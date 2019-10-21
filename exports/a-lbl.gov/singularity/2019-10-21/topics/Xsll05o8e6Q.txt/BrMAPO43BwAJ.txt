@@ -1,0 +1,600 @@
+Date: Fri, 10 Nov 2017 14:51:04 -0800 (PST)
+From: Jeff Kriske <jekr...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <4ffa3d10-e135-4567-84e4-2fa616b0abd2@lbl.gov>
+In-Reply-To: <CADU1CXn+XE_dBvb8Q2tvKyL-WzQ_3z-NFwkdCNgrwvJz6oEA_g@mail.gmail.com>
+References: <99b6aa03-9433-4fc9-ad93-9d1daaa861ff@lbl.gov> <CAM=pu+JEzBdZtU_cxLuUKgTDvfrvug6buxg8-jJ8CqpzpebZPg@mail.gmail.com>
+ <CADU1CXmgczjucCsFNgXTLTWwiK1MLO9ASqjGVTrt8wUhRWjdfQ@mail.gmail.com>
+ <CAM=pu+KrG4exrsS8Xrzq1ZF1N1EcDUy9v7S=Uic_DXqV_x_sUA@mail.gmail.com>
+ <CADU1CXmgikg+Kd9VHfhvU-ngHn53eugpKq-cKcSRogLmrL80Eg@mail.gmail.com>
+ <c217cf7e-8a0e-4769-8616-89dfb36e3801@lbl.gov> <CADU1CXk1o+SK9nAWFXSPOYM52sfu96scB75nfJLAhtNq4gRrZQ@mail.gmail.com>
+ <CADU1CXn+XE_dBvb8Q2tvKyL-WzQ_3z-NFwkdCNgrwvJz6oEA_g@mail.gmail.com>
+Subject: Re: [Singularity] singularity-container 2.3.2-1: import BIG
+ dockerimage fails
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_3065_643007881.1510354264851"
+
+------=_Part_3065_643007881.1510354264851
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_3066_1069433780.1510354264852"
+
+------=_Part_3066_1069433780.1510354264852
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+I can confirm 2.3.2 strips both SINGULARITY_DOCKER_USERNAME and 
+SINGULARITY_DOCKER_PASSWORD from the environment before it runs import.py
+
+If they are manually placed in import.py then 2.3.2 works fine.
+
+Why not build the image with 2.4 using singularity build -w to make the 
+image in the legacy format so that it runs on 2.3.2?
+
+
+On Friday, November 10, 2017 at 4:46:06 AM UTC-5, Christophe Trophime wrote:
+>
+> I've checked with singularity 2.4-1. No problems with private docker 
+> images from dockerhub:
+> #! /bin/bash
+> export SINGULARITY_DOCKER_USERNAME=${DOCKER_USER}
+> export SINGULARITY_DOCKER_PASSWORD=${DOCKER_PASSWD}
+>
+> sudo -E ${SINGULARITY_BIN} -vvv  build ${DOCKERIMAGE}-${DOCKERTAG}.img 
+> ${BOOTSTRAP}
+>
+> The point is that I would like to use this image on a HPC ressource that 
+> has only support for singularity 2.3.2...
+>
+> Could you confirm that problem with docker private image on singularity 
+> 2.3.2 ?
+> Note that it appears only with "sudo singularity bootstrap ..."
+>
+>
+>
+> On Fri, Nov 10, 2017 at 9:11 AM, Christophe Trophime <
+> chr...@googlemail.com <javascript:>> wrote:
+>
+>> Following your advice I've just tried a script like that:
+>> #! /bin/bash
+>> export SINGULARITY_DOCKER_USERNAME=${DOCKER_USER}
+>> export SINGULARITY_DOCKER_PASSWORD=${DOCKER_PASSWD}
+>>
+>> ${SINGULARITY_BIN} create --size ${SIZE_MB} 
+>> ${DOCKERIMAGE}-${DOCKERTAG}.img
+>> sudo -E ${SINGULARITY_BIN} -vvv  bootstrap 
+>> ${DOCKERIMAGE}-${DOCKERTAG}.img ${BOOTSTRAP}
+>>
+>> but I still have:
+>> VERBOSE2 SINGULARITY_DOCKER_USERNAME not defined (None)
+>> VERBOSE2 SINGULARITY_DOCKER_PASSWORD found
+>>
+>>
+>> On Thu, Nov 9, 2017 at 10:11 PM, Jeff Kriske <je...@gmail.com 
+>> <javascript:>> wrote:
+>>
+>>> When you sudo you have to use -E to preserve your environment... 
+>>> otherwise it's stripping your environment variables.
+>>>
+>>> On Thursday, November 9, 2017 at 12:00:27 PM UTC-5, Christophe Trophime 
+>>> wrote:
+>>>>
+>>>> What do you mean?
+>>>>
+>>>> I've tried this with exact same error:
+>>>> export SINGULARITY_DOCKER_USERNAME=xxx
+>>>> sudo singularity bootstrap ....
+>>>>
+>>>> On Thu, Nov 9, 2017 at 5:29 PM, v <v...@gmail.com> wrote:
+>>>>
+>>>>> The debug message is saying it cannot find your credentials for your 
+>>>>> username:
+>>>>>
+>>>>> VERBOSE2 SINGULARITY_DOCKER_USERNAME not defined (None)
+>>>>> VERBOSE2 SINGULARITY_DOCKER_PASSWORD found
+>>>>>
+>>>>> and generally it's a scary idea to put these things written verbatim 
+>>>>> in the file! I think you would want to try exporting the variables to your 
+>>>>> environment (your actual environment, not the one in the %environment 
+>>>>> section), make sure the debug says the username is found, and go from there.
+>>>>>
+>>>>>
+>>>>> On Thu, Nov 9, 2017 at 8:19 AM, 'Christophe Trophime' via singularity 
+>>>>> <si...@lbl.gov> wrote:
+>>>>>
+>>>>>> Hi, I'm running a script to generate the container:
+>>>>>>
+>>>>>> #! /bin/bash
+>>>>>> /usr/bin/singularity create --size 12083 feelpp-toolboxes.img
+>>>>>> /usr/bin/singularity import feelpp-toolboxes.img 
+>>>>>> docker://feelpp/feelpp-toolboxes:develop
+>>>>>> sudo /usr/bin/singularity bootstrap feelpp-toolboxes.img docker.def
+>>>>>>
+>>>>>> with docker.def:
+>>>>>> Bootstrap: docker
+>>>>>> From: feelpp/feelpp-toolboxes:develop
+>>>>>> Username: xxx
+>>>>>> Password: yyy
+>>>>>>
+>>>>>> %runscript
+>>>>>> exec echo "The runscript is the containers default runtime command!"
+>>>>>>
+>>>>>> %setup
+>>>>>>     echo "Looking in directory '$SINGULARITY_ROOTFS' for /bin/sh"
+>>>>>>     if [ ! -x "$SINGULARITY_ROOTFS/bin/sh" ]; then
+>>>>>>         echo "Hrmm, this container does not have /bin/sh installed..."
+>>>>>>         exit 1
+>>>>>>     fi
+>>>>>> exit 0
+>>>>>>
+>>>>>> %environment
+>>>>>> FEELPP_REPOSITORY=/feel
+>>>>>> export FEELPP_REPOSITORY
+>>>>>>
+>>>>>> %post
+>>>>>> apt-get update
+>>>>>> # To use on Cluster with InfinyBand and Slurm
+>>>>>> apt-get -y install dapl2-utils \
+>>>>>>                    libdapl2 \
+>>>>>>                    libibverbs1 \
+>>>>>>                    librdmacm1 \
+>>>>>>                    libcxgb3-1 \
+>>>>>>                    libipathverbs1 \
+>>>>>>                    libmlx4-1 \
+>>>>>>                    libmlx5-1 \
+>>>>>>                    libmthca1 \
+>>>>>>                    libnes1 \
+>>>>>>                    libpmi0 \
+>>>>>>                    libslurm30
+>>>>>>
+>>>>>> Actually the "private" docker image I actually use is derived from 
+>>>>>> feelpp/feelpp-toolboxes:develop.
+>>>>>>
+>>>>>> Cleaning the cache in $USER/.singularity and setting a more 
+>>>>>> appropriate size for the img seems to have fixed the pb.
+>>>>>> However for the private docker I still have an AUTHENTIFICATION issue 
+>>>>>> when running "sudo singularity bootstrap ...":
+>>>>>>
+>>>>>> VERBOSE: Adding value to registry: 'DRIVER' = 'docker'
+>>>>>> VERBOSE: Got bootstrap definition key/val 'From' = 
+>>>>>> 'feelpp/hifimagnet:develop-yakkety'
+>>>>>> VERBOSE: Got bootstrap definition key/val 'Username' = 'xxx'
+>>>>>> VERBOSE: Got bootstrap definition key/val 'Password' = 'yyy'
+>>>>>> VERBOSE: Set messagelevel to: 4
+>>>>>> Adding base Singularity environment to container
+>>>>>> VERBOSE2 SINGULARITY_COMMAND_ASIS found as False
+>>>>>> VERBOSE2 SINGULARITY_ROOTFS found as 
+>>>>>> /var/lib/singularity/mnt/container
+>>>>>> VERBOSE2 SINGULARITY_METADATA_FOLDER found as 
+>>>>>> /var/lib/singularity/mnt/container/.singularity.d
+>>>>>> VERBOSE2 SINGULARITY_FIX_PERMS found as False
+>>>>>> VERBOSE2 SINGULARITY_COLORIZE not defined (None)
+>>>>>> VERBOSE2 SINGULARITY_DISABLE_CACHE found as False
+>>>>>> VERBOSE2 SINGULARITY_CACHEDIR found as /root/.singularity
+>>>>>> VERBOSE2 SINGULARITY_ENVIRONMENT found as 
+>>>>>> /var/lib/singularity/mnt/container/.singularity.d/env/90-environment.sh
+>>>>>> VERBOSE2 SINGULARITY_RUNSCRIPT found as 
+>>>>>> /var/lib/singularity/mnt/container/singularity
+>>>>>> VERBOSE2 SINGULARITY_TESTFILE found as 
+>>>>>> /var/lib/singularity/mnt/container/.singularity.d/test
+>>>>>> VERBOSE2 SINGULARITY_DEFFILE found as 
+>>>>>> /var/lib/singularity/mnt/container/.singularity.d/Singularity
+>>>>>> VERBOSE2 SINGULARITY_HELPFILE found as 
+>>>>>> /var/lib/singularity/mnt/container/.singularity.d/runscript.help
+>>>>>> VERBOSE2 SINGULARITY_ENVBASE found as 
+>>>>>> /var/lib/singularity/mnt/container/.singularity.d/env
+>>>>>> VERBOSE2 SINGULARITY_LABELFILE found as 
+>>>>>> /var/lib/singularity/mnt/container/.singularity.d/labels.json
+>>>>>> VERBOSE2 SINGULARITY_INCLUDECMD found as yes
+>>>>>> VERBOSE2 SINGULARITY_NOHTTPS found as False
+>>>>>> VERBOSE2 SINGULARITY_PULLFOLDER found as 
+>>>>>> /home/LNCMI-G/trophime/feelpp/research/hifimagnet/singularity/hifimagnet
+>>>>>> VERBOSE2 SHUB_NAMEBYHASH not defined (None)
+>>>>>> VERBOSE2 SHUB_NAMEBYCOMMIT not defined (None)
+>>>>>> VERBOSE2 SHUB_CONTAINERNAME not defined (None)
+>>>>>> VERBOSE2 SINGULARITY_CONTENTS found as 
+>>>>>> /tmp/.singularity-layers.yWaMX6E2
+>>>>>> VERBOSE2 SINGULARITY_PYTHREADS found as 9
+>>>>>> VERBOSE2 SINGULARITY_CONTAINER found as 
+>>>>>> docker://feelpp/hifimagnet:develop-yakkety
+>>>>>> VERBOSE2 SINGULARITY_DOCKER_USERNAME not defined (None)
+>>>>>> VERBOSE2 SINGULARITY_DOCKER_PASSWORD found
+>>>>>> VERBOSE Docker image: feelpp/hifimagnet:develop-yakkety
+>>>>>> VERBOSE2 Specified Docker CMD as %runscript.
+>>>>>> VERBOSE Registry: index.docker.io
+>>>>>> VERBOSE Namespace: feelpp
+>>>>>> VERBOSE Repo Name: hifimagnet
+>>>>>> VERBOSE Repo Tag: develop-yakkety
+>>>>>> VERBOSE Version: None
+>>>>>> VERBOSE Obtaining tags: 
+>>>>>> https://index.docker.io/v2/feelpp/hifimagnet/tags/list
+>>>>>> Docker image path: index.docker.io/feelpp/hifimagnet:develop-yakkety
+>>>>>> VERBOSE Obtaining manifest: 
+>>>>>> https://index.docker.io/v2/feelpp/hifimagnet/manifests/develop-yakkety
+>>>>>> ERROR UNAUTHORIZED: authentication required
+>>>>>> ERROR Check existence, naming, and permissions
+>>>>>>
+>>>>>> I've tried setting USER and PASSWD in bootstrap def file or 
+>>>>>> explicitly setting  
+>>>>>> SINGULARITY_DOCKER_USERNAME ... none of these worked...
+>>>>>>
+>>>>>>
+>>>>>> On Thu, Nov 9, 2017 at 2:39 PM, v <v...@gmail.com> wrote:
+>>>>>>
+>>>>>>> Where are those command being issued? It sort of looks like they are 
+>>>>>>> being run from the container %post... can you give the exact steps to 
+>>>>>>> reproduce?
+>>>>>>>
+>>>>>>> On Thu, Nov 9, 2017 at 5:36 AM, 'Christophe Trophime' via 
+>>>>>>> singularity <si...@lbl.gov> wrote:
+>>>>>>>
+>>>>>>>> Hi,
+>>>>>>>> trying to create a singularity container on Debian/Testing 
+>>>>>>>> (actually singularity-container 2.3.2-1)
+>>>>>>>> from a large docker image I got the following error:
+>>>>>>>>
+>>>>>>>> + docker images feelpp/hifimagnet:develop-yakkety --format 
+>>>>>>>> '{{.Size}}'
+>>>>>>>> feelpp/hifimagnet:develop-yakkety: 10.8 GB
+>>>>>>>> + /usr/bin/singularity create --size 12083 
+>>>>>>>> hifimagnet-develop-yakkety.img
+>>>>>>>> Initializing Singularity image subsystem
+>>>>>>>> Opening image file: hifimagnet-develop-yakkety.img
+>>>>>>>> Creating 12083MiB image
+>>>>>>>> Binding image to loop
+>>>>>>>> Creating file system within image
+>>>>>>>> Image is done: hifimagnet-develop-yakkety.img
+>>>>>>>> + /usr/bin/singularity import hifimagnet-develop-yakkety.img 
+>>>>>>>> docker://feelpp/hifimagnet:develop-yakkety
+>>>>>>>> Traceback (most recent call last):
+>>>>>>>>   File "/usr/lib/x86_64-linux-gnu/singularity/python/import.py", 
+>>>>>>>> line 107, in <module>
+>>>>>>>>     main()
+>>>>>>>>   File "/usr/lib/x86_64-linux-gnu/singularity/python/import.py", 
+>>>>>>>> line 83, in main
+>>>>>>>>     layerfile=LAYERFILE)
+>>>>>>>>   File 
+>>>>>>>> "/usr/lib/x86_64-linux-gnu/singularity/python/docker/main.py", line 82, in 
+>>>>>>>> IMPORT
+>>>>>>>>     client = DockerApiConnection(image=image,auth=auth)
+>>>>>>>> ...
+>>>>>>>> RuntimeError: maximum recursion depth exceeded while calling a 
+>>>>>>>> Python object
+>>>>>>>> + sudo /usr/bin/singularity bootstrap 
+>>>>>>>> hifimagnet-develop-yakkety.img hifimagnet-docker.def
+>>>>>>>> Sanitizing environment
+>>>>>>>>
+>>>>>>>>
+>>>>>>>> Any idea of what I did wrong?
+>>>>>>>> Best
+>>>>>>>>
+>>>>>>>> -- 
+>>>>>>>> You received this message because you are subscribed to the Google 
+>>>>>>>> Groups "singularity" group.
+>>>>>>>> To unsubscribe from this group and stop receiving emails from it, 
+>>>>>>>> send an email to singu...@lbl.gov.
+>>>>>>>>
+>>>>>>>
+>>>>>>>
+>>>>>>>
+>>>>>>> -- 
+>>>>>>> Vanessa Villamia Sochat
+>>>>>>> Stanford University '16
+>>>>>>> (603) 321-0676
+>>>>>>>
+>>>>>>> -- 
+>>>>>>> You received this message because you are subscribed to the Google 
+>>>>>>> Groups "singularity" group.
+>>>>>>> To unsubscribe from this group and stop receiving emails from it, 
+>>>>>>> send an email to singu...@lbl.gov.
+>>>>>>>
+>>>>>>
+>>>>>> -- 
+>>>>>> You received this message because you are subscribed to the Google 
+>>>>>> Groups "singularity" group.
+>>>>>> To unsubscribe from this group and stop receiving emails from it, 
+>>>>>> send an email to singu...@lbl.gov.
+>>>>>>
+>>>>>
+>>>>>
+>>>>>
+>>>>> -- 
+>>>>> Vanessa Villamia Sochat
+>>>>> Stanford University '16
+>>>>> (603) 321-0676
+>>>>>
+>>>>> -- 
+>>>>> You received this message because you are subscribed to the Google 
+>>>>> Groups "singularity" group.
+>>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>>> an email to singu...@lbl.gov.
+>>>>>
+>>>>
+>>>> -- 
+>>> You received this message because you are subscribed to the Google 
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>> an email to singu...@lbl.gov <javascript:>.
+>>>
+>>
+>>
+>
+------=_Part_3066_1069433780.1510354264852
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">I can confirm 2.3.2 strips both SINGULARITY_DOCKER_USERNAM=
+E and SINGULARITY_DOCKER_PASSWORD from the environment before it runs impor=
+t.py<div><br></div><div>If they are manually placed in import.py then 2.3.2=
+ works fine.</div><div><br></div><div>Why not build the image with 2.4 usin=
+g singularity build -w to make the image in the legacy format so that it ru=
+ns on 2.3.2?</div><div><br><br>On Friday, November 10, 2017 at 4:46:06 AM U=
+TC-5, Christophe Trophime wrote:<blockquote class=3D"gmail_quote" style=3D"=
+margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;=
+"><div dir=3D"ltr">I&#39;ve checked with singularity 2.4-1. No problems wit=
+h private docker images from dockerhub:<br><div>#! /bin/bash</div><div>expo=
+rt SINGULARITY_DOCKER_USERNAME=3D${<wbr>DOCKER_USER}</div><div>export SINGU=
+LARITY_DOCKER_PASSWORD=3D${<wbr>DOCKER_PASSWD}</div><div><br></div><div>sud=
+o -E ${SINGULARITY_BIN} -vvv=C2=A0 build ${DOCKERIMAGE}-${DOCKERTAG}.<wbr>i=
+mg ${BOOTSTRAP}<br></div><div><br></div><div>The point is that I would like=
+ to use this image on a HPC=C2=A0ressource=C2=A0that has only support for s=
+ingularity 2.3.2...</div><div><br></div><div>Could you confirm that problem=
+ with docker private image on singularity 2.3.2 ?</div><div>Note that it ap=
+pears only with &quot;sudo=C2=A0singularity bootstrap ...&quot;</div><div><=
+br></div><div><br></div></div><div><br><div class=3D"gmail_quote">On Fri, N=
+ov 10, 2017 at 9:11 AM, Christophe Trophime <span dir=3D"ltr">&lt;<a href=
+=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"tdDX_7OFBQAJ" r=
+el=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return tru=
+e;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">chr...@googl=
+email.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=
+=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=
+=3D"ltr">Following your advice I&#39;ve just tried a script like that:<div>=
+#! /bin/bash<br><div><div>export SINGULARITY_DOCKER_USERNAME=3D${<wbr>DOCKE=
+R_USER}</div><div>export SINGULARITY_DOCKER_PASSWORD=3D${<wbr>DOCKER_PASSWD=
+}</div></div><div><br></div></div><div>${SINGULARITY_BIN} create --size ${S=
+IZE_MB} ${DOCKERIMAGE}-${DOCKERTAG}.<wbr>img<br></div><div>sudo -E ${SINGUL=
+ARITY_BIN} -vvv=C2=A0 bootstrap ${DOCKERIMAGE}-${DOCKERTAG}.<wbr>img ${BOOT=
+STRAP}<br></div><div><br></div><div>but I still have:</div><span><div><div>=
+VERBOSE2 SINGULARITY_DOCKER_USERNAME not defined (None)</div><div>VERBOSE2 =
+SINGULARITY_DOCKER_PASSWORD found</div></div><div><br></div></span></div><d=
+iv><div><div><br><div class=3D"gmail_quote">On Thu, Nov 9, 2017 at 10:11 PM=
+, Jeff Kriske <span dir=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_blan=
+k" gdf-obfuscated-mailto=3D"tdDX_7OFBQAJ" rel=3D"nofollow" onmousedown=3D"t=
+his.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;=
+javascript:&#39;;return true;">je...@gmail.com</a>&gt;</span> wrote:<br><bl=
+ockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #=
+ccc solid;padding-left:1ex"><div dir=3D"ltr">When you sudo you have to use =
+-E to preserve your environment... otherwise it&#39;s stripping your enviro=
+nment variables.<span><br><br>On Thursday, November 9, 2017 at 12:00:27 PM =
+UTC-5, Christophe Trophime wrote:</span><blockquote class=3D"gmail_quote" s=
+tyle=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-left:=
+1ex"><span><div dir=3D"ltr">What do you mean?<div><br><div>I&#39;ve tried t=
+his with exact same error:<br><div>export SINGULARITY_DOCKER_USERNAME=3D<wb=
+r>xxx</div><div>sudo=C2=A0singularity bootstrap ....</div></div></div></div=
+></span><div><br><div class=3D"gmail_quote"><span>On Thu, Nov 9, 2017 at 5:=
+29 PM, v <span dir=3D"ltr">&lt;<a rel=3D"nofollow">v...@gmail.com</a>&gt;</=
+span> wrote:<br></span><blockquote class=3D"gmail_quote" style=3D"margin:0 =
+0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><span><div dir=3D"ltr=
+">The debug message is saying it cannot find your credentials for your user=
+name:<span><div><br></div><div><div style=3D"font-size:12.8px">VERBOSE2 SIN=
+GULARITY_DOCKER_USERNAME not defined (None)</div><div style=3D"font-size:12=
+.8px">VERBOSE2 SINGULARITY_DOCKER_PASSWORD found</div></div><div style=3D"f=
+ont-size:12.8px"><br></div></span><div>and generally it&#39;s a scary idea =
+to put these things written verbatim in the file! I think you would want to=
+ try exporting the variables to your environment (your actual environment, =
+not the one in the %environment section), make sure the debug says the user=
+name is found, and go from there.<div><br></div></div></div></span><div><di=
+v><div><br><div class=3D"gmail_quote"><div><div>On Thu, Nov 9, 2017 at 8:19=
+ AM, &#39;Christophe Trophime&#39; via singularity <span dir=3D"ltr">&lt;<a=
+ rel=3D"nofollow">si...@lbl.gov</a>&gt;</span> wrote:<br></div></div><block=
+quote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc=
+ solid;padding-left:1ex"><div><div><div dir=3D"ltr">Hi, I&#39;m running a s=
+cript to generate the container:<div><br><div>#! /bin/bash<br>/usr/bin/sing=
+ularity create --size 12083 feelpp-toolboxes.img<br></div><div>/usr/bin/sin=
+gularity import feelpp-toolboxes.img docker://feelpp/feelpp-<wbr>toolboxes:=
+develop</div><div>sudo /usr/bin/singularity bootstrap feelpp-toolboxes.img =
+docker.def</div><div><br></div><div>with docker.def:</div><div><div>Bootstr=
+ap: docker</div><div>From: feelpp/feelpp-toolboxes:<wbr>develop</div><div>U=
+sername: xxx</div><div>Password: yyy</div><div><br></div><div>%runscript</d=
+iv><div>exec echo &quot;The runscript is the containers default runtime com=
+mand!&quot;</div><div><br></div><div>%setup</div><div>=C2=A0 =C2=A0 echo &q=
+uot;Looking in directory &#39;$SINGULARITY_ROOTFS&#39; for /bin/sh&quot;</d=
+iv><div>=C2=A0 =C2=A0 if [ ! -x &quot;$SINGULARITY_ROOTFS/bin/sh&quot; ]; t=
+hen</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 echo &quot;Hrmm, this container d=
+oes not have /bin/sh installed...&quot;</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 exit 1</div><div>=C2=A0 =C2=A0 fi</div><div>exit 0</div><div><br></div>=
+<div>%environment</div><div>FEELPP_REPOSITORY=3D/feel<br></div><div>export =
+FEELPP_REPOSITORY</div><div><br></div><div>%post</div><div>apt-get update</=
+div><div># To use on Cluster with InfinyBand and Slurm<br></div><div>apt-ge=
+t -y install dapl2-utils \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0libdapl2 \</div><div>=C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0libibverbs1 \</div><div>=C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0librdmacm=
+1 \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0libcxgb3-1 \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0libipathverbs1 \</div><div>=C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0libmlx4-1 \</div><div>=C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0libmlx5-1=
+ \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0libmthca1 \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0libnes1 \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0libpmi0 \</div><div>=C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0libslurm30</div><div><b=
+r></div></div></div><div>Actually the &quot;private&quot; docker image I ac=
+tually use is derived from feelpp/feelpp-toolboxes:<wbr>develop.</div><div>=
+<br></div><div>Cleaning the cache in $USER/.singularity and setting a more =
+appropriate size for the img=C2=A0seems to have fixed the pb.</div><div>How=
+ever for the private docker I still have an AUTHENTIFICATION issue when run=
+ning &quot;sudo=C2=A0singularity bootstrap ...&quot;:<br><br><div>VERBOSE: =
+Adding value to registry: &#39;DRIVER&#39; =3D &#39;docker&#39;</div><div>V=
+ERBOSE: Got bootstrap definition key/val &#39;From&#39; =3D &#39;feelpp/hif=
+imagnet:develop-<wbr>yakkety&#39;</div><div>VERBOSE: Got bootstrap definiti=
+on key/val &#39;Username&#39; =3D &#39;xxx&#39;</div><div>VERBOSE: Got boot=
+strap definition key/val &#39;Password&#39; =3D &#39;yyy&#39;</div><div>VER=
+BOSE: Set messagelevel to: 4</div><div>Adding base Singularity environment =
+to container</div><div>VERBOSE2 SINGULARITY_COMMAND_ASIS found as False</di=
+v><div>VERBOSE2 SINGULARITY_ROOTFS found as /var/lib/singularity/mnt/<wbr>c=
+ontainer</div><div>VERBOSE2 SINGULARITY_METADATA_FOLDER found as /var/lib/s=
+ingularity/mnt/<wbr>container/.singularity.d</div><div>VERBOSE2 SINGULARITY=
+_FIX_PERMS found as False</div><div>VERBOSE2 SINGULARITY_COLORIZE not defin=
+ed (None)</div><div>VERBOSE2 SINGULARITY_DISABLE_CACHE found as False</div>=
+<div>VERBOSE2 SINGULARITY_CACHEDIR found as /root/.singularity</div><div>VE=
+RBOSE2 SINGULARITY_ENVIRONMENT found as /var/lib/singularity/mnt/<wbr>conta=
+iner/.singularity.d/env/<wbr>90-environment.sh</div><div>VERBOSE2 SINGULARI=
+TY_RUNSCRIPT found as /var/lib/singularity/mnt/<wbr>container/singularity</=
+div><div>VERBOSE2 SINGULARITY_TESTFILE found as /var/lib/singularity/mnt/<w=
+br>container/.singularity.d/test</div><div>VERBOSE2 SINGULARITY_DEFFILE fou=
+nd as /var/lib/singularity/mnt/<wbr>container/.singularity.d/<wbr>Singulari=
+ty</div><div>VERBOSE2 SINGULARITY_HELPFILE found as /var/lib/singularity/mn=
+t/<wbr>container/.singularity.d/<wbr>runscript.help</div><div>VERBOSE2 SING=
+ULARITY_ENVBASE found as /var/lib/singularity/mnt/<wbr>container/.singulari=
+ty.d/env</div><div>VERBOSE2 SINGULARITY_LABELFILE found as /var/lib/singula=
+rity/mnt/<wbr>container/.singularity.d/<wbr>labels.json</div><div>VERBOSE2 =
+SINGULARITY_INCLUDECMD found as yes</div><div>VERBOSE2 SINGULARITY_NOHTTPS =
+found as False</div><div>VERBOSE2 SINGULARITY_PULLFOLDER found as /home/LNC=
+MI-G/trophime/feelpp/<wbr>research/hifimagnet/<wbr>singularity/hifimagnet</=
+div><div>VERBOSE2 SHUB_NAMEBYHASH not defined (None)</div><div>VERBOSE2 SHU=
+B_NAMEBYCOMMIT not defined (None)</div><div>VERBOSE2 SHUB_CONTAINERNAME not=
+ defined (None)</div><div>VERBOSE2 SINGULARITY_CONTENTS found as /tmp/.sing=
+ularity-layers.<wbr>yWaMX6E2</div><div>VERBOSE2 SINGULARITY_PYTHREADS found=
+ as 9</div><div>VERBOSE2 SINGULARITY_CONTAINER found as docker://feelpp/hif=
+imagnet:<wbr>develop-yakkety</div><div>VERBOSE2 SINGULARITY_DOCKER_USERNAME=
+ not defined (None)</div><div>VERBOSE2 SINGULARITY_DOCKER_PASSWORD found</d=
+iv><div>VERBOSE Docker image: feelpp/hifimagnet:develop-<wbr>yakkety</div><=
+div>VERBOSE2 Specified Docker CMD as %runscript.</div><div>VERBOSE Registry=
+: <a href=3D"http://index.docker.io" rel=3D"nofollow" target=3D"_blank" onm=
+ousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fin=
+dex.docker.io\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEl_JCV0Q0GGtoX5qZwwg3=
+5HwTkng&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.google.co=
+m/url?q\x3dhttp%3A%2F%2Findex.docker.io\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dA=
+FQjCNEl_JCV0Q0GGtoX5qZwwg35HwTkng&#39;;return true;">index.docker.io</a></d=
+iv><div>VERBOSE Namespace: feelpp</div><div>VERBOSE Repo Name: hifimagnet</=
+div><div>VERBOSE Repo Tag: develop-yakkety</div><div>VERBOSE Version: None<=
+/div><div>VERBOSE Obtaining tags: <a href=3D"https://index.docker.io/v2/fee=
+lpp/hifimagnet/tags/list" rel=3D"nofollow" target=3D"_blank" onmousedown=3D=
+"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Findex.docke=
+r.io%2Fv2%2Ffeelpp%2Fhifimagnet%2Ftags%2Flist\x26sa\x3dD\x26sntz\x3d1\x26us=
+g\x3dAFQjCNEMxi43c8h9SI9gs0ai3J8XYZqQRQ&#39;;return true;" onclick=3D"this.=
+href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Findex.docker.io%2=
+Fv2%2Ffeelpp%2Fhifimagnet%2Ftags%2Flist\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dA=
+FQjCNEMxi43c8h9SI9gs0ai3J8XYZqQRQ&#39;;return true;">https://index.docker.i=
+o/v2/<wbr>feelpp/hifimagnet/tags/list</a></div><div>Docker image path: <a h=
+ref=3D"http://index.docker.io/feelpp/hifimagnet:develop-yakkety" rel=3D"nof=
+ollow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;http://www.google.=
+com/url?q\x3dhttp%3A%2F%2Findex.docker.io%2Ffeelpp%2Fhifimagnet%3Adevelop-y=
+akkety\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNF_v1C-BAuFrHwm2F5Fs0kStauV1g=
+&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q=
+\x3dhttp%3A%2F%2Findex.docker.io%2Ffeelpp%2Fhifimagnet%3Adevelop-yakkety\x2=
+6sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNF_v1C-BAuFrHwm2F5Fs0kStauV1g&#39;;ret=
+urn true;">index.docker.io/feelpp/<wbr>hifimagnet:develop-yakkety</a></div>=
+<div>VERBOSE Obtaining manifest: <a href=3D"https://index.docker.io/v2/feel=
+pp/hifimagnet/manifests/develop-yakkety" rel=3D"nofollow" target=3D"_blank"=
+ onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2=
+F%2Findex.docker.io%2Fv2%2Ffeelpp%2Fhifimagnet%2Fmanifests%2Fdevelop-yakket=
+y\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNH9UVI_ALkvq6lheH8h96bkTAn63w&#39;=
+;return true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3d=
+https%3A%2F%2Findex.docker.io%2Fv2%2Ffeelpp%2Fhifimagnet%2Fmanifests%2Fdeve=
+lop-yakkety\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNH9UVI_ALkvq6lheH8h96bkT=
+An63w&#39;;return true;">https://index.docker.io/v2/<wbr>feelpp/hifimagnet/=
+manifests/<wbr>develop-yakkety</a></div><div>ERROR UNAUTHORIZED: authentica=
+tion required</div><div>ERROR Check existence, naming, and permissions</div=
+></div><div><br></div><div>I&#39;ve tried setting USER and PASSWD in bootst=
+rap def file or explicitly setting=C2=A0=C2=A0</div><div>SINGULARITY_DOCKER=
+_USERNAME ... none of these worked...<br></div><div><br></div></div></div><=
+/div><div><div><div><br><div class=3D"gmail_quote"><span>On Thu, Nov 9, 201=
+7 at 2:39 PM, v <span dir=3D"ltr">&lt;<a rel=3D"nofollow">v...@gmail.com</a=
+>&gt;</span> wrote:<br></span><blockquote class=3D"gmail_quote" style=3D"ma=
+rgin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><span><div dir=
+=3D"ltr">Where are those command being issued? It sort of looks like they a=
+re being run from the container %post... can you give the exact steps to re=
+produce?</div></span><div><div><div><br><div class=3D"gmail_quote"><div><di=
+v>On Thu, Nov 9, 2017 at 5:36 AM, &#39;Christophe Trophime&#39; via singula=
+rity <span dir=3D"ltr">&lt;<a rel=3D"nofollow">si...@lbl.gov</a>&gt;</span>=
+ wrote:<br></div></div><blockquote class=3D"gmail_quote" style=3D"margin:0 =
+0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div><div><div dir=3D=
+"ltr">Hi,<div>trying to create a singularity container on Debian/Testing (a=
+ctually singularity-container 2.3.2-1)<br>from a large docker image I got t=
+he following error:<br><br></div><div><div>+ docker images feelpp/hifimagne=
+t:develop-<wbr>yakkety --format &#39;{{.Size}}&#39;</div><div>feelpp/hifima=
+gnet:develop-<wbr>yakkety: 10.8 GB<br></div><div>+ /usr/bin/singularity cre=
+ate --size 12083 hifimagnet-develop-yakkety.img<br></div><div>Initializing =
+Singularity image subsystem</div><div>Opening image file: hifimagnet-develo=
+p-yakkety.img</div><div>Creating 12083MiB image</div><div>Binding image to =
+loop</div><div>Creating file system within image</div><div>Image is done: h=
+ifimagnet-develop-yakkety.img</div><div>+ /usr/bin/singularity import hifim=
+agnet-develop-yakkety.img docker://feelpp/hifimagnet:<wbr>develop-yakkety</=
+div><div>Traceback (most recent call last):</div></div><div><div>=C2=A0 Fil=
+e &quot;/usr/lib/x86_64-linux-gnu/<wbr>singularity/python/import.py&quot;, =
+line 107, in &lt;module&gt;</div><div>=C2=A0 =C2=A0 main()</div><div>=C2=A0=
+ File &quot;/usr/lib/x86_64-linux-gnu/<wbr>singularity/python/import.py&quo=
+t;, line 83, in main</div><div>=C2=A0 =C2=A0 layerfile=3DLAYERFILE)</div><d=
+iv>=C2=A0 File &quot;/usr/lib/x86_64-linux-gnu/<wbr>singularity/python/dock=
+er/<wbr>main.py&quot;, line 82, in IMPORT</div><div>=C2=A0 =C2=A0 client =
+=3D DockerApiConnection(image=3D<wbr>image,auth=3Dauth)</div></div><div>...=
+</div><div>RuntimeError: maximum recursion depth exceeded while calling a P=
+ython object</div><div>+ sudo /usr/bin/singularity bootstrap hifimagnet-dev=
+elop-yakkety.img hifimagnet-docker.def</div><div>Sanitizing environment</di=
+v><div><br></div><div><br></div><div>Any idea of what I did wrong?</div><di=
+v>Best</div></div></div></div><span><font color=3D"#888888"><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br></div></div>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div></div=
+></div><span><span><font color=3D"#888888">-- <br><div>Vanessa Villamia Soc=
+hat<br>Stanford University &#39;16<br><div><div><div><a value=3D"+160332106=
+76">(603) 321-0676</a></div></div></div></div>
+</font></span></span></div><div><div><span>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br></span>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</div></div></blockquote></div><br></div><span>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br></span>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</div></div></blockquote></div><span><br><br clear=3D"all"><div><br></div>-=
+- <br><div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><=
+div><div><a value=3D"+16033210676">(603) 321-0676</a></div></div></div></di=
+v>
+</span></div><span>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br></span>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</div></div></blockquote></div><br></div>
+</blockquote></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+tdDX_7OFBQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br></div>
+</div></div></blockquote></div><br></div>
+</blockquote></div></div>
+------=_Part_3066_1069433780.1510354264852--
+
+------=_Part_3065_643007881.1510354264851--

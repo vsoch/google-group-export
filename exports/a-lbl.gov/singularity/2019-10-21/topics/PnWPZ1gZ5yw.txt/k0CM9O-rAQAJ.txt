@@ -1,0 +1,409 @@
+Date: Tue, 6 Feb 2018 09:59:00 -0800 (PST)
+From: Steve <skbi...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <934e035f-2bed-4cf5-a2bc-f8bd2bcb7684@lbl.gov>
+In-Reply-To: <CAM=pu+LAsN0FZz1QCh+WMY_HCpJtNcXZjRj7t=nMCeyoO8VZ1Q@mail.gmail.com>
+References: <e0bb139c-86c4-44ba-b0ef-e10793e1062d@lbl.gov> <CAM=pu+JJ+gyW6Ofo1nRB9dkrcMuJA5KUdq8Mt+xT5JAVbOpTAw@mail.gmail.com>
+ <143917C6-D2E2-4043-A502-99498162B654@gmail.com> <CAApQTThxY_2R_FiNLLgzzfowcXZVmrsorvib=ASG3VdVWH0bkg@mail.gmail.com>
+ <ca7a802b-fb11-45a7-b985-fefe7a008cf3@lbl.gov>
+ <CAM=pu+LAsN0FZz1QCh+WMY_HCpJtNcXZjRj7t=nMCeyoO8VZ1Q@mail.gmail.com>
+Subject: Re: [Singularity] ERROR : Base home directory does not exist within
+ the container
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_5538_793145988.1517939940803"
+
+------=_Part_5538_793145988.1517939940803
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_5539_1207284647.1517939940804"
+
+------=_Part_5539_1207284647.1517939940804
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Ok, this seems to have worked:
+
+$ new_home=/tmp/12345678
+$ mkdir -p "$new_home"
+$ singularity shell --home "$new_home" shub://vsoch/singularity-images
+$ singularity shell --home "$new_home" shub://vsoch/singularity-images
+Progress |===================================| 100.0%
+Singularity: Invoking an interactive shell within container...
+
+
+bash: command_prompt_date_string: command not found
+Singularity vsoch-singularity-images-master-latest.simg:~> whoami
+kellys04
+
+bash: command_prompt_date_string: command not found
+Singularity vsoch-singularity-images-master-latest.simg:~> pwd
+/tmp/12345678
+
+Singularity vsoch-singularity-images-master-latest.simg:~> cat 
+/etc/*-release
+DISTRIB_ID=Ubuntu
+DISTRIB_RELEASE=16.04
+DISTRIB_CODENAME=xenial
+DISTRIB_DESCRIPTION="Ubuntu 16.04.3 LTS"
+NAME="Ubuntu"
+VERSION="16.04.3 LTS (Xenial Xerus)"
+ID=ubuntu
+ID_LIKE=debian
+PRETTY_NAME="Ubuntu 16.04.3 LTS"
+VERSION_ID="16.04"
+HOME_URL="http://www.ubuntu.com/"
+SUPPORT_URL="http://help.ubuntu.com/"
+BUG_REPORT_URL="http://bugs.launchpad.net/ubuntu/"
+VERSION_CODENAME=xenial
+UBUNTU_CODENAME=xenial
+
+So, the container is definitely loaded. For comparison, the host system:
+
+[2018-02-06 12:51:23]
+kellys04@phoenix2:~$ cat /etc/*-release
+CentOS release 6.8 (Final)
+Cluster Manager v7.3
+master
+LSB_VERSION=base-4.0-amd64:base-4.0-noarch:core-4.0-amd64:core-4.0-noarch:graphics-4.0-amd64:graphics-4.0-noarch:printing-4.0-amd64:printing-4.0-noarch
+CentOS release 6.8 (Final)
+CentOS release 6.8 (Final)
+
+I will try to pull down a container with some demo programs to try out. 
+
+But I am really confused at the carry-over of aspects from the host system 
+into the container. Why are the 'home' directory and username the same as 
+on the host? What other things are getting carried over into the container? 
+When I worked with Singularity on my Mac within the Vagrant VM, I never 
+noticed any of these aspects. 
+
+
+On Monday, February 5, 2018 at 8:53:01 PM UTC-5, vanessa wrote:
+>
+> Can you try a shell with 
+>
+> 1) $HOME set to a location somewhere in /tmp to avoid mounting the /ifs, 
+> or 
+> 2) --containall to see if skipping mounts helps?
+>
+> On Mon, Feb 5, 2018 at 5:45 PM, Steve <sk...@gmail.com <javascript:>> 
+> wrote:
+>
+>> Is there a solution to this? Our HPC just got Singularity installed, but 
+>> I cannot even run basic demo containers because of this error. For example:
+>>
+>> $ singularity pull shub://vsoch/singularity-images
+>>
+>> $ ll vsoch-singularity-images-master-latest.simg
+>> -rwxr-x--- 1 kellys04 molecpathlab 45M Feb  5 20:41 
+>> vsoch-singularity-images-master-latest.simg
+>>
+>> $ singularity shell --home $HOME shub://vsoch/singularity-images
+>> Progress |===================================| 100.0%
+>> ERROR  : Base home directory does not exist within the container: /ifs
+>> ABORT  : Retval = 255
+>>
+>> Not sure I understand why the home directory matters either. Its a 
+>> container, everything is supposed to be isolated from the host system, so 
+>> why does it matter where the host system user's home directory is? And why 
+>> would this prevent the container from running?
+>>
+>>
+>> On Saturday, July 1, 2017 at 2:48:49 PM UTC-4, Gregory Kurtzer wrote:
+>>>
+>>> I'm not sure about the other errors, but the command syntax *requires* 
+>>> any shell options to be placed before the image name. So it should look 
+>>> like:
+>>>
+>>> $ singularity shell --home ~/ rstudio_tweak.img
+>>>
+>>> Option parsing is still not perfect in Singularity, but because we can't 
+>>> interfere with anything after the image name (as we assume it is a command 
+>>> or options themselves for a different program), we can't use the standard 
+>>> methods of doing this. It is on my TODO list. ;)
+>>>
+>>> Good luck!
+>>>
+>>> On Wed, Jun 28, 2017 at 2:51 AM, moleps <m...@gmail.com> wrote:
+>>>
+>>>> My home directory is at /utx/user/molps. 
+>>>>
+>>>> I tried 
+>>>>
+>>>> $ singularity shell rstudio_tweak.img --home ~/
+>>>> ERROR  : Base home directory does not exist within the container: /uio
+>>>> ABORT  : Retval = 255
+>>>>
+>>>> singularity shell rstudio_opp.img --home /utx/user/molps
+>>>> ERROR  : Base home directory does not exist within the container: /uio
+>>>> ABORT  : Retval = 255
+>>>>
+>>>>
+>>>>
+>>>> On 27. jun. 2017, at 23.29, vanessa s <v...@gmail.com> wrote:
+>>>>
+>>>> Is your home directory at /utx? If it's not finding that in the 
+>>>> container, then it must be that overlayfs is disabled (so you can't make it 
+>>>> at runtime). What you might want to specify it be bound somewhere else (eg, 
+>>>> try the command and specify --home)
+>>>>
+>>>>  -H/--home <spec>    A home directory specification.  spec can either 
+>>>>> be a
+>>>>>                         src path or src:dest pair.  src is the source 
+>>>>> path
+>>>>>                         of the home directory outside the container 
+>>>>> and dest
+>>>>
+>>>>
+>>>>
+>>>> On Tue, Jun 27, 2017 at 5:06 PM, moleps <m...@gmail.com> wrote:
+>>>>
+>>>>> I am trying to set up my docker image on a HPC at uni. We dont have 
+>>>>> root privileges and we load singularity using module load. Next, I used 
+>>>>> singularity pull from my docker hub and everything downloaded allright (i 
+>>>>> think) into an img.file.
+>>>>> However, I cannot for the world get this to work. 
+>>>>>
+>>>>> singularity exec -H ~/rstu rstudio_tweak.img ls /
+>>>>>
+>>>>>
+>>>>> ERROR  : Base home directory does not exist within the container: /utx
+>>>>>
+>>>>> ABORT  : Retval = 255
+>>>>>
+>>>>>
+>>>>>
+>>>>> Any ideas? I cannot locate the .conf file for singularity. 
+>>>>>
+>>>>>
+>>>>> Best, /M
+>>>>>
+>>>>>
+>>>>>
+>>>>> -- 
+>>>>> You received this message because you are subscribed to the Google 
+>>>>> Groups "singularity" group.
+>>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>>> an email to singu...@lbl.gov.
+>>>>>
+>>>>
+>>>>
+>>>>
+>>>> -- 
+>>>> Vanessa Villamia Sochat
+>>>> Stanford University '16
+>>>> (603) 321-0676
+>>>>
+>>>> -- 
+>>>> You received this message because you are subscribed to the Google 
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>> an email to singu...@lbl.gov.
+>>>>
+>>>>
+>>>> -- 
+>>>> You received this message because you are subscribed to the Google 
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>> an email to singu...@lbl.gov.
+>>>>
+>>>
+>>>
+>>>
+>>> -- 
+>>> Gregory M. Kurtzer
+>>> CEO, SingularityWare, LLC.
+>>> Senior Architect, RStor
+>>> Computational Science Advisor, Lawrence Berkeley National Laboratory
+>>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_5539_1207284647.1517939940804
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Ok, this seems to have worked:<br><br><span style=3D"font-=
+family: courier new, monospace;">$ new_home=3D/tmp/12345678<br>$ mkdir -p &=
+quot;$new_home&quot;<br>$ singularity shell --home &quot;$new_home&quot; sh=
+ub://vsoch/singularity-images<br>$ singularity shell --home &quot;$new_home=
+&quot; shub://vsoch/singularity-images<br>Progress |=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D| 100.0%<br>Singularity: Invoking an interactive shell within cont=
+ainer...<br><br><br>bash: command_prompt_date_string: command not found<br>=
+Singularity vsoch-singularity-images-master-latest.simg:~&gt; whoami<br>kel=
+lys04<br><br>bash: command_prompt_date_string: command not found<br>Singula=
+rity vsoch-singularity-images-master-latest.simg:~&gt; pwd<br>/tmp/12345678=
+<br><br>Singularity vsoch-singularity-images-master-latest.simg:~&gt; cat /=
+etc/*-release<br>DISTRIB_ID=3DUbuntu<br>DISTRIB_RELEASE=3D16.04<br>DISTRIB_=
+CODENAME=3Dxenial<br>DISTRIB_DESCRIPTION=3D&quot;Ubuntu 16.04.3 LTS&quot;<b=
+r>NAME=3D&quot;Ubuntu&quot;<br>VERSION=3D&quot;16.04.3 LTS (Xenial Xerus)&q=
+uot;<br>ID=3Dubuntu<br>ID_LIKE=3Ddebian<br>PRETTY_NAME=3D&quot;Ubuntu 16.04=
+.3 LTS&quot;<br>VERSION_ID=3D&quot;16.04&quot;<br>HOME_URL=3D&quot;http://w=
+ww.ubuntu.com/&quot;<br>SUPPORT_URL=3D&quot;http://help.ubuntu.com/&quot;<b=
+r>BUG_REPORT_URL=3D&quot;http://bugs.launchpad.net/ubuntu/&quot;<br>VERSION=
+_CODENAME=3Dxenial<br>UBUNTU_CODENAME=3Dxenial<br></span><br>So, the contai=
+ner is definitely loaded. For comparison, the host system:<br><br><span sty=
+le=3D"font-family: courier new, monospace;">[2018-02-06 12:51:23]<br>kellys=
+04@phoenix2:~$ cat /etc/*-release<br>CentOS release 6.8 (Final)<br>Cluster =
+Manager v7.3<br>master<br>LSB_VERSION=3Dbase-4.0-amd64:base-4.0-noarch:core=
+-4.0-amd64:core-4.0-noarch:graphics-4.0-amd64:graphics-4.0-noarch:printing-=
+4.0-amd64:printing-4.0-noarch<br>CentOS release 6.8 (Final)<br>CentOS relea=
+se 6.8 (Final)<br></span><br>I will try to pull down a container with some =
+demo programs to try out. <br><br>But I am really confused at the carry-ove=
+r of aspects from the host system into the container. Why are the &#39;home=
+&#39; directory and username the same as on the host? What other things are=
+ getting carried over into the container? When I worked with Singularity on=
+ my Mac within the Vagrant VM, I never noticed any of these aspects. <br><b=
+r><br>On Monday, February 5, 2018 at 8:53:01 PM UTC-5, vanessa wrote:<block=
+quote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-le=
+ft: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">Can you try a shell=
+ with=C2=A0<div><br></div><div>1) $HOME set to a location somewhere in /tmp=
+ to avoid mounting the /ifs, or=C2=A0<div>2) --containall to see if skippin=
+g mounts helps?</div></div></div><div><br><div class=3D"gmail_quote">On Mon=
+, Feb 5, 2018 at 5:45 PM, Steve <span dir=3D"ltr">&lt;<a href=3D"javascript=
+:" target=3D"_blank" gdf-obfuscated-mailto=3D"1iUENwB6AAAJ" rel=3D"nofollow=
+" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D=
+"this.href=3D&#39;javascript:&#39;;return true;">sk...@gmail.com</a>&gt;</s=
+pan> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex=
+;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Is there a s=
+olution to this? Our HPC just got Singularity installed, but I cannot even =
+run basic demo containers because of this error. For example:<br><span><br>=
+$ singularity pull shub://vsoch/singularity-<wbr>images<br><br>$ ll vsoch-s=
+ingularity-images-<wbr>master-latest.simg<br>-rwxr-x--- 1 kellys04 molecpat=
+hlab 45M Feb=C2=A0 5 20:41 vsoch-singularity-images-<wbr>master-latest.simg=
+<br><br>$ singularity shell --home $HOME shub://vsoch/singularity-<wbr>imag=
+es<br>Progress |=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D| 100.0%<br>ERROR=C2=
+=A0 : Base home directory does not exist within the container: /ifs<br>ABOR=
+T=C2=A0 : Retval =3D 255<br><br></span>Not sure I understand why the home d=
+irectory matters either. Its a container, everything is supposed to be isol=
+ated from the host system, so why does it matter where the host system user=
+&#39;s home directory is? And why would this prevent the container from run=
+ning?<br><br><br>On Saturday, July 1, 2017 at 2:48:49 PM UTC-4, Gregory Kur=
+tzer wrote:<blockquote class=3D"gmail_quote" style=3D"margin:0;margin-left:=
+0.8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">I&#39;m=
+ not sure about the other errors, but the command syntax *requires* any she=
+ll options to be placed before the image name. So it should look like:<div>=
+<br></div><div>$ singularity shell --home ~/ rstudio_tweak.img</div><div><b=
+r></div><div>Option parsing is still not perfect in Singularity, but becaus=
+e we can&#39;t interfere with anything after the image name (as we assume i=
+t is a command or options themselves for a different program), we can&#39;t=
+ use the standard methods of doing this. It is on my TODO list. ;)</div><di=
+v><br></div><div>Good luck!</div></div><div><br><div class=3D"gmail_quote">=
+On Wed, Jun 28, 2017 at 2:51 AM, moleps <span dir=3D"ltr">&lt;<a rel=3D"nof=
+ollow">m...@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_q=
+uote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1e=
+x"><div style=3D"word-wrap:break-word">My home directory is at /utx/user/mo=
+lps.=C2=A0<div><br></div><div>I tried=C2=A0</div><div><span style=3D"font-f=
+amily:Monaco;font-size:10px"><br></span></div><div><span style=3D"font-fami=
+ly:Monaco;font-size:10px">$ singularity shell rstudio_tweak.img --home ~/</=
+span><div style=3D"margin:0px;font-size:10px;line-height:normal;font-family=
+:Monaco;color:rgb(255,59,29)"><span>ERROR=C2=A0 : Base home directory does =
+not exist within the container: /uio</span></div><div style=3D"margin:0px;f=
+ont-size:10px;line-height:normal;font-family:Monaco;color:rgb(195,55,32)"><=
+span>ABORT=C2=A0 : Retval =3D 255</span></div><div style=3D"margin:0px;font=
+-size:10px;line-height:normal;font-family:Monaco;color:rgb(195,55,32)"><spa=
+n><br></span></div><div style=3D"margin:0px;font-size:10px;line-height:norm=
+al;font-family:Monaco;color:rgb(195,55,32)"><span><div style=3D"margin:0px;=
+line-height:normal"><span>singularity shell rstudio_opp.img --home=C2=A0</s=
+pan><span style=3D"color:rgb(0,0,0);font-family:Helvetica;font-size:12px">/=
+utx/user/molps</span></div><div style=3D"margin:0px;line-height:normal;colo=
+r:rgb(255,59,29)"><span>ERROR=C2=A0 : Base home directory does not exist wi=
+thin the container: /uio</span></div><div style=3D"margin:0px;line-height:n=
+ormal"><span>ABORT=C2=A0 : Retval =3D 255</span></div><div style=3D"margin:=
+0px;line-height:normal"><span><br></span></div><div style=3D"margin:0px;lin=
+e-height:normal"><span><br></span></div></span></div><div><div><div style=
+=3D"margin:0px;font-size:10px;line-height:normal;font-family:Monaco;color:r=
+gb(195,55,32)"><span><br></span></div><div><blockquote type=3D"cite"><div>O=
+n 27. jun. 2017, at 23.29, vanessa s &lt;<a rel=3D"nofollow">v...@gmail.com=
+</a>&gt; wrote:</div><br><div><div dir=3D"ltr">Is your home directory at /u=
+tx? If it&#39;s not finding that in the container, then it must be that ove=
+rlayfs is disabled (so you can&#39;t make it at runtime). What you might wa=
+nt to specify it be bound somewhere else (eg, try the command and specify -=
+-home)<div><br></div><div><blockquote class=3D"gmail_quote" style=3D"margin=
+:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"=
+>=C2=A0-H/--home &lt;spec&gt; =C2=A0 =C2=A0A home directory specification. =
+=C2=A0spec can either be a<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 src path or src:dest pair. =C2=A0src=
+ is the source path<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 of the home directory outside the container=
+ and dest</blockquote></div><div><br></div></div><div><br><div class=3D"gma=
+il_quote">On Tue, Jun 27, 2017 at 5:06 PM, moleps <span dir=3D"ltr">&lt;<a =
+rel=3D"nofollow">m...@gmail.com</a>&gt;</span> wrote:<br><blockquote class=
+=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padd=
+ing-left:1ex"><div dir=3D"ltr">I am trying to set up my docker image on a H=
+PC at uni. We dont have root privileges and we load singularity using modul=
+e load. Next, I used singularity pull from my docker hub and everything dow=
+nloaded allright (i think) into an img.file.<div>However, I cannot for the =
+world get this to work.=C2=A0</div><div><br></div><div><p><span>singularity=
+ exec -H ~/rstu rstudio_tweak.img ls /</span></p><p><span><br></span></p><p=
+><span>ERROR<span>=C2=A0 </span>: Base home directory does not exist within=
+ the container: /utx</span></p><p><span>ABORT<span>=C2=A0 </span>: Retval =
+=3D 255</span></p><p><span><br></span></p><p><span><br></span></p><p>Any id=
+eas? I cannot locate the .conf file for singularity.=C2=A0</p><p><br></p><p=
+>Best, /M</p><span><font color=3D"#888888"><p><br></p></font></span></div><=
+/div><span><font color=3D"#888888"><div><br></div>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div>=
+<div><a value=3D"+16033210676">(603) 321-0676</a></div></div></div></div>
+</div><div><br></div>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</div></blockquote></div><br></div></div></div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><span><font color=3D"#=
+888888"><div><br></div>-- <br><div><div dir=3D"ltr"><div><div dir=3D"ltr"><=
+div><div dir=3D"ltr"><div>Gregory M. Kurtzer</div><div>CEO, SingularityWare=
+, LLC.</div><div>Senior Architect, RStor</div><div><span style=3D"font-size=
+:12.8px">Computational Science Advisor, Lawrence Berkeley National Laborato=
+ry</span><br></div></div></div></div></div></div></div>
+</font></span></div><span><font color=3D"#888888">
+</font></span></blockquote></div><span><font color=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+1iUENwB6AAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div>=
+<div>(603) 321-0676</div></div></div></div>
+</div>
+</blockquote></div>
+------=_Part_5539_1207284647.1517939940804--
+
+------=_Part_5538_793145988.1517939940803--

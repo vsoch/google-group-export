@@ -1,0 +1,1038 @@
+Date: Wed, 10 Jan 2018 13:36:34 -0800 (PST)
+From: Zack <zrl...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <d274a5d7-e8db-46b7-bff2-abeadca6631e@lbl.gov>
+In-Reply-To: <CAM=pu++5mr79L2noML3UpdbKOJ65A2cPc9k1EpdLov2__4TnLA@mail.gmail.com>
+References: <57b7bbaa-4a62-455f-91ad-043216a607b8@lbl.gov>
+ <CAM=pu++5mr79L2noML3UpdbKOJ65A2cPc9k1EpdLov2__4TnLA@mail.gmail.com>
+Subject: Re: [Singularity] "No such file or directory" error
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_33_1511922647.1515620195069"
+
+------=_Part_33_1511922647.1515620195069
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_34_708140544.1515620195069"
+
+------=_Part_34_708140544.1515620195069
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi Vanessa,
+
+Many thanks for your suggestions! I have attached the output from --debug.
+
+I am not quite sure that I follow your first suggestion, though. During job 
+submission I submit the SBATCH script using sbatch <name of job submission 
+script>. I understand what you are saying about how the script won't see 
+the parameters passed to SLURM and I understand that "$@" should pass along 
+the user arguments, but I'm not sure where this option should be 
+included. I did try to shell into the image and tried to execute juicer.sh, 
+which appears to work (as shown below), but it is not finding the required 
+sequence data located in a parent directory. If this is not what you were 
+suggesting, please let me know. 
+
+singularity shell -c juicer_new.img
+
+Singularity: Invoking an interactive shell within container...
+
+
+Singularity juicer_new.img:~>  #!/bin/sh
+
+Singularity juicer_new.img:~> exec "juicer.sh" "-D" "/opt" "$@" 
+
+***! Reference sequence /opt/references/Homo_sapiens_assembly19.fasta does 
+not exist
+
+Let me know if you have other suggestions. Thanks again,
+
+Zack
+
+On Wednesday, January 10, 2018 at 3:45:55 PM UTC-5, vanessa wrote:
+>
+> Hey Zack,
+>
+> I can offer to help to troubleshoot, even if I don't know the answer right 
+> off the bat, maybe some questions will help to start! it looks like the 
+> entrypoint to your script is this:
+>
+> #!/bin/sh
+>> exec "juicer.sh" "-D" "/opt"
+>
+>
+> and that you are also passing parameters from the slurm submission (-z, 
+> -d, -y and -s and -p) (haha, S&P) but then in the script itself that does 
+> the exec (above) you don't have any way to catch them. Have you tried:
+>
+> #!/bin/sh
+>> exec "juicer.sh" "-D" "/opt" "$@" 
+>
+>
+> As a first effort? Maybe some of your preferences aren't going in 
+> correctly? Could you please run again with --debug so we can also see if 
+> any mounts are being done so that /opt isn't what we think it is?
+>
+> Best,
+>
+> Vanessa 
+>
+>  
+>
+> On Wed, Jan 10, 2018 at 11:18 AM, Zack <z...@gmail.com <javascript:>> 
+> wrote:
+>
+>> Hello, 
+>>
+>> # I am running a docker image inside of a singularity container on my 
+>> university's cluster. The program seems to be running just fine, but only 
+>> makes it partway through then fails with this message:
+>>
+>> No such file or directory at /opt/scripts/common/fragment.pl
+>>
+>> # However, I can check that the script exists in the appropriate location 
+>> using this command:
+>>
+>> singularity exec juicer_new.img ls /opt/scripts/common
+>>
+>> # This is how I am running the software in singularity using a SLURM 
+>> script:
+>>
+>> #!/bin/bash
+>> #SBATCH --job-name=juicer_singularity
+>> #SBATCH -p general
+>> #SBATCH -N 1
+>> #SBATCH -c 20
+>> #SBATCH --mem-per-cpu=6G
+>> #SBATCH -t 02:00:00
+>>
+>> module load Singularity/2.4.2
+>>
+>> singularity run juicer_new.img \
+>>     -d /ysm-gpfs/home/zrl3/scratch60/singularity \
+>>     -z 
+>> /ysm-gpfs/home/zrl3/scratch60/singularity/references/Homo_sapiens_assembly19.fasta 
+>> \
+>>     -y 
+>> /ysm-gpfs/home/zrl3/scratch60/singularity/restriction_sites/hg38MboI.txt \
+>>     -p hg38 -s MboI
+>>
+>> # I ran the script and included the --verbose flag. The output is 
+>> attached. Could someone offer any suggestions for troubleshooting why this 
+>> "No such file or directory" error is occurring? Getting the software to run 
+>> requires some large datasets, making it difficult to produce a reproducible 
+>> example. For reference, I created the container using this command:
+>>
+>> singularity pull --name juicer_new.img docker://index.
+>> docker.io/aidenlab/juicer
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_34_708140544.1515620195069
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Vanessa,<div><br></div><div>Many thanks for your sugges=
+tions! I have attached the output from --debug.</div><div><br></div><div>I =
+am not quite sure that I follow your first suggestion, though. During job s=
+ubmission I submit the SBATCH script using <font face=3D"courier new, monos=
+pace">sbatch &lt;name of job submission script&gt;</font>. I understand wha=
+t you are saying about how the script won&#39;t see the parameters passed t=
+o SLURM and I understand that=C2=A0<font face=3D"courier new, monospace">&q=
+uot;$@&quot;</font>=C2=A0should pass along the user arguments, but I&#39;m =
+not sure where this option should be included.=C2=A0I did try to shell into=
+ the image and tried to execute <font face=3D"courier new, monospace">juice=
+r.sh</font>, which appears to work (as shown below), but it is not finding =
+the required sequence data located in a parent directory. If this is not wh=
+at you were suggesting, please let me know.=C2=A0</div><div><br></div><div>=
+<span style=3D"color: rgb(0, 0, 0); font-size: 11px;"><font face=3D"courier=
+ new, monospace">singularity shell -c juicer_new.img</font></span></div>
+<p style=3D"font-stretch: normal; font-size: 11px; line-height: normal; col=
+or: rgb(0, 0, 0);"><span style=3D"font-variant-ligatures: no-common-ligatur=
+es"><font face=3D"courier new, monospace">Singularity: Invoking an interact=
+ive shell within container...</font></span></p>
+<p style=3D"font-stretch: normal; font-size: 11px; line-height: normal; col=
+or: rgb(0, 0, 0); min-height: 13px;"><font face=3D"courier new, monospace">=
+<span style=3D"font-variant-ligatures: no-common-ligatures"></span><br></fo=
+nt></p>
+<p style=3D"font-stretch: normal; font-size: 11px; line-height: normal; col=
+or: rgb(0, 0, 0);"><span style=3D"font-variant-ligatures: no-common-ligatur=
+es"><font face=3D"courier new, monospace">Singularity juicer_new.img:~&gt;=
+=C2=A0 #!/bin/sh</font></span></p>
+<p style=3D"font-stretch: normal; font-size: 11px; line-height: normal; col=
+or: rgb(0, 0, 0);"><span style=3D"font-variant-ligatures: no-common-ligatur=
+es"><font face=3D"courier new, monospace">Singularity juicer_new.img:~&gt; =
+exec &quot;juicer.sh&quot; &quot;-D&quot; &quot;/opt&quot; &quot;$@&quot;=
+=C2=A0</font></span></p>
+<p style=3D"font-stretch: normal; font-size: 11px; line-height: normal; col=
+or: rgb(0, 0, 0);"><span style=3D"font-variant-ligatures: no-common-ligatur=
+es"><font face=3D"courier new, monospace">***! Reference sequence /opt/refe=
+rences/Homo_sapiens_assembly19.fasta does not exist</font></span></p><div><=
+br></div><div>Let me know if you have other suggestions. Thanks again,</div=
+><div><br></div><div>Zack<br><br>On Wednesday, January 10, 2018 at 3:45:55 =
+PM UTC-5, vanessa wrote:<blockquote class=3D"gmail_quote" style=3D"margin: =
+0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div d=
+ir=3D"ltr">Hey Zack,<div><br></div><div>I can offer to help to troubleshoot=
+, even if I don&#39;t know the answer right off the bat, maybe some questio=
+ns will help to start! it looks like the entrypoint to your script is this:=
+</div><div><br></div><div><blockquote class=3D"gmail_quote" style=3D"margin=
+:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"=
+>#!/bin/sh<br>exec &quot;juicer.sh&quot; &quot;-D&quot; &quot;/opt&quot;</b=
+lockquote></div><div><br></div><div>and that you are also passing parameter=
+s from the slurm submission (-z, -d, -y and -s and -p) (haha, S&amp;P) but =
+then in the script itself that does the exec (above) you don&#39;t have any=
+ way to catch them. Have you tried:</div><div><br></div><div><div><blockquo=
+te class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px =
+solid rgb(204,204,204);padding-left:1ex">#!/bin/sh<br>exec &quot;juicer.sh&=
+quot; &quot;-D&quot; &quot;/opt&quot; &quot;$@&quot;=C2=A0</blockquote><div=
+><br></div><div>As a first effort? Maybe some of your preferences aren&#39;=
+t going in correctly? Could you please run again with --debug so we can als=
+o see if any mounts are being done so that /opt isn&#39;t what we think it =
+is?</div><div><br></div><div>Best,</div><div><br></div><div>Vanessa=C2=A0</=
+div></div></div><div><br></div><div>=C2=A0</div></div><div><br><div class=
+=3D"gmail_quote">On Wed, Jan 10, 2018 at 11:18 AM, Zack <span dir=3D"ltr">&=
+lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"D2OOZ=
+N_OEAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;=
+return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">z.=
+..@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" sty=
+le=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div d=
+ir=3D"ltr"><div>Hello,=C2=A0</div><div><br></div><div># I am running a dock=
+er image inside of a singularity container on my university&#39;s cluster. =
+The program seems to be running just fine, but only makes it partway throug=
+h then fails with this message:</div><div><br></div><div><span style=3D"fon=
+t-stretch:normal;font-size:11px;line-height:normal;color:rgb(0,0,0)"><font =
+face=3D"courier new, monospace">No such file or directory at /opt/scripts/c=
+ommon/<a href=3D"http://fragment.pl" target=3D"_blank" rel=3D"nofollow" onm=
+ousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Ffr=
+agment.pl\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHRx3q9Ev5zOqHfYg73JqGGlMS=
+44w&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.google.com/ur=
+l?q\x3dhttp%3A%2F%2Ffragment.pl\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHRx=
+3q9Ev5zOqHfYg73JqGGlMS44w&#39;;return true;">fragment.<wbr>pl</a></font></s=
+pan></div><div><span style=3D"font-stretch:normal;font-size:11px;line-heigh=
+t:normal;font-family:Menlo;color:rgb(0,0,0)"><br></span></div><div><span st=
+yle=3D"font-stretch:normal;font-size:11px;line-height:normal;font-family:Me=
+nlo;color:rgb(0,0,0)"># However, I can check that the script exists in the =
+appropriate location using this command:</span></div><div><span style=3D"fo=
+nt-stretch:normal;font-size:11px;line-height:normal;font-family:Menlo;color=
+:rgb(0,0,0)"><br></span></div><div><span style=3D"font-size:11px;color:rgb(=
+0,0,0);font-stretch:normal;line-height:normal"><font face=3D"courier new, m=
+onospace">singularity exec juicer_new.img ls /opt/scripts/common</font></sp=
+an></div><div><span style=3D"font-size:11px;color:rgb(0,0,0);font-family:Me=
+nlo;font-stretch:normal;line-height:normal"><br></span></div><div><span sty=
+le=3D"font-size:11px;color:rgb(0,0,0);font-family:Menlo;font-stretch:normal=
+;line-height:normal"># This is how I am running the software in singularity=
+ using a SLURM script:</span></div><div><span style=3D"font-size:11px;color=
+:rgb(0,0,0);font-family:Menlo;font-stretch:normal;line-height:normal"><br><=
+/span></div><div><span style=3D"background-color:rgba(255,255,255,0.890196)=
+;font-size:11px;font-stretch:normal;line-height:normal"><font face=3D"couri=
+er new, monospace">#!/bin/bash</font></span></div><div><span style=3D"backg=
+round-color:rgba(255,255,255,0.890196);font-size:11px;font-stretch:normal;l=
+ine-height:normal"><font face=3D"courier new, monospace">#SBATCH --job-name=
+=3Djuicer_singularity</font></span></div><div><span style=3D"background-col=
+or:rgba(255,255,255,0.890196);font-size:11px;font-stretch:normal;line-heigh=
+t:normal"><font face=3D"courier new, monospace">#SBATCH -p general</font></=
+span></div><div><span style=3D"background-color:rgba(255,255,255,0.890196);=
+font-size:11px;font-stretch:normal;line-height:normal"><font face=3D"courie=
+r new, monospace">#SBATCH -N 1</font></span></div><div><span style=3D"backg=
+round-color:rgba(255,255,255,0.890196);font-size:11px;font-stretch:normal;l=
+ine-height:normal"><font face=3D"courier new, monospace">#SBATCH -c 20</fon=
+t></span></div><div><span style=3D"background-color:rgba(255,255,255,0.8901=
+96);font-size:11px;font-stretch:normal;line-height:normal"><font face=3D"co=
+urier new, monospace">#SBATCH --mem-per-cpu=3D6G</font></span></div><div><s=
+pan style=3D"background-color:rgba(255,255,255,0.890196);font-size:11px;fon=
+t-stretch:normal;line-height:normal"><font face=3D"courier new, monospace">=
+#SBATCH -t 02:00:00</font></span></div><div><font face=3D"courier new, mono=
+space"><br style=3D"font-size:11px"></font></div><div><span style=3D"font-s=
+ize:11px;color:rgb(0,0,0);font-stretch:normal;line-height:normal"><font fac=
+e=3D"courier new, monospace">module load Singularity/2.4.2</font></span></d=
+iv><div><font face=3D"courier new, monospace"><br style=3D"font-size:11px">=
+</font></div><div><font face=3D"courier new, monospace"><span style=3D"font=
+-size:11px;color:rgb(0,0,0);font-stretch:normal;line-height:normal">singula=
+rity run juicer_new.img</span><span style=3D"font-size:11px">=C2=A0\</span>=
+</font></div><div><span style=3D"font-size:11px"><font face=3D"courier new,=
+ monospace">=C2=A0=C2=A0 =C2=A0-d /ysm-gpfs/home/zrl3/scratch60/<wbr>singul=
+arity \</font></span></div><div><span style=3D"font-size:11px"><font face=
+=3D"courier new, monospace">=C2=A0=C2=A0 =C2=A0-z /ysm-gpfs/home/zrl3/scrat=
+ch60/<wbr>singularity/references/Homo_<wbr>sapiens_assembly19.fasta \</font=
+></span></div><div><span style=3D"font-size:11px"><font face=3D"courier new=
+, monospace">=C2=A0=C2=A0 =C2=A0-y /ysm-gpfs/home/zrl3/scratch60/<wbr>singu=
+larity/restriction_sites/<wbr>hg38MboI.txt \</font></span></div><div><span =
+style=3D"font-size:11px"><font face=3D"courier new, monospace">=C2=A0=C2=A0=
+ =C2=A0-p hg38 -s MboI</font></span></div><div><span style=3D"font-size:11p=
+x;color:rgb(0,0,0);font-family:Menlo;font-stretch:normal;line-height:normal=
+"><br></span></div><div><span style=3D"font-size:11px;color:rgb(0,0,0);font=
+-family:Menlo;font-stretch:normal;line-height:normal"># I ran the script an=
+d included the --verbose flag. The output is attached. Could someone offer =
+any suggestions for troubleshooting why this &quot;No such file or director=
+y&quot; error is occurring? Getting the software to run requires some large=
+ datasets, making it difficult to produce a reproducible example. For refer=
+ence, I created the container using this command:</span></div><div><span st=
+yle=3D"font-size:11px;color:rgb(0,0,0);font-family:Menlo;font-stretch:norma=
+l;line-height:normal"><br></span></div><div><font face=3D"courier new, mono=
+space"><span style=3D"font-size:11px;color:rgb(0,0,0);font-stretch:normal;l=
+ine-height:normal">singularity pull --name juicer_new.img=C2=A0</span><span=
+ style=3D"font-size:11px;color:rgb(0,0,0);font-stretch:normal;line-height:n=
+ormal">docker://index.</span><a href=3D"http://docker.io/aidenlab/juicer" s=
+tyle=3D"font-size:11px;color:rgb(0,0,0);font-stretch:normal;line-height:nor=
+mal" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;htt=
+p://www.google.com/url?q\x3dhttp%3A%2F%2Fdocker.io%2Faidenlab%2Fjuicer\x26s=
+a\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNE7BDOoTrEUoe1ClRsQMedPDxbM7A&#39;;retur=
+n true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A=
+%2F%2Fdocker.io%2Faidenlab%2Fjuicer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjC=
+NE7BDOoTrEUoe1ClRsQMedPDxbM7A&#39;;return true;"><wbr>docker.io/aidenlab/ju=
+icer</a></font></div></div><span><font color=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+D2OOZN_OEAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div>=
+<div>(603) 321-0676</div></div></div></div>
+</div>
+</blockquote></div></div>
+------=_Part_34_708140544.1515620195069--
+
+------=_Part_33_1511922647.1515620195069
+Content-Type: text/plain; charset=US-ASCII; 
+	name=singularity_juicer_debug_output.txt
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; 
+	filename=singularity_juicer_debug_output.txt
+X-Attachment-Id: a1d6d3af-54fd-4351-bf63-7bafb6660f2b
+Content-ID: <a1d6d3af-54fd-4351-bf63-7bafb6660f2b>
+
+
+Enabling debugging
+Ending argument loop
+Singularity version: 2.4.2-dist
+Exec'ing: /ysm-gpfs/apps/software/Singularity/2.4.2/libexec/singularity/cli/run.exec
+Evaluating args: 'juicer_new.img -d /ysm-gpfs/home/zrl3/scratch60/singularity -z /ysm-gpfs/home/zrl3/scratch60/singularity/references/Homo_sapiens_assembly19.fasta -y /ysm-gpfs/home/zrl3/scratch60/singularity/restriction_sites/hg38MboI.txt -p hg38 -s MboI'
+VERBOSE [U=0,P=16324]      message_init()                            Set messagelevel to: 5
+VERBOSE [U=0,P=16324]      singularity_config_parse()                Initialize configuration file: /ysm-gpfs/apps/software/Singularity/2.4.2/etc/singularity/singularity.conf
+DEBUG   [U=0,P=16324]      singularity_config_parse()                Starting parse of configuration file /ysm-gpfs/apps/software/Singularity/2.4.2/etc/singularity/singularity.conf
+VERBOSE [U=0,P=16324]      singularity_config_parse()                Got config key allow setuid = 'yes'
+VERBOSE [U=0,P=16324]      singularity_config_parse()                Got config key max loop devices = '256'
+VERBOSE [U=0,P=16324]      singularity_config_parse()                Got config key allow pid ns = 'yes'
+VERBOSE [U=0,P=16324]      singularity_config_parse()                Got config key config passwd = 'yes'
+VERBOSE [U=0,P=16324]      singularity_config_parse()                Got config key config group = 'yes'
+VERBOSE [U=0,P=16324]      singularity_config_parse()                Got config key config resolv_conf = 'yes'
+VERBOSE [U=0,P=16324]      singularity_config_parse()                Got config key mount proc = 'yes'
+VERBOSE [U=0,P=16324]      singularity_config_parse()                Got config key mount sys = 'yes'
+VERBOSE [U=0,P=16324]      singularity_config_parse()                Got config key mount dev = 'yes'
+VERBOSE [U=0,P=16324]      singularity_config_parse()                Got config key mount devpts = 'yes'
+VERBOSE [U=0,P=16324]      singularity_config_parse()                Got config key mount home = 'yes'
+VERBOSE [U=0,P=16324]      singularity_config_parse()                Got config key mount tmp = 'yes'
+VERBOSE [U=0,P=16324]      singularity_config_parse()                Got config key mount hostfs = 'no'
+VERBOSE [U=0,P=16324]      singularity_config_parse()                Got config key bind path = '/etc/localtime'
+VERBOSE [U=0,P=16324]      singularity_config_parse()                Got config key bind path = '/etc/hosts'
+VERBOSE [U=0,P=16324]      singularity_config_parse()                Got config key user bind control = 'yes'
+VERBOSE [U=0,P=16324]      singularity_config_parse()                Got config key enable overlay = 'try'
+VERBOSE [U=0,P=16324]      singularity_config_parse()                Got config key mount slave = 'yes'
+VERBOSE [U=0,P=16324]      singularity_config_parse()                Got config key sessiondir max size = '16'
+VERBOSE [U=0,P=16324]      singularity_config_parse()                Got config key allow container squashfs = 'yes'
+VERBOSE [U=0,P=16324]      singularity_config_parse()                Got config key allow container extfs = 'yes'
+VERBOSE [U=0,P=16324]      singularity_config_parse()                Got config key allow container dir = 'yes'
+VERBOSE [U=0,P=16324]      singularity_config_parse()                Got config key bind path = '/gpfs'
+VERBOSE [U=0,P=16324]      singularity_config_parse()                Got config key bind path = '/SAY'
+VERBOSE [U=0,P=16324]      singularity_config_parse()                Got config key bind path = '/ysm-gpfs'
+DEBUG   [U=0,P=16324]      singularity_config_parse()                Finished parsing configuration file '/ysm-gpfs/apps/software/Singularity/2.4.2/etc/singularity/singularity.conf'
+VERBOSE [U=0,P=16324]      singularity_registry_init()               Initializing Singularity Registry
+VERBOSE [U=0,P=16324]      singularity_registry_set()                Adding value to registry: 'LIBEXECDIR' = '/ysm-gpfs/apps/software/Singularity/2.4.2/libexec'
+DEBUG   [U=0,P=16324]      singularity_registry_set()                Returning singularity_registry_set(libexecdir, /ysm-gpfs/apps/software/Singularity/2.4.2/libexec) = 0
+VERBOSE [U=0,P=16324]      singularity_registry_set()                Adding value to registry: 'COMMAND' = 'run'
+DEBUG   [U=0,P=16324]      singularity_registry_set()                Returning singularity_registry_set(COMMAND, run) = 0
+VERBOSE [U=0,P=16324]      singularity_registry_set()                Adding value to registry: 'MESSAGELEVEL' = '5'
+DEBUG   [U=0,P=16324]      singularity_registry_set()                Returning singularity_registry_set(MESSAGELEVEL, 5) = 0
+VERBOSE [U=0,P=16324]      singularity_registry_set()                Adding value to registry: 'VERSION' = '2.4.2-dist'
+DEBUG   [U=0,P=16324]      singularity_registry_set()                Returning singularity_registry_set(version, 2.4.2-dist) = 0
+VERBOSE [U=0,P=16324]      singularity_registry_set()                Adding value to registry: 'LOCALSTATEDIR' = '/ysm-gpfs/apps/software/Singularity/2.4.2/var'
+DEBUG   [U=0,P=16324]      singularity_registry_set()                Returning singularity_registry_set(localstatedir, /ysm-gpfs/apps/software/Singularity/2.4.2/var) = 0
+VERBOSE [U=0,P=16324]      singularity_registry_set()                Adding value to registry: 'SYSCONFDIR' = '/ysm-gpfs/apps/software/Singularity/2.4.2/etc'
+DEBUG   [U=0,P=16324]      singularity_registry_set()                Returning singularity_registry_set(sysconfdir, /ysm-gpfs/apps/software/Singularity/2.4.2/etc) = 0
+VERBOSE [U=0,P=16324]      singularity_registry_set()                Adding value to registry: 'BINDIR' = '/ysm-gpfs/apps/software/Singularity/2.4.2/bin'
+DEBUG   [U=0,P=16324]      singularity_registry_set()                Returning singularity_registry_set(bindir, /ysm-gpfs/apps/software/Singularity/2.4.2/bin) = 0
+VERBOSE [U=0,P=16324]      singularity_registry_set()                Adding value to registry: 'IMAGE' = 'juicer_new.img'
+DEBUG   [U=0,P=16324]      singularity_registry_set()                Returning singularity_registry_set(IMAGE, juicer_new.img) = 0
+DEBUG   [U=0,P=16324]      singularity_registry_get()                Returning NULL on 'HOME'
+DEBUG   [U=0,P=16324]      singularity_registry_get()                Returning NULL on 'TARGET_UID'
+DEBUG   [U=0,P=16324]      singularity_registry_get()                Returning NULL on 'TARGET_GID'
+DEBUG   [U=0,P=16324]      singularity_priv_init()                   Initializing user info
+DEBUG   [U=0,P=16324]      singularity_priv_init()                   Set the calling user's username to: zrl3
+DEBUG   [U=0,P=16324]      singularity_priv_init()                   Marking uinfo structure as ready
+DEBUG   [U=0,P=16324]      singularity_priv_init()                   Obtaining home directory
+VERBOSE [U=0,P=16324]      singularity_priv_init()                   Set home (via getpwuid()) to: /ysm-gpfs/home/zrl3
+VERBOSE [U=0,P=16324]      singularity_suid_init()                   Running SUID program workflow
+VERBOSE [U=0,P=16324]      singularity_suid_init()                   Checking program has appropriate permissions
+VERBOSE [U=0,P=16324]      singularity_suid_init()                   Checking configuration file is properly owned by root
+VERBOSE [U=0,P=16324]      singularity_suid_init()                   Checking if singularity.conf allows us to run as suid
+DEBUG   [U=0,P=16324]      singularity_config_get_bool_char_impl()   Called singularity_config_get_bool(allow setuid, yes)
+DEBUG   [U=0,P=16324]      singularity_config_get_value_impl()       Returning configuration value allow setuid='yes'
+DEBUG   [U=0,P=16324]      singularity_config_get_bool_char_impl()   Return singularity_config_get_bool(allow setuid, yes) = 1
+DEBUG   [U=0,P=16324]      singularity_registry_get()                Returning NULL on 'NOSUID'
+VERBOSE [U=0,P=16324]      singularity_priv_userns()                 Invoking the user namespace
+DEBUG   [U=0,P=16324]      singularity_config_get_bool_char_impl()   Called singularity_config_get_bool(allow user ns, yes)
+DEBUG   [U=0,P=16324]      singularity_config_get_value_impl()       No configuration entry found for 'allow user ns'; returning default value 'yes'
+DEBUG   [U=0,P=16324]      singularity_config_get_bool_char_impl()   Return singularity_config_get_bool(allow user ns, yes) = 1
+VERBOSE [U=0,P=16324]      singularity_priv_userns()                 Not virtualizing USER namespace: running as SUID
+DEBUG   [U=0,P=16324]      singularity_priv_userns()                 Returning singularity_priv_init(void)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+DEBUG   [U=13920,P=16324]  singularity_config_get_value_multi_impl() No configuration entry found for 'autofs bug path'; returning default value ''
+VERBOSE [U=13920,P=16324]  singularity_runtime_autofs()              No autofs bug path in configuration, skipping
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'DAEMON_START'
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'DAEMON_JOIN'
+DEBUG   [U=13920,P=16324]  singularity_daemon_init()                 Not joining a daemon, daemon join not set
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'WRITABLE'
+VERBOSE [U=13920,P=16324]  main()                                    Instantiating read only container image object
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning value from registry: 'IMAGE' = 'juicer_new.img'
+DEBUG   [U=13920,P=16324]  singularity_image_init()                  Calling image_init for each file system module
+DEBUG   [U=13920,P=16324]  singularity_image_dir_init()              Opening file descriptor to directory: /ysm-gpfs/scratch60/zrl3/singularity/juicer_new.img
+DEBUG   [U=13920,P=16324]  singularity_image_dir_init()              This is not a directory based image
+DEBUG   [U=13920,P=16324]  singularity_image_squashfs_init()         Checking if writable image requested
+DEBUG   [U=13920,P=16324]  singularity_image_squashfs_init()         Opening file descriptor to image: /ysm-gpfs/scratch60/zrl3/singularity/juicer_new.img
+VERBOSE [U=13920,P=16324]  singularity_image_squashfs_init()         Checking that file pointer is a Singularity image
+DEBUG   [U=13920,P=16324]  singularity_image_squashfs_init()         Checking for magic in the top of the file
+VERBOSE [U=13920,P=16324]  singularity_image_squashfs_init()         File is a valid SquashFS image
+DEBUG   [U=13920,P=16324]  singularity_image_init()                  got image_init type for squashfs
+DEBUG   [U=13920,P=16324]  singularity_config_get_bool_char_impl()   Called singularity_config_get_bool(allow container squashfs, yes)
+DEBUG   [U=13920,P=16324]  singularity_config_get_value_impl()       Returning configuration value allow container squashfs='yes'
+DEBUG   [U=13920,P=16324]  singularity_config_get_bool_char_impl()   Return singularity_config_get_bool(allow container squashfs, yes) = 1
+DEBUG   [U=13920,P=16324]  singularity_config_get_value_impl()       No configuration entry found for 'limit container paths'; returning default value 'NULL'
+DEBUG   [U=13920,P=16324]  singularity_config_get_value_impl()       No configuration entry found for 'limit container owners'; returning default value 'NULL'
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'DAEMON_JOIN'
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'CLEANUPDIR'
+VERBOSE [U=13920,P=16324]  singularity_registry_set()                Adding value to registry: 'CLEANUPD_FD' = '-1'
+DEBUG   [U=13920,P=16324]  singularity_registry_set()                Returning singularity_registry_set(CLEANUPD_FD, -1) = 0
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'DAEMON_JOIN'
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'NOSESSIONCLEANUP'
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'NOCLEANUP'
+DEBUG   [U=13920,P=16324]  singularity_cleanupd()                    Not running a cleanup thread, no 'SINGULARITY_CLEANUPDIR' defined
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'DAEMON_JOIN'
+DEBUG   [U=13920,P=16324]  singularity_runtime_ns()                  Calling: _singularity_runtime_ns_ipc()
+DEBUG   [U=13920,P=16324]  singularity_config_get_bool_char_impl()   Called singularity_config_get_bool(allow ipc ns, yes)
+DEBUG   [U=13920,P=16324]  singularity_config_get_value_impl()       No configuration entry found for 'allow ipc ns'; returning default value 'yes'
+DEBUG   [U=13920,P=16324]  singularity_config_get_bool_char_impl()   Return singularity_config_get_bool(allow ipc ns, yes) = 1
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'UNSHARE_IPC'
+VERBOSE [U=13920,P=16324]  singularity_runtime_ns_ipc()              Not virtualizing IPC namespace on user request
+DEBUG   [U=13920,P=16324]  singularity_runtime_ns()                  Calling: _singularity_runtime_ns_pid()
+DEBUG   [U=13920,P=16324]  singularity_config_get_bool_char_impl()   Called singularity_config_get_bool(allow pid ns, yes)
+DEBUG   [U=13920,P=16324]  singularity_config_get_value_impl()       Returning configuration value allow pid ns='yes'
+DEBUG   [U=13920,P=16324]  singularity_config_get_bool_char_impl()   Return singularity_config_get_bool(allow pid ns, yes) = 1
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'UNSHARE_PID'
+VERBOSE [U=13920,P=16324]  singularity_runtime_ns_pid()              Not virtualizing PID namespace on user request
+DEBUG   [U=13920,P=16324]  singularity_runtime_ns()                  Calling: _singularity_runtime_ns_net()
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'UNSHARE_NET'
+VERBOSE [U=13920,P=16324]  singularity_runtime_ns_net()              Not virtualizing network namespace on user request
+DEBUG   [U=13920,P=16324]  singularity_runtime_ns()                  Calling: _singularity_runtime_ns_mnt()
+DEBUG   [U=13920,P=16324]  singularity_config_get_bool_char_impl()   Called singularity_config_get_bool(mount slave, yes)
+DEBUG   [U=13920,P=16324]  singularity_config_get_value_impl()       Returning configuration value mount slave='yes'
+DEBUG   [U=13920,P=16324]  singularity_config_get_bool_char_impl()   Return singularity_config_get_bool(mount slave, yes) = 1
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+DEBUG   [U=0,P=16324]      singularity_runtime_ns_mnt()              Virtualizing FS namespace
+DEBUG   [U=0,P=16324]      singularity_runtime_ns_mnt()              Virtualizing mount namespace
+DEBUG   [U=0,P=16324]      singularity_runtime_ns_mnt()              Making mounts slave
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'DAEMON_JOIN'
+DEBUG   [U=13920,P=16324]  singularity_sessiondir()                  Setting sessiondir
+VERBOSE [U=13920,P=16324]  singularity_sessiondir()                  Using session directory: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session
+DEBUG   [U=13920,P=16324]  singularity_sessiondir()                  Checking for session directory: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session
+DEBUG   [U=13920,P=16324]  singularity_sessiondir()                  Obtaining the default sessiondir size
+DEBUG   [U=13920,P=16324]  singularity_config_get_value_impl()       Returning configuration value sessiondir max size='16'
+DEBUG   [U=13920,P=16324]  singularity_sessiondir()                  Converted sessiondir size to: 16
+DEBUG   [U=13920,P=16324]  singularity_sessiondir()                  Creating the sessiondir size mount option length
+DEBUG   [U=13920,P=16324]  singularity_sessiondir()                  Got size length of: 9
+DEBUG   [U=13920,P=16324]  singularity_sessiondir()                  Creating the sessiondir size mount option string
+DEBUG   [U=13920,P=16324]  singularity_sessiondir()                  Checking to make sure the string was allocated correctly
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+DEBUG   [U=0,P=16324]      singularity_sessiondir()                  Mounting sessiondir tmpfs: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+VERBOSE [U=13920,P=16324]  singularity_registry_set()                Adding value to registry: 'SESSIONDIR' = '/ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session'
+DEBUG   [U=13920,P=16324]  singularity_registry_set()                Returning singularity_registry_set(SESSIONDIR, /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session) = 0
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'DAEMON_JOIN'
+DEBUG   [U=13920,P=16324]  singularity_image_mount()                 Figuring out which mount module to use...
+DEBUG   [U=13920,P=16324]  singularity_image_mount()                 Calling squashfs_mount
+DEBUG   [U=13920,P=16324]  singularity_config_get_value_impl()       Returning configuration value max loop devices='256'
+DEBUG   [U=13920,P=16324]  singularity_image_bind()                  Entered singularity_image_bind()
+DEBUG   [U=13920,P=16324]  singularity_image_bind()                  Converting max_loop_devs_string to int: '256'
+DEBUG   [U=13920,P=16324]  singularity_image_bind()                  Converted max_loop_devs_string to int: '256' -> 256
+DEBUG   [U=13920,P=16324]  singularity_image_bind()                  Checking if this image has been properly opened
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+DEBUG   [U=0,P=16324]      singularity_image_bind()                  Finding next available loop device...
+DEBUG   [U=0,P=16324]      singularity_image_bind()                  Instantiating loop device: /dev/loop0
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+VERBOSE [U=13920,P=16324]  singularity_image_bind()                  Found available loop device: /dev/loop0
+DEBUG   [U=13920,P=16324]  singularity_image_bind()                  Setting LO_FLAGS_AUTOCLEAR
+DEBUG   [U=13920,P=16324]  singularity_image_bind()                  Using image offset: 31
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+DEBUG   [U=0,P=16324]      singularity_image_bind()                  Setting loop device flags
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+VERBOSE [U=13920,P=16324]  singularity_image_bind()                  Using loop device: /dev/loop0
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+VERBOSE [U=0,P=16324]      singularity_image_squashfs_mount()        Mounting squashfs image: /dev/loop0 -> /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/container
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+DEBUG   [U=13920,P=16324]  action_ready()                            Checking if container is valid at: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/container
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'DAEMON_JOIN'
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+DEBUG   [U=0,P=16324]      singularity_runtime_overlayfs()           Creating overlay_final directory: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/final
+DEBUG   [U=0,P=16324]      s_mkpath()                                Directory exists, returning '0': /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/final
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+DEBUG   [U=13920,P=16324]  singularity_runtime_overlayfs()           Checking if overlayfs should be used
+DEBUG   [U=13920,P=16324]  singularity_config_get_value_impl()       Returning configuration value enable overlay='try'
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'DISABLE_OVERLAYFS'
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'WRITABLE'
+VERBOSE [U=13920,P=16324]  singularity_runtime_overlayfs()           Trying OverlayFS as requested by configuration
+DEBUG   [U=13920,P=16324]  singularity_runtime_overlayfs()           Setting up overlay mount options
+DEBUG   [U=13920,P=16324]  singularity_runtime_overlayfs()           Checking for existance of overlay directory: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/overlay
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'OVERLAYIMAGE'
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+DEBUG   [U=0,P=16324]      singularity_runtime_overlayfs()           Mounting overlay tmpfs: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/overlay
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+DEBUG   [U=0,P=16324]      singularity_runtime_overlayfs()           Creating upper overlay directory: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/overlay/upper
+DEBUG   [U=0,P=16324]      s_mkpath()                                Creating directory: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/overlay/upper
+DEBUG   [U=0,P=16324]      singularity_runtime_overlayfs()           Creating overlay work directory: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/overlay/work
+DEBUG   [U=0,P=16324]      s_mkpath()                                Creating directory: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/overlay/work
+VERBOSE [U=0,P=16324]      singularity_runtime_overlayfs()           Mounting overlay with options: lowerdir=/ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/container,upperdir=/ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/overlay/upper,workdir=/ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/overlay/work
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+VERBOSE [U=13920,P=16324]  singularity_registry_set()                Adding value to registry: 'OVERLAYFS_ENABLED' = '1'
+DEBUG   [U=13920,P=16324]  singularity_registry_set()                Returning singularity_registry_set(OVERLAYFS_ENABLED, 1) = 0
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'DAEMON_JOIN'
+VERBOSE [U=13920,P=16324]  singularity_runtime_mounts()              Running all mount components
+DEBUG   [U=13920,P=16324]  singularity_config_get_bool_char_impl()   Called singularity_config_get_bool(mount hostfs, no)
+DEBUG   [U=13920,P=16324]  singularity_config_get_value_impl()       Returning configuration value mount hostfs='no'
+DEBUG   [U=13920,P=16324]  singularity_config_get_bool_char_impl()   Return singularity_config_get_bool(mount hostfs, no) = 0
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_hostfs()        Not mounting host file systems per configuration
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'CONTAIN'
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_binds()         Checking configuration file for 'bind path'
+VERBOSE [U=13920,P=16324]  singularity_runtime_mount_binds()         Found 'bind path' = /etc/localtime, /etc/localtime
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_binds()         Checking if bind point is already mounted: /etc/localtime
+DEBUG   [U=13920,P=16324]  check_mounted()                           Opening /proc/mounts
+DEBUG   [U=13920,P=16324]  check_mounted()                           Iterating through /proc/mounts
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+VERBOSE [U=0,P=16324]      singularity_runtime_mount_binds()         Binding '/etc/localtime' to '/ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/final//etc/localtime'
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+VERBOSE [U=13920,P=16324]  singularity_runtime_mount_binds()         Found 'bind path' = /etc/hosts, /etc/hosts
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_binds()         Checking if bind point is already mounted: /etc/hosts
+DEBUG   [U=13920,P=16324]  check_mounted()                           Opening /proc/mounts
+DEBUG   [U=13920,P=16324]  check_mounted()                           Iterating through /proc/mounts
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+VERBOSE [U=0,P=16324]      singularity_runtime_mount_binds()         Binding '/etc/hosts' to '/ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/final//etc/hosts'
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+VERBOSE [U=13920,P=16324]  singularity_runtime_mount_binds()         Found 'bind path' = /gpfs, /gpfs
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_binds()         Checking if bind point is already mounted: /gpfs
+DEBUG   [U=13920,P=16324]  check_mounted()                           Opening /proc/mounts
+DEBUG   [U=13920,P=16324]  check_mounted()                           Iterating through /proc/mounts
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning value from registry: 'OVERLAYFS_ENABLED' = '1'
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+VERBOSE [U=0,P=16324]      singularity_runtime_mount_binds()         Creating bind directory on overlay file system: /gpfs
+DEBUG   [U=0,P=16324]      s_mkpath()                                Creating directory: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/final/gpfs
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+VERBOSE [U=0,P=16324]      singularity_runtime_mount_binds()         Binding '/gpfs' to '/ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/final//gpfs'
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+VERBOSE [U=13920,P=16324]  singularity_runtime_mount_binds()         Found 'bind path' = /SAY, /SAY
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_binds()         Checking if bind point is already mounted: /SAY
+DEBUG   [U=13920,P=16324]  check_mounted()                           Opening /proc/mounts
+DEBUG   [U=13920,P=16324]  check_mounted()                           Iterating through /proc/mounts
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning value from registry: 'OVERLAYFS_ENABLED' = '1'
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+VERBOSE [U=0,P=16324]      singularity_runtime_mount_binds()         Creating bind directory on overlay file system: /SAY
+DEBUG   [U=0,P=16324]      s_mkpath()                                Creating directory: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/final/SAY
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+VERBOSE [U=0,P=16324]      singularity_runtime_mount_binds()         Binding '/SAY' to '/ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/final//SAY'
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+VERBOSE [U=13920,P=16324]  singularity_runtime_mount_binds()         Found 'bind path' = /ysm-gpfs, /ysm-gpfs
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_binds()         Checking if bind point is already mounted: /ysm-gpfs
+DEBUG   [U=13920,P=16324]  check_mounted()                           Opening /proc/mounts
+DEBUG   [U=13920,P=16324]  check_mounted()                           Iterating through /proc/mounts
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning value from registry: 'OVERLAYFS_ENABLED' = '1'
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+VERBOSE [U=0,P=16324]      singularity_runtime_mount_binds()         Creating bind directory on overlay file system: /ysm-gpfs
+DEBUG   [U=0,P=16324]      s_mkpath()                                Creating directory: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/final/ysm-gpfs
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+VERBOSE [U=0,P=16324]      singularity_runtime_mount_binds()         Binding '/ysm-gpfs' to '/ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/final//ysm-gpfs'
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_kernelfs()      Checking configuration file for 'mount proc'
+DEBUG   [U=13920,P=16324]  singularity_config_get_bool_char_impl()   Called singularity_config_get_bool(mount proc, yes)
+DEBUG   [U=13920,P=16324]  singularity_config_get_value_impl()       Returning configuration value mount proc='yes'
+DEBUG   [U=13920,P=16324]  singularity_config_get_bool_char_impl()   Return singularity_config_get_bool(mount proc, yes) = 1
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'PIDNS_ENABLED'
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+VERBOSE [U=0,P=16324]      singularity_runtime_mount_kernelfs()      Bind-mounting host /proc
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_kernelfs()      Checking configuration file for 'mount sys'
+DEBUG   [U=13920,P=16324]  singularity_config_get_bool_char_impl()   Called singularity_config_get_bool(mount sys, yes)
+DEBUG   [U=13920,P=16324]  singularity_config_get_value_impl()       Returning configuration value mount sys='yes'
+DEBUG   [U=13920,P=16324]  singularity_config_get_bool_char_impl()   Return singularity_config_get_bool(mount sys, yes) = 1
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+VERBOSE [U=0,P=16324]      singularity_runtime_mount_kernelfs()      Mounting /sys
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'CONTAIN'
+DEBUG   [U=13920,P=16324]  singularity_config_get_value_impl()       Returning configuration value mount dev='yes'
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_dev()           Checking configuration file for 'mount dev'
+DEBUG   [U=13920,P=16324]  singularity_config_get_bool_char_impl()   Called singularity_config_get_bool(mount dev, yes)
+DEBUG   [U=13920,P=16324]  singularity_config_get_value_impl()       Returning configuration value mount dev='yes'
+DEBUG   [U=13920,P=16324]  singularity_config_get_bool_char_impl()   Return singularity_config_get_bool(mount dev, yes) = 1
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+VERBOSE [U=0,P=16324]      singularity_runtime_mount_dev()           Bind mounting /dev
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning value from registry: 'SESSIONDIR' = '/ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session'
+DEBUG   [U=13920,P=16324]  singularity_config_get_bool_char_impl()   Called singularity_config_get_bool(mount home, yes)
+DEBUG   [U=13920,P=16324]  singularity_config_get_value_impl()       Returning configuration value mount home='yes'
+DEBUG   [U=13920,P=16324]  singularity_config_get_bool_char_impl()   Return singularity_config_get_bool(mount home, yes) = 1
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_home()          Checking that home directry is configured: /ysm-gpfs/home/zrl3
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_home()          Checking if home directories are being influenced by user
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'HOME'
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_home()          Checking ownership of home directory source: /ysm-gpfs/home/zrl3
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_home()          Checking to make sure home directory destination is a full path: /ysm-gpfs/home/zrl3
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_home()          Checking if home directory is already mounted: /ysm-gpfs/home/zrl3
+DEBUG   [U=13920,P=16324]  check_mounted()                           Opening /proc/mounts
+DEBUG   [U=13920,P=16324]  check_mounted()                           Iterating through /proc/mounts
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_home()          Creating temporary directory to stage home: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session/ysm-gpfs/home/zrl3
+DEBUG   [U=13920,P=16324]  s_mkpath()                                Creating parent directory: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session/ysm-gpfs/home
+DEBUG   [U=13920,P=16324]  s_mkpath()                                Creating parent directory: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session/ysm-gpfs
+DEBUG   [U=13920,P=16324]  s_mkpath()                                Creating directory: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session/ysm-gpfs
+DEBUG   [U=13920,P=16324]  s_mkpath()                                Creating directory: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session/ysm-gpfs/home
+DEBUG   [U=13920,P=16324]  s_mkpath()                                Creating directory: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session/ysm-gpfs/home/zrl3
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_home()          Checking if SINGULARITY_CONTAIN is set
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'CONTAIN'
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+VERBOSE [U=0,P=16324]      singularity_runtime_mount_home()          Mounting home directory source into session directory: /ysm-gpfs/home/zrl3 -> /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session/ysm-gpfs/home/zrl3
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_home()          Checking if overlay is enabled
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning value from registry: 'OVERLAYFS_ENABLED' = '1'
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_home()          Staging home directory
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+DEBUG   [U=0,P=16324]      singularity_runtime_mount_home()          Creating home directory within container: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/final/ysm-gpfs/home/zrl3
+DEBUG   [U=0,P=16324]      s_mkpath()                                Directory exists, returning '0': /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/final/ysm-gpfs/home/zrl3
+VERBOSE [U=0,P=16324]      singularity_runtime_mount_home()          Mounting staged home directory to container: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session/ysm-gpfs/home/zrl3 -> /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/final/ysm-gpfs/home/zrl3
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+DEBUG   [U=13920,P=16324]  envar_set()                               Setting environment variable: 'HOME' = '/ysm-gpfs/home/zrl3'
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_userbinds()     Checking for environment variable 'SINGULARITY_BINDPATH'
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'BINDPATH'
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_userbinds()     No user bind mounts specified.
+DEBUG   [U=13920,P=16324]  singularity_config_get_bool_char_impl()   Called singularity_config_get_bool(mount tmp, yes)
+DEBUG   [U=13920,P=16324]  singularity_config_get_value_impl()       Returning configuration value mount tmp='yes'
+DEBUG   [U=13920,P=16324]  singularity_config_get_bool_char_impl()   Return singularity_config_get_bool(mount tmp, yes) = 1
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'CONTAIN'
+DEBUG   [U=13920,P=16324]  check_mounted()                           Opening /proc/mounts
+DEBUG   [U=13920,P=16324]  check_mounted()                           Iterating through /proc/mounts
+DEBUG   [U=13920,P=16324]  s_mkpath()                                Directory exists, returning '0': /tmp
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+VERBOSE [U=0,P=16324]      singularity_runtime_mount_tmp()           Mounting directory: /tmp
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+DEBUG   [U=13920,P=16324]  check_mounted()                           Opening /proc/mounts
+DEBUG   [U=13920,P=16324]  check_mounted()                           Iterating through /proc/mounts
+DEBUG   [U=13920,P=16324]  s_mkpath()                                Directory exists, returning '0': /var/tmp
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+VERBOSE [U=0,P=16324]      singularity_runtime_mount_tmp()           Mounting directory: /var/tmp
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_scratch()       Getting SINGULARITY_SCRATCHDIR from environment
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'SCRATCHDIR'
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_scratch()       Not mounting scratch directory: Not requested
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_cwd()           Checking to see if we should mount current working directory
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_cwd()           Getting current working directory
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_cwd()           Checking for contain option
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'CONTAIN'
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_cwd()           Checking if current directory already available within container: /ysm-gpfs/home/zrl3/scratch60/singularity
+DEBUG   [U=13920,P=16324]  file_devino()                             Called file_devino(/ysm-gpfs/home/zrl3/scratch60/singularity)
+DEBUG   [U=13920,P=16324]  file_devino()                             Returning file_devino(/ysm-gpfs/home/zrl3/scratch60/singularity) = 47.515642402
+DEBUG   [U=13920,P=16324]  file_devino()                             Called file_devino(/ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/final/ysm-gpfs/home/zrl3/scratch60/singularity)
+DEBUG   [U=13920,P=16324]  file_devino()                             Returning file_devino(/ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/final/ysm-gpfs/home/zrl3/scratch60/singularity) = 47.515642402
+DEBUG   [U=13920,P=16324]  singularity_runtime_mount_cwd()           Checking if container's cwd == host's cwd
+VERBOSE [U=13920,P=16324]  singularity_runtime_mount_cwd()           Not mounting current directory: location already available within container
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'DAEMON_JOIN'
+VERBOSE [U=13920,P=16324]  singularity_runtime_files()               Running file components
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning value from registry: 'SESSIONDIR' = '/ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session'
+DEBUG   [U=13920,P=16324]  singularity_runtime_files_passwd()        Called singularity_file_passwd_create()
+DEBUG   [U=13920,P=16324]  singularity_runtime_files_passwd()        Checking configuration option: 'config passwd'
+DEBUG   [U=13920,P=16324]  singularity_config_get_bool_char_impl()   Called singularity_config_get_bool(config passwd, yes)
+DEBUG   [U=13920,P=16324]  singularity_config_get_value_impl()       Returning configuration value config passwd='yes'
+DEBUG   [U=13920,P=16324]  singularity_config_get_bool_char_impl()   Return singularity_config_get_bool(config passwd, yes) = 1
+VERBOSE [U=13920,P=16324]  singularity_runtime_files_passwd()        Checking for template passwd file: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/final/etc/passwd
+VERBOSE [U=13920,P=16324]  singularity_runtime_files_passwd()        Creating template of /etc/passwd
+DEBUG   [U=13920,P=16324]  copy_file()                               Called copy_file(/ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/final/etc/passwd, /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session/passwd)
+DEBUG   [U=13920,P=16324]  copy_file()                               Opening source file: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/final/etc/passwd
+DEBUG   [U=13920,P=16324]  copy_file()                               Opening destination file: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session/passwd
+DEBUG   [U=13920,P=16324]  copy_file()                               Calling fstat() on source file descriptor: 7
+DEBUG   [U=13920,P=16324]  copy_file()                               Cloning permission string of source to dest
+DEBUG   [U=13920,P=16324]  copy_file()                               Copying file data...
+DEBUG   [U=13920,P=16324]  copy_file()                               Done copying data, closing file pointers
+DEBUG   [U=13920,P=16324]  copy_file()                               Returning copy_file(/ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/final/etc/passwd, /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session/passwd) = 0
+VERBOSE [U=13920,P=16324]  singularity_runtime_files_passwd()        Creating template passwd file and appending user data: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session/passwd
+DEBUG   [U=13920,P=16324]  container_file_bind()                     Called file_bind(/ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session/passwd, /etc/passwd()
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+VERBOSE [U=0,P=16324]      container_file_bind()                     Binding file '/ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session/passwd' to '/ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/final/etc/passwd'
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+DEBUG   [U=13920,P=16324]  envar_set()                               Setting environment variable: 'HOME' = '/ysm-gpfs/home/zrl3'
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning value from registry: 'SESSIONDIR' = '/ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session'
+DEBUG   [U=13920,P=16324]  singularity_runtime_files_group()         Called singularity_file_group_create()
+DEBUG   [U=13920,P=16324]  singularity_runtime_files_group()         Checking configuration option: 'config group'
+DEBUG   [U=13920,P=16324]  singularity_config_get_bool_char_impl()   Called singularity_config_get_bool(config group, yes)
+DEBUG   [U=13920,P=16324]  singularity_config_get_value_impl()       Returning configuration value config group='yes'
+DEBUG   [U=13920,P=16324]  singularity_config_get_bool_char_impl()   Return singularity_config_get_bool(config group, yes) = 1
+VERBOSE [U=13920,P=16324]  singularity_runtime_files_group()         Creating template of /etc/group for containment
+DEBUG   [U=13920,P=16324]  copy_file()                               Called copy_file(/ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/final/etc/group, /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session/group)
+DEBUG   [U=13920,P=16324]  copy_file()                               Opening source file: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/final/etc/group
+DEBUG   [U=13920,P=16324]  copy_file()                               Opening destination file: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session/group
+DEBUG   [U=13920,P=16324]  copy_file()                               Calling fstat() on source file descriptor: 7
+DEBUG   [U=13920,P=16324]  copy_file()                               Cloning permission string of source to dest
+DEBUG   [U=13920,P=16324]  copy_file()                               Copying file data...
+DEBUG   [U=13920,P=16324]  copy_file()                               Done copying data, closing file pointers
+DEBUG   [U=13920,P=16324]  copy_file()                               Returning copy_file(/ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/final/etc/group, /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session/group) = 0
+VERBOSE [U=13920,P=16324]  singularity_runtime_files_group()         Updating group file with user info
+DEBUG   [U=13920,P=16324]  singularity_runtime_files_group()         Getting supplementary group info
+DEBUG   [U=13920,P=16324]  singularity_runtime_files_group()         Skipping duplicate supplementary group
+DEBUG   [U=13920,P=16324]  container_file_bind()                     Called file_bind(/ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session/group, /etc/group()
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+VERBOSE [U=0,P=16324]      container_file_bind()                     Binding file '/ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session/group' to '/ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/final/etc/group'
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+DEBUG   [U=13920,P=16324]  singularity_runtime_files_resolvconf()    Checking configuration option
+DEBUG   [U=13920,P=16324]  singularity_config_get_bool_char_impl()   Called singularity_config_get_bool(config resolv_conf, yes)
+DEBUG   [U=13920,P=16324]  singularity_config_get_value_impl()       Returning configuration value config resolv_conf='yes'
+DEBUG   [U=13920,P=16324]  singularity_config_get_bool_char_impl()   Return singularity_config_get_bool(config resolv_conf, yes) = 1
+DEBUG   [U=13920,P=16324]  container_file_bind()                     Called file_bind(/etc/resolv.conf, /etc/resolv.conf()
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+VERBOSE [U=0,P=16324]      container_file_bind()                     Binding file '/etc/resolv.conf' to '/ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/final/etc/resolv.conf'
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning value from registry: 'SESSIONDIR' = '/ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/session'
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'CONTAINLIBS'
+VERBOSE [U=13920,P=16324]  singularity_runtime_enter()               Containing all rootfs components
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+VERBOSE [U=0,P=16324]      singularity_runtime_enter_chroot()        Entering container file system root: /ysm-gpfs/apps/software/Singularity/2.4.2/var/singularity/mnt/final
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Dropping privileges to UID=13920, GID=10815 (1 supplementary GIDs)
+DEBUG   [U=0,P=16324]      singularity_priv_drop()                   Restoring supplementary groups
+DEBUG   [U=13920,P=16324]  singularity_priv_drop()                   Confirming we have correct UID/GID
+DEBUG   [U=13920,P=16324]  singularity_runtime_enter_chroot()        Changing dir to '/' within the new root
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Cloning environment
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Counted 106 environment elements
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'CLEANENV'
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Cleaning environment
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_CHECKPOINT_IMAGE_DIR=/var/slurm/checkpoint
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_NODELIST=c19n05
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_JOB_NAME=juicer_singularity
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: MANPATH=/ysm-gpfs/apps/software/Singularity/2.4.2/share/man:/usr/share/lmod/lmod/share/man::
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: XDG_SESSION_ID=25160
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: _ModuleTable003_=L21vZHVsZWZpbGVzL0NvcmUiLH0sWyJjX3JlYnVpbGRUaW1lIl09ZmFsc2UsWyJjX3Nob3J0VGltZSJdPWZhbHNlLGZhbWlseT17fSxpbmFjdGl2ZT17fSxtVD17U2luZ3VsYXJpdHk9e1siRk4iXT0iL3lzbS1ncGZzL2FwcHMvbW9kdWxlcy90b29scy9TaW5ndWxhcml0eS8yLjQuMi5sdWEiLFsiZGVmYXVsdCJdPTAsWyJmdWxsTmFtZSJdPSJTaW5ndWxhcml0eS8yLjQuMiIsWyJsb2FkT3JkZXIiXT0xLHByb3BUPXt9LFsic2hvcnQiXT0iU2luZ3VsYXJpdHkiLFsic3RhdHVzIl09ImFjdGl2ZSIsfSx9LG1wYXRoQT17Ii95c20tZ3Bmcy9hcHBzL21vZHVsZXMvYmFzZSIsIi95c20tZ3Bmcy9hcHBz(TRUNCATED...)
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURMD_NODENAME=c19n05
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_TOPOLOGY_ADDR=c19n05
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: HOSTNAME=c19n05
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_PRIO_PROCESS=10
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_NODE_ALIASES=(null)
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SHELL=/bin/bash
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: TERM=xterm-256color
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_JOB_QOS=normal
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: HISTSIZE=1000
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: LMOD_DEFAULT_MODULEPATH=/ysm-gpfs/apps/modules/base:/ysm-gpfs/apps/modules/bio:/ysm-gpfs/apps/modules/cae:/ysm-gpfs/apps/modules/chem:/ysm-gpfs/apps/modules/compiler:/ysm-gpfs/apps/modules/data:/ysm-gpfs/apps/modules/debugger:/ysm-gpfs/apps/modules/devel:/ysm-gpfs/apps/modules/geo:/ysm-gpfs/apps/modules/ide:/ysm-gpfs/apps/modules/lang:/ysm-gpfs/apps/modules/lib:/ysm-gpfs/apps/modules/math:/ysm-gpfs/apps/modules/mpi:/ysm-gpfs/apps/modules/numlib:/ysm-gpfs/apps/modul(TRUNCATED...)
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_TOPOLOGY_ADDR_PATTERN=node
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SSH_CLIENT=172.23.99.102 56844 22
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: MODULEPATH_ROOT=/usr/share/modulefiles
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: LIBRARY_PATH=/ysm-gpfs/apps/software/Singularity/2.4.2/lib
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: PERL5LIB=/ysm-gpfs/home/zrl3/perl5/lib/perl5
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: LMOD_PKG=/usr/share/lmod/lmod
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: QTDIR=/usr/lib64/qt-3.3
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: QTINC=/usr/lib64/qt-3.3/include
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: LMOD_VERSION=6.5.1
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: PERL_MB_OPT=--install_base "/ysm-gpfs/home/zrl3/perl5"
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SSH_TTY=/dev/pts/154
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: _ModuleTable007_=cGh5czoveXNtLWdwZnMvYXBwcy9tb2R1bGVzL3N5c3RlbToveXNtLWdwZnMvYXBwcy9tb2R1bGVzL3Rvb2xjaGFpbjoveXNtLWdwZnMvYXBwcy9tb2R1bGVzL3Rvb2xzOi95c20tZ3Bmcy9hcHBzL21vZHVsZXMvdmlzOi91c3Ivc2hhcmUvbW9kdWxlZmlsZXMvTGludXg6L3Vzci9zaGFyZS9tb2R1bGVmaWxlcy9Db3JlOi91c3Ivc2hhcmUvbG1vZC9sbW9kL21vZHVsZWZpbGVzL0NvcmUiLFsidmVyc2lvbiJdPTIsfQ==
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SINGULARITY_libexecdir=/ysm-gpfs/apps/software/Singularity/2.4.2/libexec
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Unsetting environment variable: SINGULARITY_libexecdir
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SINGULARITY_COMMAND=run
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Unsetting environment variable: SINGULARITY_COMMAND
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: EBVERSIONSINGULARITY=2.4.2
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_MEM_PER_CPU=6144
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: QT_GRAPHICSSYSTEM_CHECKED=1
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_NNODES=1
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: USER=zrl3
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SINGULARITY_MESSAGELEVEL=5
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Unsetting environment variable: SINGULARITY_MESSAGELEVEL
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: LMOD_sys=Linux
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: _ModuleTable004_=eXNtLWdwZnMvYXBwcy9tb2R1bGVzL2NoZW0iLCIveXNtLWdwZnMvYXBwcy9tb2R1bGVzL2NvbXBpbGVyIiwiL3lzbS1ncGZzL2FwcHMvbW9kdWxlcy9kYXRhIiwiL3lzbS1ncGZzL2FwcHMvbW9kdWxlcy9kZWJ1Z2dlciIsIi95c20tZ3Bmcy9hcHBzL21vZHVsZXMvZGV2ZWwiLCIveXNtLWdwZnMvYXBwcy9tb2R1bGVzL2dlbyIsIi95c20tZ3Bmcy9hcHBzL21vZHVsZXMvaWRlIiwiL3lzbS1ncGZzL2FwcHMvbW9kdWxlcy9sYW5nIiwiL3lzbS1ncGZzL2FwcHMvbW9kdWxlcy9saWIiLCIveXNtLWdwZnMvYXBwcy9tb2R1bGVzL21hdGgiLCIveXNtLWdwZnMvYXBwcy9tb2R1bGVzL21waSIsIi95c20t(TRUNCATED...)
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: EBDEVELSINGULARITY=/ysm-gpfs/apps/software/Singularity/2.4.2/easybuild/Singularity-2.4.2-easybuild-devel
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: CPATH=/ysm-gpfs/apps/software/Singularity/2.4.2/include
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_JOBID=4651411
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SINGULARITY_version=2.4.2-dist
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Unsetting environment variable: SINGULARITY_version
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: LMOD_PREPEND_BLOCK=normal
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: _ModuleTable001_=X01vZHVsZVRhYmxlXz17WyJhY3RpdmVTaXplIl09MSxiYXNlTXBhdGhBPXsiL3lzbS1ncGZzL2FwcHMvbW9kdWxlcy9iYXNlIiwiL3lzbS1ncGZzL2FwcHMvbW9kdWxlcy9iaW8iLCIveXNtLWdwZnMvYXBwcy9tb2R1bGVzL2NhZSIsIi95c20tZ3Bmcy9hcHBzL21vZHVsZXMvY2hlbSIsIi95c20tZ3Bmcy9hcHBzL21vZHVsZXMvY29tcGlsZXIiLCIveXNtLWdwZnMvYXBwcy9tb2R1bGVzL2RhdGEiLCIveXNtLWdwZnMvYXBwcy9tb2R1bGVzL2RlYnVnZ2VyIiwiL3lzbS1ncGZzL2FwcHMvbW9kdWxlcy9kZXZlbCIsIi95c20tZ3Bmcy9hcHBzL21vZHVsZXMvZ2VvIiwiL3lzbS1ncGZzL2FwcHMvbW9k(TRUNCATED...)
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_TASKS_PER_NODE=1
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: MAIL=/var/spool/mail/zrl3
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SINGULARITY_localstatedir=/ysm-gpfs/apps/software/Singularity/2.4.2/var
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Unsetting environment variable: SINGULARITY_localstatedir
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_JOB_ID=4651411
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_CPUS_PER_TASK=20
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: LMOD_SETTARG_CMD=:
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_JOB_USER=zrl3
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: PWD=/ysm-gpfs/home/zrl3/scratch60/singularity
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: _LMFILES_=/ysm-gpfs/apps/modules/tools/Singularity/2.4.2.lua
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: CUDA_VISIBLE_DEVICES=NoDevFiles
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SINGULARITYENV_HISTFILE=
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SINGULARITYENV_PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: LANG=en_US.UTF-8
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: MODULEPATH=/ysm-gpfs/apps/modules/base:/ysm-gpfs/apps/modules/bio:/ysm-gpfs/apps/modules/cae:/ysm-gpfs/apps/modules/chem:/ysm-gpfs/apps/modules/compiler:/ysm-gpfs/apps/modules/data:/ysm-gpfs/apps/modules/debugger:/ysm-gpfs/apps/modules/devel:/ysm-gpfs/apps/modules/geo:/ysm-gpfs/apps/modules/ide:/ysm-gpfs/apps/modules/lang:/ysm-gpfs/apps/modules/lib:/ysm-gpfs/apps/modules/math:/ysm-gpfs/apps/modules/mpi:/ysm-gpfs/apps/modules/numlib:/ysm-gpfs/apps/modules/perf:/ysm-(TRUNCATED...)
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: _ModuleTable_Sz_=7
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: LOADEDMODULES=Singularity/2.4.2
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_JOB_UID=13920
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: LMOD_SYSTEM_NAME=farnam-rhel7
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: KDEDIRS=/usr
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_NODEID=0
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_SUBMIT_DIR=/ysm-gpfs/scratch60/zrl3/singularity
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: _ModuleTable005_=dWxlcy9wZXJmIiwiL3lzbS1ncGZzL2FwcHMvbW9kdWxlcy9waHlzIiwiL3lzbS1ncGZzL2FwcHMvbW9kdWxlcy9zeXN0ZW0iLCIveXNtLWdwZnMvYXBwcy9tb2R1bGVzL3Rvb2xjaGFpbiIsIi95c20tZ3Bmcy9hcHBzL21vZHVsZXMvdG9vbHMiLCIveXNtLWdwZnMvYXBwcy9tb2R1bGVzL3ZpcyIsIi91c3Ivc2hhcmUvbW9kdWxlZmlsZXMvTGludXgiLCIvdXNyL3NoYXJlL21vZHVsZWZpbGVzL0NvcmUiLCIvdXNyL3NoYXJlL2xtb2QvbG1vZC9tb2R1bGVmaWxlcy9Db3JlIix9LFsic3lzdGVtQmFzZU1QQVRIIl09Ii95c20tZ3Bmcy9hcHBzL21vZHVsZXMvYmFzZToveXNtLWdwZnMvYXBwcy9tb2R1(TRUNCATED...)
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_TASK_PID=16310
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: LMOD_CMD=/usr/share/lmod/lmod/libexec/lmod
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_CPUS_ON_NODE=20
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_PROCID=0
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: ENVIRONMENT=BATCH
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: HISTCONTROL=ignoredups
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_JOB_NODELIST=c19n05
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: HOME=/ysm-gpfs/home/zrl3
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SHLVL=2
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_LOCALID=0
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: _ModuleTable002_=LWdwZnMvYXBwcy9tb2R1bGVzL2xpYiIsIi95c20tZ3Bmcy9hcHBzL21vZHVsZXMvbWF0aCIsIi95c20tZ3Bmcy9hcHBzL21vZHVsZXMvbXBpIiwiL3lzbS1ncGZzL2FwcHMvbW9kdWxlcy9udW1saWIiLCIveXNtLWdwZnMvYXBwcy9tb2R1bGVzL3BlcmYiLCIveXNtLWdwZnMvYXBwcy9tb2R1bGVzL3BoeXMiLCIveXNtLWdwZnMvYXBwcy9tb2R1bGVzL3N5c3RlbSIsIi95c20tZ3Bmcy9hcHBzL21vZHVsZXMvdG9vbGNoYWluIiwiL3lzbS1ncGZzL2FwcHMvbW9kdWxlcy90b29scyIsIi95c20tZ3Bmcy9hcHBzL21vZHVsZXMvdmlzIiwiL3Vzci9zaGFyZS9tb2R1bGVmaWxlcy9MaW51eCIsIi91c3Iv(TRUNCATED...)
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_JOB_CPUS_PER_NODE=20
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_CLUSTER_NAME=farnam
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_GTIDS=0
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_SUBMIT_HOST=farnam2.farnam.hpc.yale.internal
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_JOB_PARTITION=general
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: PERL_LOCAL_LIB_ROOT=/ysm-gpfs/home/zrl3/perl5
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SINGULARITY_sysconfdir=/ysm-gpfs/apps/software/Singularity/2.4.2/etc
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Unsetting environment variable: SINGULARITY_sysconfdir
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: LOGNAME=zrl3
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: LMOD_arch=x86_64
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: CVS_RSH=ssh
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: QTLIB=/usr/lib64/qt-3.3/lib
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SINGULARITY_bindir=/ysm-gpfs/apps/software/Singularity/2.4.2/bin
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Unsetting environment variable: SINGULARITY_bindir
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: GPU_DEVICE_ORDINAL=NoDevFiles
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_JOB_ACCOUNT=dunn
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SSH_CONNECTION=172.23.99.102 56844 172.18.89.11 22
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SLURM_JOB_NUM_NODES=1
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: LMOD_RC=/ysm-gpfs/apps/lmodrc.lua
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: MODULESHOME=/usr/share/lmod/lmod
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: LESSOPEN=||/usr/bin/lesspipe.sh %s
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: LMOD_FULL_SETTARG_SUPPORT=no
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: EBROOTSINGULARITY=/ysm-gpfs/apps/software/Singularity/2.4.2
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: XDG_RUNTIME_DIR=/run/user/13920
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: SINGULARITY_IMAGE=juicer_new.img
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Unsetting environment variable: SINGULARITY_IMAGE
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: QT_PLUGIN_PATH=/usr/lib64/kde4/plugins:/usr/lib/kde4/plugins
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: _ModuleTable006_=YXBwcy9tb2R1bGVzL2NoZW06L3lzbS1ncGZzL2FwcHMvbW9kdWxlcy9jb21waWxlcjoveXNtLWdwZnMvYXBwcy9tb2R1bGVzL2RhdGE6L3lzbS1ncGZzL2FwcHMvbW9kdWxlcy9kZWJ1Z2dlcjoveXNtLWdwZnMvYXBwcy9tb2R1bGVzL2RldmVsOi95c20tZ3Bmcy9hcHBzL21vZHVsZXMvZ2VvOi95c20tZ3Bmcy9hcHBzL21vZHVsZXMvaWRlOi95c20tZ3Bmcy9hcHBzL21vZHVsZXMvbGFuZzoveXNtLWdwZnMvYXBwcy9tb2R1bGVzL2xpYjoveXNtLWdwZnMvYXBwcy9tb2R1bGVzL21hdGg6L3lzbS1ncGZzL2FwcHMvbW9kdWxlcy9tcGk6L3lzbS1ncGZzL2FwcHMvbW9kdWxlcy9udW1saWI6L3lzbS1n(TRUNCATED...)
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: LMOD_DIR=/usr/share/lmod/lmod/libexec
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: LMOD_COLORIZE=yes
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Evaluating envar to clean: PERL_MM_OPT=INSTALL_BASE=/ysm-gpfs/home/zrl3/perl5
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Transposing environment
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Converting envar 'SINGULARITYENV_HISTFILE' to 'HISTFILE' = '(null)'
+DEBUG   [U=13920,P=16324]  envar_set()                               Unsetting environment variable: HISTFILE
+DEBUG   [U=13920,P=16324]  singularity_runtime_environment()         Converting envar 'SINGULARITYENV_PATH' to 'PATH' = '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin'
+DEBUG   [U=13920,P=16324]  envar_set()                               Setting environment variable: 'PATH' = '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin'
+DEBUG   [U=13920,P=16324]  singularity_priv_drop_perm()              Called singularity_priv_drop_perm(void)
+DEBUG   [U=13920,P=16324]  singularity_priv_drop_perm()              Escalating permissison so we can properly drop permission
+DEBUG   [U=13920,P=16324]  singularity_priv_escalate()               Temporarily escalating privileges (U=13920)
+DEBUG   [U=0,P=16324]      singularity_priv_escalate()               Clearing supplementary GIDs.
+DEBUG   [U=0,P=16324]      singularity_priv_drop_perm()              Resetting supplementary groups
+DEBUG   [U=0,P=16324]      singularity_priv_drop_perm()              Dropping to group ID '10815'
+DEBUG   [U=0,P=16324]      singularity_priv_drop_perm()              Dropping real and effective privileges to GID = '10815'
+DEBUG   [U=0,P=16324]      singularity_priv_drop_perm()              Dropping real and effective privileges to UID = '13920'
+DEBUG   [U=13920,P=16324]  singularity_priv_drop_perm()              Confirming we have correct GID
+DEBUG   [U=13920,P=16324]  singularity_priv_drop_perm()              Confirming we have correct UID
+DEBUG   [U=13920,P=16324]  singularity_priv_drop_perm()              Setting NO_NEW_PRIVS to prevent future privilege escalations.
+DEBUG   [U=13920,P=16324]  singularity_priv_drop_perm()              Finished dropping privileges
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'CONTAIN'
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'TARGET_PWD'
+DEBUG   [U=13920,P=16324]  main()                                    Attempting to chdir to CWD: /ysm-gpfs/home/zrl3/scratch60/singularity
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning value from registry: 'COMMAND' = 'run'
+DEBUG   [U=13920,P=16324]  envar_set()                               Setting environment variable: 'SINGULARITY_CONTAINER' = 'juicer_new.img'
+DEBUG   [U=13920,P=16324]  envar_set()                               Setting environment variable: 'SINGULARITY_NAME' = 'juicer_new.img'
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'SHELL'
+DEBUG   [U=13920,P=16324]  envar_set()                               Unsetting environment variable: SINGULARITY_SHELL
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning NULL on 'APPNAME'
+DEBUG   [U=13920,P=16324]  envar_set()                               Unsetting environment variable: SINGULARITY_APPNAME
+DEBUG   [U=13920,P=16324]  singularity_registry_get()                Returning value from registry: 'COMMAND' = 'run'
+LOG     [U=13920,P=16324]  main()                                    USER=zrl3, IMAGE='juicer_new.img', COMMAND='run'
+VERBOSE [U=13920,P=16324]  action_run()                              Starting runscript
+DEBUG   [U=13920,P=16324]  action_run()                              Exec'ing /.singularity.d/actions/run
+(-: Looking for fastq files...fastq files exist
+(-: Aligning files matching /ysm-gpfs/home/zrl3/scratch60/singularity/fastq/*_R*.fastq*
+ to genome hg19 with site file /ysm-gpfs/home/zrl3/scratch60/singularity/restriction_sites/hg38MboI.txt
+(-: Created /ysm-gpfs/home/zrl3/scratch60/singularity/splits and /ysm-gpfs/home/zrl3/scratch60/singularity/aligned.
+Running command bwa mem -SP5M -t 20 /ysm-gpfs/home/zrl3/scratch60/singularity/references/Homo_sapiens_assembly19.fasta /ysm-gpfs/home/zrl3/scratch60/singularity/splits/HIC003_S2_L001_R1_001.fastq.gz /ysm-gpfs/home/zrl3/scratch60/singularity/splits/HIC003_S2_L001_R2_001.fastq.gz > /ysm-gpfs/home/zrl3/scratch60/singularity/splits/HIC003_S2_L001_001.fastq.gz.sam
+[M::bwa_idx_load_from_disk] read 0 ALT contigs
+[M::process] read 2000000 sequences (200000000 bp)...
+[M::process] read 2000000 sequences (200000000 bp)...
+[M::mem_pestat] # candidate unique pairs for (FF, FR, RF, RR): (14978, 192243, 14242, 15003)
+[M::mem_pestat] analyzing insert size distribution for orientation FF...
+[M::mem_pestat] (25, 50, 75) percentile: (1943, 3943, 6536)
+[M::mem_pestat] low and high boundaries for computing mean and std.dev: (1, 15722)
+[M::mem_pestat] mean and std.dev: (4338.95, 2749.60)
+[M::mem_pestat] low and high boundaries for proper pairs: (1, 20315)
+[M::mem_pestat] analyzing insert size distribution for orientation FR...
+[M::mem_pestat] (25, 50, 75) percentile: (331, 374, 426)
+[M::mem_pestat] low and high boundaries for computing mean and std.dev: (141, 616)
+[M::mem_pestat] mean and std.dev: (371.40, 65.10)
+[M::mem_pestat] low and high boundaries for proper pairs: (46, 711)
+[M::mem_pestat] analyzing insert size distribution for orientation RF...
+[M::mem_pestat] (25, 50, 75) percentile: (2191, 4134, 6653)
+[M::mem_pestat] low and high boundaries for computing mean and std.dev: (1, 15577)
+[M::mem_pestat] mean and std.dev: (4493.24, 2698.90)
+[M::mem_pestat] low and high boundaries for proper pairs: (1, 20039)
+[M::mem_pestat] analyzing insert size distribution for orientation RR...
+[M::mem_pestat] (25, 50, 75) percentile: (1939, 3930, 6484)
+[M::mem_pestat] low and high boundaries for computing mean and std.dev: (1, 15574)
+[M::mem_pestat] mean and std.dev: (4318.88, 2733.91)
+[M::mem_pestat] low and high boundaries for proper pairs: (1, 20119)
+[M::mem_process_seqs] Processed 2000000 reads in 607.771 CPU sec, 46.474 real sec
+[M::process] read 697156 sequences (69715600 bp)...
+[M::mem_pestat] # candidate unique pairs for (FF, FR, RF, RR): (15052, 191657, 14138, 15055)
+[M::mem_pestat] analyzing insert size distribution for orientation FF...
+[M::mem_pestat] (25, 50, 75) percentile: (1920, 3946, 6532)
+[M::mem_pestat] low and high boundaries for computing mean and std.dev: (1, 15756)
+[M::mem_pestat] mean and std.dev: (4331.47, 2750.64)
+[M::mem_pestat] low and high boundaries for proper pairs: (1, 20368)
+[M::mem_pestat] analyzing insert size distribution for orientation FR...
+[M::mem_pestat] (25, 50, 75) percentile: (331, 374, 427)
+[M::mem_pestat] low and high boundaries for computing mean and std.dev: (139, 619)
+[M::mem_pestat] mean and std.dev: (371.93, 65.45)
+[M::mem_pestat] low and high boundaries for proper pairs: (43, 715)
+[M::mem_pestat] analyzing insert size distribution for orientation RF...
+[M::mem_pestat] (25, 50, 75) percentile: (2138, 4144, 6686)
+[M::mem_pestat] low and high boundaries for computing mean and std.dev: (1, 15782)
+[M::mem_pestat] mean and std.dev: (4479.44, 2718.05)
+[M::mem_pestat] low and high boundaries for proper pairs: (1, 20330)
+[M::mem_pestat] analyzing insert size distribution for orientation RR...
+[M::mem_pestat] (25, 50, 75) percentile: (1991, 3994, 6544)
+[M::mem_pestat] low and high boundaries for computing mean and std.dev: (1, 15650)
+[M::mem_pestat] mean and std.dev: (4365.66, 2740.71)
+[M::mem_pestat] low and high boundaries for proper pairs: (1, 20203)
+[M::mem_process_seqs] Processed 2000000 reads in 592.933 CPU sec, 30.583 real sec
+[M::mem_pestat] # candidate unique pairs for (FF, FR, RF, RR): (5156, 66567, 5041, 5309)
+[M::mem_pestat] analyzing insert size distribution for orientation FF...
+[M::mem_pestat] (25, 50, 75) percentile: (1912, 3882, 6476)
+[M::mem_pestat] low and high boundaries for computing mean and std.dev: (1, 15604)
+[M::mem_pestat] mean and std.dev: (4289.91, 2740.93)
+[M::mem_pestat] low and high boundaries for proper pairs: (1, 20168)
+[M::mem_pestat] analyzing insert size distribution for orientation FR...
+[M::mem_pestat] (25, 50, 75) percentile: (332, 375, 427)
+[M::mem_pestat] low and high boundaries for computing mean and std.dev: (142, 617)
+[M::mem_pestat] mean and std.dev: (372.32, 65.40)
+[M::mem_pestat] low and high boundaries for proper pairs: (47, 712)
+[M::mem_pestat] analyzing insert size distribution for orientation RF...
+[M::mem_pestat] (25, 50, 75) percentile: (2150, 4132, 6642)
+[M::mem_pestat] low and high boundaries for computing mean and std.dev: (1, 15626)
+[M::mem_pestat] mean and std.dev: (4490.96, 2714.17)
+[M::mem_pestat] low and high boundaries for proper pairs: (1, 20118)
+[M::mem_pestat] analyzing insert size distribution for orientation RR...
+[M::mem_pestat] (25, 50, 75) percentile: (1908, 3871, 6492)
+[M::mem_pestat] low and high boundaries for computing mean and std.dev: (1, 15660)
+[M::mem_pestat] mean and std.dev: (4287.33, 2740.97)
+[M::mem_pestat] low and high boundaries for proper pairs: (1, 20244)
+[M::mem_process_seqs] Processed 697156 reads in 212.060 CPU sec, 11.199 real sec
+[main] Version: 0.7.17-r1188
+[main] CMD: bwa mem -SP5M -t 20 /ysm-gpfs/home/zrl3/scratch60/singularity/references/Homo_sapiens_assembly19.fasta /ysm-gpfs/home/zrl3/scratch60/singularity/splits/HIC003_S2_L001_R1_001.fastq.gz /ysm-gpfs/home/zrl3/scratch60/singularity/splits/HIC003_S2_L001_R2_001.fastq.gz
+[main] Real time: 97.837 sec; CPU: 1419.456 sec
+(-:  Align of /ysm-gpfs/home/zrl3/scratch60/singularity/splits/HIC003_S2_L001_001.fastq.gz.sam done successfully
+No such file or directory at /opt/scripts/common/fragment.pl line 53.
+***! Failure during fragment assignment of /ysm-gpfs/home/zrl3/scratch60/singularity/splits/HIC003_S2_L001_001.fastq.gz
+------=_Part_33_1511922647.1515620195069--

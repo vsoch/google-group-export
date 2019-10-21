@@ -1,0 +1,612 @@
+X-Received: by 2002:a62:45d0:: with SMTP id n77mr1678952pfi.78.1548281918878;
+        Wed, 23 Jan 2019 14:18:38 -0800 (PST)
+X-BeenThere: singularity@lbl.gov
+Received: by 2002:a62:22c8:: with SMTP id p69ls1687261pfj.2.gmail; Wed, 23 Jan
+ 2019 14:18:37 -0800 (PST)
+X-Received: by 2002:a62:8096:: with SMTP id j144mr3904660pfd.140.1548281917641;
+        Wed, 23 Jan 2019 14:18:37 -0800 (PST)
+ARC-Seal: i=1; a=rsa-sha256; t=1548281917; cv=none;
+        d=google.com; s=arc-20160816;
+        b=GkBmXcHAyL7PcOAUUHsOVGapwl81McpCBtrX9QWsBTfIgeZfNNz98RSRVh58N4aq/I
+         zrcy71ps/Z7qPZZZMBQ/rfNqyPFSBuYL8igkMaqqKXU6NOQvqSHySo9ezGPx2VvvVYqv
+         YrsBy6qrSpVUca8qDPKMpoZfLRnZADVWzB77fdYxxDZxNqEiyqu083xmZXvapTsgBL1B
+         bQBZ8iID06AcqGqNfciMGIcNfThioHbbt6JyVznh7WK4kVSkNXpaREqYJmC3dAzGxC6f
+         lkoQlgpZJ6PyF7ZK+SNzzbMz15pX2prYQH6/dqlWYPbXGO7u0k0FY1k1yEnsjM57i+rx
+         5j0A==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816;
+        h=to:subject:message-id:date:from:in-reply-to:references:mime-version
+         :dkim-signature;
+        bh=UqYOxBYM2RRLEbOsZM1WivY0a0EA+d+DoEogzstjgYA=;
+        b=OJpyQlxLlBSLnFePn84p2qrwm7U7ivu5moGH3dggpLtfRBgyuJlRjVVDTaFZ83/OIn
+         ptGKTsNxEURS/413q3Aa/BUqBlK9PWhwx7d9G3qbzBhRjEnFNOMLxooJ2q+RMDLceJv3
+         ZPZkR5VGxdsQ+K6gmCTwtyKmSWhZwxB7uqSaD1sZrjKvVAnyAQDOLiNZi8SxNbYwjZBO
+         PUlNYaE03meMihYi/XJVh8Gya6fQo+FF4u78MnsMI6uDIiRv6dqFkRP+fOFlYuSBt3PO
+         YZD+oBHr8z0sGuTchaoTEEbvebO/nlIQt9zRXOY4dLurULltYFke2TEOUSCSSCZwb9Ml
+         HT0g==
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=pass head...@sylabs.io header.s=google header.b=bBBbuFEK;
+       spf=pass (google.com: domain of d...@sylabs.io designates 209.85.208.50 as permitted sender) smtp.mailfrom=d...@sylabs.io
+Return-Path: <d...@sylabs.io>
+Received: from fe3.lbl.gov (fe3.lbl.gov. [131.243.228.52])
+        by mx.google.com with ESMTP id j186si20018038pfb.174.2019.01.23.14.18.37
+        for <singu...@lbl.gov>;
+        Wed, 23 Jan 2019 14:18:37 -0800 (PST)
+Received-SPF: pass (google.com: domain of d...@sylabs.io designates 209.85.208.50 as permitted sender) client-ip=209.85.208.50;
+Authentication-Results: mx.google.com;
+       dkim=pass head...@sylabs.io header.s=google header.b=bBBbuFEK;
+       spf=pass (google.com: domain of d...@sylabs.io designates 209.85.208.50 as permitted sender) smtp.mailfrom=d...@sylabs.io
+X-Ironport-SBRS: 3.5
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: =?us-ascii?q?A2FCAADH50hchzLQVdFjHgEGBwaBUwcLA?=
+ =?us-ascii?q?YFagQ+BAieDewaBHYItklCSG4VoFIFnJQEKC4ECgzwCgn0iNgcNAQMBAQIBAQI?=
+ =?us-ascii?q?BAQIQAQEBCA0JCCkjDII6BQIDHwcOTWoBAQEBAQEBIwINJj0BAQEBAgEjHQEBD?=
+ =?us-ascii?q?CwECwsLDSoCAiIPAwEFARwGCAcEARwEgwEBJwGBUQgFCqELPIoqcYEvgncBAQV?=
+ =?us-ascii?q?0hj4IEowvghaBEYMSgx4EgSwBDAYBEjqCXIJXiVc+A4Z4kRgJhyaKehiBZ1CEY?=
+ =?us-ascii?q?YsAiw+MQwGDTDCBKwFnMHEzGixHMQaCNQmCEhqBCQEChSyCMIVdJDAMBIhIAQ0?=
+ =?us-ascii?q?XMIF3AQE?=
+X-IronPort-AV: E=Sophos;i="5.56,513,1539673200"; 
+   d="scan'208,217";a="141400279"
+Received: from mail-ed1-f50.google.com ([209.85.208.50])
+  by fe3.lbl.gov with ESMTP; 23 Jan 2019 14:18:15 -0800
+Received: by mail-ed1-f50.google.com with SMTP id y56so2966510edd.11
+        for <singu...@lbl.gov>; Wed, 23 Jan 2019 14:18:14 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=sylabs.io; s=google;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to;
+        bh=UqYOxBYM2RRLEbOsZM1WivY0a0EA+d+DoEogzstjgYA=;
+        b=bBBbuFEKp337qpekhFpqC54O+Ck+YAF75WC4ZbmhJsDaSMtxu/RLD2NwEHtlEZRzz+
+         6E5W2Fk1PKDpn+OjATKMDVZXljCEFjnyrd524I21QkxNNKN43TdArH3NGkIkS4Wapr6Q
+         0JU8rzKxGtX4oVf/gqd/8xb5dK0d7dMxbvuqK85OyGd0xDFq1Uu5UkIiFmv8daKCzUU7
+         wNg2BeAVS9f8XdEkeLTJqUE8pKJFqPDH06lR1CO4yMXrhqeSL1KO/0lyyxAqWuEN4+uN
+         b8qNuPN69Hev8husqs5WTCnFBc/HngkHOrvpm4cQTRU8Q9onK+mqLRocnMEnnGiI5T9h
+         6zWA==
+X-Gm-Message-State: AJcUukcSmsU1697nrF4Hhcflmm9PMdppwv3Bmb/yN20n1xiqBqx4wOvD
+	WEa2X8xfolHC7wWNyPEntRnjvWt1wYMpbyV2QMUTH2d+
+X-Received: by 2002:a17:906:e111:: with SMTP id gj17mr3876248ejb.150.1548281892926;
+ Wed, 23 Jan 2019 14:18:12 -0800 (PST)
+MIME-Version: 1.0
+References: <932c53a4-7b94-c4e3-9974-7171f6e6caf3@debian.org>
+ <20190107193332.GA18730@fnal.gov> <2baceccd-a42d-acae-9b31-2d97f2aec3b3@debian.org>
+ <CAN9aCeewf=Gs=5r+CQqB80c+5cGCfUuNxixoL7W-nC_uP=pLAw@mail.gmail.com>
+ <77fb72a6-5dba-cbe7-678b-b8dff774d8ed@debian.org> <20190109211532.GA77129@fnal.gov>
+ <bf31a16e-a021-fa12-8312-ee867301432f@debian.org> <20190115172816.GA55811@fnal.gov>
+ <CAN9aCecrrSFA0DMe7qmTxzALw+Ymgr4bvNL8dx5uq1_pXGVO6A@mail.gmail.com> <20190118161237.GA31083@fnal.gov>
+In-Reply-To: <20190118161237.GA31083@fnal.gov>
+From: Dave Godlove <d...@sylabs.io>
+Date: Wed, 23 Jan 2019 17:18:01 -0500
+Message-ID: <CAJ6xezmVCCw8Xk6D0iB07OUUG+fMV-sUN-W=-Gp-5eU1dDUqaw@mail.gmail.com>
+Subject: Re: [Singularity] Singularity in Debian
+To: singularity <singu...@lbl.gov>
+Content-Type: multipart/alternative; boundary="0000000000003d8c650580277879"
+
+--0000000000003d8c650580277879
+Content-Type: text/plain; charset="UTF-8"
+
+Heya Dave,
+
+Sorry for the delay.  We made an edit to the security page.  After the
+numbered list identifying the security procedure we've added a note to
+clarify that all patches will be made public.  Does that make sense?
+
+
+On Fri, Jan 18, 2019 at 11:13 AM David Dykstra <d...@fnal.gov> wrote:
+
+> Thanks a lot for that clarification, Dave, that sounds great.
+>
+> I was going to ask that someone update the security policy with this
+> info if needed, but re-reading point 8 again it already says "the
+> patches will be merged from the private development space into the
+> public repository" and does not limit that to only the latest version,
+> so the policy may already cover this.  It also says "a release will
+> immediately be made", although it doesn't define what release means if a
+> vulnerability only applies to older versions.  Maybe that would be good
+> to clarify.
+>
+> Dave
+>
+> On Thu, Jan 17, 2019 at 09:25:36PM -0500, David Godlove wrote:
+> > Hey Guys,
+> >
+> > This is a good discussion.  I spoke with Greg about this and we agreed
+> that
+> > we should make one thing absolutely clear.
+> >
+> > We are maintaining several LTS versions in SingularityPRO.  (2.4, 2.5,
+> 2.6,
+> > and 3.x in the future).  This means that we will need to develop security
+> > patches for vulnerabilities discovered in any and all of these releases.
+> > We want to make clear, that Sylabs will NEVER keep these patches closed
+> > source.  We will always release security patches that we've developed for
+> > LTS PRO versions.
+> >
+> > Now, this does not necessarily mean there will be new point releases on
+> > deprecated series.  It would require extra work for us to cut new
+> releases
+> > on old versions and it would defeat the purpose of deprecating the
+> > release.  And it's not even clear if we will actually apply the patches
+> > ourselves to the tips of the release branches in vault.  If the PRO and
+> > open source series have diverged widely enough it may take extra work to
+> > reconcile conflicts and apply the patches.  But we will always at least
+> > release them in one form or another so that they will be available to
+> > interested parties.  That is no extra work on our end and it's the right
+> > thing to do.
+> >
+> > Does that help assuage any fears you have about including Singularity in
+> > stable Afif?
+> >
+> > On Tue, Jan 15, 2019 at 12:29 PM David Dykstra <d...@fnal.gov> wrote:
+> >
+> > > Hi Afif,
+> > >
+> > > On Sat, Jan 12, 2019 at 05:38:20PM -0500, Afif Elghraoui wrote:
+> > > ...
+> > > > > How is this different from other open source projects?
+> > > >
+> > > > Other security-sensitive projects tend to have LTS branches that
+> > > continue to
+> > > > be supported with only security udates for a specified amount of
+> time.
+> > >
+> > > I don't think that's always the case; I would bet that there are
+> > > exceptions to that.  The project I am most familiar with is squid, and
+> > > they don't have LTS branches.  They support security updates for older
+> > > versions for a while after major upgrades, but mostly new releases come
+> > > to the latest stable version (and newer unstable versions if there is
+> > > one).  They always say which versions are impacted in a security
+> > > announcement.
+> > >
+> > > > >  What change to
+> > > > > the singularity team's security policy would be required to make
+> it be
+> > > > > acceptable?
+> > > >
+> > > > We would need to know that we'll have patches to backport to the
+> version
+> > > in
+> > > > Stable.
+> > >
+> > > I don't think it necessarily needs to be that strong, based on the Q&A
+> > > you link below (more details on that point below).  The singularity
+> > > security policy at
+> > >     https://www.sylabs.io/singularity/security-policy/
+> > > already says they will always get a CVE for a vulnerability, and it
+> > > doesn't say that doesn't apply to older releases, so assume it does
+> > > apply.  It also says that they will say in the announcement which
+> > > releases are affected.  How about if they further say that they will
+> > > provide a patch for older versions if it is easy, but not promise to
+> > > create a new release based on non-current open source versions?  I know
+> > > that squid has sometimes provided security patches for older versions
+> > > without making a new release.
+> > >
+> > > Singularity team & Sylabs: are you willing to amend your security
+> policy
+> > > to say that if the latest version is not vulnerable that you'll at
+> least
+> > > provide a source code patch for the newest vulnerable release, if the
+> > > patch is small?
+> > >
+> > > > > I think most open source projects would at least notify everyone
+> if an
+> > > > > exploit is found in only older releases and advise everyone to
+> upgrade
+> > > > > to the latest version as the fix.  Is this not sufficient for
+> Debian's
+> > > > > Stable?  Is the assumption that any security fix has to be a
+> minimum
+> > > > > change to the stable version, and not an upgrade to a version with
+> new
+> > > > > functionality?
+> > > >
+> > > > All I know about that is what's written here:
+> > > >   https://www.debian.org/security/faq#oldversion
+> > >
+> > > That clearly allows for exceptions.  It says
+> > >     In some cases it is not possible to backport a security fix, for
+> > >     example when large amounts of source code need to be modified or
+> > >     rewritten. If that happens it might be necessary to move to a new
+> > >     upstream version, but this has to be coordinated with the security
+> > >     team beforehand.
+> > > That sounds quite a lot like what the singularity security policy is
+> > > saying.  If they develop a fix for the latest release, and it would be
+> > > hard to do it for an older release, they could just recommend that
+> > > everyone upgrade to the latest version.  If the Debian package provider
+> > > also thinks it is too much work to backport, he or she would need to
+> ask
+> > > the Debian security team for an exception, and if they agreed it is too
+> > > hard they would grant it.
+> > >
+> > > The Debian Q&A also says it is most important to maintain stability for
+> > > library APIs, which is not an issue with this package.
+> > >
+> > > > > Are there other significant open source packages that stay only in
+> > > > > Debian Unstable; is this acceptable to users?  I believe that it
+> can be
+> > > > > a major pain for them, since it often requires newer versions of
+> all
+> > > > > dependent libraries.
+> > > >
+> > > > I /think/ firefox is like that (as opposed to firefox-esr, which is
+> what
+> > > > ends up in Stable). But some people do use Unstable and maybe a
+> > > combination
+> > > > of Testing and Unstable, but you'd have to be vigilant and know what
+> > > you're
+> > > > doing.
+> > >
+> > > Yes it would be quite a burden on users to ask them to get singularity
+> > > only from Unstable.  firefox doesn't sound like a good example because
+> > > there is firefox-esr.
+> > >
+> > > > > Is there an alternative widely used repository available?  Red Hat
+> > > > > Enterprise Linux has EPEL, and they normally want to keep the
+> first two
+> > > > > release numbers of packages to stay stable per OS version as well,
+> but
+> > > > > exceptions can be granted there if a backport patch is not
+> available.
+> > > >
+> > > > We have stable-backports, but packages are only allowed there if
+> they're
+> > > > destined for the next Stable--to ensure an upgrade path between
+> releases.
+> > >
+> > > This is a clear difference between the Debian and Fedora/EPEL/CentOS
+> > > communities, and I think it is unfortunate.  Some packages that are in
+> > > Fedora stay in EPEL forever and never make it to RHEL/CentOS.  I think
+> > > it would be good to have some mechanism for similar packages in Debian.
+> > >
+> > > > I'm not sure how readily an exception is granted for lack of a patch
+> in
+> > > > Debian, but it can cause disruption even if it is granted. Browsers
+> are
+> > > > given exceptions-- firefox-esr (which even still has major release
+> > > updates
+> > > > in Stable) and chromium, which can break packaged browser extensions,
+> > > etc.
+> > > >
+> > > > I could ask specifically about getting potential exceptions for
+> > > Singularity,
+> > > > but it was never mentioned as a possibility when the security team
+> > > reached
+> > > > out.
+> > >
+> > > Please do.  Talk specifically about the situation for 3.x only. I don't
+> > > think there should be expectations for continued security support for
+> > > 2.x for very long because of the difficulty of backporting fixes.
+> > > Backports between different 3.x levels when a security fix comes in a
+> > > new 3.x.y release should be much easier at that point in general
+> because
+> > > of the common language.  Of course this means that Debian packaging for
+> > > 3.x needs to get completed first.
+> > >
+> > > Dave
+> > >
+> > > --
+> > > You received this message because you are subscribed to the Google
+> Groups
+> > > "singularity" group.
+> > > To unsubscribe from this group and stop receiving emails from it, send
+> an
+> > > email to singu...@lbl.gov.
+> > >
+> >
+> > --
+> > You received this message because you are subscribed to the Google
+> Groups "singularity" group.
+> > To unsubscribe from this group and stop receiving emails from it, send
+> an email to singu...@lbl.gov.
+>
+> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+>
+
+
+-- 
+Dave Godlove
+Engineering Coordinator, Sylabs Inc.
+sylabs.io
+
+--0000000000003d8c650580277879
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Heya Dave,<div><br></div><div>Sorry for the delay.=C2=A0 W=
+e made an edit to the security page.=C2=A0 After the numbered list identify=
+ing the security procedure we&#39;ve added a note to clarify that all patch=
+es will be made public.=C2=A0 Does that make sense?</div><div><br></div></d=
+iv><br><div class=3D"gmail_quote"><div dir=3D"ltr" class=3D"gmail_attr">On =
+Fri, Jan 18, 2019 at 11:13 AM David Dykstra &lt;<a href=3D"mailto:d...@fnal=
+.gov">d...@fnal.gov</a>&gt; wrote:<br></div><blockquote class=3D"gmail_quot=
+e" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204)=
+;padding-left:1ex">Thanks a lot for that clarification, Dave, that sounds g=
+reat.<br>
+<br>
+I was going to ask that someone update the security policy with this<br>
+info if needed, but re-reading point 8 again it already says &quot;the<br>
+patches will be merged from the private development space into the<br>
+public repository&quot; and does not limit that to only the latest version,=
+<br>
+so the policy may already cover this.=C2=A0 It also says &quot;a release wi=
+ll<br>
+immediately be made&quot;, although it doesn&#39;t define what release mean=
+s if a<br>
+vulnerability only applies to older versions.=C2=A0 Maybe that would be goo=
+d<br>
+to clarify.<br>
+<br>
+Dave<br>
+<br>
+On Thu, Jan 17, 2019 at 09:25:36PM -0500, David Godlove wrote:<br>
+&gt; Hey Guys,<br>
+&gt; <br>
+&gt; This is a good discussion.=C2=A0 I spoke with Greg about this and we a=
+greed that<br>
+&gt; we should make one thing absolutely clear.<br>
+&gt; <br>
+&gt; We are maintaining several LTS versions in SingularityPRO.=C2=A0 (2.4,=
+ 2.5, 2.6,<br>
+&gt; and 3.x in the future).=C2=A0 This means that we will need to develop =
+security<br>
+&gt; patches for vulnerabilities discovered in any and all of these release=
+s.<br>
+&gt; We want to make clear, that Sylabs will NEVER keep these patches close=
+d<br>
+&gt; source.=C2=A0 We will always release security patches that we&#39;ve d=
+eveloped for<br>
+&gt; LTS PRO versions.<br>
+&gt; <br>
+&gt; Now, this does not necessarily mean there will be new point releases o=
+n<br>
+&gt; deprecated series.=C2=A0 It would require extra work for us to cut new=
+ releases<br>
+&gt; on old versions and it would defeat the purpose of deprecating the<br>
+&gt; release.=C2=A0 And it&#39;s not even clear if we will actually apply t=
+he patches<br>
+&gt; ourselves to the tips of the release branches in vault.=C2=A0 If the P=
+RO and<br>
+&gt; open source series have diverged widely enough it may take extra work =
+to<br>
+&gt; reconcile conflicts and apply the patches.=C2=A0 But we will always at=
+ least<br>
+&gt; release them in one form or another so that they will be available to<=
+br>
+&gt; interested parties.=C2=A0 That is no extra work on our end and it&#39;=
+s the right<br>
+&gt; thing to do.<br>
+&gt; <br>
+&gt; Does that help assuage any fears you have about including Singularity =
+in<br>
+&gt; stable Afif?<br>
+&gt; <br>
+&gt; On Tue, Jan 15, 2019 at 12:29 PM David Dykstra &lt;<a href=3D"mailto:d=
+...@fnal.gov" target=3D"_blank">d...@fnal.gov</a>&gt; wrote:<br>
+&gt; <br>
+&gt; &gt; Hi Afif,<br>
+&gt; &gt;<br>
+&gt; &gt; On Sat, Jan 12, 2019 at 05:38:20PM -0500, Afif Elghraoui wrote:<b=
+r>
+&gt; &gt; ...<br>
+&gt; &gt; &gt; &gt; How is this different from other open source projects?<=
+br>
+&gt; &gt; &gt;<br>
+&gt; &gt; &gt; Other security-sensitive projects tend to have LTS branches =
+that<br>
+&gt; &gt; continue to<br>
+&gt; &gt; &gt; be supported with only security udates for a specified amoun=
+t of time.<br>
+&gt; &gt;<br>
+&gt; &gt; I don&#39;t think that&#39;s always the case; I would bet that th=
+ere are<br>
+&gt; &gt; exceptions to that.=C2=A0 The project I am most familiar with is =
+squid, and<br>
+&gt; &gt; they don&#39;t have LTS branches.=C2=A0 They support security upd=
+ates for older<br>
+&gt; &gt; versions for a while after major upgrades, but mostly new release=
+s come<br>
+&gt; &gt; to the latest stable version (and newer unstable versions if ther=
+e is<br>
+&gt; &gt; one).=C2=A0 They always say which versions are impacted in a secu=
+rity<br>
+&gt; &gt; announcement.<br>
+&gt; &gt;<br>
+&gt; &gt; &gt; &gt;=C2=A0 What change to<br>
+&gt; &gt; &gt; &gt; the singularity team&#39;s security policy would be req=
+uired to make it be<br>
+&gt; &gt; &gt; &gt; acceptable?<br>
+&gt; &gt; &gt;<br>
+&gt; &gt; &gt; We would need to know that we&#39;ll have patches to backpor=
+t to the version<br>
+&gt; &gt; in<br>
+&gt; &gt; &gt; Stable.<br>
+&gt; &gt;<br>
+&gt; &gt; I don&#39;t think it necessarily needs to be that strong, based o=
+n the Q&amp;A<br>
+&gt; &gt; you link below (more details on that point below).=C2=A0 The sing=
+ularity<br>
+&gt; &gt; security policy at<br>
+&gt; &gt;=C2=A0 =C2=A0 =C2=A0<a href=3D"https://www.sylabs.io/singularity/s=
+ecurity-policy/" rel=3D"noreferrer" target=3D"_blank">https://www.sylabs.io=
+/singularity/security-policy/</a><br>
+&gt; &gt; already says they will always get a CVE for a vulnerability, and =
+it<br>
+&gt; &gt; doesn&#39;t say that doesn&#39;t apply to older releases, so assu=
+me it does<br>
+&gt; &gt; apply.=C2=A0 It also says that they will say in the announcement =
+which<br>
+&gt; &gt; releases are affected.=C2=A0 How about if they further say that t=
+hey will<br>
+&gt; &gt; provide a patch for older versions if it is easy, but not promise=
+ to<br>
+&gt; &gt; create a new release based on non-current open source versions?=
+=C2=A0 I know<br>
+&gt; &gt; that squid has sometimes provided security patches for older vers=
+ions<br>
+&gt; &gt; without making a new release.<br>
+&gt; &gt;<br>
+&gt; &gt; Singularity team &amp; Sylabs: are you willing to amend your secu=
+rity policy<br>
+&gt; &gt; to say that if the latest version is not vulnerable that you&#39;=
+ll at least<br>
+&gt; &gt; provide a source code patch for the newest vulnerable release, if=
+ the<br>
+&gt; &gt; patch is small?<br>
+&gt; &gt;<br>
+&gt; &gt; &gt; &gt; I think most open source projects would at least notify=
+ everyone if an<br>
+&gt; &gt; &gt; &gt; exploit is found in only older releases and advise ever=
+yone to upgrade<br>
+&gt; &gt; &gt; &gt; to the latest version as the fix.=C2=A0 Is this not suf=
+ficient for Debian&#39;s<br>
+&gt; &gt; &gt; &gt; Stable?=C2=A0 Is the assumption that any security fix h=
+as to be a minimum<br>
+&gt; &gt; &gt; &gt; change to the stable version, and not an upgrade to a v=
+ersion with new<br>
+&gt; &gt; &gt; &gt; functionality?<br>
+&gt; &gt; &gt;<br>
+&gt; &gt; &gt; All I know about that is what&#39;s written here:<br>
+&gt; &gt; &gt;=C2=A0 =C2=A0<a href=3D"https://www.debian.org/security/faq#o=
+ldversion" rel=3D"noreferrer" target=3D"_blank">https://www.debian.org/secu=
+rity/faq#oldversion</a><br>
+&gt; &gt;<br>
+&gt; &gt; That clearly allows for exceptions.=C2=A0 It says<br>
+&gt; &gt;=C2=A0 =C2=A0 =C2=A0In some cases it is not possible to backport a=
+ security fix, for<br>
+&gt; &gt;=C2=A0 =C2=A0 =C2=A0example when large amounts of source code need=
+ to be modified or<br>
+&gt; &gt;=C2=A0 =C2=A0 =C2=A0rewritten. If that happens it might be necessa=
+ry to move to a new<br>
+&gt; &gt;=C2=A0 =C2=A0 =C2=A0upstream version, but this has to be coordinat=
+ed with the security<br>
+&gt; &gt;=C2=A0 =C2=A0 =C2=A0team beforehand.<br>
+&gt; &gt; That sounds quite a lot like what the singularity security policy=
+ is<br>
+&gt; &gt; saying.=C2=A0 If they develop a fix for the latest release, and i=
+t would be<br>
+&gt; &gt; hard to do it for an older release, they could just recommend tha=
+t<br>
+&gt; &gt; everyone upgrade to the latest version.=C2=A0 If the Debian packa=
+ge provider<br>
+&gt; &gt; also thinks it is too much work to backport, he or she would need=
+ to ask<br>
+&gt; &gt; the Debian security team for an exception, and if they agreed it =
+is too<br>
+&gt; &gt; hard they would grant it.<br>
+&gt; &gt;<br>
+&gt; &gt; The Debian Q&amp;A also says it is most important to maintain sta=
+bility for<br>
+&gt; &gt; library APIs, which is not an issue with this package.<br>
+&gt; &gt;<br>
+&gt; &gt; &gt; &gt; Are there other significant open source packages that s=
+tay only in<br>
+&gt; &gt; &gt; &gt; Debian Unstable; is this acceptable to users?=C2=A0 I b=
+elieve that it can be<br>
+&gt; &gt; &gt; &gt; a major pain for them, since it often requires newer ve=
+rsions of all<br>
+&gt; &gt; &gt; &gt; dependent libraries.<br>
+&gt; &gt; &gt;<br>
+&gt; &gt; &gt; I /think/ firefox is like that (as opposed to firefox-esr, w=
+hich is what<br>
+&gt; &gt; &gt; ends up in Stable). But some people do use Unstable and mayb=
+e a<br>
+&gt; &gt; combination<br>
+&gt; &gt; &gt; of Testing and Unstable, but you&#39;d have to be vigilant a=
+nd know what<br>
+&gt; &gt; you&#39;re<br>
+&gt; &gt; &gt; doing.<br>
+&gt; &gt;<br>
+&gt; &gt; Yes it would be quite a burden on users to ask them to get singul=
+arity<br>
+&gt; &gt; only from Unstable.=C2=A0 firefox doesn&#39;t sound like a good e=
+xample because<br>
+&gt; &gt; there is firefox-esr.<br>
+&gt; &gt;<br>
+&gt; &gt; &gt; &gt; Is there an alternative widely used repository availabl=
+e?=C2=A0 Red Hat<br>
+&gt; &gt; &gt; &gt; Enterprise Linux has EPEL, and they normally want to ke=
+ep the first two<br>
+&gt; &gt; &gt; &gt; release numbers of packages to stay stable per OS versi=
+on as well, but<br>
+&gt; &gt; &gt; &gt; exceptions can be granted there if a backport patch is =
+not available.<br>
+&gt; &gt; &gt;<br>
+&gt; &gt; &gt; We have stable-backports, but packages are only allowed ther=
+e if they&#39;re<br>
+&gt; &gt; &gt; destined for the next Stable--to ensure an upgrade path betw=
+een releases.<br>
+&gt; &gt;<br>
+&gt; &gt; This is a clear difference between the Debian and Fedora/EPEL/Cen=
+tOS<br>
+&gt; &gt; communities, and I think it is unfortunate.=C2=A0 Some packages t=
+hat are in<br>
+&gt; &gt; Fedora stay in EPEL forever and never make it to RHEL/CentOS.=C2=
+=A0 I think<br>
+&gt; &gt; it would be good to have some mechanism for similar packages in D=
+ebian.<br>
+&gt; &gt;<br>
+&gt; &gt; &gt; I&#39;m not sure how readily an exception is granted for lac=
+k of a patch in<br>
+&gt; &gt; &gt; Debian, but it can cause disruption even if it is granted. B=
+rowsers are<br>
+&gt; &gt; &gt; given exceptions-- firefox-esr (which even still has major r=
+elease<br>
+&gt; &gt; updates<br>
+&gt; &gt; &gt; in Stable) and chromium, which can break packaged browser ex=
+tensions,<br>
+&gt; &gt; etc.<br>
+&gt; &gt; &gt;<br>
+&gt; &gt; &gt; I could ask specifically about getting potential exceptions =
+for<br>
+&gt; &gt; Singularity,<br>
+&gt; &gt; &gt; but it was never mentioned as a possibility when the securit=
+y team<br>
+&gt; &gt; reached<br>
+&gt; &gt; &gt; out.<br>
+&gt; &gt;<br>
+&gt; &gt; Please do.=C2=A0 Talk specifically about the situation for 3.x on=
+ly. I don&#39;t<br>
+&gt; &gt; think there should be expectations for continued security support=
+ for<br>
+&gt; &gt; 2.x for very long because of the difficulty of backporting fixes.=
+<br>
+&gt; &gt; Backports between different 3.x levels when a security fix comes =
+in a<br>
+&gt; &gt; new 3.x.y release should be much easier at that point in general =
+because<br>
+&gt; &gt; of the common language.=C2=A0 Of course this means that Debian pa=
+ckaging for<br>
+&gt; &gt; 3.x needs to get completed first.<br>
+&gt; &gt;<br>
+&gt; &gt; Dave<br>
+&gt; &gt;<br>
+&gt; &gt; --<br>
+&gt; &gt; You received this message because you are subscribed to the Googl=
+e Groups<br>
+&gt; &gt; &quot;singularity&quot; group.<br>
+&gt; &gt; To unsubscribe from this group and stop receiving emails from it,=
+ send an<br>
+&gt; &gt; email to <a href=3D"mailto:singularity%...@lbl.gov" target=3D"_bl=
+ank">singu...@lbl.gov</a>.<br>
+&gt; &gt;<br>
+&gt; <br>
+&gt; -- <br>
+&gt; You received this message because you are subscribed to the Google Gro=
+ups &quot;singularity&quot; group.<br>
+&gt; To unsubscribe from this group and stop receiving emails from it, send=
+ an email to <a href=3D"mailto:singularity%...@lbl.gov" target=3D"_blank">s=
+ingu...@lbl.gov</a>.<br>
+<br>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singularity%...@lbl.gov" target=3D"_blank">singu.=
+..@lbl.gov</a>.<br>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+ class=3D"gmail_signature"><div dir=3D"ltr"><div><div dir=3D"ltr">Dave Godl=
+ove<div>Engineering Coordinator, Sylabs Inc.</div><div><a href=3D"https://s=
+ylabs.io" target=3D"_blank">sylabs.io</a></div></div></div></div></div>
+
+--0000000000003d8c650580277879--

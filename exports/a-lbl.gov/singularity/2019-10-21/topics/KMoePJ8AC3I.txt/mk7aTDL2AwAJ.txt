@@ -1,0 +1,250 @@
+Date: Thu, 3 Aug 2017 10:31:31 -0700 (PDT)
+From: =?UTF-8?Q?F=C3=A9lix_C=2E_Morency?= <felix....@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <f721b1ee-e1c4-42aa-a94a-b38f701df4ea@lbl.gov>
+In-Reply-To: <CAAQzouOh4BbuxvGDAr3iv5rQdDRxGp02vxci28x=abCH8+FVdA@mail.gmail.com>
+References: <CAApQTTjU+=ASab7pEv8Vn=TOLY2h9j9av1+zAtK-x6qsZXZhxA@mail.gmail.com>
+ <CAAQzouOh4BbuxvGDAr3iv5rQdDRxGp02vxci28x=abCH8+FVdA@mail.gmail.com>
+Subject: Re: [Singularity] Container format change idea
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_37_420010152.1501781491465"
+
+------=_Part_37_420010152.1501781491465
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_38_1261551109.1501781491466"
+
+------=_Part_38_1261551109.1501781491466
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
++1
+
+On Thursday, August 3, 2017 at 1:23:12 PM UTC-4, Chris Filo Gorgolewski 
+wrote:
+>
+> +1 for squashfs and removal of the size specification requirement!
+>
+> On Aug 3, 2017 10:17 AM, "Gregory M. Kurtzer" <gm...@gmail.com 
+> <javascript:>> wrote:
+>
+>> Hello everyone, 
+>>
+>> This is a much longer email then I intended to write, but I felt that 
+>> background is important. I have been spending a lot of time considering the 
+>> Singularity container format. There are several pretty major considerations 
+>> that are far from ideal that has warranted this:
+>>
+>> 1. Images are always bloated and they have to be "right sized" which is 
+>> difficult to guess at before a container has been built.
+>> 2. Images must be packaged and/or compressed for distribution
+>> 3. Containers are modifiable, and while many people use this 
+>> functionality for development or part of their workflow, it is not a great 
+>> idea as it leads to container "black boxes".
+>> 4. When we `mkfs.ext3` the container payload, mkfs automatically adds 
+>> some sparseness which creates inconsistencies due to how programs, file 
+>> systems, and users copy and move images.
+>> 5. Modifiable images will have to be resigned (working on that feature 
+>> now) and may break encryption models that are being investigated.
+>>
+>> These points have caused me to think about different formats, and I've 
+>> considered several alternatives:
+>>
+>> 1. Custom Singularity file system: This gives us massive flexibility, but 
+>> we do not want to require Singularity support on the host kernel. Also a 
+>> long time to develop and Q/A.
+>>
+>> 2. Fuse singularity file system: This also gives us lots of flexibility, 
+>> but also comes with the baggage of Fuse and will take a long time to 
+>> develop and Q/A.
+>>
+>> 3. SquashFS: This is an existing file system which is supported by all (I 
+>> believe) currently supported distributions of Linux. Using SquashFS based 
+>> containers is already supported, but we don't have any mechanism for 
+>> creating containers of this form. Development of that interface would be 
+>> pretty easy, and quite possibly even more intuitive then it currently 
+>> stands.
+>>
+>> Out of the 3 above options, #3 is the most appealing for me for the short 
+>> term. But there are some pros and a con associated with it:
+>>
+>> Pros:
+>> - Container images never need a size, bootstrap, import, etc.. will 
+>> always be "right sized"
+>> - Containers will always be compressed, and never need to be uncompressed
+>> - No sparseness, so containers are very easy to move
+>> - Containers are guaranteed immutable
+>> - We can better support signing and possible encryption of containers
+>> - Labels/keys/metadata will always be in sync with containers
+>> - SquashFS is a known standard for doing this sort of thing
+>>
+>> Cons:
+>> - The --writable option and all associated features will no longer be 
+>> supported as containers will be immutable.
+>>
+>> Personally, I see the negative as not even completely negative. It means 
+>> we will force the container management paradigm to something more akin to 
+>> compiling. Metaphorically, the definition file is the source code, and the 
+>> resulting container is the compiled result. When dealing with source code, 
+>> we don't edit the binary when there is a problem, we edit the source code 
+>> and then recompile. This will have to be the model going forth if we choose 
+>> immutable containers, and I actually consider this a good thing. It means 
+>> containers are derived from a recipe.
+>>
+>> There is an additional bit of support I can add to mitigate any 
+>> development issues that this might cause, for example, container 
+>> "sandboxes". Singularity already supports bootstrapping and running from a 
+>> container directory. So development and testing can still easily occur. And 
+>> when you are ready to create an image from that "sandbox", you could do it 
+>> directly from the sandbox (icky, but we can in theory support it), or build 
+>> from the definition file.
+>>
+>> After speaking with some people about this, here is the interface I am 
+>> considering for this to replace the "create", "import" (as they will no 
+>> longer be necessary) and the "bootstrap" commands:
+>>
+>> # singularity build container.simg recipe.def
+>> # singularity build container.simg docker://container
+>> # singularity build container.simg /path/to/container.tar.gz
+>>
+>> Or using a sandbox:
+>>
+>> # singularity build --sandbox /path/to/sandbox [any of the above targets]
+>> # singularity shell /path/to/sandbox
+>>
+>> And then after making the necessary changes to the sandbox, building an 
+>> image directly from the sandbox:
+>>
+>> # singularity build container.simg /path/to/sandbox
+>>
+>>
+>> So my questions are,...
+>>
+>> Aside from the knee-jerk reactions of "OMG, nooo, change scares me!", are 
+>> there any known workflows that this will break that can be described?
+>>
+>> Are there any additional workarounds that need consideration?
+>>
+>> What about positive feedback, does this sound like a good idea?
+>>
+>>
+>> -- 
+>> Gregory M. Kurtzer
+>> CEO, SingularityWare, LLC.
+>> Senior Architect, RStor
+>> Computational Science Advisor, Lawrence Berkeley National Laboratory
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+------=_Part_38_1261551109.1501781491466
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">+1<br><br>On Thursday, August 3, 2017 at 1:23:12 PM UTC-4,=
+ Chris Filo Gorgolewski wrote:<blockquote class=3D"gmail_quote" style=3D"ma=
+rgin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;">=
+<div dir=3D"auto">+1 for squashfs and removal of the size specification req=
+uirement!</div><div><br><div class=3D"gmail_quote">On Aug 3, 2017 10:17 AM,=
+ &quot;Gregory M. Kurtzer&quot; &lt;<a href=3D"javascript:" target=3D"_blan=
+k" gdf-obfuscated-mailto=3D"iKTISJcWDAAJ" rel=3D"nofollow" onmousedown=3D"t=
+his.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;=
+javascript:&#39;;return true;">gm...@gmail.com</a>&gt; wrote:<br type=3D"at=
+tribution"><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;bor=
+der-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Hello everyone,=
+=C2=A0<br clear=3D"all"><div><br></div><div>This is a much longer email the=
+n I intended to write, but I felt that background is important. I have been=
+ spending a lot of time considering the Singularity container format. There=
+ are several pretty major considerations that are far from ideal that has w=
+arranted this:</div><div><br></div><div>1. Images are always bloated and th=
+ey have to be &quot;right sized&quot; which is difficult to guess at before=
+ a container has been built.</div><div>2. Images must be packaged and/or co=
+mpressed for distribution</div><div>3. Containers are modifiable, and while=
+ many people use this functionality for development or part of their workfl=
+ow, it is not a great idea as it leads to container &quot;black boxes&quot;=
+.</div><div>4. When we `mkfs.ext3` the container payload, mkfs automaticall=
+y adds some sparseness which creates inconsistencies due to how programs, f=
+ile systems, and users copy and move images.</div><div>5. Modifiable images=
+ will have to be resigned (working on that feature now) and may break encry=
+ption models that are being investigated.</div><div><br></div><div>These po=
+ints have caused me to think about different formats, and I&#39;ve consider=
+ed several alternatives:</div><div><br></div><div>1. Custom Singularity fil=
+e system: This gives us massive flexibility, but we do not want to require =
+Singularity support on the host kernel. Also a long time to develop and Q/A=
+.</div><div><br></div><div>2. Fuse singularity file system: This also gives=
+ us lots of flexibility, but also comes with the baggage of Fuse and will t=
+ake a long time to develop and Q/A.</div><div><br></div><div>3. SquashFS: T=
+his is an existing file system which is supported by all (I believe) curren=
+tly supported distributions of Linux. Using SquashFS based containers is al=
+ready supported, but we don&#39;t have any mechanism for creating container=
+s of this form. Development of that interface would be pretty easy, and qui=
+te possibly even more intuitive then it currently stands.</div><div><br></d=
+iv><div>Out of the 3 above options, #3 is the most appealing for me for the=
+ short term. But there are some pros and a con associated with it:</div><di=
+v><br></div><div>Pros:</div><div>- Container images never need a size, boot=
+strap, import, etc.. will always be &quot;right sized&quot;</div><div>- Con=
+tainers will always be compressed, and never need to be uncompressed</div><=
+div>- No sparseness, so containers are very easy to move</div><div>- Contai=
+ners are guaranteed immutable</div><div>- We can better support signing and=
+ possible encryption of containers</div><div>- Labels/keys/metadata will al=
+ways be in sync with containers</div><div>- SquashFS is a known standard fo=
+r doing this sort of thing</div><div><br></div><div>Cons:</div><div>- The -=
+-writable option and all associated features will no longer be supported as=
+ containers will be immutable.</div><div><br></div><div>Personally, I see t=
+he negative as not even completely negative. It means we will force the con=
+tainer management paradigm to something more akin to compiling. Metaphorica=
+lly, the definition file is the source code, and the resulting container is=
+ the compiled result. When dealing with source code, we don&#39;t edit the =
+binary when there is a problem, we edit the source code and then recompile.=
+ This will have to be the model going forth if we choose immutable containe=
+rs, and I actually consider this a good thing. It means containers are deri=
+ved from a recipe.</div><div><br></div><div>There is an additional bit of s=
+upport I can add to mitigate any development issues that this might cause, =
+for example, container &quot;sandboxes&quot;. Singularity already supports =
+bootstrapping and running from a container directory. So development and te=
+sting can still easily occur. And when you are ready to create an image fro=
+m that &quot;sandbox&quot;, you could do it directly from the sandbox (icky=
+, but we can in theory support it), or build from the definition file.</div=
+><div><br></div><div>After speaking with some people about this, here is th=
+e interface I am considering for this to replace the &quot;create&quot;, &q=
+uot;import&quot; (as they will no longer be necessary) and the &quot;bootst=
+rap&quot; commands:</div><div><br></div><div># singularity build container.=
+simg recipe.def</div><div># singularity build container.simg docker://conta=
+iner</div><div># singularity build container.simg /path/to/container.tar.gz=
+</div><div><br></div><div>Or using a sandbox:</div><div><br></div><div># si=
+ngularity build --sandbox /path/to/sandbox [any of the above targets]</div>=
+<div># singularity shell /path/to/sandbox</div><div><br></div><div>And then=
+ after making the necessary changes to the sandbox, building an image direc=
+tly from the sandbox:</div><div><br></div><div># singularity build containe=
+r.simg /path/to/sandbox</div><div><br></div><div><br></div><div>So my quest=
+ions are,...</div><div><br></div><div>Aside from the knee-jerk reactions of=
+ &quot;OMG, nooo, change scares me!&quot;, are there any known workflows th=
+at this will break that can be described?</div><div><br></div><div>Are ther=
+e any additional workarounds that need consideration?</div><div><br></div><=
+div>What about positive feedback, does this sound like a good idea?</div><d=
+iv><br></div><div><br></div>-- <br><div><div dir=3D"ltr"><div><div dir=3D"l=
+tr"><div><div dir=3D"ltr"><div>Gregory M. Kurtzer</div><div>CEO, Singularit=
+yWare, LLC.</div><div>Senior Architect, RStor</div><div><span style=3D"font=
+-size:12.8px">Computational Science Advisor, Lawrence Berkeley National Lab=
+oratory</span><br></div></div></div></div></div></div></div>
+</div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+iKTISJcWDAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</blockquote></div></div>
+</blockquote></div>
+------=_Part_38_1261551109.1501781491466--
+
+------=_Part_37_420010152.1501781491465--

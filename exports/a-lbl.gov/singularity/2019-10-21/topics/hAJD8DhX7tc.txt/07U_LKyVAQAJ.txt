@@ -1,0 +1,188 @@
+Date: Wed, 27 Sep 2017 15:20:50 -0700 (PDT)
+From: =?UTF-8?Q?C=C3=A9dric_Clerget?= <cedric...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <7e52a379-9fe8-4129-81dd-e36ab43d108a@lbl.gov>
+In-Reply-To: <c1d20296-2d88-43d5-9b71-7566ba73a838@lbl.gov>
+References: <c1d20296-2d88-43d5-9b71-7566ba73a838@lbl.gov>
+Subject: Re: Too many levels of symbolic links - autofs, automount,
+ namespaces, and singularity
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_6_1319963228.1506550850810"
+
+------=_Part_6_1319963228.1506550850810
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_7_1495841915.1506550850811"
+
+------=_Part_7_1495841915.1506550850811
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Hi,
+
+Indeed, if you have to put every path in configuration file ...
+If singularity is executed while current working directory is home=20
+directory, it produces error ?
+Otherwise maybe you could try to put for in user directories a file=20
+$HOME/.singularity-init with contents:
+
+#!/bin/bash
+>
+> OLD=3D$PWD
+> cd $HOME # force autofs mount
+> cd $OLD
+>
+
+This file is sourced before executing shell/exec/run commands, it may help=
+=20
+you
+
+C=C3=A9dric
+
+Le mercredi 27 septembre 2017 00:13:07 UTC+2, Benjamin McGough a =C3=A9crit=
+ :
+>
+> We have several interactive compute servers for our users. Over the last=
+=20
+> few months, we have deployed singularity, and have several users who are=
+=20
+> making heavy use of it!
+>
+> Correlated with that use have been numerous contacts due to the 'Too many=
+=20
+> levels of symbolic links' error.
+>
+> I am familiar with the issues posted and the workaround in the developmen=
+t=20
+> branch right now, and I think that will likely solve the issue for most=
+=20
+> users, but not us unfortunately. Also, we see this error on automounted=
+=20
+> directories for users who do not use singularity at all. I suspect autofs=
+=20
+> is in a bad state as a result of the namespace collision/misunderstanding=
+.
+>
+> My understanding of the workaround in singularity is that you simply open=
+=20
+> directories listed in the config file before you leave the namespace. Thi=
+s=20
+> makes everything work as autofs expects things to work (our autofs - Ubun=
+tu=20
+> 14.04 3.13.0-68 I believe to be namespace agnostic). The reason it does n=
+ot=20
+> work for us is that we use automount for our users' home directories. We=
+=20
+> would have a config file several thousand lines long and this would defea=
+t=20
+> most of the benefit of autofs in the first place. We are looking at=20
+> narrowing the user list down to the actual users, and gating access with=
+=20
+> the config file change necessary for new users, but we would rather not d=
+o=20
+> that.
+>
+> Finally, I am still in the dark about the errors outside singularity and=
+=20
+> what state the automounter is in when producing these errors. I have=20
+> observed the following simultaneously:
+>
+> one user's home directory produces the error on every attempted access,=
+=20
+> and I am unable to unmount it manually (umount: dir: not mounted)
+> unmounted directories can be mounted by running `ls` but there is about a=
+=20
+> 30 second timeout before it happens - once mounted they return directory=
+=20
+> contents quickly
+> another user's home directory was producing the error, but after a time I=
+=20
+> was able to mount it and read it again, so it had unmounted successfully =
+at=20
+> some point
+>
+> My investigations are a bit stymied right now as autofs is very opaque.=
+=20
+> The `automount` service/daemon simply manages the mount points and spends=
+=20
+> almost all of its life in sigtimedwait. All the cool stuff happens in the=
+=20
+> kernel.
+>
+> Also to note is that Ubuntu 14.04 is not blessed with systemd and we are=
+=20
+> not running docker or any other container systems, so I do not know of an=
+y=20
+> other software other than singularity using namespaces on the systems.
+>
+> I hope other singluarity users and contributors who have had any=20
+> experiences with this issue can chime in on what they have seen, and mayb=
+e=20
+> we can figure out if we are just running systems too old for this, or if=
+=20
+> there is a fix that will make everyone happy.
+>
+> Thanks,
+>
+> -Ben
+>
+
+------=_Part_7_1495841915.1506550850811
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi,<br><br>Indeed, if you have to put every path in config=
+uration file ...<br>If singularity is executed while current working direct=
+ory is home directory, it produces error ?<br>Otherwise maybe you could try=
+ to put for in user directories a file $HOME/.singularity-init with content=
+s:<br><br><blockquote class=3D"gmail_quote" style=3D"margin: 0px 0px 0px 0.=
+8ex; border-left: 1px solid rgb(204, 204, 204); padding-left: 1ex;">#!/bin/=
+bash<br><br>OLD=3D$PWD<br>cd $HOME # force autofs mount<br>cd $OLD<br></blo=
+ckquote><br>This file is sourced before executing shell/exec/run commands, =
+it may help you<br><br>C=C3=A9dric<br><br>Le mercredi 27 septembre 2017 00:=
+13:07 UTC+2, Benjamin McGough a =C3=A9crit=C2=A0:<blockquote class=3D"gmail=
+_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;p=
+adding-left: 1ex;"><div dir=3D"ltr">We have several interactive compute ser=
+vers for our users. Over the last few months, we have deployed singularity,=
+ and have several users who are making heavy use of it!<div><br></div><div>=
+Correlated with that use have been numerous contacts due to the &#39;Too ma=
+ny levels of symbolic links&#39; error.</div><div><br></div><div>I am famil=
+iar with the issues posted and the workaround in the development branch rig=
+ht now, and I think that will likely solve the issue for most users, but no=
+t us unfortunately. Also, we see this error on automounted directories for =
+users who do not use singularity at all. I suspect autofs is in a bad state=
+ as a result of the namespace collision/misunderstanding.</div><div><br></d=
+iv><div>My understanding of the workaround in singularity is that you simpl=
+y open directories listed in the config file before you leave the namespace=
+. This makes everything work as autofs expects things to work (our autofs -=
+ Ubuntu 14.04 3.13.0-68 I believe to be namespace agnostic). The reason it =
+does not work for us is that we use automount for our users&#39; home direc=
+tories. We would have a config file several thousand lines long and this wo=
+uld defeat most of the benefit of autofs in the first place. We are looking=
+ at narrowing the user list down to the actual users, and gating access wit=
+h the config file change necessary for new users, but we would rather not d=
+o that.</div><div><br></div><div>Finally, I am still in the dark about the =
+errors outside singularity and what state the automounter is in when produc=
+ing these errors. I have observed the following simultaneously:</div><div><=
+br></div><div>one user&#39;s home directory produces the error on every att=
+empted access, and I am unable to unmount it manually (umount: dir: not mou=
+nted)</div><div>unmounted directories can be mounted by running `ls` but th=
+ere is about a 30 second timeout before it happens - once mounted they retu=
+rn directory contents quickly</div><div>another user&#39;s home directory w=
+as producing the error, but after a time I was able to mount it and read it=
+ again, so it had unmounted successfully at some point</div><div><br></div>=
+<div>My investigations are a bit stymied right now as autofs is very opaque=
+. The `automount` service/daemon simply manages the mount points and spends=
+ almost all of its life in sigtimedwait. All the cool stuff happens in the =
+kernel.</div><div><br></div><div>Also to note is that Ubuntu 14.04 is not b=
+lessed with systemd and we are not running docker or any other container sy=
+stems, so I do not know of any other software other than singularity using =
+namespaces on the systems.</div><div><br></div><div>I hope other singluarit=
+y users and contributors who have had any experiences with this issue can c=
+hime in on what they have seen, and maybe we can figure out if we are just =
+running systems too old for this, or if there is a fix that will make every=
+one happy.</div><div><br></div><div>Thanks,</div><div><br></div><div>-Ben</=
+div></div></blockquote></div>
+------=_Part_7_1495841915.1506550850811--
+
+------=_Part_6_1319963228.1506550850810--

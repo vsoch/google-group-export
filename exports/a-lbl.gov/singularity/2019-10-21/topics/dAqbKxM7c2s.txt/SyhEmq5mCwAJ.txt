@@ -1,0 +1,2057 @@
+Date: Thu, 26 Jan 2017 22:55:49 -0800 (PST)
+From: Jie Zhang <jessezh...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <7a79a05e-a0a6-44f6-9934-25deb76f92f2@lbl.gov>
+In-Reply-To: <CAJm6r9-49MbCymbkck1obKVTM4C+W7keexDg6Za9bu3Ec97+qg@mail.gmail.com>
+References: <CACtFfPExr2itZtYRA3ifQrV+ONa1d+7fyZiAsyu4Ztyc1vWVHg@mail.gmail.com>
+ <CAJm6r9_+iEAoxaF_DmvxYu7ZcdaQNZA0QF_V4RBXHqAxXTCJAQ@mail.gmail.com> <4428a059-f487-4446-80d0-101c78f63a04@lbl.gov>
+ <CAJm6r9-49MbCymbkck1obKVTM4C+W7keexDg6Za9bu3Ec97+qg@mail.gmail.com>
+Subject: Re: [Singularity] Not able to return with MVAPICH2
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_628_804032151.1485500149686"
+
+------=_Part_628_804032151.1485500149686
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_629_461076787.1485500149686"
+
+------=_Part_629_461076787.1485500149686
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi, Krishna,
+
+I tried adding strace to the plain singularity case (strace 
+/usr/local/bin/singularity exec singularity-centos7.img date), what I found 
+is that it actually exited with error (255) at the end 
+(non-root-strace.log).
+If trying with root (sudo strace /usr/local/bin/singularity exec 
+singularity-centos7.img date), there's no error. (root-strace.log)
+Trying with mpirun_rsh, it looks hanging on futex system call. 
+(non-root-mpirun_rsh-strace.log)
+
+Please take a look at the log files attached below to see if you have any 
+insight.
+
+
+
+On Thursday, January 26, 2017 at 8:10:22 PM UTC-5, Krishna Muriki wrote:
+>
+> Jie,
+>
+> Could you add strace to the container and run strace date to see why the 
+> date process is going defunct ? Also first try running with -np 1 host1 and 
+> then scale to -np 2 and multiple nodes. 
+>
+> Thanks,
+> Krishna.
+>
+> On Thu, Jan 26, 2017 at 5:07 PM, Jie Zhang <jes...@gmail.com> wrote:
+>
+>> Hi, Krishna,
+>>
+>>
+>> Without mpirun_rsh, all other tests work fine.
+>>
+>> ssh host1  singularity exec singularity-centos7.img date
+>> singularity exec singularity-centos7.img date
+>>
+>>
+>>
+>> On Thursday, January 26, 2017 at 7:58:21 PM UTC-5, Krishna Muriki wrote:
+>>>
+>>> Jie,
+>>>
+>>> Can you do a couple of tests, see if directly running  'singularity 
+>>> exec singularity-centos7.img date' without mpirun_rsh returns the prompt 
+>>> back to you properly. If that also gets struck, add strace to your 
+>>> container and run strace date.  
+>>>
+>>> If that does return properly try running with 'ssh host1  singularity 
+>>> exec singularity-centos7.img date' without mpirun_rsh and see if that works.
+>>>
+>>> --Krishna.
+>>>
+>>> On Thu, Jan 26, 2017 at 1:51 PM, Jie Zhang <zh...@osu.edu> wrote:
+>>>
+>>>> Hello,
+>>>>
+>>>> I'm trying singularity with MVAPICH2. I found a small issue here. 
+>>>> When running `mpirun_rsh -np 2  host1 host1  singularity exec 
+>>>> singularity-centos7.img date', the routine (date) got executed 
+>>>> successfully, but the mpi command is not able to return.
+>>>>
+>>>> [runbot@host1:singularity]$mpirun_rsh -np 2  host1 host1  singularity 
+>>>> exec singularity-centos7.img date
+>>>> Thu Jan 26 16:38:35 EST 2017
+>>>> Thu Jan 26 16:38:35 EST 2017
+>>>> (stuck here...., can Not return)
+>>>>
+>>>> And I can see the `date' command does not return properly.
+>>>> [runbot@host1:singularity]$ps -Af | grep runbot
+>>>> .........
+>>>> runbot   7347  7345  0 16:45 pts/1    00:00:00 
+>>>> /home/runbot/singularity/master.install/bin/mpispawn 0
+>>>> runbot  7349  7347  0 16:45 pts/1    00:00:00 
+>>>> /usr/local/libexec/singularity/sexec date
+>>>> runbot  7350  7347  0 16:45 pts/1    00:00:00 
+>>>> /usr/local/libexec/singularity/sexec date
+>>>> runbot  7355  7349  0 16:45 pts/1    00:00:00 [date] <defunct>
+>>>> runbot  7356  7350  0 16:45 pts/1    00:00:00 [date] <defunct> 
+>>>>
+>>>> I'm not sure whether the issue is from either mpi launcher, singularity 
+>>>> or the interaction between both. Do you have any idea?
+>>>>
+>>>>
+>>>> Thanks,
+>>>> -Jie
+>>>>
+>>>> --------------------------------------------
+>>>> Department of Computer Science & Engineering
+>>>> Erwin E. Dreese Laboratories, 2015 Neil Avenue
+>>>> Ohio State University
+>>>>
+>>>> -- 
+>>>> You received this message because you are subscribed to the Google 
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>> an email to singu...@lbl.gov.
+>>>>
+>>>
+>>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov.
+>>
+>
+>
+------=_Part_629_461076787.1485500149686
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi, Krishna,<div><br></div><div>I tried=C2=A0adding strace=
+=C2=A0to the plain singularity case (strace /usr/local/bin/singularity exec=
+ singularity-centos7.img date), what I found is that it actually exited wit=
+h error (255) at the end (non-root-strace.log).</div><div>If trying with ro=
+ot (sudo strace=C2=A0/usr/local/bin/singularity exec singularity-centos7.im=
+g date), there&#39;s no error. (root-strace.log)</div><div>Trying with mpir=
+un_rsh, it looks hanging on futex=C2=A0system call. (non-root-mpirun_rsh-st=
+race.log)</div><div><br></div><div>Please take a look at the log files atta=
+ched below to see if you have any insight.</div><div><br></div><div><br><br=
+>On Thursday, January 26, 2017 at 8:10:22 PM UTC-5, Krishna Muriki wrote:<b=
+lockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;borde=
+r-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">Jie,<div><br></=
+div><div>Could you add strace to the container and run strace date to see w=
+hy the date process is going defunct ? Also first try running with -np 1 ho=
+st1 and then scale to -np 2 and multiple nodes.=C2=A0</div><div><br></div><=
+div>Thanks,</div><div>Krishna.</div></div><div><br><div class=3D"gmail_quot=
+e">On Thu, Jan 26, 2017 at 5:07 PM, Jie Zhang <span dir=3D"ltr">&lt;<a rel=
+=3D"nofollow">jes...@gmail.com</a>&gt;</span> wrote:<br><blockquote class=
+=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padd=
+ing-left:1ex"><div dir=3D"ltr">Hi, Krishna,<div><br></div><div><br></div><d=
+iv>Without mpirun_rsh, all other tests work fine.</div><span><div><span sty=
+le=3D"font-size:12.8px"><br></span></div><div><span style=3D"font-size:12.8=
+px">ssh host1=C2=A0</span><span style=3D"font-size:12.8px">=C2=A0singularit=
+y exec singularity-centos7.img date</span><br></div></span><div><span style=
+=3D"font-size:12.8px">singularity exec singularity-centos7.img date</span><=
+span style=3D"font-size:12.8px"><br></span></div><div><span style=3D"font-s=
+ize:12.8px"><br></span></div><div><span><br><br>On Thursday, January 26, 20=
+17 at 7:58:21 PM UTC-5, Krishna Muriki wrote:</span><blockquote class=3D"gm=
+ail_quote" style=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc solid;p=
+adding-left:1ex"><span><div dir=3D"ltr">Jie,<div><br></div><div>Can you do =
+a couple of tests, see if directly running=C2=A0<span style=3D"font-size:12=
+.8px">=C2=A0&#39;singularity exec singularity-centos7.img date&#39; without=
+ mpirun_rsh returns the prompt back to you properly.=C2=A0</span><span styl=
+e=3D"font-size:12.8px">If that also gets struck, add strace to your contain=
+er and run strace date. =C2=A0</span></div><div><span style=3D"font-size:12=
+.8px"><br></span></div><div><span style=3D"font-size:12.8px">If that does r=
+eturn properly t</span><span style=3D"font-size:12.8px">ry running with &#3=
+9;ssh host1=C2=A0</span><span style=3D"font-size:12.8px">=C2=A0singularity =
+exec singularity-centos7.img date&#39; without mpirun_rsh and see if that w=
+orks.</span></div><div><span style=3D"font-size:12.8px"><br></span></div><d=
+iv><span style=3D"font-size:12.8px">--Krishna.<br></span></div></div></span=
+><div><br><div class=3D"gmail_quote"><div><div>On Thu, Jan 26, 2017 at 1:51=
+ PM, Jie Zhang <span dir=3D"ltr">&lt;<a rel=3D"nofollow">zh...@osu.edu</a>&=
+gt;</span> wrote:<br></div></div><blockquote class=3D"gmail_quote" style=3D=
+"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div><div><=
+div dir=3D"ltr">Hello,<div><br></div><div><div>I&#39;m trying singularity w=
+ith MVAPICH2. I found a small issue here.=C2=A0</div><div>When running `mpi=
+run_rsh -np 2 =C2=A0host1 host1 =C2=A0singularity exec singularity-centos7.=
+img date&#39;, the routine (date) got executed successfully, but the mpi co=
+mmand is not able to return.</div></div><div><br></div><div>[runbot@host1:s=
+ingularity]$<wbr>mpirun_rsh -np 2 =C2=A0host1 host1 =C2=A0singularity exec =
+singularity-centos7.img date<br></div><div>Thu Jan 26 16:38:35 EST 2017<br>=
+</div><div>Thu Jan 26 16:38:35 EST 2017<br></div><div>(stuck here...., can =
+Not return)</div><div><br></div><div>And I can see the `date&#39; command d=
+oes not return properly.</div><div>[runbot@host1:singularity]$ps -Af | grep=
+ runbot</div><div>.........</div><div>runbot =C2=A0 7347 =C2=A07345 =C2=A00=
+ 16:45 pts/1 =C2=A0 =C2=A000:00:00 /home/runbot/singularity/<wbr>master.ins=
+tall/bin/mpispawn 0</div><div>runbot =C2=A07349 =C2=A07347 =C2=A00 16:45 pt=
+s/1 =C2=A0 =C2=A000:00:00 /usr/local/libexec/<wbr>singularity/sexec date</d=
+iv><div>runbot =C2=A07350 =C2=A07347 =C2=A00 16:45 pts/1 =C2=A0 =C2=A000:00=
+:00 /usr/local/libexec/<wbr>singularity/sexec date</div><div>runbot =C2=A07=
+355 =C2=A07349 =C2=A00 16:45 pts/1 =C2=A0 =C2=A000:00:00 [date] &lt;defunct=
+&gt;</div><div>runbot =C2=A07356 =C2=A07350 =C2=A00 16:45 pts/1 =C2=A0 =C2=
+=A000:00:00 [date] &lt;defunct&gt;=C2=A0</div><div><br></div><div>I&#39;m n=
+ot sure whether the issue is from either mpi=C2=A0launcher, singularity or =
+the interaction between both. Do you have any idea?</div><div><br></div><di=
+v><br clear=3D"all"><div><div><div dir=3D"ltr"><div><font size=3D"2" face=
+=3D"tahoma, sans-serif" color=3D"#000000">Thanks,</font></div><font size=3D=
+"2" face=3D"tahoma, sans-serif" color=3D"#000000">-Jie<br><br>-------------=
+-----------------<wbr>--------------<br>Department of Computer Science &amp=
+; Engineering<br>Erwin E. Dreese Laboratories, 2015 Neil Avenue<br>Ohio Sta=
+te University</font><span><font color=3D"#888888"><br></font></span></div><=
+/div></div><span><font color=3D"#888888">
+</font></span></div></div></div></div><span><font color=3D"#888888"><div><d=
+iv>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br></div></div>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</font></span></blockquote></div><br></div>
+</blockquote></div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br></div>
+</blockquote></div></div>
+------=_Part_629_461076787.1485500149686--
+
+------=_Part_628_804032151.1485500149686
+Content-Type: text/plain; charset=US-ASCII; name=non-root-strace.log
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename=non-root-strace.log
+X-Attachment-Id: 6c7e876b-9c64-438b-8a0e-845af6828b4a
+Content-ID: <6c7e876b-9c64-438b-8a0e-845af6828b4a>
+
+execve("/usr/local/bin/singularity", ["/usr/local/bin/singularity", "exec", "/home/zhanjie/singularity/singul"..., "date"], [/* 45 vars */]) = 0
+brk(0)                                  = 0x153b000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f765a160000
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+open("/lib64/tls/x86_64/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/lib64/tls/x86_64", 0x7fff958b5e20) = -1 ENOENT (No such file or directory)
+open("/lib64/tls/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/lib64/tls", {st_mode=S_IFDIR|0555, st_size=6, ...}) = 0
+open("/lib64/x86_64/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/lib64/x86_64", 0x7fff958b5e20)   = -1 ENOENT (No such file or directory)
+open("/lib64/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0@\316\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=174520, ...}) = 0
+mmap(NULL, 2268928, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f7659d16000
+mprotect(0x7f7659d3b000, 2097152, PROT_NONE) = 0
+mmap(0x7f7659f3b000, 20480, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x25000) = 0x7f7659f3b000
+close(3)                                = 0
+open("/lib64/tls/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+open("/lib64/libdl.so.2", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\320\16\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=19512, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f765a15f000
+mmap(NULL, 2109744, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f7659b12000
+mprotect(0x7f7659b15000, 2093056, PROT_NONE) = 0
+mmap(0x7f7659d14000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x2000) = 0x7f7659d14000
+close(3)                                = 0
+open("/lib64/tls/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+open("/lib64/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\34\2\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=2107760, ...}) = 0
+mmap(NULL, 3932736, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f7659751000
+mprotect(0x7f7659907000, 2097152, PROT_NONE) = 0
+mmap(0x7f7659b07000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1b6000) = 0x7f7659b07000
+mmap(0x7f7659b0d000, 16960, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f7659b0d000
+close(3)                                = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f765a15e000
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f765a15c000
+arch_prctl(ARCH_SET_FS, 0x7f765a15c740) = 0
+mprotect(0x7f7659b07000, 16384, PROT_READ) = 0
+mprotect(0x7f7659d14000, 4096, PROT_READ) = 0
+mprotect(0x7f7659f3b000, 16384, PROT_READ) = 0
+mprotect(0x6dc000, 4096, PROT_READ)     = 0
+mprotect(0x7f765a161000, 4096, PROT_READ) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+open("/dev/tty", O_RDWR|O_NONBLOCK)     = 3
+close(3)                                = 0
+brk(0)                                  = 0x153b000
+brk(0x155c000)                          = 0x155c000
+brk(0)                                  = 0x155c000
+open("/usr/lib/locale/locale-archive", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=106065056, ...}) = 0
+mmap(NULL, 106065056, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7f765322a000
+close(3)                                = 0
+brk(0)                                  = 0x155c000
+getuid()                                = 28915
+getgid()                                = 100
+geteuid()                               = 28915
+getegid()                               = 100
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+open("/proc/meminfo", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0444, st_size=0, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f765a15b000
+read(3, "MemTotal:       32833524 kB\nMemF"..., 1024) = 1024
+close(3)                                = 0
+munmap(0x7f765a15b000, 4096)            = 0
+rt_sigaction(SIGCHLD, {SIG_DFL, [], SA_RESTORER|SA_RESTART, 0x7f7659786650}, {SIG_DFL, [], 0}, 8) = 0
+rt_sigaction(SIGCHLD, {SIG_DFL, [], SA_RESTORER|SA_RESTART, 0x7f7659786650}, {SIG_DFL, [], SA_RESTORER|SA_RESTART, 0x7f7659786650}, 8) = 0
+rt_sigaction(SIGINT, {SIG_DFL, [], SA_RESTORER, 0x7f7659786650}, {SIG_DFL, [], 0}, 8) = 0
+rt_sigaction(SIGINT, {SIG_DFL, [], SA_RESTORER, 0x7f7659786650}, {SIG_DFL, [], SA_RESTORER, 0x7f7659786650}, 8) = 0
+rt_sigaction(SIGQUIT, {SIG_DFL, [], SA_RESTORER, 0x7f7659786650}, {SIG_DFL, [], 0}, 8) = 0
+rt_sigaction(SIGQUIT, {SIG_DFL, [], SA_RESTORER, 0x7f7659786650}, {SIG_DFL, [], SA_RESTORER, 0x7f7659786650}, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigaction(SIGQUIT, {SIG_IGN, [], SA_RESTORER, 0x7f7659786650}, {SIG_DFL, [], SA_RESTORER, 0x7f7659786650}, 8) = 0
+uname({sys="Linux", node="sandy4", ...}) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+open("/usr/lib64/gconv/gconv-modules.cache", O_RDONLY) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=26254, ...}) = 0
+mmap(NULL, 26254, PROT_READ, MAP_SHARED, 3, 0) = 0x7f765a155000
+close(3)                                = 0
+stat("/home/zhanjie/singularity", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+stat(".", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+getpid()                                = 19477
+getppid()                               = 19473
+getpgrp()                               = 19473
+rt_sigaction(SIGCHLD, {0x441090, [], SA_RESTORER|SA_RESTART, 0x7f7659786650}, {SIG_DFL, [], SA_RESTORER|SA_RESTART, 0x7f7659786650}, 8) = 0
+getrlimit(RLIMIT_NPROC, {rlim_cur=4*1024, rlim_max=127817}) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+open("/usr/local/bin/singularity", O_RDONLY) = 3
+ioctl(3, SNDCTL_TMR_TIMEBASE or SNDRV_TIMER_IOCTL_NEXT_DEVICE or TCGETS, 0x7fff958b64d0) = -1 ENOTTY (Inappropriate ioctl for device)
+lseek(3, 0, SEEK_CUR)                   = 0
+read(3, "#!/bin/bash\n# \n# Copyright (c) 2"..., 80) = 80
+lseek(3, 0, SEEK_SET)                   = 0
+getrlimit(RLIMIT_NOFILE, {rlim_cur=8*1024, rlim_max=8*1024}) = 0
+fcntl(255, F_GETFD)                     = -1 EBADF (Bad file descriptor)
+dup2(3, 255)                            = 255
+close(3)                                = 0
+fcntl(255, F_SETFD, FD_CLOEXEC)         = 0
+fcntl(255, F_GETFL)                     = 0x8000 (flags O_RDONLY|O_LARGEFILE)
+fstat(255, {st_mode=S_IFREG|0755, st_size=4246, ...}) = 0
+lseek(255, 0, SEEK_CUR)                 = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+read(255, "#!/bin/bash\n# \n# Copyright (c) 2"..., 4246) = 4246
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+stat("/usr/local/libexec/singularity/functions", {st_mode=S_IFREG|0755, st_size=6705, ...}) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+open("/usr/local/libexec/singularity/functions", O_RDONLY) = 3
+fstat(3, {st_mode=S_IFREG|0755, st_size=6705, ...}) = 0
+read(3, "#!/bin/bash\n#\n# Copyright (c) 20"..., 6705) = 6705
+close(3)                                = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+brk(0)                                  = 0x155c000
+brk(0x157d000)                          = 0x157d000
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+faccessat(AT_FDCWD, "/usr/local/libexec/singularity/cli/exec.exec", X_OK) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigaction(SIGINT, {SIG_DFL, [], SA_RESTORER, 0x7f7659786650}, {SIG_DFL, [], SA_RESTORER, 0x7f7659786650}, 8) = 0
+rt_sigaction(SIGQUIT, {SIG_DFL, [], SA_RESTORER, 0x7f7659786650}, {SIG_IGN, [], SA_RESTORER, 0x7f7659786650}, 8) = 0
+rt_sigaction(SIGCHLD, {SIG_DFL, [], SA_RESTORER|SA_RESTART, 0x7f7659786650}, {0x441090, [], SA_RESTORER|SA_RESTART, 0x7f7659786650}, 8) = 0
+execve("/usr/local/libexec/singularity/cli/exec.exec", ["/usr/local/libexec/singularity/c"..., "/home/zhanjie/singularity/singul"..., "date"], [/* 49 vars */]) = 0
+brk(0)                                  = 0xdf2000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fbab453f000
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+open("/lib64/tls/x86_64/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/lib64/tls/x86_64", 0x7ffd2ee22ea0) = -1 ENOENT (No such file or directory)
+open("/lib64/tls/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/lib64/tls", {st_mode=S_IFDIR|0555, st_size=6, ...}) = 0
+open("/lib64/x86_64/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/lib64/x86_64", 0x7ffd2ee22ea0)   = -1 ENOENT (No such file or directory)
+open("/lib64/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0@\316\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=174520, ...}) = 0
+mmap(NULL, 2268928, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7fbab40f5000
+mprotect(0x7fbab411a000, 2097152, PROT_NONE) = 0
+mmap(0x7fbab431a000, 20480, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x25000) = 0x7fbab431a000
+close(3)                                = 0
+open("/lib64/tls/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+open("/lib64/libdl.so.2", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\320\16\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=19512, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fbab453e000
+mmap(NULL, 2109744, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7fbab3ef1000
+mprotect(0x7fbab3ef4000, 2093056, PROT_NONE) = 0
+mmap(0x7fbab40f3000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x2000) = 0x7fbab40f3000
+close(3)                                = 0
+open("/lib64/tls/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+open("/lib64/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\34\2\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=2107760, ...}) = 0
+mmap(NULL, 3932736, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7fbab3b30000
+mprotect(0x7fbab3ce6000, 2097152, PROT_NONE) = 0
+mmap(0x7fbab3ee6000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1b6000) = 0x7fbab3ee6000
+mmap(0x7fbab3eec000, 16960, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7fbab3eec000
+close(3)                                = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fbab453d000
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fbab453b000
+arch_prctl(ARCH_SET_FS, 0x7fbab453b740) = 0
+mprotect(0x7fbab3ee6000, 16384, PROT_READ) = 0
+mprotect(0x7fbab40f3000, 4096, PROT_READ) = 0
+mprotect(0x7fbab431a000, 16384, PROT_READ) = 0
+mprotect(0x6dc000, 4096, PROT_READ)     = 0
+mprotect(0x7fbab4540000, 4096, PROT_READ) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+open("/dev/tty", O_RDWR|O_NONBLOCK)     = 3
+close(3)                                = 0
+brk(0)                                  = 0xdf2000
+brk(0xe13000)                           = 0xe13000
+brk(0)                                  = 0xe13000
+open("/usr/lib/locale/locale-archive", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=106065056, ...}) = 0
+mmap(NULL, 106065056, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7fbaad609000
+close(3)                                = 0
+brk(0)                                  = 0xe13000
+getuid()                                = 28915
+getgid()                                = 100
+geteuid()                               = 28915
+getegid()                               = 100
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+open("/proc/meminfo", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0444, st_size=0, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fbab453a000
+read(3, "MemTotal:       32833524 kB\nMemF"..., 1024) = 1024
+close(3)                                = 0
+munmap(0x7fbab453a000, 4096)            = 0
+rt_sigaction(SIGCHLD, {SIG_DFL, [], SA_RESTORER|SA_RESTART, 0x7fbab3b65650}, {SIG_DFL, [], 0}, 8) = 0
+rt_sigaction(SIGCHLD, {SIG_DFL, [], SA_RESTORER|SA_RESTART, 0x7fbab3b65650}, {SIG_DFL, [], SA_RESTORER|SA_RESTART, 0x7fbab3b65650}, 8) = 0
+rt_sigaction(SIGINT, {SIG_DFL, [], SA_RESTORER, 0x7fbab3b65650}, {SIG_DFL, [], 0}, 8) = 0
+rt_sigaction(SIGINT, {SIG_DFL, [], SA_RESTORER, 0x7fbab3b65650}, {SIG_DFL, [], SA_RESTORER, 0x7fbab3b65650}, 8) = 0
+rt_sigaction(SIGQUIT, {SIG_DFL, [], SA_RESTORER, 0x7fbab3b65650}, {SIG_DFL, [], 0}, 8) = 0
+rt_sigaction(SIGQUIT, {SIG_DFL, [], SA_RESTORER, 0x7fbab3b65650}, {SIG_DFL, [], SA_RESTORER, 0x7fbab3b65650}, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigaction(SIGQUIT, {SIG_IGN, [], SA_RESTORER, 0x7fbab3b65650}, {SIG_DFL, [], SA_RESTORER, 0x7fbab3b65650}, 8) = 0
+uname({sys="Linux", node="sandy4", ...}) = 0
+stat("/home/zhanjie/singularity", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+stat(".", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+getpid()                                = 19477
+open("/usr/lib64/gconv/gconv-modules.cache", O_RDONLY) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=26254, ...}) = 0
+mmap(NULL, 26254, PROT_READ, MAP_SHARED, 3, 0) = 0x7fbab4534000
+close(3)                                = 0
+getppid()                               = 19473
+getpgrp()                               = 19473
+rt_sigaction(SIGCHLD, {0x441090, [], SA_RESTORER|SA_RESTART, 0x7fbab3b65650}, {SIG_DFL, [], SA_RESTORER|SA_RESTART, 0x7fbab3b65650}, 8) = 0
+getrlimit(RLIMIT_NPROC, {rlim_cur=4*1024, rlim_max=127817}) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+open("/usr/local/libexec/singularity/cli/exec.exec", O_RDONLY) = 3
+ioctl(3, SNDCTL_TMR_TIMEBASE or SNDRV_TIMER_IOCTL_NEXT_DEVICE or TCGETS, 0x7ffd2ee23550) = -1 ENOTTY (Inappropriate ioctl for device)
+lseek(3, 0, SEEK_CUR)                   = 0
+read(3, "#!/bin/bash\n# \n# Copyright (c) 2"..., 80) = 80
+lseek(3, 0, SEEK_SET)                   = 0
+getrlimit(RLIMIT_NOFILE, {rlim_cur=8*1024, rlim_max=8*1024}) = 0
+fcntl(255, F_GETFD)                     = -1 EBADF (Bad file descriptor)
+dup2(3, 255)                            = 255
+close(3)                                = 0
+fcntl(255, F_SETFD, FD_CLOEXEC)         = 0
+fcntl(255, F_GETFL)                     = 0x8000 (flags O_RDONLY|O_LARGEFILE)
+fstat(255, {st_mode=S_IFREG|0755, st_size=4667, ...}) = 0
+lseek(255, 0, SEEK_CUR)                 = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+read(255, "#!/bin/bash\n# \n# Copyright (c) 2"..., 4667) = 4667
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+stat("/usr/local/libexec/singularity/functions", {st_mode=S_IFREG|0755, st_size=6705, ...}) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+open("/usr/local/libexec/singularity/functions", O_RDONLY) = 3
+fstat(3, {st_mode=S_IFREG|0755, st_size=6705, ...}) = 0
+read(3, "#!/bin/bash\n#\n# Copyright (c) 20"..., 6705) = 6705
+close(3)                                = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+stat("/usr/local/etc/singularity/init", {st_mode=S_IFREG|0644, st_size=489, ...}) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+open("/usr/local/etc/singularity/init", O_RDONLY) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=489, ...}) = 0
+read(3, "# This will be sourced before la"..., 489) = 489
+close(3)                                = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+pipe([3, 4])                            = 0
+rt_sigprocmask(SIG_BLOCK, [CHLD], [], 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, [INT CHLD], [], 8) = 0
+clone(child_stack=0, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, child_tidptr=0x7fbab453ba10) = 19478
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigaction(SIGCHLD, {0x441090, [], SA_RESTORER|SA_RESTART, 0x7fbab3b65650}, {0x441090, [], SA_RESTORER|SA_RESTART, 0x7fbab3b65650}, 8) = 0
+close(4)                                = 0
+read(3, "EST\n", 128)                   = 4
+read(3, "", 128)                        = 0
+--- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=19478, si_status=0, si_utime=0, si_stime=0} ---
+wait4(-1, [{WIFEXITED(s) && WEXITSTATUS(s) == 0}], WNOHANG, NULL) = 19478
+wait4(-1, 0x7ffd2ee22350, WNOHANG, NULL) = -1 ECHILD (No child processes)
+rt_sigreturn()                          = 0
+close(3)                                = 0
+rt_sigprocmask(SIG_BLOCK, [CHLD], [], 8) = 0
+rt_sigaction(SIGINT, {0x43e500, [], SA_RESTORER, 0x7fbab3b65650}, {SIG_DFL, [], SA_RESTORER, 0x7fbab3b65650}, 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigaction(SIGINT, {SIG_DFL, [], SA_RESTORER, 0x7fbab3b65650}, {0x43e500, [], SA_RESTORER, 0x7fbab3b65650}, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+open("/usr/share/zoneinfo/EST", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=118, ...}) = 0
+fstat(3, {st_mode=S_IFREG|0644, st_size=118, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fbab4533000
+read(3, "TZif2\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\1\0\0\0\0"..., 4096) = 118
+lseek(3, -62, SEEK_CUR)                 = 56
+read(3, "TZif2\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\1\0\0\0\0"..., 4096) = 62
+close(3)                                = 0
+munmap(0x7fbab4533000, 4096)            = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+stat("/home/zhanjie/.singularity-init", 0x7ffd2ee23160) = -1 ENOENT (No such file or directory)
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+faccessat(AT_FDCWD, "/usr/local/libexec/singularity/image-handler.sh", X_OK) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+open("/usr/local/libexec/singularity/image-handler.sh", O_RDONLY) = 3
+fstat(3, {st_mode=S_IFREG|0755, st_size=9975, ...}) = 0
+brk(0)                                  = 0xe13000
+brk(0xe36000)                           = 0xe36000
+read(3, "#!/bin/bash\n# \n# Copyright (c) 2"..., 9975) = 9975
+close(3)                                = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+faccessat(AT_FDCWD, "/usr/local/libexec/singularity/sexec", X_OK) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigaction(SIGINT, {SIG_DFL, [], SA_RESTORER, 0x7fbab3b65650}, {SIG_DFL, [], SA_RESTORER, 0x7fbab3b65650}, 8) = 0
+rt_sigaction(SIGQUIT, {SIG_DFL, [], SA_RESTORER, 0x7fbab3b65650}, {SIG_IGN, [], SA_RESTORER, 0x7fbab3b65650}, 8) = 0
+rt_sigaction(SIGCHLD, {SIG_DFL, [], SA_RESTORER|SA_RESTART, 0x7fbab3b65650}, {0x441090, [], SA_RESTORER|SA_RESTART, 0x7fbab3b65650}, 8) = 0
+execve("/usr/local/libexec/singularity/sexec", ["/usr/local/libexec/singularity/s"..., "date"], [/* 52 vars */]) = 0
+brk(0)                                  = 0x7f225eecb000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f225d640000
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/tls/x86_64/libsingularity.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/usr/local/lib/tls/x86_64", 0x7ffcb8e10740) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/tls/libsingularity.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/usr/local/lib/tls", 0x7ffcb8e10740) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/x86_64/libsingularity.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/usr/local/lib/x86_64", 0x7ffcb8e10740) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/libsingularity.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/usr/local/lib", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+open("/usr/local/lib/singularity/tls/x86_64/libsingularity.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/usr/local/lib/singularity/tls/x86_64", 0x7ffcb8e10740) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/singularity/tls/libsingularity.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/usr/local/lib/singularity/tls", 0x7ffcb8e10740) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/singularity/x86_64/libsingularity.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/usr/local/lib/singularity/x86_64", 0x7ffcb8e10740) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/singularity/libsingularity.so.1", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0@Z\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=450582, ...}) = 0
+mmap(NULL, 2238688, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f225d1fd000
+mprotect(0x7f225d21f000, 2093056, PROT_NONE) = 0
+mmap(0x7f225d41e000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x21000) = 0x7f225d41e000
+close(3)                                = 0
+open("/usr/local/lib/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/singularity/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+open("/lib64/tls/x86_64/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/lib64/tls/x86_64", 0x7ffcb8e10710) = -1 ENOENT (No such file or directory)
+open("/lib64/tls/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/lib64/tls", {st_mode=S_IFDIR|0555, st_size=6, ...}) = 0
+open("/lib64/x86_64/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/lib64/x86_64", 0x7ffcb8e10710)   = -1 ENOENT (No such file or directory)
+open("/lib64/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\34\2\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=2107760, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f225d63f000
+mmap(NULL, 3932736, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f225ce3c000
+mprotect(0x7f225cff2000, 2097152, PROT_NONE) = 0
+mmap(0x7f225d1f2000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1b6000) = 0x7f225d1f2000
+mmap(0x7f225d1f8000, 16960, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f225d1f8000
+close(3)                                = 0
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f225d63d000
+arch_prctl(ARCH_SET_FS, 0x7f225d63d740) = 0
+mprotect(0x7f225d1f2000, 16384, PROT_READ) = 0
+mprotect(0x7f225d41e000, 4096, PROT_READ) = 0
+mprotect(0x7f225d848000, 4096, PROT_READ) = 0
+mprotect(0x7f225d641000, 4096, PROT_READ) = 0
+socket(PF_LOCAL, SOCK_DGRAM|SOCK_CLOEXEC, 0) = 3
+connect(3, {sa_family=AF_LOCAL, sun_path="/dev/log"}, 110) = 0
+getuid()                                = 28915
+getuid()                                = 28915
+getgid()                                = 100
+getgroups(0, NULL)                      = 2
+brk(0)                                  = 0x7f225eecb000
+brk(0x7f225eeec000)                     = 0x7f225eeec000
+brk(0)                                  = 0x7f225eeec000
+getgroups(2, [100, 522])                = 2
+geteuid()                               = 28915
+setresuid(-1, 0, -1)                    = -1 EPERM (Operation not permitted)
+setresgid(-1, 100, -1)                  = 0
+setresuid(-1, 28915, -1)                = 0
+getgid()                                = 100
+getuid()                                = 28915
+stat("/proc/self/exe", {st_mode=S_IFREG|0755, st_size=62961, ...}) = 0
+stat("/usr/local/etc/singularity/singularity.conf", {st_mode=S_IFREG|0644, st_size=6382, ...}) = 0
+open("/usr/local/etc/singularity/singularity.conf", O_RDONLY) = 4
+fstat(4, {st_mode=S_IFREG|0644, st_size=6382, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f225d63c000
+read(4, "# SINGULARITY.CONF\n# This is the"..., 4096) = 4096
+read(4, " Probe for all mounted file syst"..., 4096) = 2286
+read(4, "", 4096)                       = 0
+close(4)                                = 0
+munmap(0x7f225d63c000, 4096)            = 0
+stat("/usr/local/libexec/singularity/sexec-suid", {st_mode=S_IFREG|S_ISUID|0755, st_size=392380, ...}) = 0
+stat("/usr/local/libexec/singularity/sexec-suid", {st_mode=S_IFREG|S_ISUID|0755, st_size=392380, ...}) = 0
+stat("/usr/local/libexec/singularity/sexec-suid", {st_mode=S_IFREG|S_ISUID|0755, st_size=392380, ...}) = 0
+fstat(1, {st_mode=S_IFIFO|0600, st_size=0, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f225d63c000
+execve("/usr/local/libexec/singularity/sexec-suid", ["/usr/local/libexec/singularity/s"..., "date"], [/* 52 vars */]) = 0
+brk(0)                                  = 0xbbd000
+fcntl(0, F_GETFD)                       = 0
+fcntl(1, F_GETFD)                       = 0
+fcntl(2, F_GETFD)                       = 0
+access("/etc/suid-debug", F_OK)         = -1 ENOENT (No such file or directory)
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f7c7e6f2000
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/tls/x86_64/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/usr/local/lib/tls/x86_64", 0x7ffe65bb54c0) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/tls/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/usr/local/lib/tls", 0x7ffe65bb54c0) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/x86_64/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/usr/local/lib/x86_64", 0x7ffe65bb54c0) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/usr/local/lib", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+open("/lib64/tls/x86_64/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/lib64/tls/x86_64", 0x7ffe65bb54c0) = -1 ENOENT (No such file or directory)
+open("/lib64/tls/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/lib64/tls", {st_mode=S_IFDIR|0555, st_size=6, ...}) = 0
+open("/lib64/x86_64/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/lib64/x86_64", 0x7ffe65bb54c0)   = -1 ENOENT (No such file or directory)
+open("/lib64/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\34\2\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=2107760, ...}) = 0
+mmap(NULL, 3932736, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f7c7e111000
+mprotect(0x7f7c7e2c7000, 2097152, PROT_NONE) = 0
+mmap(0x7f7c7e4c7000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1b6000) = 0x7f7c7e4c7000
+mmap(0x7f7c7e4cd000, 16960, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f7c7e4cd000
+close(3)                                = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f7c7e6f1000
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f7c7e6ef000
+arch_prctl(ARCH_SET_FS, 0x7f7c7e6ef740) = 0
+mprotect(0x7f7c7e4c7000, 16384, PROT_READ) = 0
+mprotect(0x61b000, 4096, PROT_READ)     = 0
+mprotect(0x7f7c7e6f3000, 4096, PROT_READ) = 0
+socket(PF_LOCAL, SOCK_DGRAM|SOCK_CLOEXEC, 0) = 3
+connect(3, {sa_family=AF_LOCAL, sun_path="/dev/log"}, 110) = 0
+getuid()                                = 28915
+getuid()                                = 28915
+getgid()                                = 100
+getgroups(0, NULL)                      = 2
+brk(0)                                  = 0xbbd000
+brk(0xbde000)                           = 0xbde000
+brk(0)                                  = 0xbde000
+getgroups(2, [100, 522])                = 2
+geteuid()                               = 28915
+setresuid(-1, 0, -1)                    = -1 EPERM (Operation not permitted)
+setresgid(-1, 100, -1)                  = 0
+setresuid(-1, 28915, -1)                = 0
+getgid()                                = 100
+getuid()                                = 28915
+getuid()                                = 28915
+stat("/proc/self/exe", {st_mode=S_IFREG|S_ISUID|0755, st_size=392380, ...}) = 0
+stat("/proc/self/exe", {st_mode=S_IFREG|S_ISUID|0755, st_size=392380, ...}) = 0
+stat("/usr/local/etc/singularity/singularity.conf", {st_mode=S_IFREG|0644, st_size=6382, ...}) = 0
+stat("/usr/local/etc/singularity/singularity.conf", {st_mode=S_IFREG|0644, st_size=6382, ...}) = 0
+open("/usr/local/etc/singularity/singularity.conf", O_RDONLY) = 4
+fstat(4, {st_mode=S_IFREG|0644, st_size=6382, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f7c7e6ee000
+read(4, "# SINGULARITY.CONF\n# This is the"..., 4096) = 4096
+read(4, " Probe for all mounted file syst"..., 4096) = 2286
+read(4, "", 4096)                       = 0
+close(4)                                = 0
+munmap(0x7f7c7e6ee000, 4096)            = 0
+getcwd("/home/zhanjie/singularity", 4096) = 26
+stat("/home/zhanjie/singularity/singularity-centos7.img", {st_mode=S_IFREG|0755, st_size=3221225504, ...}) = 0
+stat("/home/zhanjie/singularity/singularity-centos7.img", {st_mode=S_IFREG|0755, st_size=3221225504, ...}) = 0
+open("/home/zhanjie/singularity/singularity-centos7.img", O_RDONLY|O_CLOEXEC) = 4
+fstat(4, {st_mode=S_IFREG|0755, st_size=3221225504, ...}) = 0
+mmap(NULL, 1048576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f7c7e5ef000
+lseek(4, 0, SEEK_SET)                   = 0
+read(4, "#!/usr/bin/env run-singularity\n\0"..., 1048576) = 1048576
+getuid()                                = 28915
+stat("/proc/self/exe", {st_mode=S_IFREG|S_ISUID|0755, st_size=392380, ...}) = 0
+stat("/home/zhanjie/singularity/singularity-centos7.img", {st_mode=S_IFREG|0755, st_size=3221225504, ...}) = 0
+stat("/tmp/.singularity-session-28915.36.131614", {st_mode=S_IFDIR|0755, st_size=63, ...}) = 0
+stat("/tmp/.singularity-session-28915.36.131614", {st_mode=S_IFDIR|0755, st_size=63, ...}) = 0
+open("/tmp/.singularity-session-28915.36.131614", O_RDONLY|O_CLOEXEC) = 5
+flock(5, LOCK_SH|LOCK_NB)               = 0
+pipe2([6, 7], O_CLOEXEC)                = 0
+pipe([8, 9])                            = 0
+clone(child_stack=0, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, child_tidptr=0x7f7c7e6efa10) = 19480
+rt_sigprocmask(SIG_SETMASK, ~[RTMIN RT_1], [], 8) = 0
+rt_sigaction(SIGINT, {0x40fd00, [], SA_RESTORER|SA_RESTART|SA_SIGINFO, 0x7f7c7e146650}, NULL, 8) = 0
+rt_sigaction(SIGQUIT, {0x40fd00, [], SA_RESTORER|SA_RESTART|SA_SIGINFO, 0x7f7c7e146650}, NULL, 8) = 0
+rt_sigaction(SIGTERM, {0x40fd00, [], SA_RESTORER|SA_RESTART|SA_SIGINFO, 0x7f7c7e146650}, NULL, 8) = 0
+rt_sigaction(SIGHUP, {0x40fd00, [], SA_RESTORER|SA_RESTART|SA_SIGINFO, 0x7f7c7e146650}, NULL, 8) = 0
+rt_sigaction(SIGUSR1, {0x40fd00, [], SA_RESTORER|SA_RESTART|SA_SIGINFO, 0x7f7c7e146650}, NULL, 8) = 0
+rt_sigaction(SIGUSR2, {0x40fd00, [], SA_RESTORER|SA_RESTART|SA_SIGINFO, 0x7f7c7e146650}, NULL, 8) = 0
+rt_sigaction(SIGCHLD, {0x40fd50, [], SA_RESTORER|SA_RESTART|SA_SIGINFO, 0x7f7c7e146650}, NULL, 8) = 0
+pipe2([10, 11], O_CLOEXEC)              = 0
+pipe2([12, 13], O_CLOEXEC)              = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+stat("/proc/self/exe", {st_mode=S_IFREG|S_ISUID|0755, st_size=392380, ...}) = 0
+stat("/proc/self/exe", {st_mode=S_IFREG|S_ISUID|0755, st_size=392380, ...}) = 0
+getuid()                                = 28915
+setresuid(-1, 0, -1)                    = -1 EPERM (Operation not permitted)
+getpid()                                = 19477
+geteuid()                               = 28915
+open("/usr/share/zoneinfo/EST", O_RDONLY|O_CLOEXEC) = 14
+fstat(14, {st_mode=S_IFREG|0644, st_size=118, ...}) = 0
+fstat(14, {st_mode=S_IFREG|0644, st_size=118, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f7c7e5ee000
+read(14, "TZif2\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\1\0\0\0\0"..., 4096) = 118
+lseek(14, -62, SEEK_CUR)                = 56
+read(14, "TZif2\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\1\0\0\0\0"..., 4096) = 62
+close(14)                               = 0
+munmap(0x7f7c7e5ee000, 4096)            = 0
+sendto(3, "<131>Jan 27 01:02:08 Singularity"..., 125, MSG_NOSIGNAL, NULL, 0) = 125
+write(2, "ERROR  : The feature you are req"..., 75ERROR  : The feature you are requesting requires privilege you do not have
+) = 75
+geteuid()                               = 28915
+sendto(3, "<129>Jan 27 01:02:08 Singularity"..., 72, MSG_NOSIGNAL, NULL, 0) = 72
+write(2, "ABORT  : Retval = 255\n", 22ABORT  : Retval = 255
+) = 22
+exit_group(255)                         = ?
++++ exited with 255 +++
+ERROR  : Parent closed write pipe unexpectedly.
+ABORT  : Retval = 255
+
+------=_Part_628_804032151.1485500149686
+Content-Type: text/plain; charset=US-ASCII; name=root-strace.log
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename=root-strace.log
+X-Attachment-Id: 11bf3ac3-809d-45ee-9439-0a7d4e4e9dc8
+Content-ID: <11bf3ac3-809d-45ee-9439-0a7d4e4e9dc8>
+
+execve("/usr/local/bin/singularity", ["/usr/local/bin/singularity", "exec", "/home/zhanjie/singularity/singul"..., "date"], [/* 33 vars */]) = 0
+brk(0)                                  = 0x1eee000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fd124c34000
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+open("/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=82641, ...}) = 0
+mmap(NULL, 82641, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7fd124c1f000
+close(3)                                = 0
+open("/usr/lib64/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0@\316\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=174520, ...}) = 0
+mmap(NULL, 2268928, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7fd1247ea000
+mprotect(0x7fd12480f000, 2097152, PROT_NONE) = 0
+mmap(0x7fd124a0f000, 20480, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x25000) = 0x7fd124a0f000
+close(3)                                = 0
+open("/usr/lib64/libdl.so.2", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\320\16\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=19512, ...}) = 0
+mmap(NULL, 2109744, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7fd1245e6000
+mprotect(0x7fd1245e9000, 2093056, PROT_NONE) = 0
+mmap(0x7fd1247e8000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x2000) = 0x7fd1247e8000
+close(3)                                = 0
+open("/usr/lib64/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\34\2\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=2107760, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fd124c1e000
+mmap(NULL, 3932736, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7fd124225000
+mprotect(0x7fd1243db000, 2097152, PROT_NONE) = 0
+mmap(0x7fd1245db000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1b6000) = 0x7fd1245db000
+mmap(0x7fd1245e1000, 16960, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7fd1245e1000
+close(3)                                = 0
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fd124c1c000
+arch_prctl(ARCH_SET_FS, 0x7fd124c1c740) = 0
+mprotect(0x7fd1245db000, 16384, PROT_READ) = 0
+mprotect(0x7fd1247e8000, 4096, PROT_READ) = 0
+mprotect(0x7fd124a0f000, 16384, PROT_READ) = 0
+mprotect(0x6dc000, 4096, PROT_READ)     = 0
+mprotect(0x7fd124c35000, 4096, PROT_READ) = 0
+munmap(0x7fd124c1f000, 82641)           = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+open("/dev/tty", O_RDWR|O_NONBLOCK)     = 3
+close(3)                                = 0
+brk(0)                                  = 0x1eee000
+brk(0x1f0f000)                          = 0x1f0f000
+brk(0)                                  = 0x1f0f000
+open("/usr/lib/locale/locale-archive", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=106065056, ...}) = 0
+mmap(NULL, 106065056, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7fd11dcfe000
+close(3)                                = 0
+brk(0)                                  = 0x1f0f000
+getuid()                                = 0
+getgid()                                = 0
+geteuid()                               = 0
+getegid()                               = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+open("/proc/meminfo", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0444, st_size=0, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fd124c33000
+read(3, "MemTotal:       32833524 kB\nMemF"..., 1024) = 1024
+close(3)                                = 0
+munmap(0x7fd124c33000, 4096)            = 0
+rt_sigaction(SIGCHLD, {SIG_DFL, [], SA_RESTORER|SA_RESTART, 0x7fd12425a650}, {SIG_DFL, [], 0}, 8) = 0
+rt_sigaction(SIGCHLD, {SIG_DFL, [], SA_RESTORER|SA_RESTART, 0x7fd12425a650}, {SIG_DFL, [], SA_RESTORER|SA_RESTART, 0x7fd12425a650}, 8) = 0
+rt_sigaction(SIGINT, {SIG_DFL, [], SA_RESTORER, 0x7fd12425a650}, {SIG_DFL, [], 0}, 8) = 0
+rt_sigaction(SIGINT, {SIG_DFL, [], SA_RESTORER, 0x7fd12425a650}, {SIG_DFL, [], SA_RESTORER, 0x7fd12425a650}, 8) = 0
+rt_sigaction(SIGQUIT, {SIG_DFL, [], SA_RESTORER, 0x7fd12425a650}, {SIG_DFL, [], 0}, 8) = 0
+rt_sigaction(SIGQUIT, {SIG_DFL, [], SA_RESTORER, 0x7fd12425a650}, {SIG_DFL, [], SA_RESTORER, 0x7fd12425a650}, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigaction(SIGQUIT, {SIG_IGN, [], SA_RESTORER, 0x7fd12425a650}, {SIG_DFL, [], SA_RESTORER, 0x7fd12425a650}, 8) = 0
+uname({sys="Linux", node="sandy4", ...}) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+open("/usr/lib64/gconv/gconv-modules.cache", O_RDONLY) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=26254, ...}) = 0
+mmap(NULL, 26254, PROT_READ, MAP_SHARED, 3, 0) = 0x7fd124c2d000
+close(3)                                = 0
+stat("/home/zhanjie/singularity", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+stat(".", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+getpid()                                = 19453
+getppid()                               = 19449
+getpgrp()                               = 19449
+rt_sigaction(SIGCHLD, {0x441090, [], SA_RESTORER|SA_RESTART, 0x7fd12425a650}, {SIG_DFL, [], SA_RESTORER|SA_RESTART, 0x7fd12425a650}, 8) = 0
+getrlimit(RLIMIT_NPROC, {rlim_cur=127817, rlim_max=127817}) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+open("/usr/local/bin/singularity", O_RDONLY) = 3
+ioctl(3, SNDCTL_TMR_TIMEBASE or SNDRV_TIMER_IOCTL_NEXT_DEVICE or TCGETS, 0x7ffe28a574a0) = -1 ENOTTY (Inappropriate ioctl for device)
+lseek(3, 0, SEEK_CUR)                   = 0
+read(3, "#!/bin/bash\n# \n# Copyright (c) 2"..., 80) = 80
+lseek(3, 0, SEEK_SET)                   = 0
+getrlimit(RLIMIT_NOFILE, {rlim_cur=8*1024, rlim_max=8*1024}) = 0
+fcntl(255, F_GETFD)                     = -1 EBADF (Bad file descriptor)
+dup2(3, 255)                            = 255
+close(3)                                = 0
+fcntl(255, F_SETFD, FD_CLOEXEC)         = 0
+fcntl(255, F_GETFL)                     = 0x8000 (flags O_RDONLY|O_LARGEFILE)
+fstat(255, {st_mode=S_IFREG|0755, st_size=4246, ...}) = 0
+lseek(255, 0, SEEK_CUR)                 = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+read(255, "#!/bin/bash\n# \n# Copyright (c) 2"..., 4246) = 4246
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+stat("/usr/local/libexec/singularity/functions", {st_mode=S_IFREG|0755, st_size=6705, ...}) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+open("/usr/local/libexec/singularity/functions", O_RDONLY) = 3
+fstat(3, {st_mode=S_IFREG|0755, st_size=6705, ...}) = 0
+read(3, "#!/bin/bash\n#\n# Copyright (c) 20"..., 6705) = 6705
+close(3)                                = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+faccessat(AT_FDCWD, "/usr/local/libexec/singularity/cli/exec.exec", X_OK) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigaction(SIGINT, {SIG_DFL, [], SA_RESTORER, 0x7fd12425a650}, {SIG_DFL, [], SA_RESTORER, 0x7fd12425a650}, 8) = 0
+rt_sigaction(SIGQUIT, {SIG_DFL, [], SA_RESTORER, 0x7fd12425a650}, {SIG_IGN, [], SA_RESTORER, 0x7fd12425a650}, 8) = 0
+rt_sigaction(SIGCHLD, {SIG_DFL, [], SA_RESTORER|SA_RESTART, 0x7fd12425a650}, {0x441090, [], SA_RESTORER|SA_RESTART, 0x7fd12425a650}, 8) = 0
+execve("/usr/local/libexec/singularity/cli/exec.exec", ["/usr/local/libexec/singularity/c"..., "/home/zhanjie/singularity/singul"..., "date"], [/* 38 vars */]) = 0
+brk(0)                                  = 0x79b000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f5394300000
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+open("/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=82641, ...}) = 0
+mmap(NULL, 82641, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7f53942eb000
+close(3)                                = 0
+open("/usr/lib64/libtinfo.so.5", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0@\316\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=174520, ...}) = 0
+mmap(NULL, 2268928, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f5393eb6000
+mprotect(0x7f5393edb000, 2097152, PROT_NONE) = 0
+mmap(0x7f53940db000, 20480, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x25000) = 0x7f53940db000
+close(3)                                = 0
+open("/usr/lib64/libdl.so.2", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\320\16\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=19512, ...}) = 0
+mmap(NULL, 2109744, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f5393cb2000
+mprotect(0x7f5393cb5000, 2093056, PROT_NONE) = 0
+mmap(0x7f5393eb4000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x2000) = 0x7f5393eb4000
+close(3)                                = 0
+open("/usr/lib64/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\34\2\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=2107760, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f53942ea000
+mmap(NULL, 3932736, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f53938f1000
+mprotect(0x7f5393aa7000, 2097152, PROT_NONE) = 0
+mmap(0x7f5393ca7000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1b6000) = 0x7f5393ca7000
+mmap(0x7f5393cad000, 16960, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f5393cad000
+close(3)                                = 0
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f53942e8000
+arch_prctl(ARCH_SET_FS, 0x7f53942e8740) = 0
+mprotect(0x7f5393ca7000, 16384, PROT_READ) = 0
+mprotect(0x7f5393eb4000, 4096, PROT_READ) = 0
+mprotect(0x7f53940db000, 16384, PROT_READ) = 0
+mprotect(0x6dc000, 4096, PROT_READ)     = 0
+mprotect(0x7f5394301000, 4096, PROT_READ) = 0
+munmap(0x7f53942eb000, 82641)           = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+open("/dev/tty", O_RDWR|O_NONBLOCK)     = 3
+close(3)                                = 0
+brk(0)                                  = 0x79b000
+brk(0x7bc000)                           = 0x7bc000
+brk(0)                                  = 0x7bc000
+open("/usr/lib/locale/locale-archive", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=106065056, ...}) = 0
+mmap(NULL, 106065056, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7f538d3ca000
+close(3)                                = 0
+brk(0)                                  = 0x7bc000
+getuid()                                = 0
+getgid()                                = 0
+geteuid()                               = 0
+getegid()                               = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+open("/proc/meminfo", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0444, st_size=0, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f53942ff000
+read(3, "MemTotal:       32833524 kB\nMemF"..., 1024) = 1024
+close(3)                                = 0
+munmap(0x7f53942ff000, 4096)            = 0
+rt_sigaction(SIGCHLD, {SIG_DFL, [], SA_RESTORER|SA_RESTART, 0x7f5393926650}, {SIG_DFL, [], 0}, 8) = 0
+rt_sigaction(SIGCHLD, {SIG_DFL, [], SA_RESTORER|SA_RESTART, 0x7f5393926650}, {SIG_DFL, [], SA_RESTORER|SA_RESTART, 0x7f5393926650}, 8) = 0
+rt_sigaction(SIGINT, {SIG_DFL, [], SA_RESTORER, 0x7f5393926650}, {SIG_DFL, [], 0}, 8) = 0
+rt_sigaction(SIGINT, {SIG_DFL, [], SA_RESTORER, 0x7f5393926650}, {SIG_DFL, [], SA_RESTORER, 0x7f5393926650}, 8) = 0
+rt_sigaction(SIGQUIT, {SIG_DFL, [], SA_RESTORER, 0x7f5393926650}, {SIG_DFL, [], 0}, 8) = 0
+rt_sigaction(SIGQUIT, {SIG_DFL, [], SA_RESTORER, 0x7f5393926650}, {SIG_DFL, [], SA_RESTORER, 0x7f5393926650}, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigaction(SIGQUIT, {SIG_IGN, [], SA_RESTORER, 0x7f5393926650}, {SIG_DFL, [], SA_RESTORER, 0x7f5393926650}, 8) = 0
+uname({sys="Linux", node="sandy4", ...}) = 0
+stat("/home/zhanjie/singularity", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+stat(".", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+getpid()                                = 19453
+open("/usr/lib64/gconv/gconv-modules.cache", O_RDONLY) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=26254, ...}) = 0
+mmap(NULL, 26254, PROT_READ, MAP_SHARED, 3, 0) = 0x7f53942f9000
+close(3)                                = 0
+getppid()                               = 19449
+getpgrp()                               = 19449
+rt_sigaction(SIGCHLD, {0x441090, [], SA_RESTORER|SA_RESTART, 0x7f5393926650}, {SIG_DFL, [], SA_RESTORER|SA_RESTART, 0x7f5393926650}, 8) = 0
+getrlimit(RLIMIT_NPROC, {rlim_cur=127817, rlim_max=127817}) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+open("/usr/local/libexec/singularity/cli/exec.exec", O_RDONLY) = 3
+ioctl(3, SNDCTL_TMR_TIMEBASE or SNDRV_TIMER_IOCTL_NEXT_DEVICE or TCGETS, 0x7fff75f34270) = -1 ENOTTY (Inappropriate ioctl for device)
+lseek(3, 0, SEEK_CUR)                   = 0
+read(3, "#!/bin/bash\n# \n# Copyright (c) 2"..., 80) = 80
+lseek(3, 0, SEEK_SET)                   = 0
+getrlimit(RLIMIT_NOFILE, {rlim_cur=8*1024, rlim_max=8*1024}) = 0
+fcntl(255, F_GETFD)                     = -1 EBADF (Bad file descriptor)
+dup2(3, 255)                            = 255
+close(3)                                = 0
+fcntl(255, F_SETFD, FD_CLOEXEC)         = 0
+fcntl(255, F_GETFL)                     = 0x8000 (flags O_RDONLY|O_LARGEFILE)
+fstat(255, {st_mode=S_IFREG|0755, st_size=4667, ...}) = 0
+lseek(255, 0, SEEK_CUR)                 = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+read(255, "#!/bin/bash\n# \n# Copyright (c) 2"..., 4667) = 4667
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+stat("/usr/local/libexec/singularity/functions", {st_mode=S_IFREG|0755, st_size=6705, ...}) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+open("/usr/local/libexec/singularity/functions", O_RDONLY) = 3
+fstat(3, {st_mode=S_IFREG|0755, st_size=6705, ...}) = 0
+read(3, "#!/bin/bash\n#\n# Copyright (c) 20"..., 6705) = 6705
+close(3)                                = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+stat("/usr/local/etc/singularity/init", {st_mode=S_IFREG|0644, st_size=489, ...}) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+open("/usr/local/etc/singularity/init", O_RDONLY) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=489, ...}) = 0
+read(3, "# This will be sourced before la"..., 489) = 489
+close(3)                                = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+pipe([3, 4])                            = 0
+rt_sigprocmask(SIG_BLOCK, [CHLD], [], 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, [INT CHLD], [], 8) = 0
+clone(child_stack=0, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, child_tidptr=0x7f53942e8a10) = 19454
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigaction(SIGCHLD, {0x441090, [], SA_RESTORER|SA_RESTART, 0x7f5393926650}, {0x441090, [], SA_RESTORER|SA_RESTART, 0x7f5393926650}, 8) = 0
+close(4)                                = 0
+read(3, "EST\n", 128)                   = 4
+read(3, "", 128)                        = 0
+--- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=19454, si_status=0, si_utime=0, si_stime=0} ---
+wait4(-1, [{WIFEXITED(s) && WEXITSTATUS(s) == 0}], WNOHANG, NULL) = 19454
+wait4(-1, 0x7fff75f33050, WNOHANG, NULL) = -1 ECHILD (No child processes)
+rt_sigreturn()                          = 0
+close(3)                                = 0
+rt_sigprocmask(SIG_BLOCK, [CHLD], [], 8) = 0
+rt_sigaction(SIGINT, {0x43e500, [], SA_RESTORER, 0x7f5393926650}, {SIG_DFL, [], SA_RESTORER, 0x7f5393926650}, 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigaction(SIGINT, {SIG_DFL, [], SA_RESTORER, 0x7f5393926650}, {0x43e500, [], SA_RESTORER, 0x7f5393926650}, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+open("/usr/share/zoneinfo/EST", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=118, ...}) = 0
+fstat(3, {st_mode=S_IFREG|0644, st_size=118, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f53942f8000
+read(3, "TZif2\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\1\0\0\0\0"..., 4096) = 118
+lseek(3, -62, SEEK_CUR)                 = 56
+read(3, "TZif2\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\1\0\0\0\0"..., 4096) = 62
+close(3)                                = 0
+munmap(0x7f53942f8000, 4096)            = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+stat("/root/.singularity-init", 0x7fff75f33e80) = -1 ENOENT (No such file or directory)
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+faccessat(AT_FDCWD, "/usr/local/libexec/singularity/image-handler.sh", X_OK) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+open("/usr/local/libexec/singularity/image-handler.sh", O_RDONLY) = 3
+fstat(3, {st_mode=S_IFREG|0755, st_size=9975, ...}) = 0
+brk(0)                                  = 0x7bc000
+brk(0x7dd000)                           = 0x7dd000
+read(3, "#!/bin/bash\n# \n# Copyright (c) 2"..., 9975) = 9975
+close(3)                                = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+faccessat(AT_FDCWD, "/usr/local/libexec/singularity/sexec", X_OK) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigaction(SIGINT, {SIG_DFL, [], SA_RESTORER, 0x7f5393926650}, {SIG_DFL, [], SA_RESTORER, 0x7f5393926650}, 8) = 0
+rt_sigaction(SIGQUIT, {SIG_DFL, [], SA_RESTORER, 0x7f5393926650}, {SIG_IGN, [], SA_RESTORER, 0x7f5393926650}, 8) = 0
+rt_sigaction(SIGCHLD, {SIG_DFL, [], SA_RESTORER|SA_RESTART, 0x7f5393926650}, {0x441090, [], SA_RESTORER|SA_RESTART, 0x7f5393926650}, 8) = 0
+execve("/usr/local/libexec/singularity/sexec", ["/usr/local/libexec/singularity/s"..., "date"], [/* 41 vars */]) = 0
+brk(0)                                  = 0x7f505cf29000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f505b77d000
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/tls/x86_64/libsingularity.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/usr/local/lib/tls/x86_64", 0x7ffc2c9db080) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/tls/libsingularity.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/usr/local/lib/tls", 0x7ffc2c9db080) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/x86_64/libsingularity.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/usr/local/lib/x86_64", 0x7ffc2c9db080) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/libsingularity.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/usr/local/lib", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+open("/usr/local/lib/singularity/tls/x86_64/libsingularity.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/usr/local/lib/singularity/tls/x86_64", 0x7ffc2c9db080) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/singularity/tls/libsingularity.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/usr/local/lib/singularity/tls", 0x7ffc2c9db080) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/singularity/x86_64/libsingularity.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/usr/local/lib/singularity/x86_64", 0x7ffc2c9db080) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/singularity/libsingularity.so.1", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0@Z\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=450582, ...}) = 0
+mmap(NULL, 2238688, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f505b33a000
+mprotect(0x7f505b35c000, 2093056, PROT_NONE) = 0
+mmap(0x7f505b55b000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x21000) = 0x7f505b55b000
+close(3)                                = 0
+open("/usr/local/lib/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/singularity/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+open("/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=82641, ...}) = 0
+mmap(NULL, 82641, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7f505b768000
+close(3)                                = 0
+open("/usr/lib64/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\34\2\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=2107760, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f505b767000
+mmap(NULL, 3932736, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f505af79000
+mprotect(0x7f505b12f000, 2097152, PROT_NONE) = 0
+mmap(0x7f505b32f000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1b6000) = 0x7f505b32f000
+mmap(0x7f505b335000, 16960, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f505b335000
+close(3)                                = 0
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f505b765000
+arch_prctl(ARCH_SET_FS, 0x7f505b765740) = 0
+mprotect(0x7f505b32f000, 16384, PROT_READ) = 0
+mprotect(0x7f505b55b000, 4096, PROT_READ) = 0
+mprotect(0x7f505b985000, 4096, PROT_READ) = 0
+mprotect(0x7f505b77e000, 4096, PROT_READ) = 0
+munmap(0x7f505b768000, 82641)           = 0
+socket(PF_LOCAL, SOCK_DGRAM|SOCK_CLOEXEC, 0) = 3
+connect(3, {sa_family=AF_LOCAL, sun_path="/dev/log"}, 110) = 0
+getuid()                                = 0
+getuid()                                = 0
+getgid()                                = 0
+getgroups(0, NULL)                      = 1
+brk(0)                                  = 0x7f505cf29000
+brk(0x7f505cf4a000)                     = 0x7f505cf4a000
+brk(0)                                  = 0x7f505cf4a000
+getgroups(1, [0])                       = 1
+stat("/proc/self/exe", {st_mode=S_IFREG|0755, st_size=62961, ...}) = 0
+stat("/usr/local/etc/singularity/singularity.conf", {st_mode=S_IFREG|0644, st_size=6382, ...}) = 0
+open("/usr/local/etc/singularity/singularity.conf", O_RDONLY) = 4
+fstat(4, {st_mode=S_IFREG|0644, st_size=6382, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f505b77c000
+read(4, "# SINGULARITY.CONF\n# This is the"..., 4096) = 4096
+read(4, " Probe for all mounted file syst"..., 4096) = 2286
+read(4, "", 4096)                       = 0
+close(4)                                = 0
+munmap(0x7f505b77c000, 4096)            = 0
+getcwd("/home/zhanjie/singularity", 4096) = 26
+stat("/home/zhanjie/singularity/singularity-centos7.img", {st_mode=S_IFREG|0755, st_size=3221225504, ...}) = 0
+stat("/home/zhanjie/singularity/singularity-centos7.img", {st_mode=S_IFREG|0755, st_size=3221225504, ...}) = 0
+open("/home/zhanjie/singularity/singularity-centos7.img", O_RDONLY|O_CLOEXEC) = 4
+fstat(4, {st_mode=S_IFREG|0755, st_size=3221225504, ...}) = 0
+mmap(NULL, 1048576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f505b665000
+lseek(4, 0, SEEK_SET)                   = 0
+read(4, "#!/usr/bin/env run-singularity\n\0"..., 1048576) = 1048576
+getuid()                                = 0
+stat("/home/zhanjie/singularity/singularity-centos7.img", {st_mode=S_IFREG|0755, st_size=3221225504, ...}) = 0
+stat("/tmp/.singularity-session-0.36.131614", 0x7ffc2c9db750) = -1 ENOENT (No such file or directory)
+stat("/tmp/.singularity-session-0.36.131614", 0x7ffc2c9db710) = -1 ENOENT (No such file or directory)
+stat("/tmp", {st_mode=S_IFDIR|S_ISVTX|0777, st_size=4096, ...}) = 0
+umask(0)                                = 022
+mkdir("/tmp/.singularity-session-0.36.131614", 0755) = 0
+umask(022)                              = 0
+stat("/tmp/.singularity-session-0.36.131614", {st_mode=S_IFDIR|0755, st_size=6, ...}) = 0
+open("/tmp/.singularity-session-0.36.131614", O_RDONLY|O_CLOEXEC) = 5
+flock(5, LOCK_SH|LOCK_NB)               = 0
+pipe2([6, 7], O_CLOEXEC)                = 0
+pipe([8, 9])                            = 0
+clone(child_stack=0, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, child_tidptr=0x7f505b765a10) = 19456
+rt_sigprocmask(SIG_SETMASK, ~[RTMIN RT_1], [], 8) = 0
+rt_sigaction(SIGINT, {0x7f505b344270, [], SA_RESTORER|SA_RESTART|SA_SIGINFO, 0x7f505afae650}, NULL, 8) = 0
+rt_sigaction(SIGQUIT, {0x7f505b344270, [], SA_RESTORER|SA_RESTART|SA_SIGINFO, 0x7f505afae650}, NULL, 8) = 0
+rt_sigaction(SIGTERM, {0x7f505b344270, [], SA_RESTORER|SA_RESTART|SA_SIGINFO, 0x7f505afae650}, NULL, 8) = 0
+rt_sigaction(SIGHUP, {0x7f505b344270, [], SA_RESTORER|SA_RESTART|SA_SIGINFO, 0x7f505afae650}, NULL, 8) = 0
+rt_sigaction(SIGUSR1, {0x7f505b344270, [], SA_RESTORER|SA_RESTART|SA_SIGINFO, 0x7f505afae650}, NULL, 8) = 0
+rt_sigaction(SIGUSR2, {0x7f505b344270, [], SA_RESTORER|SA_RESTART|SA_SIGINFO, 0x7f505afae650}, NULL, 8) = 0
+rt_sigaction(SIGCHLD, {0x7f505b3442c0, [], SA_RESTORER|SA_RESTART|SA_SIGINFO, 0x7f505afae650}, NULL, 8) = 0
+pipe2([10, 11], O_CLOEXEC)              = 0
+pipe2([12, 13], O_CLOEXEC)              = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+stat("/proc/self/exe", {st_mode=S_IFREG|0755, st_size=62961, ...}) = 0
+close(8)                                = 0
+write(9, "\0", 1)                       = 1
+close(9)                                = 0
+poll([{fd=12, events=POLLIN}, {fd=10, events=POLLIN}, {fd=6, events=POLLIN}], 3, 4294967295Fri Jan 27 01:01:26 EST 2017
+) = ? ERESTART_RESTARTBLOCK (Interrupted by signal)
+--- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=19456, si_status=0, si_utime=0, si_stime=0} ---
+write(13, "1", 1)                       = 1
+rt_sigreturn()                          = -1 EINTR (Interrupted system call)
+poll([{fd=12, events=POLLIN}, {fd=10, events=POLLIN}, {fd=6, events=POLLIN}], 3, 4294967295) = 1 ([{fd=12, revents=POLLIN}])
+wait4(19456, [{WIFEXITED(s) && WEXITSTATUS(s) == 0}], 0, NULL) = 19456
+flock(5, LOCK_EX|LOCK_NB)               = 0
+lstat("/tmp/.singularity-session-0.36.131614", {st_mode=S_IFDIR|0755, st_size=38, ...}) = 0
+openat(AT_FDCWD, "/tmp/.singularity-session-0.36.131614", O_RDONLY|O_NONBLOCK|O_DIRECTORY|O_CLOEXEC) = 8
+getdents(8, /* 4 entries */, 32768)     = 112
+newfstatat(8, "image_loop_dev", {st_mode=S_IFREG|0644, st_size=10, ...}, AT_SYMLINK_NOFOLLOW) = 0
+unlink("/tmp/.singularity-session-0.36.131614/image_loop_dev") = 0
+newfstatat(8, "root", {st_mode=S_IFDIR|0755, st_size=6, ...}, AT_SYMLINK_NOFOLLOW) = 0
+openat(8, "root", O_RDONLY|O_NONBLOCK|O_DIRECTORY) = 9
+fstat(9, {st_mode=S_IFDIR|0755, st_size=6, ...}) = 0
+fcntl(9, F_GETFL)                       = 0x18800 (flags O_RDONLY|O_NONBLOCK|O_LARGEFILE|O_DIRECTORY)
+fcntl(9, F_SETFD, FD_CLOEXEC)           = 0
+getdents(9, /* 2 entries */, 32768)     = 48
+getdents(9, /* 0 entries */, 32768)     = 0
+close(9)                                = 0
+unlink("/tmp/.singularity-session-0.36.131614/root") = -1 EISDIR (Is a directory)
+rmdir("/tmp/.singularity-session-0.36.131614/root") = 0
+getdents(8, /* 0 entries */, 32768)     = 0
+close(8)                                = 0
+unlink("/tmp/.singularity-session-0.36.131614") = -1 EISDIR (Is a directory)
+rmdir("/tmp/.singularity-session-0.36.131614") = 0
+exit_group(0)                           = ?
++++ exited with 0 +++
+
+------=_Part_628_804032151.1485500149686
+Content-Type: text/plain; charset=US-ASCII; 
+	name=non-root-mpirun_rsh-strace.log
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename=non-root-mpirun_rsh-strace.log
+X-Attachment-Id: 8236bc0e-376b-4bc1-b0c5-07bd6db85a76
+Content-ID: <8236bc0e-376b-4bc1-b0c5-07bd6db85a76>
+
+execve("../master.install/bin/mpirun_rsh", ["../master.install/bin/mpirun_rsh", "-np", "1", "sandy4", "/usr/local/bin/singularity", "exec", "/home/zhanjie/singularity/singul"..., "date"], [/* 45 vars */]) = 0
+brk(0)                                  = 0x1cbf000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f05ee6fa000
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/tls/x86_64/libibmad.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/lib/tls/x86_64", 0x7fff50509530) = -1 ENOENT (No such file or directory)
+open("/lib/tls/libibmad.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/lib/tls", 0x7fff50509530)        = -1 ENOENT (No such file or directory)
+open("/lib/x86_64/libibmad.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/lib/x86_64", 0x7fff50509530)     = -1 ENOENT (No such file or directory)
+open("/lib/libibmad.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/lib", {st_mode=S_IFDIR|0555, st_size=8192, ...}) = 0
+open("/lib64/tls/x86_64/libibmad.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/lib64/tls/x86_64", 0x7fff50509530) = -1 ENOENT (No such file or directory)
+open("/lib64/tls/libibmad.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/lib64/tls", {st_mode=S_IFDIR|0555, st_size=6, ...}) = 0
+open("/lib64/x86_64/libibmad.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/lib64/x86_64", 0x7fff50509530)   = -1 ENOENT (No such file or directory)
+open("/lib64/libibmad.so.5", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0Pz\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=128624, ...}) = 0
+mmap(NULL, 2222912, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f05ee2bb000
+mprotect(0x7f05ee2d0000, 2097152, PROT_NONE) = 0
+mmap(0x7f05ee4d0000, 40960, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x15000) = 0x7f05ee4d0000
+close(3)                                = 0
+open("/lib/librdmacm.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+open("/lib64/tls/librdmacm.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+open("/lib64/librdmacm.so.1", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0 2\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=108144, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f05ee6f9000
+mmap(NULL, 2204416, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f05ee0a0000
+mprotect(0x7f05ee0b9000, 2093056, PROT_NONE) = 0
+mmap(0x7f05ee2b8000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x18000) = 0x7f05ee2b8000
+mmap(0x7f05ee2ba000, 768, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f05ee2ba000
+close(3)                                = 0
+open("/lib/libibumad.so.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+open("/lib64/tls/libibumad.so.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+open("/lib64/libibumad.so.3", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\220\24\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=36432, ...}) = 0
+mmap(NULL, 2130936, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f05ede97000
+mprotect(0x7f05ede9f000, 2093056, PROT_NONE) = 0
+mmap(0x7f05ee09e000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x7000) = 0x7f05ee09e000
+close(3)                                = 0
+open("/lib/libibverbs.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+open("/lib64/tls/libibverbs.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+open("/lib64/libibverbs.so.1", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\200V\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=100888, ...}) = 0
+mmap(NULL, 2193152, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f05edc7f000
+mprotect(0x7f05edc96000, 2093056, PROT_NONE) = 0
+mmap(0x7f05ede95000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x16000) = 0x7f05ede95000
+close(3)                                = 0
+open("/lib/libdl.so.2", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\320\n\0\0004\0\0\0"..., 832) = 832
+close(3)                                = 0
+open("/lib64/tls/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+open("/lib64/libdl.so.2", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\320\16\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=19512, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f05ee6f8000
+mmap(NULL, 2109744, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f05eda7b000
+mprotect(0x7f05eda7e000, 2093056, PROT_NONE) = 0
+mmap(0x7f05edc7d000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x2000) = 0x7f05edc7d000
+close(3)                                = 0
+open("/lib/librt.so.1", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\1\1\1\3\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0@\31\0\0004\0\0\0"..., 832) = 832
+close(3)                                = 0
+open("/lib64/tls/librt.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+open("/lib64/librt.so.1", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\300\"\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=44088, ...}) = 0
+mmap(NULL, 2128952, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f05ed873000
+mprotect(0x7f05ed87a000, 2093056, PROT_NONE) = 0
+mmap(0x7f05eda79000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x6000) = 0x7f05eda79000
+close(3)                                = 0
+open("/lib/libm.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\1\1\1\3\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0`E\0\0004\0\0\0"..., 832) = 832
+close(3)                                = 0
+open("/lib64/tls/libm.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+open("/lib64/libm.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\260T\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=1141552, ...}) = 0
+mmap(NULL, 3150168, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f05ed571000
+mprotect(0x7f05ed672000, 2093056, PROT_NONE) = 0
+mmap(0x7f05ed871000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x100000) = 0x7f05ed871000
+close(3)                                = 0
+open("/lib/libpthread.so.0", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\0[\0\0004\0\0\0"..., 832) = 832
+close(3)                                = 0
+open("/lib64/tls/libpthread.so.0", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+open("/lib64/libpthread.so.0", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\240l\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=141616, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f05ee6f7000
+mmap(NULL, 2208864, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f05ed355000
+mprotect(0x7f05ed36b000, 2097152, PROT_NONE) = 0
+mmap(0x7f05ed56b000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x16000) = 0x7f05ed56b000
+mmap(0x7f05ed56d000, 13408, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f05ed56d000
+close(3)                                = 0
+open("/lib/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\1\1\1\3\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\220\232\1\0004\0\0\0"..., 832) = 832
+close(3)                                = 0
+open("/lib64/tls/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+open("/lib64/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\34\2\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=2107760, ...}) = 0
+mmap(NULL, 3932736, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f05ecf94000
+mprotect(0x7f05ed14a000, 2097152, PROT_NONE) = 0
+mmap(0x7f05ed34a000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1b6000) = 0x7f05ed34a000
+mmap(0x7f05ed350000, 16960, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f05ed350000
+close(3)                                = 0
+open("/lib/libnl.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+open("/lib64/tls/libnl.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+open("/lib64/libnl.so.1", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0pX\1\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=349176, ...}) = 0
+mmap(NULL, 2436456, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f05ecd41000
+mprotect(0x7f05ecd8e000, 2097152, PROT_NONE) = 0
+mmap(0x7f05ecf8e000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x4d000) = 0x7f05ecf8e000
+close(3)                                = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f05ee6f6000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f05ee6f5000
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f05ee6f3000
+arch_prctl(ARCH_SET_FS, 0x7f05ee6f3740) = 0
+mprotect(0x7f05ed34a000, 16384, PROT_READ) = 0
+mprotect(0x7f05ed871000, 4096, PROT_READ) = 0
+mprotect(0x7f05ed56b000, 4096, PROT_READ) = 0
+mprotect(0x7f05ecf8e000, 4096, PROT_READ) = 0
+mprotect(0x7f05eda79000, 4096, PROT_READ) = 0
+mprotect(0x7f05edc7d000, 4096, PROT_READ) = 0
+mprotect(0x7f05ede95000, 4096, PROT_READ) = 0
+mprotect(0x7f05ee09e000, 4096, PROT_READ) = 0
+mprotect(0x7f05ee2b8000, 4096, PROT_READ) = 0
+mprotect(0x7f05ee4d0000, 36864, PROT_READ) = 0
+mprotect(0x613000, 4096, PROT_READ)     = 0
+mprotect(0x7f05ee6fb000, 4096, PROT_READ) = 0
+set_tid_address(0x7f05ee6f3a10)         = 19548
+set_robust_list(0x7f05ee6f3a20, 24)     = 0
+rt_sigaction(SIGRTMIN, {0x7f05ed35b780, [], SA_RESTORER|SA_SIGINFO, 0x7f05ed364130}, NULL, 8) = 0
+rt_sigaction(SIGRT_1, {0x7f05ed35b810, [], SA_RESTORER|SA_RESTART|SA_SIGINFO, 0x7f05ed364130}, NULL, 8) = 0
+rt_sigprocmask(SIG_UNBLOCK, [RTMIN RT_1], NULL, 8) = 0
+getrlimit(RLIMIT_STACK, {rlim_cur=8192*1024, rlim_max=RLIM64_INFINITY}) = 0
+brk(0)                                  = 0x1cbf000
+brk(0x1ce0000)                          = 0x1ce0000
+open("/proc/net/psched", O_RDONLY)      = 3
+fstat(3, {st_mode=S_IFREG|0444, st_size=0, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f05ee6f2000
+read(3, "000003e8 00000040 000f4240 3b9ac"..., 1024) = 36
+close(3)                                = 0
+munmap(0x7f05ee6f2000, 4096)            = 0
+open("/home/zhanjie/.mvapich2.conf", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/etc/mvapich2.conf", O_RDONLY)    = -1 ENOENT (No such file or directory)
+uname({sys="Linux", node="sandy4", ...}) = 0
+rt_sigaction(SIGILL, NULL, {SIG_DFL, [], 0}, 8) = 0
+rt_sigaction(SIGILL, {0x40cad0, [], SA_RESTORER|SA_RESTART|SA_RESETHAND|SA_SIGINFO, 0x7f05ed364130}, NULL, 8) = 0
+rt_sigaction(SIGABRT, NULL, {SIG_DFL, [], 0}, 8) = 0
+rt_sigaction(SIGABRT, {0x40cad0, [], SA_RESTORER|SA_RESTART|SA_RESETHAND|SA_SIGINFO, 0x7f05ed364130}, NULL, 8) = 0
+rt_sigaction(SIGFPE, NULL, {SIG_DFL, [], 0}, 8) = 0
+rt_sigaction(SIGFPE, {0x40cad0, [], SA_RESTORER|SA_RESTART|SA_RESETHAND|SA_SIGINFO, 0x7f05ed364130}, NULL, 8) = 0
+rt_sigaction(SIGSEGV, NULL, {SIG_DFL, [], 0}, 8) = 0
+rt_sigaction(SIGSEGV, {0x40cad0, [], SA_RESTORER|SA_RESTART|SA_RESETHAND|SA_SIGINFO, 0x7f05ed364130}, NULL, 8) = 0
+rt_sigaction(SIGBUS, NULL, {SIG_DFL, [], 0}, 8) = 0
+rt_sigaction(SIGBUS, {0x40cad0, [], SA_RESTORER|SA_RESTART|SA_RESETHAND|SA_SIGINFO, 0x7f05ed364130}, NULL, 8) = 0
+rt_sigprocmask(SIG_SETMASK, [HUP INT ALRM TERM CHLD TSTP], NULL, 8) = 0
+mmap(NULL, 8392704, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_STACK, -1, 0) = 0x7f05ec540000
+mprotect(0x7f05ec540000, 4096, PROT_NONE) = 0
+clone(child_stack=0x7f05ecd3ffb0, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS|CLONE_PARENT_SETTID|CLONE_CHILD_CLEARTID, parent_tidptr=0x7f05ecd409d0, tls=0x7f05ecd40700, child_tidptr=0x7f05ecd409d0) = 19549
+futex(0x7fff50509b0c, FUTEX_WAIT_PRIVATE, 1, NULL) = 0
+futex(0x7fff50509ae0, FUTEX_WAKE_PRIVATE, 1) = 0
+stat(".", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+stat("/home/zhanjie/singularity/master", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+uname({sys="Linux", node="sandy4", ...}) = 0
+uname({sys="Linux", node="sandy4", ...}) = 0
+open("/etc/resolv.conf", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=116, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f05ee6f2000
+read(3, "; generated by /usr/sbin/dhclien"..., 4096) = 116
+read(3, "", 4096)                       = 0
+close(3)                                = 0
+munmap(0x7f05ee6f2000, 4096)            = 0
+socket(PF_LOCAL, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0) = 3
+connect(3, {sa_family=AF_LOCAL, sun_path="/var/run/nscd/socket"}, 110) = -1 ENOENT (No such file or directory)
+close(3)                                = 0
+socket(PF_LOCAL, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0) = 3
+connect(3, {sa_family=AF_LOCAL, sun_path="/var/run/nscd/socket"}, 110) = -1 ENOENT (No such file or directory)
+close(3)                                = 0
+open("/etc/nsswitch.conf", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=1752, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f05ee6f2000
+read(3, "#\n# /etc/nsswitch.conf\n#\n# An ex"..., 4096) = 1752
+read(3, "", 4096)                       = 0
+close(3)                                = 0
+munmap(0x7f05ee6f2000, 4096)            = 0
+open("/lib/libnss_files.so.2", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\220\32\0\0004\0\0\0"..., 832) = 832
+close(3)                                = 0
+open("/lib64/tls/libnss_files.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+open("/lib64/libnss_files.so.2", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0@\"\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=58288, ...}) = 0
+mmap(NULL, 2144360, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f05ec334000
+mprotect(0x7f05ec33f000, 2093056, PROT_NONE) = 0
+mmap(0x7f05ec53e000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0xa000) = 0x7f05ec53e000
+close(3)                                = 0
+mprotect(0x7f05ec53e000, 4096, PROT_READ) = 0
+open("/etc/host.conf", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=9, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f05ee6f2000
+read(3, "multi on\n", 4096)             = 9
+read(3, "", 4096)                       = 0
+close(3)                                = 0
+munmap(0x7f05ee6f2000, 4096)            = 0
+futex(0x7f05ed352a70, FUTEX_WAKE_PRIVATE, 2147483647) = 0
+open("/etc/hosts", O_RDONLY|O_CLOEXEC)  = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=2063, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f05ee6f2000
+read(3, "127.0.0.1   localhost localhost."..., 4096) = 2063
+read(3, "", 4096)                       = 0
+close(3)                                = 0
+munmap(0x7f05ee6f2000, 4096)            = 0
+socket(PF_INET, SOCK_STREAM, IPPROTO_TCP) = 3
+alarm(60)                               = 0
+bind(3, {sa_family=AF_INET, sin_port=htons(0), sin_addr=inet_addr("0.0.0.0")}, 16) = 0
+alarm(0)                                = 60
+getsockname(3, {sa_family=AF_INET, sin_port=htons(38983), sin_addr=inet_addr("0.0.0.0")}, [16]) = 0
+listen(3, 1)                            = 0
+alarm(30)                               = 0
+readlink("/proc/19548/exe", "/home/zhanjie/singularity/master"..., 4096) = 55
+open("/home/zhanjie/singularity/master.install/bin", O_RDONLY) = 4
+close(4)                                = 0
+clone(child_stack=0, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, child_tidptr=0x7f05ee6f3a10) = 19550
+write(2, "mpispawn (pid=19548)\n", 21mpispawn (pid=19548)
+)  = 21
+mmap(NULL, 8392704, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_STACK, -1, 0) = 0x7f05ebb33000
+mprotect(0x7f05ebb33000, 4096, PROT_NONE) = 0
+clone(child_stack=0x7f05ec332fb0, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS|CLONE_PARENT_SETTID|CLONE_CHILD_CLEARTID, parent_tidptr=0x7f05ec3339d0, tls=0x7f05ec333700, child_tidptr=0x7f05ec3339d0) = 19551
+futex(0x615b64, FUTEX_WAIT_PRIVATE, 1, NULLFORK mpispawn (pid=19550)
+) = 0
+futex(0x615b20, FUTEX_WAKE_PRIVATE, 1)  = 0
+alarm(0)                                = 30
+FORK MPI proc (pid=19554)
+futex(0x615b64, FUTEX_WAIT_PRIVATE, 3, NULLFri Jan 27 01:03:41 EST 2017
+
+------=_Part_628_804032151.1485500149686--

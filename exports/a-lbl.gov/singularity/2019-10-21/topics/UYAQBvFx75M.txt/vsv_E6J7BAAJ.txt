@@ -1,0 +1,286 @@
+Date: Sun, 11 Feb 2018 15:29:13 -0800 (PST)
+From: Michael Yourshaw <myou...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <d332a410-66f9-40a7-ac93-0a55e8eb57ed@lbl.gov>
+In-Reply-To: <CAM=pu+LZW1wqooxqtVtg_7mFeow7_O0f2zdMj1XrYM4m5TMoQw@mail.gmail.com>
+References: <82be990b-2f7e-4d37-a0ac-f4c9d89f0ac4@lbl.gov>
+ <CAM=pu+LZW1wqooxqtVtg_7mFeow7_O0f2zdMj1XrYM4m5TMoQw@mail.gmail.com>
+Subject: Re: [Singularity] singularity not changing to current working
+ directory
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_7771_401720173.1518391753094"
+
+------=_Part_7771_401720173.1518391753094
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_7772_658586384.1518391753095"
+
+------=_Part_7772_658586384.1518391753095
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Using --pwd may not be feasible within the constraints of the pipeline, 
+because the working directories are auto-generated.
+
+However, I tried --pwd manually, and it failed:
+
+cubipmcmp001:execution$ 
+/gpfs/software/singularity/singularity2.4.2c/bin/singularity exec --pwd 
+/gpfs/share/cmoco_sys_dev/nfs/storage/cromwell/cromwell-executions/PairedEndSingleSampleWorkflow/28b31fed-49f0-4b82-80c3-2746f21c84fe/call-CollectQualityYieldMetrics/shard-0/execution 
+-B /homelink:/homelink -B /gpfs/share/cmoco_sys_dev/nfs/storage:/storage 
+/gpfs/share/cmoco_sys_dev/nfs/storage/germline/applications/singularity/VEP.simg 
+pwd
+ERROR  : Could not change directory to: 
+/gpfs/share/cmoco_sys_dev/nfs/storage/cromwell/cromwell-executions/PairedEndSingleSampleWorkflow/28b31fed-49f0-4b82-80c3-2746f21c84fe/call-CollectQualityYieldMetrics/shard-0/execution
+ABORT  : Retval = 255
+
+
+I also experimented with adding `-B /homelink` to the command, but no 
+/homelink defined in the image. That caused the container's cwd to be `/` 
+(root).
+
+When I created a /homelink in the image and used `-B /homelink:/homelink`, 
+I got "WARNING: Could not chdir to home: /homelink/yoursham" and the cwd 
+was `/`.
+
+On Sunday, February 11, 2018 at 4:05:49 PM UTC-7, vanessa wrote:
+>
+> I can't comment on the setup for your cluster and if an entire mount isn't 
+> allowed, but for the directory you hit when you use the image, did you try 
+> running the command with --pwd to set it?
+>
+> On Sun, Feb 11, 2018 at 2:26 PM, Michael Yourshaw <my...@gmail.com 
+> <javascript:>> wrote:
+>
+>> I'm running a singularity image that contains java and other genetics 
+>> applications. I use the Broad Institute Cromwell workflow engine running on 
+>> a virtual machine to submit jobs to a Slurm-managed compute cluster.
+>>
+>> My version of Singularity is a December 2017 patched version of 2.4.2 
+>> that fixed problems binding to our file system. We have named this patch 
+>> 2.4.2c on our system. See Unable to bind directories on NFS filesystem, 
+>> "permission denied" error even though I have permission #1205 
+>> <https://github.com/singularityware/singularity/issues/1205> for details.
+>>
+>> Cromwell submits a job with a script that essentially:
+>>     - sets the current working directory to an 'execution' directory
+>>     - invokes singularity exec to execute a java application whose 
+>> outputs are expected to go to the current working directory that was 
+>> previously set.
+>>
+>> Instead, output is going to the home directory of the user that is 
+>> running the job.
+>>
+>> The home directories have non-standard names, like 
+>> `/homelink/cmoco_sys_dev` and actually are are symbloic links like 
+>> `cmoco_sys_dev -> /cmoco_sys_dev/share/cmoco_sys_dev/nfs/cmoco_sys_dev`.
+>>
+>> I have a `/storage` bind point in the image, which I bind to the top 
+>> level directory with `-B /gpfs/share/cmoco_sys_dev/nfs/storage:/storage`, 
+>> and the current working directory actually is mounted.
+>>
+>> Here is a transcript of a manual replication of this problem:
+>>
+>> ```
+>> cubipmcmp001:~$ cd 
+>> /gpfs/share/cmoco_sys_dev/nfs/storage/cromwell/cromwell-executions/PairedEndSingleSampleWorkflow/8ae5051e-2950-42f8-bd07-6ad251077e06/call-CollectQualityYieldMetrics/shard-0/execution
+>> cubipmcmp001:execution$ pwd
+>>
+>> /gpfs/share/cmoco_sys_dev/nfs/storage/cromwell/cromwell-executions/PairedEndSingleSampleWorkflow/8ae5051e-2950-42f8-bd07-6ad251077e06/call-CollectQualityYieldMetrics/shard-0/execution
+>> cubipmcmp001:execution$ 
+>> /gpfs/software/singularity/singularity2.4.2c/bin/singularity shell -B 
+>> /gpfs/share/cmoco_sys_dev/nfs/storage:/storage 
+>> /gpfs/share/cmoco_sys_dev/nfs/storage/germline/applications/singularity/GATK.simg
+>> Singularity: Invoking an interactive shell within container...
+>>
+>> Singularity 
+>> singularity_GATK_3.8-0_4.0.1.0_picard2.17.6_samtools1.7_jre8u162_python3.6.4_2018-02-10.simg:~> 
+>> pwd
+>> /homelink/yoursham
+>> Singularity 
+>> singularity_GATK_3.8-0_4.0.1.0_picard2.17.6_samtools1.7_jre8u162_python3.6.4_2018-02-10.simg:~> 
+>> ls -l 
+>> /storage/cromwell/cromwell-executions/PairedEndSingleSampleWorkflow/8ae5051e-2950-42f8-bd07-6ad251077e06/call-CollectQualityYieldMetrics/shard-0/execution/
+>> total 32
+>> -rw-rw---- 1 2001912691 ticr_cmoco_sys_dev     2 Feb 10 16:45 rc
+>> -rw-r--r-- 1 2001912691 ticr_cmoco_sys_dev  2243 Feb 10 16:43 script
+>> -rw-r--r-- 1 2001912691 ticr_cmoco_sys_dev  1045 Feb 10 16:43 
+>> script.submit
+>> -rw-rw---- 1 2001912691 ticr_cmoco_sys_dev 13156 Feb 10 16:45 stderr
+>> -rw-r--r-- 1 2001912691 ticr_cmoco_sys_dev   972 Feb 10 16:43 
+>> stderr.submit
+>> -rw-rw---- 1 2001912691 ticr_cmoco_sys_dev     0 Feb 10 16:43 stdout
+>> -rw-r--r-- 1 2001912691 ticr_cmoco_sys_dev    27 Feb 10 16:43 
+>> stdout.submit
+>> drwxrwxrwx 2 2001912691 ticr_cmoco_sys_dev  4096 Feb 10 16:43 tmp.LToYy9
+>> Singularity 
+>> singularity_GATK_3.8-0_4.0.1.0_picard2.17.6_samtools1.7_jre8u162_python3.6.4_2018-02-10.simg:~> 
+>> cd 
+>> /storage/cromwell/cromwell-executions/PairedEndSingleSampleWorkflow/8ae5051e-2950-42f8-bd07-6ad251077e06/call-CollectQualityYieldMetrics/shard-0/execution/
+>> Singularity 
+>> singularity_GATK_3.8-0_4.0.1.0_picard2.17.6_samtools1.7_jre8u162_python3.6.4_2018-02-10.simg:/storage/cromwell/cromwell-executions/PairedEndSingleSampleWorkflow/8ae5051e-2950-42f8-bd07-6ad251077e06/call-CollectQualityYieldMetrics/shard-0/execution> 
+>> ls -l
+>> total 32
+>> -rw-rw---- 1 2001912691 ticr_cmoco_sys_dev     2 Feb 10 16:45 rc
+>> -rw-r--r-- 1 2001912691 ticr_cmoco_sys_dev  2243 Feb 10 16:43 script
+>> -rw-r--r-- 1 2001912691 ticr_cmoco_sys_dev  1045 Feb 10 16:43 
+>> script.submit
+>> -rw-rw---- 1 2001912691 ticr_cmoco_sys_dev 13156 Feb 10 16:45 stderr
+>> -rw-r--r-- 1 2001912691 ticr_cmoco_sys_dev   972 Feb 10 16:43 
+>> stderr.submit
+>> -rw-rw---- 1 2001912691 ticr_cmoco_sys_dev     0 Feb 10 16:43 stdout
+>> -rw-r--r-- 1 2001912691 ticr_cmoco_sys_dev    27 Feb 10 16:43 
+>> stdout.submit
+>> drwxrwxrwx 2 2001912691 ticr_cmoco_sys_dev  4096 Feb 10 16:43 tmp.LToYy9
+>> ```
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_7772_658586384.1518391753095
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Using --pwd may not be feasible within the constraints of =
+the pipeline, because the working directories are auto-generated.<div><br><=
+/div><div>However, I tried --pwd manually, and it failed:</div><div><br></d=
+iv><div><div class=3D"prettyprint" style=3D"background-color: rgb(250, 250,=
+ 250); border-color: rgb(187, 187, 187); border-style: solid; border-width:=
+ 1px; word-wrap: break-word;"><code class=3D"prettyprint"><div class=3D"sub=
+prettyprint"><div class=3D"subprettyprint">cubipmcmp001:execution$ /gpfs/so=
+ftware/singularity/singularity2.4.2c/bin/singularity exec --pwd /gpfs/share=
+/cmoco_sys_dev/nfs/storage/cromwell/cromwell-executions/PairedEndSingleSamp=
+leWorkflow/28b31fed-49f0-4b82-80c3-2746f21c84fe/call-CollectQualityYieldMet=
+rics/shard-0/execution -B /homelink:/homelink -B /gpfs/share/cmoco_sys_dev/=
+nfs/storage:/storage /gpfs/share/cmoco_sys_dev/nfs/storage/germline/applica=
+tions/singularity/VEP.simg pwd</div><div class=3D"subprettyprint">ERROR=C2=
+=A0 : Could not change directory to: /gpfs/share/cmoco_sys_dev/nfs/storage/=
+cromwell/cromwell-executions/PairedEndSingleSampleWorkflow/28b31fed-49f0-4b=
+82-80c3-2746f21c84fe/call-CollectQualityYieldMetrics/shard-0/execution</div=
+><div class=3D"subprettyprint">ABORT=C2=A0 : Retval =3D 255</div><div><br><=
+/div></div></code></div><br>I also experimented with adding `-B /homelink` =
+to the command, but no /homelink defined in the image. That caused the cont=
+ainer&#39;s cwd to be `/` (root).</div><div><br></div><div>When I created a=
+ /homelink in the image and used `-B /homelink:/homelink`, I got &quot;WARN=
+ING: Could not chdir to home: /homelink/yoursham&quot; and the cwd was `/`.=
+<br><br>On Sunday, February 11, 2018 at 4:05:49 PM UTC-7, vanessa wrote:<bl=
+ockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border=
+-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">I can&#39;t comm=
+ent on the setup for your cluster and if an entire mount isn&#39;t allowed,=
+ but for the directory you hit when you use the image, did you try running =
+the command with --pwd to set it?</div><div><br><div class=3D"gmail_quote">=
+On Sun, Feb 11, 2018 at 2:26 PM, Michael Yourshaw <span dir=3D"ltr">&lt;<a =
+href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"0QNtIze5AQA=
+J" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return=
+ true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">my...@gm=
+ail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D=
+"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D=
+"ltr">I&#39;m running a singularity image that contains java and other gene=
+tics applications. I use the Broad Institute Cromwell workflow engine runni=
+ng on a virtual machine to submit jobs to a Slurm-managed compute cluster.<=
+div><br></div><div>My version of Singularity is a December 2017 patched ver=
+sion of 2.4.2 that fixed problems binding to our file system. We have named=
+ this patch 2.4.2c on our system. See=C2=A0<a href=3D"https://github.com/si=
+ngularityware/singularity/issues/1205" target=3D"_blank" rel=3D"nofollow" o=
+nmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%=
+2Fgithub.com%2Fsingularityware%2Fsingularity%2Fissues%2F1205\x26sa\x3dD\x26=
+sntz\x3d1\x26usg\x3dAFQjCNGLzPz8UvK9bf3HQvIe85jhyLocHQ&#39;;return true;" o=
+nclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgi=
+thub.com%2Fsingularityware%2Fsingularity%2Fissues%2F1205\x26sa\x3dD\x26sntz=
+\x3d1\x26usg\x3dAFQjCNGLzPz8UvK9bf3HQvIe85jhyLocHQ&#39;;return true;">Unabl=
+e to bind directories on NFS filesystem, &quot;permission denied&quot; erro=
+r even though I have permission #1205</a> for details.</div><div><br></div>=
+<div>Cromwell submits a job with a script that essentially:</div><div>=C2=
+=A0 =C2=A0 - sets the current working directory to an &#39;execution&#39; d=
+irectory</div><div>=C2=A0 =C2=A0 - invokes singularity exec to execute a ja=
+va application whose outputs are expected to go to the current working dire=
+ctory that was previously set.</div><div><br></div><div>Instead, output is =
+going to the home directory of the user that is running the job.</div><div>=
+<br></div><div>The home directories have non-standard names, like `/homelin=
+k/cmoco_sys_dev` and actually are are symbloic links like `cmoco_sys_dev=C2=
+=A0-&gt; /cmoco_sys_dev/share/cmoco_<wbr>sys_dev/nfs/cmoco_sys_dev`.</div><=
+div><br></div><div>I have a `/storage` bind point in the image, which I bin=
+d to the top level directory with `-B /gpfs/share/cmoco_sys_dev/nfs/<wbr>st=
+orage:/storage`, and the current working directory actually is mounted.</di=
+v><div><br></div><div>Here is a transcript of a manual replication of this =
+problem:</div><div><br><div>```</div><div><div>cubipmcmp001:~$ cd /gpfs/sha=
+re/cmoco_sys_dev/nfs/<wbr>storage/cromwell/cromwell-<wbr>executions/<wbr>Pa=
+iredEndSingleSampleWorkflow/<wbr>8ae5051e-2950-42f8-bd07-<wbr>6ad251077e06/=
+call-<wbr>CollectQualityYieldMetrics/<wbr>shard-0/execution</div><div>cubip=
+mcmp001:execution$ pwd</div><div>/gpfs/share/cmoco_sys_dev/nfs/<wbr>storage=
+/cromwell/cromwell-<wbr>executions/<wbr>PairedEndSingleSampleWorkflow/<wbr>=
+8ae5051e-2950-42f8-bd07-<wbr>6ad251077e06/call-<wbr>CollectQualityYieldMetr=
+ics/<wbr>shard-0/execution</div><div>cubipmcmp001:execution$ /gpfs/software=
+/singularity/<wbr>singularity2.4.2c/bin/<wbr>singularity shell -B /gpfs/sha=
+re/cmoco_sys_dev/nfs/<wbr>storage:/storage /gpfs/share/cmoco_sys_dev/nfs/<w=
+br>storage/germline/applications/<wbr>singularity/GATK.simg</div><div>Singu=
+larity: Invoking an interactive shell within container...</div><div><br></d=
+iv><div>Singularity singularity_GATK_3.8-0_4.0.1.<wbr>0_picard2.17.6_samtoo=
+ls1.7_<wbr>jre8u162_python3.6.4_2018-02-<wbr>10.simg:~&gt; pwd</div><div>/h=
+omelink/yoursham</div><div>Singularity singularity_GATK_3.8-0_4.0.1.<wbr>0_=
+picard2.17.6_samtools1.7_<wbr>jre8u162_python3.6.4_2018-02-<wbr>10.simg:~&g=
+t; ls -l /storage/cromwell/cromwell-<wbr>executions/<wbr>PairedEndSingleSam=
+pleWorkflow/<wbr>8ae5051e-2950-42f8-bd07-<wbr>6ad251077e06/call-<wbr>Collec=
+tQualityYieldMetrics/<wbr>shard-0/execution/</div><div>total 32</div><div>-=
+rw-rw---- 1 2001912691 ticr_cmoco_sys_dev=C2=A0 =C2=A0 =C2=A02 Feb 10 16:45=
+ rc</div><div>-rw-r--r-- 1 2001912691 ticr_cmoco_sys_dev=C2=A0 2243 Feb 10 =
+16:43 script</div><div>-rw-r--r-- 1 2001912691 ticr_cmoco_sys_dev=C2=A0 104=
+5 Feb 10 16:43 script.submit</div><div>-rw-rw---- 1 2001912691 ticr_cmoco_s=
+ys_dev 13156 Feb 10 16:45 stderr</div><div>-rw-r--r-- 1 2001912691 ticr_cmo=
+co_sys_dev=C2=A0 =C2=A0972 Feb 10 16:43 stderr.submit</div><div>-rw-rw---- =
+1 2001912691 ticr_cmoco_sys_dev=C2=A0 =C2=A0 =C2=A00 Feb 10 16:43 stdout</d=
+iv><div>-rw-r--r-- 1 2001912691 ticr_cmoco_sys_dev=C2=A0 =C2=A0 27 Feb 10 1=
+6:43 stdout.submit</div><div>drwxrwxrwx 2 2001912691 ticr_cmoco_sys_dev=C2=
+=A0 4096 Feb 10 16:43 tmp.LToYy9</div><div>Singularity singularity_GATK_3.8=
+-0_4.0.1.<wbr>0_picard2.17.6_samtools1.7_<wbr>jre8u162_python3.6.4_2018-02-=
+<wbr>10.simg:~&gt; cd /storage/cromwell/cromwell-<wbr>executions/<wbr>Paire=
+dEndSingleSampleWorkflow/<wbr>8ae5051e-2950-42f8-bd07-<wbr>6ad251077e06/cal=
+l-<wbr>CollectQualityYieldMetrics/<wbr>shard-0/execution/</div><div>Singula=
+rity singularity_GATK_3.8-0_4.0.1.<wbr>0_picard2.17.6_samtools1.7_<wbr>jre8=
+u162_python3.6.4_2018-02-<wbr>10.simg:/storage/cromwell/<wbr>cromwell-execu=
+tions/<wbr>PairedEndSingleSampleWorkflow/<wbr>8ae5051e-2950-42f8-bd07-<wbr>=
+6ad251077e06/call-<wbr>CollectQualityYieldMetrics/<wbr>shard-0/execution&gt=
+; ls -l</div><div>total 32</div><div>-rw-rw---- 1 2001912691 ticr_cmoco_sys=
+_dev=C2=A0 =C2=A0 =C2=A02 Feb 10 16:45 rc</div><div>-rw-r--r-- 1 2001912691=
+ ticr_cmoco_sys_dev=C2=A0 2243 Feb 10 16:43 script</div><div>-rw-r--r-- 1 2=
+001912691 ticr_cmoco_sys_dev=C2=A0 1045 Feb 10 16:43 script.submit</div><di=
+v>-rw-rw---- 1 2001912691 ticr_cmoco_sys_dev 13156 Feb 10 16:45 stderr</div=
+><div>-rw-r--r-- 1 2001912691 ticr_cmoco_sys_dev=C2=A0 =C2=A0972 Feb 10 16:=
+43 stderr.submit</div><div>-rw-rw---- 1 2001912691 ticr_cmoco_sys_dev=C2=A0=
+ =C2=A0 =C2=A00 Feb 10 16:43 stdout</div><div>-rw-r--r-- 1 2001912691 ticr_=
+cmoco_sys_dev=C2=A0 =C2=A0 27 Feb 10 16:43 stdout.submit</div><div>drwxrwxr=
+wx 2 2001912691 ticr_cmoco_sys_dev=C2=A0 4096 Feb 10 16:43 tmp.LToYy9</div>=
+<div>```<span><font color=3D"#888888"><br></font></span></div></div><span><=
+font color=3D"#888888"><div><br></div></font></span></div></div><span><font=
+ color=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+0QNtIze5AQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div>=
+<div>(603) 321-0676</div></div></div></div>
+</div>
+</blockquote></div></div>
+------=_Part_7772_658586384.1518391753095--
+
+------=_Part_7771_401720173.1518391753094--

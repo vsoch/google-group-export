@@ -1,0 +1,222 @@
+Date: Fri, 12 Apr 2019 15:19:17 -0700 (PDT)
+From: Jason Boles <jason...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <6c30220a-0010-4a42-8a1d-3082b9953d30@lbl.gov>
+In-Reply-To: <20180822223830.GA871@fnal.gov>
+References: <c3210c20-2c17-4647-bdff-0873dbe8b673@lbl.gov>
+ <c30cc58c-7f0b-46c1-9efe-448e4d5a50a8@lbl.gov>
+ <CAGfAqt9TkLV3Q=4D6uhrJQ4CKPQfiz23apbrMrKOE0ORG0Dm5w@mail.gmail.com>
+ <20180822223830.GA871@fnal.gov>
+Subject: Re: [Singularity] Re: Mount volumes without root permissions using
+ fuse
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1078_2136806857.1555107557830"
+
+------=_Part_1078_2136806857.1555107557830
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1079_747122406.1555107557830"
+
+------=_Part_1079_747122406.1555107557830
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+
+Hi Dave,
+  Have you had any success on kernel 4.18 FUSE w/o privileges?
+
+I just tested on Ubuntu 18.04.2 w/kernel 4.18.0-17, and Docker 18.09.5=20
+(latest from Docker repo, not ubuntu=E2=80=99s) and sshfs, but I get the sa=
+me=20
+"operation not permitted" error without --privileged or --cap-add...
+I notice that /bin/fusermount is still setuid root, so perhaps that or=20
+sshfs haven't been updated to use 'unprivileged mount' that's supposed to=
+=20
+be available in 4.18?
+
+I will test again with libfuse3 and sshfs built from latest source, but=20
+just checking.
+
+regards,
+Jason B.
+
+
+
+
+On Wednesday, August 22, 2018 at 6:38:39 PM UTC-4, Dave Dykstra wrote:
+>
+> Docker behaves the same way.  You can't mount fuse filesystems inside of=
+=20
+> a container without giving the container privileged capabilities.=20
+>
+> This changed however in Linux kernel 4.18 which was released August 12.=
+=20
+> It supports FUSE mounts within an unprivileged user namespace.=20
+>     https://www.phoronix.com/scan.php?page=3Dnews_item&px=3DLinux-4.18-FU=
+SE=20
+>
+> Dave=20
+>
+> On Tue, Aug 21, 2018 at 02:01:56PM -0500, Jason Stover wrote:=20
+> > Hi,=20
+> >=20
+> >   > which leads me to believe the problem is something about the=20
+> > singularity container=20
+> >=20
+> >   Correct. You cannot elevate privileges inside of the container. So,=
+=20
+> > you can't become root for operations to run like you can outside of=20
+> > the container.=20
+> >=20
+> >   It's by design, not a problem. Once the container starts up, you=20
+> > can't elevate privileges to do any operations you need root privilege=
+=20
+> > for as a normal user. That's it. You're stuck at whatever privileges=20
+> > you have as your user.=20
+> >=20
+> > -J=20
+> >=20
+> > On Tue, Aug 21, 2018 at 1:47 PM cschlick <cs...@iu.edu <javascript:>>=
+=20
+> wrote:=20
+> > >=20
+> > > Thanks for the reply Jason. I tried changing things with setcap and i=
+t=20
+> didn't help. I also tried=20
+> > >=20
+> > > $ chmod 777 /usr/bin/fusermount=20
+> > > $ chown user:user /usr/bin/fusermount=20
+> > >=20
+> > > Just to see what would happen and it still didn't help. Though like I=
+=20
+> said before, it works fine on my machine outside of a container, where:=
+=20
+> > >=20
+> > > $ ls -l /usr/bin/fusermount=20
+> > > -rwsr-xr-x. 1 root root 32008 Apr 11 01:12 /usr/bin/fusermount=20
+> > >=20
+> > >  which leads me to believe the problem is something about the=20
+> singularity container, and not a fundamental limitation of trying to moun=
+t=20
+> as a regular user. Any other ideas?=20
+> > >=20
+> > > --=20
+> > > You received this message because you are subscribed to the Google=20
+> Groups "singularity" group.=20
+> > > To unsubscribe from this group and stop receiving emails from it, sen=
+d=20
+> an email to si...@lbl.gov <javascript:>.=20
+> >=20
+> > --=20
+> > You received this message because you are subscribed to the Google=20
+> Groups "singularity" group.=20
+> > To unsubscribe from this group and stop receiving emails from it, send=
+=20
+> an email to si...@lbl.gov <javascript:>.=20
+>
+
+------=_Part_1079_747122406.1555107557830
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div><br></div><div>Hi Dave,</div><div>=C2=A0 Have you had=
+ any success on kernel 4.18 FUSE w/o privileges?</div><div><br></div><div>I=
+ just tested on Ubuntu
+18.04.2 w/kernel 4.18.0-17, and Docker 18.09.5 (latest
+from Docker repo, not ubuntu=E2=80=99s) and sshfs, but I get the same &quot=
+;operation not permitted&quot; error without --privileged or --cap-add...</=
+div><div>I notice that /bin/fusermount is still setuid root, so perhaps tha=
+t or sshfs haven&#39;t been updated to use &#39;unprivileged mount&#39; tha=
+t&#39;s supposed to be available in 4.18?</div><div><br></div><div>I will t=
+est again with libfuse3 and sshfs built from latest source, but just checki=
+ng.</div><div><br></div><div>regards,</div><div>Jason B.</div><div><br></di=
+v><div><br></div><p class=3D"MsoNormal"><o:p></o:p></p><br><br>On Wednesday=
+, August 22, 2018 at 6:38:39 PM UTC-4, Dave Dykstra wrote:<blockquote class=
+=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #cc=
+c solid;padding-left: 1ex;">Docker behaves the same way. =C2=A0You can&#39;=
+t mount fuse filesystems inside of
+<br>a container without giving the container privileged capabilities.
+<br>
+<br>This changed however in Linux kernel 4.18 which was released August 12.
+<br>It supports FUSE mounts within an unprivileged user namespace.
+<br>=C2=A0 =C2=A0 <a href=3D"https://www.phoronix.com/scan.php?page=3Dnews_=
+item&amp;px=3DLinux-4.18-FUSE" target=3D"_blank" rel=3D"nofollow" onmousedo=
+wn=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fwww.ph=
+oronix.com%2Fscan.php%3Fpage%3Dnews_item%26px%3DLinux-4.18-FUSE\x26sa\x3dD\=
+x26sntz\x3d1\x26usg\x3dAFQjCNHo2bZhpjulUmQylgLPVISs3GWHgw&#39;;return true;=
+" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2=
+Fwww.phoronix.com%2Fscan.php%3Fpage%3Dnews_item%26px%3DLinux-4.18-FUSE\x26s=
+a\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHo2bZhpjulUmQylgLPVISs3GWHgw&#39;;retur=
+n true;">https://www.phoronix.com/scan.<wbr>php?page=3Dnews_item&amp;px=3DL=
+inux-4.<wbr>18-FUSE</a>
+<br>
+<br>Dave
+<br>
+<br>On Tue, Aug 21, 2018 at 02:01:56PM -0500, Jason Stover wrote:
+<br>&gt; Hi,
+<br>&gt;=20
+<br>&gt; =C2=A0 &gt; which leads me to believe the problem is something abo=
+ut the
+<br>&gt; singularity container
+<br>&gt;=20
+<br>&gt; =C2=A0 Correct. You cannot elevate privileges inside of the contai=
+ner. So,
+<br>&gt; you can&#39;t become root for operations to run like you can outsi=
+de of
+<br>&gt; the container.
+<br>&gt;=20
+<br>&gt; =C2=A0 It&#39;s by design, not a problem. Once the container start=
+s up, you
+<br>&gt; can&#39;t elevate privileges to do any operations you need root pr=
+ivilege
+<br>&gt; for as a normal user. That&#39;s it. You&#39;re stuck at whatever =
+privileges
+<br>&gt; you have as your user.
+<br>&gt;=20
+<br>&gt; -J
+<br>&gt;=20
+<br>&gt; On Tue, Aug 21, 2018 at 1:47 PM cschlick &lt;<a href=3D"javascript=
+:" target=3D"_blank" gdf-obfuscated-mailto=3D"oeaOnXZnDgAJ" rel=3D"nofollow=
+" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D=
+"this.href=3D&#39;javascript:&#39;;return true;">cs...@iu.edu</a>&gt; wrote=
+:
+<br>&gt; &gt;
+<br>&gt; &gt; Thanks for the reply Jason. I tried changing things with setc=
+ap and it didn&#39;t help. I also tried
+<br>&gt; &gt;
+<br>&gt; &gt; $ chmod 777 /usr/bin/fusermount
+<br>&gt; &gt; $ chown user:user /usr/bin/fusermount
+<br>&gt; &gt;
+<br>&gt; &gt; Just to see what would happen and it still didn&#39;t help. T=
+hough like I said before, it works fine on my machine outside of a containe=
+r, where:
+<br>&gt; &gt;
+<br>&gt; &gt; $ ls -l /usr/bin/fusermount
+<br>&gt; &gt; -rwsr-xr-x. 1 root root 32008 Apr 11 01:12 /usr/bin/fusermoun=
+t
+<br>&gt; &gt;
+<br>&gt; &gt; =C2=A0which leads me to believe the problem is something abou=
+t the singularity container, and not a fundamental limitation of trying to =
+mount as a regular user. Any other ideas?
+<br>&gt; &gt;
+<br>&gt; &gt; --
+<br>&gt; &gt; You received this message because you are subscribed to the G=
+oogle Groups &quot;singularity&quot; group.
+<br>&gt; &gt; To unsubscribe from this group and stop receiving emails from=
+ it, send an email to <a href=3D"javascript:" target=3D"_blank" gdf-obfusca=
+ted-mailto=3D"oeaOnXZnDgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#3=
+9;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#3=
+9;;return true;">singu...@lbl.<wbr>gov</a>.
+<br>&gt;=20
+<br>&gt; --=20
+<br>&gt; You received this message because you are subscribed to the Google=
+ Groups &quot;singularity&quot; group.
+<br>&gt; To unsubscribe from this group and stop receiving emails from it, =
+send an email to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-m=
+ailto=3D"oeaOnXZnDgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;jav=
+ascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;re=
+turn true;">singu...@lbl.<wbr>gov</a>.
+<br></blockquote></div>
+------=_Part_1079_747122406.1555107557830--
+
+------=_Part_1078_2136806857.1555107557830--

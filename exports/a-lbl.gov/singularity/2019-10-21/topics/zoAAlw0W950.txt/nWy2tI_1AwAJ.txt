@@ -1,0 +1,533 @@
+Date: Mon, 3 Sep 2018 11:00:23 -0700 (PDT)
+From: Jai Dayal <daya...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <40c06b4f-85dc-4d19-ab63-b9e0f267c61d@lbl.gov>
+In-Reply-To: <CAGfAqt9paJDG-ZoqiftrkgAHEbG4KSmy9yQ6zY=t9fnPyQXCgw@mail.gmail.com>
+References: <371e3209-d168-4b02-bc92-203491f09cbb@lbl.gov> <7873447e-aef2-45c4-8cae-69d0e38fa198@lbl.gov>
+ <CAGfAqt8SsNTb25=Fx1RDEXK3hwLqYf0r6R6A=wc2myDp1w-ZnA@mail.gmail.com>
+ <7fc1dffd-e396-4504-b864-775a627b0b59@lbl.gov> <CAGfAqt9JZoHfJgt2+sA+Z4-AbSn7+tVhX6KmHSRydy+OkDBUFQ@mail.gmail.com>
+ <CAMJ-YiR_HDWVPdXkM6cubBs3Hbj25o3fy+95YKXNrb4VYqWRWA@mail.gmail.com>
+ <CAGfAqt9G43bzrokfww32OFpx4gyuB9tog1Z2HMj-9nE9ex56TQ@mail.gmail.com> <d1457613-d008-41f9-8bd0-f5c17e2b3f45@lbl.gov>
+ <CAGfAqt9paJDG-ZoqiftrkgAHEbG4KSmy9yQ6zY=t9fnPyQXCgw@mail.gmail.com>
+Subject: Re: [Singularity] Re: Creating a container from a vnfs?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1447_854622296.1535997623730"
+
+------=_Part_1447_854622296.1535997623730
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1448_512489294.1535997623731"
+
+------=_Part_1448_512489294.1535997623731
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+This has been tremendously helpful. Thank you.
+
+Given how we're doing things with Singularity 2.5, will this still be 
+possible for Singularity 3.0? I see there will be an entirely new image 
+format:
+
+https://www.sylabs.io/2018/08/a-glimpse-into-singularity-3-0/
+
+Effectively, can we still create images out of "Sandboxes"?
+
+Thanks,
+Jai
+
+On Wednesday, August 29, 2018 at 7:19:29 PM UTC-7, Jason Stover wrote:
+>
+> Hi Jai, 
+>
+>   Well ... in this case singularity is beating out wwmkchroot it some 
+> ways. ;)  For example you can do something like: 
+>
+>     # cd /var/chroots 
+>     # singularity build --sandbox centos7-base docker://centos:latest 
+>       [ ... ] 
+>     # singularity shell -w --sandbox centos7-base/ 
+>       [ ... add packages, etc... ] 
+>
+>   And have a functional root. Or you can setup a Singularity DEF file 
+> to build out a root. You can then do:  wwvnfs 
+> --chroot=/var/chroots/centos7-base --name=centos7-base  ... and have a 
+> "functional" VNFS built for warewulf. And since it was built initially 
+> with singularity, it would have the /.singularity.d directory 
+> included. Singularity is giving more functionality in a lot of cases 
+> that wwmkchroot currently has. 
+>
+>   That's the biggest issue that I see.... Singularity takes a 
+> directory, or tarball, _as is_ and just adds it into a squashfs image. 
+> It doesn't add the metadata directory in with these. From what I can 
+> tell, the reason came down to a workflow like: 
+>
+>     # singularity build --sandbox centos docker://centos:6 
+>     # singularity build centos6.img centos/ 
+>
+>   So, you _start_ with a sandbox directory, which has the 
+> /.singularity.d ... and you make an image from that. From what I see 
+> that was the expected work flow, and why it doesn't try adding the 
+> environment in when creating from a directory. 
+>
+> -J 
+>
+> On Wed, Aug 29, 2018 at 6:21 PM Jai Dayal <da...@gmail.com <javascript:>> 
+> wrote: 
+> > 
+> > Okay. Maybe some of my terminology has been goofed up. Effectively what 
+> we want is to be able to create a propery singularity (or docker) image 
+> from an arbitrary chroot. I think most of this has been captured in my 
+> above questions, but I was goofing up what a vnfs actually is. 
+> > 
+> > I have been able to manually generate the metadata, but it would of 
+> course be nice if there was a way to have singularity do it, just so it's 
+> done properly. Similar to how you can use Singularity to properly interact 
+> with docker images (it will create a /.singularity.d), we'd like to have it 
+> properly interact with an arbitrary chroot (including converting it to a 
+> proper singularity image). 
+> > 
+> > As I said before, this could be something we could work on and submit 
+> some pull requests if you all are interested. 
+> > 
+> > On Monday, August 27, 2018 at 10:32:55 PM UTC-7, Jason Stover wrote: 
+> >> 
+> >> That's what I'm not sure about. When you built off the directory, it 
+> >> didn't add a the `/.singularity.d/` directory into the image. 
+> >> 
+> >> And I _think_ that it builds similar if you use a tarball as the 
+> >> source. So, if that's the case, there's not a metadata dir and it 
+> >> would need to be included. 
+> >> 
+> >> -J 
+> >> 
+> >> On Mon, Aug 27, 2018 at 8:48 PM Jai Dayal <da...@gmail.com> wrote: 
+> >> > 
+> >> > Okay. Will this create the appropriate metadata or does that metadata 
+> need to be I'm the tar.gz? 
+> >> > 
+> >> > On Mon, Aug 27, 2018, 6:43 PM Jason Stover <ja...@gmail.com> 
+> wrote: 
+> >> >> 
+> >> >> > I do remember some instructions on importing an image from a 
+> .tar.gz. 
+> >> >> 
+> >> >> Yes, the command is something like: 
+> >> >> 
+> >> >> singularity build my_image.img my_tar_file.tar.gz 
+> >> >> 
+> >> >> That creates the file "my_image.img" using the contents of 
+> >> >> my_tar_file.tar.gz. Though I think it's going to be similar to if 
+> you 
+> >> >> did: 
+> >> >> 
+> >> >> singularity build my_image.img /path/to/vnfs 
+> >> >> 
+> >> >> -J 
+> >> >> 
+> >> >> On Mon, Aug 27, 2018 at 6:57 PM Jai Dayal <da...@gmail.com> 
+> wrote: 
+> >> >> > 
+> >> >> > >Creating a basic image from something like:  `singularity build 
+> >> >> > alpine.img docker://alpine:latest`   ....  Would give you enough 
+> of 
+> >> >> > the structure to work with. 
+> >> >> > 
+> >> >> > I do remember some instructions on importing an image from a 
+> .tar.gz. I saw the instructions to create a blank container and then you 
+> could "import" a root filesystem stored as a .tar.gz. For some reason, I am 
+> not able to find those instructions. Is that feature still available? 
+> >> >> > 
+> >> >> > I could package up the vnfs into a tar.gz and then import it into 
+> a "blank" container. 
+> >> >> > 
+> >> >> > Jai 
+> >> >> > 
+> >> >> > On Tuesday, August 21, 2018 at 10:39:05 AM UTC-7, Jason Stover 
+> wrote: 
+> >> >> >> 
+> >> >> >> Hi Jai, 
+> >> >> >> 
+> >> >> >>   You can find the base environment setup at (default location): 
+> >> >> >> 
+> >> >> >>       
+> /usr/local/libexec/singularity/bootstrap-scripts/environment.tar 
+> >> >> >> 
+> >> >> >>   That also includes some other stuff in it to make bind mounting 
+> >> >> >> easier so be careful with it. All directories are prepended with 
+> a '.' 
+> >> >> >> though so it's somewhat safer. 
+> >> >> >> 
+> >> >> >>   > not immediately clear what the difference is between run and 
+> start scripts 
+> >> >> >> 
+> >> >> >>   A 'runscript' is invoked when you do:  singularity run [image] 
+>  ... 
+> >> >> >> or you run a image directly like: ./image_name.img 
+> >> >> >>   A 'startscript' is invoked when you use instances, and you run: 
+> >> >> >> singularity instance.start [image] [name] 
+> >> >> >> 
+> >> >> >>   Similar functionality, but you could want different things to 
+> happen 
+> >> >> >> between when you 'start' an instance, and when you 'run' it. 
+> >> >> >> 
+> >> >> >>   > For the "libs" feature, couldn't I make these host system 
+> libs 
+> >> >> >> available w/in the container manually by using a bind flag 
+> >> >> >> 
+> >> >> >>   This '/.singularity.d/libs' directory is used with the `--nv` 
+> flag 
+> >> >> >> for bringing in the host nVidia libraries. I think it does a bind 
+> >> >> >> mount of the libraries to that location. 
+> >> >> >> 
+> >> >> >> -J 
+> >> >> >> 
+> >> >> >> On Tue, Aug 21, 2018 at 12:27 PM Jai Dayal <da...@gmail.com> 
+> wrote: 
+> >> >> >> > 
+> >> >> >> > Thanks for the quick reply. From reading that link, it seems 
+> that the functionality lost would be 
+> >> >> >> > 
+> >> >> >> > 1) the ability to create custom run/start scripts (not 
+> immediately clear what the difference is between run and start scripts, but 
+> I can check the documentation for further clarity) 
+> >> >> >> > 
+> >> >> >> > 2) Sourcing some default environment scripts 
+> >> >> >> > 
+> >> >> >> > 3) For the "libs" feature, couldn't I make these host system 
+> libs available w/in the container manually by using a bind flag? 
+> >> >> >> > 
+> >> >> >> > The most concerning is the "action" commands. We definitely 
+> want the ability to call singularity exec <command> /image/to/vnfs/image. 
+> So far this seems to be working for us, but it's not clear if there will be 
+> any side effects. 
+> >> >> >> > 
+> >> >> >> > It seems like these scripts wouldn't be too hard to replicate, 
+> though, from what you write. I could create them manually, I suppose. One 
+> thing we've thought about doing was adding to Singularity a "singularity 
+> from vnfs" feature that would properly invoke the metadata creation 
+> functionality. 
+> >> >> >> > 
+> >> >> >> > Jai 
+> >> >> >> > 
+> >> >> >> > On Tuesday, August 21, 2018 at 9:22:16 AM UTC-7, Jai Dayal 
+> wrote: 
+> >> >> >> >> 
+> >> >> >> >> Hi, 
+> >> >> >> >> 
+> >> >> >> >> Basically, we have different warewulf vnfs OS images and we 
+> want to create a containers based on these images. The distro isn't 
+> available on something like Dockerhub, so pulling from Dockerhub or 
+> Singularity hub isn't possible. A warewulf vnfs is basically something you 
+> can chroot too, so I would think it should be possible to package that up 
+> into a container, either a singularity container or a docker container. 
+> >> >> >> >> 
+> >> >> >> >> I have previously treated this chrootable vnfs as a 
+> singularity "sandbox" and ran the conversion tools (I can successfully do a 
+> singularity shell /path/to/vnfs), but it wasn't clear to me if there were 
+> any drawbacks to this, as the fake "sandbox" doesn't have any of the 
+> singularity metadata in it. Will this be a problem? 
+> >> >> >> >> 
+> >> >> >> >> Thanks, 
+> >> >> >> >> Jai 
+> >> >> >> > 
+> >> >> >> > -- 
+> >> >> >> > You received this message because you are subscribed to the 
+> Google Groups "singularity" group. 
+> >> >> >> > To unsubscribe from this group and stop receiving emails from 
+> it, send an email to singu...@lbl.gov. 
+> >> >> > 
+> >> >> > -- 
+> >> >> > You received this message because you are subscribed to the Google 
+> Groups "singularity" group. 
+> >> >> > To unsubscribe from this group and stop receiving emails from it, 
+> send an email to singu...@lbl.gov. 
+> >> >> 
+> >> >> -- 
+> >> >> You received this message because you are subscribed to the Google 
+> Groups "singularity" group. 
+> >> >> To unsubscribe from this group and stop receiving emails from it, 
+> send an email to singu...@lbl.gov. 
+> >> > 
+> >> > -- 
+> >> > You received this message because you are subscribed to the Google 
+> Groups "singularity" group. 
+> >> > To unsubscribe from this group and stop receiving emails from it, 
+> send an email to singu...@lbl.gov. 
+> > 
+> > -- 
+> > You received this message because you are subscribed to the Google 
+> Groups "singularity" group. 
+> > To unsubscribe from this group and stop receiving emails from it, send 
+> an email to singu...@lbl.gov <javascript:>. 
+>
+
+------=_Part_1448_512489294.1535997623731
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">This has been tremendously helpful. Thank you.<div><br></d=
+iv><div>Given how we&#39;re doing things with Singularity 2.5, will this st=
+ill be possible for Singularity 3.0? I see there will be an entirely new im=
+age format:</div><div><br></div><div>https://www.sylabs.io/2018/08/a-glimps=
+e-into-singularity-3-0/</div><div><br></div><div>Effectively, can we still =
+create images out of &quot;Sandboxes&quot;?</div><div><br></div><div>Thanks=
+,</div><div>Jai</div><div><br>On Wednesday, August 29, 2018 at 7:19:29 PM U=
+TC-7, Jason Stover wrote:<blockquote class=3D"gmail_quote" style=3D"margin:=
+ 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;">Hi Ja=
+i,
+<br>
+<br>=C2=A0 Well ... in this case singularity is beating out wwmkchroot it s=
+ome
+<br>ways. ;) =C2=A0For example you can do something like:
+<br>
+<br>=C2=A0 =C2=A0 # cd /var/chroots
+<br>=C2=A0 =C2=A0 # singularity build --sandbox centos7-base docker://cento=
+s:latest
+<br>=C2=A0 =C2=A0 =C2=A0 [ ... ]
+<br>=C2=A0 =C2=A0 # singularity shell -w --sandbox centos7-base/
+<br>=C2=A0 =C2=A0 =C2=A0 [ ... add packages, etc... ]
+<br>
+<br>=C2=A0 And have a functional root. Or you can setup a Singularity DEF f=
+ile
+<br>to build out a root. You can then do: =C2=A0wwvnfs
+<br>--chroot=3D/var/chroots/centos7-<wbr>base --name=3Dcentos7-base =C2=A0.=
+.. and have a
+<br>&quot;functional&quot; VNFS built for warewulf. And since it was built =
+initially
+<br>with singularity, it would have the /.singularity.d directory
+<br>included. Singularity is giving more functionality in a lot of cases
+<br>that wwmkchroot currently has.
+<br>
+<br>=C2=A0 That&#39;s the biggest issue that I see.... Singularity takes a
+<br>directory, or tarball, _as is_ and just adds it into a squashfs image.
+<br>It doesn&#39;t add the metadata directory in with these. From what I ca=
+n
+<br>tell, the reason came down to a workflow like:
+<br>
+<br>=C2=A0 =C2=A0 # singularity build --sandbox centos docker://centos:6
+<br>=C2=A0 =C2=A0 # singularity build centos6.img centos/
+<br>
+<br>=C2=A0 So, you _start_ with a sandbox directory, which has the
+<br>/.singularity.d ... and you make an image from that. From what I see
+<br>that was the expected work flow, and why it doesn&#39;t try adding the
+<br>environment in when creating from a directory.
+<br>
+<br>-J
+<br>
+<br>On Wed, Aug 29, 2018 at 6:21 PM Jai Dayal &lt;<a href=3D"javascript:" t=
+arget=3D"_blank" gdf-obfuscated-mailto=3D"fSXoZ2pMEwAJ" rel=3D"nofollow" on=
+mousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"thi=
+s.href=3D&#39;javascript:&#39;;return true;">da...@gmail.com</a>&gt; wrote:
+<br>&gt;
+<br>&gt; Okay. Maybe some of my terminology has been goofed up. Effectively=
+ what we want is to be able to create a propery singularity (or docker) ima=
+ge from an arbitrary chroot. I think most of this has been captured in my a=
+bove questions, but I was goofing up what a vnfs actually is.
+<br>&gt;
+<br>&gt; I have been able to manually generate the metadata, but it would o=
+f course be nice if there was a way to have singularity do it, just so it&#=
+39;s done properly. Similar to how you can use Singularity to properly inte=
+ract with docker images (it will create a /.singularity.d), we&#39;d like t=
+o have it properly interact with an arbitrary chroot (including converting =
+it to a proper singularity image).
+<br>&gt;
+<br>&gt; As I said before, this could be something we could work on and sub=
+mit some pull requests if you all are interested.
+<br>&gt;
+<br>&gt; On Monday, August 27, 2018 at 10:32:55 PM UTC-7, Jason Stover wrot=
+e:
+<br>&gt;&gt;
+<br>&gt;&gt; That&#39;s what I&#39;m not sure about. When you built off the=
+ directory, it
+<br>&gt;&gt; didn&#39;t add a the `/.singularity.d/` directory into the ima=
+ge.
+<br>&gt;&gt;
+<br>&gt;&gt; And I _think_ that it builds similar if you use a tarball as t=
+he
+<br>&gt;&gt; source. So, if that&#39;s the case, there&#39;s not a metadata=
+ dir and it
+<br>&gt;&gt; would need to be included.
+<br>&gt;&gt;
+<br>&gt;&gt; -J
+<br>&gt;&gt;
+<br>&gt;&gt; On Mon, Aug 27, 2018 at 8:48 PM Jai Dayal &lt;<a>da...@gmail.c=
+om</a>&gt; wrote:
+<br>&gt;&gt; &gt;
+<br>&gt;&gt; &gt; Okay. Will this create the appropriate metadata or does t=
+hat metadata need to be I&#39;m the tar.gz?
+<br>&gt;&gt; &gt;
+<br>&gt;&gt; &gt; On Mon, Aug 27, 2018, 6:43 PM Jason Stover &lt;<a>ja...@g=
+mail.com</a>&gt; wrote:
+<br>&gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; &gt; I do remember some instructions on importing an =
+image from a .tar.gz.
+<br>&gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; Yes, the command is something like:
+<br>&gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; singularity build my_image.img my_tar_file.tar.gz
+<br>&gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; That creates the file &quot;my_image.img&quot; using =
+the contents of
+<br>&gt;&gt; &gt;&gt; my_tar_file.tar.gz. Though I think it&#39;s going to =
+be similar to if you
+<br>&gt;&gt; &gt;&gt; did:
+<br>&gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; singularity build my_image.img /path/to/vnfs
+<br>&gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; -J
+<br>&gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; On Mon, Aug 27, 2018 at 6:57 PM Jai Dayal &lt;<a>da..=
+.@gmail.com</a>&gt; wrote:
+<br>&gt;&gt; &gt;&gt; &gt;
+<br>&gt;&gt; &gt;&gt; &gt; &gt;Creating a basic image from something like: =
+=C2=A0`singularity build
+<br>&gt;&gt; &gt;&gt; &gt; alpine.img docker://alpine:latest` =C2=A0 .... =
+=C2=A0Would give you enough of
+<br>&gt;&gt; &gt;&gt; &gt; the structure to work with.
+<br>&gt;&gt; &gt;&gt; &gt;
+<br>&gt;&gt; &gt;&gt; &gt; I do remember some instructions on importing an =
+image from a .tar.gz. I saw the instructions to create a blank container an=
+d then you could &quot;import&quot; a root filesystem stored as a .tar.gz. =
+For some reason, I am not able to find those instructions. Is that feature =
+still available?
+<br>&gt;&gt; &gt;&gt; &gt;
+<br>&gt;&gt; &gt;&gt; &gt; I could package up the vnfs into a tar.gz and th=
+en import it into a &quot;blank&quot; container.
+<br>&gt;&gt; &gt;&gt; &gt;
+<br>&gt;&gt; &gt;&gt; &gt; Jai
+<br>&gt;&gt; &gt;&gt; &gt;
+<br>&gt;&gt; &gt;&gt; &gt; On Tuesday, August 21, 2018 at 10:39:05 AM UTC-7=
+, Jason Stover wrote:
+<br>&gt;&gt; &gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; &gt;&gt; Hi Jai,
+<br>&gt;&gt; &gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; &gt;&gt; =C2=A0 You can find the base environment set=
+up at (default location):
+<br>&gt;&gt; &gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; &gt;&gt; =C2=A0 =C2=A0 =C2=A0 /usr/local/libexec/<wbr=
+>singularity/bootstrap-scripts/<wbr>environment.tar
+<br>&gt;&gt; &gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; &gt;&gt; =C2=A0 That also includes some other stuff i=
+n it to make bind mounting
+<br>&gt;&gt; &gt;&gt; &gt;&gt; easier so be careful with it. All directorie=
+s are prepended with a &#39;.&#39;
+<br>&gt;&gt; &gt;&gt; &gt;&gt; though so it&#39;s somewhat safer.
+<br>&gt;&gt; &gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; &gt;&gt; =C2=A0 &gt; not immediately clear what the d=
+ifference is between run and start scripts
+<br>&gt;&gt; &gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; &gt;&gt; =C2=A0 A &#39;runscript&#39; is invoked when=
+ you do: =C2=A0singularity run [image] =C2=A0...
+<br>&gt;&gt; &gt;&gt; &gt;&gt; or you run a image directly like: ./image_na=
+me.img
+<br>&gt;&gt; &gt;&gt; &gt;&gt; =C2=A0 A &#39;startscript&#39; is invoked wh=
+en you use instances, and you run:
+<br>&gt;&gt; &gt;&gt; &gt;&gt; singularity instance.start [image] [name]
+<br>&gt;&gt; &gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; &gt;&gt; =C2=A0 Similar functionality, but you could =
+want different things to happen
+<br>&gt;&gt; &gt;&gt; &gt;&gt; between when you &#39;start&#39; an instance=
+, and when you &#39;run&#39; it.
+<br>&gt;&gt; &gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; &gt;&gt; =C2=A0 &gt; For the &quot;libs&quot; feature=
+, couldn&#39;t I make these host system libs
+<br>&gt;&gt; &gt;&gt; &gt;&gt; available w/in the container manually by usi=
+ng a bind flag
+<br>&gt;&gt; &gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; &gt;&gt; =C2=A0 This &#39;/.singularity.d/libs&#39; d=
+irectory is used with the `--nv` flag
+<br>&gt;&gt; &gt;&gt; &gt;&gt; for bringing in the host nVidia libraries. I=
+ think it does a bind
+<br>&gt;&gt; &gt;&gt; &gt;&gt; mount of the libraries to that location.
+<br>&gt;&gt; &gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; &gt;&gt; -J
+<br>&gt;&gt; &gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; &gt;&gt; On Tue, Aug 21, 2018 at 12:27 PM Jai Dayal &=
+lt;<a>da...@gmail.com</a>&gt; wrote:
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt;
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt; Thanks for the quick reply. From readin=
+g that link, it seems that the functionality lost would be
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt;
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt; 1) the ability to create custom run/sta=
+rt scripts (not immediately clear what the difference is between run and st=
+art scripts, but I can check the documentation for further clarity)
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt;
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt; 2) Sourcing some default environment sc=
+ripts
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt;
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt; 3) For the &quot;libs&quot; feature, co=
+uldn&#39;t I make these host system libs available w/in the container manua=
+lly by using a bind flag?
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt;
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt; The most concerning is the &quot;action=
+&quot; commands. We definitely want the ability to call singularity exec &l=
+t;command&gt; /image/to/vnfs/image. So far this seems to be working for us,=
+ but it&#39;s not clear if there will be any side effects.
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt;
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt; It seems like these scripts wouldn&#39;=
+t be too hard to replicate, though, from what you write. I could create the=
+m manually, I suppose. One thing we&#39;ve thought about doing was adding t=
+o Singularity a &quot;singularity from vnfs&quot; feature that would proper=
+ly invoke the metadata creation functionality.
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt;
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt; Jai
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt;
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt; On Tuesday, August 21, 2018 at 9:22:16 =
+AM UTC-7, Jai Dayal wrote:
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt;&gt; Hi,
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt;&gt; Basically, we have different warewu=
+lf vnfs OS images and we want to create a containers based on these images.=
+ The distro isn&#39;t available on something like Dockerhub, so pulling fro=
+m Dockerhub or Singularity hub isn&#39;t possible. A warewulf vnfs is basic=
+ally something you can chroot too, so I would think it should be possible t=
+o package that up into a container, either a singularity container or a doc=
+ker container.
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt;&gt; I have previously treated this chro=
+otable vnfs as a singularity &quot;sandbox&quot; and ran the conversion too=
+ls (I can successfully do a singularity shell /path/to/vnfs), but it wasn&#=
+39;t clear to me if there were any drawbacks to this, as the fake &quot;san=
+dbox&quot; doesn&#39;t have any of the singularity metadata in it. Will thi=
+s be a problem?
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt;&gt; Thanks,
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt;&gt; Jai
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt;
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt; --
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt; You received this message because you a=
+re subscribed to the Google Groups &quot;singularity&quot; group.
+<br>&gt;&gt; &gt;&gt; &gt;&gt; &gt; To unsubscribe from this group and stop=
+ receiving emails from it, send an email to <a>singu...@lbl.gov</a>.
+<br>&gt;&gt; &gt;&gt; &gt;
+<br>&gt;&gt; &gt;&gt; &gt; --
+<br>&gt;&gt; &gt;&gt; &gt; You received this message because you are subscr=
+ibed to the Google Groups &quot;singularity&quot; group.
+<br>&gt;&gt; &gt;&gt; &gt; To unsubscribe from this group and stop receivin=
+g emails from it, send an email to <a>singu...@lbl.gov</a>.
+<br>&gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; --
+<br>&gt;&gt; &gt;&gt; You received this message because you are subscribed =
+to the Google Groups &quot;singularity&quot; group.
+<br>&gt;&gt; &gt;&gt; To unsubscribe from this group and stop receiving ema=
+ils from it, send an email to <a>singu...@lbl.gov</a>.
+<br>&gt;&gt; &gt;
+<br>&gt;&gt; &gt; --
+<br>&gt;&gt; &gt; You received this message because you are subscribed to t=
+he Google Groups &quot;singularity&quot; group.
+<br>&gt;&gt; &gt; To unsubscribe from this group and stop receiving emails =
+from it, send an email to <a>singu...@lbl.gov</a>.
+<br>&gt;
+<br>&gt; --
+<br>&gt; You received this message because you are subscribed to the Google=
+ Groups &quot;singularity&quot; group.
+<br>&gt; To unsubscribe from this group and stop receiving emails from it, =
+send an email to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-m=
+ailto=3D"fSXoZ2pMEwAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;jav=
+ascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;re=
+turn true;">singularity...@lbl.<wbr>gov</a>.
+<br></blockquote></div></div>
+------=_Part_1448_512489294.1535997623731--
+
+------=_Part_1447_854622296.1535997623730--

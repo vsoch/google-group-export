@@ -1,0 +1,385 @@
+Date: Thu, 13 Dec 2018 06:42:32 -0800 (PST)
+From: =?UTF-8?Q?Tobias_K=C3=BChn?= <t.k...@gmx.de>
+To: singularity <singu...@lbl.gov>
+Message-Id: <8e45439f-284f-4f4b-a791-4d5b43b105f2@lbl.gov>
+In-Reply-To: <845351d0-31ce-4927-9067-1d0e448dd89a@lbl.gov>
+References: <bb491a49-6a94-42da-b429-619ecd5aa3eb@lbl.gov>
+ <CAJ6xeznU0d+G71S2umzjNsBrQ35Yt2+_nM_wQ0vp9vwZn9oxnQ@mail.gmail.com>
+ <845351d0-31ce-4927-9067-1d0e448dd89a@lbl.gov>
+Subject: Re: [Singularity] Issues migrating to singularity from self
+ contained docker instance.
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_357_856227851.1544712152618"
+
+------=_Part_357_856227851.1544712152618
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_358_527783693.1544712152619"
+
+------=_Part_358_527783693.1544712152619
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+you can cp files to your container before updating with the %Setup Option 
+like this:
+
+# BeeGFS managment server
+BootStrap: library
+From: centos:7
+Include: yum
+
+%post
+ yum -y update -x setup
+ yum install -y wget net-tools
+ wget -O /etc/yum.repos.d/beegfs_rhel7.repo 
+https://www.beegfs.io/release/latest-stable/dists/beegfs-rhel7.repo
+ yum install -y beegfs-mgmtd beegfs-utils
+ /opt/beegfs/sbin/beegfs-setup-mgmtd -p /data/mgmtd1/
+ chmod +x /etc/init.d/runmgm.sh
+
+%setup
+        mkdir -p ${SINGULARITY_ROOTFS}/etc/beegfs/
+        cp /home/admin/def/confs/beegfs-mgmtd.conf 
+${SINGULARITY_ROOTFS}/etc/beeg$
+        cp /home/admin/def/runmgm.sh ${SINGULARITY_ROOTFS}/etc/init.d/
+ 
+%startscript
+ /home/admin/def/runmgm.sh
+
+
+
+Am Donnerstag, 13. Dezember 2018 10:10:54 UTC+1 schrieb 
+fe...@jncc.gov.uk:
+>
+> Hi Dave 
+>
+> Thanks for your response
+>
+> I wasn't quite sure where the  #!/bin/sh declaration you were refering too 
+> was as I hadn't specifically declared that in the %runscript section.
+>
+> I investigate a little bit more with the following recipie, this time 
+> explicitly declaring that I want this to execute in bash as per your 
+> suggestion.
+>
+> BootStrap: docker
+> From: jncc/arcsi-base
+>
+> %runscript
+>     #!/bin/bash
+>     echo The shell is $SHELL
+>     unalias source
+>     unset -f source 
+>     source --help
+>     source /opt/conda/etc/profile.d/conda.sh
+>     conda activate base
+>
+> So rather then use the . notation I explicitly called the bash source 
+> command. As far as I'm aware this is inbuilt so I would expect it to work. 
+> The unalias and unset were just incase some definition was overriding 
+> source.
+>
+> I built a container called arcsi-base.img and ran it. The output from the 
+> first few commands is interesting and inexplicable.
+>
+> If I run fully contained:
+>
+> ubuntu:~$ singularity run -C arcsi-base.img
+> The shell is
+> unalias: source not found
+> /.singularity.d/runscript: 7: /.singularity.d/runscript: source: not found
+> /.singularity.d/runscript: 8: /.singularity.d/runscript: source: not found
+> ..
+>
+> So in this case it's unclear what the shell i'm running is and source is 
+> not found, that is if I just run source --help it tells me it cant find the 
+> command. So maybe it's not the bash shell.
+>
+> If i run with a clear environment (-c) 
+>
+> I get the following:
+>
+> ubuntu:~$ singularity run -c arcsi-base.img
+> The shell is /bin/bash
+> unalias: source not found
+> /.singularity.d/runscript: 7: /.singularity.d/runscript: source: not found
+> /.singularity.d/runscript: 8: /.singularity.d/runscript: source: not found
+>
+> This time the shell reports that its' bash but the source command is still 
+> not found? This really puzzles me.
+>
+> If i run it with no command line options at all I get the same response:
+>
+> ubuntu :~$ singularity run arcsi-base.img
+> The shell is /bin/bash
+> unalias: source not found
+> /.singularity.d/runscript: 7: /.singularity.d/runscript: source: not found
+> /.singularity.d/runscript: 8: /.singularity.d/runscript: source: not found
+>
+> I've tried this on a basic ubuntu machien and also in a HPC environment 
+> with exactly the same results, so the issue definatly derives from the 
+> container. 
+>
+> (The ubuntu box is running Singularity 2.5.2-dist.
+>
+> Cheers
+> Felix
+>
+> On Monday, December 10, 2018 at 3:49:19 PM UTC, Dave Godlove wrote:
+>>
+>> The only thing that I can think of that might be causing this is the 
+>> #!/bin/sh shebang in the runscript.  iirc, conda really wants bash to 
+>> work properly.  I'm pretty sure that in 2.5.2 you can select a custom 
+>> shebang for you runscript just by writing one in.  Have you tried using 
+>> #!/bin/bash as your shebang in your runscript?  
+>>
+>> On Fri, Dec 7, 2018 at 8:08 AM fe...@jncc.gov.uk <fe...@jncc.gov.uk> 
+>> wrote:
+>>
+>>> Hi 
+>>>
+>>> We've created a containerised workflow in docker originally designed to 
+>>> run as a selfcontained unit of work on AWS. It can also be used on data 
+>>> scientists own machines etc for specific peices of work. In these use cases 
+>>> it works fine. However we now have access to a HPC environment with 
+>>> singularity and am having some problems getting it to work there.
+>>>
+>>> The container is developed into two parts, a base container that 
+>>> encapsulates the primary tooling and a derived workflow container that adds 
+>>> the luigi workflow itself.
+>>>
+>>> My first task is to get the base contaier, running the tooling to work. 
+>>> The problem is that the conda environment won't instantiate properly. I'm 
+>>> testing this outside of HPC environment on a AWS ubnutu 18.04 instance 
+>>> running Singularity 2.5.2. 
+>>>
+>>> The .bashrc script for the root user in the docker container has the 
+>>> following elements:
+>>>
+>>>     . /opt/conda/etc/profile.d/conda.sh
+>>>     conda activate base
+>>>
+>>> I'm trying to get thise to run in the %runscript portion of the 
+>>> Singularity recipie. However I get the following errors:
+>>> /.singularity.d/runscript: 6: 
+>>> /opt/conda/etc/conda/activate.d/gdal-activate.sh: [[: not found
+>>> /.singularity.d/runscript: 10: 
+>>> /opt/conda/etc/conda/activate.d/gdal-activate.sh: [[: not found
+>>> /.singularity.d/runscript: 27: 
+>>> /opt/conda/etc/conda/activate.d/gdal-activate.sh: [[: not found
+>>> /.singularity.d/runscript: 6: 
+>>> /opt/conda/etc/conda/activate.d/geotiff-activate.sh: [[: not found
+>>> /.singularity.d/runscript: 6: 
+>>> /opt/conda/etc/conda/activate.d/proj4-activate.sh: [[: not found
+>>>
+>>> However if I shell into the container and run the same commands 
+>>> everything works.
+>>>
+>>>
+>>> The second issue I have is that the profile contains a number of files 
+>>> that contain conda configs. 
+>>>
+>>> Given that the profile will depend on the user that is running the 
+>>> container how do I introduce these files at run time?
+>>> Its also worth noting that  I will need to isolate the conda environment 
+>>> and associated settings supplied by this container from the users hpc 
+>>> environment because they will have similar divergent environemnts and 
+>>> settings in place. The fact that singularity shares the users profile in 
+>>> this case is a significant hinderance. I believe I can use -C and --userns 
+>>> to overcome this but how can I ensure the structure of the runtime 
+>>> environment.
+>>>
+>>> I should point out I'm not a conda expert or a data scientist, just a 
+>>> generalist developer tasked with the automation of this tooling so I could 
+>>> be missing something in conda that would help with this problem also.
+>>>
+>>> For reference. The docker container is here: 
+>>> https://hub.docker.com/r/jncc/arcsi-base/
+>>> The Source code is here: 
+>>> https://github.com/jncc/s2-ard-processor/tree/master/base
+>>>
+>>> Cheers 
+>>> Felix
+>>>
+>>> -- 
+>>> You received this message because you are subscribed to the Google 
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>> an email to singu...@lbl.gov.
+>>>
+>>
+>>
+>> -- 
+>> Dave Godlove
+>> Engineering Coordinator, Sylabs Inc.
+>> sylabs.io
+>>
+>
+------=_Part_358_527783693.1544712152619
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>you can cp files to your container before updating wi=
+th the %Setup Option like this:</div><div><br></div><div><div class=3D"pret=
+typrint" style=3D"border: 1px solid rgb(187, 187, 187); word-wrap: break-wo=
+rd; background-color: rgb(250, 250, 250);"><code class=3D"prettyprint"><div=
+ class=3D"subprettyprint"><span class=3D"styled-by-prettify" style=3D"color=
+: #606;"><font color=3D"#004000" style=3D"background-color: transparent;">#=
+ BeeGFS managment server</font></span></div><div class=3D"subprettyprint"><=
+span class=3D"styled-by-prettify" style=3D"color: #606;"><font color=3D"#00=
+4000" style=3D"background-color: transparent;">BootStrap: library<br>From: =
+centos:7</font></span></div><div class=3D"subprettyprint"><span class=3D"st=
+yled-by-prettify" style=3D"color: #606;"><font color=3D"#004000" style=3D"b=
+ackground-color: transparent;">Include: yum<br><br></font></span></div><div=
+ class=3D"subprettyprint"><span class=3D"styled-by-prettify" style=3D"color=
+: #606;"><font color=3D"#004000" style=3D"background-color: transparent;">%=
+post<br>=C2=A0yum -y update -x setup<br>=C2=A0yum install -y wget net-tools=
+<br>=C2=A0wget -O /etc/yum.repos.d/beegfs_rhel7.repo https://www.beegfs.io/=
+release/latest-stable/dists/beegfs-rhel7.repo<br>=C2=A0yum install -y beegf=
+s-mgmtd beegfs-utils<br>=C2=A0/opt/beegfs/sbin/beegfs-setup-mgmtd -p /data/=
+mgmtd1/<br>=C2=A0chmod +x /etc/init.d/runmgm.sh<br><br></font></span></div>=
+<div class=3D"subprettyprint"><span class=3D"styled-by-prettify" style=3D"c=
+olor: #606;"><font color=3D"#004000" style=3D"background-color: transparent=
+;">%setup<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 mkdir -p ${SINGULAR=
+ITY_ROOTFS}/etc/beegfs/<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 cp /h=
+ome/admin/def/confs/beegfs-mgmtd.conf ${SINGULARITY_ROOTFS}/etc/beeg$<br>=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 cp /home/admin/def/runmgm.sh ${S=
+INGULARITY_ROOTFS}/etc/init.d/<br>=C2=A0<br>%startscript<br>=C2=A0/home/adm=
+in/def/runmgm.sh</font></span><span class=3D"styled-by-prettify" style=3D"c=
+olor: #660;"></span></div></code></div><br><br></div><br>Am Donnerstag, 13.=
+ Dezember 2018 10:10:54 UTC+1 schrieb fe...@jncc.gov.uk:<blockquote class=
+=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #cc=
+c solid;padding-left: 1ex;"><div dir=3D"ltr"><div>Hi Dave=C2=A0</div><div><=
+br></div><div>Thanks for your response</div><div><br></div><div>I wasn&#39;=
+t quite sure where the=C2=A0 #!/bin/sh declaration you were refering too wa=
+s as I hadn&#39;t specifically declared that in the %runscript section.</di=
+v><div><br></div><div>I investigate a little bit more with the following re=
+cipie, this time explicitly declaring that I want this to execute in bash a=
+s per your suggestion.</div><div><br></div><div>BootStrap: docker</div><div=
+>From: jncc/arcsi-base</div><div><br></div><div>%runscript</div><div>=C2=A0=
+ =C2=A0 #!/bin/bash</div><div>=C2=A0 =C2=A0 echo The shell is $SHELL</div><=
+div>=C2=A0 =C2=A0 unalias source</div><div>=C2=A0 =C2=A0 unset -f source<sp=
+an style=3D"white-space:pre">=09=09</span></div><div>=C2=A0 =C2=A0 source -=
+-help</div><div>=C2=A0 =C2=A0 source /opt/conda/etc/profile.d/<wbr>conda.sh=
+</div><div>=C2=A0 =C2=A0 conda activate base</div><div><br></div><div>So ra=
+ther then use the . notation I explicitly called the bash source command. A=
+s far as I&#39;m aware this is inbuilt so I would expect it to work. The un=
+alias and unset were just incase some definition was overriding source.</di=
+v><div><br></div><div>I built a container called arcsi-base.img and ran it.=
+ The output from the first few commands is interesting and inexplicable.</d=
+iv><div><br></div><div>If I run fully contained:</div><div><br></div><div>u=
+buntu:~$ singularity run -C arcsi-base.img</div><div>The shell is</div><div=
+>unalias: source not found</div><div>/.singularity.d/runscript: 7: /.singul=
+arity.d/runscript: source: not found</div><div>/.singularity.d/runscript: 8=
+: /.singularity.d/runscript: source: not found</div><div>..</div><div><br><=
+/div><div>So in this case it&#39;s unclear what the shell i&#39;m running i=
+s and source is not found, that is if I just run source --help it tells me =
+it cant find the command. So maybe it&#39;s not the bash shell.</div><div><=
+br></div><div>If i run with a clear environment (-c)=C2=A0</div><div><br></=
+div><div>I get the following:</div><div><br></div><div>ubuntu:~$ singularit=
+y run -c arcsi-base.img</div><div>The shell is /bin/bash</div><div>unalias:=
+ source not found</div><div>/.singularity.d/runscript: 7: /.singularity.d/r=
+unscript: source: not found</div><div>/.singularity.d/runscript: 8: /.singu=
+larity.d/runscript: source: not found</div><div><br></div><div>This time th=
+e shell reports that its&#39; bash but the source command is still not foun=
+d? This really puzzles me.</div><div><br></div><div>If i run it with no com=
+mand line options at all I get the same response:</div><div><br></div><div>=
+ubuntu :~$ singularity run arcsi-base.img</div><div>The shell is /bin/bash<=
+/div><div>unalias: source not found</div><div>/.singularity.d/runscript: 7:=
+ /.singularity.d/runscript: source: not found</div><div>/.singularity.d/run=
+script: 8: /.singularity.d/runscript: source: not found</div><div><br></div=
+><div>I&#39;ve tried this on a basic ubuntu machien and also in a HPC envir=
+onment with exactly the same results, so the issue definatly derives from t=
+he container.=C2=A0</div><div><br></div><div>(The ubuntu box is running Sin=
+gularity 2.5.2-dist.</div><div><br></div><div>Cheers</div><div>Felix</div><=
+br>On Monday, December 10, 2018 at 3:49:19 PM UTC, Dave Godlove wrote:<bloc=
+kquote class=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-lef=
+t:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">The only thing that I c=
+an think of that might be causing this is the <font face=3D"monospace, mono=
+space">#!/bin/sh</font> shebang in the runscript.=C2=A0 iirc, conda really =
+wants bash to work properly.=C2=A0 I&#39;m pretty sure that in 2.5.2 you ca=
+n select a custom shebang for you runscript just by writing one in.=C2=A0 H=
+ave you tried using <font face=3D"monospace, monospace">#!/bin/bash</font> =
+as your shebang in your runscript?=C2=A0=C2=A0</div><br><div class=3D"gmail=
+_quote"><div dir=3D"ltr">On Fri, Dec 7, 2018 at 8:08 AM <a rel=3D"nofollow"=
+>fe...@jncc.gov.uk</a> &lt;<a rel=3D"nofollow">fe...@jncc.gov.uk</a>&gt; wr=
+ote:<br></div><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;=
+border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr"><div>Hi=C2=A0=
+</div><div><br></div><div>We&#39;ve created a containerised workflow in doc=
+ker originally designed to run as a selfcontained unit of work on AWS. It c=
+an also be used on data scientists own machines etc for specific peices of =
+work. In these use cases it works fine. However we now have access to a HPC=
+ environment with singularity and am having some problems getting it to wor=
+k there.</div><div><br></div><div>The container is developed into two parts=
+, a base container that encapsulates the primary tooling and a derived work=
+flow container that adds the luigi workflow itself.</div><div><br></div><di=
+v>My first task is to get the base contaier, running the tooling to work. T=
+he problem is that the conda environment won&#39;t instantiate properly. I&=
+#39;m testing this outside of HPC environment on a AWS ubnutu 18.04 instanc=
+e running Singularity 2.5.2.=C2=A0</div><div><br></div><div>The .bashrc scr=
+ipt for the root user in the docker container has the following elements:</=
+div><div><br></div><div>=C2=A0 =C2=A0 . /opt/conda/etc/profile.d/<wbr>conda=
+.sh</div><div>=C2=A0 =C2=A0 conda activate base</div><div><br></div><div>I&=
+#39;m trying to get thise to run in the %runscript portion of the Singulari=
+ty recipie. However I get the following errors:</div><div>/.singularity.d/r=
+unscript: 6: /opt/conda/etc/conda/activate.<wbr>d/gdal-activate.sh: [[: not=
+ found</div><div>/.singularity.d/runscript: 10: /opt/conda/etc/conda/activa=
+te.<wbr>d/gdal-activate.sh: [[: not found</div><div>/.singularity.d/runscri=
+pt: 27: /opt/conda/etc/conda/activate.<wbr>d/gdal-activate.sh: [[: not foun=
+d</div><div>/.singularity.d/runscript: 6: /opt/conda/etc/conda/activate.<wb=
+r>d/geotiff-activate.sh: [[: not found</div><div>/.singularity.d/runscript:=
+ 6: /opt/conda/etc/conda/activate.<wbr>d/proj4-activate.sh: [[: not found</=
+div><div><br></div><div>However if I shell into the container and run the s=
+ame commands everything works.</div><div><br></div><div><br></div><div>The =
+second issue I have is that the profile contains a number of files that con=
+tain conda configs.=C2=A0</div><div><br></div><div>Given that the profile w=
+ill depend on the user that is running the container how do I introduce the=
+se files at run time?</div><div>Its also worth noting that=C2=A0 I will nee=
+d to isolate the conda environment and associated settings supplied by this=
+ container from the users hpc environment because they will have similar di=
+vergent environemnts and settings in place. The fact that singularity share=
+s the users profile in this case is a significant hinderance. I believe I c=
+an use -C and --userns to overcome this but how can I ensure the structure =
+of the runtime environment.</div><div><br></div><div>I should point out I&#=
+39;m not a conda expert or a data scientist, just a generalist developer ta=
+sked with the automation of this tooling so I could be missing something in=
+ conda that would help with this problem also.</div><div><br></div><div>For=
+ reference. The docker container is here: <a onmousedown=3D"this.href=3D&#3=
+9;https://www.google.com/url?q\x3dhttps%3A%2F%2Fhub.docker.com%2Fr%2Fjncc%2=
+Farcsi-base%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFcrcSlwO5g8aB_BToJFF=
+wbli3ZIA&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.=
+com/url?q\x3dhttps%3A%2F%2Fhub.docker.com%2Fr%2Fjncc%2Farcsi-base%2F\x26sa\=
+x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFcrcSlwO5g8aB_BToJFFwbli3ZIA&#39;;return =
+true;" href=3D"https://hub.docker.com/r/jncc/arcsi-base/" target=3D"_blank"=
+ rel=3D"nofollow">https://hub.docker.com/r/jncc/<wbr>arcsi-base/</a></div><=
+div>The Source code is here: <a onmousedown=3D"this.href=3D&#39;https://www=
+.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fjncc%2Fs2-ard-processor%2Ft=
+ree%2Fmaster%2Fbase\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNF5lLaJP_MF76oS6=
+QnUHsgKxDxUHw&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.go=
+ogle.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fjncc%2Fs2-ard-processor%2Ftree=
+%2Fmaster%2Fbase\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNF5lLaJP_MF76oS6QnU=
+HsgKxDxUHw&#39;;return true;" href=3D"https://github.com/jncc/s2-ard-proces=
+sor/tree/master/base" target=3D"_blank" rel=3D"nofollow">https://github.com=
+/jncc/s2-<wbr>ard-processor/tree/master/base</a></div><div><br></div><div>C=
+heers=C2=A0</div><div>Felix</div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+><div dir=3D"ltr"><div><div dir=3D"ltr">Dave Godlove<div>Engineering Coordi=
+nator, Sylabs Inc.</div><div><a onmousedown=3D"this.href=3D&#39;https://www=
+.google.com/url?q\x3dhttps%3A%2F%2Fsylabs.io\x26sa\x3dD\x26sntz\x3d1\x26usg=
+\x3dAFQjCNFFOR29RifjbO5iLFBHpPcmxYI4Ww&#39;;return true;" onclick=3D"this.h=
+ref=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fsylabs.io\x26sa\x3=
+dD\x26sntz\x3d1\x26usg\x3dAFQjCNFFOR29RifjbO5iLFBHpPcmxYI4Ww&#39;;return tr=
+ue;" href=3D"https://sylabs.io" target=3D"_blank" rel=3D"nofollow">sylabs.i=
+o</a></div></div></div></div></div>
+</blockquote></div></blockquote></div>
+------=_Part_358_527783693.1544712152619--
+
+------=_Part_357_856227851.1544712152618--

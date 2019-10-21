@@ -1,0 +1,233 @@
+Date: Thu, 20 Dec 2018 06:19:02 -0800 (PST)
+From: Hugo R Hernandez <hdez...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Cc: jason...@gmail.com
+Message-Id: <2803a76f-a456-46da-90c2-2eb221d07158@lbl.gov>
+In-Reply-To: <33c2acc2-b7e2-e88c-5885-d067ebb8d88a@googlemail.com>
+References: <7811f65f-b911-422b-b831-8341967e24a8@lbl.gov>
+ <CAGfAqt910Rkp=wU9MLXbUm5yhxE4Y3VzEaLfS5=rF5JwOKcJVQ@mail.gmail.com>
+ <33c2acc2-b7e2-e88c-5885-d067ebb8d88a@googlemail.com>
+Subject: Re: [Singularity] Running application via sudo within a container -
+ yes, user escalation is prohibited, but...
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_173_162416206.1545315542144"
+
+------=_Part_173_162416206.1545315542144
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_174_723669443.1545315542144"
+
+------=_Part_174_723669443.1545315542144
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Oliver, thanks for your response.  Yes, that's a valid question we have 
+been asking the users about this application and the needs for root access 
+via sudo.  The problem is there is embedded on the code a "sudo do_this" 
+call initially it can't be removed (hard-coded).  From a system perspective 
+the call has a kind of easy solution as this is related to data access we 
+can deal with UNIX permissions - here we need to fix errors made on the 
+past - but the problem is the dependency of this legacy software for the 
+entire workflow they are using to run Monte Carlo simulations and the 
+hard-coded sudo entry.
+
+Your workaround could be feasible combined with the UNIX permission fix we 
+should do for data access.  I will let you know how it goes.
+
+As you noticed, the subject itself gives me the answer for my question 
+about user privileges escalation, we are aware about it, we desire this to 
+have the singularity containers isolated to be owned by the specific user 
+launching the container.  This is just an unexpected situation we are 
+trying to handle.
+
+VR,
+-Hugo
+
+On Wednesday, December 19, 2018 at 5:00:34 PM UTC-6, Oliver Freyermuth 
+wrote:
+>
+> Hi together, 
+>
+> isn't the actual question if the legacy application really "needs" sudo? 
+>
+> If it needs to have something which executes the arguments when called 
+> with "sudo", one could shadow "sudo" in the PATH with a simple script 
+> just executing the arguments. 
+> If the call is hardcoded to /usr/bin/sudo, one would have to replace that 
+> file in the image. 
+> And if the application insists on having uid 0, one could use the 
+> --fakeroot option. 
+>
+> Only if the legacy application does something which requires more than 
+> that (and only really ugly things come to mind...) 
+> there is an actual problem. 
+>
+> Cheers, 
+>         Oliver 
+>
+> Am 19.12.18 um 22:26 schrieb Jason Stover: 
+> > Hi Hugo, 
+> > 
+> > Unfortunately, there isn't an easy workaround for this. This all comes 
+> > back to the security model that Singularity uses when running a 
+> > container. 
+> > 
+> > To allow something like this, we would need to refrain from mounting 
+> > the image NOSUID, and from setting PR_NO_NEW_PRIVS. In Singularity 3.0 
+> > we may be able to accomplish this, by having the `--allow-setuid` 
+> > option *not* enable NO_NEW_PRIVS. But, a big caveat here... 
+> > "--keep-setuid" is a root only flag, meaning you would need to run an 
+> > image like: 
+> > 
+> >     sudo singularity --security=uid:1000,gid:1000 --allow-setuid [...] 
+> > 
+> > It still comes back to needing to execute singularity as root to allow 
+> > the permissions to be opened up. 
+> > 
+> > Thanks, 
+> > -Jason 
+> > 
+> > 
+> > 
+> > 
+> > On Wed, Dec 19, 2018 at 12:17 PM Hugo R Hernandez <hd...@gmail.com 
+> <javascript:>> wrote: 
+> >> 
+> >> Hello there, first post on the group.  We are new with Singularity and 
+> we have identified this as an option for a CentOS6-to-7 migration.   We 
+> have one of our workflows with a hard-coded sudo call to run an application 
+> (a typical situation where you have legacy software nobody is maintaining 
+> anymore...).  When we try to run this workflow on the container we get the 
+> error: 
+> >> 
+> >> sudo: effective uid is not 0, is sudo installed setuid root? 
+> >> 
+> >> Yes, we are aware there is no user privilege escalation for Singularity 
+> containers, however, I have to ask the question if there is any workaround 
+> the problem we are trying to solve by using Singularity. 
+> >> 
+> >> Help appreciated! 
+> >> 
+> >> Thanks, 
+> >> -Hugo 
+> >> 
+> >> -- 
+> >> You received this message because you are subscribed to the Google 
+> Groups "singularity" group. 
+> >> To unsubscribe from this group and stop receiving emails from it, send 
+> an email to singu...@lbl.gov <javascript:>. 
+> > 
+>
+>
+------=_Part_174_723669443.1545315542144
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Oliver, thanks for your response.=C2=A0 Yes, that&#39;s a =
+valid question we have been asking the users about this application and the=
+ needs for root access via sudo.=C2=A0 The problem is there is embedded on =
+the code a &quot;sudo do_this&quot; call initially it can&#39;t be removed =
+(hard-coded).=C2=A0 From a system perspective the call has a kind of easy s=
+olution as this is related to data access we can deal with UNIX permissions=
+ - here we need to fix errors made on the past - but the problem is the dep=
+endency of this legacy software for the entire workflow they are using to r=
+un Monte Carlo simulations and the hard-coded sudo entry.<div><br></div><di=
+v>Your workaround could be feasible combined with the UNIX permission fix w=
+e should do for data access.=C2=A0 I will let you know how it goes.</div><d=
+iv><br></div><div>As you noticed, the subject itself gives me the answer fo=
+r my question about user privileges escalation, we are aware about it, we d=
+esire this to have the singularity containers isolated to be owned by the s=
+pecific user launching the container.=C2=A0 This is just an unexpected situ=
+ation we are trying to handle.</div><div><br></div><div>VR,</div><div>-Hugo=
+<br><br>On Wednesday, December 19, 2018 at 5:00:34 PM UTC-6, Oliver Freyerm=
+uth wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left:=
+ 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;">Hi together,
+<br>
+<br>isn&#39;t the actual question if the legacy application really &quot;ne=
+eds&quot; sudo?=20
+<br>
+<br>If it needs to have something which executes the arguments when called =
+with &quot;sudo&quot;, one could shadow &quot;sudo&quot; in the PATH with a=
+ simple script
+<br>just executing the arguments.=20
+<br>If the call is hardcoded to /usr/bin/sudo, one would have to replace th=
+at file in the image.=20
+<br>And if the application insists on having uid 0, one could use the --fak=
+eroot option.=20
+<br>
+<br>Only if the legacy application does something which requires more than =
+that (and only really ugly things come to mind...)
+<br>there is an actual problem.=20
+<br>
+<br>Cheers,
+<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0Oliver
+<br>
+<br>Am 19.12.18 um 22:26 schrieb Jason Stover:
+<br>&gt; Hi Hugo,
+<br>&gt;=20
+<br>&gt; Unfortunately, there isn&#39;t an easy workaround for this. This a=
+ll comes
+<br>&gt; back to the security model that Singularity uses when running a
+<br>&gt; container.
+<br>&gt;=20
+<br>&gt; To allow something like this, we would need to refrain from mounti=
+ng
+<br>&gt; the image NOSUID, and from setting PR_NO_NEW_PRIVS. In Singularity=
+ 3.0
+<br>&gt; we may be able to accomplish this, by having the `--allow-setuid`
+<br>&gt; option *not* enable NO_NEW_PRIVS. But, a big caveat here...
+<br>&gt; &quot;--keep-setuid&quot; is a root only flag, meaning you would n=
+eed to run an
+<br>&gt; image like:
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 sudo singularity --security=3Duid:1000,gid:1000 --al=
+low-setuid [...]
+<br>&gt;=20
+<br>&gt; It still comes back to needing to execute singularity as root to a=
+llow
+<br>&gt; the permissions to be opened up.
+<br>&gt;=20
+<br>&gt; Thanks,
+<br>&gt; -Jason
+<br>&gt;=20
+<br>&gt;=20
+<br>&gt;=20
+<br>&gt;=20
+<br>&gt; On Wed, Dec 19, 2018 at 12:17 PM Hugo R Hernandez &lt;<a href=3D"j=
+avascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"hhcEzlBcCQAJ" rel=3D=
+"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" o=
+nclick=3D"this.href=3D&#39;javascript:&#39;;return true;">hd...@gmail.com</=
+a>&gt; wrote:
+<br>&gt;&gt;
+<br>&gt;&gt; Hello there, first post on the group. =C2=A0We are new with Si=
+ngularity and we have identified this as an option for a CentOS6-to-7 migra=
+tion. =C2=A0 We have one of our workflows with a hard-coded sudo call to ru=
+n an application (a typical situation where you have legacy software nobody=
+ is maintaining anymore...). =C2=A0When we try to run this workflow on the =
+container we get the error:
+<br>&gt;&gt;
+<br>&gt;&gt; sudo: effective uid is not 0, is sudo installed setuid root?
+<br>&gt;&gt;
+<br>&gt;&gt; Yes, we are aware there is no user privilege escalation for Si=
+ngularity containers, however, I have to ask the question if there is any w=
+orkaround the problem we are trying to solve by using Singularity.
+<br>&gt;&gt;
+<br>&gt;&gt; Help appreciated!
+<br>&gt;&gt;
+<br>&gt;&gt; Thanks,
+<br>&gt;&gt; -Hugo
+<br>&gt;&gt;
+<br>&gt;&gt; --
+<br>&gt;&gt; You received this message because you are subscribed to the Go=
+ogle Groups &quot;singularity&quot; group.
+<br>&gt;&gt; To unsubscribe from this group and stop receiving emails from =
+it, send an email to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscat=
+ed-mailto=3D"hhcEzlBcCQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39=
+;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39=
+;;return true;">singularity...@lbl.<wbr>gov</a>.
+<br>&gt;=20
+<br>
+<br></blockquote></div></div>
+------=_Part_174_723669443.1545315542144--
+
+------=_Part_173_162416206.1545315542144--

@@ -1,0 +1,682 @@
+Date: Fri, 6 Jul 2018 08:39:06 -0700 (PDT)
+From: Brandon Barker <be...@cornell.edu>
+To: singularity <singu...@lbl.gov>
+Cc: gmku...@lbl.gov
+Message-Id: <7928006f-a435-47c9-a33f-f8ca63b19d94@lbl.gov>
+In-Reply-To: <a92130c2-a3ce-4b06-93bb-b745cf853aca@lbl.gov>
+References: <5356fb8bc8f38cc652658fd80480ea67@cam.ac.uk> <CAM=pu+LMXzkzE7qR4TbJDyja9t0seGWzn2CKyN3JviBx5r3GZA@mail.gmail.com>
+ <CAN7etTzGop+YMFJ3nC1F3MBRFB0sqrYOzZxfMyyx+ohbY7L_3A@mail.gmail.com> <20161027182836.2ce5c4b5@erebus.hpc.cam.ac.uk>
+ <CAN7etTyWP6K5CMdYbPG3oasrLoobja3Mqbo5oG+=moa+zDvBeA@mail.gmail.com>
+ <a92130c2-a3ce-4b06-93bb-b745cf853aca@lbl.gov>
+Subject: Re: [Singularity] Container Inheritance
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_63664_1853621615.1530891546504"
+
+------=_Part_63664_1853621615.1530891546504
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_63665_1817327444.1530891546505"
+
+------=_Part_63665_1817327444.1530891546505
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Of course, for depth greater than two, you might have multiple ancestor 
+runscripts:
+
+/path/to/0/parent_runscript.sh  # this is the most recent
+/path/to/1/parent_runscript.sh
+/path/to/2/parent_runscript.sh
+
+Then you should probably just call /path/to/0/parent_runscript.sh in most 
+cases.
+
+On Friday, 6 July 2018 11:36:40 UTC-4, Brandon Barker wrote:
+>
+> I saw this old thread, but didn't see in the current docs 
+> <https://www.sylabs.io/guides/2.5.1/user-guide/container_recipes.html#runscript> 
+> (or here 
+> <https://www.sylabs.io/guides/2.5.1/user-guide/singularity_and_docker.html#how-does-the-runscript-work>) 
+> if %runscript and others (but runscript in particular) are 
+> inherited/concatenated in the current version of singularity, or if there 
+> is a means to do so. Though from the second link, it sounds like it 
+> probably isn't the case. 
+>
+> I think the best thing would be a simple but flexible option to do 
+> something like "import parent" for each option. Random example syntax:
+> %runscript: import parent
+>
+> In this case I assume the parent's runscript would be run before the rest 
+> of the child's %runscript, much like inheritance in Java classes. Not sure 
+> if there is a compelling reason to allow more flexibility, but I guess we 
+> could get it for free if the parent's runscript is just stored on the image 
+> somewhere. Then the child %runscript simply call:
+>
+> /path/to/parent_runscript.sh
+>
+> One could easily imagine this working well for %runscript, though I 
+> haven't given much consideration to other headers.
+>
+>
+>
+> On Monday, 31 October 2016 17:49:57 UTC-4, Gregory M. Kurtzer wrote:
+>>
+>>
+>>
+>> On Thu, Oct 27, 2016 at 10:28 AM, Chris Hadjigeorgiou <c...@cam.ac.uk> 
+>> wrote:
+>>
+>>>
+>>> My thinking was more along the C/C++ include but from what I've seen in
+>>> CentOS/SL definitions the Include keyword is already used.
+>>>
+>>
+>> Ooops, I should have known that! lol... 
+>>  
+>>
+>>>
+>>> This could potentially work in a similar way in 2 steps:
+>>> 1) Do a first pass replacing all include/inherit keywords with the
+>>> corresponding file/s in place, output to the single temp definition.
+>>> 2) Do a second pass to make sure keywords such as bootstrap/OSversion
+>>> exist only once from the first place and any subsequent occurences are
+>>> removed.
+>>>
+>>
+>> If we aren't entering a recursion loop, we can define the syntax of both 
+>> the parent and child form of each file would have. For example, the parent 
+>> could have any number of the keyword formally described as "Include", but 
+>> it also must have the Bootstrap, OSVersion, and any other core OS builder 
+>> components defined. Then what gets included/inherited from the children is 
+>> limited to the section scriptlets.
+>>
+>>
+>>> I think it shouldn't get more complicated than this.
+>>>
+>>
+>> That would satisfy my use case, but it is fairly limiting on other 
+>> aspects which may prove limiting.
+>>  
+>>
+>>>
+>>> Currently this works more like the Docker From but with the ability to
+>>> have multiple inclusions. Although it doesn't need to be at the start of
+>>> the definition the Inherit keywords are parsed before anything else.
+>>>
+>>
+>> It sounds like you have a good idea on what this should look like, and 
+>> you've already implemented a good percentage of it. My main change request 
+>> in what I've seen is that it requires knowledge of all of the keywords that 
+>> would ever be used, and it manipulates the scriptlets in shell which could 
+>> result in manipulation of the scriptlet sections (e.g. use of reverse ticks 
+>> or escapes and quotations). Aside from that, let's start with what you have 
+>> been playing with and the model that is in your head and go from there!
+>>
+>> Does that sounds reasonable?
+>>
+>> Thanks!
+>>
+>>
+>>  
+>>
+>>>
+>>> >
+>>> > >
+>>> > >
+>>> > >> Some remarks/clarifications:
+>>> > >>
+>>> > >> 1. Currently there's no built-in limit on the depth of inheritance
+>>> > >> but the deepest definition is considered the main parent.
+>>> > >>
+>>> > >
+>>> > > This makes sense.
+>>> > >
+>>> >
+>>> > While there is probably no use cases that would require recursion,
+>>> > why not support it from the get-go?
+>>> >
+>>> >
+>>>
+>>> Initially it was recursive but I put in a check to avoid infinite
+>>> loops. This could easily be an option.
+>>>
+>>> > >
+>>> > >
+>>> > >> 2. The main parent's BootStrap, OSVersion, MirrorURL and UpdateURL
+>>> > >> keywords take priority over all other definitions.
+>>> > >>
+>>> > >
+>>> > > We would want to explicitly walk people through different goals and
+>>> > > use cases...
+>>> > >
+>>> >
+>>> > This should be easy and I would submit that the order of the keywords
+>>> > should always take precedent (first will be used, and all others
+>>> > ignored). With that, if we use an Include statement above any other
+>>> > keywords, then the file that is being included will have keywords
+>>> > defined *above* the parent, and thus those will end up being parsed
+>>> > first.
+>>> >
+>>>
+>>> I think it's easy as long as the difference in behaviour between
+>>> keywords and sections is clearly spelled out. Some
+>>> guidelines/walkthroughs would definitely be needed. For example even if
+>>> you could include a file in the middle of %post that should be avoided
+>>> for clarity. Instead consider breaking up the definition.
+>>>
+>>> > >
+>>> > >
+>>> > >> 3. The Inherit keyword can contain multiple definitions, but the
+>>> > >> first definition will always be considered the parent or
+>>> > >> the one which leads to the parent. ie.
+>>> > >> Inherit: def1 def2 def3
+>>> > >>
+>>> > >
+>>> > I didn't realize it until now, but I think we are indeed thinking of
+>>> > different features. In the vision that I have, you could have as many
+>>> > Include keywords as you want. All in order of how they would be
+>>> > included (again just like in C). For example:
+>>> >
+>>> > Include: def1
+>>> > Include: def2
+>>> > Include: def3
+>>> >
+>>> > With of course the first defined keyword taking priority.
+>>> >
+>>> > But where I think this makes the most sense, is not in keywords... but
+>>> > rather section support. This yields the possibility of concatenating
+>>> > alike sections together. I can see this being VERY useful for a use
+>>> > case like:
+>>> >
+>>> > I distribute my awesome definition/recipe that builds a very specific
+>>> > workflow. Someone downloads this, and instead of modifying it, they
+>>> > include it in a definition that they have which is customized for a
+>>> > particular OS. So, this can be implemented in a manner of having a
+>>> > base Ubuntu bootstrap (that could either bootstrap from debootstrap
+>>> > or docker), and that gets included by another bootstrap definition
+>>> > that adds some scientific packages to it. And that one can be
+>>> > included by another that does something else.
+>>> >
+>>>
+>>> I tried this out earlier and it works both ways. I wasn't aware
+>>> that singularity_keys_get handled multiple keywords like in your
+>>> example.
+>>>
+>>> >
+>>> > >
+>>> > > I never thought about the idea of allowing for multiple inherits
+>>> > > (From) in one file, I'm interested to hear what others think about
+>>> > > this. My instinct is telling me if would lead to a lot more bugs,
+>>> > > given that three different things are going into one image
+>>> > > generation (what if one image has a bug? What if one software is
+>>> > > reinstalled? not compatible? etc). There is something to be said
+>>> > > for maintaining the standard that is known, the one that Docker has
+>>> > > been using, but I'd be open to support for the other way.
+>>> >
+>>> > If you consider inherits being functionality equivalent as froms,
+>>> > then I would agree that this would lead to a lot more bugs as you
+>>> > would be layering in a manner that is not designed to be layered.
+>>> >
+>>>
+>>> How does the Docker From stop someone from pulling an image and
+>>> then running something incompatible? Or creating a chain of dockerfiles
+>>> with one of them containing a bug?
+>>>
+>>> Also Docker does have or had multiple Froms but it was proposed for
+>>> removal as it wasn't well supported:
+>>>
+>>> https://github.com/docker/docker/issues/13026
+>>>
+>>> >
+>>> > >
+>>> > >
+>>> > >> def1 is the parent unless it inherits from other definitions as
+>>> > >> well. 4. Packages from the Include keyword are concatenated.
+>>> > >>
+>>> > >
+>>> > IncludePkgs? Hrmm... That would be tough. I don't think this should
+>>> > change any configurations of an existing keyword.
+>>> >
+>>>
+>>> What about having multiple Include/IncludePkgs keywords?
+>>> Either way a guideline for this would be to avoid putting
+>>> packages which depend on some inheritance in this, instead do a manual
+>>> yum install in %post.
+>>>
+>>> >
+>>> > > 5. Sections (runscript, post, test) are combined but this could
+>>> > >> potentially be changed to create multiple posts or tests.
+>>> > >>
+>>> > >
+>>> > > This also sounds messy. I like the idea of having "modules" that
+>>> > > could be added to the post section (so the same code isn't done
+>>> > > over a million times) but I'm not sure how this would work easily -
+>>> > > some kind of template library? Then if the template changes, it's
+>>> > > another thing to keep track of second to the image and it's spec.
+>>> > > No, I don't like this idea.
+>>> >
+>>> > I actually don't think it is so bad if implemented correctly, and it
+>>> > is a use case that I actually need at LBNL. Is it more reasonable to
+>>> > you under the explanation of "include" rather then "from"? In that
+>>> > case, for example, a %post would be executed from both recipes in the
+>>> > order that they were included.
+>>> >
+>>> Could the tracking of includes be optional?
+>>>
+>>>
+>>> >
+>>> > >
+>>> > >
+>>> > >> 6. No docker bootstrap support at the moment.
+>>> > >>
+>>> > >> We have lots of ways, and are working on improving them, for
+>>> > >> working with
+>>> > > Docker: http://singularity.lbl.gov/docs-docker
+>>> > >
+>>> > > I don't see any reason this wouldn't work exactly as it already
+>>> > > does if we
+>>> > implement it as a preprocessor.
+>>> >
+>>> > The last bit that I would like to add is the ability for the Include
+>>> > to be a URI so it could be a web address or Github location. Should
+>>> > be easy enough to implement using a shell based case statement.
+>>> >
+>>> > Thanks, this is a great idea!
+>>> >
+>>> >
+>>> >
+>>> Definitely!
+>>>
+>>> Thanks,
+>>>
+>>> Chris
+>>>
+>>> --
+>>> You received this message because you are subscribed to the Google 
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>> an email to singu...@lbl.gov.
+>>>
+>>
+>>
+>>
+>> -- 
+>> Gregory M. Kurtzer
+>> HPC Systems Architect and Technology Developer
+>> Lawrence Berkeley National Laboratory HPCS
+>> University of California Berkeley Research IT
+>> Singularity Linux Containers (http://singularity.lbl.gov/)
+>> Warewulf Cluster Management (http://warewulf.lbl.gov/)
+>> GitHub: https://github.com/gmkurtzer, Twitter: 
+>> https://twitter.com/gmkurtzer
+>>
+>
+------=_Part_63665_1817327444.1530891546505
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Of course, for depth greater than two, you might have=
+ multiple ancestor runscripts:</div><div><br></div><div>/path/to/0/parent_r=
+unscript.sh=C2=A0 # this is the most recent<br></div><div>/path/to/1/parent=
+_runscript.sh</div><div>/path/to/2/parent_runscript.sh</div><div><br></div>=
+<div>Then you should probably just call /path/to/0/parent_runscript.sh in m=
+ost cases.<br></div><br>On Friday, 6 July 2018 11:36:40 UTC-4, Brandon Bark=
+er  wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left:=
+ 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr"><di=
+v>I saw this old thread, but didn&#39;t see in the<a href=3D"https://www.sy=
+labs.io/guides/2.5.1/user-guide/container_recipes.html#runscript" target=3D=
+"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.googl=
+e.com/url?q\x3dhttps%3A%2F%2Fwww.sylabs.io%2Fguides%2F2.5.1%2Fuser-guide%2F=
+container_recipes.html%23runscript\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCN=
+H-Jpx2rfhNPXIya0_4Bu9YTnOu0w&#39;;return true;" onclick=3D"this.href=3D&#39=
+;https://www.google.com/url?q\x3dhttps%3A%2F%2Fwww.sylabs.io%2Fguides%2F2.5=
+.1%2Fuser-guide%2Fcontainer_recipes.html%23runscript\x26sa\x3dD\x26sntz\x3d=
+1\x26usg\x3dAFQjCNH-Jpx2rfhNPXIya0_4Bu9YTnOu0w&#39;;return true;"> current =
+docs</a> (or <a href=3D"https://www.sylabs.io/guides/2.5.1/user-guide/singu=
+larity_and_docker.html#how-does-the-runscript-work" target=3D"_blank" rel=
+=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\=
+x3dhttps%3A%2F%2Fwww.sylabs.io%2Fguides%2F2.5.1%2Fuser-guide%2Fsingularity_=
+and_docker.html%23how-does-the-runscript-work\x26sa\x3dD\x26sntz\x3d1\x26us=
+g\x3dAFQjCNGydGAxIPMaC6L9YaQHBQceZHAevw&#39;;return true;" onclick=3D"this.=
+href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fwww.sylabs.io%2Fg=
+uides%2F2.5.1%2Fuser-guide%2Fsingularity_and_docker.html%23how-does-the-run=
+script-work\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGydGAxIPMaC6L9YaQHBQceZ=
+HAevw&#39;;return true;">here</a>) if %runscript and others (but runscript =
+in particular) are inherited/concatenated in the current version of singula=
+rity, or if there is a means to do so. Though from the second link, it soun=
+ds like it probably isn&#39;t the case. <br></div><div><br></div><div>I thi=
+nk the best thing would be a simple but flexible option to do something lik=
+e &quot;import parent&quot; for each option. Random example syntax:</div><d=
+iv>%runscript: import parent<br></div><div><br></div><div>In this case I as=
+sume the parent&#39;s runscript would be run before the rest of the child&#=
+39;s %runscript, much like inheritance in Java classes. Not sure if there i=
+s a compelling reason to allow more flexibility, but I guess we could get i=
+t for free if the parent&#39;s runscript is just stored on the image somewh=
+ere. Then the child %runscript simply call:</div><div><br></div><div>/path/=
+to/parent_runscript.sh<br></div><div><br></div><div>One could easily imagin=
+e this working well for %runscript, though I haven&#39;t given much conside=
+ration to other headers.<br></div><div><br></div><div><br></div><br>On Mond=
+ay, 31 October 2016 17:49:57 UTC-4, Gregory M. Kurtzer  wrote:<blockquote c=
+lass=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-left:1px #c=
+cc solid;padding-left:1ex"><div dir=3D"ltr"><br><div><br><div class=3D"gmai=
+l_quote">On Thu, Oct 27, 2016 at 10:28 AM, Chris Hadjigeorgiou <span dir=3D=
+"ltr">&lt;<a rel=3D"nofollow">c...@cam.ac.uk</a>&gt;</span> wrote:<br><bloc=
+kquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:=
+1px solid rgb(204,204,204);padding-left:1ex"><div><div><br>
+</div></div>My thinking was more along the C/C++ include but from what I&#3=
+9;ve seen in<br>
+CentOS/SL definitions the Include keyword is already used.<br></blockquote>=
+<div><br></div><div>Ooops, I should have known that! lol...=C2=A0</div><div=
+>=C2=A0</div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px =
+0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex">
+<br>
+This could potentially work in a similar way in 2 steps:<br>
+1) Do a first pass replacing all include/inherit keywords with the<br>
+corresponding file/s in place, output to the single temp definition.<br>
+2) Do a second pass to make sure keywords such as bootstrap/OSversion<br>
+exist only once from the first place and any subsequent occurences are<br>
+removed.<br></blockquote><div><br></div><div>If we aren&#39;t entering a re=
+cursion loop, we can define the syntax of both the parent and child form of=
+ each file would have. For example, the parent could have any number of the=
+ keyword formally described as &quot;Include&quot;, but it also must have t=
+he Bootstrap, OSVersion, and any other core OS builder components defined. =
+Then what gets included/inherited from the children is limited to the secti=
+on scriptlets.</div><div><br></div><blockquote class=3D"gmail_quote" style=
+=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding=
+-left:1ex">
+<br>
+I think it shouldn&#39;t get more complicated than this.<br></blockquote><d=
+iv><br></div><div>That would satisfy my use case, but it is fairly limiting=
+ on other aspects which may prove limiting.</div><div>=C2=A0</div><blockquo=
+te class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px =
+solid rgb(204,204,204);padding-left:1ex">
+<br>
+Currently this works more like the Docker From but with the ability to<br>
+have multiple inclusions. Although it doesn&#39;t need to be at the start o=
+f<br>
+the definition the Inherit keywords are parsed before anything else.<br></b=
+lockquote><div><br></div><div>It sounds like you have a good idea on what t=
+his should look like, and you&#39;ve already implemented a good percentage =
+of it. My main change request in what I&#39;ve seen is that it requires kno=
+wledge of all of the keywords that would ever be used, and it manipulates t=
+he scriptlets in shell which could result in manipulation of the scriptlet =
+sections (e.g. use of reverse ticks or escapes and quotations). Aside from =
+that, let&#39;s start with what you have been playing with and the model th=
+at is in your head and go from there!</div><div><br></div><div>Does that so=
+unds reasonable?</div><div><br></div><div>Thanks!</div><div><br></div><div>=
+<br></div><div>=C2=A0</div><blockquote class=3D"gmail_quote" style=3D"margi=
+n:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex=
+">
+<span><br>
+&gt;<br>
+&gt; &gt;<br>
+&gt; &gt;<br>
+&gt; &gt;&gt; Some remarks/clarifications:<br>
+&gt; &gt;&gt;<br>
+&gt; &gt;&gt; 1. Currently there&#39;s no built-in limit on the depth of in=
+heritance<br>
+&gt; &gt;&gt; but the deepest definition is considered the main parent.<br>
+&gt; &gt;&gt;<br>
+&gt; &gt;<br>
+&gt; &gt; This makes sense.<br>
+&gt; &gt;<br>
+&gt;<br>
+&gt; While there is probably no use cases that would require recursion,<br>
+&gt; why not support it from the get-go?<br>
+&gt;<br>
+&gt;<br>
+<br>
+</span>Initially it was recursive but I put in a check to avoid infinite<br=
+>
+loops. This could easily be an option.<br>
+<span><br>
+&gt; &gt;<br>
+&gt; &gt;<br>
+&gt; &gt;&gt; 2. The main parent&#39;s BootStrap, OSVersion, MirrorURL and =
+UpdateURL<br>
+&gt; &gt;&gt; keywords take priority over all other definitions.<br>
+&gt; &gt;&gt;<br>
+&gt; &gt;<br>
+&gt; &gt; We would want to explicitly walk people through different goals a=
+nd<br>
+&gt; &gt; use cases...<br>
+&gt; &gt;<br>
+&gt;<br>
+&gt; This should be easy and I would submit that the order of the keywords<=
+br>
+&gt; should always take precedent (first will be used, and all others<br>
+&gt; ignored). With that, if we use an Include statement above any other<br=
+>
+&gt; keywords, then the file that is being included will have keywords<br>
+&gt; defined *above* the parent, and thus those will end up being parsed<br=
+>
+&gt; first.<br>
+&gt;<br>
+<br>
+</span>I think it&#39;s easy as long as the difference in behaviour between=
+<br>
+keywords and sections is clearly spelled out. Some<br>
+guidelines/walkthroughs would definitely be needed. For example even if<br>
+you could include a file in the middle of %post that should be avoided<br>
+for clarity. Instead consider breaking up the definition.<br>
+<span><br>
+&gt; &gt;<br>
+&gt; &gt;<br>
+&gt; &gt;&gt; 3. The Inherit keyword can contain multiple definitions, but =
+the<br>
+&gt; &gt;&gt; first definition will always be considered the parent or<br>
+&gt; &gt;&gt; the one which leads to the parent. ie.<br>
+&gt; &gt;&gt; Inherit: def1 def2 def3<br>
+&gt; &gt;&gt;<br>
+&gt; &gt;<br>
+&gt; I didn&#39;t realize it until now, but I think we are indeed thinking =
+of<br>
+&gt; different features. In the vision that I have, you could have as many<=
+br>
+&gt; Include keywords as you want. All in order of how they would be<br>
+&gt; included (again just like in C). For example:<br>
+&gt;<br>
+&gt; Include: def1<br>
+&gt; Include: def2<br>
+&gt; Include: def3<br>
+&gt;<br>
+&gt; With of course the first defined keyword taking priority.<br>
+&gt;<br>
+&gt; But where I think this makes the most sense, is not in keywords... but=
+<br>
+&gt; rather section support. This yields the possibility of concatenating<b=
+r>
+&gt; alike sections together. I can see this being VERY useful for a use<br=
+>
+&gt; case like:<br>
+&gt;<br>
+&gt; I distribute my awesome definition/recipe that builds a very specific<=
+br>
+&gt; workflow. Someone downloads this, and instead of modifying it, they<br=
+>
+&gt; include it in a definition that they have which is customized for a<br=
+>
+&gt; particular OS. So, this can be implemented in a manner of having a<br>
+&gt; base Ubuntu bootstrap (that could either bootstrap from debootstrap<br=
+>
+&gt; or docker), and that gets included by another bootstrap definition<br>
+&gt; that adds some scientific packages to it. And that one can be<br>
+&gt; included by another that does something else.<br>
+&gt;<br>
+<br>
+</span>I tried this out earlier and it works both ways. I wasn&#39;t aware<=
+br>
+that singularity_keys_get handled multiple keywords like in your<br>
+example.<br>
+<span><br>
+&gt;<br>
+&gt; &gt;<br>
+&gt; &gt; I never thought about the idea of allowing for multiple inherits<=
+br>
+&gt; &gt; (From) in one file, I&#39;m interested to hear what others think =
+about<br>
+&gt; &gt; this. My instinct is telling me if would lead to a lot more bugs,=
+<br>
+&gt; &gt; given that three different things are going into one image<br>
+&gt; &gt; generation (what if one image has a bug? What if one software is<=
+br>
+&gt; &gt; reinstalled? not compatible? etc). There is something to be said<=
+br>
+&gt; &gt; for maintaining the standard that is known, the one that Docker h=
+as<br>
+&gt; &gt; been using, but I&#39;d be open to support for the other way.<br>
+&gt;<br>
+&gt; If you consider inherits being functionality equivalent as froms,<br>
+&gt; then I would agree that this would lead to a lot more bugs as you<br>
+&gt; would be layering in a manner that is not designed to be layered.<br>
+&gt;<br>
+<br>
+</span>How does the Docker From stop someone from pulling an image and<br>
+then running something incompatible? Or creating a chain of dockerfiles<br>
+with one of them containing a bug?<br>
+<br>
+Also Docker does have or had multiple Froms but it was proposed for<br>
+removal as it wasn&#39;t well supported:<br>
+<br>
+<a href=3D"https://github.com/docker/docker/issues/13026" rel=3D"nofollow" =
+target=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/ur=
+l?q\x3dhttps%3A%2F%2Fgithub.com%2Fdocker%2Fdocker%2Fissues%2F13026\x26sa\x3=
+dD\x26sntz\x3d1\x26usg\x3dAFQjCNEVzR4PQO032S3RsHhshiPy2jweCw&#39;;return tr=
+ue;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2=
+F%2Fgithub.com%2Fdocker%2Fdocker%2Fissues%2F13026\x26sa\x3dD\x26sntz\x3d1\x=
+26usg\x3dAFQjCNEVzR4PQO032S3RsHhshiPy2jweCw&#39;;return true;">https://gith=
+ub.com/docker/<wbr>docker/issues/13026</a><br>
+<span><br>
+&gt;<br>
+&gt; &gt;<br>
+&gt; &gt;<br>
+&gt; &gt;&gt; def1 is the parent unless it inherits from other definitions =
+as<br>
+&gt; &gt;&gt; well. 4. Packages from the Include keyword are concatenated.<=
+br>
+&gt; &gt;&gt;<br>
+&gt; &gt;<br>
+&gt; IncludePkgs? Hrmm... That would be tough. I don&#39;t think this shoul=
+d<br>
+&gt; change any configurations of an existing keyword.<br>
+&gt;<br>
+<br>
+</span>What about having multiple Include/IncludePkgs keywords?<br>
+Either way a guideline for this would be to avoid putting<br>
+packages which depend on some inheritance in this, instead do a manual<br>
+yum install in %post.<br>
+<span><br>
+&gt;<br>
+&gt; &gt; 5. Sections (runscript, post, test) are combined but this could<b=
+r>
+&gt; &gt;&gt; potentially be changed to create multiple posts or tests.<br>
+&gt; &gt;&gt;<br>
+&gt; &gt;<br>
+&gt; &gt; This also sounds messy. I like the idea of having &quot;modules&q=
+uot; that<br>
+&gt; &gt; could be added to the post section (so the same code isn&#39;t do=
+ne<br>
+&gt; &gt; over a million times) but I&#39;m not sure how this would work ea=
+sily -<br>
+&gt; &gt; some kind of template library? Then if the template changes, it&#=
+39;s<br>
+&gt; &gt; another thing to keep track of second to the image and it&#39;s s=
+pec.<br>
+&gt; &gt; No, I don&#39;t like this idea.<br>
+&gt;<br>
+&gt; I actually don&#39;t think it is so bad if implemented correctly, and =
+it<br>
+&gt; is a use case that I actually need at LBNL. Is it more reasonable to<b=
+r>
+&gt; you under the explanation of &quot;include&quot; rather then &quot;fro=
+m&quot;? In that<br>
+&gt; case, for example, a %post would be executed from both recipes in the<=
+br>
+&gt; order that they were included.<br>
+&gt;<br>
+</span>Could the tracking of includes be optional?<br>
+<span><br>
+<br>
+&gt;<br>
+&gt; &gt;<br>
+&gt; &gt;<br>
+&gt; &gt;&gt; 6. No docker bootstrap support at the moment.<br>
+&gt; &gt;&gt;<br>
+&gt; &gt;&gt; We have lots of ways, and are working on improving them, for<=
+br>
+&gt; &gt;&gt; working with<br>
+&gt; &gt; Docker: <a href=3D"http://singularity.lbl.gov/docs-docker" rel=3D=
+"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;http://www.goo=
+gle.com/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.gov%2Fdocs-docker\x26sa\x3dD\=
+x26sntz\x3d1\x26usg\x3dAFQjCNGsWRMiNXjhAn6TDNSCCWEkRhNVhg&#39;;return true;=
+" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fs=
+ingularity.lbl.gov%2Fdocs-docker\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGs=
+WRMiNXjhAn6TDNSCCWEkRhNVhg&#39;;return true;">http://singularity.lbl.gov/<w=
+br>docs-docker</a><br>
+&gt; &gt;<br>
+&gt; &gt; I don&#39;t see any reason this wouldn&#39;t work exactly as it a=
+lready<br>
+&gt; &gt; does if we<br>
+&gt; implement it as a preprocessor.<br>
+&gt;<br>
+&gt; The last bit that I would like to add is the ability for the Include<b=
+r>
+&gt; to be a URI so it could be a web address or Github location. Should<br=
+>
+&gt; be easy enough to implement using a shell based case statement.<br>
+&gt;<br>
+&gt; Thanks, this is a great idea!<br>
+&gt;<br>
+&gt;<br>
+&gt;<br>
+</span>Definitely!<br>
+<br>
+Thanks,<br>
+<br>
+Chris<br>
+<div><div><br>
+--<br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div=
+ dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div>Gregory M. Kurtzer</div=
+><div>HPC Systems Architect and Technology Developer</div><div>Lawrence Ber=
+keley National Laboratory HPCS<br>University of California Berkeley Researc=
+h IT<br>Singularity Linux Containers=C2=A0(<a href=3D"http://singularity.lb=
+l.gov/" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;=
+http://www.google.com/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.gov%2F\x26sa\x3=
+dD\x26sntz\x3d1\x26usg\x3dAFQjCNHITKHVjde-iKsg1vSOOrRt58XtEQ&#39;;return tr=
+ue;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%=
+2Fsingularity.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHITKHVjde-=
+iKsg1vSOOrRt58XtEQ&#39;;return true;">http://<wbr>singularity.lbl.gov/</a>)=
+</div><div>Warewulf Cluster Management=C2=A0(<a href=3D"http://warewulf.lbl=
+.gov/" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;h=
+ttp://www.google.com/url?q\x3dhttp%3A%2F%2Fwarewulf.lbl.gov%2F\x26sa\x3dD\x=
+26sntz\x3d1\x26usg\x3dAFQjCNFPtSL1wiDx3C_BKcVgBhWc77Jxww&#39;;return true;"=
+ onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwa=
+rewulf.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPtSL1wiDx3C_BKcV=
+gBhWc77Jxww&#39;;return true;">http://warewulf.<wbr>lbl.gov/</a>)</div><div=
+>GitHub:=C2=A0<a href=3D"https://github.com/gmkurtzer" rel=3D"nofollow" tar=
+get=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q=
+\x3dhttps%3A%2F%2Fgithub.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3d=
+AFQjCNHgwLrV-1wbChhxINJY_U3Xyjg2uw&#39;;return true;" onclick=3D"this.href=
+=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fgmkurtze=
+r\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHgwLrV-1wbChhxINJY_U3Xyjg2uw&#39;=
+;return true;">https://github.com/<wbr>gmkurtzer</a>,=C2=A0<span style=3D"f=
+ont-size:12.8px">Twitter:=C2=A0</span><a href=3D"https://twitter.com/gmkurt=
+zer" style=3D"font-size:12.8px" rel=3D"nofollow" target=3D"_blank" onmoused=
+own=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Ftwitt=
+er.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGiphjH-YHVVhLsKs=
+NsH_Zw5B_gRA&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.goo=
+gle.com/url?q\x3dhttps%3A%2F%2Ftwitter.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x=
+3d1\x26usg\x3dAFQjCNGiphjH-YHVVhLsKsNsH_Zw5B_gRA&#39;;return true;">https:/=
+/<wbr>twitter.com/gmkurtzer</a></div></div></div></div></div></div></div></=
+div></div></div></div>
+</div></div>
+</blockquote></div></blockquote></div>
+------=_Part_63665_1817327444.1530891546505--
+
+------=_Part_63664_1853621615.1530891546504--

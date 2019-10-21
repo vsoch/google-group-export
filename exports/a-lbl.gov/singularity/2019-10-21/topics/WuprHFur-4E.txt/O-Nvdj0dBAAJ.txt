@@ -1,0 +1,314 @@
+Date: Sat, 10 Feb 2018 10:39:26 -0800 (PST)
+From: Jeff Kriske <jekr...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <818c9aea-d46b-432d-839f-3271c5883eff@lbl.gov>
+In-Reply-To: <CAM=pu+L0p61AcJ45Wa3h5HxtiCO9Fg-isPis=oc=cUZDajvo-A@mail.gmail.com>
+References: <CADU1CXnO-Ux-ZG2CzRMpKqyq53EiA=Ly1LMn3D=cstJHSmvs5g@mail.gmail.com>
+ <1df508c3-5dbc-44ac-86e7-427569e5a039@lbl.gov> <0ab60812-4d3e-4f94-892b-09020d3a4d79@lbl.gov>
+ <CAM=pu+L0p61AcJ45Wa3h5HxtiCO9Fg-isPis=oc=cUZDajvo-A@mail.gmail.com>
+Subject: Re: [Singularity] Re: How to use "external" variable in a recipe
+ when building an image?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_6214_990972036.1518287966855"
+
+------=_Part_6214_990972036.1518287966855
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_6215_442518746.1518287966856"
+
+------=_Part_6215_442518746.1518287966856
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+SINGULARITY_SOMENAME doesn't seem to pass the arbitrary variables at all, 
+unlike SINGULARITYENV_SOMENAME.
+
+when SINGULARITYENV_SOMENAME is unset this reveals a another issue as 
+well...
+
+If inside %environment you set a variable as you would in /etc/environment 
+(without "export"), it doesn't become part of the environment without 
+SINGULARITYENV_SOMENAME set.
+
+Concrete example:
+BootStrap: docker
+From: alpine:latest
+
+%environment
+HELLOWORLD="Inside %environment"
+
+%setup
+ echo $HELLOWORLD
+ echo "HELLOWORLD='Hello variable from %setup'" >> 
+$SINGULARITY_ROOTFS$SINGULARITY_ENVIRONMENT
+
+%post
+  source $SINGULARITY_ENVIRONMENT
+  echo $HELLOWORLD
+  rm $SINGULARITY_ENVIRONMENT
+
+%runscript
+  exec echo $HELLOWORLD
+
+
+$ # After the build
+$ singularity run test
+
+$ # It did not print anything
+$ export SINGULARITYENV_HELLOWORLD="From the host"
+$ singularity run test
+Inside %environment
+
+If you add export in the %environment then it prints 
+Inside %environment
+in the first instance where it had been blank, as one might expect. In the 
+second case it appears to be loading the %environment script after 
+SINGULARITYENV_HELLOWORLD meaning end users do not have the ability to 
+override what's in %environment.
+
+The situation where %environment doesn't act exactly like /etc/environment 
+might be just fine as long as people always use export. 
+
+-Jeff
+
+
+
+On Saturday, February 10, 2018 at 11:15:47 AM UTC-5, vanessa wrote:
+>
+> What about just SINGULARITY_SOMENAME ? (with SOMENAME set in %environment) 
+> ? When was the ENV added?
+>
+> On Sat, Feb 10, 2018 at 8:09 AM, Jeff Kriske <je...@gmail.com 
+> <javascript:>> wrote:
+>
+>> I should also mention if you set an environment variable SOMENAME in 
+>> %environment during build and you use SINGULARITYENV_SOMENAME at runtime it 
+>> doesn't overwrite the variable as one might expect... which is weird, but 
+>> that's how it currently functions.
+>>
+>> -Jeff
+>>
+>>
+>>
+>> On Saturday, February 10, 2018 at 11:02:40 AM UTC-5, Jeff Kriske wrote:
+>>>
+>>> Personally, I prefer that the host environment is sanitized before 
+>>> starting the build process.
+>>>
+>>> My question would be, what are you looking for in your environment that 
+>>> can't be determined by some other means in %setup or in %post?
+>>> What you're describing is not scripting the generation of the container 
+>>> as much as scripting the generation of the definition file.
+>>>
+>>> At that point you could have a Singularity definition file template and 
+>>> have bits filled in depending on whatever factors you want.
+>>>
+>>> If you can determine what you want during %setup using other factors you 
+>>> can always set a variable to work during %post, for example:
+>>>
+>>> BootStrap: docker
+>>> From: alpine:latest
+>>>
+>>> %setup
+>>>  echo $HELLOWORLD
+>>>  echo "HELLOWORLD='Hello there'" >> 
+>>> $SINGULARITY_ROOTFS$SINGULARITY_ENVIRONMENT
+>>>
+>>> %post
+>>>   source $SINGULARITY_ENVIRONMENT
+>>>   echo $HELLOWORLD
+>>>   rm $SINGULARITY_ENVIRONMENT
+>>>
+>>> %runscript
+>>>   exec echo $HELLOWORLD
+>>>
+>>> If you have it in your environment the first $HELLOWORLD is stripped 
+>>> which is expected. Next you can use any logic you want to determine and set 
+>>> an env variable for %post, you can use it in %post and delete it afterwards 
+>>> if you want.
+>>>
+>>> When actually running the container you can set 
+>>> SINGULARITYENV_HELLOWORLD on the host and the container will read it when 
+>>> you run it.
+>>>
+>>> Although, to your point, it'd be interesting if SINGULARITYENV_anything 
+>>> wasn't stripped at build time... I can already think of other possible uses.
+>>>
+>>>
+>>> On Friday, February 9, 2018 at 9:49:02 AM UTC-5, Christophe Trophime 
+>>> wrote:
+>>>>
+>>>> Hi,
+>>>> I would like to script the generation of a container
+>>>> and add a variable defined as a  parameter of the script to add
+>>>> some additional package within the container: 
+>>>>
+>>>> Bootstrap: docker
+>>>> From: ....
+>>>>
+>>>> %runscript
+>>>> %setup
+>>>> %environment
+>>>> %post
+>>>>
+>>>> # Add other stuff
+>>>> if [ "$isOtherStuff" = "1" ]; then
+>>>>    apt-get -y install otherstuff ....
+>>>> fi
+>>>>
+>>>> so far I've tried without success to :
+>>>>
+>>>> export isOtherStuff="1"
+>>>> sudo -E singularity build ...
+>>>>
+>>>> I'm pretty sure it's possible to custom the recipe using variables...
+>>>> Thank for your help
+>>>>
+>>>> Best
+>>>>
+>>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_6215_442518746.1518287966856
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">SINGULARITY_SOMENAME doesn&#39;t seem to pass the arbitrar=
+y variables at all, unlike SINGULARITYENV_SOMENAME.<div><br></div><div>when=
+ SINGULARITYENV_SOMENAME is unset this reveals a another issue as well...</=
+div><div><br></div><div>If inside %environment you set a variable as you wo=
+uld in /etc/environment (without &quot;export&quot;), it doesn&#39;t become=
+ part of the environment without SINGULARITYENV_SOMENAME set.</div><div><br=
+></div><div>Concrete example:</div><div><div class=3D"prettyprint" style=3D=
+"background-color: rgb(250, 250, 250); border-color: rgb(187, 187, 187); bo=
+rder-style: solid; border-width: 1px; word-wrap: break-word;"><code class=
+=3D"prettyprint"><div class=3D"subprettyprint"><font color=3D"#660066"><div=
+ class=3D"subprettyprint">BootStrap: docker</div><div class=3D"subprettypri=
+nt">From: alpine:latest</div><div class=3D"subprettyprint"><br></div><div c=
+lass=3D"subprettyprint">%environment</div><div class=3D"subprettyprint">HEL=
+LOWORLD=3D&quot;Inside %environment&quot;</div><div class=3D"subprettyprint=
+"><br></div><div class=3D"subprettyprint">%setup</div><div class=3D"subpret=
+typrint">=C2=A0echo $HELLOWORLD</div><div class=3D"subprettyprint">=C2=A0ec=
+ho &quot;HELLOWORLD=3D&#39;Hello variable from %setup&#39;&quot; &gt;&gt; $=
+SINGULARITY_ROOTFS$SINGULARITY_ENVIRONMENT</div><div class=3D"subprettyprin=
+t"><br></div><div class=3D"subprettyprint">%post</div><div class=3D"subpret=
+typrint">=C2=A0 source $SINGULARITY_ENVIRONMENT</div><div class=3D"subprett=
+yprint">=C2=A0 echo $HELLOWORLD</div><div class=3D"subprettyprint">=C2=A0 r=
+m $SINGULARITY_ENVIRONMENT</div><div class=3D"subprettyprint"><br></div><di=
+v class=3D"subprettyprint">%runscript</div><div class=3D"subprettyprint">=
+=C2=A0 exec echo $HELLOWORLD</div></font></div></code></div><br><br></div><=
+div><div class=3D"prettyprint" style=3D"background-color: rgb(250, 250, 250=
+); border-color: rgb(187, 187, 187); border-style: solid; border-width: 1px=
+; word-wrap: break-word;"><code class=3D"prettyprint"><div class=3D"subpret=
+typrint"><font color=3D"#660066"><div class=3D"subprettyprint">$ # After th=
+e build</div><div class=3D"subprettyprint">$ singularity run test</div><div=
+ class=3D"subprettyprint"><br></div><div class=3D"subprettyprint">$ # It di=
+d not print anything</div><div class=3D"subprettyprint">$ export SINGULARIT=
+YENV_HELLOWORLD=3D&quot;From the host&quot;</div><div class=3D"subprettypri=
+nt">$ singularity run test</div><div class=3D"subprettyprint">Inside %envir=
+onment</div></font></div></code></div><div><br></div>If you add export in t=
+he %environment then it prints=C2=A0<div class=3D"prettyprint" style=3D"bac=
+kground-color: rgb(250, 250, 250); border-color: rgb(187, 187, 187); border=
+-style: solid; border-width: 1px; word-wrap: break-word;"><code class=3D"pr=
+ettyprint"><div class=3D"subprettyprint"><span style=3D"color: rgb(102, 0, =
+102);">Inside %environment</span><br></div></code></div>in the first instan=
+ce where it had been blank, as one might expect. In the second case it appe=
+ars to be loading the %environment script after SINGULARITYENV_HELLOWORLD m=
+eaning end users do not have the ability to override what&#39;s in %environ=
+ment.</div><div><br></div><div>The situation where %environment doesn&#39;t=
+ act exactly like /etc/environment might be just fine as long as people alw=
+ays use export.=C2=A0</div><div><br></div><div>-Jeff<br><br><br></div><div>=
+<br></div><div>On Saturday, February 10, 2018 at 11:15:47 AM UTC-5, vanessa=
+ wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.=
+8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">What a=
+bout just SINGULARITY_SOMENAME ? (with SOMENAME set in %environment) ? When=
+ was the ENV added?</div><div><br><div class=3D"gmail_quote">On Sat, Feb 10=
+, 2018 at 8:09 AM, Jeff Kriske <span dir=3D"ltr">&lt;<a href=3D"javascript:=
+" target=3D"_blank" gdf-obfuscated-mailto=3D"sY6vgkJUAQAJ" rel=3D"nofollow"=
+ onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"=
+this.href=3D&#39;javascript:&#39;;return true;">je...@gmail.com</a>&gt;</sp=
+an> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;=
+border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">I should also=
+ mention if you set an environment variable SOMENAME in %environment during=
+ build and you use SINGULARITYENV_SOMENAME at runtime it doesn&#39;t overwr=
+ite the variable as one might expect... which is weird, but that&#39;s how =
+it currently functions.<span><font color=3D"#888888"><div><br></div></font>=
+</span><div><span><font color=3D"#888888">-Jeff</font></span><div><div><br>=
+<div><br><br>On Saturday, February 10, 2018 at 11:02:40 AM UTC-5, Jeff Kris=
+ke wrote:<blockquote class=3D"gmail_quote" style=3D"margin:0;margin-left:0.=
+8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr"><div>Pers=
+onally, I prefer that the host environment is sanitized before starting the=
+ build process.<br></div><div><br></div><div>My question would be, what are=
+ you looking for in your environment that can&#39;t be determined by some o=
+ther means in %setup or in %post?</div><div>What you&#39;re describing is n=
+ot scripting the generation of the container as much as scripting the gener=
+ation of the definition file.</div><div><br></div><div>At that point you co=
+uld have a Singularity definition file template and have bits filled in dep=
+ending on whatever factors you want.</div><div><br></div><div>If you can de=
+termine what you want during %setup using other factors you can always set =
+a variable to work during %post, for example:</div><div><br></div><div><div=
+ style=3D"background-color:rgb(250,250,250);border-color:rgb(187,187,187);b=
+order-style:solid;border-width:1px;word-wrap:break-word"><code><div><font c=
+olor=3D"#660066"><div>BootStrap: docker</div><div>From: alpine:latest</div>=
+<div><br></div><div>%setup</div><div>=C2=A0echo $HELLOWORLD</div><div>=C2=
+=A0echo &quot;HELLOWORLD=3D&#39;Hello there&#39;&quot; &gt;&gt; $SINGULARIT=
+Y_ROOTFS$<wbr>SINGULARITY_ENVIRONMENT</div><div><br></div><div>%post</div><=
+div>=C2=A0 source $SINGULARITY_ENVIRONMENT</div><div>=C2=A0 echo $HELLOWORL=
+D</div><div>=C2=A0 rm $SINGULARITY_ENVIRONMENT</div><div><br></div><div>%ru=
+nscript</div><div>=C2=A0 exec echo $HELLOWORLD</div></font></div></code></d=
+iv><br>If you have it in your environment the first $HELLOWORLD is stripped=
+ which is expected. Next you can use any logic you want to determine and se=
+t an env variable for %post, you can use it in %post and delete it afterwar=
+ds if you want.</div><div><br></div><div>When actually running the containe=
+r you can set SINGULARITYENV_HELLOWORLD on the host and the container will =
+read it when you run it.</div><div><br></div><div>Although, to your point, =
+it&#39;d be interesting if SINGULARITYENV_anything wasn&#39;t stripped at b=
+uild time... I can already think of other possible uses.</div><div><br><div=
+><br>On Friday, February 9, 2018 at 9:49:02 AM UTC-5, Christophe Trophime w=
+rote:<blockquote class=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;=
+border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr"><div>Hi,</div=
+><div>I would like to script the generation of a container</div><div>and ad=
+d a variable defined as a=C2=A0 parameter of the script to add</div><div>so=
+me additional package within the container:=C2=A0</div><div><br></div><div>=
+Bootstrap: docker</div><div>From: ....</div><div><br></div><div>%runscript<=
+/div><div>%setup<br></div><div>%environment</div><div>%post</div><div><br><=
+/div><div># Add other stuff<br></div><div>if [ &quot;$isOtherStuff&quot; =
+=3D &quot;1&quot; ]; then</div><div>=C2=A0 =C2=A0apt-get -y install otherst=
+uff ....</div><div>fi</div><div><br></div><div>so far I&#39;ve tried withou=
+t success to :</div><div><br></div><div>export isOtherStuff=3D&quot;1&quot;=
+</div><div>sudo=C2=A0-E singularity build ...</div><div><br></div><div>I&#3=
+9;m pretty sure it&#39;s possible to custom the recipe using variables...</=
+div><div>Thank for your help</div><div><br></div><div>Best</div></div>
+</blockquote></div></div></div></blockquote></div></div></div></div></div><=
+div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+sY6vgkJUAQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><d=
+iv>(603) 321-0676</div></div></div></div>
+</div>
+</blockquote></div></div>
+------=_Part_6215_442518746.1518287966856--
+
+------=_Part_6214_990972036.1518287966855--

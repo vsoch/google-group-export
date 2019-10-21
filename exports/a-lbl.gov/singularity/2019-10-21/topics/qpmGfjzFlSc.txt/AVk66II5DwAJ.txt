@@ -1,0 +1,547 @@
+Date: Tue, 14 Aug 2018 14:46:04 -0700 (PDT)
+From: Pedro <pedrol...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <214e9a6a-b19c-4df3-8a36-352488e1a2df@lbl.gov>
+In-Reply-To: <20180814144521.GB62261@fnal.gov>
+References: <d79c6365-d22c-480d-a312-a3470a1cb0e3@lbl.gov>
+ <20180814144521.GB62261@fnal.gov>
+Subject: Re: [Singularity] How to make a local image behave as a Docker Hub
+ container?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2044_1216779101.1534283164814"
+
+------=_Part_2044_1216779101.1534283164814
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2045_1598411859.1534283164815"
+
+------=_Part_2045_1598411859.1534283164815
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+=20
+
+Dave,
+
+
+Thanks for pointing out. Here is some additional information:
+
+
+Singularity version: 2.4.2
+
+Host machine OS: Scientific Linux release 6.9
+
+
+As previously stated,=20
+
+
+Method 1
+
+singularity exec local_file.img bash script.sh
+
+
+Method 2
+singularity pull --name local_image.img docker://ubuntu
+singularity exec local_file.img bash script.sh
+
+
+
+The first difference between the two methods is that system variables are=
+=20
+correctly assigned only in the first one.
+
+
+The variables are assigned according to the following /environment file:
+
+
+
+if test -z "$SINGULARITY_INIT"; then=20
+
+    PATH=3D$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sb=
+in:
+/util/opt/matlab/r2017a/bin=20
+
+    PS1=3D"Singularity.$SINGULARITY_CONTAINER> $PS1"=20
+
+    SINGULARITY_INIT=3D1=20
+
+    export PATH PS1 SINGULARITY_INIT=20
+
+fi=20
+
+. /docker_environment
+
+
+I retrieve different results when displaying the path:
+
+echo $PATH
+
+
+Method 1=20
+
+/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin=
+:/bin:/util/opt/matlab/r2017a/bin:/opt/conda/bin:/opt/conda/envs/test_env/b=
+in
+
+
+Method 2
+
+/opt/conda/envs/rl/bin:/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr/s=
+bin:/usr/bin:/sbin:/bin
+
+
+
+Even after fixing system variables (by assigning it in run-time), the=20
+result of the two methods is distinct since I get permission errors in=20
+Method 2 that are absent in Method 1.=20
+
+e.g. this error when executing a python script:
+
+
+File "simulation_interface.py", line 6, in <module>
+
+    from gym.spaces import Box
+
+  File "/opt/conda/envs/rl/lib/python3.5/site-packages/gym/__init__.py",=20
+line 11, in <module>
+
+    from gym.envs import make, spec
+
+  File=20
+"/opt/conda/envs/rl/lib/python3.5/site-packages/gym/envs/__init__.py", line=
+=20
+1, in <module>
+
+    from gym.envs.registration import registry, register, make, spec
+
+  File=20
+"/opt/conda/envs/rl/lib/python3.5/site-packages/gym/envs/registration.py",=
+=20
+line 1, in <module>
+
+    import pkg_resources
+
+  File=20
+"/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py",=
+=20
+line 3074, in <module>
+
+    @_call_aside
+
+  File=20
+"/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py",=
+=20
+line 3058, in _call_aside
+
+    f(*args, **kwargs)
+
+  File=20
+"/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py",=
+=20
+line 3087, in _initialize_master_working_set
+
+    working_set =3D WorkingSet._build_master()
+
+  File=20
+"/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py",=
+=20
+line 655, in _build_master
+
+    ws =3D cls()
+
+  File=20
+"/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py",=
+=20
+line 648, in __init__
+
+    self.add_entry(entry)
+
+  File=20
+"/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py",=
+=20
+line 704, in add_entry
+
+    for dist in find_distributions(entry, True):
+
+  File=20
+"/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py",=
+=20
+line 2059, in find_on_path
+
+    path_item, entry, metadata, precedence=3DDEVELOP_DIST
+
+  File=20
+"/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py",=
+=20
+line 2488, in from_location
+
+    py_version=3Dpy_version, platform=3Dplatform, **kw
+
+  File=20
+"/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py",=
+=20
+line 2828, in _reload_version
+
+    md_version =3D _version_from_file(self._get_metadata(self.PKG_INFO))
+
+  File=20
+"/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py",=
+=20
+line 2453, in _version_from_file
+
+    line =3D next(iter(version_lines), '')
+
+  File=20
+"/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py",=
+=20
+line 2621, in _get_metadata
+
+    for line in self.get_metadata_lines(name):
+
+  File=20
+"/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py",=
+=20
+line 1895, in get_metadata_lines
+
+    return yield_lines(self.get_metadata(name))
+
+  File=20
+"/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py",=
+=20
+line 1881, in get_metadata
+
+    with io.open(self.path, encoding=3D'utf-8', errors=3D"replace") as f:
+
+PermissionError: [Errno 13] Permission denied:=20
+'/opt/conda/envs/rl/lib/python3.5/site-packages/.wh.six-1.10.0-py3.5.egg-in=
+fo'
+
+
+Cheers
+
+Em ter=C3=A7a-feira, 14 de agosto de 2018 09:45:28 UTC-5, Dave Dykstra escr=
+eveu:
+>
+> Pedro,=20
+>
+> I think you need to be more specific and give exact error messages,=20
+> singularity version, host operating system, and instructions to=20
+> reproduce what you're seeing.=20
+>
+> Dave=20
+>
+> On Mon, Aug 13, 2018 at 05:37:21PM -0700, Pedro wrote:=20
+> > How can I get the execution of a local copy of a docker container to=20
+> behave=20
+> > just like one hosted at Docker Hub?=20
+> >=20
+> > I'm trying to keep a local copy of a Docker container, so I got one as=
+=20
+> > follows:=20
+> >=20
+> > singularity pull --name local_image.img docker://ubuntu=20
+> >=20
+> > However, there are many differences between running this image instead=
+=20
+> of=20
+> > the Docker Hub container directly, such as system variables not set and=
+=20
+> > many errors on permission.=20
+> >=20
+> > So, the question is: how can one get a local file in which=20
+> > singularity exec local_file.img bash script.sh=20
+> >=20
+> > behaves exactly as=20
+> > singularity exec docker://ubuntu:latest bash script.sh=20
+> >=20
+> > p.s.: I've also tried with singularity run, with no success.=20
+> >=20
+> > Thanks!=20
+> >=20
+> > --=20
+> > You received this message because you are subscribed to the Google=20
+> Groups "singularity" group.=20
+> > To unsubscribe from this group and stop receiving emails from it, send=
+=20
+> an email to singu...@lbl.gov <javascript:>.=20
+>
+>
+------=_Part_2045_1598411859.1534283164815
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">
+
+
+
+
+<style type=3D"text/css"> p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0=
+px 'Helvetica Neue'; color: #454545} p.p2 {margin: 0.0px 0.0px 0.0px 0.0px;=
+ font: 12.0px 'Helvetica Neue'; color: #454545; min-height: 14.0px} </style=
+>
+
+
+<p class=3D"p1">Dave,</p>
+<p class=3D"p2"><br></p>
+<p class=3D"p1">Thanks for pointing out. Here is some additional informatio=
+n:</p>
+<p class=3D"p2"><br></p>
+<p class=3D"p1">Singularity version: 2.4.2</p>
+<p class=3D"p1">Host machine OS: Scientific Linux release 6.9</p>
+<p class=3D"p2"><br></p>
+<p class=3D"p1">As previously stated,<span class=3D"Apple-converted-space">=
+=C2=A0</span></p>
+<p class=3D"p2"><br></p><p class=3D"p1">Method 1</p><p class=3D"p1"></p><di=
+v class=3D"prettyprint" style=3D"background-color: rgb(250, 250, 250); bord=
+er-color: rgb(187, 187, 187); border-style: solid; border-width: 1px; word-=
+wrap: break-word;"><code class=3D"prettyprint"><div class=3D"subprettyprint=
+"><span style=3D"color: #000;" class=3D"styled-by-prettify">singularity </s=
+pan><span style=3D"color: #008;" class=3D"styled-by-prettify">exec</span><s=
+pan style=3D"color: #000;" class=3D"styled-by-prettify"> local_file</span><=
+span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify">img bash script</span><span=
+ style=3D"color: #660;" class=3D"styled-by-prettify">.</span><span style=3D=
+"color: #000;" class=3D"styled-by-prettify">sh</span></div></code></div><p>=
+</p><p class=3D"p1"><br></p>
+<p class=3D"p1">Method 2</p>
+<div class=3D"prettyprint" style=3D"background-color: rgb(250, 250, 250); b=
+order-color: rgb(187, 187, 187); border-style: solid; border-width: 1px; wo=
+rd-wrap: break-word;"><code class=3D"prettyprint"><div class=3D"subprettypr=
+int"><span style=3D"color: #000;" class=3D"styled-by-prettify">singularity =
+pull </span><span style=3D"color: #660;" class=3D"styled-by-prettify">--</s=
+pan><span style=3D"color: #000;" class=3D"styled-by-prettify">name local_im=
+age</span><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span=
+><span style=3D"color: #000;" class=3D"styled-by-prettify">img docker</span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span st=
+yle=3D"color: #800;" class=3D"styled-by-prettify">//ubuntu</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify"><br>singularity </span><spa=
+n style=3D"color: #008;" class=3D"styled-by-prettify">exec</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify"> local_file</span><span sty=
+le=3D"color: #660;" class=3D"styled-by-prettify">.</span><span style=3D"col=
+or: #000;" class=3D"styled-by-prettify">img bash script</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">.</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify">sh</span></div></code></div>
+<p class=3D"p1"><br></p>
+<p class=3D"p2"><br></p>
+<p class=3D"p1">The first difference between the two methods is that system=
+ variables are correctly assigned only in the first one.</p>
+<p class=3D"p2"><br></p>
+<p class=3D"p1">The variables are assigned according to the following /envi=
+ronment file:</p>
+<p class=3D"p2"><br></p>
+<div class=3D"prettyprint" style=3D"background-color: rgb(250, 250, 250); b=
+order-color: rgb(187, 187, 187); border-style: solid; border-width: 1px; wo=
+rd-wrap: break-word;"><code class=3D"prettyprint"><div class=3D"subprettypr=
+int"><span style=3D"color: #000;" class=3D"styled-by-prettify"><br></span><=
+span style=3D"color: #008;" class=3D"styled-by-prettify">if</span><span sty=
+le=3D"color: #000;" class=3D"styled-by-prettify"> test </span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify">z </span><span style=3D"color: #080;"=
+ class=3D"styled-by-prettify">&quot;$SINGULARITY_INIT&quot;</span><span sty=
+le=3D"color: #660;" class=3D"styled-by-prettify">;</span><span style=3D"col=
+or: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #008;=
+" class=3D"styled-by-prettify">then</span><span style=3D"color: #000;" clas=
+s=3D"styled-by-prettify"> <br><br>=C2=A0 =C2=A0 PATH</span><span style=3D"c=
+olor: #660;" class=3D"styled-by-prettify">=3D</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify">$PATH</span><span style=3D"color: #660;"=
+ class=3D"styled-by-prettify">:</span><span style=3D"color: #080;" class=3D=
+"styled-by-prettify">/bin:/</span><span style=3D"color: #000;" class=3D"sty=
+led-by-prettify">sbin</span><span style=3D"color: #660;" class=3D"styled-by=
+-prettify">:</span><span style=3D"color: #080;" class=3D"styled-by-prettify=
+">/usr/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">bin=
+</span><span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><s=
+pan style=3D"color: #080;" class=3D"styled-by-prettify">/usr/</span><span s=
+tyle=3D"color: #000;" class=3D"styled-by-prettify">sbin</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color=
+: #080;" class=3D"styled-by-prettify">/usr/</span><span style=3D"color: #00=
+8;" class=3D"styled-by-prettify">local</span><span style=3D"color: #660;" c=
+lass=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"s=
+tyled-by-prettify">bin</span><span style=3D"color: #660;" class=3D"styled-b=
+y-prettify">:</span><span style=3D"color: #080;" class=3D"styled-by-prettif=
+y">/usr/</span><span style=3D"color: #008;" class=3D"styled-by-prettify">lo=
+cal</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</span=
+><span style=3D"color: #000;" class=3D"styled-by-prettify">sbin</span><span=
+ style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D=
+"color: #080;" class=3D"styled-by-prettify">/util/</span><span style=3D"col=
+or: #000;" class=3D"styled-by-prettify">opt</span><span style=3D"color: #66=
+0;" class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">matlab</span><span style=3D"color: #660;" class=3D"=
+styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"styled-by=
+-prettify">r2017a</span><span style=3D"color: #660;" class=3D"styled-by-pre=
+ttify">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">bi=
+n <br><br>=C2=A0 =C2=A0 PS1</span><span style=3D"color: #660;" class=3D"sty=
+led-by-prettify">=3D</span><span style=3D"color: #080;" class=3D"styled-by-=
+prettify">&quot;Singularity.$SINGULARITY_CONTAINER&gt; $PS1&quot;</span><sp=
+an style=3D"color: #000;" class=3D"styled-by-prettify"> <br><br>=C2=A0 =C2=
+=A0 SINGULARITY_INIT</span><span style=3D"color: #660;" class=3D"styled-by-=
+prettify">=3D</span><span style=3D"color: #066;" class=3D"styled-by-prettif=
+y">1</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> <br><=
+br>=C2=A0 =C2=A0 </span><span style=3D"color: #008;" class=3D"styled-by-pre=
+ttify">export</span><span style=3D"color: #000;" class=3D"styled-by-prettif=
+y"> PATH PS1 SINGULARITY_INIT <br><br></span><span style=3D"color: #008;" c=
+lass=3D"styled-by-prettify">fi</span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify"> <br><br></span><span style=3D"color: #660;" class=3D"s=
+tyled-by-prettify">.</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify"> </span><span style=3D"color: #660;" class=3D"styled-by-prettify"=
+>/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">docker_e=
+nvironment</span></div></code></div><p class=3D"p1"><br></p>
+<p class=3D"p2">I retrieve different results when displaying the path:<br><=
+/p>
+<p class=3D"p1"></p><div class=3D"prettyprint" style=3D"background-color: r=
+gb(250, 250, 250); border-color: rgb(187, 187, 187); border-style: solid; b=
+order-width: 1px; word-wrap: break-word;"><code class=3D"prettyprint"><div =
+class=3D"subprettyprint"><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify">echo $PATH</span></div></code></div><p></p><p class=3D"p2"><br></p>
+<p class=3D"p1">Method 1<span class=3D"Apple-converted-space">=C2=A0</span>=
+</p><p class=3D"p1"><span class=3D"Apple-converted-space">/usr/local/cuda/b=
+in:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/util/opt/m=
+atlab/r2017a/bin:/opt/conda/bin:/opt/conda/envs/test_env/bin</span></p>
+<p class=3D"p2"><br></p>
+<p class=3D"p1">Method 2</p>
+<p class=3D"p1">/opt/conda/envs/rl/bin:/opt/conda/bin:/usr/local/sbin:/usr/=
+local/bin:/usr/sbin:/usr/bin:/sbin:/bin</p><p class=3D"p1"><br></p>
+<p class=3D"p2"><br></p>
+<p class=3D"p1">Even after fixing system variables (by assigning it in run-=
+time), the result of the two methods is distinct since I get permission err=
+ors in Method 2 that are absent in Method 1.<span class=3D"Apple-converted-=
+space">=C2=A0</span></p>
+<p class=3D"p1">e.g. this error when executing a python script:</p>
+<p class=3D"p2"><br></p>
+<p class=3D"p1">File &quot;simulation_interface.py&quot;, line 6, in &lt;mo=
+dule&gt;</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 =C2=A0 </span>=
+from gym.spaces import Box</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 </span>File &q=
+uot;/opt/conda/envs/rl/lib/python3.5/site-packages/gym/__init__.py&quot;, l=
+ine 11, in &lt;module&gt;</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 =C2=A0 </span>=
+from gym.envs import make, spec</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 </span>File &q=
+uot;/opt/conda/envs/rl/lib/python3.5/site-packages/gym/envs/__init__.py&quo=
+t;, line 1, in &lt;module&gt;</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 =C2=A0 </span>=
+from gym.envs.registration import registry, register, make, spec</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 </span>File &q=
+uot;/opt/conda/envs/rl/lib/python3.5/site-packages/gym/envs/registration.py=
+&quot;, line 1, in &lt;module&gt;</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 =C2=A0 </span>=
+import pkg_resources</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 </span>File &q=
+uot;/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.p=
+y&quot;, line 3074, in &lt;module&gt;</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 =C2=A0 </span>=
+@_call_aside</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 </span>File &q=
+uot;/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.p=
+y&quot;, line 3058, in _call_aside</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 =C2=A0 </span>=
+f(*args, **kwargs)</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 </span>File &q=
+uot;/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.p=
+y&quot;, line 3087, in _initialize_master_working_set</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 =C2=A0 </span>=
+working_set =3D WorkingSet._build_master()</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 </span>File &q=
+uot;/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.p=
+y&quot;, line 655, in _build_master</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 =C2=A0 </span>=
+ws =3D cls()</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 </span>File &q=
+uot;/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.p=
+y&quot;, line 648, in __init__</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 =C2=A0 </span>=
+self.add_entry(entry)</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 </span>File &q=
+uot;/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.p=
+y&quot;, line 704, in add_entry</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 =C2=A0 </span>=
+for dist in find_distributions(entry, True):</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 </span>File &q=
+uot;/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.p=
+y&quot;, line 2059, in find_on_path</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 =C2=A0 </span>=
+path_item, entry, metadata, precedence=3DDEVELOP_DIST</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 </span>File &q=
+uot;/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.p=
+y&quot;, line 2488, in from_location</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 =C2=A0 </span>=
+py_version=3Dpy_version, platform=3Dplatform, **kw</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 </span>File &q=
+uot;/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.p=
+y&quot;, line 2828, in _reload_version</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 =C2=A0 </span>=
+md_version =3D _version_from_file(self._get_metadata(self.PKG_INFO))</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 </span>File &q=
+uot;/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.p=
+y&quot;, line 2453, in _version_from_file</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 =C2=A0 </span>=
+line =3D next(iter(version_lines), &#39;&#39;)</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 </span>File &q=
+uot;/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.p=
+y&quot;, line 2621, in _get_metadata</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 =C2=A0 </span>=
+for line in self.get_metadata_lines(name):</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 </span>File &q=
+uot;/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.p=
+y&quot;, line 1895, in get_metadata_lines</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 =C2=A0 </span>=
+return yield_lines(self.get_metadata(name))</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 </span>File &q=
+uot;/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.p=
+y&quot;, line 1881, in get_metadata</p>
+<p class=3D"p1"><span class=3D"Apple-converted-space">=C2=A0 =C2=A0 </span>=
+with io.open(self.path, encoding=3D&#39;utf-8&#39;, errors=3D&quot;replace&=
+quot;) as f:</p>
+<p class=3D"p1">PermissionError: [Errno 13] Permission denied: &#39;/opt/co=
+nda/envs/rl/lib/python3.5/site-packages/.wh.six-1.10.0-py3.5.egg-info&#39;<=
+/p><p class=3D"p1"><br></p><p class=3D"p1">Cheers</p><br>Em ter=C3=A7a-feir=
+a, 14 de agosto de 2018 09:45:28 UTC-5, Dave Dykstra escreveu:<blockquote c=
+lass=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px=
+ #ccc solid;padding-left: 1ex;">Pedro,
+<br>
+<br>I think you need to be more specific and give exact error messages,
+<br>singularity version, host operating system, and instructions to
+<br>reproduce what you&#39;re seeing.
+<br>
+<br>Dave
+<br>
+<br>On Mon, Aug 13, 2018 at 05:37:21PM -0700, Pedro wrote:
+<br>&gt; How can I get the execution of a local copy of a docker container =
+to behave=20
+<br>&gt; just like one hosted at Docker Hub?
+<br>&gt;=20
+<br>&gt; I&#39;m trying to keep a local copy of a Docker container, so I go=
+t one as=20
+<br>&gt; follows:
+<br>&gt;=20
+<br>&gt; singularity pull --name local_image.img docker://ubuntu
+<br>&gt;=20
+<br>&gt; However, there are many differences between running this image ins=
+tead of=20
+<br>&gt; the Docker Hub container directly, such as system variables not se=
+t and=20
+<br>&gt; many errors on permission.
+<br>&gt;=20
+<br>&gt; So, the question is: how can one get a local file in which=20
+<br>&gt; singularity exec local_file.img bash script.sh
+<br>&gt;=20
+<br>&gt; behaves exactly as
+<br>&gt; singularity exec docker://ubuntu:latest bash script.sh
+<br>&gt;=20
+<br>&gt; p.s.: I&#39;ve also tried with singularity run, with no success.
+<br>&gt;=20
+<br>&gt; Thanks!
+<br>&gt;=20
+<br>&gt; --=20
+<br>&gt; You received this message because you are subscribed to the Google=
+ Groups &quot;singularity&quot; group.
+<br>&gt; To unsubscribe from this group and stop receiving emails from it, =
+send an email to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-m=
+ailto=3D"WRbV3ouyCAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;jav=
+ascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;re=
+turn true;">singularity...@lbl.<wbr>gov</a>.
+<br>
+<br></blockquote></div>
+------=_Part_2045_1598411859.1534283164815--
+
+------=_Part_2044_1216779101.1534283164814--

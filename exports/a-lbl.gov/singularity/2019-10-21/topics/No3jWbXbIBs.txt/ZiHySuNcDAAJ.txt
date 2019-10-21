@@ -1,0 +1,634 @@
+Date: Thu, 23 Feb 2017 03:44:47 -0800 (PST)
+From: Chih-Song Kuo <chihs...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <edc73d0a-acb1-4cef-a23c-c4ab5f1b7289@lbl.gov>
+In-Reply-To: <CAA6Bz=fgxCcGtxQz7wVTTqgq_nyuLjNeuu2fOKMhJ3HTR6k5_g@mail.gmail.com>
+References: <d0a10fdc-f912-4e9c-8681-a54f5d53fd72@lbl.gov> <CAN7etTxxeYYxY7aB93H7E686y-8Qru-c_H3t1ANNQ_4oE1C-aA@mail.gmail.com>
+ <887cfc8c-48ed-4720-8040-989e407f4203@lbl.gov> <CAN7etTwgGhbKjQw3EpWXMQN7jcQURt2tTHhWZn3FgZjij_=GDA@mail.gmail.com>
+ <CABWwhHr9Z_h+nQM2SFq8Mhq=S1x+K9zCB74iPAn9tGdZKBUHNQ@mail.gmail.com>
+ <CAA6Bz=fgxCcGtxQz7wVTTqgq_nyuLjNeuu2fOKMhJ3HTR6k5_g@mail.gmail.com>
+Subject: Re: [Singularity] Performance impact: My experience
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1276_1434416343.1487850287591"
+
+------=_Part_1276_1434416343.1487850287591
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1277_1905233946.1487850287592"
+
+------=_Part_1277_1905233946.1487850287592
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+I am not really sure if I can share the containers publicly as it contains=
+=20
+an Intel MKL installation which is bound to a personalized serial number=20
+(although that MKL is from the community edition, so it is essentially=20
+free).
+
+Still, I am wondering if installing OFED into the container is the right=20
+approach. There was a thread on a similar topic and Greg said no. I hope I=
+=20
+understood it correctly.
+https://groups.google.com/a/lbl.gov/forum/#!topic/singularity/fsCO1_StjjA
+
+After all, although requiring the user to install OFED into the container=
+=20
+might be technically feasible, it would be very awkward for users who=20
+develop their applications on their own workstations without InfiniBand,=20
+not to mention that I am even not sure if one can install OFED into a=20
+machine without IB adapters. And what if the OFED library in the container=
+=20
+differ from that on the host? I don't think that will work, will it?
+
+Sorry but somehow OpenMPI (or any MPI) is intent to reach OFED libraries=20
+still remains a mystery for me. Please enlighten me.
+
+On Thursday, February 23, 2017 at 9:51:34 AM UTC+1, R=C3=A9my Dernat wrote:
+>
+> Hi,
+>
+> You can try to copy your libraries directly from the host to the containe=
+r=20
+> instead of a classical install ? I do not know what is the best way... Bu=
+t=20
+> if you check woth solutions we will have an answer.
+> BTW, I am very interesting by your containers. Could you share it (throug=
+h=20
+> singularity-hub ?) with your command line to run the benchmark in the=20
+> "singularity" file inside the container ? Indeed, I will do some=20
+> performance tests also...
+>
+> Best regards,
+> R=C3=A9my
+>
+> 2017-02-23 0:58 GMT+01:00 Chihsong :
+>
+>> Hi Greg,
+>>
+>> The problem is that I don't feel I have IB libraries inside my container=
+.=20
+>> How can I check that? Or did you simply install the ofed into the=20
+>> container?=20
+>>
+>> Chiu-Song
+>>
+>> On Thursday, February 23, 2017, Gregory M. Kurtzer <gm...@lbl.gov=20
+>> <javascript:>> wrote:
+>>
+>>> Hi Chih-Song,
+>>>
+>>> Haha, every now and then I get lucky when a new mail comes in and is at=
+=20
+>>> the top of my mbox and I have a moment.
+>>>
+>>> In summary, yes. The MPI inside the container must also link against th=
+e=20
+>>> IB libraries (also within the container).
+>>>
+>>> Hopefully that helps!
+>>>
+>>> On Wed, Feb 22, 2017 at 10:58 AM, Chih-Song Kuo  wrote:
+>>>
+>>>> Hi Greg,
+>>>>
+>>>> That reply was very prompt! Anyways, my answer follows.
+>>>>
+>>>> > * Make sure the MPI inside the container is properly linking against=
+=20
+>>>> the IB libraries
+>>>> Did that mean that I need to install IB libraries (like Mellanox OFED)=
+=20
+>>>> into the container? I guess not?
+>>>> But apparently openib is missing in the container.
+>>>> [me@cn03 ompi-rhel6-host]$ ompi_info | grep openib
+>>>>                  MCA btl: openib (MCA v2.1.0, API v3.0.0, Component=20
+>>>> v3.0.0)
+>>>>
+>>>> Singularity.container-centos6-demo.img> ompi_info | grep openib
+>>>> Singularity.container-centos6-demo.img>
+>>>> Singularity.container-centos6-demo.img> ls /etc/infiniband/openib.conf
+>>>> ls: cannot access /etc/infiniband/openib.conf: No such file or directo=
+ry
+>>>>
+>>>> > * Make sure that the MPI configuration is configured to use MPI
+>>>> I think you meant "to use IB" instead.=20
+>>>> But still, did you mean that OpenMPI should be "configured"=20
+>>>> "--with-verbs"? (Did you do so or you never had my problem?)
+>>>> I did not use this flag when compiling Open MPI either on the host or=
+=20
+>>>> in the container.
+>>>> > * Make sure you have Singularity configured properly to share the=20
+>>>> devices properly, tmp, and you are *NOT* using the IPC or PID namespac=
+es
+>>>> Can you provide more hint on how that can be done?
+>>>>
+>>>> Thank you once again for your time.
+>>>> Chih-Song
+>>>>
+>>>> On Wednesday, February 22, 2017 at 7:33:22 PM UTC+1, Gregory M. Kurtze=
+r=20
+>>>> wrote:
+>>>>>
+>>>>> There are various things that *could* go wrong, and usage of=20
+>>>>> containers (any of the technologies) actually introduce complexities =
+in=20
+>>>>> kernel and user space alignment that normally we don't consider. For =
+that=20
+>>>>> reason, my first suspicion is that your IB fabric is not being proper=
+ly=20
+>>>>> utilized by the MPI within the container. That could be due to anythi=
+ng=20
+>>>>> from build errors within the container to IB library/kmod API misalig=
+nment.
+>>>>>
+>>>>> Things I would look at and check:
+>>>>>
+>>>>> * Make sure the MPI inside the container is properly linking against=
+=20
+>>>>> the IB libraries
+>>>>> * Make sure that the IB libraries inside the container are compatible=
+=20
+>>>>> with the host kernel
+>>>>> * Make sure that the MPI configuration is configured to use MPI
+>>>>> * Make sure you have Singularity configured properly to share the=20
+>>>>> devices properly, tmp, and you are *NOT* using the IPC or PID namespa=
+ces
+>>>>>
+>>>>> Hope that helps.
+>>>>>
+>>>>> Greg
+>>>>>
+>>>>> On Wed, Feb 22, 2017 at 10:19 AM, Chih-Song Kuo wrote:
+>>>>>
+>>>>>> Hello,
+>>>>>>
+>>>>>> This is again Chih-Song from Fujitsu. I decided to make another post=
+=20
+>>>>>> to share my experience of performance impact with two kernel benchma=
+rks:=20
+>>>>>> High Performance Linpack (HPL) and the OSU MPI benchmark suit.
+>>>>>>
+>>>>>> Overall, there was no noticeable performance difference for=20
+>>>>>> benchmarks running on a single node. But for benchmarks running acro=
+ss=20
+>>>>>> nodes, I did observe some difference, which was against to the claim=
+ of=20
+>>>>>> Singularity. Have anybody done any similar exercise? What are your=
+=20
+>>>>>> findings? Can you suspect whether I was doing anything wrong?
+>>>>>>
+>>>>>> Host configuration:
+>>>>>> 2x Intel E5-2680v2 (Ivybridge)
+>>>>>> 64GB memory
+>>>>>> Mellanox ConnectX-3 FDR adapter (but connects to a Mellanox QDR=20
+>>>>>> switch)
+>>>>>> RHEL 6.7
+>>>>>> OpenMPI development master branch (8.2.17)
+>>>>>> Intel MKL 2017.0 community edition
+>>>>>> gcc 4.4
+>>>>>>
+>>>>>> Container:
+>>>>>> Centos 6 and 7 both tested without noticeable performance difference
+>>>>>> OpenMPI development master branch (8.2.17)
+>>>>>> Intel MKL 2017.0 community edition
+>>>>>> gcc 4.4.7 (Centos-6), gcc 4.8.5 (Centos-7)
+>>>>>>
+>>>>>> Benchmarks:
+>>>>>> 1. LINPACK 2.2
+>>>>>> 2. OSU 5.3.2
+>>>>>>
+>>>>>> <LINPACK>
+>>>>>> Single node. N=3D40000, P=3D5, Q=3D4
+>>>>>> Container: 368 GFlops
+>>>>>> Host: 368 GFLOPS
+>>>>>> #A single node has 2x Intel E5-2680v2. So we are expecting 2 x 10 x =
+8=20
+>>>>>> * 2.8 =3D 448 GFlops
+>>>>>> Efficiency =3D 368 / 448 =3D 82%. Not bad (given the small N (matrix=
+=20
+>>>>>> size) and that gcc instead of icc was used, and the executable was=
+=20
+>>>>>> dynamically linked -- by purpose)
+>>>>>>
+>>>>>> Dual-node, N=3D60000, P=3D8, Q=3D5
+>>>>>> Container: 702 GFLOPS
+>>>>>> Host:737 GFLOPS
+>>>>>> There is roughly 5% of performance degradation with the container.
+>>>>>>
+>>>>>> <OSU-P2P-Bandwidth>
+>>>>>> The container only saw 50-65% of the total bandwidth.
+>>>>>>
+>>>>>> Container:=20
+>>>>>> Msg size(bytes) BW (MB/s)
+>>>>>> 65536                2142.28
+>>>>>> 131072               2363.45
+>>>>>> 262144               1705.79
+>>>>>> 524288               1592.56
+>>>>>> 1048576              1721.88
+>>>>>> 2097152              1557.42
+>>>>>> 4194304              1655.90
+>>>>>>
+>>>>>> Host:
+>>>>>> Msg size(bytes) BW (MB/s)
+>>>>>> 65536                3722.32
+>>>>>> 131072               3751.33
+>>>>>> 262144               3771.13
+>>>>>> 524288               3774.33
+>>>>>> 1048576              3781.43
+>>>>>> 2097152              3775.00
+>>>>>> 4194304              3773.68
+>>>>>>
+>>>>>> <OSU-P2P-Latency>
+>>>>>> Here the container was significantly slower.
+>>>>>>
+>>>>>> Container:=20
+>>>>>> Msg size(bytes)  Latency (us)
+>>>>>> 0                      31.59
+>>>>>> 1                      31.86
+>>>>>> 2                      31.83
+>>>>>>
+>>>>>> Host:
+>>>>>> Msg size(bytes)  Latency (us)
+>>>>>> 0                       1.55
+>>>>>> 1                       1.63
+>>>>>> 2                       1.63
+>>>>>>
+>>>>>> Note 1: Run-to-run variation of performance was much smaller than th=
+e=20
+>>>>>> difference on the host and in the container.
+>>>>>> Note 2: When Singularity was used, I could not instruct mpirun to us=
+e=20
+>>>>>> the ofed by specifying "--mca btl openib,self,vader" in the mpirun=
+=20
+>>>>>> parameter list. Doing so would give me an error message stating that=
+ the=20
+>>>>>> openib component is missing. However, from the bandwidth measured ab=
+ove,=20
+>>>>>> the container did seem to be able to use InfiniBand, otherwise the=
+=20
+>>>>>> bandwidth would not be so high (the nodes only had InfiniBand and 1G=
+=20
+>>>>>> Ethernet). Maybe container was using IPoIB? I did not check that yet=
+.=20
+>>>>>>
+>>>>>> Reference: How the benchmarks were executed:
+>>>>>> mpirun -n 20 -hostfile hostfile singularity exec=20
+>>>>>> /home/chih/containers/container-centos6-demo.img xhpl
+>>>>>> mpirun -n 2 -hostfile hostfile singularity exec=20
+>>>>>> /home/chih/containers/container-centos6-demo.img osu_bw
+>>>>>> mpirun -n 2 -hostfile hostfile singularity exec=20
+>>>>>> /home/chih/containers/container-centos6-demo.img osu_latency
+>>>>>>
+>>>>>> Chih-Song
+>>>>>>
+>>>>>> --=20
+>>>>>> You received this message because you are subscribed to the Google=
+=20
+>>>>>> Groups "singularity" group.
+>>>>>> To unsubscribe from this group and stop receiving emails from it,=20
+>>>>>> send an email to singu...@lbl.gov.
+>>>>>>
+>>>>>
+>>>>>
+>>>>>
+>>>>> --=20
+>>>>> Gregory M. Kurtzer
+>>>>> HPC Systems Architect and Technology Developer
+>>>>> Lawrence Berkeley National Laboratory HPCS
+>>>>> University of California Berkeley Research IT
+>>>>> Singularity Linux Containers (http://singularity.lbl.gov/)
+>>>>> Warewulf Cluster Management (http://warewulf.lbl.gov/)
+>>>>> GitHub: https://github.com/gmkurtzer, Twitter:=20
+>>>>> https://twitter.com/gmkurtzer
+>>>>>
+>>>> --=20
+>>>> You received this message because you are subscribed to the Google=20
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send=
+=20
+>>>> an email to singu...@lbl.gov.
+>>>>
+>>>
+>>>
+>>>
+>>> --=20
+>>> Gregory M. Kurtzer
+>>> HPC Systems Architect and Technology Developer
+>>> Lawrence Berkeley National Laboratory HPCS
+>>> University of California Berkeley Research IT
+>>> Singularity Linux Containers (http://singularity.lbl.gov/)
+>>> Warewulf Cluster Management (http://warewulf.lbl.gov/)
+>>> GitHub: https://github.com/gmkurtzer, Twitter:=20
+>>> https://twitter.com/gmkurtzer
+>>>
+>>> --=20
+>>> You received this message because you are subscribed to the Google=20
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send=
+=20
+>>> an email to singu...@lbl.gov.
+>>>
+>>
+>>
+>> --=20
+>> Chih-Song Kuo =E9=83=AD=E7=9F=A5=E9=A0=8C
+>> Senior Sales Consultant - HPC Benchmark Specialist at Fujitsu
+>> M.Sc. RWTH with distinction in Software Systems Engineering with HPC foc=
+us
+>> B.Sc. NTHU in Computer Science, B.S.M. NTHU in Quantitative Finance
+>> Tel:  +49-177-88949-28; +49-241-88949-155; +886-2-26629518
+>>
+>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s=20
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n=20
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+------=_Part_1277_1905233946.1487850287592
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">I am not really sure if I can share the containers publicl=
+y as it contains an Intel MKL installation which is bound to a personalized=
+ serial number (although that MKL is from the community edition, so it is e=
+ssentially free).<br><br>Still, I am wondering if installing OFED into the =
+container is the right approach. There was a thread on a similar topic and =
+Greg said no. I hope I understood it correctly.<br>https://groups.google.co=
+m/a/lbl.gov/forum/#!topic/singularity/fsCO1_StjjA<br><br>After all, althoug=
+h requiring the user to install OFED  into the container might be technical=
+ly feasible, it would be very awkward for users who develop their applicati=
+ons on their own workstations without InfiniBand, not to mention that I am =
+even not sure if one can install OFED into a machine without IB adapters. A=
+nd what if the OFED library in the container differ from that on the host? =
+I don&#39;t think that will work, will it?<br><br>Sorry but somehow OpenMPI=
+ (or any MPI) is intent to reach OFED libraries still remains a mystery for=
+ me. Please enlighten me.<br><br>On Thursday, February 23, 2017 at 9:51:34 =
+AM UTC+1, R=C3=A9my Dernat wrote:<blockquote class=3D"gmail_quote" style=3D=
+"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex=
+;"><div dir=3D"ltr">Hi,<div><br></div><div>You can try to copy your librari=
+es=C2=A0directly=C2=A0from the host to the container instead of a classical=
+ install ? I do not know what is the best way... But if you check woth solu=
+tions we will have an answer.</div><div>BTW, I am very interesting by your =
+containers. Could you share it (through singularity-hub ?) with your comman=
+d line to run the benchmark in the &quot;singularity&quot; file inside the =
+container ? Indeed, I will do some performance tests also...</div><div><br>=
+</div><div>Best regards,</div><div>R=C3=A9my</div></div><div><br><div class=
+=3D"gmail_quote">2017-02-23 0:58 GMT+01:00 Chihsong <span dir=3D"ltr"></spa=
+n>:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-=
+left:1px #ccc solid;padding-left:1ex">Hi Greg,<div><br></div><div>The probl=
+em is that I=C2=A0don&#39;t feel I=C2=A0have IB libraries inside my contain=
+er. How can I=C2=A0check that? Or did you simply=C2=A0install the ofed into=
+ the container?=C2=A0</div><div><br>Chiu-Song</div><div><div><div><br>On Th=
+ursday, February 23, 2017, Gregory M. Kurtzer &lt;<a href=3D"javascript:" t=
+arget=3D"_blank" gdf-obfuscated-mailto=3D"1zyqb29TDAAJ" rel=3D"nofollow" on=
+mousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"thi=
+s.href=3D&#39;javascript:&#39;;return true;">gm...@lbl.gov</a>&gt; wrote:<b=
+r><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:=
+1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Hi Chih-Song,<div><br></d=
+iv><div>Haha, every now and then I get lucky when a new mail comes in and i=
+s at the top of my mbox and I have a moment.</div><div><br></div><div>In su=
+mmary, yes. The MPI inside the container must also link against the IB libr=
+aries (also within the container).</div><div><br></div><div>Hopefully that =
+helps!</div></div><div><br><div class=3D"gmail_quote">On Wed, Feb 22, 2017 =
+at 10:58 AM, Chih-Song Kuo=C2=A0 wrote:<br><blockquote class=3D"gmail_quote=
+" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><=
+div dir=3D"ltr">Hi Greg,<br><br>That reply was very prompt! Anyways, my ans=
+wer follows.<span><br><br>&gt; * Make sure the MPI inside the container is =
+properly linking against the IB libraries<br></span>Did that mean that I ne=
+ed to install IB libraries (like Mellanox OFED) into the container? I guess=
+ not?<br>But apparently openib is missing in the container.<br>[me@cn03 omp=
+i-rhel6-host]$ ompi_info | grep openib<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 MCA btl: op=
+enib (MCA v2.1.0, API v3.0.0, Component v3.0.0)<br><br>Singularity.containe=
+r-centos6-<wbr>demo.img&gt; ompi_info | grep openib<br>Singularity.containe=
+r-centos6-<wbr>demo.img&gt;<br>Singularity.container-centos6-<wbr>demo.img&=
+gt; ls /etc/infiniband/openib.conf<br>ls: cannot access /etc/infiniband/ope=
+nib.conf: No such file or directory<span><br><br>&gt; * Make sure that the =
+MPI configuration is configured to use MPI<br></span>I think you meant &quo=
+t;to use IB&quot; instead. <br>But still, did you mean that OpenMPI should =
+be &quot;configured&quot; &quot;--with-verbs&quot;? (Did you do so or you n=
+ever had my problem?)<br>I did not use this flag when compiling Open MPI ei=
+ther on the host or in the container.<span><br>&gt; * Make sure you have Si=
+ngularity configured properly to share the=20
+devices properly, tmp, and you are *NOT* using the IPC or PID namespaces<br=
+></span>Can you provide more hint on how that can be done?<br><br>Thank you=
+ once again for your time.<br>Chih-Song<span><br><br>On Wednesday, February=
+ 22, 2017 at 7:33:22 PM UTC+1, Gregory M. Kurtzer wrote:</span><blockquote =
+class=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-left:1px #=
+ccc solid;padding-left:1ex"><span><div dir=3D"ltr">There are various things=
+ that *could* go wrong, and usage of containers (any of the technologies) a=
+ctually introduce complexities in kernel and user space alignment that norm=
+ally we don&#39;t consider. For that reason, my first suspicion is that you=
+r IB fabric is not being properly utilized by the MPI within the container.=
+ That could be due to anything from build errors within the container to IB=
+ library/kmod API misalignment.<div><br></div><div>Things I would look at a=
+nd check:</div><div><br></div><div>* Make sure the MPI inside the container=
+ is properly linking against the IB libraries</div><div>* Make sure that th=
+e IB libraries inside the container are compatible with the host kernel</di=
+v><div>* Make sure that the MPI configuration is configured to use MPI</div=
+><div>* Make sure you have Singularity configured properly to share the dev=
+ices properly, tmp, and you are *NOT* using the IPC or PID namespaces</div>=
+<div><br></div><div>Hope that helps.</div><div><br></div><div>Greg</div></d=
+iv></span><div><br><div class=3D"gmail_quote"><div><div>On Wed, Feb 22, 201=
+7 at 10:19 AM, Chih-Song Kuo wrote:<br></div></div><blockquote class=3D"gma=
+il_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-lef=
+t:1ex"><div><div><div dir=3D"ltr">Hello,<br><br>This is again Chih-Song fro=
+m Fujitsu. I decided to make another post to share my experience of perform=
+ance impact with two kernel benchmarks: High Performance Linpack (HPL) and =
+the OSU MPI benchmark suit.<br><br>Overall, there was no noticeable perform=
+ance difference for benchmarks running on a single node. But for benchmarks=
+ running across nodes, I did observe some difference, which was against to =
+the claim of Singularity. Have anybody done any similar exercise? What are =
+your findings? Can you suspect whether I was doing anything wrong?<br><br>H=
+ost configuration:<br>2x Intel E5-2680v2 (Ivybridge)<br>64GB memory<br>Mell=
+anox ConnectX-3 FDR adapter (but connects to a Mellanox QDR switch)<br>RHEL=
+ 6.7<br>OpenMPI development master branch (8.2.17)<br>Intel MKL 2017.0 comm=
+unity edition<br>gcc 4.4<br><br>Container:<br>Centos 6 and 7 both tested wi=
+thout noticeable performance difference<br>OpenMPI development master branc=
+h (8.2.17)<br>Intel MKL 2017.0 community edition<br>gcc 4.4.7 (Centos-6), g=
+cc 4.8.5 (Centos-7)<br><br>Benchmarks:<br>1. LINPACK 2.2<br>2. OSU 5.3.2<br=
+><br>&lt;LINPACK&gt;<br>Single node. N=3D40000, P=3D5, Q=3D4<br>Container: =
+368 GFlops<br>Host: 368 GFLOPS<br>#A single node has 2x Intel E5-2680v2. So=
+ we are expecting 2 x 10 x 8 * 2.8 =3D 448 GFlops<br>Efficiency =3D 368 / 4=
+48 =3D 82%. Not bad (given the small N (matrix size) and that gcc instead o=
+f icc was used, and the executable was dynamically linked -- by purpose)<br=
+><br>Dual-node, N=3D60000, P=3D8, Q=3D5<br>Container: 702 GFLOPS<br>Host:73=
+7 GFLOPS<br>There is roughly 5% of performance degradation with the contain=
+er.<br><br>&lt;OSU-P2P-Bandwidth&gt;<br>The container only saw 50-65% of th=
+e total bandwidth.<br><br>Container: <br>Msg size(bytes) BW (MB/s)<br>65536=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0 2142.28<br>131072=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 2363.45<br>262144=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 1705.=
+79<br>524288=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0 1592.56<br>1048576=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 1721.88<br>2097152=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 1557.=
+42<br>4194304=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0 1655.90<br><br>Host:<br>Msg size(bytes) BW (MB/s)<br>655=
+36=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0 3722.32<br>131072=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 3751.33<br>262144=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 37=
+71.13<br>524288=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0 3774.33<br>1048576=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 3781.43<br>2097152=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 37=
+75.00<br>4194304=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0 3773.68<br><br>&lt;OSU-P2P-Latency&gt;<br>Here the co=
+ntainer was significantly slower.<br><br>Container: <br>Msg size(bytes)=C2=
+=A0 Latency (us)<br>0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 31=
+.59<br>1=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 31.86<br>2=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 31.83<br><br>Host:<br>Msg =
+size(bytes)=C2=A0 Latency (us)<br>0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0 1.55<br>1=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0 1.63<br>2=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0 1.63<br><br>Note 1: Run-to-run variation of performance was much sma=
+ller than the difference on the host and in the container.<br>Note 2: When =
+Singularity was used, I could not instruct mpirun to use the ofed by specif=
+ying &quot;--mca btl openib,self,vader&quot; in the mpirun parameter list. =
+Doing so would give me an error message stating that the openib component i=
+s missing. However, from the bandwidth measured above, the container did se=
+em to be able to use InfiniBand, otherwise the bandwidth would not be so hi=
+gh (the nodes only had InfiniBand and 1G Ethernet). Maybe container was usi=
+ng IPoIB? I did not check that yet. <br><br>Reference: How the benchmarks w=
+ere executed:<br>mpirun -n 20 -hostfile hostfile singularity exec /home/chi=
+h/containers/<wbr>container-centos6-demo.img xhpl<br>mpirun -n 2 -hostfile =
+hostfile singularity exec /home/chih/containers/<wbr>container-centos6-demo=
+.img osu_bw<br>mpirun -n 2 -hostfile hostfile singularity exec /home/chih/c=
+ontainers/<wbr>container-centos6-demo.img osu_latency<span><font color=3D"#=
+888888"><br><br>Chih-Song<br><br></font></span></div></div></div><span><fon=
+t color=3D"#888888"><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br></div></div>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</font></span></blockquote></div><span><br><br clear=3D"all"><div><br></div=
+>-- <br><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><=
+div><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div>Gregory M. Kurt=
+zer</div><div>HPC Systems Architect and Technology Developer</div><div>Lawr=
+ence Berkeley National Laboratory HPCS<br>University of California Berkeley=
+ Research IT<br>Singularity Linux Containers=C2=A0(<a href=3D"http://singul=
+arity.lbl.gov/" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=
+=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.gov%2F\=
+x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHITKHVjde-iKsg1vSOOrRt58XtEQ&#39;;r=
+eturn true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhtt=
+p%3A%2F%2Fsingularity.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHI=
+TKHVjde-iKsg1vSOOrRt58XtEQ&#39;;return true;">http://<wbr>singularity.lbl.g=
+ov/</a>)</div><div>Warewulf Cluster Management=C2=A0(<a href=3D"http://ware=
+wulf.lbl.gov/" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=
+=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwarewulf.lbl.gov%2F\x26=
+sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPtSL1wiDx3C_BKcVgBhWc77Jxww&#39;;retu=
+rn true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3=
+A%2F%2Fwarewulf.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPtSL1wi=
+Dx3C_BKcVgBhWc77Jxww&#39;;return true;">http://warewulf.<wbr>lbl.gov/</a>)<=
+/div><div>GitHub:=C2=A0<a href=3D"https://github.com/gmkurtzer" rel=3D"nofo=
+llow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.google.=
+com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x=
+26usg\x3dAFQjCNHgwLrV-1wbChhxINJY_U3Xyjg2uw&#39;;return true;" onclick=3D"t=
+his.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2F=
+gmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHgwLrV-1wbChhxINJY_U3Xyjg=
+2uw&#39;;return true;">https://github.com/<wbr>gmkurtzer</a>,=C2=A0<span st=
+yle=3D"font-size:12.8px">Twitter:=C2=A0</span><a href=3D"https://twitter.co=
+m/gmkurtzer" style=3D"font-size:12.8px" rel=3D"nofollow" target=3D"_blank" =
+onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F=
+%2Ftwitter.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGiphjH-Y=
+HVVhLsKsNsH_Zw5B_gRA&#39;;return true;" onclick=3D"this.href=3D&#39;https:/=
+/www.google.com/url?q\x3dhttps%3A%2F%2Ftwitter.com%2Fgmkurtzer\x26sa\x3dD\x=
+26sntz\x3d1\x26usg\x3dAFQjCNGiphjH-YHVVhLsKsNsH_Zw5B_gRA&#39;;return true;"=
+>https://<wbr>twitter.com/gmkurtzer</a></div></div></div></div></div></div>=
+</div></div></div></div></div>
+</span></div>
+</blockquote></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a>singularity+unsubscribe@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div=
+ dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div>Gregory M. Kurtzer</div=
+><div>HPC Systems Architect and Technology Developer</div><div>Lawrence Ber=
+keley National Laboratory HPCS<br>University of California Berkeley Researc=
+h IT<br>Singularity Linux Containers=C2=A0(<a href=3D"http://singularity.lb=
+l.gov/" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;=
+http://www.google.com/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.gov%2F\x26sa\x3=
+dD\x26sntz\x3d1\x26usg\x3dAFQjCNHITKHVjde-iKsg1vSOOrRt58XtEQ&#39;;return tr=
+ue;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%=
+2Fsingularity.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHITKHVjde-=
+iKsg1vSOOrRt58XtEQ&#39;;return true;">http://<wbr>singularity.lbl.gov/</a>)=
+</div><div>Warewulf Cluster Management=C2=A0(<a href=3D"http://warewulf.lbl=
+.gov/" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;h=
+ttp://www.google.com/url?q\x3dhttp%3A%2F%2Fwarewulf.lbl.gov%2F\x26sa\x3dD\x=
+26sntz\x3d1\x26usg\x3dAFQjCNFPtSL1wiDx3C_BKcVgBhWc77Jxww&#39;;return true;"=
+ onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwa=
+rewulf.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPtSL1wiDx3C_BKcV=
+gBhWc77Jxww&#39;;return true;">http://warewulf.<wbr>lbl.gov/</a>)</div><div=
+>GitHub:=C2=A0<a href=3D"https://github.com/gmkurtzer" target=3D"_blank" re=
+l=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q=
+\x3dhttps%3A%2F%2Fgithub.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3d=
+AFQjCNHgwLrV-1wbChhxINJY_U3Xyjg2uw&#39;;return true;" onclick=3D"this.href=
+=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fgmkurtze=
+r\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHgwLrV-1wbChhxINJY_U3Xyjg2uw&#39;=
+;return true;">https://github.com/<wbr>gmkurtzer</a>,=C2=A0<span style=3D"f=
+ont-size:12.8px">Twitter:=C2=A0</span><a href=3D"https://twitter.com/gmkurt=
+zer" style=3D"font-size:12.8px" target=3D"_blank" rel=3D"nofollow" onmoused=
+own=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Ftwitt=
+er.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGiphjH-YHVVhLsKs=
+NsH_Zw5B_gRA&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.goo=
+gle.com/url?q\x3dhttps%3A%2F%2Ftwitter.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x=
+3d1\x26usg\x3dAFQjCNGiphjH-YHVVhLsKsNsH_Zw5B_gRA&#39;;return true;">https:/=
+/<wbr>twitter.com/gmkurtzer</a></div></div></div></div></div></div></div></=
+div></div></div></div>
+</div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a>singularity+unsubscribe@lbl.<wbr>gov</a>.<br>
+</blockquote></div><br><br></div></div><span><font color=3D"#888888">-- <br=
+><div dir=3D"ltr"><span><div><div dir=3D"ltr"><div>Chih-Song Kuo =E9=83=AD=
+=E7=9F=A5=E9=A0=8C<br>Senior Sales Consultant - HPC Benchmark Specialist at=
+ Fujitsu<br>M.Sc. RWTH with distinction in Software Systems Engineering wit=
+h HPC focus<br>B.Sc. NTHU in Computer Science, B.S.M. NTHU in Quantitative =
+Finance<br>Tel: =C2=A0<a value=3D"+491778894928">+49-177-88949-28</a>; <a v=
+alue=3D"+4924188949155">+49-241-88949-155</a>; <a value=3D"+886226629518">+=
+886-2-26629518</a></div></div></div></span></div></font></span><div><div><b=
+r>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+1zyqb29TDAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br></div>
+</blockquote></div>
+------=_Part_1277_1905233946.1487850287592--
+
+------=_Part_1276_1434416343.1487850287591--

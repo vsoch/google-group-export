@@ -1,0 +1,309 @@
+X-Received: by 10.159.37.105 with SMTP id 96mr11949867uaz.13.1468521001274;
+        Thu, 14 Jul 2016 11:30:01 -0700 (PDT)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.36.184.2 with SMTP id m2ls15555ite.20.canary; Thu, 14 Jul 2016
+ 11:30:00 -0700 (PDT)
+X-Received: by 10.66.253.38 with SMTP id zx6mr24930094pac.19.1468521000553;
+        Thu, 14 Jul 2016 11:30:00 -0700 (PDT)
+Return-Path: <gmku...@lbl.gov>
+Received: from fe4.lbl.gov (fe4.lbl.gov. [128.3.41.71])
+        by mx.google.com with ESMTPS id b185si981923pfa.260.2016.07.14.11.30.00
+        for <singu...@lbl.gov>
+        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Thu, 14 Jul 2016 11:30:00 -0700 (PDT)
+Received-SPF: pass (google.com: domain of gmku...@lbl.gov designates 74.125.82.72 as permitted sender) client-ip=74.125.82.72;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of gmku...@lbl.gov designates 74.125.82.72 as permitted sender) smtp.mailfrom=gmku...@lbl.gov
+X-Ironport-SBRS: 2.7
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2GJAABo2YdXf0hSfUpUCIUQBoM2qReHFYUEgXuGGQKBLAc4FAEBAQEBAQEDDwEBCQsLCR8xhF0BBAESESswCwsLNwICIQEPAwEFARwGCAcEARwEAYd0Aw8IBaUPgTE+MYs7ihwNhA8BCgEBAQEiEIpngkOBTwwFAYMdgj0dBYgVB4VrdT+EJIUMNAGLf0OCFoFrF4dwhT+GXYFDhjoSHoEPHoI/HIFsHDIHhjKBNQEBAQ
+X-IronPort-AV: E=Sophos;i="5.28,364,1464678000"; 
+   d="scan'208,217";a="29668462"
+Received: from mail-wm0-f72.google.com ([74.125.82.72])
+  by fe4.lbl.gov with ESMTP; 14 Jul 2016 11:29:58 -0700
+Received: by mail-wm0-f72.google.com with SMTP id r190so61499258wmr.0
+        for <singu...@lbl.gov>; Thu, 14 Jul 2016 11:29:58 -0700 (PDT)
+X-Gm-Message-State: ALyK8tKVClj6ioYJAm4eDjt8Al41OhBzIZyDt0fAtMX2qXg0VF7bR8VanKwb6l2PFcUTq2KCf24ls5N44cZ97IWnovfU78d/gDZwzLeHRFyih8DYcAxmk8o+gKP1pmOLpYQ3rRShlizbetjZDC51MxoJOt8=
+X-Received: by 10.46.5.196 with SMTP id 187mr5452165ljf.13.1468520997995;
+        Thu, 14 Jul 2016 11:29:57 -0700 (PDT)
+X-Received: by 10.46.5.196 with SMTP id 187mr5452156ljf.13.1468520997690; Thu,
+ 14 Jul 2016 11:29:57 -0700 (PDT)
+MIME-Version: 1.0
+Received: by 10.25.214.158 with HTTP; Thu, 14 Jul 2016 11:29:56 -0700 (PDT)
+In-Reply-To: <03a19fb0-27ce-43c4-9400-8e58cf726500@lbl.gov>
+References: <03a19fb0-27ce-43c4-9400-8e58cf726500@lbl.gov>
+From: "Gregory M. Kurtzer" <gmku...@lbl.gov>
+Date: Thu, 14 Jul 2016 11:29:56 -0700
+Message-ID: <CAN7etTwRbSe1MMh9wdQAMYoKVJTb_SGJeHto+WrZ=aU7NoBmhQ@mail.gmail.com>
+Subject: Re: [Singularity] Image is locked by another process
+To: singularity <singu...@lbl.gov>
+Content-Type: multipart/alternative; boundary=001a114a6bea69b5b805379cb0fc
+
+--001a114a6bea69b5b805379cb0fc
+Content-Type: text/plain; charset=UTF-8
+
+Hi Steve,
+
+That means there is an active file descriptor/process still running and
+attached to the container maintaining a shared lock. You can run other
+commands against the container as long as long as the container is not
+being requested as --writable(-w), because that will try and obtain an
+exclusive lock and it will fail if there are any active shared locks. Try
+an "lsof /path/to/c7" to see what processes are attached to it. You may see
+a list like:
+
+# lsof /tmp/Demo-2.img
+COMMAND    PID USER   FD   TYPE DEVICE   SIZE/OFF      NODE NAME
+sexec   107975 root    6rR  REG  253,0 1073741856 202112247 /tmp/Demo-2.img
+sexec   107977 root    6r   REG  253,0 1073741856 202112247 /tmp/Demo-2.img
+bash    107982 root    6r   REG  253,0 1073741856 202112247 /tmp/Demo-2.img
+
+Notice the two top ones are 'sexec' which are part of the Singularity
+process stack. Kill the bottom one, and those should go away naturally.
+
+BTW, as long as you have installed Singularity as root, there is no need to
+run Singularity commands as root (unless you want to make system changes
+within the container).
+
+Hope that helps!
+
+
+On Thu, Jul 14, 2016 at 10:56 AM, Steve Mehlberg <sgmeh...@gmail.com>
+wrote:
+
+> Running mpirun tests, when an abort occurs, my image ends up locked.  Is
+> there a way to clear the lock without rebooting?  I looked for processes
+> that I could kill, but didn't see anything worthy.
+>
+> I'm using singularity v2.1 on Centos 7.2 (both host and container).
+>
+> Regards,
+>
+> Steve
+>
+> [root@mach0 ~]# mpirun --allow-run-as-root -n 2 -H mach1,mach2
+> singularity exec c7 /usr/bin/ring
+> Process 0 sending 10 to 1, tag 201 (2 processes in ring)
+> Process 0 sent to 1
+> Process 0 decremented value: 9
+> Process 0 decremented value: 8
+> Process 0 decremented value: 7
+> Process 0 decremented value: 6
+> Process 0 decremented value: 5
+> Process 0 decremented value: 4
+> Process 0 decremented value: 3
+> Process 0 decremented value: 2
+> Process 0 decremented value: 1
+> Process 0 decremented value: 0
+> Process 0 exiting
+> Process 1 exiting
+> [root@mach0 ~]# mpirun --allow-run-as-root -n 3 -H mach0,mach1,mach2
+> singularity exec c7 /usr/bin/ring
+> --------------------------------------------------------------------------
+> It appears as if there is not enough space for
+> /tmp/ompi.mach0.2291/54935/1/0/vader_segment.mach0.0 (the shared-memory
+> backing
+> file). It is likely that your MPI job will now either abort or experience
+> performance degradation.
+>
+>   Local host:  mach0
+>   Space Requested: 4194312 B
+>   Space Available: 0 B
+> --------------------------------------------------------------------------
+> [mach0:02308] create_and_attach: unable to create shared memory BTL
+> coordinating structure :: size 134217728
+> [mach0:02291] 2 more processes have sent help message
+> help-opal-shmem-mmap.txt / target full
+> [mach0:02291] Set MCA parameter "orte_base_help_aggregate" to 0 to see all
+> help / error messages
+> ^CKilled by signal 2.
+> Killed by signal 2.
+> Singularity is sending SIGKILL to child pid: 2308
+> Singularity is sending SIGKILL to child pid: 2309
+> [warn] Epoll ADD(4) on fd 31 failed.  Old events were 0; read change was 0
+> (none); write change was 1 (add): Bad file descriptor
+> ^C[root@mach0 ~]singularity shell -w c7
+> ERROR  : Image is locked by another process
+> [root@mach0 ~]# tail -30 /var/log/messages
+> Jul 14 10:42:17 mach0 systemd: Started LSB: slurm daemon management.
+> Jul 14 10:42:17 mach0 systemd: Reached target Multi-User System.
+> Jul 14 10:42:17 mach0 systemd: Starting Multi-User System.
+> Jul 14 10:42:17 mach0 systemd: Starting Update UTMP about System Runlevel
+> Changes...
+> Jul 14 10:42:17 mach0 systemd: Started Stop Read-Ahead Data Collection 10s
+> After Completed Startup.
+> Jul 14 10:42:17 mach0 systemd: Started Update UTMP about System Runlevel
+> Changes.
+> Jul 14 10:42:18 mach0 kdumpctl: kexec: loaded kdump kernel
+> Jul 14 10:42:18 mach0 kdumpctl: Starting kdump: [OK]
+> Jul 14 10:42:18 mach0 systemd: Started Crash recovery kernel arming.
+> Jul 14 10:42:18 mach0 systemd: Startup finished in 415ms (kernel) + 1.100s
+> (initrd) + 4.931s (userspace) = 6.446s.
+> Jul 14 10:42:34 mach0 systemd: Created slice user-0.slice.
+> Jul 14 10:42:34 mach0 systemd: Starting user-0.slice.
+> Jul 14 10:42:34 mach0 systemd-logind: New session 1 of user root.
+> Jul 14 10:42:34 mach0 systemd: Started Session 1 of user root.
+> Jul 14 10:42:34 mach0 systemd: Starting Session 1 of user root.
+> Jul 14 10:42:36 mach0 Singularity: sexec (U=0,P=2023)> Command=exec,
+> Container=c7, CWD=/root, Arg1=/usr/bin/ring
+> Jul 14 10:42:36 mach0 Singularity: sexec (U=0,P=2024)> Command=exec,
+> Container=c7, CWD=/root, Arg1=/usr/bin/ring
+> Jul 14 10:42:36 mach0 Singularity: sexec (U=0,P=2024)> Image is locked by
+> another process
+> Jul 14 10:42:36 mach0 kernel: loop: module loaded
+> Jul 14 10:43:38 mach0 Singularity: sexec (U=0,P=2050)> Command=shell,
+> Container=c7, CWD=/root, Arg1=(null)
+> Jul 14 10:43:38 mach0 kernel: EXT4-fs (loop0): mounted filesystem with
+> ordered data mode. Opts: discard
+> Jul 14 10:49:17 mach0 Singularity: sexec (U=0,P=2203)> Command=shell,
+> Container=c7, CWD=/root, Arg1=(null)
+> Jul 14 10:49:17 mach0 kernel: EXT4-fs (loop0): mounted filesystem with
+> ordered data mode. Opts: discard
+> Jul 14 10:50:39 mach0 Singularity: sexec (U=0,P=2244)> Command=exec,
+> Container=c7, CWD=/root, Arg1=/usr/bin/ring
+> Jul 14 10:50:39 mach0 kernel: EXT4-fs (loop0): mounted filesystem with
+> ordered data mode. Opts: discard
+> Jul 14 10:51:34 mach0 Singularity: sexec (U=0,P=2299)> Command=exec,
+> Container=c7, CWD=/root, Arg1=/usr/bin/ring
+> Jul 14 10:51:34 mach0 Singularity: sexec (U=0,P=2300)> Command=exec,
+> Container=c7, CWD=/root, Arg1=/usr/bin/ring
+> Jul 14 10:51:34 mach0 kernel: EXT4-fs (loop0): mounted filesystem with
+> ordered data mode. Opts: discard
+> Jul 14 10:51:57 mach0 Singularity: sexec (U=0,P=2322)> Command=shell,
+> Container=c7, CWD=/root, Arg1=(null)
+> Jul 14 10:51:57 mach0 Singularity: sexec (U=0,P=2322)> Image is locked by
+> another process
+>
+>
+> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+>
+
+
+
+-- 
+Gregory M. Kurtzer
+High Performance Computing Services (HPCS)
+University of California
+Lawrence Berkeley National Laboratory
+One Cyclotron Road, Berkeley, CA 94720
+
+--001a114a6bea69b5b805379cb0fc
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Steve,<div><br></div><div>That means there is an active=
+ file descriptor/process still running and attached to the container mainta=
+ining a shared lock. You can run other commands against the container as lo=
+ng as long as the container is not being requested as --writable(-w), becau=
+se that will try and obtain an exclusive lock and it will fail if there are=
+ any active shared locks. Try an &quot;lsof /path/to/c7&quot; to see what p=
+rocesses are attached to it. You may see a list like:</div><div><br></div><=
+div><div># lsof /tmp/Demo-2.img=C2=A0</div><div>COMMAND =C2=A0 =C2=A0PID US=
+ER =C2=A0 FD =C2=A0 TYPE DEVICE =C2=A0 SIZE/OFF =C2=A0 =C2=A0 =C2=A0NODE NA=
+ME</div><div>sexec =C2=A0 107975 root =C2=A0 =C2=A06rR =C2=A0REG =C2=A0253,=
+0 1073741856 202112247 /tmp/Demo-2.img</div><div>sexec =C2=A0 107977 root =
+=C2=A0 =C2=A06r =C2=A0 REG =C2=A0253,0 1073741856 202112247 /tmp/Demo-2.img=
+</div><div>bash =C2=A0 =C2=A0107982 root =C2=A0 =C2=A06r =C2=A0 REG =C2=A02=
+53,0 1073741856 202112247 /tmp/Demo-2.img</div></div><div><br></div><div>No=
+tice the two top ones are &#39;sexec&#39; which are part of the Singularity=
+ process stack. Kill the bottom one, and those should go away naturally.</d=
+iv><div><br></div><div>BTW, as long as you have installed Singularity as ro=
+ot, there is no need to run Singularity commands as root (unless you want t=
+o make system changes within the container).</div><div><br></div><div>Hope =
+that helps!</div><div><br></div></div><div class=3D"gmail_extra"><br><div c=
+lass=3D"gmail_quote">On Thu, Jul 14, 2016 at 10:56 AM, Steve Mehlberg <span=
+ dir=3D"ltr">&lt;<a href=3D"mailto:sgmeh...@gmail.com" target=3D"_blank">sg=
+meh...@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote"=
+ style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><d=
+iv dir=3D"ltr">Running mpirun tests, when an abort occurs, my image ends up=
+ locked.=C2=A0 Is there a way to clear the lock without rebooting?=C2=A0 I =
+looked for processes that I could kill, but didn&#39;t see anything worthy.=
+<br><br>I&#39;m using singularity v2.1 on Centos 7.2 (both host and contain=
+er).<br><br>Regards,<br><br>Steve<br><br><span style=3D"font-family:courier=
+ new,monospace">[root@mach0 ~]# mpirun --allow-run-as-root -n 2 -H mach1,ma=
+ch2 singularity exec c7 /usr/bin/ring<br>Process 0 sending 10 to 1, tag 201=
+ (2 processes in ring)<br>Process 0 sent to 1<br>Process 0 decremented valu=
+e: 9<br>Process 0 decremented value: 8<br>Process 0 decremented value: 7<br=
+>Process 0 decremented value: 6<br>Process 0 decremented value: 5<br>Proces=
+s 0 decremented value: 4<br>Process 0 decremented value: 3<br>Process 0 dec=
+remented value: 2<br>Process 0 decremented value: 1<br>Process 0 decremente=
+d value: 0<br>Process 0 exiting<br>Process 1 exiting<br>[root@mach0 ~]# mpi=
+run --allow-run-as-root -n 3 -H mach0,mach1,mach2 singularity exec c7 /usr/=
+bin/ring<br>---------------------------------------------------------------=
+-----------<br>It appears as if there is not enough space for /tmp/ompi.mac=
+h0.2291/54935/1/0/vader_segment.mach0.0 (the shared-memory backing<br>file)=
+. It is likely that your MPI job will now either abort or experience<br>per=
+formance degradation.<br><br>=C2=A0 Local host:=C2=A0 mach0<br>=C2=A0 Space=
+ Requested: 4194312 B<br>=C2=A0 Space Available: 0 B<br>-------------------=
+-------------------------------------------------------<br>[mach0:02308] cr=
+eate_and_attach: unable to create shared memory BTL coordinating structure =
+:: size 134217728<br>[mach0:02291] 2 more processes have sent help message =
+help-opal-shmem-mmap.txt / target full<br>[mach0:02291] Set MCA parameter &=
+quot;orte_base_help_aggregate&quot; to 0 to see all help / error messages<b=
+r>^CKilled by signal 2.<br>Killed by signal 2.<br>Singularity is sending SI=
+GKILL to child pid: 2308<br>Singularity is sending SIGKILL to child pid: 23=
+09<br>[warn] Epoll ADD(4) on fd 31 failed.=C2=A0 Old events were 0; read ch=
+ange was 0 (none); write change was 1 (add): Bad file descriptor<br>^C[root=
+@mach0 ~]singularity shell -w c7<br>ERROR=C2=A0 : Image is locked by anothe=
+r process<br>[root@mach0 ~]# tail -30 /var/log/messages<br>Jul 14 10:42:17 =
+mach0 systemd: Started LSB: slurm daemon management.<br>Jul 14 10:42:17 mac=
+h0 systemd: Reached target Multi-User System.<br>Jul 14 10:42:17 mach0 syst=
+emd: Starting Multi-User System.<br>Jul 14 10:42:17 mach0 systemd: Starting=
+ Update UTMP about System Runlevel Changes...<br>Jul 14 10:42:17 mach0 syst=
+emd: Started Stop Read-Ahead Data Collection 10s After Completed Startup.<b=
+r>Jul 14 10:42:17 mach0 systemd: Started Update UTMP about System Runlevel =
+Changes.<br>Jul 14 10:42:18 mach0 kdumpctl: kexec: loaded kdump kernel<br>J=
+ul 14 10:42:18 mach0 kdumpctl: Starting kdump: [OK]<br>Jul 14 10:42:18 mach=
+0 systemd: Started Crash recovery kernel arming.<br>Jul 14 10:42:18 mach0 s=
+ystemd: Startup finished in 415ms (kernel) + 1.100s (initrd) + 4.931s (user=
+space) =3D 6.446s.<br>Jul 14 10:42:34 mach0 systemd: Created slice user-0.s=
+lice.<br>Jul 14 10:42:34 mach0 systemd: Starting user-0.slice.<br>Jul 14 10=
+:42:34 mach0 systemd-logind: New session 1 of user root.<br>Jul 14 10:42:34=
+ mach0 systemd: Started Session 1 of user root.<br>Jul 14 10:42:34 mach0 sy=
+stemd: Starting Session 1 of user root.<br>Jul 14 10:42:36 mach0 Singularit=
+y: sexec (U=3D0,P=3D2023)&gt; Command=3Dexec, Container=3Dc7, CWD=3D/root, =
+Arg1=3D/usr/bin/ring<br>Jul 14 10:42:36 mach0 Singularity: sexec (U=3D0,P=
+=3D2024)&gt; Command=3Dexec, Container=3Dc7, CWD=3D/root, Arg1=3D/usr/bin/r=
+ing<br>Jul 14 10:42:36 mach0 Singularity: sexec (U=3D0,P=3D2024)&gt; Image =
+is locked by another process<br>Jul 14 10:42:36 mach0 kernel: loop: module =
+loaded<br>Jul 14 10:43:38 mach0 Singularity: sexec (U=3D0,P=3D2050)&gt; Com=
+mand=3Dshell, Container=3Dc7, CWD=3D/root, Arg1=3D(null)<br>Jul 14 10:43:38=
+ mach0 kernel: EXT4-fs (loop0): mounted filesystem with ordered data mode. =
+Opts: discard<br>Jul 14 10:49:17 mach0 Singularity: sexec (U=3D0,P=3D2203)&=
+gt; Command=3Dshell, Container=3Dc7, CWD=3D/root, Arg1=3D(null)<br>Jul 14 1=
+0:49:17 mach0 kernel: EXT4-fs (loop0): mounted filesystem with ordered data=
+ mode. Opts: discard<br>Jul 14 10:50:39 mach0 Singularity: sexec (U=3D0,P=
+=3D2244)&gt; Command=3Dexec, Container=3Dc7, CWD=3D/root, Arg1=3D/usr/bin/r=
+ing<br>Jul 14 10:50:39 mach0 kernel: EXT4-fs (loop0): mounted filesystem wi=
+th ordered data mode. Opts: discard<br>Jul 14 10:51:34 mach0 Singularity: s=
+exec (U=3D0,P=3D2299)&gt; Command=3Dexec, Container=3Dc7, CWD=3D/root, Arg1=
+=3D/usr/bin/ring<br>Jul 14 10:51:34 mach0 Singularity: sexec (U=3D0,P=3D230=
+0)&gt; Command=3Dexec, Container=3Dc7, CWD=3D/root, Arg1=3D/usr/bin/ring<br=
+>Jul 14 10:51:34 mach0 kernel: EXT4-fs (loop0): mounted filesystem with ord=
+ered data mode. Opts: discard<br>Jul 14 10:51:57 mach0 Singularity: sexec (=
+U=3D0,P=3D2322)&gt; Command=3Dshell, Container=3Dc7, CWD=3D/root, Arg1=3D(n=
+ull)<br>Jul 14 10:51:57 mach0 Singularity: sexec (U=3D0,P=3D2322)&gt; Image=
+ is locked by another process</span><span class=3D"HOEnZb"><font color=3D"#=
+888888"><br><br><br></font></span></div><span class=3D"HOEnZb"><font color=
+=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singu...@lbl.=
+gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div class=3D"gmail_signature" data-smartmail=3D"gmail_signature"><div di=
+r=3D"ltr"><div>Gregory M. Kurtzer<br>High Performance Computing Services (H=
+PCS)<br>University of California<br>Lawrence Berkeley National Laboratory<b=
+r>One Cyclotron Road, Berkeley, CA 94720</div></div></div>
+</div>
+
+--001a114a6bea69b5b805379cb0fc--

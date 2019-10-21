@@ -1,0 +1,125 @@
+Date: Fri, 16 Feb 2018 11:05:02 -0800 (PST)
+From: Kim Wong <kimberl...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <ec5ef056-5ce2-4956-9ffe-2d1939e3864d@lbl.gov>
+In-Reply-To: <CAGfAqt_JKaveudDCOrCBupc95jH_9kxVua2zhwh1pRg+SoV11w@mail.gmail.com>
+References: <43b84047-926f-4ecd-a8da-fd7bbe3470ff@lbl.gov> <CADgKzdw9kpwwD46N0eKOqj=3mvf-_HqGqNeybem9ia0EZvNs1Q@mail.gmail.com>
+ <CAFgQtxFN2+MTqcBqcu9M8qT4tvZfS2etgXpAN-diWNVUTEV0VA@mail.gmail.com>
+ <b8ff849b-fdb7-4315-a28d-ebaa862ad671@lbl.gov> <044760f5-d18a-4090-88a3-0602ec7cc675@lbl.gov>
+ <CAB2ovovPA--7NBTKbw6QpY22jAz9=sb8nB5XkQT5pDQcp2ARXQ@mail.gmail.com> <4b2b1672-7c5f-49b7-ab6f-3084eac067a7@lbl.gov>
+ <CAGfAqt_JKaveudDCOrCBupc95jH_9kxVua2zhwh1pRg+SoV11w@mail.gmail.com>
+Subject: Re: [Singularity] Submit additional jobs from within a container
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_3856_2146262001.1518807902331"
+
+------=_Part_3856_2146262001.1518807902331
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_3857_1887507842.1518807902331"
+
+------=_Part_3857_1887507842.1518807902331
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+After some trial and error last week, I got it working under SLURM.  The 
+Singularity file is attached.  It was adapted from the centos example.  
+Originally, I attempted to install SLURM and munge within the container.  
+Package installation was a success but getting munge working was a no go.  
+Trying to get systemd to initialize the process was prohibited.  In the 
+end, the comment about bind paths lead down the useful path.
+
+To build the container, issue
+
+sudo $(which singularity) build centos.sim singularity-centos
+
+To test the container, issue
+
+$(which singularity) shell --bind /etc/munge --bind /var/log/munge --bind 
+/var/run/munge --bind /usr/bin --bind /etc/slurm --bind /usr/lib64 --bind 
+/ihome/crc/wrappers --bind /ihome/crc/install centos.sim --login
+
+You will need to adapt the above bind paths to your specific host 
+environment.  The --login at the end is important for initializing our lmod 
+environment as the inits are done within profile.d.  In the singularity 
+file, the slurm and munge user creation parts should use the appropriate 
+gid/uid corresponding to what you have on the host.  The yum install for 
+lua-* was needed for lmod.  I tested everything by submitting an Amber MPI 
+job from within the container.
+
+Good luck.  You might be able to adapt this to Ubuntu but I have not 
+tried.  Our host OS is RHEL7, so I might have benefited from "free" 
+compatibility by selecting CentOS for the image.
+
+
+
+
+------=_Part_3857_1887507842.1518807902331
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">After some trial and error last week, I got it working und=
+er SLURM.=C2=A0 The Singularity file is attached.=C2=A0 It was adapted from=
+ the centos example.=C2=A0 Originally, I attempted to install SLURM and mun=
+ge within the container.=C2=A0 Package installation was a success but getti=
+ng munge working was a no go.=C2=A0 Trying to get systemd to initialize the=
+ process was prohibited.=C2=A0 In the end, the comment about bind paths lea=
+d down the useful path.<br><br>To build the container, issue<br><br>sudo $(=
+which singularity) build centos.sim singularity-centos<br><br>To test the c=
+ontainer, issue<br><br>$(which singularity) shell --bind /etc/munge --bind =
+/var/log/munge --bind /var/run/munge --bind /usr/bin --bind /etc/slurm --bi=
+nd /usr/lib64 --bind /ihome/crc/wrappers --bind /ihome/crc/install centos.s=
+im --login<br><br>You will need to adapt the above bind paths to your speci=
+fic host environment.=C2=A0 The --login at the end is important for initial=
+izing our lmod environment as the inits are done within profile.d.=C2=A0 In=
+ the singularity file, the slurm and munge user creation parts should use t=
+he appropriate gid/uid corresponding to what you have on the host.=C2=A0 Th=
+e yum install for lua-* was needed for lmod.=C2=A0 I tested everything by s=
+ubmitting an Amber MPI job from within the container.<br><br>Good luck.=C2=
+=A0 You might be able to adapt this to Ubuntu but I have not tried.=C2=A0 O=
+ur host OS is RHEL7, so I might have benefited from &quot;free&quot; compat=
+ibility by selecting CentOS for the image.<br><br><br><br></div>
+------=_Part_3857_1887507842.1518807902331--
+
+------=_Part_3856_2146262001.1518807902331
+Content-Type: application/octet-stream; name=singularity-centos
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename=singularity-centos
+X-Attachment-Id: 3baa516c-e579-4b90-a31f-f5835c519477
+Content-ID: <3baa516c-e579-4b90-a31f-f5835c519477>
+
+BootStrap: yum
+OSVersion: 7
+MirrorURL: http://mirror.centos.org/centos-%{OSVERSION}/%{OSVERSION}/os/$basearch/
+Include: yum
+
+# If you want the updates (available at the bootstrap date) to be installed
+# inside the container during the bootstrap instead of the General Availability
+# point release (7.x) then uncomment the following line
+#UpdateURL: http://mirror.centos.org/centos-%{OSVERSION}/%{OSVERSION}/updates/$basearch/
+
+
+%runscript
+    echo "This is what happens when you run the container..."
+
+%setup
+    cp /ihome/crc/install/lmod/lmod/init/bash $SINGULARITY_ROOTFS/lmod.sh
+    cp /ihome/crc/install/lmod/lmod/init/csh  $SINGULARITY_ROOTFS/lmod.csh
+
+%post
+    echo "Hello from inside the container"
+    yum -y install vim-minimal
+
+    yum -y install shadow-utils
+    groupadd -g 16441 slurm
+    useradd  -m -c "Slurm workload manager" -d /var/lib/slurm -u 152622 -g slurm  -s /bin/bash slurm
+    groupadd -g 990 munge
+    useradd  -m -c "MUNGE Uid 'N' Gid Emporium" -d /var/lib/munge -u 993 -g munge  -s /sbin/nologin munge
+   
+    cp lmod.sh /etc/profile.d
+    cp lmod.sh /etc/profile.d
+
+    yum -y install epel-release
+    yum -y install lua-posix
+    yum -y install lua-filesystem
+
+------=_Part_3856_2146262001.1518807902331--

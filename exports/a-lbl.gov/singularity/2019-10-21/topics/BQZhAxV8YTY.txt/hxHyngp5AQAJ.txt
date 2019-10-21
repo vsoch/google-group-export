@@ -1,0 +1,479 @@
+X-Received: by 2002:a17:902:227:: with SMTP id 36mr6594699plc.35.1551737462273;
+        Mon, 04 Mar 2019 14:11:02 -0800 (PST)
+X-BeenThere: singularity@lbl.gov
+Received: by 2002:a63:5751:: with SMTP id h17ls6677651pgm.4.gmail; Mon, 04 Mar
+ 2019 14:11:01 -0800 (PST)
+X-Received: by 2002:a65:64c4:: with SMTP id t4mr20519588pgv.152.1551737461139;
+        Mon, 04 Mar 2019 14:11:01 -0800 (PST)
+ARC-Seal: i=1; a=rsa-sha256; t=1551737461; cv=none;
+        d=google.com; s=arc-20160816;
+        b=hOKeSbu7iFEbVr2SViy6addRohSol4DEKtE1cWfzMAf6zwC7nTkNxQrbdJLQ2x4YGW
+         UaMEqhMN5VX4RvTOXDP1Bb0qwJvaKzFWrOEcSWyAJfAwRyUP9qgXaGB1RKS7/8qTVi+0
+         TA0H2x4kezY23IBG101gCnE3Fvzsad0/AE4GihODDPyfobg4uF6nfuZEoCTzhy2eN9wl
+         RJl8sTsjkWRkEsoXWdlwsLkrLZPr6hS+6IOYdY42reey/5M/giCpiaXgx0tb82/7iPSn
+         /gMFXd385N/z+I8Vy71zoehTUITb4iAQUe+78D5DSQ33BEf75h0km0t9RkeeusNhUg3s
+         x9Sg==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816;
+        h=to:subject:message-id:date:from:in-reply-to:references:mime-version
+         :dkim-signature;
+        bh=iwTEF8zkp3pbwn+vP9DSwav1WLK630wES9xhjaMT9B8=;
+        b=YZ4S90V2ETChIhf/LTD+ob0gLuLO/gyAHseUPOXaFRdE4A0HoWCcqK8QjuMdFw+YTx
+         YxgztUNX4vQsizuisaLibDgfMnKFNIcKc4cPtTrsdC40L6HYlfyHsBxMXBFL9wtbQXek
+         46q3ZC/UO68fVo2VkqiShZtRuMJNxvW5OvoBJ7kF5b2OGBU0NrqwybF2R2KSZ5eev34C
+         9ByyoO7QLiGvxZo7LR6glgJXcKoh6VpR+Nogvto/ubhtyP2Ww3DSUtjHUlQVTYg3xXWM
+         SD8aA5Z+8jgUHadNZoUNJ/EPHzn2wZAiTvIHrNBn1V/O450saJd3ml5XB4JufnzyNHTr
+         Ekiw==
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=pass head...@sylabs.io header.s=google header.b=XmuUFp3S;
+       spf=pass (google.com: domain of i...@sylabs.io designates 209.85.128.41 as permitted sender) smtp.mailfrom=i...@sylabs.io
+Return-Path: <i...@sylabs.io>
+Received: from fe4.lbl.gov (fe4.lbl.gov. [131.243.228.53])
+        by mx.google.com with ESMTP id l3si6222110plt.307.2019.03.04.14.11.00
+        for <singu...@lbl.gov>;
+        Mon, 04 Mar 2019 14:11:01 -0800 (PST)
+Received-SPF: pass (google.com: domain of i...@sylabs.io designates 209.85.128.41 as permitted sender) client-ip=209.85.128.41;
+Authentication-Results: mx.google.com;
+       dkim=pass head...@sylabs.io header.s=google header.b=XmuUFp3S;
+       spf=pass (google.com: domain of i...@sylabs.io designates 209.85.128.41 as permitted sender) smtp.mailfrom=i...@sylabs.io
+X-Ironport-SBRS: 3.5
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: =?us-ascii?q?A2EdBACroX1chymAVdFlHgEGBwaBZYEOW?=
+ =?us-ascii?q?IESgQMnhAEHcC2CLZAbgg18kTKGB4ErPCUBCguBAkeCL0YChCYiOBIBAQMBAQM?=
+ =?us-ascii?q?BAwIBAQIQAQEBCA0JCCkjDII6BQIDHwcKBE07LwEBAQEBAQEBAQEBAQEBAQEaA?=
+ =?us-ascii?q?g0mPQEBAQQjBBkBAQcFGQ0GDwsLCgMqAgIiDwMBBQEcDgcEARoCBIMBASYBgU4?=
+ =?us-ascii?q?FCp1DPIoscXwzH4JZAQEFdDwBhXQIEoEdhFqGTheBf4ERgl01gx4CgSkFARIBT?=
+ =?us-ascii?q?IJdgjUiigsKhlGBB1yFJIwZCYJAhQODeIc5GYF0hWKLTI8wgQYJiQgBg1cwgT1?=
+ =?us-ascii?q?XMHFNLAxsBoI1CYIBDA4JgQABCYJBgmSIDSQwEI44DxcELIFyBQEB?=
+X-IronPort-AV: E=Sophos;i="5.58,441,1544515200"; 
+   d="scan'208,217";a="53619673"
+Received: from mail-wm1-f41.google.com ([209.85.128.41])
+  by fe4.lbl.gov with ESMTP; 04 Mar 2019 14:10:58 -0800
+Received: by mail-wm1-f41.google.com with SMTP id x7so691276wmj.0
+        for <singu...@lbl.gov>; Mon, 04 Mar 2019 14:10:58 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=sylabs.io; s=google;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to;
+        bh=iwTEF8zkp3pbwn+vP9DSwav1WLK630wES9xhjaMT9B8=;
+        b=XmuUFp3Szxos2LW7eS1nhNGMHkffbtitTuo6T+lfVvIqoARiCROyT07NDv7/dBP/L/
+         Z0hOjRBe3pNT0Yv0ul2W3TCjoSpdaDbJdxDjmkaRdda862X0/l6eD4vod1+F7pmI26lo
+         ZIWHB9g7dBJfycX2Ze9IlkV1mv7WFWBSA8hjRdpODJEqge99aEkG32vtEF76z6hnNDvM
+         noauLP124zManMjkAyE/mSPxPLAZiPsgAZtEyWXwx2yRw36hObwVTAAEnKTwkbUrGVfn
+         8BR7+e3iulu8k+oQj32f9tRYKq589cFg4ZO5jCmm39gw5mYR76PeXAQHjH7KC7LggnFg
+         QM2w==
+X-Gm-Message-State: APjAAAWgaa0FHDl6BqMmYi165e8qp7BvWYwSHNFyQ7AOJQvo0cSY/tXD
+	ZEqWIlXFw6NXE5+P3T2IFDTSZoYel2H+o5w6OcJWZy1/
+X-Received: by 2002:a1c:4844:: with SMTP id v65mr786369wma.66.1551737456604;
+ Mon, 04 Mar 2019 14:10:56 -0800 (PST)
+MIME-Version: 1.0
+References: <7bb2ddd5-0de0-5bbd-0fa2-d60c36966e57@lal.in2p3.fr> <CAPqNE2WuXEy1sKUP1Akzes0Q+obxLBu0TkR7=5n+KhsUiMdR8w@mail.gmail.com>
+In-Reply-To: <CAPqNE2WuXEy1sKUP1Akzes0Q+obxLBu0TkR7=5n+KhsUiMdR8w@mail.gmail.com>
+From: Ian Kaneshiro <i...@sylabs.io>
+Date: Mon, 4 Mar 2019 17:10:20 -0500
+Message-ID: <CAHNsURv_d7mLQf35JE0TuRZH-JMHodF_aU5D2hQCRMEb5=2j5Q@mail.gmail.com>
+Subject: Re: [Singularity] Thoughts from a Docker -> Singularity conversion attempt
+To: singularity@lbl.gov
+Content-Type: multipart/alternative; boundary="000000000000e2cef005834c078f"
+
+--000000000000e2cef005834c078f
+Content-Type: text/plain; charset="UTF-8"
+
+Hello Hadrien!
+
+This is really helpful feedback for determining where the build system
+needs to be improved. Thank you!
+Multistage builds are on the horizon for 3.2, which is targeted for
+early/mid April. I don't think this will directly address your concerns,
+but it will lay down the framework to do so. With multistage builds comes
+the possibility of caching stages so that you won't have to rebuild
+everything each build. This should help make debugging builds less painful
+in some scenarios, but will not make builds recoverable on a per command of
+the %post section granularity.
+
+Version 3.2 will also introduce changes to the definition parser to support
+args for sections, (e.g. %section arg0 arg1 ...). This will make it easier
+to configure behavior for how builds are executed on a per section basis
+and potentially open doors to alleviate other problems you mentioned.
+Child images should inherit the environment of the parent, though this will
+not be apparent during the build since the run time environment is not
+sourced during builds. I agree that having a way to configure the build
+time environment and have it be consistent between sections will ease a lot
+of pain. I will need to investigate this further, but I've opened an issue
+here: https://github.com/sylabs/singularity/issues/2807 to track this.
+
+Though build flags offer a lot of nice functionality, one of the goals of
+Singularity definitions is to allow reproducible builds. So having build
+behavior configured from the CLI or external to the definition file will
+hinder that in my opinion.
+
+If I've failed to address anything please let me know here or feel free to
+open an issue here: https://github.com/sylabs/singularity/issues so that we
+can make sure everything is addressed.
+
+Best,
+Ian
+
+On Mon, Mar 4, 2019 at 10:41 AM 'John Hearns' via singularity <
+singu...@lbl.gov> wrote:
+
+> "the laptop-hostile orthodoxy of RHEL / CentOS"    Love it. Lol.
+>
+> A grown up from Singularity will be along in a moment - I believe multi
+> stage builds are on the cards.
+>
+> ps. Containers? Laptops? Luxury.  In my day you used HBOOK and plotted
+> histograms used EBCDIC characters hammered out by a line printer.
+> And you thought yourself lucky if the computer centre delivered the output
+> before lunch.
+>
+> On Mon, 4 Mar 2019 at 15:35, Hadrien Grasland <gras...@lal.in2p3.fr>
+> wrote:
+>
+>> Dear Singularity users,
+>>
+>> I've been packaging HEP software and development environments using a
+>> combination of Spack and Docker for a while.
+>>
+>>    - Spack gives me customizable and ergonomic software builds, with
+>>    automated dependency management and peaceful coexistence between different
+>>    build configurations.
+>>    - Docker gives me cross-OS binary + environment portability, and a
+>>    way to "freeze" a snapshot of my rolling Linux distribution of choice in
+>>    order to momentarily prevent Spack from rebuilding everything over and over
+>>    again the way it loves to.
+>>
+>> This is what the end result currently looks like:
+>> https://github.com/HadrienG2/spack-based-docker .
+>>
+>> A problem with using Docker for this purpose, though, is that it does too
+>> much container/host isolation for my use case. I don't really care for
+>> Docker masquerading as a VM by hiding the host filesystem and processes
+>> from the container, but I do care about the cumbersome side of remembering
+>> to bind mount everything, ending up with root-owned files in these bind
+>> mounts if I'm not very careful, and ptrace rights being taken away from me
+>> unless I take care to pass the magical "I don't care, I trust this
+>> container" flags to the docker run command line. From this perspective, I
+>> sometimes feel like I'm fighting Docker's cloud-oriented design a bit too
+>> much.
+>>
+>> Which is what led me to investigate Singularity, an experience which I
+>> now feel ready to report on.
+>> ------------------------------
+>>
+>> Having some previous bad experience from the Docker -> Singularity image
+>> conversion machinery, I decided for this attempt to try to stick with a
+>> pure Singularity workflow, without Docker getting in the way at any time.
+>> This was easier than expected: bootstrapping a zypper-based image actually
+>> proved very smooth.
+>>
+>> My feeling from translating my Docker recipes afterwards is that
+>> Singularity does deliver beautifully on the final image usability front
+>> (hurray for the simple CLI, ptrace privileges, proper file permissions, and
+>> /home mounting by default), but feels quite a bit more painful than Docker
+>> on the image builder's side. Here are some particular pain points that I
+>> encountered, maybe they have some well-known solutions / workarounds ?
+>>
+>>    - I miss Docker's build arguments a lot.
+>>    - A typical use case is building an image twice, once with debug
+>>       software builds (for debugging) and once with release builds (for end usage
+>>       and profiling)
+>>       - Another use case is controlling from remote which version of
+>>       some software gets built, and to synchronize that with the output image's
+>>       file name.
+>>       - A third use case is synchronizing the directory where image
+>>       files are written across multiple Singularity definition file, and making
+>>       it externally configurable.
+>>       - I appreciate Singuarity's attempt to cautiously separate build
+>>    environment from runtime environment, but find that it makes build
+>>    environment management difficult:
+>>       - I often have to write each environment-altering statement three
+>>       times, once in %post, once in %test, and once in ${SINGULARITY_ENVIRONMENT}
+>>       - Build environment not being carried over from one parent image
+>>       to a child image often makes me give up and just write my whole build setup
+>>       in ${SINGULARITY_ENVIRONMENT} so that I can source that at the beginning of
+>>       the next image.
+>>       - %environment is almost never usable for me because most of the
+>>       time I need some environment to be set both for runtime and for child
+>>       images.
+>>       - The idea of separating a build in clear-cut %build, %post, %test
+>>    phases is nice in theory, but limiting for complex recipes
+>>       - The folder to which I want to copy files may be created during
+>>       %post, in which case I need to move files to a temporary directory during
+>>       %copy and re-move them later.
+>>       - Some tests can only be run at some stages during the build
+>>       process, because they rely on a build folder which must be cleaned up at
+>>       the end of the recipe.
+>>       - SINGULARITY_ENVIRONMENT not being sourced before %test is
+>>       painful and uncalled for.
+>>       - A replacement to Docker layers for build snapshots would be much
+>>    appreciated.
+>>       - I certainly don't miss the build performance/size vs recipe
+>>       readability compromise of Docker saving a layer after every RUN statement...
+>>       - ...but I do miss being able to quickly investigate a failed
+>>       build and restart it without going through my whole %post section all over
+>>       again.
+>>
+>> In short, I would be longing for....
+>>
+>>    - A way to use some externally configurable environment in a
+>>    singularity definition file (including, and I guess that's the difficult
+>>    part, in the "From:" statement)
+>>    - An alternative to SINGULARITY_ENVIRONMENT for configuring build
+>>    environment instead of runtime environment
+>>    - A less hacky way to pass environment to childe images' build
+>>    recipes (may or may not be merged with the above)
+>>    - A way to check if tests are enabled in %post as a more flexible
+>>    alternative to the %test section
+>>       - ...and runtime environment being sourced before the %test
+>>       section begins.
+>>    - Faster / easier ways to debug failed Singularity builds than
+>>    modifying the recipe and restarting it from the beginning.
+>>
+>> ...but some of that may be an XY problem coming from my Docker user
+>> habits :)
+>>
+>> Cheers,
+>> Hadrien
+>>
+>> --
+>> You received this message because you are subscribed to the Google Groups
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an
+>> email to singu...@lbl.gov.
+>>
+> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+>
+
+
+-- 
+Ian Kaneshiro
+Software Engineer, Sylabs, Inc.
+www.sylabs.io
+
+--000000000000e2cef005834c078f
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div di=
+r=3D"ltr"><div>Hello Hadrien!</div><div><br></div><div>This is really helpf=
+ul feedback for determining where the build system needs to be improved. Th=
+ank you!</div><div><span style=3D"white-space:pre-wrap">=09</span></div><di=
+v>Multistage builds are on the horizon for 3.2, which is targeted for early=
+/mid April. I don&#39;t think this will directly address your concerns, but=
+ it will lay down the framework to do so. With multistage builds comes the =
+possibility of caching stages so that you won&#39;t have to rebuild everyth=
+ing each build. This should help make debugging builds less painful in some=
+ scenarios, but will not make builds recoverable on a per command of the %p=
+ost section granularity.=C2=A0</div><div><br></div><div>Version 3.2 will al=
+so introduce changes to the definition parser to support args for sections,=
+ (e.g. %section arg0 arg1 ...). This will make it easier to configure behav=
+ior for how builds are executed on a per section basis and potentially open=
+ doors to alleviate other problems you mentioned.</div><div><span style=3D"=
+white-space:pre-wrap">=09</span></div><div>Child images should inherit the =
+environment of the parent, though this will not be apparent during the buil=
+d since the run time environment is not sourced during builds. I agree that=
+ having a way to configure the build time environment and have it be consis=
+tent between sections will ease a lot of pain. I will need to investigate t=
+his further, but I&#39;ve opened an issue here: <a href=3D"https://github.c=
+om/sylabs/singularity/issues/2807" target=3D"_blank">https://github.com/syl=
+abs/singularity/issues/2807</a>=C2=A0to track this.=C2=A0</div><div><br></d=
+iv><div>Though build flags offer a lot of nice functionality, one of the go=
+als of Singularity definitions is to allow reproducible builds. So having b=
+uild behavior configured from the CLI or external to the definition file wi=
+ll hinder that in my opinion.</div><div><br></div><div>If I&#39;ve failed t=
+o address anything please let me know here or feel free to open an issue he=
+re:=C2=A0<a href=3D"https://github.com/sylabs/singularity/issues" target=3D=
+"_blank">https://github.com/sylabs/singularity/issues</a> so that we can ma=
+ke sure everything is addressed.</div><div><br></div><div>Best,</div><div>I=
+an=C2=A0</div></div></div></div><br><div class=3D"gmail_quote"><div dir=3D"=
+ltr" class=3D"gmail_attr">On Mon, Mar 4, 2019 at 10:41 AM &#39;John Hearns&=
+#39; via singularity &lt;<a href=3D"mailto:singu...@lbl.gov" target=3D"_bla=
+nk">singu...@lbl.gov</a>&gt; wrote:<br></div><blockquote class=3D"gmail_quo=
+te" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204=
+);padding-left:1ex"><div dir=3D"ltr"><div dir=3D"ltr"><span style=3D"text-a=
+lign:left;color:rgb(36,41,46);text-transform:none;text-indent:0px;letter-sp=
+acing:normal;font-family:-apple-system,BlinkMacSystemFont,&quot;Segoe UI&qu=
+ot;,Helvetica,Arial,sans-serif,&quot;Apple Color Emoji&quot;,&quot;Segoe UI=
+ Emoji&quot;,&quot;Segoe UI Symbol&quot;;font-size:16px;font-style:normal;f=
+ont-variant:normal;font-weight:400;text-decoration:none;word-spacing:0px;di=
+splay:inline;white-space:normal;float:none;background-color:rgb(255,255,255=
+)">&quot;the laptop-hostile
+orthodoxy of RHEL / CentOS&quot; =C2=A0=C2=A0 Love it. Lol.=C2=A0</span></d=
+iv><div dir=3D"ltr"><br></div><div>A grown up from Singularity will be alon=
+g in a moment - I believe multi stage builds are on the cards.</div><div><b=
+r></div><div>ps. Containers? Laptops? Luxury.=C2=A0 In my day you used HBOO=
+K and plotted histograms used EBCDIC characters hammered out by a line prin=
+ter.</div><div>And you thought yourself lucky if the computer centre delive=
+red the output before lunch.<br></div></div><br><div class=3D"gmail_quote">=
+<div class=3D"gmail_attr" dir=3D"ltr">On Mon, 4 Mar 2019 at 15:35, Hadrien =
+Grasland &lt;<a href=3D"mailto:gras...@lal.in2p3.fr" target=3D"_blank">gras=
+...@lal.in2p3.fr</a>&gt; wrote:<br></div><blockquote class=3D"gmail_quote" =
+style=3D"margin:0px 0px 0px 0.8ex;padding-left:1ex;border-left:1px solid rg=
+b(204,204,204)">
+ =20
+
+   =20
+ =20
+  <div bgcolor=3D"#FFFFFF">
+    <p>Dear Singularity users,</p>
+    <p>I&#39;ve been packaging HEP software and development environments
+      using a combination of Spack and Docker for a while.</p>
+    <ul>
+      <li>Spack gives me customizable and ergonomic software builds,
+        with automated dependency management and peaceful coexistence
+        between different build configurations.</li>
+      <li>Docker gives me cross-OS binary + environment portability, and
+        a way to &quot;freeze&quot; a snapshot of my rolling Linux distribu=
+tion of
+        choice in order to momentarily prevent Spack from rebuilding
+        everything over and over again the way it loves to.</li>
+    </ul>
+    <p>This is what the end result currently looks like:
+      <a class=3D"m_3480298081180584512m_6354435953002871067gmail-m_9123956=
+282012154854gmail-m_-752644209929854928moz-txt-link-freetext" href=3D"https=
+://github.com/HadrienG2/spack-based-docker" target=3D"_blank">https://githu=
+b.com/HadrienG2/spack-based-docker</a> .</p>
+    <p>A problem with using Docker for this purpose, though, is that it
+      does too much container/host isolation for my use case. I don&#39;t
+      really care for Docker masquerading as a VM by hiding the host
+      filesystem and processes from the container, but I do care about
+      the cumbersome side of remembering to bind mount everything,
+      ending up with root-owned files in these bind mounts if I&#39;m not
+      very careful, and ptrace rights being taken away from me unless I
+      take care to pass the magical &quot;I don&#39;t care, I trust this
+      container&quot; flags to the docker run command line. From this
+      perspective, I sometimes feel like I&#39;m fighting Docker&#39;s
+      cloud-oriented design a bit too much.</p>
+    <p>Which is what led me to investigate Singularity, an experience
+      which I now feel ready to report on.</p>
+    <hr width=3D"100%" size=3D"2">
+    <p>Having some previous bad experience from the Docker -&gt;
+      Singularity image conversion machinery, I decided for this attempt
+      to try to stick with a pure Singularity workflow, without Docker
+      getting in the way at any time. This was easier than expected:
+      bootstrapping a zypper-based image actually proved very smooth.<br>
+    </p>
+    <p>My feeling from translating my Docker recipes afterwards is that
+      Singularity does deliver beautifully on the final image usability
+      front (hurray for the simple CLI, ptrace privileges, proper file
+      permissions, and /home mounting by default), but feels quite a bit
+      more painful than Docker on the image builder&#39;s side. Here are
+      some particular pain points that I encountered, maybe they have
+      some well-known solutions / workarounds ?</p>
+    <ul>
+      <li>I miss Docker&#39;s build arguments a lot.<br>
+      </li>
+      <ul>
+        <li>A typical use case is building an image twice, once with
+          debug software builds (for debugging) and once with release
+          builds (for end usage and profiling)</li>
+        <li>Another use case is controlling from remote which version of
+          some software gets built, and to synchronize that with the
+          output image&#39;s file name.</li>
+        <li>A third use case is synchronizing the directory where image
+          files are written across multiple Singularity definition file,
+          and making it externally configurable.<br>
+        </li>
+      </ul>
+      <li>I appreciate Singuarity&#39;s attempt to cautiously separate buil=
+d
+        environment from runtime environment, but find that it makes
+        build environment management difficult:</li>
+      <ul>
+        <li>I often have to write each environment-altering statement
+          three times, once in %post, once in %test, and once in
+          ${SINGULARITY_ENVIRONMENT}</li>
+        <li>Build environment not being carried over from one parent
+          image to a child image often makes me give up and just write
+          my whole build setup in ${SINGULARITY_ENVIRONMENT} so that I
+          can source that at the beginning of the next image.</li>
+        <li>%environment is almost never usable for me because most of
+          the time I need some environment to be set both for runtime
+          and for child images.<br>
+        </li>
+      </ul>
+      <li>The idea of separating a build in clear-cut %build, %post,
+        %test phases is nice in theory, but limiting for complex recipes</l=
+i>
+      <ul>
+        <li>The folder to which I want to copy files may be created
+          during %post, in which case I need to move files to a
+          temporary directory during %copy and re-move them later.</li>
+        <li>Some tests can only be run at some stages during the build
+          process, because they rely on a build folder which must be
+          cleaned up at the end of the recipe.</li>
+        <li>SINGULARITY_ENVIRONMENT not being sourced before %test is
+          painful and uncalled for.<br>
+        </li>
+      </ul>
+      <li>A replacement to Docker layers for build snapshots would be
+        much appreciated.</li>
+      <ul>
+        <li>I certainly don&#39;t miss the build performance/size vs recipe
+          readability compromise of Docker saving a layer after every
+          RUN statement...</li>
+        <li>...but I do miss being able to quickly investigate a failed
+          build and restart it without going through my whole %post
+          section all over again.</li>
+      </ul>
+    </ul>
+    <p>In short, I would be longing for....</p>
+    <ul>
+      <li>A way to use some externally configurable environment in a
+        singularity definition file (including, and I guess that&#39;s the
+        difficult part, in the &quot;From:&quot; statement)</li>
+      <li>An alternative to SINGULARITY_ENVIRONMENT for configuring
+        build environment instead of runtime environment</li>
+      <li>A less hacky way to pass environment to childe images&#39; build
+        recipes (may or may not be merged with the above)<br>
+      </li>
+      <li>A way to check if tests are enabled in %post as a more
+        flexible alternative to the %test section</li>
+      <ul>
+        <li>...and runtime environment being sourced before the %test
+          section begins.</li>
+      </ul>
+      <li>Faster / easier ways to debug failed Singularity builds than
+        modifying the recipe and restarting it from the beginning.</li>
+    </ul>
+    <p>...but some of that may be an XY problem coming from my Docker
+      user habits :)<br>
+    </p>
+    <p>Cheers,<br>
+      Hadrien<br>
+    </p>
+  </div>
+
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singu...@lbl.=
+gov</a>.<br>
+</blockquote></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singu...@lbl.=
+gov</a>.<br>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+ class=3D"m_3480298081180584512m_6354435953002871067gmail_signature"><div d=
+ir=3D"ltr"><div><div dir=3D"ltr"><div style=3D"color:rgb(80,0,80);font-size=
+:12.8px"><div><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div style=
+=3D"color:rgb(34,34,34);font-size:12.8px">Ian Kaneshiro</div><div style=3D"=
+color:rgb(34,34,34);font-size:12.8px">Software Engineer, Sylabs, Inc.</div>=
+<div style=3D"color:rgb(34,34,34);font-size:12.8px"><a href=3D"http://www.s=
+ylabs.io/" style=3D"color:rgb(17,85,204)" target=3D"_blank">www.sylabs.io</=
+a></div></div></div></div></div></div></div></div></div></div></div></div>
+
+--000000000000e2cef005834c078f--

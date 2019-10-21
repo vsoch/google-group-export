@@ -1,0 +1,317 @@
+Date: Tue, 20 Feb 2018 15:05:34 -0800 (PST)
+From: Damien Lebrun-Grandie <dal...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <183d0432-05d4-4d37-b47f-e4d295d17140@lbl.gov>
+In-Reply-To: <c3a32b86-7781-4e53-9509-f1e87310d486@lbl.gov>
+References: <c3a32b86-7781-4e53-9509-f1e87310d486@lbl.gov>
+Subject: Re: Singularity on HPC - issues running with Open MPI 2.1.2
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_17970_1695262959.1519167935043"
+
+------=_Part_17970_1695262959.1519167935043
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_17971_939836210.1519167935044"
+
+------=_Part_17971_939836210.1519167935044
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+I was able to resolve my problem after someone suggested I look at 
+singularityware/singularity#876 
+<https://github.com/singularityware/singularity/issues/876> on GitHub.
+Thanks.
+
+On Monday, February 19, 2018 at 6:19:15 PM UTC-5, Damien Lebrun-Grandie 
+wrote:
+>
+> I am having issues running a containerized application on one of our 
+> clusters.
+> As I was trying to narrow the problem down I realized that the Open MPI 
+> ring example would produce a similar error when running it with a number of 
+> processes that exceed the core count on a single node of our cluster.
+>
+> Here is a Singularity file I used to build a `mpi_ring.img` container:
+> ```
+> Bootstrap: docker
+> From: ubuntu:16.04
+>
+> %post
+>    apt-get update && apt-get install -y \
+>        build-essential \
+>        cmake \
+>        curl
+>    export OPENMPI_VERSION=2.1.2 && \
+>    export OPENMPI_URL=
+> http://www.open-mpi.org/software/ompi/v2.1/downloads/openmpi-${OPENMPI_VERSION}.tar.bz2 && 
+> \
+>    export OPENMPI_SHA1=4d43bb407eb8b9da099a555e8dc083352c6a1d02 && \
+>    export OPENMPI_ARCHIVE=/scratch/openmpi-${OPENMPI_VERSION}.tar.bz2 && \
+>    export OPENMPI_SOURCE_DIR=/scratch/openmpi-${OPENMPI_VERSION} && \
+>    export OPENMPI_BUILD_DIR=/scratch/openmpi_build && \
+>    export OPENMPI_INSTALL_DIR=/usr && \
+>    mkdir -p /scratch && \
+>    curl -Ls ${OPENMPI_URL} -o ${OPENMPI_ARCHIVE} && \
+>    echo "${OPENMPI_SHA1} ${OPENMPI_ARCHIVE}" | sha1sum -c && \
+>    mkdir -p ${OPENMPI_SOURCE_DIR} && \
+>    tar -xf ${OPENMPI_ARCHIVE} -C ${OPENMPI_SOURCE_DIR} 
+> --strip-components=1 && \
+>    mkdir -p ${OPENMPI_BUILD_DIR} && cd ${OPENMPI_BUILD_DIR} && \
+>    ${OPENMPI_SOURCE_DIR}/configure \
+>        --prefix=${OPENMPI_INSTALL_DIR} \
+>        && \
+>    make -j4 all && make install && \
+>    rm -rvf ${OPENMPI_ARCHIVE} ${OPENMPI_BUILD_DIR}
+> ```
+>
+> And here is how I produced the error
+> ```
+> [<USER>@<HOST> ~]$ singularity exec mpi_ring.img mpicc 
+> /scratch/openmpi-2.1.2/examples/ring_c.c
+> [<USER>@<HOST> ~]$ mpiexec -np 32 singularity exec --ipc mpi_ring.img 
+> ./a.out
+> Process 0 sending 10 to 1, tag 201 (32 processes in ring)
+> Process 0 sent to 1
+> Process 0 decremented value: 9
+> Process 0 decremented value: 8
+> Process 0 decremented value: 7
+> Process 0 decremented value: 6
+> Process 0 decremented value: 5
+> Process 0 decremented value: 4
+> Process 0 decremented value: 3
+> Process 0 decremented value: 2
+> Process 0 decremented value: 1
+> Process 0 decremented value: 0
+> Process 0 exiting
+> Process 1 exiting
+> Process 2 exiting
+> Process 3 exiting
+> Process 4 exiting
+> Process 5 exiting
+> Process 6 exiting
+> Process 7 exiting
+> Process 8 exiting
+> Process 9 exiting
+> Process 10 exiting
+> Process 11 exiting
+> Process 12 exiting
+> Process 13 exiting
+> Process 14 exiting
+> Process 15 exiting
+> Process 16 exiting
+> Process 17 exiting
+> Process 18 exiting
+> Process 19 exiting
+> Process 20 exiting
+> Process 21 exiting
+> Process 22 exiting
+> Process 23 exiting
+> Process 24 exiting
+> Process 25 exiting
+> Process 26 exiting
+> Process 27 exiting
+> Process 28 exiting
+> Process 29 exiting
+> Process 30 exiting
+> Process 31 exiting
+> [<USER>@<HOST> ~]$ mpiexec -np 33 singularity exec --ipc mpi_ring.img 
+> ./a.out
+> Process 0 sending 10 to 1, tag 201 (33 processes in ring)
+> Process 0 sent to 1
+> [<HOST>][[54958,1],31][/scratch/openmpi-2.1.2/opal/mca/btl/tcp/btl_tcp_endpoint.c:803:mca_btl_tcp_endpoint_complete_connect] 
+> connect() to <IP> failed: No route to host (113)
+> ```
+>
+> I did check and it does run normally without Singularity.
+> ```
+> [<USER>@<HOST> ~]$ mpiexec --version
+> mpiexec (OpenRTE) 2.1.2
+>
+> Report bugs to http://www.open-mpi.org/community/help/
+> [<USER>@<HOST> ~]$ singularity exec mpi_ring.img cp 
+> /scratch/openmpi-2.1.2/examples/ring_c.c .
+> [<USER>@<HOST> ~]$ mpicc ring_c.c
+> [<USER>@<HOST> ~]$ mpiexec --mca mpi_cuda_support 0 --np 33 ./a.out
+> Process 0 sending 10 to 1, tag 201 (33 processes in ring)
+> Process 0 sent to 1
+> Process 0 decremented value: 9
+> Process 0 decremented value: 8
+> Process 0 decremented value: 7
+> Process 0 decremented value: 6
+> Process 0 decremented value: 5
+> Process 0 decremented value: 4
+> Process 0 decremented value: 3
+> Process 0 decremented value: 2
+> Process 0 decremented value: 1
+> Process 0 decremented value: 0
+> Process 0 exiting
+> Process 1 exiting
+> Process 2 exiting
+> Process 3 exiting
+> Process 4 exiting
+> Process 5 exiting
+> Process 6 exiting
+> Process 7 exiting
+> Process 8 exiting
+> Process 9 exiting
+> Process 10 exiting
+> Process 11 exiting
+> Process 12 exiting
+> Process 32 exiting
+> Process 13 exiting
+> Process 14 exiting
+> Process 15 exiting
+> Process 16 exiting
+> Process 17 exiting
+> Process 18 exiting
+> Process 19 exiting
+> Process 20 exiting
+> Process 21 exiting
+> Process 22 exiting
+> Process 23 exiting
+> Process 24 exiting
+> Process 25 exiting
+> Process 26 exiting
+> Process 27 exiting
+> Process 28 exiting
+> Process 29 exiting
+> Process 30 exiting
+> Process 31 exiting
+> ```
+>
+> Any help would be appreciated!
+>
+
+------=_Part_17971_939836210.1519167935044
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">I was able to resolve my problem after someone suggested I=
+ look at=C2=A0<a href=3D"https://github.com/singularityware/singularity/iss=
+ues/876">singularityware/singularity#876</a>=C2=A0on GitHub.<div>Thanks.<br=
+><br>On Monday, February 19, 2018 at 6:19:15 PM UTC-5, Damien Lebrun-Grandi=
+e wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0=
+.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr"><div =
+style=3D"color:rgb(0,0,0);font-family:Helvetica;font-size:12px">I am having=
+ issues running a containerized application on one of our clusters.</div><d=
+iv style=3D"color:rgb(0,0,0);font-family:Helvetica;font-size:12px">As I was=
+ trying to narrow the problem down I realized that the Open MPI ring exampl=
+e would produce a similar error when running it with a number of processes =
+that exceed the core count on a single node of our cluster.</div><div style=
+=3D"color:rgb(0,0,0);font-family:Helvetica;font-size:12px"><br></div><div s=
+tyle=3D"color:rgb(0,0,0);font-family:Helvetica;font-size:12px">Here is a Si=
+ngularity file I used to build a `mpi_ring.img` container:<br>```<br>Bootst=
+rap: docker<br>From: ubuntu:16.04<br><br>%post<br>=C2=A0=C2=A0=C2=A0apt-get=
+ update &amp;&amp; apt-get install -y \<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0build-essential \<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+cmake \<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0curl<br>=C2=A0=C2=A0=
+=C2=A0export OPENMPI_VERSION=3D2.1.2 &amp;&amp; \<br>=C2=A0=C2=A0=C2=A0expo=
+rt OPENMPI_URL=3D<a href=3D"http://www.open-mpi.org/software/ompi/v2.1/down=
+loads/openmpi-$%7BOPENMPI_VERSION%7D.tar.bz2" target=3D"_blank" rel=3D"nofo=
+llow" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3=
+A%2F%2Fwww.open-mpi.org%2Fsoftware%2Fompi%2Fv2.1%2Fdownloads%2Fopenmpi-%24%=
+257BOPENMPI_VERSION%257D.tar.bz2\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNE3=
+NQKlWOo6X9qX5J9zcJl9Bgohsg&#39;;return true;" onclick=3D"this.href=3D&#39;h=
+ttp://www.google.com/url?q\x3dhttp%3A%2F%2Fwww.open-mpi.org%2Fsoftware%2Fom=
+pi%2Fv2.1%2Fdownloads%2Fopenmpi-%24%257BOPENMPI_VERSION%257D.tar.bz2\x26sa\=
+x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNE3NQKlWOo6X9qX5J9zcJl9Bgohsg&#39;;return =
+true;">http://www.open-<wbr>mpi.org/software/ompi/v2.1/<wbr>downloads/openm=
+pi-${OPENMPI_<wbr>VERSION}.tar.bz2</a>=C2=A0&amp;&amp; \<br>=C2=A0=C2=A0=C2=
+=A0export OPENMPI_SHA1=3D<wbr>4d43bb407eb8b9da099a555e8dc083<wbr>352c6a1d02=
+ &amp;&amp; \<br>=C2=A0=C2=A0=C2=A0export OPENMPI_ARCHIVE=3D/scratch/<wbr>o=
+penmpi-${OPENMPI_VERSION}.<wbr>tar.bz2 &amp;&amp; \<br>=C2=A0=C2=A0=C2=A0ex=
+port OPENMPI_SOURCE_DIR=3D/scratch/<wbr>openmpi-${OPENMPI_VERSION} &amp;&am=
+p; \<br>=C2=A0=C2=A0=C2=A0export OPENMPI_BUILD_DIR=3D/scratch/<wbr>openmpi_=
+build &amp;&amp; \<br>=C2=A0=C2=A0=C2=A0export OPENMPI_INSTALL_DIR=3D/usr &=
+amp;&amp; \<br>=C2=A0=C2=A0=C2=A0mkdir -p /scratch &amp;&amp; \<br>=C2=A0=
+=C2=A0=C2=A0curl -Ls ${OPENMPI_URL} -o ${OPENMPI_ARCHIVE} &amp;&amp; \<br>=
+=C2=A0=C2=A0=C2=A0echo &quot;${OPENMPI_SHA1} ${OPENMPI_ARCHIVE}&quot; | sha=
+1sum -c &amp;&amp; \<br>=C2=A0=C2=A0=C2=A0mkdir -p ${OPENMPI_SOURCE_DIR} &a=
+mp;&amp; \<br>=C2=A0=C2=A0=C2=A0tar -xf ${OPENMPI_ARCHIVE} -C ${OPENMPI_SOU=
+RCE_DIR} --strip-components=3D1 &amp;&amp; \<br>=C2=A0=C2=A0=C2=A0mkdir -p =
+${OPENMPI_BUILD_DIR} &amp;&amp; cd ${OPENMPI_BUILD_DIR} &amp;&amp; \<br>=C2=
+=A0=C2=A0=C2=A0${OPENMPI_SOURCE_DIR}/<wbr>configure \<br>=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0--prefix=3D${OPENMPI_<wbr>INSTALL_DIR} \<br>=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0&amp;&amp; \<br>=C2=A0=C2=A0=C2=A0make =
+-j4 all &amp;&amp; make install &amp;&amp; \<br>=C2=A0=C2=A0=C2=A0rm -rvf $=
+{OPENMPI_ARCHIVE} ${OPENMPI_BUILD_DIR}<br>```</div><div style=3D"color:rgb(=
+0,0,0);font-family:Helvetica;font-size:12px"><br></div><div style=3D"color:=
+rgb(0,0,0);font-family:Helvetica;font-size:12px">And here is how I produced=
+ the error</div><div style=3D"color:rgb(0,0,0);font-family:Helvetica;font-s=
+ize:12px">```</div><div style=3D"color:rgb(0,0,0);font-family:Helvetica;fon=
+t-size:12px">[&lt;USER&gt;@&lt;HOST&gt; ~]$ singularity exec mpi_ring.img=
+=C2=A0mpicc /scratch/openmpi-2.1.2/<wbr>examples/ring_c.c<br></div><div sty=
+le=3D"color:rgb(0,0,0);font-family:Helvetica;font-size:12px">[&lt;USER&gt;@=
+&lt;HOST&gt; ~]$ mpiexec -np 32 singularity exec --ipc mpi_ring.img ./a.out=
+<br>Process 0 sending 10 to 1, tag 201 (32 processes in ring)<br>Process 0 =
+sent to 1<br>Process 0 decremented value: 9<br>Process 0 decremented value:=
+ 8<br>Process 0 decremented value: 7<br>Process 0 decremented value: 6<br>P=
+rocess 0 decremented value: 5<br>Process 0 decremented value: 4<br>Process =
+0 decremented value: 3<br>Process 0 decremented value: 2<br>Process 0 decre=
+mented value: 1<br>Process 0 decremented value: 0<br>Process 0 exiting<br>P=
+rocess 1 exiting<br>Process 2 exiting<br>Process 3 exiting<br>Process 4 exi=
+ting<br>Process 5 exiting<br>Process 6 exiting<br>Process 7 exiting<br>Proc=
+ess 8 exiting<br>Process 9 exiting<br>Process 10 exiting<br>Process 11 exit=
+ing<br>Process 12 exiting<br>Process 13 exiting<br>Process 14 exiting<br>Pr=
+ocess 15 exiting<br>Process 16 exiting<br>Process 17 exiting<br>Process 18 =
+exiting<br>Process 19 exiting<br>Process 20 exiting<br>Process 21 exiting<b=
+r>Process 22 exiting<br>Process 23 exiting<br>Process 24 exiting<br>Process=
+ 25 exiting<br>Process 26 exiting<br>Process 27 exiting<br>Process 28 exiti=
+ng<br>Process 29 exiting<br>Process 30 exiting<br>Process 31 exiting<br>[&l=
+t;USER&gt;@&lt;HOST&gt; ~]$ mpiexec -np 33 singularity exec --ipc mpi_ring.=
+img ./a.out<br>Process 0 sending 10 to 1, tag 201 (33 processes in ring)<br=
+>Process 0 sent to 1<br>[&lt;HOST&gt;][[54958,1],31][/<wbr>scratch/openmpi-=
+2.1.2/opal/<wbr>mca/btl/tcp/btl_tcp_endpoint.<wbr>c:803:mca_btl_tcp_endpoin=
+t_<wbr>complete_connect] connect() to &lt;IP&gt; failed: No route to host (=
+113)</div><div style=3D"color:rgb(0,0,0);font-family:Helvetica;font-size:12=
+px">```</div><div style=3D"color:rgb(0,0,0);font-family:Helvetica;font-size=
+:12px"><br></div><div style=3D"color:rgb(0,0,0);font-family:Helvetica;font-=
+size:12px">I did check and it does run normally without Singularity.</div><=
+div style=3D"color:rgb(0,0,0);font-family:Helvetica;font-size:12px">```</di=
+v><div><div><span style=3D"color:rgb(0,0,0);font-family:Helvetica;font-size=
+:12px">[&lt;USER&gt;@&lt;HOST&gt; ~]</span><font color=3D"#000000" face=3D"=
+Helvetica"><span style=3D"font-size:12px">$ mpiexec --version</span></font>=
+</div><div><font color=3D"#000000" face=3D"Helvetica"><span style=3D"font-s=
+ize:12px">mpiexec (OpenRTE) 2.1.2</span></font></div><div><font color=3D"#0=
+00000" face=3D"Helvetica"><span style=3D"font-size:12px"><br></span></font>=
+</div><div><font color=3D"#000000" face=3D"Helvetica"><span style=3D"font-s=
+ize:12px">Report bugs to <a href=3D"http://www.open-mpi.org/community/help/=
+" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http:/=
+/www.google.com/url?q\x3dhttp%3A%2F%2Fwww.open-mpi.org%2Fcommunity%2Fhelp%2=
+F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNH7vrvokpm2Fu2FPPE1jm8fMRDbeg&#39;=
+;return true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dh=
+ttp%3A%2F%2Fwww.open-mpi.org%2Fcommunity%2Fhelp%2F\x26sa\x3dD\x26sntz\x3d1\=
+x26usg\x3dAFQjCNH7vrvokpm2Fu2FPPE1jm8fMRDbeg&#39;;return true;">http://www.=
+open-mpi.org/<wbr>community/help/</a></span></font></div></div><div style=
+=3D"color:rgb(0,0,0);font-family:Helvetica;font-size:12px"><div>[&lt;USER&g=
+t;@&lt;HOST&gt; ~]$ singularity exec mpi_ring.img cp /scratch/openmpi-2.1.2=
+/<wbr>examples/ring_c.c .</div><div>[&lt;USER&gt;@&lt;HOST&gt; ~]$ mpicc ri=
+ng_c.c</div></div><div style=3D"color:rgb(0,0,0);font-family:Helvetica;font=
+-size:12px"><div>[&lt;USER&gt;@&lt;HOST&gt; ~]$ mpiexec --mca mpi_cuda_supp=
+ort 0 --np 33 ./a.out</div><div>Process 0 sending 10 to 1, tag 201 (33 proc=
+esses in ring)</div><div>Process 0 sent to 1</div><div>Process 0 decremente=
+d value: 9</div><div>Process 0 decremented value: 8</div><div>Process 0 dec=
+remented value: 7</div><div>Process 0 decremented value: 6</div><div>Proces=
+s 0 decremented value: 5</div><div>Process 0 decremented value: 4</div><div=
+>Process 0 decremented value: 3</div><div>Process 0 decremented value: 2</d=
+iv><div>Process 0 decremented value: 1</div><div>Process 0 decremented valu=
+e: 0</div><div>Process 0 exiting</div><div>Process 1 exiting</div><div>Proc=
+ess 2 exiting</div><div>Process 3 exiting</div><div>Process 4 exiting</div>=
+<div>Process 5 exiting</div><div>Process 6 exiting</div><div>Process 7 exit=
+ing</div><div>Process 8 exiting</div><div>Process 9 exiting</div><div>Proce=
+ss 10 exiting</div><div>Process 11 exiting</div><div>Process 12 exiting</di=
+v><div>Process 32 exiting</div><div>Process 13 exiting</div><div>Process 14=
+ exiting</div><div>Process 15 exiting</div><div>Process 16 exiting</div><di=
+v>Process 17 exiting</div><div>Process 18 exiting</div><div>Process 19 exit=
+ing</div><div>Process 20 exiting</div><div>Process 21 exiting</div><div>Pro=
+cess 22 exiting</div><div>Process 23 exiting</div><div>Process 24 exiting</=
+div><div>Process 25 exiting</div><div>Process 26 exiting</div><div>Process =
+27 exiting</div><div>Process 28 exiting</div><div>Process 29 exiting</div><=
+div>Process 30 exiting</div><div>Process 31 exiting</div></div><div style=
+=3D"color:rgb(0,0,0);font-family:Helvetica;font-size:12px">```</div><div st=
+yle=3D"color:rgb(0,0,0);font-family:Helvetica;font-size:12px"><br></div><di=
+v style=3D"color:rgb(0,0,0);font-family:Helvetica;font-size:12px">Any help =
+would be appreciated!</div></div></blockquote></div></div>
+------=_Part_17971_939836210.1519167935044--
+
+------=_Part_17970_1695262959.1519167935043--

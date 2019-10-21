@@ -1,0 +1,144 @@
+Date: Wed, 9 May 2018 01:26:08 -0700 (PDT)
+From: =?UTF-8?Q?C=C3=A9dric_Clerget?= <cedric...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <277b6001-d612-4d59-8e32-ee7659168775@lbl.gov>
+In-Reply-To: <ae4b2f59-1f66-4b00-acdd-8aaa6867931b@lbl.gov>
+References: <bfa71130-d16c-4890-a138-c35549ae4fc0@lbl.gov>
+ <ae4b2f59-1f66-4b00-acdd-8aaa6867931b@lbl.gov>
+Subject: Re: Disk latency
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_25524_693140189.1525854368804"
+
+------=_Part_25524_693140189.1525854368804
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_25525_872930018.1525854368804"
+
+------=_Part_25525_872930018.1525854368804
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Hi Carla,
+
+Those differences are normal, nothing magical here :), you're writing on=20
+/tmp which is certainly a physical disk, however when you run inside=20
+container on /home like you did, you're writing on a memory filesystem=20
+(tmpfs), that explains those big difference.
+You would observe same results as in container by testing on host :
+
+$ sudo mount -t tmpfs tmpfs /mnt
+$ dd if=3D/dev/zero of=3D/mnt/test bs=3D512 count=3D1000 oflag=3Ddsync
+
+C=C3=A9dric
+
+Le mardi 8 mai 2018 15:47:04 UTC+2, C. Sauvanaud a =C3=A9crit :
+>
+> Dear all,=20
+>
+> Is any one able to replicate this difference in disk latency?
+>
+> Best,
+> Carla
+>
+> On Wednesday, 18 April 2018 17:57:20 UTC+2, C. Sauvanaud wrote:
+>>
+>> Hi all,
+>>
+>> I was studying disk access latency using Singularity 2.4 and I notice=20
+>> that it is better than bare metal when running in a non-mount directory=
+=20
+>> (for example in /home when running my instance with sudo)
+>>
+>> See below an example:
+>> *- Bare metal*
+>>   ~$ sudo  dd if=3D/dev/zero *of=3D/tmp*/test.img bs=3D512 count=3D1000=
+=20
+>> oflag=3Ddsync
+>>   1000+0 records in
+>>   1000+0 records out
+>>   512000 bytes (512 kB, 500 KiB) copied, 24.0186 s, *21.3 kB/s*
+>>
+>> *- Singularity*
+>>   ~$ *sudo singularity* shell instance://myinstance
+>>   Singularity: Invoking an interactive shell within container...
+>>   ~# dd if=3D/dev/zero *of=3D/home*/test2.img bs=3D512 count=3D1000 ofla=
+g=3Ddsync
+>>   1000+0 records in
+>>   1000+0 records out
+>>   512000 bytes (512 kB, 500 KiB) copied, 0.00074016 s, *692 MB/s*
+>>   ~# dd if=3D/dev/zero *of=3D/home*/test2.img bs=3D512 count=3D1000 ofla=
+g=3Ddsync
+>>   1000+0 records in
+>>   1000+0 records out
+>>   512000 bytes (512 kB, 500 KiB) copied, 0.000734662 s, *697 MB/s*
+>>   ~# dd if=3D/dev/zero *of=3D/tmp/*test2.img bs=3D512 count=3D1000 oflag=
+=3Ddsync
+>>   1000+0 records in
+>>   1000+0 records out
+>>   512000 bytes (512 kB, 500 KiB) copied, 23.8432 s, *21.5 kB/s*
+>>   ~# dd if=3D/dev/zero* of=3D/tmp/*test2.img bs=3D512 count=3D1000 oflag=
+=3Ddsync
+>>   1000+0 records in
+>>   1000+0 records out
+>>   512000 bytes (512 kB, 500 KiB) copied, 24.3417 s,* 21.0 kB/s*
+>> ~# exit
+>>
+>> Same results are observed using containers.
+>> Do you have any clue about what in Singularity implementation enables=20
+>> this?
+>>
+>> All the best,
+>> Carla
+>>
+>
+------=_Part_25525_872930018.1525854368804
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Carla,<br><br>Those differences are normal, nothing mag=
+ical here :), you&#39;re writing on /tmp which is certainly a physical disk=
+, however when you run inside container on /home like you did, you&#39;re w=
+riting on a memory filesystem (tmpfs), that explains those big difference.<=
+br>You would observe same results as in container by testing on host :<br><=
+br>$ sudo mount -t tmpfs tmpfs /mnt<br>$ dd if=3D/dev/zero of=3D/mnt/test b=
+s=3D512 count=3D1000 oflag=3Ddsync<br><br>C=C3=A9dric<br><br>Le mardi 8 mai=
+ 2018 15:47:04 UTC+2, C. Sauvanaud a =C3=A9crit=C2=A0:<blockquote class=3D"=
+gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc so=
+lid;padding-left: 1ex;"><div dir=3D"ltr">Dear all,=C2=A0<div><br></div><div=
+>Is any one able to replicate this difference in disk latency?</div><div><b=
+r></div><div>Best,</div><div>Carla<br><br>On Wednesday, 18 April 2018 17:57=
+:20 UTC+2, C. Sauvanaud  wrote:<blockquote class=3D"gmail_quote" style=3D"m=
+argin:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><div=
+ dir=3D"ltr">Hi all,<div><br></div><div>I was studying disk access latency =
+using Singularity 2.4 and I notice that it is better than bare metal when r=
+unning in a non-mount directory (for example in /home when running my insta=
+nce with sudo)</div><div><br></div><div>See below an example:</div><div><di=
+v><div><b><i>- Bare metal</i></b></div><div>=C2=A0 ~$ sudo=C2=A0 dd if=3D/d=
+ev/zero=C2=A0<b>of=3D/tmp</b>/test.img bs=3D512 count=3D1000 oflag=3Ddsync<=
+br></div><div>=C2=A0 1000+0 records in</div><div>=C2=A0 1000+0 records out<=
+/div><div>=C2=A0 512000 bytes (512 kB, 500 KiB) copied, 24.0186 s,=C2=A0<b>=
+21.3 kB/s</b></div></div><div><br></div></div><div><b><i>- Singularity</i><=
+/b></div><div><div>=C2=A0 ~$ <b>sudo singularity</b> shell instance://myins=
+tance</div><div>=C2=A0 Singularity: Invoking an interactive shell within co=
+ntainer...</div><div>=C2=A0 ~# dd if=3D/dev/zero <b>of=3D/home</b>/test2.im=
+g bs=3D512 count=3D1000 oflag=3Ddsync<br></div><div>=C2=A0 1000+0 records i=
+n</div><div>=C2=A0 1000+0 records out</div><div>=C2=A0 512000 bytes (512 kB=
+, 500 KiB) copied, 0.00074016 s, <b>692 MB/s</b></div><div><div>=C2=A0 ~# d=
+d if=3D/dev/zero=C2=A0<b>of=3D/home</b>/test2.<wbr>img bs=3D512 count=3D100=
+0 oflag=3Ddsync</div><div>=C2=A0 1000+0 records in</div><div>=C2=A0 1000+0 =
+records out</div><div>=C2=A0 512000 bytes (512 kB, 500 KiB) copied, 0.00073=
+4662 s,=C2=A0<b>697 MB/s</b></div></div><div>=C2=A0 ~# dd if=3D/dev/zero <b=
+>of=3D/tmp/</b>test2.img bs=3D512 count=3D1000 oflag=3Ddsync</div><div>=C2=
+=A0 1000+0 records in</div><div>=C2=A0 1000+0 records out</div><div>=C2=A0 =
+512000 bytes (512 kB, 500 KiB) copied, 23.8432 s, <b>21.5 kB/s</b></div><di=
+v>=C2=A0 ~# dd if=3D/dev/zero<b> of=3D/tmp/</b>test2.img bs=3D512 count=3D1=
+000 oflag=3Ddsync</div><div>=C2=A0 1000+0 records in</div><div>=C2=A0 1000+=
+0 records out</div><div>=C2=A0 512000 bytes (512 kB, 500 KiB) copied, 24.34=
+17 s,<b> 21.0 kB/s</b></div><div>~# exit</div><div><br></div><div>Same resu=
+lts are observed using containers.</div></div><div>Do you have any clue abo=
+ut what in Singularity implementation enables this?</div><div><br></div><di=
+v>All the best,</div><div>Carla</div></div></blockquote></div></div></block=
+quote></div>
+------=_Part_25525_872930018.1525854368804--
+
+------=_Part_25524_693140189.1525854368804--

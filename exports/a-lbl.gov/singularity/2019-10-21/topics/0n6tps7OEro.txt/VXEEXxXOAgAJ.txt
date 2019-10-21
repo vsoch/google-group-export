@@ -1,0 +1,206 @@
+Date: Thu, 11 May 2017 15:42:59 -0700 (PDT)
+From: =?UTF-8?Q?C=C3=A9dric_Clerget?= <cedric...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <da7ea31b-d274-4d78-aa08-63ada13170e5@lbl.gov>
+In-Reply-To: <CAApQTTiLf2t0W9HeyOEn87jTFwos9ELLzQQAvRoZMc9zMq9gog@mail.gmail.com>
+References: <47877de4-59bd-4bec-ae7b-d6efae654416@lbl.gov>
+ <CAApQTTiLf2t0W9HeyOEn87jTFwos9ELLzQQAvRoZMc9zMq9gog@mail.gmail.com>
+Subject: Re: [Singularity] mpi and portability
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2090_1089027798.1494542579112"
+
+------=_Part_2090_1089027798.1494542579112
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2091_1569410910.1494542579113"
+
+------=_Part_2091_1569410910.1494542579113
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Hi Greg,
+
+Thank you very much for your quick response. It's more clear now.
+
+C=C3=A9dric
+
+Le vendredi 12 mai 2017 00:16:09 UTC+2, Gregory Kurtzer a =C3=A9crit :
+>
+> Hi Cedric,
+>
+> Yes, always be truthful! I second that!
+>
+> Regarding your findings, yes, you are 100% correct in that the IB support=
+=20
+> must be present within the container for the MPI to be able to communicat=
+e=20
+> with the underlying hardware. There is no way to virtualize that as of ye=
+t,=20
+> and yes, this does have an impact on portability due to the reliance of=
+=20
+> kernel<->userspace compatibility within the OFED stack. We would like to=
+=20
+> mitigate this but it will take collaboration with the OFED community whic=
+h=20
+> still needs to happen (and introductions would be greatly appreciated fro=
+m=20
+> anybody on the list).
+>
+> Singularity by default will blur the lines between container and host as=
+=20
+> much as possible, and that includes sharing devices between the=20
+> environments. So from a container perspective, Singularity really lends=
+=20
+> itself to this easily. But, from a user-space and environment perspective=
+,=20
+> you will still need the necessary libraries to communicate with the=20
+> underlying hardware; this is true in a container or when running on the=
+=20
+> host proper.
+>
+> Now to your questions.
+>
+> 1. The configure options (as far as I know) will be auto-discovered as=20
+> long as you have the necessary IB development environment installed=20
+> wherever you are building OMPI/MVAPICH.
+>
+> 2. Yes, you should embed all of the libraries and headers necessary to=20
+> work on the hardware configurations you wish to be compatible with.=20
+> Luckily, we have figured this out with GPUs, but not OFED, Qlogic, or=20
+> OmniPath.
+>
+> Hope that helps!
+>
+> Greg
+>
+>
+>
+> On Thu, May 11, 2017 at 2:55 PM, C=C3=A9dric Clerget <ced...@gmail.com=20
+> <javascript:>> wrote:
+>
+>> Hello,
+>>
+>> I will speak next week in a workshop about reproducible science and=20
+>> portability and I wouldn't lie about MPI and Singularity containers.
+>>
+>> I managed to run MPI applications with Singularity and OpenMPI.
+>>
+>> So I installed version 2.1.0rc4 on host (centos 6) and container (ubuntu=
+=20
+>> 16.04), by following the documentation I simply compiled OpenMPI in=20
+>> container with
+>> ./configure && make && make install.
+>> On the host: ./configure --with-sge --with-psm && make && make install
+>>
+>> All works as expected with a hello example. To be sure it run on=20
+>> Infiniband, I launched a PingPong between two hosts
+>> and latency results show it used Ethernet.
+>> The solution was to install libpsm-infinipath1 and libpsm-infinipath1-de=
+v=20
+>> package and recompile OMPI with ./configure --with-psm
+>>
+>> All documentations just did ./configure in container without any options=
+.
+>>
+>> I red in this group that MVAPICH works without problem with singularity,=
+=20
+>> give it a try: same behaviour, need to install psm headers too and=20
+>> recompile.
+>>
+>> and came to these questions:
+>>
+>>    - is there some options to pass in configure on OMPI/MVAPICH host
+>>    - for portability should I embed all libs/headers to work with many=
+=20
+>>    hardware configurations (mellanox, glogic, intel)
+>>   =20
+>> It would be grateful if you would share you experience about that
+>>
+>> Regards,
+>> C=C3=A9dric Clerget
+>>
+>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s=20
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n=20
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+------=_Part_2091_1569410910.1494542579113
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Greg,<br><br>Thank you very much for your quick respons=
+e. It&#39;s more clear now.<br><br>C=C3=A9dric<br><br>Le vendredi 12 mai 20=
+17 00:16:09 UTC+2, Gregory Kurtzer a =C3=A9crit=C2=A0:<blockquote class=3D"=
+gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc so=
+lid;padding-left: 1ex;"><div dir=3D"ltr">Hi Cedric,<div><br></div><div>Yes,=
+ always be truthful! I second that!</div><div><br></div><div>Regarding your=
+ findings, yes, you are 100% correct in that the IB support must be present=
+ within the container for the MPI to be able to communicate with the underl=
+ying hardware. There is no way to virtualize that as of yet, and yes, this =
+does have an impact on portability due to the reliance of kernel&lt;-&gt;us=
+erspace compatibility within the OFED stack. We would like to mitigate this=
+ but it will take collaboration with the OFED community which still needs t=
+o happen (and introductions would be greatly appreciated from anybody on th=
+e list).</div><div><br></div><div>Singularity by default will blur the line=
+s between container and host as much as possible, and that includes sharing=
+ devices between the environments. So from a container perspective, Singula=
+rity really lends itself to this easily. But, from a user-space and environ=
+ment perspective, you will still need the necessary libraries to communicat=
+e with the underlying hardware; this is true in a container or when running=
+ on the host proper.</div><div><br></div><div>Now to your questions.</div><=
+div><br></div><div>1. The configure options (as far as I know) will be auto=
+-discovered as long as you have the necessary IB development environment in=
+stalled wherever you are building OMPI/MVAPICH.</div><div><br></div><div>2.=
+ Yes, you should embed all of the libraries and headers necessary to work o=
+n the hardware configurations you wish to be compatible with. Luckily, we h=
+ave figured this out with GPUs, but not OFED, Qlogic, or OmniPath.</div><di=
+v><br></div><div>Hope that helps!</div><div><br></div><div>Greg</div><div><=
+br></div><div><br><div><br><div class=3D"gmail_quote">On Thu, May 11, 2017 =
+at 2:55 PM, C=C3=A9dric Clerget <span dir=3D"ltr">&lt;<a href=3D"javascript=
+:" target=3D"_blank" gdf-obfuscated-mailto=3D"DjiasEEBAQAJ" rel=3D"nofollow=
+" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D=
+"this.href=3D&#39;javascript:&#39;;return true;">ced...@gmail.com</a>&gt;</=
+span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8e=
+x;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Hello,<br><=
+br>I will speak next week in a workshop about reproducible science and port=
+ability and I wouldn&#39;t lie about MPI and Singularity containers.<br><br=
+>I managed to run MPI applications with Singularity and OpenMPI.<br><br>So =
+I installed version 2.1.0rc4 on host (centos 6) and container (ubuntu 16.04=
+), by following the documentation I simply compiled OpenMPI in container wi=
+th<br>./configure &amp;&amp; make &amp;&amp; make install.<br>On the host: =
+./configure --with-sge --with-psm &amp;&amp; make &amp;&amp; make install<b=
+r><br>All works as expected with a hello example. To be sure it run on Infi=
+niband, I launched a PingPong between two hosts<br>and latency results show=
+ it used Ethernet.<br>The solution was to install libpsm-infinipath1 and li=
+bpsm-infinipath1-dev package and recompile OMPI with ./configure --with-psm=
+<br><br>All documentations just did ./configure in container without any op=
+tions.<br><br>I red in this group that MVAPICH works without problem with s=
+ingularity, give it a try: same behaviour, need to install psm headers too =
+and recompile.<br><br>and came to these questions:<br><ul><li>is there some=
+ options to pass in configure on OMPI/MVAPICH host</li><li>for portability =
+should I embed all libs/headers to work with many hardware configurations (=
+mellanox, glogic, intel)<br></li></ul>It would be grateful if you would sha=
+re you experience about that<br><br>Regards,<br>C=C3=A9dric Clerget<span><f=
+ont color=3D"#888888"><br></font></span></div><span><font color=3D"#888888"=
+>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+DjiasEEBAQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</font></span></blockquote></div><br></div></div></div>
+</blockquote></div>
+------=_Part_2091_1569410910.1494542579113--
+
+------=_Part_2090_1089027798.1494542579112--

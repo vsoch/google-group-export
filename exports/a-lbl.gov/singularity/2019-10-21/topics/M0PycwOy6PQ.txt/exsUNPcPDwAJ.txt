@@ -1,0 +1,660 @@
+X-Received: by 2002:a17:902:9302:: with SMTP id bc2-v6mr1155043plb.36.1535162789311;
+        Fri, 24 Aug 2018 19:06:29 -0700 (PDT)
+X-BeenThere: singularity@lbl.gov
+Received: by 2002:a17:902:b209:: with SMTP id t9-v6ls201908plr.5.gmail; Fri,
+ 24 Aug 2018 19:06:28 -0700 (PDT)
+X-Received: by 2002:a17:902:585:: with SMTP id f5-v6mr3911248plf.7.1535162788173;
+        Fri, 24 Aug 2018 19:06:28 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1535162788; cv=none;
+        d=google.com; s=arc-20160816;
+        b=M4RTzzx+RLuSA+3FqY0vAKCgF5a8vOoUfmM38b9va6OXutIJqVzZIwOhZ2bKpH9T3N
+         +XlO0unaBVCC+d+W4Kvm3dzQyP6kE/MWT2oYdIU4OKCn9ACzPEIroL19gIFDYX6eZ5Ss
+         ZT41mWzEq4+coVEdEBftUbhILNAkNTUd0LrWZltbxgpi+8ukGTip+MDStVFjWz/Klt1i
+         rL5dc0iZpjXqzv/F7NFzEA4hBp5yV4NiffBG0ZKoJBncW+ITLjD7vYbCv+qDo0JXW6Zc
+         NhOrIVwedSeQF9UtVNCx7e7Z/L6rCNYe8+TYQBdGa/FnCO9OhLUJKw/THaTbwZYpwzTV
+         69JQ==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816;
+        h=message-id:in-reply-to:to:references:date:subject:mime-version:from
+         :dkim-signature:arc-authentication-results;
+        bh=qFGelLGehMLr/cAesPqVmWKZNVIIVdqZFXafWnKl5N8=;
+        b=TQYpAKKDlpvnSp/D2aStmJ0Z3dkunf2NZQch3gr8yDhorLS4CVOUTawAlE5oLIHJMi
+         FbWQUWjTxG477gPVtTbtaWCxe+EUI8diTu8Qos3MFWnWGjrTGbjtShabCu+7cNXhRjfG
+         OtcDs1Vwi5LhCmIfNiQarnZlZgdEFkE3PuaD5GhmmFbe89yk9vrN8X2fGB9EZwvrIQYF
+         dd1syc5uB3SJbgEWGEK7svV9H+yP8bAunPRLj3yhLEBnrzaeCCkezvV6o9o+pGp5psj9
+         p1fGM3aScaDYotS2S6i6a90kJPiYrVNuskKA/Cygp4mx5nCb20GpWIcTsrgK33aVEQ29
+         dniw==
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=pass head...@sylabs.io header.s=google header.b=VWGdmAUL;
+       spf=pass (google.com: domain of dtr...@sylabs.io designates 209.85.218.41 as permitted sender) smtp.mailfrom=dtr...@sylabs.io
+Return-Path: <dtr...@sylabs.io>
+Received: from fe3.lbl.gov (fe3.lbl.gov. [128.3.41.68])
+        by mx.google.com with ESMTP id q23-v6si8518517pgq.483.2018.08.24.19.06.27
+        for <singu...@lbl.gov>;
+        Fri, 24 Aug 2018 19:06:27 -0700 (PDT)
+Received-SPF: pass (google.com: domain of dtr...@sylabs.io designates 209.85.218.41 as permitted sender) client-ip=209.85.218.41;
+Authentication-Results: mx.google.com;
+       dkim=pass head...@sylabs.io header.s=google header.b=VWGdmAUL;
+       spf=pass (google.com: domain of dtr...@sylabs.io designates 209.85.218.41 as permitted sender) smtp.mailfrom=dtr...@sylabs.io
+X-Ironport-SBRS: 3.4
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: =?us-ascii?q?A2FJAwBjuYBbhinaVdFbHAEBAQQBAQoBA?=
+ =?us-ascii?q?YJXToEPgSeDawaULYINiFMLjUUUgSs7CxgBCguBAkeCL0YCgxEhNRcBAgEBAgE?=
+ =?us-ascii?q?BAgEBAhABAQEICwsIGw4jDII1BQIDGgYFBEs6AwEBAQEBAQEBASMBAQEBAQEBA?=
+ =?us-ascii?q?QEBAQEBAQEBGgINJj0BAQEBAgEjBBkBAQwsBAsLGCAHAwICIRADAQUBCxEGCAc?=
+ =?us-ascii?q?EARwEgwABKAGBQAMIBQgDAgqWaDyKHG97M4J1AQEFhCcNgykDBQkBCIkOF4FBP?=
+ =?us-ascii?q?4E5H4IeLoJWRQKBJQEJAQwGAUyCVDGCJo4MhE6IDRcrCYYzgngFgy+DEBeINoY?=
+ =?us-ascii?q?QixxjhDQBNoI2AgQCBAUCBQ8hgSICaC5xTSwMZQGCPj6BWwwOCXoBCIJCgmSID?=
+ =?us-ascii?q?FEQjGwOFzCBdAEB?=
+X-IronPort-AV: E=Sophos;i="5.53,285,1531810800"; 
+   d="scan'208,217";a="126495684"
+Received: from mail-oi0-f41.google.com ([209.85.218.41])
+  by fe3.lbl.gov with ESMTP; 24 Aug 2018 19:06:10 -0700
+Received: by mail-oi0-f41.google.com with SMTP id b15-v6so18451160oib.10
+        for <singu...@lbl.gov>; Fri, 24 Aug 2018 19:06:10 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=sylabs.io; s=google;
+        h=from:mime-version:subject:date:references:to:in-reply-to:message-id;
+        bh=qFGelLGehMLr/cAesPqVmWKZNVIIVdqZFXafWnKl5N8=;
+        b=VWGdmAUL3ihiBl87XEra1ufVoa234BoqExtji1tphIYCPKHifHStY8KOtwRsbkxJT1
+         RseZGA+/ZBRwEV0y6+BwT3K3cJjcRU7ZbZbVreAiyRPBBQ53krnW31gWqcjs9kSubrXF
+         9ddXHixoF1yfTPOyj1W8un8cUafaBiuYb0zGrUjX91dzAoxLRsjiw02rjdTrWdLyNeHk
+         eCSaTeQNN0S39gNxrk8FgBqBRVdaB0POFoZXXIlDpq+AXHnPSuR2qIP9yuvFTdOrgA3B
+         PSfiQEB1zMqGN3KAahahqn9X0p4NW0legYBdFXgofKDuAh5Ony20q5uwg0nBLeHbCPqq
+         V+eQ==
+X-Gm-Message-State: APzg51D2Yr0e4VR4igoYebce4pwduCQuGIb2iT/OjGlkbWIbXwZVnjPs
+	L316QetCE3y1yGNzF2e7EOtKILJp5GCdTg==
+X-Received: by 2002:aca:190d:: with SMTP id l13-v6mr3785425oii.216.1535162769337;
+        Fri, 24 Aug 2018 19:06:09 -0700 (PDT)
+Return-Path: <dtr...@sylabs.io>
+Received: from dct-sylabs.randomroad.home ([47.186.240.75])
+        by smtp.gmail.com with ESMTPSA id r10-v6sm7468883oif.37.2018.08.24.19.06.08
+        for <singu...@lbl.gov>
+        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Fri, 24 Aug 2018 19:06:08 -0700 (PDT)
+From: David Trudgian <dtr...@sylabs.io>
+Content-Type: multipart/alternative;
+	boundary="Apple-Mail=_5D02308E-4499-4426-8ECA-1DCF76133CEA"
+Mime-Version: 1.0 (Mac OS X Mail 11.5 \(3445.9.1\))
+Subject: Re: [Singularity] Singularity and the RStudio Parallel Package
+Date: Fri, 24 Aug 2018 21:06:07 -0500
+References: <CA+58tPbxXWp2eAGsw+6-Zjz2=F5vjnJ8OBc7BEO75dw93rCibQ@mail.gmail.com>
+ <E0D0F095-B06B-4B68-9B3E-1E537267A36D@sylabs.io>
+ <CA+58tPa0z8tQf6CctiZAp3ZOXcgN+-GEKqQdvVU=wKe0+joPKQ@mail.gmail.com>
+ <945349D2-E8A1-4B19-83C2-1231B2C10379@sylabs.io>
+ <CA+58tPbx53uG3ztCzs6uAKqS1fzTc2NBwRO9qkXUkCG0got2NA@mail.gmail.com>
+ <2FEFF9E8-4169-4E24-A424-CB80B2A0C230@sylabs.io>
+ <CA+58tPZzo4WKy=qqkBavR=R77RK+inX_a-jNNhy-cwTGj6Se0w@mail.gmail.com>
+To: 'Oliver Freyermuth' via singularity <singu...@lbl.gov>
+In-Reply-To: <CA+58tPZzo4WKy=qqkBavR=R77RK+inX_a-jNNhy-cwTGj6Se0w@mail.gmail.com>
+Message-Id: <D7DD70CC-242C-4E58-BF10-B743AAB737CF@sylabs.io>
+X-Mailer: Apple Mail (2.3445.9.1)
+
+--Apple-Mail=_5D02308E-4499-4426-8ECA-1DCF76133CEA
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain;
+	charset=utf-8
+
+Hi Ping,
+
+I am using 2.6.0 - it=E2=80=99s *highly* recommended to use the latest stab=
+le version. See the release page on GitHub for security and bug fix informa=
+tion.
+
+https://github.com/singularityware/singularity/releases
+
+Cheers,
+
+DT
+
+> On Aug 24, 2018, at 5:27 PM, Ping Luo <luop...@gmail.com> wrote:
+>=20
+> David,
+>=20
+> That's interesting. Mine still hangs=20
+>=20
+> $ singularity exec 3.4.3/rstudio.simg R
+>=20
+> R version 3.4.3 (2017-11-30) -- "Kite-Eating Tree"
+> Copyright (C) 2017 The R Foundation for Statistical Computing
+> Platform: x86_64-pc-linux-gnu (64-bit)
+>=20
+> R is free software and comes with ABSOLUTELY NO WARRANTY.
+> You are welcome to redistribute it under certain conditions.
+> Type 'license()' or 'licence()' for distribution details.
+>=20
+>   Natural language support but running in an English locale
+>=20
+> R is a collaborative project with many contributors.
+> Type 'contributors()' for more information and
+> 'citation()' on how to cite R or R packages in publications.
+>=20
+> Type 'demo()' for some demos, 'help()' for on-line help, or
+> 'help.start()' for an HTML browser interface to help.
+> Type 'q()' to quit R.
+>=20
+> > library(parallel)
+> > makeCluster(4, outfile=3D"")
+> starting worker pid=3D20154 on localhost:11709 at 22:24:33.362
+> Error in socketConnection(master, port =3D port, blocking =3D TRUE, open =
+=3D "a+b",  :=20
+>   cannot open the connection
+> Calls: <Anonymous> ... doTryCatch -> recvData -> makeSOCKmaster -> socket=
+Connection
+> In addition: Warning message:
+> In socketConnection(master, port =3D port, blocking =3D TRUE, open =3D "a=
++b",  :
+>   localhost:11709 cannot be opened
+> Execution halted
+>=20
+>=20
+> I think it is not a problem of OOD, as I am running this without OOD. The=
+ singularity version I am using is 2.4.2. Which version are you using?
+>=20
+> Ping
+>=20
+>=20
+> On Fri, Aug 24, 2018 at 5:15 PM David Trudgian <dtr...@sylabs.io <mailto:=
+dtr...@sylabs.io>> wrote:
+> Ping,
+>=20
+> That=E2=80=99s interesting - if I set that it still works okay=E2=80=A6.
+>=20
+> $ SINGULARITY_CONTAIN=3D1 singularity run r.simg
+>=20
+> R version 3.4.4 (2018-03-15) -- "Someone to Lean On"
+> Copyright (C) 2018 The R Foundation for Statistical Computing
+> Platform: x86_64-pc-linux-gnu (64-bit)
+>=20
+> R is free software and comes with ABSOLUTELY NO WARRANTY.
+> You are welcome to redistribute it under certain conditions.
+> Type 'license()' or 'licence()' for distribution details.
+>=20
+>   Natural language support but running in an English locale
+>=20
+> R is a collaborative project with many contributors.
+> Type 'contributors()' for more information and
+> 'citation()' on how to cite R or R packages in publications.
+>=20
+> Type 'demo()' for some demos, 'help()' for on-line help, or
+> 'help.start()' for an HTML browser interface to help.
+> Type 'q()' to quit R.
+>=20
+> > library(parallel)
+> > cl <- makeCluster(4,  outfile=3D"")
+> starting worker pid=3D31864 on localhost:11735 at 22:11:37.305
+> starting worker pid=3D31873 on localhost:11735 at 22:11:37.495
+> starting worker pid=3D31882 on localhost:11735 at 22:11:37.685
+> starting worker pid=3D31891 on localhost:11735 at 22:11:37.871
+> >
+>=20
+> Do you have pointer to what exact singularity command OOD is using, what =
+version of Singularity is in play here etc? I=E2=80=99ve had a quick look i=
+n some OOD code and it seems like a lot depends on how its installed, and I=
+ didn=E2=80=99t find exactly where Singularity is being used to run R.
+>=20
+> Thanks.
+>=20
+>=20
+>=20
+>> On Aug 24, 2018, at 5:06 PM, Ping Luo <luop...@gmail.com <mailto:luop...=
+@gmail.com>> wrote:
+>>=20
+>> David,
+>>=20
+>> I think I found out the cause of the problem. The environment variable S=
+INGULARITY_CONTAIN is set to 1 before OOD runs 'singularity exec rserver ..=
+.'. If I comment it out and then start RStudio in OOD, I can run makeCluste=
+r without any problem.=20
+>>=20
+>> You can reproduce this without OOD by setting SINGULARITY_CONTAIN=3D1 be=
+fore you run 'singularity exec rserver' from the command line.
+>>=20
+>> I don't know what's the use of this environment variable. I was guessing=
+ it was used to limit number of workers to 1. So I tried to set it to some =
+number larger than 1. It always hung no matter how large SINGULARITY_CONTAI=
+N was specified. So my guess seems not right. Do you know what it does?
+>>=20
+>> Thanks,
+>>=20
+>> Ping
+>>=20
+>> On Fri, Aug 24, 2018 at 10:57 AM David Trudgian <dtr...@sylabs.io <mailt=
+o:dtr...@sylabs.io>> wrote:
+>> Hi Ping,
+>>=20
+>>> There is no error in rsession.log file. Where should I check logs for S=
+ingularity?
+>>=20
+>> Am afraid in this case there is not going to be anything useful in Singu=
+larity logs. The issue is something to do with how the R parallel package i=
+s working. However, detailed logs can be obtained by adding the `-d` option=
+ to the singularity command, e.g. `singularity -d run myimage.sif`
+>>=20
+>> On my test machine, building your container and running under singularit=
+y I get success...
+>>=20
+>> > library(parallel)
+>> > cl <- makeCluster(4)
+>> > cl
+>> socket cluster with 4 nodes on host =E2=80=98localhost=E2=80=99
+>>=20
+>> By default R parallel makeCluster sets up an R cluster with socket commu=
+nication. Looking around on the net there is a lot that can potentially go =
+wrong, and the most common failure mode is just hanging indefinitely. It=E2=
+=80=99s possible to force a bit more info with=E2=80=A6
+>>=20
+>> > cl <- makeCluster(4,  outfile=3D=E2=80=9C")
+>>=20
+>> =E2=80=A6 which will ensure any errors from the workers spinning up is s=
+ent to standard error/output.
+>>=20
+>> You can also get the command that is used to startup workers - and then =
+manually try to run it, to see what is going on. For me the the command loo=
+ks like...
+>>=20
+>> > cl <- makeCluster(4, manual=3DT, outfile=3D"")
+>> Manually start worker on localhost with
+>>      '/usr/lib/R/bin/Rscript' --default-packages=3Ddatasets,utils,grDevi=
+ces,graphics,stats,methods -e 'parallel:::.slaveRSOCK()' MASTER=3Dlocalhost=
+ PORT=3D11156 OUT=3D TIMEOUT=3D2592000 XDR=3DTRUE
+>>=20
+>> Do you have any detail on how Singularity is installed in the Open OnDem=
+and environment you are using, and how exactly you are running the containe=
+r? i.e. what is the `singularity run =E2=80=A6..` or `singularity exec =E2=
+=80=A6.` command being used?
+>>=20
+>> Thanks=20
+>>=20
+>> DT
+>>=20
+>>=20
+>>=20
+>>> On Aug 23, 2018, at 7:26 PM, Ping Luo <luop...@gmail.com <mailto:luop..=
+.@gmail.com>> wrote:
+>>>=20
+>>> David,
+>>>=20
+>>> The Singularity container is created from the recipe attached. Singular=
+ity is running under CentOS 6.10, on a single machine. It is running throug=
+h Open OnDemand (https://osc.github.io/ood-documentation/master/ <https://o=
+sc.github.io/ood-documentation/master/>), which I think can be considered a=
+s running through a scheduler.=20
+>>>=20
+>>> There is no error in rsession.log file. Where should I check logs for S=
+ingularity?
+>>>=20
+>>> Thanks,
+>>>=20
+>>> =20
+>>> Ping
+>>>=20
+>>> On Thu, Aug 23, 2018 at 6:11 PM David Trudgian <dtr...@sylabs.io <mailt=
+o:dtr...@sylabs.io>> wrote:
+>>> Hi Ping,
+>>>=20
+>>> This will need a bit more information to look at.
+>>>=20
+>>> What is the Singularity container, or recipe you are using? What kind o=
+f environment are you running Singularity under - on a single machine, clus=
+ter through a scheduler etc?
+>>>=20
+>>> Is there any debug output / errors?
+>>>=20
+>>> Thanks.
+>>>=20
+>>> DT
+>>>=20
+>>>> On Aug 23, 2018, at 6:07 PM, Ping Luo <luop...@gmail.com <mailto:luop.=
+..@gmail.com>> wrote:
+>>>>=20
+>>>> I can run the following code in RStudio without Singularity, but it ha=
+ngs at makeCluster(4) when RStudio is running in Singularity. How can I res=
+olve the issue?
+>>>>=20
+>>>> > library(parallel)
+>>>> > cl <- makeCluster(4)
+>>>>=20
+>>>> Ping
+>>>>=20
+>>>>=20
+>>>> --=20
+>>>> You received this message because you are subscribed to the Google Gro=
+ups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send=
+ an email to singu...@lbl.gov <mailto:singu...@lbl.gov>.
+>>>=20
+>>>=20
+>>> --=20
+>>> You received this message because you are subscribed to the Google Grou=
+ps "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send =
+an email to singu...@lbl.gov <mailto:singu...@lbl.gov>.
+>>>=20
+>>> --=20
+>>> You received this message because you are subscribed to the Google Grou=
+ps "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send =
+an email to singu...@lbl.gov <mailto:singu...@lbl.gov>.
+>>> <singularity>
+>>=20
+>>=20
+>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n email to singu...@lbl.gov <mailto:singu...@lbl.gov>.
+>>=20
+>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n email to singu...@lbl.gov <mailto:singu...@lbl.gov>.
+>=20
+>=20
+> --=20
+> You received this message because you are subscribed to the Google Groups=
+ "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an=
+ email to singu...@lbl.gov <mailto:singu...@lbl.gov>.
+>=20
+> --=20
+> You received this message because you are subscribed to the Google Groups=
+ "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an=
+ email to singu...@lbl.gov <mailto:singu...@lbl.gov>.
+
+
+--Apple-Mail=_5D02308E-4499-4426-8ECA-1DCF76133CEA
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/html;
+	charset=utf-8
+
+<html><head><meta http-equiv=3D"Content-Type" content=3D"text/html; charset=
+=3Dutf-8"></head><body style=3D"word-wrap: break-word; -webkit-nbsp-mode: s=
+pace; line-break: after-white-space;" class=3D"">Hi Ping,<div class=3D""><b=
+r class=3D""></div><div class=3D"">I am using 2.6.0 - it=E2=80=99s *highly*=
+ recommended to use the latest stable version. See the release page on GitH=
+ub for security and bug fix information.</div><div class=3D""><br class=3D"=
+"></div><div class=3D""><a href=3D"https://github.com/singularityware/singu=
+larity/releases" class=3D"">https://github.com/singularityware/singularity/=
+releases</a></div><div class=3D""><br class=3D""></div><div class=3D"">Chee=
+rs,</div><div class=3D""><br class=3D""></div><div class=3D"">DT<br class=
+=3D""><div><br class=3D""><blockquote type=3D"cite" class=3D""><div class=
+=3D"">On Aug 24, 2018, at 5:27 PM, Ping Luo &lt;<a href=3D"mailto:luop...@g=
+mail.com" class=3D"">luop...@gmail.com</a>&gt; wrote:</div><br class=3D"App=
+le-interchange-newline"><div class=3D""><div dir=3D"ltr" class=3D""><div cl=
+ass=3D""><div class=3D""><div class=3D"">David,<br class=3D""><br class=3D"=
+"></div>That's interesting. Mine still hangs <br class=3D""><br class=3D"">=
+$ singularity exec 3.4.3/rstudio.simg R<br class=3D""><br class=3D"">R vers=
+ion 3.4.3 (2017-11-30) -- "Kite-Eating Tree"<br class=3D"">Copyright (C) 20=
+17 The R Foundation for Statistical Computing<br class=3D"">Platform: x86_6=
+4-pc-linux-gnu (64-bit)<br class=3D""><br class=3D"">R is free software and=
+ comes with ABSOLUTELY NO WARRANTY.<br class=3D"">You are welcome to redist=
+ribute it under certain conditions.<br class=3D"">Type 'license()' or 'lice=
+nce()' for distribution details.<br class=3D""><br class=3D"">&nbsp; Natura=
+l language support but running in an English locale<br class=3D""><br class=
+=3D"">R is a collaborative project with many contributors.<br class=3D"">Ty=
+pe 'contributors()' for more information and<br class=3D"">'citation()' on =
+how to cite R or R packages in publications.<br class=3D""><br class=3D"">T=
+ype 'demo()' for some demos, 'help()' for on-line help, or<br class=3D"">'h=
+elp.start()' for an HTML browser interface to help.<br class=3D"">Type 'q()=
+' to quit R.<br class=3D""><br class=3D"">&gt; library(parallel)<br class=
+=3D"">&gt; makeCluster(4, outfile=3D"")<br class=3D"">starting worker pid=
+=3D20154 on localhost:11709 at 22:24:33.362<br class=3D"">Error in socketCo=
+nnection(master, port =3D port, blocking =3D TRUE, open =3D "a+b",&nbsp; : =
+<br class=3D"">&nbsp; cannot open the connection<br class=3D"">Calls: &lt;A=
+nonymous&gt; ... doTryCatch -&gt; recvData -&gt; makeSOCKmaster -&gt; socke=
+tConnection<br class=3D"">In addition: Warning message:<br class=3D"">In so=
+cketConnection(master, port =3D port, blocking =3D TRUE, open =3D "a+b",&nb=
+sp; :<br class=3D"">&nbsp; localhost:11709 cannot be opened<br class=3D"">E=
+xecution halted<br class=3D""><br class=3D""><br class=3D""></div>I think i=
+t is not a problem of OOD, as I am running this without OOD. The singularit=
+y version I am using is 2.4.2. Which version are you using?<br class=3D""><=
+br class=3D""></div>Ping<br class=3D""><div class=3D""><div class=3D""><br =
+class=3D""></div></div></div><br class=3D""><div class=3D"gmail_quote"><div=
+ dir=3D"ltr" class=3D"">On Fri, Aug 24, 2018 at 5:15 PM David Trudgian &lt;=
+<a href=3D"mailto:dtr...@sylabs.io" class=3D"">dtr...@sylabs.io</a>&gt; wro=
+te:<br class=3D""></div><blockquote class=3D"gmail_quote" style=3D"margin:0=
+ 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div style=3D"word-w=
+rap:break-word;line-break:after-white-space" class=3D"">Ping,<div class=3D"=
+"><br class=3D""></div><div class=3D"">That=E2=80=99s interesting - if I se=
+t that it still works okay=E2=80=A6.</div><div class=3D""><br class=3D""></=
+div><div class=3D""><div class=3D"">$ SINGULARITY_CONTAIN=3D1 singularity r=
+un r.simg</div><div class=3D""><br class=3D""></div><div class=3D"">R versi=
+on 3.4.4 (2018-03-15) -- "Someone to Lean On"</div><div class=3D"">Copyrigh=
+t (C) 2018 The R Foundation for Statistical Computing</div><div class=3D"">=
+Platform: x86_64-pc-linux-gnu (64-bit)</div><div class=3D""><br class=3D"">=
+</div><div class=3D"">R is free software and comes with ABSOLUTELY NO WARRA=
+NTY.</div><div class=3D"">You are welcome to redistribute it under certain =
+conditions.</div><div class=3D"">Type 'license()' or 'licence()' for distri=
+bution details.</div><div class=3D""><br class=3D""></div><div class=3D"">&=
+nbsp; Natural language support but running in an English locale</div><div c=
+lass=3D""><br class=3D""></div><div class=3D"">R is a collaborative project=
+ with many contributors.</div><div class=3D"">Type 'contributors()' for mor=
+e information and</div><div class=3D"">'citation()' on how to cite R or R p=
+ackages in publications.</div><div class=3D""><br class=3D""></div><div cla=
+ss=3D"">Type 'demo()' for some demos, 'help()' for on-line help, or</div><d=
+iv class=3D"">'help.start()' for an HTML browser interface to help.</div><d=
+iv class=3D"">Type 'q()' to quit R.</div><div class=3D""><br class=3D""></d=
+iv><div class=3D"">&gt; library(parallel)</div><div class=3D"">&gt; cl &lt;=
+- makeCluster(4, &nbsp;outfile=3D"")</div><div class=3D"">starting worker p=
+id=3D31864 on localhost:11735 at 22:11:37.305</div><div class=3D"">starting=
+ worker pid=3D31873 on localhost:11735 at 22:11:37.495</div><div class=3D""=
+>starting worker pid=3D31882 on localhost:11735 at 22:11:37.685</div><div c=
+lass=3D"">starting worker pid=3D31891 on localhost:11735 at 22:11:37.871</d=
+iv><div class=3D"">&gt;</div></div><div class=3D""><div class=3D""><br clas=
+s=3D""></div><div class=3D"">Do you have pointer to what exact singularity =
+command OOD is using, what version of Singularity is in play here etc? I=E2=
+=80=99ve had a quick look in some OOD code and it seems like a lot depends =
+on how its installed, and I didn=E2=80=99t find exactly where Singularity i=
+s being used to run R.</div><div class=3D""><br class=3D""></div><div class=
+=3D"">Thanks.</div><div class=3D""><br class=3D""></div><div class=3D""><br=
+ class=3D""></div><div class=3D""><br class=3D""><blockquote type=3D"cite" =
+class=3D""><div class=3D"">On Aug 24, 2018, at 5:06 PM, Ping Luo &lt;<a hre=
+f=3D"mailto:luop...@gmail.com" target=3D"_blank" class=3D"">luop...@gmail.c=
+om</a>&gt; wrote:</div><br class=3D"m_2515808425267759555Apple-interchange-=
+newline"><div class=3D""><div dir=3D"ltr" class=3D""><div class=3D""><div c=
+lass=3D""><div class=3D""><div class=3D"">David,<br class=3D""><br class=3D=
+""></div>I think I found out the cause of the problem. The environment vari=
+able SINGULARITY_CONTAIN is set to 1 before OOD runs 'singularity exec rser=
+ver ...'. If I comment it out and then start RStudio in OOD, I can run make=
+Cluster without any problem. <br class=3D""><br class=3D""></div><div class=
+=3D"">You can reproduce this without OOD by setting SINGULARITY_CONTAIN=3D1=
+ before you run 'singularity exec rserver' from the command line.<br class=
+=3D""></div><div class=3D""><br class=3D""></div>I don't know what's the us=
+e of this environment variable. I was guessing it was used to limit number =
+of workers to 1. So I tried to set it to some number larger than 1. It alwa=
+ys hung no matter how large SINGULARITY_CONTAIN was specified. So my guess =
+seems not right. Do you know what it does?<br class=3D""><br class=3D""></d=
+iv>Thanks,<br class=3D""><br class=3D""></div>Ping<br class=3D""></div><br =
+class=3D""><div class=3D"gmail_quote"><div dir=3D"ltr" class=3D"">On Fri, A=
+ug 24, 2018 at 10:57 AM David Trudgian &lt;<a href=3D"mailto:dtr...@sylabs.=
+io" target=3D"_blank" class=3D"">dtr...@sylabs.io</a>&gt; wrote:<br class=
+=3D""></div><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;bo=
+rder-left:1px #ccc solid;padding-left:1ex"><div style=3D"word-wrap:break-wo=
+rd;line-break:after-white-space" class=3D"">Hi Ping,<div class=3D""><br cla=
+ss=3D""></div><div class=3D""><blockquote type=3D"cite" class=3D""><div dir=
+=3D"ltr" class=3D""><div class=3D"">There is no error in rsession.log file.=
+ Where should I check logs for Singularity?</div></div></blockquote><div cl=
+ass=3D""><div dir=3D"ltr" class=3D""><div class=3D""><br class=3D""></div><=
+div class=3D"">Am afraid in this case there is not going to be anything use=
+ful in Singularity logs. The issue is something to do with how the R parall=
+el package is working. However, detailed logs can be obtained by adding the=
+ `-d` option to the singularity command, e.g. `singularity -d run myimage.s=
+if`</div><div class=3D""><br class=3D""></div><div class=3D"">On my test ma=
+chine, building your container and running under singularity I get success.=
+..</div><div class=3D""><br class=3D""></div><div class=3D""><div class=3D"=
+">&gt; library(parallel)</div><div class=3D"">&gt; cl &lt;- makeCluster(4)<=
+/div><div class=3D"">&gt; cl</div><div class=3D"">socket cluster with 4 nod=
+es on host =E2=80=98localhost=E2=80=99</div></div><div class=3D""><br class=
+=3D""></div><div class=3D"">By default R parallel makeCluster sets up an R =
+cluster with socket communication. Looking around on the net there is a lot=
+ that can potentially go wrong, and the most common failure mode is just ha=
+nging indefinitely. It=E2=80=99s possible to force a bit more info with=E2=
+=80=A6</div><div class=3D""><br class=3D""></div><div class=3D"">&gt;&nbsp;=
+cl &lt;- makeCluster(4, &nbsp;outfile=3D=E2=80=9C")</div><div class=3D""><b=
+r class=3D""></div><div class=3D"">=E2=80=A6 which will ensure any errors f=
+rom the workers spinning up is sent to standard error/output.</div><div cla=
+ss=3D""><br class=3D""></div><div class=3D"">You can also get the command t=
+hat is used to startup workers - and then manually try to run it, to see wh=
+at is going on. For me the the command looks like...</div><div class=3D""><=
+br class=3D""></div><div class=3D""><div class=3D"">&gt; cl &lt;- makeClust=
+er(4, manual=3DT, outfile=3D"")</div><div class=3D"">Manually start worker =
+on localhost with</div><div class=3D"">&nbsp; &nbsp; &nbsp;'/usr/lib/R/bin/=
+Rscript' --default-packages=3Ddatasets,utils,grDevices,graphics,stats,metho=
+ds -e 'parallel:::.slaveRSOCK()' MASTER=3Dlocalhost PORT=3D11156 OUT=3D TIM=
+EOUT=3D2592000 XDR=3DTRUE</div></div><div class=3D""><br class=3D""></div><=
+div class=3D"">Do you have any detail on how Singularity is installed in th=
+e Open OnDemand environment you are using, and how exactly you are running =
+the container? i.e. what is the `singularity run =E2=80=A6..` or `singulari=
+ty exec =E2=80=A6.` command being used?</div><div class=3D""><br class=3D""=
+></div><div class=3D"">Thanks&nbsp;</div><div class=3D""><br class=3D""></d=
+iv><div class=3D"">DT</div><div class=3D""><br class=3D""></div><div class=
+=3D""><br class=3D""></div></div></div><div class=3D""><br class=3D""><bloc=
+kquote type=3D"cite" class=3D""><div class=3D"">On Aug 23, 2018, at 7:26 PM=
+, Ping Luo &lt;<a href=3D"mailto:luop...@gmail.com" target=3D"_blank" class=
+=3D"">luop...@gmail.com</a>&gt; wrote:</div><br class=3D"m_2515808425267759=
+555m_-2081267219769285525Apple-interchange-newline"><div class=3D""><div di=
+r=3D"ltr" class=3D"">David,<div class=3D""><br class=3D""></div><div class=
+=3D"">The Singularity container is created from the recipe attached. Singul=
+arity is running under CentOS 6.10, on a single machine. It is running thro=
+ugh Open OnDemand (<a href=3D"https://osc.github.io/ood-documentation/maste=
+r/" target=3D"_blank" class=3D"">https://osc.github.io/ood-documentation/ma=
+ster/</a>), which I think can be considered as running through a scheduler.=
+&nbsp;</div><div class=3D""><br class=3D""></div></div></div></blockquote><=
+blockquote type=3D"cite" class=3D""><div dir=3D"ltr" class=3D""><div class=
+=3D"">There is no error in rsession.log file. Where should I check logs for=
+ Singularity?</div></div></blockquote><blockquote type=3D"cite" class=3D"">=
+<div class=3D""><div dir=3D"ltr" class=3D""><div class=3D""><br class=3D"">=
+</div><div class=3D"">Thanks,</div><div class=3D""><br class=3D""></div><di=
+v class=3D"">&nbsp;</div><div class=3D"">Ping</div></div><br class=3D""><di=
+v class=3D"gmail_quote"><div dir=3D"ltr" class=3D"">On Thu, Aug 23, 2018 at=
+ 6:11 PM David Trudgian &lt;<a href=3D"mailto:dtr...@sylabs.io" target=3D"_=
+blank" class=3D"">dtr...@sylabs.io</a>&gt; wrote:<br class=3D""></div><bloc=
+kquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #cc=
+c solid;padding-left:1ex"><div style=3D"word-wrap:break-word;line-break:aft=
+er-white-space" class=3D"">Hi Ping,<div class=3D""><br class=3D""></div><di=
+v class=3D"">This will need a bit more information to look at.</div><div cl=
+ass=3D""><br class=3D""></div><div class=3D"">What is the Singularity conta=
+iner, or recipe you are using? What kind of environment are you running Sin=
+gularity under - on a single machine, cluster through a scheduler etc?</div=
+><div class=3D""><br class=3D""></div><div class=3D"">Is there any debug ou=
+tput / errors?</div><div class=3D""><br class=3D""></div><div class=3D"">Th=
+anks.</div><div class=3D""><br class=3D""></div><div class=3D"">DT<br class=
+=3D""><div class=3D""><br class=3D""><blockquote type=3D"cite" class=3D""><=
+div class=3D"">On Aug 23, 2018, at 6:07 PM, Ping Luo &lt;<a href=3D"mailto:=
+luop...@gmail.com" target=3D"_blank" class=3D"">luop...@gmail.com</a>&gt; w=
+rote:</div><br class=3D"m_2515808425267759555m_-2081267219769285525m_-47205=
+33590544423848Apple-interchange-newline"><div class=3D""><div dir=3D"ltr" c=
+lass=3D""><div class=3D"">I can run the following code in RStudio without S=
+ingularity, but it hangs at makeCluster(4) when RStudio is running in Singu=
+larity. How can I resolve the issue?</div><div class=3D""><br class=3D""></=
+div><div class=3D""><pre class=3D"m_2515808425267759555m_-20812672197692855=
+25m_-4720533590544423848gmail-GCWXI2KCJKB" id=3D"m_2515808425267759555m_-20=
+81267219769285525m_-4720533590544423848gmail-rstudio_console_output" style=
+=3D"font-family:Consolas,&quot;Lucida Console&quot;,monospace;font-size:13.=
+8667px;outline:none;border:none;word-break:break-all;margin-top:0px;margin-=
+bottom:0px;line-height:1.1;white-space:pre-wrap"><span class=3D"m_251580842=
+5267759555m_-2081267219769285525m_-4720533590544423848gmail-ace_keyword m_2=
+515808425267759555m_-2081267219769285525m_-4720533590544423848gmail-GCWXI2K=
+CPKB" style=3D"color:blue;white-space:pre-wrap">&gt; </span><span class=3D"=
+m_2515808425267759555m_-2081267219769285525m_-4720533590544423848gmail-ace_=
+keyword m_2515808425267759555m_-2081267219769285525m_-4720533590544423848gm=
+ail-GCWXI2KCPJB" style=3D"color:blue">library(parallel)
+</span><span class=3D"m_2515808425267759555m_-2081267219769285525m_-4720533=
+590544423848gmail-ace_keyword m_2515808425267759555m_-2081267219769285525m_=
+-4720533590544423848gmail-GCWXI2KCPKB" style=3D"color:blue;white-space:pre-=
+wrap">&gt; </span><span class=3D"m_2515808425267759555m_-208126721976928552=
+5m_-4720533590544423848gmail-ace_keyword m_2515808425267759555m_-2081267219=
+769285525m_-4720533590544423848gmail-GCWXI2KCPJB" style=3D"color:blue">cl &=
+lt;- makeCluster(4)</span></pre><pre class=3D"m_2515808425267759555m_-20812=
+67219769285525m_-4720533590544423848gmail-GCWXI2KCJKB" id=3D"m_251580842526=
+7759555m_-2081267219769285525m_-4720533590544423848gmail-rstudio_console_ou=
+tput" style=3D"font-family:Consolas,&quot;Lucida Console&quot;,monospace;fo=
+nt-size:13.8667px;outline:none;border:none;word-break:break-all;margin-top:=
+0px;margin-bottom:0px;line-height:1.1;white-space:pre-wrap"><span class=3D"=
+m_2515808425267759555m_-2081267219769285525m_-4720533590544423848gmail-ace_=
+keyword m_2515808425267759555m_-2081267219769285525m_-4720533590544423848gm=
+ail-GCWXI2KCPJB" style=3D"color:blue"><br class=3D""></span></pre><pre clas=
+s=3D"m_2515808425267759555m_-2081267219769285525m_-4720533590544423848gmail=
+-GCWXI2KCJKB" id=3D"m_2515808425267759555m_-2081267219769285525m_-472053359=
+0544423848gmail-rstudio_console_output" style=3D"font-family:Consolas,&quot=
+;Lucida Console&quot;,monospace;font-size:13.8667px;outline:none;border:non=
+e;word-break:break-all;margin-top:0px;margin-bottom:0px;line-height:1.1;whi=
+te-space:pre-wrap"><span class=3D"m_2515808425267759555m_-20812672197692855=
+25m_-4720533590544423848gmail-ace_keyword m_2515808425267759555m_-208126721=
+9769285525m_-4720533590544423848gmail-GCWXI2KCPJB" style=3D"color:blue">Pin=
+g</span></pre><pre class=3D"m_2515808425267759555m_-2081267219769285525m_-4=
+720533590544423848gmail-GCWXI2KCJKB" id=3D"m_2515808425267759555m_-20812672=
+19769285525m_-4720533590544423848gmail-rstudio_console_output" style=3D"fon=
+t-family:Consolas,&quot;Lucida Console&quot;,monospace;font-size:13.8667px;=
+outline:none;border:none;word-break:break-all;margin-top:0px;margin-bottom:=
+0px;line-height:1.1;white-space:pre-wrap"><br class=3D""></pre></div></div>=
+<div class=3D""><br class=3D"m_2515808425267759555m_-2081267219769285525m_-=
+4720533590544423848webkit-block-placeholder"></div>
+
+-- <br class=3D"">
+You received this message because you are subscribed to the Google Groups "=
+singularity" group.<br class=3D"">
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank" class=3D"">si=
+ngu...@lbl.gov</a>.<br class=3D"">
+</div></blockquote></div><br class=3D""></div></div><div class=3D""><br cla=
+ss=3D"m_2515808425267759555m_-2081267219769285525webkit-block-placeholder">=
+</div>
+
+-- <br class=3D"">
+You received this message because you are subscribed to the Google Groups "=
+singularity" group.<br class=3D"">
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank" class=3D"">si=
+ngu...@lbl.gov</a>.<br class=3D"">
+</blockquote></div><div class=3D""><br class=3D"m_2515808425267759555m_-208=
+1267219769285525webkit-block-placeholder"></div>
+
+-- <br class=3D"">
+You received this message because you are subscribed to the Google Groups "=
+singularity" group.<br class=3D"">
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank" class=3D"">si=
+ngu...@lbl.gov</a>.<br class=3D"">
+<span id=3D"m_2515808425267759555m_-2081267219769285525cid:f_jl77hyb80" cla=
+ss=3D"">&lt;singularity&gt;</span></div></blockquote></div><br class=3D""><=
+/div></div><div class=3D""><br class=3D"m_2515808425267759555webkit-block-p=
+laceholder"></div>
+
+-- <br class=3D"">
+You received this message because you are subscribed to the Google Groups "=
+singularity" group.<br class=3D"">
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank" class=3D"">si=
+ngu...@lbl.gov</a>.<br class=3D"">
+</blockquote></div><div class=3D""><br class=3D"m_2515808425267759555webkit=
+-block-placeholder"></div>
+
+-- <br class=3D"">
+You received this message because you are subscribed to the Google Groups "=
+singularity" group.<br class=3D"">
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank" class=3D"">si=
+ngu...@lbl.gov</a>.<br class=3D"">
+</div></blockquote></div><br class=3D""></div></div><div class=3D""><br cla=
+ss=3D"webkit-block-placeholder"></div>
+
+-- <br class=3D"">
+You received this message because you are subscribed to the Google Groups "=
+singularity" group.<br class=3D"">
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank" class=3D"">si=
+ngu...@lbl.gov</a>.<br class=3D"">
+</blockquote></div><div class=3D""><br class=3D"webkit-block-placeholder"><=
+/div>
+
+-- <br class=3D"">
+You received this message because you are subscribed to the Google Groups "=
+singularity" group.<br class=3D"">
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" class=3D"">singu...@lbl.gov</a>=
+.<br class=3D"">
+</div></blockquote></div><br class=3D""></div></body></html>
+--Apple-Mail=_5D02308E-4499-4426-8ECA-1DCF76133CEA--

@@ -1,0 +1,488 @@
+Date: Tue, 15 May 2018 12:23:27 -0700 (PDT)
+From: =?UTF-8?Q?C=C3=A9dric_Clerget?= <cedric...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <92b60776-9261-46f6-aba7-d39d69a4e5af@lbl.gov>
+In-Reply-To: <CAFVt7K6x1Cn6ZQirz6b0VhL3=ORaXucm39bUukWaq6qC=JqAKA@mail.gmail.com>
+References: <bfd62bcd-8878-42cd-a8b0-67522694c6cd@lbl.gov> <CAGfAqt-jzuNLY=yDmy-EXqMeCNmS0C0LQTsa0ZpSAFOXeTzFhQ@mail.gmail.com>
+ <CAFVt7K44cUc_v9zcCsdf_S7_WjZQq6a2h9wPRkcPnAT+gjbzKw@mail.gmail.com>
+ <CAFVt7K6yk0CaHvq-NHyc3uTB+ebUYFm4cHBMGMnHh0BDMfjzsw@mail.gmail.com> <d0d4439a-d8c6-478c-8e7d-fd20609163d0@lbl.gov>
+ <CAFVt7K6x1Cn6ZQirz6b0VhL3=ORaXucm39bUukWaq6qC=JqAKA@mail.gmail.com>
+Subject: Re: [Singularity] Failed to obtain user identity information (as
+ non-root user)
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_18852_869894934.1526412207824"
+
+------=_Part_18852_869894934.1526412207824
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_18853_941420947.1526412207825"
+
+------=_Part_18853_941420947.1526412207825
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Ok, to better identify where the issue lies, could you compile the test=20
+program in attachment
+
+Please build with same compiler and environment as you did with Singularity=
+=20
+:
+$ gcc test.c -o test && ./test
+
+if it display "failed to determine your username", there is something wrong=
+=20
+with build
+if it display "username: ...", there is a problem on Singularity side
+
+C=C3=A9dric
+
+Le mardi 15 mai 2018 20:41:58 UTC+2, Robert Wagner a =C3=A9crit :
+>
+> Hi C=C3=A9dric,
+>
+> I hadn't actually tried 2.4.x (or any prior release on here).  I compiled=
+=20
+> and tried 2.4.6, with similar results:
+> 1) Without --home: Home is not identified
+> 2) With --home:  segfault at singularity_runtime_files_passwd()
+>
+> Debug output for 2.4.6: https://pastebin.com/hZELGB5L
+>
+> In both versions tested, I was running on the same node I compiled on.  (=
+I=20
+> tested on compute nodes as well with the same results)
+>
+> Regards,
+>
+> Rob
+>
+> On Tue, May 15, 2018 at 12:30 PM, C=C3=A9dric Clerget <ced...@gmail.com=
+=20
+> <javascript:>> wrote:
+>
+>> Hi Robert,
+>>
+>> Is Singularity 2.4.X versions worked before ?
+>>
+>> Have you tried to run Singularity on same host where you compiled=20
+>> Singularity and see if it fail too ?
+>>
+>> C=C3=A9dric
+>>
+>> Le mardi 15 mai 2018 19:56:47 UTC+2, Robert Wagner a =C3=A9crit :
+>>>
+>>> Sorry to spam, but I made one more test:
+>>>
+>>> I copied output from getent for my passwd entry, pasted that into the=
+=20
+>>> local /etc/passwd file on my head node.  This resolved both issues list=
+ed=20
+>>> above.  Unfortunately, this really isn't a sustainable option for this=
+=20
+>>> cluster.
+>>>
+>>> Regards,
+>>>
+>>> Rob
+>>>
+>>> On Tue, May 15, 2018 at 11:53 AM, Robert Wagner <
+>>> rob...@computecanada.ca> wrote:
+>>>
+>>>> Almost forgot:
+>>>>
+>>>> Oh, and no SSSD.
+>>>>
+>>>> Using LDAP local to cluster for auth.
+>>>>
+>>>>
+>>>> Cheers,
+>>>>
+>>>> Rob
+>>>>
+>>>>
+>>>>
+>>>> On Tue, May 15, 2018 at 11:19 AM, Jason Stover <ja...@gmail.com>=20
+>>>> wrote:
+>>>>
+>>>>> Hi Rob,
+>>>>>
+>>>>>   Hrmmm... The "Failed to obtain user identity information" was just
+>>>>> added in after we ran into this issue with another user. Do you have
+>>>>> sssd running?
+>>>>>
+>>>>>   Can we see the output from a shell:  ls -l /proc/self/fd/
+>>>>>
+>>>>>   For the previous issue see:
+>>>>> https://github.com/singularityware/singularity/issues/1489
+>>>>>
+>>>>>   This all comes back to the same issue.... we can't look-up your use=
+r
+>>>>> information from the authentication server. We had _hoped_ in 2.5.1
+>>>>> this was fixed. :/
+>>>>>
+>>>>> -J
+>>>>>
+>>>>>
+>>>>>
+>>>>> On Tue, May 15, 2018 at 12:03 PM, Robert Wagner
+>>>>> <rob...@computecanada.ca> wrote:
+>>>>> > Hi all,
+>>>>> >
+>>>>> > Having some troubles with fresh install of 2.5.1, built from source=
+,=20
+>>>>> on RHEL
+>>>>> > 7.4 cluster using LDAP (Bright Cluster).  Installing with software=
+=20
+>>>>> on shared
+>>>>> > filesystem, local state directory on each node, but is not operatin=
+g=20
+>>>>> on any.
+>>>>> > I had similar issues with 2.5.0, though it would simply segfault at=
+=20
+>>>>> the same
+>>>>> > point.
+>>>>> >
+>>>>> > If run as root, I can execute containers.  If I execute as a user, =
+I=20
+>>>>> have
+>>>>> > two issues (one minor, one show-stopper) - listing both in the case=
+=20
+>>>>> they are
+>>>>> > related.  singularity.conf is completely default.
+>>>>> >
+>>>>> > 1) Home directory not owned by calling user: /  - If I specify=20
+>>>>> --home $HOME,
+>>>>> > this isn't an issue. My /home mount is an NFS filesystem, but no=20
+>>>>> symlinks
+>>>>> > involved.
+>>>>> >
+>>>>> > Config file: https://pastebin.com/gnKgBc3C
+>>>>> > Debug output: https://pastebin.com/w1gWytv1
+>>>>> >
+>>>>> > 2) Failed to obtain user identity information.   I'm not sure if=20
+>>>>> this is
+>>>>> > tied to my use of LDAP for user information, but this one is=20
+>>>>> stumping me.
+>>>>> > Again, this does not occur if run as root. (I have not tried with=
+=20
+>>>>> users that
+>>>>> > have been manually added to /etc/passwd, but I will try that=20
+>>>>> shortly).
+>>>>> > Singularity dies at step "singularity_file_passwd_create()".   Usin=
+g=20
+>>>>> v2.5.0,
+>>>>> > I disabled passwd creation in the config file, and that allowed=20
+>>>>> execution to
+>>>>> > continue. Using 2.5.1, it dies whether the setting is on or off. (a=
+s=20
+>>>>> if the
+>>>>> > option is being ignored)
+>>>>> >
+>>>>> > Debug output:
+>>>>> >
+>>>>> > https://pastebin.com/fsbAkCZJ
+>>>>> >
+>>>>> > Debug output with config option for passwd creation disabled:
+>>>>> >
+>>>>> > https://pastebin.com/W0R83kbb
+>>>>> >
+>>>>> >
+>>>>> > Thanks for any insights.
+>>>>> >
+>>>>> > Cheers,
+>>>>> >
+>>>>> > Rob
+>>>>> >
+>>>>> > --
+>>>>> > You received this message because you are subscribed to the Google=
+=20
+>>>>> Groups
+>>>>> > "singularity" group.
+>>>>> > To unsubscribe from this group and stop receiving emails from it,=
+=20
+>>>>> send an
+>>>>> > email to singu...@lbl.gov.
+>>>>>
+>>>>> --=20
+>>>>> You received this message because you are subscribed to the Google=20
+>>>>> Groups "singularity" group.
+>>>>> To unsubscribe from this group and stop receiving emails from it, sen=
+d=20
+>>>>> an email to singu...@lbl.gov.
+>>>>>
+>>>>
+>>>>
+>>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s=20
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n=20
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+------=_Part_18853_941420947.1526412207825
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Ok, to better identify where the issue lies, could yo=
+u compile the test program in attachment<br></div><div><br></div><div>Pleas=
+e build with same compiler and environment as you did with Singularity :<br=
+></div><div></div><div>$ gcc test.c -o test &amp;&amp; ./test</div><div><br=
+></div><div>if it display &quot;failed to determine your username&quot;, th=
+ere is something wrong with build</div><div>if it display &quot;username: .=
+..&quot;, there is a problem on Singularity side<br></div><div><br></div><d=
+iv>C=C3=A9dric</div><div><br></div>Le mardi 15 mai 2018 20:41:58 UTC+2, Rob=
+ert Wagner a =C3=A9crit=C2=A0:<blockquote class=3D"gmail_quote" style=3D"ma=
+rgin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;">=
+<div dir=3D"ltr">Hi=C2=A0<span style=3D"color:rgb(34,34,34);font-family:ari=
+al,sans-serif;font-size:12.8px;font-style:normal;letter-spacing:normal;text=
+-align:left;text-indent:0px;text-transform:none;white-space:nowrap;word-spa=
+cing:0px;background-color:rgb(255,255,255);float:none;display:inline">C=C3=
+=A9dric,</span><div><span style=3D"color:rgb(34,34,34);font-family:arial,sa=
+ns-serif;font-size:12.8px;font-style:normal;letter-spacing:normal;text-alig=
+n:left;text-indent:0px;text-transform:none;white-space:nowrap;word-spacing:=
+0px;background-color:rgb(255,255,255);float:none;display:inline"><br></span=
+></div><div><span style=3D"color:rgb(34,34,34);font-family:arial,sans-serif=
+;font-size:12.8px;font-style:normal;letter-spacing:normal;text-align:left;t=
+ext-indent:0px;text-transform:none;white-space:nowrap;word-spacing:0px;back=
+ground-color:rgb(255,255,255);float:none;display:inline">I hadn&#39;t actua=
+lly tried 2.4.x (or any prior release on here).=C2=A0 I compiled and tried =
+2.4.6, with similar results:</span></div><div><span style=3D"color:rgb(34,3=
+4,34);font-family:arial,sans-serif;font-size:12.8px;font-style:normal;lette=
+r-spacing:normal;text-align:left;text-indent:0px;text-transform:none;white-=
+space:nowrap;word-spacing:0px;background-color:rgb(255,255,255);float:none;=
+display:inline">1) Without --home: Home is not identified</span></div><div>=
+<span style=3D"color:rgb(34,34,34);font-family:arial,sans-serif;font-size:1=
+2.8px;font-style:normal;letter-spacing:normal;text-align:left;text-indent:0=
+px;text-transform:none;white-space:nowrap;word-spacing:0px;background-color=
+:rgb(255,255,255);float:none;display:inline">2) With --home:=C2=A0 segfault=
+ at singularity_runtime_files_<wbr>passwd()</span></div><div><span style=3D=
+"color:rgb(34,34,34);font-family:arial,sans-serif;font-size:12.8px;font-sty=
+le:normal;letter-spacing:normal;text-align:left;text-indent:0px;text-transf=
+orm:none;white-space:nowrap;word-spacing:0px;background-color:rgb(255,255,2=
+55);float:none;display:inline"><br></span></div><div><span style=3D"color:r=
+gb(34,34,34);font-family:arial,sans-serif;font-size:12.8px;font-style:norma=
+l;letter-spacing:normal;text-align:left;text-indent:0px;text-transform:none=
+;white-space:nowrap;word-spacing:0px;background-color:rgb(255,255,255);floa=
+t:none;display:inline">Debug output for 2.4.6:=C2=A0<a href=3D"https://past=
+ebin.com/hZELGB5L" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.h=
+ref=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fpastebin.com%2FhZE=
+LGB5L\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNE2xynoP5Ziqdr-wE0WflbVv4Utqg&=
+#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q=
+\x3dhttps%3A%2F%2Fpastebin.com%2FhZELGB5L\x26sa\x3dD\x26sntz\x3d1\x26usg\x3=
+dAFQjCNE2xynoP5Ziqdr-wE0WflbVv4Utqg&#39;;return true;">https://pastebin.com=
+/<wbr>hZELGB5L</a></span></div><div><span style=3D"color:rgb(34,34,34);font=
+-family:arial,sans-serif;font-size:12.8px;font-style:normal;letter-spacing:=
+normal;text-align:left;text-indent:0px;text-transform:none;white-space:nowr=
+ap;word-spacing:0px;background-color:rgb(255,255,255);float:none;display:in=
+line"><br></span></div><div><span style=3D"color:rgb(34,34,34);font-family:=
+arial,sans-serif;font-size:12.8px;font-style:normal;letter-spacing:normal;t=
+ext-align:left;text-indent:0px;text-transform:none;white-space:nowrap;word-=
+spacing:0px;background-color:rgb(255,255,255);float:none;display:inline">In=
+ both versions tested, I was running on the same node I compiled on.=C2=A0 =
+(I tested on compute nodes as well with the same results)</span></div><div>=
+<span style=3D"color:rgb(34,34,34);font-family:arial,sans-serif;font-size:1=
+2.8px;font-style:normal;letter-spacing:normal;text-align:left;text-indent:0=
+px;text-transform:none;white-space:nowrap;word-spacing:0px;background-color=
+:rgb(255,255,255);float:none;display:inline"><br></span></div><div><span st=
+yle=3D"font-size:12.8px;white-space:nowrap">Regards,</span></div><div><span=
+ style=3D"font-size:12.8px;white-space:nowrap"><br></span></div><div><span =
+style=3D"font-size:12.8px;white-space:nowrap">Rob</span></div></div><div><b=
+r><div class=3D"gmail_quote">On Tue, May 15, 2018 at 12:30 PM, C=C3=A9dric =
+Clerget <span dir=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_blank" gdf=
+-obfuscated-mailto=3D"dtC3DCDECQAJ" rel=3D"nofollow" onmousedown=3D"this.hr=
+ef=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javasc=
+ript:&#39;;return true;">ced...@gmail.com</a>&gt;</span> wrote:<br><blockqu=
+ote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc s=
+olid;padding-left:1ex"><div dir=3D"ltr"><div>Hi Robert,</div><div><br></div=
+><div>Is Singularity 2.4.X versions worked before ?</div><div><br></div><di=
+v>Have you tried to run Singularity on same host where you compiled Singula=
+rity and see if it fail too ?</div><div><br></div><div>C=C3=A9dric<br></div=
+><span><br>Le mardi 15 mai 2018 19:56:47 UTC+2, Robert Wagner a =C3=A9crit=
+=C2=A0:</span><blockquote class=3D"gmail_quote" style=3D"margin:0;margin-le=
+ft:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><span><div dir=3D"ltr=
+">Sorry to spam, but I made one more test:<div><br></div><div>I copied outp=
+ut from getent for my passwd entry, pasted that into the local /etc/passwd =
+file on my head node.=C2=A0 This resolved both issues listed above.=C2=A0 U=
+nfortunately, this really isn&#39;t a sustainable option for this cluster.<=
+/div><div><br></div><div>Regards,</div><div><br></div><div>Rob</div></div><=
+/span><div><br><div class=3D"gmail_quote"><span>On Tue, May 15, 2018 at 11:=
+53 AM, Robert Wagner <span dir=3D"ltr">&lt;<a rel=3D"nofollow">rob...@compu=
+tecanada.ca</a>&gt;</span> wrote:<br></span><blockquote class=3D"gmail_quot=
+e" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">=
+<span><div dir=3D"ltr"><div>Almost forgot:</div><div><br></div>Oh, and no S=
+SSD.<div><br></div><div>Using LDAP local to cluster for auth.</div><div><br=
+></div><div><br></div><div>Cheers,</div><div><br></div><div>Rob</div><div><=
+br></div><div><br></div></div></span><div><br><div class=3D"gmail_quote"><s=
+pan><span>On Tue, May 15, 2018 at 11:19 AM, Jason Stover <span dir=3D"ltr">=
+&lt;<a rel=3D"nofollow">ja...@gmail.com</a>&gt;</span> wrote:<br></span></s=
+pan><div><div><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;=
+border-left:1px #ccc solid;padding-left:1ex"><span>Hi Rob,<br>
+<br>
+=C2=A0 Hrmmm... The &quot;Failed to obtain user identity information&quot; =
+was just<br>
+added in after we ran into this issue with another user. Do you have<br>
+sssd running?<br>
+<br>
+=C2=A0 Can we see the output from a shell:=C2=A0 ls -l /proc/self/fd/<br>
+<br>
+=C2=A0 For the previous issue see:<br>
+<a href=3D"https://github.com/singularityware/singularity/issues/1489" rel=
+=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www=
+.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsingularityware%2Fsingulari=
+ty%2Fissues%2F1489\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEiEJi3EvIfeGP8Jb=
+J6xWcQvllYXg&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.goo=
+gle.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsingularityware%2Fsingularity%2=
+Fissues%2F1489\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEiEJi3EvIfeGP8JbJ6xW=
+cQvllYXg&#39;;return true;">https://github.com/<wbr>singularityware/singula=
+rity/<wbr>issues/1489</a><br>
+<br>
+=C2=A0 This all comes back to the same issue.... we can&#39;t look-up your =
+user<br>
+information from the authentication server. We had _hoped_ in 2.5.1<br>
+this was fixed. :/<br>
+<span><font color=3D"#888888"><br>
+-J<br>
+</font></span></span><div><div><span><br>
+<br>
+<br>
+On Tue, May 15, 2018 at 12:03 PM, Robert Wagner<br></span><div><div>
+&lt;<a rel=3D"nofollow">rob...@computecanada.ca</a>&gt; wrote:<br>
+&gt; Hi all,<br>
+&gt;<br>
+&gt; Having some troubles with fresh install of 2.5.1, built from source, o=
+n RHEL<br>
+&gt; 7.4 cluster using LDAP (Bright Cluster).=C2=A0 Installing with softwar=
+e on shared<br>
+&gt; filesystem, local state directory on each node, but is not operating o=
+n any.<br>
+&gt; I had similar issues with 2.5.0, though it would simply segfault at th=
+e same<br>
+&gt; point.<br>
+&gt;<br>
+&gt; If run as root, I can execute containers.=C2=A0 If I execute as a user=
+, I have<br>
+&gt; two issues (one minor, one show-stopper) - listing both in the case th=
+ey are<br>
+&gt; related.=C2=A0 singularity.conf is completely default.<br>
+&gt;<br>
+&gt; 1) Home directory not owned by calling user: /=C2=A0 - If I specify --=
+home $HOME,<br>
+&gt; this isn&#39;t an issue. My /home mount is an NFS filesystem, but no s=
+ymlinks<br>
+&gt; involved.<br>
+&gt;<br>
+&gt; Config file: <a href=3D"https://pastebin.com/gnKgBc3C" rel=3D"nofollow=
+" target=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/=
+url?q\x3dhttps%3A%2F%2Fpastebin.com%2FgnKgBc3C\x26sa\x3dD\x26sntz\x3d1\x26u=
+sg\x3dAFQjCNEfBO_-dDbie23fv-STKDWO-esF9A&#39;;return true;" onclick=3D"this=
+.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fpastebin.com%2Fg=
+nKgBc3C\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEfBO_-dDbie23fv-STKDWO-esF9=
+A&#39;;return true;">https://pastebin.com/gnKgBc3C</a><br>
+&gt; Debug output: <a href=3D"https://pastebin.com/w1gWytv1" rel=3D"nofollo=
+w" target=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.google.com=
+/url?q\x3dhttps%3A%2F%2Fpastebin.com%2Fw1gWytv1\x26sa\x3dD\x26sntz\x3d1\x26=
+usg\x3dAFQjCNHqKPpV4iMG7C4H4j0I7QHGZeDZ6A&#39;;return true;" onclick=3D"thi=
+s.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fpastebin.com%2F=
+w1gWytv1\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHqKPpV4iMG7C4H4j0I7QHGZeDZ=
+6A&#39;;return true;">https://pastebin.com/w1gWytv1</a><br>
+&gt;<br>
+&gt; 2) Failed to obtain user identity information.=C2=A0 =C2=A0I&#39;m not=
+ sure if this is<br>
+&gt; tied to my use of LDAP for user information, but this one is stumping =
+me.<br>
+&gt; Again, this does not occur if run as root. (I have not tried with user=
+s that<br>
+&gt; have been manually added to /etc/passwd, but I will try that shortly).=
+<br>
+&gt; Singularity dies at step &quot;singularity_file_passwd_<wbr>create()&q=
+uot;.=C2=A0 =C2=A0Using v2.5.0,<br>
+&gt; I disabled passwd creation in the config file, and that allowed execut=
+ion to<br>
+&gt; continue. Using 2.5.1, it dies whether the setting is on or off. (as i=
+f the<br>
+&gt; option is being ignored)<br>
+&gt;<br>
+&gt; Debug output:<br>
+&gt;<br>
+&gt; <a href=3D"https://pastebin.com/fsbAkCZJ" rel=3D"nofollow" target=3D"_=
+blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttp=
+s%3A%2F%2Fpastebin.com%2FfsbAkCZJ\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNH=
+8jN4HgdmmJ2YSi3VjBAikM7gEQw&#39;;return true;" onclick=3D"this.href=3D&#39;=
+https://www.google.com/url?q\x3dhttps%3A%2F%2Fpastebin.com%2FfsbAkCZJ\x26sa=
+\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNH8jN4HgdmmJ2YSi3VjBAikM7gEQw&#39;;return=
+ true;">https://pastebin.com/fsbAkCZJ</a><br>
+&gt;<br>
+&gt; Debug output with config option for passwd creation disabled:<br>
+&gt;<br>
+&gt; <a href=3D"https://pastebin.com/W0R83kbb" rel=3D"nofollow" target=3D"_=
+blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttp=
+s%3A%2F%2Fpastebin.com%2FW0R83kbb\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNF=
+Ws9LS3xYCic6ejI-2G1sSVAXhrg&#39;;return true;" onclick=3D"this.href=3D&#39;=
+https://www.google.com/url?q\x3dhttps%3A%2F%2Fpastebin.com%2FW0R83kbb\x26sa=
+\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFWs9LS3xYCic6ejI-2G1sSVAXhrg&#39;;return=
+ true;">https://pastebin.com/W0R83kbb</a><br>
+&gt;<br>
+&gt;<br>
+&gt; Thanks for any insights.<br>
+&gt;<br>
+&gt; Cheers,<br>
+&gt;<br>
+&gt; Rob<br>
+&gt;<br>
+&gt; --<br>
+&gt; You received this message because you are subscribed to the Google Gro=
+ups<br>
+&gt; &quot;singularity&quot; group.<br>
+&gt; To unsubscribe from this group and stop receiving emails from it, send=
+ an<br></div></div>
+&gt; email to <a rel=3D"nofollow">singu...@lbl.gov</a>.<span><br>
+<br>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br></span>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</div></div></blockquote></div></div></div><br></div>
+</blockquote></div><br></div>
+</blockquote></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+dtC3DCDECQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br></div>
+</blockquote></div>
+------=_Part_18853_941420947.1526412207825--
+
+------=_Part_18852_869894934.1526412207824
+Content-Type: text/x-csrc; charset=US-ASCII; name=test.c
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename=test.c
+X-Attachment-Id: ea54628e-9eb5-456d-a6ff-76485bc60755
+Content-ID: <ea54628e-9eb5-456d-a6ff-76485bc60755>
+
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
+
+int main(int argc, char **argv) {
+    struct passwd *pw = getpwuid(getuid());
+    if ( pw == NULL ) {
+        printf("failed to determine your username\n");
+    } else {
+        printf("username: %s\n", pw->pw_name);
+    }
+    return 0;
+}
+
+------=_Part_18852_869894934.1526412207824--

@@ -1,0 +1,1332 @@
+Date: Mon, 23 Jan 2017 17:51:56 -0800 (PST)
+From: Raphael Townshend <raph...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <01ed6620-d103-464d-a9bb-de3f44285b3e@lbl.gov>
+In-Reply-To: <28c93b72-1c78-e113-adfb-10c7423218b6@microway.com>
+References: <72b098d0-2753-44af-b3dd-55fc9b88ff5a@lbl.gov>
+ <CAM=pu+Ji=hKmS0LKRDTz4QifHc4LnkJKRwmZwhWyJm9z0NDktQ@mail.gmail.com>
+ <a0ec2d6e-7eac-4245-9eef-56512f86f4dd@lbl.gov>
+ <28c93b72-1c78-e113-adfb-10c7423218b6@microway.com>
+Subject: Re: [Singularity] Tensorflow Docker in Singularity Doesn't See GPU
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_7059_1025134640.1485222716541"
+
+------=_Part_7059_1025134640.1485222716541
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_7060_969957946.1485222716542"
+
+------=_Part_7060_969957946.1485222716542
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Eliot, thank you for figuring this out.  I updated 
+https://github.com/drorlab/tf-singularity to use pip to install 
+tensorflow-gpu instead of the docker version, and it works out of the box 
+again.
+
+One more thing to note, the tensorflow on docker does not seem to respect 
+version either.  I was trying to get 0.11.0rc2-gpu again and it kept giving 
+me 0.12.1 !  Not sure if this is an issue on Docker's end, or with 
+singularity Docker bootstrap.
+
+On Monday, January 2, 2017 at 10:38:26 AM UTC-8, Eliot Eshelman wrote:
+>
+> I was hitting the same problem. This seems very odd, but it appears the 
+> Docker image being returned does not include a version of TensorFlow built 
+> for GPUs.
+>
+> I tried the version being used on Sherlock 
+> (tensorflow/tensorflow:0.11.0rc2-gpu) as well as a new version that is 
+> listed on DockerHub (tensorflow/tensorflow:latest-gpu). Neither seems to 
+> include GPU support.
+>
+>
+> If you take the Singularity container from above and run the following 
+> commands, you should end up with a version that works:
+>
+> pip uninstall tensorflow protobuf
+> pip install --upgrade 
+> https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow-0.11.0-cp27-none-linux_x86_64.whl
+>
+> To test, run the Singularity and enter this into the Python interpreter:
+>
+> import tensorflow as tf
+> sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
+>
+>
+> The way to tell whether you've got a GPU-enabled TensorFlow is to see if 
+> any CUDA messages are printed when the tensorflow Python module is 
+> imported. A non-GPU version will look like this:
+>
+> >>> import tensorflow as tf
+> >>>
+>
+> A GPU-enabled version will look something like this:
+>
+> >>> import tensorflow as tf
+> I tensorflow/stream_executor/dso_loader.cc:111] successfully opened CUDA 
+> library libcublas.so locally
+> I tensorflow/stream_executor/dso_loader.cc:111] successfully opened CUDA 
+> library libcudnn.so locally
+> I tensorflow/stream_executor/dso_loader.cc:111] successfully opened CUDA 
+> library libcufft.so locally
+> I tensorflow/stream_executor/dso_loader.cc:111] successfully opened CUDA 
+> library libcuda.so.1 locally
+> I tensorflow/stream_executor/dso_loader.cc:111] successfully opened CUDA 
+> library libcurand.so locally
+> >>>
+>
+>
+> P.S. I was also hitting the issue of the nvidia-uvm Linux kernel module 
+> needing to be loaded before the GPUs could be accessed from within the 
+> container. The nvidia-smi utility does not need uvm loaded, so it's not 
+> the best test that CUDA is operational. Better to use some of the samples 
+> included with CUDA (they'll return CUDA errors). Once the host had loaded 
+> nvidia-uvm, all ran fine.
+>
+>
+>
+> On 12/25/16 15:21, Bharath Ramsundar wrote:
+>
+> Good sanity suggestion. I tried running with the python from the 
+> runscript, but I'm still seeing the same error 
+>
+> rbharath@tensorbr0:~/Tensorflow-singularity-container-with-GPU-support$ 
+> sudo singularity run ubuntu_tensorflow_GPU.img 
+> [sudo] password for rbharath: 
+> Python 2.7.6 (default, Oct 26 2016, 20:30:19) 
+> [GCC 4.8.4] on linux2
+> Type "help", "copyright", "credits" or "license" for more information.
+> >>> import tensorflow as tf
+> >>> tf.Session(config=tf.ConfigProto(log_device_placement=True))
+> Device mapping: no known devices.
+> I tensorflow/core/common_runtime/direct_session.cc:255] Device mapping:
+>
+> <tensorflow.python.client.session.Session object at 0x7f07bf8c1e90>
+>
+>
+> This isn't my local machine python since the date (Oct 26) doesn't match 
+> the date (Nov 19th) on my system /usr/bin/python
+>
+> rbharath@tensorbr0:~/Tensorflow-singularity-container-with-GPU-support$ 
+> /usr/bin/python
+> Python 2.7.12 (default, Nov 19 2016, 06:48:10) 
+> [GCC 5.4.0 20160609] on linux2
+> Type "help", "copyright", "credits" or "license" for more information.
+>
+>
+> On Sunday, December 25, 2016 at 5:36:41 AM UTC-8, vanessa wrote: 
+>>
+>> Can you confirm that you are using the python inside the container? You 
+>> specify it in your runscript, but then in the example call ipython: 
+>>
+>> /usr/local/lib/python2.7/dist-packages/IPython/paths.py:69: UserWarning: 
+>> IPython parent '/home/rbharath' is not a writable location, using a temp 
+>> directory.
+>>
+>> I've run into the bug of using my (local machine) python from inside the 
+>> image, instead of the image's, so confirming that you are using 
+>> /usr/bin/python inside the image would be a good place to start.
+>>
+>> On Sat, Dec 24, 2016 at 11:39 PM, Bharath Ramsundar <
+>> bha...@gmail.com> wrote:
+>>
+>>> Hi, 
+>>>
+>>> I'm attempting to run Tensorflow within singularity on an Ubuntu 16.04 
+>>> machine. I'm using the Tensorflow docker to bootstrap (I've been using 
+>>> https://github.com/drorlab/tf-singularity and 
+>>> https://github.com/jdongca2003/Tensorflow-singularity-container-with-GPU-support 
+>>> as my guides). I'm able to successfully build the singularity image and run 
+>>> tensorflow within it, but only with CPU. I've checked that I'm using the 
+>>> same NVIDIA driver version and CUDA versions in singularity as on the 
+>>> machine, so I don't think that's the issue. I'm able to use nvidia-smi from 
+>>> within the image to view the GPUs, but just not able to access the GPU from 
+>>> tensorflow. I've listed my output below, along with the code I used to 
+>>> generate the image. Any advice would be much appreciated :-)
+>>>
+>>> rbharath:~/Tensorflow-singularity-container-with-GPU-support$ sudo 
+>>> singularity shell -w ubuntu_tensorflow_GPU.img 
+>>> Singularity: Invoking an interactive shell within container...
+>>>
+>>> Singularity.ubuntu_tensorflow_GPU.img> # nvidia-smi
+>>> Sun Dec 25 07:35:43 2016       
+>>>
+>>> +-----------------------------------------------------------------------------+
+>>> | NVIDIA-SMI 367.57                 Driver Version: 367.57               
+>>>      |
+>>>
+>>> |-------------------------------+----------------------+----------------------+
+>>> | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile 
+>>> Uncorr. ECC |
+>>> | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util 
+>>>  Compute M. |
+>>>
+>>> |===============================+======================+======================|
+>>> |   0  GeForce GTX 1080    Off  | 0000:01:00.0      On |                 
+>>>  N/A |
+>>> | 27%   37C    P8    12W / 180W |     62MiB /  8110MiB |      0%     
+>>>  Default |
+>>>
+>>> +-------------------------------+----------------------+----------------------+
+>>> |   1  GeForce GTX 1080    Off  | 0000:02:00.0     Off |                 
+>>>  N/A |
+>>> | 27%   34C    P8    11W / 180W |      1MiB /  8113MiB |      0%     
+>>>  Default |
+>>>
+>>> +-------------------------------+----------------------+----------------------+
+>>>                                                                         
+>>>        
+>>>
+>>> +-----------------------------------------------------------------------------+
+>>> | Processes:                                                       GPU 
+>>> Memory |
+>>> |  GPU       PID  Type  Process name                               Usage 
+>>>      |
+>>>
+>>> |=============================================================================|
+>>> |    0      3509    G   /usr/lib/xorg/Xorg                             
+>>>  60MiB |
+>>>
+>>> +-----------------------------------------------------------------------------+
+>>> Singularity.ubuntu_tensorflow_GPU.img> # ldconfig -p | grep libcuda
+>>>         libcudart.so.8.0 (libc6,x86-64) => 
+>>> /usr/local/cuda/lib64/libcudart.so.8.0
+>>>         libcudart.so (libc6,x86-64) => /usr/local/cuda/lib64/libcudart.so
+>>>         libcuda.so.1 (libc6,x86-64) => 
+>>> /usr/local/NVIDIA-Linux-x86_64-367.57/libcuda.so.1
+>>>         libcuda.so (libc6,x86-64) => 
+>>> /usr/local/NVIDIA-Linux-x86_64-367.57/libcuda.so
+>>> Singularity.ubuntu_tensorflow_GPU.img> # ipython
+>>> /usr/local/lib/python2.7/dist-packages/IPython/paths.py:69: UserWarning: 
+>>> IPython parent '/home/rbharath' is not a writable location, using a temp 
+>>> directory.
+>>>   " using a temp directory.".format(parent))
+>>> Python 2.7.6 (default, Oct 26 2016, 20:30:19) 
+>>> Type "copyright", "credits" or "license" for more information.
+>>>
+>>> IPython 5.1.0 -- An enhanced Interactive Python.
+>>> ?         -> Introduction and overview of IPython's features.
+>>> %quickref -> Quick reference.
+>>> help      -> Python's own help system.
+>>> object?   -> Details about 'object', use 'object??' for extra details.
+>>>
+>>> In [1]: import tensorflow as tf
+>>>
+>>> In [2]: tf.Session(config=tf.ConfigProto(log_device_placement=True))
+>>> Device mapping: no known devices.
+>>> I tensorflow/core/common_runtime/direct_session.cc:255] Device mapping:
+>>>
+>>> Out[2]: <tensorflow.python.client.session.Session at 0x7f97c853b210>
+>>>
+>>>
+>>> For completeness, I've listed below the code I use to build the image. 
+>>> The entrypoint is running 
+>>>
+>>> sh build.sh
+>>>
+>>> ############# build.sh
+>>> echo "Removing old GPU image"
+>>> sudo rm -f ubuntu_tensorflow_GPU.img
+>>> echo "Creating GPU image"
+>>> sudo singularity create -s 5000 ubuntu_tensorflow_GPU.img
+>>> echo "Bootstrapping image"
+>>> sudo singularity bootstrap ubuntu_tensorflow_GPU.img tf-gpu.def
+>>> echo "Running tensorflow install script"
+>>> sudo singularity exec -B `pwd`:/mnt -w ubuntu_tensorflow_GPU.img sh 
+>>> /mnt/tensorflow.sh
+>>>
+>>> ############# tf-gpu.def
+>>> # Copyright (c) 2015-2016, Gregory M. Kurtzer. All rights reserved.
+>>> # 
+>>> # "Singularity" Copyright (c) 2016, The Regents of the University of 
+>>> California,
+>>> # through Lawrence Berkeley National Laboratory (subject to receipt of 
+>>> any
+>>> # required approvals from the U.S. Dept. of Energy).  All rights 
+>>> reserved.
+>>>
+>>> BootStrap: docker
+>>> From: tensorflow/tensorflow:latest-gpu 
+>>> IncludeCmd: yes
+>>>
+>>> %runscript
+>>>     exec /usr/bin/python "$@"
+>>>
+>>> %post
+>>>     apt-get update && apt-get -y upgrade
+>>>     apt-get install git -y
+>>>
+>>> ############# tensorflow.sh
+>>> driver_version=367.57
+>>> cuda_version=8.0.44_linux
+>>> cudnn_version=8.0-linux-x64-v5.1
+>>> sh /mnt/NVIDIA-Linux-x86_64-$driver_version.run -x
+>>> mv NVIDIA-Linux-x86_64-$driver_version /usr/local/
+>>> sh /mnt/links.sh $driver_version
+>>>
+>>> sh /mnt/cuda_$cuda_version.run --toolkit --silent
+>>> tar xvf /mnt/cudnn-$cudnn_version.tgz -C /usr/local
+>>>
+>>> driver_path=/usr/local/NVIDIA-Linux-x86_64-$driver_version
+>>> sudo echo "/usr/local/cuda/lib64" >> /etc/ld.so.conf
+>>> sudo echo "$driver_path" >> /etc/ld.so.conf
+>>> # ldconfig doesn't list lubcuda*/libcudnn* without explicit commands
+>>> sudo ldconfig /usr/local/cuda/lib64
+>>> sudo ldconfig $driver_path
+>>>
+>>> echo " " >> /environment
+>>> echo 
+>>> "LD_LIBRARY_PATH=/usr/local/cuda/lib64:$driver_path:$LD_LIBRARY_PATH" >> 
+>>> /environment
+>>> echo "PATH=$driver_path:\$PATH" >> /environment
+>>> echo "export CUDA_HOME=/usr/local/cuda" >> /environment
+>>> echo "export PATH LD_LIBRARY_PATH" >> /environment
+>>>
+>>> ############# links.sh
+>>> #!/usr/bin/bash
+>>>
+>>> dir=/usr/local/NVIDIA-Linux-x86_64-$1
+>>>
+>>> cd $dir
+>>>
+>>> ln -s libcuda.so.$1 libcuda.so
+>>> ln -s libEGL.so.$1 libEGL.so
+>>> ln -s libGLESv1_CM.so.$1 libGLESv1_CM.so 
+>>> ln -s libGLESv2.so.$1 libGLESv2.so
+>>> ln -s libGL.so.$1 libGL.so
+>>> ln -s libglx.so.$1 libglx.so
+>>> ln -s libnvcuvid.so.$1 libnvcuvid.so
+>>> ln -s libnvidia-cfg.so.$1 libnvidia-cfg.so
+>>> ln -s libnvidia-compiler.so.$1 libnvidia-compiler.so
+>>> ln -s libnvidia-eglcore.so.$1 libnvidia-eglcore.so
+>>> ln -s libnvidia-encode.so.$1 libnvidia-encode.so
+>>> ln -s libnvidia-fbc.so.$1 libnvidia-fbc.so
+>>> ln -s libnvidia-glcore.so.$1 libnvidia-glcore.so
+>>> ln -s libnvidia-glsi.so.$1 libnvidia-glsi.so
+>>> ln -s libnvidia-gtk2.so.$1 libnvidia-gtk2.so
+>>> ln -s libnvidia-gtk3.so.$1 libnvidia-gtk3.so
+>>> ln -s libnvidia-ifr.so.$1 libnvidia-ifr.so
+>>> ln -s libnvidia-ml.so.$1 libnvidia-ml.so
+>>> ln -s libnvidia-ml.so.$1 libnvidia-ml.so.1
+>>> ln -s libnvidia-opencl.so.$1 libnvidia-opencl.so
+>>> ln -s libnvidia-tls.so.$1 libnvidia-tls.so
+>>> ln -s libnvidia-wfb.so.$1 libnvidia-wfb.so
+>>> ln -s libvdpau_nvidia.so.$1 libvdpau_nvidia.so
+>>> ln -s libvdpau.so.$1 libvdpau.so
+>>> ln -s libvdpau_trace.so.$1 libvdpau_trace.so
+>>> ln -s libcuda.so.$1 libcuda.so.1
+>>>
+>>>
+>>> -- 
+>>> You received this message because you are subscribed to the Google 
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>> an email to singu...@lbl.gov.
+>>>
+>>
+>>
+>>
+>> -- 
+>> Vanessa Villamia Sochat
+>> Stanford University '16
+>> (603) 321-0676
+>>
+> -- 
+> You received this message because you are subscribed to the Google Groups 
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an 
+> email to singu...@lbl.gov <javascript:>.
+>
+>
+>
+------=_Part_7060_969957946.1485222716542
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Eliot, thank you for figuring this out. =C2=A0I updated=C2=
+=A0<a href=3D"https://github.com/drorlab/tf-singularity">https://github.com=
+/<wbr>drorlab/tf-singularity</a>=C2=A0to use pip to install tensorflow-gpu =
+instead of the docker version, and it works out of the box again.<div><br><=
+/div><div>One more thing to note, the tensorflow on docker does not seem to=
+ respect version either. =C2=A0I was trying to get 0.11.0rc2-gpu again and =
+it kept giving me 0.12.1 ! =C2=A0Not sure if this is an issue on Docker&#39=
+;s end, or with singularity Docker bootstrap.<br><br>On Monday, January 2, =
+2017 at 10:38:26 AM UTC-8, Eliot Eshelman wrote:<blockquote class=3D"gmail_=
+quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;pa=
+dding-left: 1ex;">
+ =20
+   =20
+ =20
+  <div bgcolor=3D"#FFFFFF" text=3D"#000000">
+    <p>I was hitting the same problem. This seems very odd, but it
+      appears the Docker image being returned does not include a version
+      of TensorFlow built for GPUs.</p>
+    <p>I tried the version being used on Sherlock
+      (tensorflow/tensorflow:0.11.<wbr>0rc2-gpu) as well as a new version
+      that is listed on DockerHub (tensorflow/tensorflow:latest-<wbr>gpu).
+      Neither seems to include GPU support.</p>
+    <p><br>
+    </p>
+    <p>If you take the Singularity container from above and run the
+      following commands, you should end up with a version that works:</p>
+    <p><tt>pip uninstall tensorflow protobuf</tt><tt><br>
+      </tt>
+     =20
+      <tt>pip install --upgrade </tt>
+     =20
+      <tt><a href=3D"https://storage.googleapis.com/tensorflow/linux/gpu/te=
+nsorflow-0.11.0-cp27-none-linux_x86_64.whl" target=3D"_blank" rel=3D"nofoll=
+ow" onmousedown=3D"this.href=3D&#39;https://storage.googleapis.com/tensorfl=
+ow/linux/gpu/tensorflow-0.11.0-cp27-none-linux_x86_64.whl&#39;;return true;=
+" onclick=3D"this.href=3D&#39;https://storage.googleapis.com/tensorflow/lin=
+ux/gpu/tensorflow-0.11.0-cp27-none-linux_x86_64.whl&#39;;return true;">http=
+s://storage.googleapis.<wbr>com/tensorflow/linux/gpu/<wbr>tensorflow-0.11.0=
+-cp27-none-<wbr>linux_x86_64.whl</a></tt></p>
+    <p>To test, run the Singularity and enter this into the Python
+      interpreter:<br>
+    </p>
+    <p><tt>import tensorflow as tf</tt><tt><br>
+      </tt><tt>sess =3D
+        tf.Session(config=3Dtf.<wbr>ConfigProto(log_device_<wbr>placement=
+=3DTrue))</tt></p>
+    <p><br>
+    </p>
+    <p>The way to tell whether you&#39;ve got a GPU-enabled TensorFlow is t=
+o
+      see if any CUDA messages are printed when the tensorflow Python
+      module is imported. A non-GPU version will look like this:</p>
+    <p><tt>&gt;&gt;&gt; import tensorflow as tf</tt><tt><br>
+      </tt><tt>&gt;&gt;&gt;</tt></p>
+    <p>A GPU-enabled version will look something like this:</p>
+    <p><tt>&gt;&gt;&gt; import tensorflow as tf</tt><tt><br>
+      </tt><tt>I tensorflow/stream_executor/<wbr>dso_loader.cc:111]
+        successfully opened CUDA library libcublas.so locally</tt><tt><br>
+      </tt><tt>I tensorflow/stream_executor/<wbr>dso_loader.cc:111]
+        successfully opened CUDA library libcudnn.so locally</tt><tt><br>
+      </tt><tt>I tensorflow/stream_executor/<wbr>dso_loader.cc:111]
+        successfully opened CUDA library libcufft.so locally</tt><tt><br>
+      </tt><tt>I tensorflow/stream_executor/<wbr>dso_loader.cc:111]
+        successfully opened CUDA library libcuda.so.1 locally</tt><tt><br>
+      </tt><tt>I tensorflow/stream_executor/<wbr>dso_loader.cc:111]
+        successfully opened CUDA library libcurand.so locally</tt><tt><br>
+      </tt><tt>&gt;&gt;&gt;</tt><br>
+    </p>
+    <p><br>
+    </p>
+    <p>P.S. I was also hitting the issue of the <tt>nvidia-uvm</tt>
+      Linux kernel module needing to be loaded before the GPUs could be
+      accessed from within the container. The <tt>nvidia-smi</tt>
+      utility does not need uvm loaded, so it&#39;s not the best test that
+      CUDA is operational. Better to use some of the samples included
+      with CUDA (they&#39;ll return CUDA errors). Once the host had loaded
+      nvidia-uvm, all ran fine.<br>
+    </p>
+    <p><br>
+    </p>
+    <br>
+    <div>On 12/25/16 15:21, Bharath Ramsundar
+      wrote:<br>
+    </div>
+    <blockquote type=3D"cite">
+      <div dir=3D"ltr">Good sanity suggestion. I tried running with the
+        python from the runscript, but I&#39;m still seeing the same error
+        <div><br>
+        </div>
+        <blockquote style=3D"margin:0 0 0 40px;border:none;padding:0px">
+          <div>
+            <div><font face=3D"courier new, monospace">rbharath@tensorbr0:~=
+/<wbr>Tensorflow-singularity-<wbr>container-with-GPU-support$
+                sudo singularity run ubuntu_tensorflow_GPU.img=C2=A0</font>=
+</div>
+          </div>
+          <div>
+            <div><font face=3D"courier new, monospace">[sudo] password for
+                rbharath:=C2=A0</font></div>
+          </div>
+          <div>
+            <div><font face=3D"courier new, monospace">Python 2.7.6
+                (default, Oct 26 2016, 20:30:19)=C2=A0</font></div>
+          </div>
+          <div>
+            <div><font face=3D"courier new, monospace">[GCC 4.8.4] on
+                linux2</font></div>
+          </div>
+          <div>
+            <div><font face=3D"courier new, monospace">Type &quot;help&quot=
+;,
+                &quot;copyright&quot;, &quot;credits&quot; or &quot;license=
+&quot; for more
+                information.</font></div>
+          </div>
+          <div>
+            <div><font face=3D"courier new, monospace">&gt;&gt;&gt; import
+                tensorflow as tf</font></div>
+          </div>
+          <div>
+            <div><font face=3D"courier new, monospace">&gt;&gt;&gt;
+                tf.Session(config=3Dtf.<wbr>ConfigProto(log_device_<wbr>pla=
+cement=3DTrue))</font></div>
+          </div>
+          <div>
+            <div><font face=3D"courier new, monospace">Device mapping: no
+                known devices.</font></div>
+          </div>
+          <div>
+            <div><font face=3D"courier new, monospace">I
+                tensorflow/core/common_<wbr>runtime/direct_session.cc:255]
+                Device mapping:</font></div>
+          </div>
+          <div>
+            <div><font face=3D"courier new, monospace"><br>
+              </font></div>
+          </div>
+          <div>
+            <div><font face=3D"courier new, monospace">&lt;tensorflow.pytho=
+n.client.<wbr>session.Session
+                object at 0x7f07bf8c1e90&gt;</font></div>
+          </div>
+        </blockquote>
+        <div>
+          <div><br>
+          </div>
+          <div>This isn&#39;t my local machine python since the date (Oct
+            26) doesn&#39;t match the date (Nov 19th) on my system
+            /usr/bin/python</div>
+          <div><br>
+          </div>
+        </div>
+        <blockquote style=3D"margin:0 0 0 40px;border:none;padding:0px">
+          <div>
+            <div><font face=3D"courier new, monospace">rbharath@tensorbr0:~=
+/<wbr>Tensorflow-singularity-<wbr>container-with-GPU-support$
+                /usr/bin/python</font></div>
+          </div>
+          <div>
+            <div><font face=3D"courier new, monospace">Python 2.7.12
+                (default, Nov 19 2016, 06:48:10)=C2=A0</font></div>
+          </div>
+          <div>
+            <div><font face=3D"courier new, monospace">[GCC 5.4.0
+                20160609] on linux2</font></div>
+          </div>
+          <div>
+            <div><font face=3D"courier new, monospace">Type &quot;help&quot=
+;,
+                &quot;copyright&quot;, &quot;credits&quot; or &quot;license=
+&quot; for more
+                information.</font></div>
+          </div>
+        </blockquote>
+        <div>
+          <div><br>
+          </div>
+          On Sunday, December 25, 2016 at 5:36:41 AM UTC-8, vanessa
+          wrote:
+          <blockquote class=3D"gmail_quote" style=3D"margin:0;margin-left:0=
+.8ex;border-left:1px #ccc solid;padding-left:1ex">
+            <div dir=3D"ltr">Can you confirm that you are using the python
+              inside the container? You specify it in your runscript,
+              but then in the example call ipython:
+              <div><br>
+              </div>
+              <div><span>/usr/local/lib/python2.7/dist-</span><span><wbr>pa=
+ckages/IPython/paths.py:69:
+                  UserWarning: IPython parent &#39;/home/rbharath&#39; is n=
+ot a
+                  writable location, using a temp directory.</span><br>
+              </div>
+              <div><span><br>
+                </span></div>
+              <div>I&#39;ve run into the bug of using my (local machine)
+                python from inside the image, instead of the image&#39;s, s=
+o
+                confirming that you are using /usr/bin/python inside the
+                image would be a good place to start.</div>
+            </div>
+            <div><br>
+              <div class=3D"gmail_quote">On Sat, Dec 24, 2016 at 11:39 PM,
+                Bharath Ramsundar <span dir=3D"ltr">&lt;<a rel=3D"nofollow"=
+>bha...@gmail.com</a>&gt;</span>
+                wrote:<br>
+                <blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8e=
+x;border-left:1px #ccc solid;padding-left:1ex">
+                  <div dir=3D"ltr">Hi,
+                    <div><br>
+                    </div>
+                    <div>I&#39;m attempting to run Tensorflow within
+                      singularity on an Ubuntu 16.04 machine. I&#39;m using
+                      the Tensorflow docker to bootstrap (I&#39;ve been
+                      using=C2=A0<a href=3D"https://github.com/drorlab/tf-s=
+ingularity" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&=
+#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fdrorlab%2Ftf=
+-singularity\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNErD_PABGkMHJcMbrwxntT_=
+wqtNAw&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.co=
+m/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fdrorlab%2Ftf-singularity\x26sa\x3dD\x=
+26sntz\x3d1\x26usg\x3dAFQjCNErD_PABGkMHJcMbrwxntT_wqtNAw&#39;;return true;"=
+>https://github.com/<wbr>drorlab/tf-singularity</a>
+                      and=C2=A0<a href=3D"https://github.com/jdongca2003/Te=
+nsorflow-singularity-container-with-GPU-support" rel=3D"nofollow" target=3D=
+"_blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dht=
+tps%3A%2F%2Fgithub.com%2Fjdongca2003%2FTensorflow-singularity-container-wit=
+h-GPU-support\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNF5LvtN0aXWp_5uXatcF3N=
+2BaIB-g&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.c=
+om/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fjdongca2003%2FTensorflow-singularity=
+-container-with-GPU-support\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNF5LvtN0=
+aXWp_5uXatcF3N2BaIB-g&#39;;return true;">https://github.com/<wbr>jdongca200=
+3/Tensorflow-<wbr>singularity-container-with-<wbr>GPU-support</a>
+                      as my guides). I&#39;m able to successfully build the
+                      singularity image and run tensorflow within it,
+                      but only with CPU. I&#39;ve checked that I&#39;m usin=
+g the
+                      same NVIDIA driver version and CUDA versions in
+                      singularity as on the machine, so I don&#39;t think
+                      that&#39;s the issue. I&#39;m able to use nvidia-smi =
+from
+                      within the image to view the GPUs, but just not
+                      able to access the GPU from tensorflow. I&#39;ve
+                      listed my output below, along with the code I used
+                      to generate the image. Any advice would be much
+                      appreciated :-)</div>
+                    <div><br>
+                    </div>
+                    <blockquote style=3D"margin:0 0 0 40px;border:none;padd=
+ing:0px">
+                      <div>
+                        <div><font face=3D"courier new, monospace">rbharath=
+:~/Tensorflow-<wbr>singularity-container-with-<wbr>GPU-support$
+                            sudo singularity shell -w
+                            ubuntu_tensorflow_GPU.img=C2=A0</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">Singular=
+ity:
+                            Invoking an interactive shell within
+                            container...</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace"><br>
+                          </font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">Singular=
+ity.ubuntu_tensorflow_<wbr>GPU.img&gt;
+                            # nvidia-smi</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">Sun Dec
+                            25 07:35:43 2016 =C2=A0 =C2=A0 =C2=A0=C2=A0</fo=
+nt></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">+-------=
+----------------------<wbr>------------------------------<wbr>-------------=
+-----+</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">|
+                            NVIDIA-SMI 367.57 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 Driver
+                            Version: 367.57 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0|</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">|-------=
+----------------------<wbr>--+----------------------+----<wbr>-------------=
+-----+</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">| GPU
+                            =C2=A0Name =C2=A0 =C2=A0 =C2=A0 =C2=A0Persisten=
+ce-M| Bus-Id =C2=A0 =C2=A0 =C2=A0
+                            =C2=A0Disp.A | Volatile Uncorr. ECC |</font></d=
+iv>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">| Fan
+                            =C2=A0Temp =C2=A0Perf =C2=A0Pwr:Usage/Cap| =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0
+                            Memory-Usage | GPU-Util =C2=A0Compute M. |</fon=
+t></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">|=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D<wbr>=3D=3D+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D+=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D|</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">| =C2=A0=
+ 0
+                            =C2=A0GeForce GTX 1080 =C2=A0 =C2=A0Off =C2=A0|=
+ 0000:01:00.0 =C2=A0 =C2=A0
+                            =C2=A0On | =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0N/A |</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">| 27% =
+=C2=A0
+                            37C =C2=A0 =C2=A0P8 =C2=A0 =C2=A012W / 180W | =
+=C2=A0 =C2=A0 62MiB /
+                            =C2=A08110MiB | =C2=A0 =C2=A0 =C2=A00% =C2=A0 =
+=C2=A0 =C2=A0Default |</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">+-------=
+----------------------<wbr>--+----------------------+----<wbr>-------------=
+-----+</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">| =C2=A0=
+ 1
+                            =C2=A0GeForce GTX 1080 =C2=A0 =C2=A0Off =C2=A0|=
+ 0000:02:00.0 =C2=A0 =C2=A0
+                            Off | =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0N/A |</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">| 27% =
+=C2=A0
+                            34C =C2=A0 =C2=A0P8 =C2=A0 =C2=A011W / 180W | =
+=C2=A0 =C2=A0 =C2=A01MiB /
+                            =C2=A08113MiB | =C2=A0 =C2=A0 =C2=A00% =C2=A0 =
+=C2=A0 =C2=A0Default |</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">+-------=
+----------------------<wbr>--+----------------------+----<wbr>-------------=
+-----+</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">=C2=A0 =
+=C2=A0 =C2=A0 =C2=A0
+                            =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+                            =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">+-------=
+----------------------<wbr>------------------------------<wbr>-------------=
+-----+</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">|
+                            Processes: =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0
+                            =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 GPU Memory |</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">| =C2=A0=
+GPU
+                            =C2=A0 =C2=A0 =C2=A0 PID =C2=A0Type =C2=A0Proce=
+ss name =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+                            =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 Usage =C2=A0 =C2=A0 =C2=A0|</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">|=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D|</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">| =C2=A0=
+ =C2=A00
+                            =C2=A0 =C2=A0 =C2=A03509 =C2=A0 =C2=A0G =C2=A0 =
+/usr/lib/xorg/Xorg =C2=A0 =C2=A0 =C2=A0 =C2=A0
+                            =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A060MiB |</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">+-------=
+----------------------<wbr>------------------------------<wbr>-------------=
+-----+</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">Singular=
+ity.ubuntu_tensorflow_<wbr>GPU.img&gt;
+                            # ldconfig -p | grep libcuda</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">=C2=A0 =
+=C2=A0 =C2=A0 =C2=A0
+                            libcudart.so.8.0 (libc6,x86-64) =3D&gt;
+                            /usr/local/cuda/lib64/<wbr>libcudart.so.8.0</fo=
+nt></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">=C2=A0 =
+=C2=A0 =C2=A0 =C2=A0
+                            libcudart.so (libc6,x86-64) =3D&gt;
+                            /usr/local/cuda/lib64/<wbr>libcudart.so</font><=
+/div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">=C2=A0 =
+=C2=A0 =C2=A0 =C2=A0
+                            libcuda.so.1 (libc6,x86-64) =3D&gt;
+                            /usr/local/NVIDIA-Linux-x86_<wbr>64-367.57/libc=
+uda.so.1</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">=C2=A0 =
+=C2=A0 =C2=A0 =C2=A0
+                            libcuda.so (libc6,x86-64) =3D&gt;
+                            /usr/local/NVIDIA-Linux-x86_<wbr>64-367.57/libc=
+uda.so</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">Singular=
+ity.ubuntu_tensorflow_<wbr>GPU.img&gt;
+                            # ipython</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">/usr/loc=
+al/lib/python2.7/dist-<wbr>packages/IPython/paths.py:69:
+                            UserWarning: IPython parent &#39;/home/rbharath=
+&#39;
+                            is not a writable location, using a temp
+                            directory.</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">=C2=A0 &=
+quot;
+                            using a temp directory.&quot;.format(parent))</=
+font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">Python
+                            2.7.6 (default, Oct 26 2016, 20:30:19)=C2=A0</f=
+ont></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">Type
+                            &quot;copyright&quot;, &quot;credits&quot; or &=
+quot;license&quot; for more
+                            information.</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace"><br>
+                          </font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">IPython
+                            5.1.0 -- An enhanced Interactive Python.</font>=
+</div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">? =C2=A0=
+ =C2=A0 =C2=A0
+                            =C2=A0 -&gt; Introduction and overview of
+                            IPython&#39;s features.</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">%quickre=
+f
+                            -&gt; Quick reference.</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">help =C2=
+=A0
+                            =C2=A0 =C2=A0-&gt; Python&#39;s own help system=
+.</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">object?
+                            =C2=A0 -&gt; Details about &#39;object&#39;, us=
+e
+                            &#39;object??&#39; for extra details.</font></d=
+iv>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace"><br>
+                          </font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">In [1]:
+                            import tensorflow as tf</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace"><br>
+                          </font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">In [2]:
+                            tf.Session(config=3Dtf.<wbr>ConfigProto(log_dev=
+ice_<wbr>placement=3DTrue))</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">Device
+                            mapping: no known devices.</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">I
+                            tensorflow/core/common_<wbr>runtime/direct_sess=
+ion.cc:255]
+                            Device mapping:</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace"><br>
+                          </font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">Out[2]:
+                            &lt;tensorflow.python.client.<wbr>session.Sessi=
+on
+                            at 0x7f97c853b210&gt;</font></div>
+                      </div>
+                    </blockquote>
+                    <div><br>
+                    </div>
+                    <div>For completeness, I&#39;ve listed below the code I
+                      use to build the image. The entrypoint is running=C2=
+=A0<br>
+                    </div>
+                    <div><br>
+                    </div>
+                    <blockquote style=3D"margin:0 0 0 40px;border:none;padd=
+ing:0px">
+                      <div><font face=3D"courier new, monospace">sh
+                          build.sh</font></div>
+                      <div><font face=3D"courier new, monospace"><br>
+                        </font></div>
+                      <div><font face=3D"courier new, monospace">##########=
+###
+                          build.sh</font></div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">echo
+                            &quot;Removing old GPU image&quot;</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">sudo rm
+                            -f ubuntu_tensorflow_GPU.img</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">echo
+                            &quot;Creating GPU image&quot;</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">sudo
+                            singularity create -s 5000
+                            ubuntu_tensorflow_GPU.img</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">echo
+                            &quot;Bootstrapping image&quot;</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">sudo
+                            singularity bootstrap
+                            ubuntu_tensorflow_GPU.img tf-gpu.def</font></di=
+v>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">echo
+                            &quot;Running tensorflow install script&quot;</=
+font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">sudo
+                            singularity exec -B `pwd`:/mnt -w
+                            ubuntu_tensorflow_GPU.img sh
+                            /mnt/tensorflow.sh</font></div>
+                      </div>
+                      <div><font face=3D"courier new, monospace"><br>
+                        </font></div>
+                      <div><font face=3D"courier new, monospace">##########=
+###
+                          tf-gpu.def</font></div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">#
+                            Copyright (c) 2015-2016, Gregory M. Kurtzer.
+                            All rights reserved.</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">#=C2=A0<=
+/font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">#
+                            &quot;Singularity&quot; Copyright (c) 2016, The
+                            Regents of the University of California,</font>=
+</div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">#
+                            through Lawrence Berkeley National
+                            Laboratory (subject to receipt of any</font></d=
+iv>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">#
+                            required approvals from the U.S. Dept. of
+                            Energy).=C2=A0 All rights reserved.</font></div=
+>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace"><br>
+                          </font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">BootStra=
+p:
+                            docker</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">From:
+                            tensorflow/tensorflow:latest-<wbr>gpu=C2=A0</fo=
+nt></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">IncludeC=
+md:
+                            yes</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace"><br>
+                          </font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">%runscri=
+pt</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">=C2=A0 =
+=C2=A0
+                            exec /usr/bin/python &quot;$@&quot;</font></div=
+>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace"><br>
+                          </font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">%post</f=
+ont></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">=C2=A0 =
+=C2=A0
+                            apt-get update &amp;&amp; apt-get -y upgrade</f=
+ont></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">=C2=A0 =
+=C2=A0
+                            apt-get install git -y</font></div>
+                      </div>
+                      <div><font face=3D"courier new, monospace"><br>
+                        </font></div>
+                      <div><font face=3D"courier new, monospace">##########=
+###
+                          tensorflow.sh</font></div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">driver_v=
+ersion=3D367.57</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">cuda_ver=
+sion=3D8.0.44_linux</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">cudnn_ve=
+rsion=3D8.0-linux-x64-<wbr>v5.1</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">sh
+                            /mnt/NVIDIA-Linux-x86_64-$<wbr>driver_version.r=
+un
+                            -x</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">mv
+                            NVIDIA-Linux-x86_64-$driver_<wbr>version
+                            /usr/local/</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">sh
+                            /mnt/links.sh $driver_version</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace"><br>
+                          </font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">sh
+                            /mnt/cuda_$cuda_version.run --toolkit
+                            --silent</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">tar xvf
+                            /mnt/cudnn-$cudnn_version.tgz -C /usr/local</fo=
+nt></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace"><br>
+                          </font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">driver_p=
+ath=3D/usr/local/NVIDIA-<wbr>Linux-x86_64-$driver_version</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">sudo
+                            echo &quot;/usr/local/cuda/lib64&quot; &gt;&gt;
+                            /etc/ld.so.conf</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">sudo
+                            echo &quot;$driver_path&quot; &gt;&gt; /etc/ld.=
+so.conf</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">#
+                            ldconfig doesn&#39;t list lubcuda*/libcudnn*
+                            without explicit commands</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">sudo
+                            ldconfig /usr/local/cuda/lib64</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">sudo
+                            ldconfig $driver_path</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace"><br>
+                          </font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">echo &qu=
+ot;
+                            &quot; &gt;&gt; /environment</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">echo
+                            &quot;LD_LIBRARY_PATH=3D/usr/local/<wbr>cuda/li=
+b64:$driver_path:$LD_<wbr>LIBRARY_PATH&quot;
+                            &gt;&gt; /environment</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">echo
+                            &quot;PATH=3D$driver_path:\$PATH&quot; &gt;&gt;
+                            /environment</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">echo
+                            &quot;export CUDA_HOME=3D/usr/local/cuda&quot; =
+&gt;&gt;
+                            /environment</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">echo
+                            &quot;export PATH LD_LIBRARY_PATH&quot; &gt;&gt=
+;
+                            /environment</font></div>
+                      </div>
+                      <div><font face=3D"courier new, monospace"><br>
+                        </font></div>
+                      <div><font face=3D"courier new, monospace">##########=
+###
+                          links.sh</font></div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">#!/usr/b=
+in/bash</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace"><br>
+                          </font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">dir=3D/u=
+sr/local/NVIDIA-Linux-<wbr>x86_64-$1</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace"><br>
+                          </font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">cd $dir<=
+/font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace"><br>
+                          </font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">ln -s
+                            libcuda.so.$1 libcuda.so</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">ln -s
+                            libEGL.so.$1 libEGL.so</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">ln -s
+                            libGLESv1_CM.so.$1 libGLESv1_CM.so=C2=A0</font>=
+</div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">ln -s
+                            libGLESv2.so.$1 libGLESv2.so</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">ln -s
+                            libGL.so.$1 libGL.so</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">ln -s
+                            libglx.so.$1 libglx.so</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">ln -s
+                            libnvcuvid.so.$1 libnvcuvid.so</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">ln -s
+                            libnvidia-cfg.so.$1 libnvidia-cfg.so</font></di=
+v>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">ln -s
+                            libnvidia-compiler.so.$1
+                            libnvidia-compiler.so</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">ln -s
+                            libnvidia-eglcore.so.$1 libnvidia-eglcore.so</f=
+ont></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">ln -s
+                            libnvidia-encode.so.$1 libnvidia-encode.so</fon=
+t></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">ln -s
+                            libnvidia-fbc.so.$1 libnvidia-fbc.so</font></di=
+v>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">ln -s
+                            libnvidia-glcore.so.$1 libnvidia-glcore.so</fon=
+t></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">ln -s
+                            libnvidia-glsi.so.$1 libnvidia-glsi.so</font></=
+div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">ln -s
+                            libnvidia-gtk2.so.$1 libnvidia-gtk2.so</font></=
+div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">ln -s
+                            libnvidia-gtk3.so.$1 libnvidia-gtk3.so</font></=
+div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">ln -s
+                            libnvidia-ifr.so.$1 libnvidia-ifr.so</font></di=
+v>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">ln -s
+                            libnvidia-ml.so.$1 libnvidia-ml.so</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">ln -s
+                            libnvidia-ml.so.$1 libnvidia-ml.so.1</font></di=
+v>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">ln -s
+                            libnvidia-opencl.so.$1 libnvidia-opencl.so</fon=
+t></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">ln -s
+                            libnvidia-tls.so.$1 libnvidia-tls.so</font></di=
+v>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">ln -s
+                            libnvidia-wfb.so.$1 libnvidia-wfb.so</font></di=
+v>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">ln -s
+                            libvdpau_nvidia.so.$1 libvdpau_nvidia.so</font>=
+</div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">ln -s
+                            libvdpau.so.$1 libvdpau.so</font></div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">ln -s
+                            libvdpau_trace.so.$1 libvdpau_trace.so</font></=
+div>
+                      </div>
+                      <div>
+                        <div><font face=3D"courier new, monospace">ln -s
+                            libcuda.so.$1 libcuda.so.1</font></div>
+                      </div>
+                    </blockquote>
+                    <span><font color=3D"#888888">
+                        <div><br>
+                        </div>
+                      </font></span></div>
+                  <span><font color=3D"#888888">
+                      -- <br>
+                      You received this message because you are
+                      subscribed to the Google Groups &quot;singularity&quo=
+t;
+                      group.<br>
+                      To unsubscribe from this group and stop receiving
+                      emails from it, send an email to <a rel=3D"nofollow">=
+singu...@lbl.gov</a>.<br>
+                    </font></span></blockquote>
+              </div>
+              <br>
+              <br clear=3D"all">
+              <div><br>
+              </div>
+              -- <br>
+              <div>Vanessa Villamia Sochat<br>
+                Stanford University &#39;16<br>
+                <div>
+                  <div>
+                    <div>(603) 321-0676</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </blockquote>
+        </div>
+      </div>
+      -- <br>
+      You received this message because you are subscribed to the Google
+      Groups &quot;singularity&quot; group.<br>
+      To unsubscribe from this group and stop receiving emails from it,
+      send an email to <a href=3D"javascript:" target=3D"_blank" gdf-obfusc=
+ated-mailto=3D"dOMIUEPFDwAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#=
+39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#=
+39;;return true;">singularity...@lbl.<wbr>gov</a>.<br>
+    </blockquote>
+    <br>
+  </div>
+
+</blockquote></div></div>
+------=_Part_7060_969957946.1485222716542--
+
+------=_Part_7059_1025134640.1485222716541--

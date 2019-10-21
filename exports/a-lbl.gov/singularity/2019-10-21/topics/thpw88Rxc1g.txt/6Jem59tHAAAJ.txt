@@ -1,0 +1,202 @@
+Date: Tue, 1 Aug 2017 07:17:31 -0700 (PDT)
+From: Christopher Larrieu <chris...@larrieu.org>
+To: singularity <singu...@lbl.gov>
+Message-Id: <f347c4a6-d527-48d8-adb7-40613c46fd72@lbl.gov>
+In-Reply-To: <CAM=pu+K39yLJEcOK7rZUCy=Q9mpQzxEUb+JfiZ-mnShzq6464w@mail.gmail.com>
+References: <d27c2fe3-d019-4b01-b38e-beac9890a842@lbl.gov>
+ <CAM=pu+K39yLJEcOK7rZUCy=Q9mpQzxEUb+JfiZ-mnShzq6464w@mail.gmail.com>
+Subject: Re: [Singularity] Contain home directory within image?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_5139_1249821656.1501597051597"
+
+------=_Part_5139_1249821656.1501597051597
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_5140_1137058264.1501597051597"
+
+------=_Part_5140_1137058264.1501597051597
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi Vanessa,
+
+Thanks for your quick reply!  What I am most interested in is preventing 
+files in the host system's user home directory from affecting the 
+environment of the container shell.  As the most basic example: .bashrc:  I 
+don't want the shell I spawn within my container to initialize with a 
+configuration file that exists outside.
+
+Another example.  One of the users at our lab insisted that his code simply 
+would not run efficiently on our cluster, so he ended up shipping his data 
+off site for years.  When I dug into his problem, I ultimately discovered 
+that he had a dot file in his home directory that was enabling profiling in 
+his code.  He had totally forgotten about the config file.  But this is the 
+sort of problem that singularity could prevent by providing a consistent, 
+self-contained, environment.  The issue is that a user's home directory 
+mounted from outside the container introduces the possibility of all kinds 
+of site-specific differences into the container.
+
+I'm thinking a modification of the -H option to take solely the target part 
+of a source:target pair:
+
+  # singularity exec -H :/contained/home ...
+
+This would simply set the user's home directory within the container to 
+'/contained/home'.
+
+Does that make sense?
+
+Cheers,
+
+Chris
+
+
+
+On Tuesday, August 1, 2017 at 9:55:41 AM UTC-4, vanessa wrote:
+>
+> Hi Chris,
+>
+> If you have important files for the runtime of the container, for the sake 
+> of reproducibility I would caution you from keeping these in home. If 
+> another user were to use your container, would it be broken?
+>
+> For files and dependencies in your home that are shareable, I would save 
+> them somewhere more reliably present in the image (/usr/local/app or 
+> /opt/app).  If you want to be saving some home with "secret" settings then 
+> I think having it mount is the right way to go. You would want to provide 
+> clear instruction to other users about the needed secrets, lest they run 
+> the container without them.
+>
+> If you want to define some custom home, then take a look at the --home/-H 
+> option provided in most commands (shell, exec, etc.) it should let you 
+> specify a custom path (other than /home/[username]) for home when you run 
+> the image. This is however, a bind, which doesn't seem to be what you want? 
+> If you want to specify another directory in the container "as the actual 
+> home" I take it you mean something in the container *not* bound, in which 
+> case see my concern above.
+>
+> If these ideas aren't resolution to your issue, if you could provide more 
+> detail we can think of some workaround that is both portable and 
+> satisfactory.
+>
+> Best,
+>
+> Vanessa
+>
+> On Tue, Aug 1, 2017 at 6:43 AM, Christopher Larrieu <ch...@larrieu.org 
+> <javascript:>> wrote:
+>
+>> I'd really like to to have my home directory reside within the 
+>> container.  So many dot files quietly affect the runtime behavior of 
+>> applications that it's quite difficult to guarantee a consistent 
+>> environment when a container runs on systems with different home 
+>> directories.
+>>
+>> The -H option allows you to specify a unique mapping from the host system 
+>> into the container, but what I'd really like is to specify a directory 
+>> within the container as the actual home directory, not the target of a 
+>> mapping.
+>>
+>> Is this possible?
+>>
+>> Thanks,
+>>
+>> Chris
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_5140_1137058264.1501597051597
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Vanessa,<div><br></div><div>Thanks for your quick reply=
+! =C2=A0What I am most interested in is preventing files in the host system=
+&#39;s user home directory from affecting the environment of the container =
+shell. =C2=A0As the most basic example: .bashrc: =C2=A0I don&#39;t want the=
+ shell I spawn within my container to initialize with a configuration file =
+that exists outside.</div><div><br></div><div>Another example. =C2=A0One of=
+ the users at our lab insisted that his code simply would not run efficient=
+ly on our cluster, so he ended up shipping his data off site for years. =C2=
+=A0When I dug into his problem, I ultimately discovered that he had a dot f=
+ile in his home directory that was enabling profiling in his code. =C2=A0He=
+ had totally forgotten about the config file. =C2=A0But this is the sort of=
+ problem that singularity could prevent by providing a consistent, self-con=
+tained, environment. =C2=A0The issue is that a user&#39;s home directory mo=
+unted from outside the container introduces the possibility of all kinds of=
+ site-specific differences into the container.</div><div><br></div><div>I&#=
+39;m thinking a modification of the -H option to take solely the target par=
+t of a source:target pair:</div><div><br></div><div>=C2=A0 # singularity ex=
+ec -H :/contained/home ...</div><div><br></div><div>This would simply set t=
+he user&#39;s home directory within the container to &#39;/contained/home&#=
+39;.</div><div><br></div><div>Does that make sense?</div><div><br></div><di=
+v>Cheers,</div><div><br></div><div>Chris</div><div><br></div><div><br></div=
+><div><br>On Tuesday, August 1, 2017 at 9:55:41 AM UTC-4, vanessa wrote:<bl=
+ockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border=
+-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">Hi Chris,<div><b=
+r></div><div>If you have important files for the runtime of the container, =
+for the sake of reproducibility I would caution you from keeping these in h=
+ome. If another user were to use your container, would it be broken?</div><=
+div><br></div><div>For files and dependencies in your home that are shareab=
+le, I would save them somewhere more reliably present in the image (/usr/lo=
+cal/app or /opt/app).=C2=A0 If you want to be saving some home with &quot;s=
+ecret&quot; settings then I think having it mount is the right way to go. Y=
+ou would want to provide clear instruction to other users about the needed =
+secrets, lest they run the container without them.</div><div><br></div><div=
+>If you want to define some custom home, then take a look at the --home/-H =
+option provided in most commands (shell, exec, etc.) it should let you spec=
+ify a custom path (other than /home/[username]) for home when you run the i=
+mage. This is however, a bind, which doesn&#39;t seem to be what you want? =
+If you want to specify another directory in the container &quot;as the actu=
+al home&quot; I take it you mean something in the container <i>not</i>=C2=
+=A0bound, in which case see my concern above.</div><div><br></div><div>If t=
+hese ideas aren&#39;t resolution to your issue, if you could provide more d=
+etail we can think of some workaround that is both portable and satisfactor=
+y.</div><div><br></div><div>Best,</div><div><br></div><div>Vanessa</div></d=
+iv><div><br><div class=3D"gmail_quote">On Tue, Aug 1, 2017 at 6:43 AM, Chri=
+stopher Larrieu <span dir=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_bl=
+ank" gdf-obfuscated-mailto=3D"l39--mYaAQAJ" rel=3D"nofollow" onmousedown=3D=
+"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#3=
+9;javascript:&#39;;return true;">ch...@larrieu.org</a>&gt;</span> wrote:<br=
+><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1=
+px #ccc solid;padding-left:1ex"><div dir=3D"ltr">I&#39;d really like to to =
+have my home directory reside within the container.=C2=A0 So many dot files=
+ quietly affect the runtime behavior of applications that it&#39;s quite di=
+fficult to guarantee a consistent environment when a container runs on syst=
+ems with different home directories.<div><br></div><div>The -H option allow=
+s you to specify a unique mapping from the host system into the container, =
+but what I&#39;d really like is to specify a directory within the container=
+ as the actual home directory, not the target of a mapping.</div><div><br><=
+/div><div>Is this possible?</div><div><br></div><div>Thanks,</div><div><br>=
+</div><div>Chris</div></div><span><font color=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+l39--mYaAQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div>=
+<div>(603) 321-0676</div></div></div></div>
+</div>
+</blockquote></div></div>
+------=_Part_5140_1137058264.1501597051597--
+
+------=_Part_5139_1249821656.1501597051597--

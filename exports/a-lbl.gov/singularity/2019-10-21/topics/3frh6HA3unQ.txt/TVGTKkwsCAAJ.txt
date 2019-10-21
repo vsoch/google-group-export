@@ -1,0 +1,165 @@
+Date: Mon, 10 Dec 2018 07:41:01 -0800 (PST)
+From: =?UTF-8?Q?Tobias_K=C3=BChn?= <t.k...@gmx.de>
+To: singularity <singu...@lbl.gov>
+Message-Id: <ed120aaf-4e7b-4123-8a50-836d13ff1c62@lbl.gov>
+Subject: Try to Start a BeeGFS Management Container
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1557_1860975430.1544456461120"
+
+------=_Part_1557_1860975430.1544456461120
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1558_855264992.1544456461121"
+
+------=_Part_1558_855264992.1544456461121
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hello Everybody,
+
+i am trying to install BeeGFS to an singularity container but i have some  
+serios Problems.
+
+My Definition File Looks like this:
+
+# BeeGFS managment server
+BootStrap: library
+From: centos:7
+Include: yum
+%post
+       yum -y update -x setup
+        yum install -y wget net-tools
+        wget -O /etc/yum.repos.d/beegfs_rhel7.repo 
+https://www.beegfs.io/release/latest-stable/dists/beegfs_rhel7.re$
+        yum install -y beegfs-mgmtd beegfs-utils
+        /opt/beegfs/sbin/beegfs-setup-mgmtd -p /data/beegfs/beegfs_mgmtd
+%runscript
+  runmgm.sh
+
+The runmeta.sh:
+
+#!/bin/bash
+#
+# Wrapper around beegfs-mgmtd to start the service _and_ keep an eye
+# on the log. beegfs-mgmtd is able to run non-daemonized, but it
+# doesn't report anything on stdout/stderr.
+: ${BEEGFS_LOGLEVEL:="3"}
+/opt/beegfs/sbin/beegfs-meta \
+    cfgFile=/etc/beegfs/beegfs-meta.conf \
+    logLevel=${BEEGFS_LOGLEVEL}
+tail -f /var/log/beegfs-meta.log
+
+
+
+My instance command as root:
+
+singularity instance start --net --network bridge,ptp --hostname mgmtd01 
+--writable-tmpfs mgmtd.sif mgmtd1
+
+but the runmeta.sh wont start. If i start the script manualy in the 
+container then it says: 
+Error: Storage directory not initialized and initialization has been 
+disabled: /data/beegfs/beegfs_meta
+[BeeGFS Metadata Node Version: 7.1.1
+Refer to the default config file (/etc/beegfs/beegfs-meta.conf)
+or visit http://www.beegfs.com to find out about configuration options.]
+(3) Dec10 16:14:42 Main [App.cpp:631] >> Limiting number of xattrs per 
+inode.
+(1) Dec10 16:14:42 Main [App] >> This appears to be a new storage 
+directory. Creating a new root dir.
+(0) Dec10 16:14:42 Main [Directory (store initial metadata file)] >> Unable 
+to store directory xattr metadata: inodes/38/51/root. Did you enable 
+extended attributes (user_xattr) on the underlying file system?
+(0) Dec10 16:14:42 Main [App] >> Failed to store root directory. Unable to 
+proceed.
+(0) Dec10 16:14:42 Main [App] >> Failed to store root directory
+
+
+i do not understand what the message mean with xattrs
+
+I hope someon can help me.
+
+Greetings Tobi
+
+------=_Part_1558_855264992.1544456461121
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Hello Everybody,</div><div><br></div><div>i am trying=
+ to install BeeGFS to an singularity container but i have some=C2=A0 serios=
+ Problems.</div><div><br></div><div>My Definition File Looks like this:</di=
+v><div><br></div><div><div class=3D"prettyprint" style=3D"border: 1px solid=
+ rgb(187, 187, 187); word-wrap: break-word; background-color: rgb(250, 250,=
+ 250);"><code class=3D"prettyprint"><div class=3D"subprettyprint"><span cla=
+ss=3D"styled-by-prettify" style=3D"color: #660;"># BeeGFS managment server<=
+/span></div><div class=3D"subprettyprint"><span class=3D"styled-by-prettify=
+" style=3D"color: #660;">BootStrap: library<br>From: centos:7</span></div><=
+div class=3D"subprettyprint"><span class=3D"styled-by-prettify" style=3D"co=
+lor: #660;">Include: yum</span></div><div class=3D"subprettyprint"><span cl=
+ass=3D"styled-by-prettify" style=3D"color: #660;">%post<br>=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0 yum -y update -x setup<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0 yum install -y wget net-tools<br>=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0 wget -O /etc/yum.repos.d/beegfs_rhel7.repo https://www.b=
+eegfs.io/release/latest-stable/dists/beegfs_rhel7.re$<br>=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0 yum install -y beegfs-mgmtd beegfs-utils<br>=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 /opt/beegfs/sbin/beegfs-setup-mgmtd -p=
+ /data/beegfs/beegfs_mgmtd</span></div><div class=3D"subprettyprint"><span =
+class=3D"styled-by-prettify" style=3D"color: #660;">%runscript<br>=C2=A0 ru=
+nmgm.sh<br></span></div></code></div><br></div><div>The runmeta.sh:</div><d=
+iv><br></div><div><div class=3D"prettyprint" style=3D"border: 1px solid rgb=
+(187, 187, 187); word-wrap: break-word; background-color: rgb(250, 250, 250=
+);"><div class=3D"subprettyprint"><font color=3D"#0b0316"></font><code clas=
+s=3D"prettyprint">#!/bin/bash</code></div><div class=3D"subprettyprint"><co=
+de class=3D"prettyprint">#</code></div><div class=3D"subprettyprint"><code =
+class=3D"prettyprint"># Wrapper around beegfs-mgmtd to start the service _a=
+nd_ keep an eye</code></div><div class=3D"subprettyprint"><code class=3D"pr=
+ettyprint"># on the log. beegfs-mgmtd is able to run non-daemonized, but it=
+</code></div><div class=3D"subprettyprint"><code class=3D"prettyprint"># do=
+esn&#39;t report anything on stdout/stderr.</code></div><code class=3D"pret=
+typrint"></code></div><div class=3D"prettyprint" style=3D"border: 1px solid=
+ rgb(187, 187, 187); word-wrap: break-word; background-color: rgb(250, 250,=
+ 250);"><code class=3D"prettyprint">: ${BEEGFS_LOGLEVEL:=3D&quot;3&quot;}</=
+code></div><div class=3D"prettyprint" style=3D"border: 1px solid rgb(187, 1=
+87, 187); word-wrap: break-word; background-color: rgb(250, 250, 250);"><co=
+de class=3D"prettyprint">/opt/beegfs/sbin/beegfs-meta \<br>=C2=A0=C2=A0=C2=
+=A0 cfgFile=3D/etc/beegfs/beegfs-meta.conf \<br>=C2=A0=C2=A0=C2=A0 logLevel=
+=3D${BEEGFS_LOGLEVEL}</code></div><div class=3D"prettyprint" style=3D"borde=
+r: 1px solid rgb(187, 187, 187); word-wrap: break-word; background-color: r=
+gb(250, 250, 250);"><code class=3D"prettyprint">tail -f /var/log/beegfs-met=
+a.log</code></div><div class=3D"prettyprint" style=3D"border: 1px solid rgb=
+(187, 187, 187); word-wrap: break-word; background-color: rgb(250, 250, 250=
+);"><code class=3D"prettyprint"><br></code></div><code class=3D"prettyprint=
+"><div class=3D"subprettyprint" style=3D"border: 1px solid rgb(187, 187, 18=
+7); word-wrap: break-word; background-color: rgb(250, 250, 250);"><br></div=
+></code><br>My instance command as root:</div><div><br></div><div><div clas=
+s=3D"prettyprint" style=3D"border: 1px solid rgb(187, 187, 187); word-wrap:=
+ break-word; background-color: rgb(250, 250, 250);"><code class=3D"prettypr=
+int"><div class=3D"subprettyprint"><span class=3D"styled-by-prettify" style=
+=3D"color: #606;"><font color=3D"#004000" style=3D"background-color: transp=
+arent;">singularity instance start --net --network bridge,ptp --hostname mg=
+mtd01 --writable-tmpfs mgmtd.sif mgmtd1<br></font></span><span class=3D"sty=
+led-by-prettify" style=3D"color: #660;"></span></div></code></div><br>but t=
+he runmeta.sh wont start. If i start the script manualy in the container th=
+en it says:=C2=A0</div><div><div class=3D"prettyprint" style=3D"border: 1px=
+ solid rgb(187, 187, 187); word-wrap: break-word; background-color: rgb(250=
+, 250, 250);"><code class=3D"prettyprint"><span class=3D"styled-by-prettify=
+" style=3D"color: #606;"></span></code><div class=3D"subprettyprint"><font =
+color=3D"#b06400"></font>Error: Storage directory not initialized and initi=
+alization has been disabled: /data/beegfs/beegfs_meta</div><div class=3D"su=
+bprettyprint">[BeeGFS Metadata Node Version: 7.1.1<br>Refer to the default =
+config file (/etc/beegfs/beegfs-meta.conf)<br>or visit http://www.beegfs.co=
+m to find out about configuration options.]</div><div class=3D"subprettypri=
+nt">(3) Dec10 16:14:42 Main [App.cpp:631] &gt;&gt; Limiting number of xattr=
+s per inode.<br>(1) Dec10 16:14:42 Main [App] &gt;&gt; This appears to be a=
+ new storage directory. Creating a new root dir.<br>(0) Dec10 16:14:42 Main=
+ [Directory (store initial metadata file)] &gt;&gt; Unable to store directo=
+ry xattr metadata: inodes/38/51/root. Did you enable extended attributes (u=
+ser_xattr) on the underlying file system?<br>(0) Dec10 16:14:42 Main [App] =
+&gt;&gt; Failed to store root directory. Unable to proceed.<br>(0) Dec10 16=
+:14:42 Main [App] &gt;&gt; Failed to store root directory</div><div class=
+=3D"subprettyprint"><br></div></div><br></div><div>i do not understand what=
+ the message mean with xattrs</div><div><br></div><div>I hope someon can he=
+lp me.</div><div><br></div><div>Greetings Tobi</div></div>
+------=_Part_1558_855264992.1544456461121--
+
+------=_Part_1557_1860975430.1544456461120--

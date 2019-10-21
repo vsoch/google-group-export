@@ -1,0 +1,104 @@
+Date: Mon, 27 Mar 2017 14:44:44 -0700 (PDT)
+From: Martin Cuma <mart...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <45234a53-1c9d-4c42-86c4-f9155e3c82dd@lbl.gov>
+Subject: Custom environment in the Singularity container
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_9647_53458941.1490651084853"
+
+------=_Part_9647_53458941.1490651084853
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_9648_434691323.1490651084853"
+
+------=_Part_9648_434691323.1490651084853
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+There has been some discussion on what environment variables to pass to the 
+container from the host and what not, and, I admit I am lost at what's the 
+current status. It'd be great if this could be documented somewhere (or if 
+it is, please point me to it).
+
+From what I can tell from Singularity 2.2.1, pretty much everything but 
+LD_LIBRARY_PATH gets passed. 
+
+Now, I am trying to clean up some environment variables and set up new ones 
+(in particular, clearing LMod  from the host - CentOS7, and setting it up 
+for the container - Ubuntu - some program/library locations are different 
+on those 2 distros which would make it hacky to use single LMod install for 
+both).  Additionally, LMod uses shell functions for command definitions 
+which Singularity does not seem to pass so I'd have to source LMod again 
+anyway (please, correct me if I am wrong here).
+
+I can control this fairly simply on the user level, by putting something 
+like this in ~/.bashrc:
+if [ -n "$SINGULARITY_CONTAINER" ] && [ -n "$SINGULARITY_MOD" ]; then
+  source /uufs/chpc.utah.edu/sys/modulefiles/scripts/clear_lmod.sh
+  source /uufs/chpc.utah.edu/sys/installdir/lmod/7.4-u16/init/profile
+fi
+
+where I set SINGULARITY_MOD in /environment only in the containers that I 
+want LMod to be active (clear_lmod.sh is my hack on clearing the LMod 
+environment variables, the init/profile is LMod's standard initialization).
+
+But, I would prefer to have this wrapped in the container so user did not 
+need to modify their dot files. 
+
+I first tried to put the two source lines to /etc/profile.d/, but it does 
+not get accessed at the container (singularity shell) start, which makes me 
+think that the shell is interactive non-login - so /etc/profile.d is 
+ignored. Note that this is the way we have LMod set up on our clusters (and 
+how TCL Modules do it as well), but, I figure that's because one ssh-es to 
+the cluster so login shell sources /etc/profile.d.
+
+Then I tried to put them in the /environment, but, while they do get 
+executed and the environment variables changed, the shell function 
+definitions don't get passed.
+
+Does anyone have any thoughts on this and/or did they successfully put LMod 
+in the container?
+
+Thanks,
+MC
+
+
+------=_Part_9648_434691323.1490651084853
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">There has been some discussion on what environment variabl=
+es to pass to the container from the host and what not, and, I admit I am l=
+ost at what&#39;s the current status. It&#39;d be great if this could be do=
+cumented somewhere (or if it is, please point me to it).<br><br>From what I=
+ can tell from Singularity 2.2.1, pretty much everything but LD_LIBRARY_PAT=
+H gets passed. <br><br>Now, I am trying to clean up some environment variab=
+les and set up new ones (in particular, clearing LMod=C2=A0 from the host -=
+ CentOS7, and setting it up for the container - Ubuntu - some program/libra=
+ry locations are different on those 2 distros which would make it hacky to =
+use single LMod install for both).=C2=A0 Additionally, LMod uses shell func=
+tions for command definitions which Singularity does not seem to pass so I&=
+#39;d have to source LMod again anyway (please, correct me if I am wrong he=
+re).<br><br>I can control this fairly simply on the user level, by putting =
+something like this in ~/.bashrc:<br>if [ -n &quot;$SINGULARITY_CONTAINER&q=
+uot; ] &amp;&amp; [ -n &quot;$SINGULARITY_MOD&quot; ]; then<br>=C2=A0 sourc=
+e /uufs/chpc.utah.edu/sys/modulefiles/scripts/clear_lmod.sh<br>=C2=A0 sourc=
+e /uufs/chpc.utah.edu/sys/installdir/lmod/7.4-u16/init/profile<br>fi<br><br=
+>where I set SINGULARITY_MOD in /environment only in the containers that I =
+want LMod to be active (clear_lmod.sh is my hack on clearing the LMod envir=
+onment variables, the init/profile is LMod&#39;s standard initialization).<=
+br><br>But, I would prefer to have this wrapped in the container so user di=
+d not need to modify their dot files. <br><br>I first tried to put the two =
+source lines to /etc/profile.d/, but it does not get accessed at the contai=
+ner (singularity shell) start, which makes me think that the shell is inter=
+active non-login - so /etc/profile.d is ignored. Note that this is the way =
+we have LMod set up on our clusters (and how TCL Modules do it as well), bu=
+t, I figure that&#39;s because one ssh-es to the cluster so login shell sou=
+rces /etc/profile.d.<br><br>Then I tried to put them in the /environment, b=
+ut, while they do get executed and the environment variables changed, the s=
+hell function definitions don&#39;t get passed.<br><br>Does anyone have any=
+ thoughts on this and/or did they successfully put LMod in the container?<b=
+r><br>Thanks,<br>MC<br><br></div>
+------=_Part_9648_434691323.1490651084853--
+
+------=_Part_9647_53458941.1490651084853--

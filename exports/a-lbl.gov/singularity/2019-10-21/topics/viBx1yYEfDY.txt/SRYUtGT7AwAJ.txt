@@ -1,0 +1,346 @@
+Date: Wed, 8 May 2019 12:56:47 -0700 (PDT)
+From: Samy <smahan...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <516e8990-a012-4432-92db-84e813735336@lbl.gov>
+In-Reply-To: <CAM=pu+LRRosvwLK1q-5vixynMFDUW_JvqirW+dCPh50UKAH3YQ@mail.gmail.com>
+References: <b8a1c7a0-0d79-4292-8c41-adc41f3bb965@lbl.gov> <CAM=pu++o8B0GSNOUU1COOp2dYrO6EQH7VyQ2zp17N0R5cD2joQ@mail.gmail.com>
+ <0a993128-25c9-4b75-a56d-a69c062dc9b8@lbl.gov> <CAM=pu+L_ptMviOx+3ZjGYtnE6gfmKtE8DmhCViA6D6cWWzjnGg@mail.gmail.com>
+ <cc250dcc-e5b8-47b6-9764-dd111723a8fc@lbl.gov>
+ <CAM=pu+LRRosvwLK1q-5vixynMFDUW_JvqirW+dCPh50UKAH3YQ@mail.gmail.com>
+Subject: Re: [Singularity] How to override an environment variable during
+ container run time?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_42_1622629569.1557345407907"
+
+------=_Part_42_1622629569.1557345407907
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_43_1587433421.1557345407908"
+
+------=_Part_43_1587433421.1557345407908
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+thank you both for the solution. I'm trying it now.
+
+Vanessa, could you clarify how I'm using SCIF in a weird way? I'm using the 
+same style for multiple recipes and would like to fix them all.
+Also, I'm using WORKDIR=$SINGULARITY_ROOTFS and you're using WORKDIR=${SCIF_APPBASE}: 
+what is the different between $SINGULARITY_ROOTFS and SCIF_APPBASE please? 
+doesn't it matter which one i use? (they both seem to work similarly)
+
+On Wednesday, May 8, 2019 at 12:42:17 PM UTC-7, vanessa wrote:
+>
+> Hey Samy,
+>
+> You are using the SCIF app in a weird way - when you define any section 
+> for "lammps" it will automatically generate a home for it under 
+> /scif/apps/llamps, and environment variables for the name, base, etc. are 
+> available when you run it.
+> In either case, I tweaked your recipe with Jason' suggestion to 
+> demonstrate the fix:
+>
+> https://gist.github.com/vsoch/7a7d41d166a846badf723b1462a9db46
+>
+> Here is an example running without changing the results directory:
+>
+> $ singularity run --app lammps lamps.simg 
+>> lammps is running.
+>> Single node Output file is 
+>> vanessa-ThinkPad-T460s_lammps_2019_05_08.results and log is 
+>> vanessa-ThinkPad-T460s_lammps_2019_05_08 and results dir is 
+>> /home/vanessa/lammps
+>
+>
+> and here is with a custom results folder:
+>
+> $ SINGULARITYENV_CUSTOM_RESULTS_DIR=/tmp/pancakes singularity run --app 
+>> lammps lamps.simg 
+>> lammps is running.
+>> Single node Output file is 
+>> vanessa-ThinkPad-T460s_lammps_2019_05_08.results and log is 
+>> vanessa-ThinkPad-T460s_lammps_2019_05_08 and results dir is /tmp/pancakes
+>
+>
+> Notice how $SCIF_APPNAME can be used when running llamps i(the echo for 
+> the appname) nstead of setting a global environment variable. Try this to 
+> see all the envars that are available to you for lammps:
+>
+> $ singularity exec --app lammps lamps.simg env | grep SCIF_APP
+>> SCIF_APPROOT_lammps=/scif/apps/lammps
+>> SCIF_APPMETA=/scif/apps/lammps/scif
+>> SCIF_APPRUN_lammps=/scif/apps/lammps/scif/runscript
+>> SCIF_APPLABELS_lammps=/scif/apps/lammps/scif/labels.json
+>> SCIF_APPDATA=/scif/data/lammps
+>> SCIF_APPROOT=/scif/apps/lammps
+>> SCIF_APPLIB_lammps=/scif/apps/lammps/lib
+>> SCIF_APPDATA_lammps=/scif/data/lammps
+>> SCIF_APPINPUT=/scif/data/lammps/input
+>> SCIF_APPBIN_lammps=/scif/apps/lammps/bin
+>> SCIF_APPS=/scif/apps
+>> SCIF_APPOUTPUT=/scif/data/lammps/output
+>> SCIF_APPMETA_lammps=/scif/apps/lammps/scif
+>> SCIF_APPNAME=lammps
+>
+>
+> Good team work, y'all! :)
+>
+> Best,
+>
+> Vanessa
+>
+> On Wed, May 8, 2019 at 3:06 PM Samy <sma...@gmail.com <javascript:>> 
+> wrote:
+>
+>> Thanks for doing that. I attached a simplified recipe with the same 
+>> content of the #environment section i have in the original recipe.
+>>
+>> On Wednesday, May 8, 2019 at 10:59:44 AM UTC-7, vanessa wrote:
+>>>
+>>> Can you provide a (dummy) recipe with a similar entrypoint? I installed 
+>>> Singularity 2.6 for you this morning so I'm ready to go! It will suck if 
+>>> it's an old bug that doesn't pass the variables to the SCIF apps.
+>>>
+>>> On Wed, May 8, 2019 at 1:54 PM Samy <sma...@gmail.com> wrote:
+>>>
+>>>> This still doesn't override RESULTS_DIR original value :(
+>>>> Any other ideas?
+>>>>
+>>>> Thanks,
+>>>>
+>>>> On Wednesday, May 8, 2019 at 9:27:08 AM UTC-7, vanessa wrote:
+>>>>>
+>>>>> The variable RESULTS_DIR is already defined (with a previous $OUTPUT) 
+>>>>> so you would probably do better to try changing RESULTS_DIR directly:
+>>>>>
+>>>>> $ SINGULARITYENV_RESULTS_DIR=something singularity exec busybox.simg 
+>>>>>> env | grep RESULTS_DIR
+>>>>>> RESULTS_DIR=something
+>>>>>
+>>>>>
+>>>>>
+>>>>> On Wed, May 8, 2019 at 12:07 PM Samy <sma...@gmail.com> wrote:
+>>>>>
+>>>>>> Hello everyone,
+>>>>>>
+>>>>>> I'm using singularity 2.6 . I have this variable to setup the out put 
+>>>>>> folder path like this:
+>>>>>>
+>>>>>>     %environment
+>>>>>>     OUTPUT=${HOME}
+>>>>>>     APPNAME="lammps"
+>>>>>>     RESULTS_DIR=${OUTPUT}/${APPNAME}
+>>>>>>
+>>>>>>     %apprun lammps
+>>>>>>     <runcommand> |tee -a $RESULTS_DIR/
+>>>>>>
+>>>>>>
+>>>>>> I wold like to override this directory depending the situation.
+>>>>>> I tried:
+>>>>>>       export SINGULARITYENV_OUTPUT=/localdisk/
+>>>>>>       singularity run --app lammps container.simg
+>>>>>>
+>>>>>> But that still writes the files to the $HOME directory.
+>>>>>>
+>>>>>> Any leads please how to get this variable customized without changing 
+>>>>>> and rebuilding the container every time? thank you.
+>>>>>>
+>>>>>> -- 
+>>>>>> You received this message because you are subscribed to the Google 
+>>>>>> Groups "singularity" group.
+>>>>>> To unsubscribe from this group and stop receiving emails from it, 
+>>>>>> send an email to si...@lbl.gov.
+>>>>>>
+>>>>>
+>>>>>
+>>>>> -- 
+>>>>> Vanessa Villamia Sochat
+>>>>> Stanford University '16
+>>>>> (603) 321-0676
+>>>>>
+>>>> -- 
+>>>> You received this message because you are subscribed to the Google 
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>> an email to si...@lbl.gov.
+>>>>
+>>>
+>>>
+>>> -- 
+>>> Vanessa Villamia Sochat
+>>> Stanford University '16
+>>> (603) 321-0676
+>>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to si...@lbl.gov <javascript:>.
+>>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_43_1587433421.1557345407908
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">thank you both for the solution. I&#39;m trying it now.<di=
+v><br></div><div>Vanessa, could you clarify how I&#39;m using SCIF in a wei=
+rd way? I&#39;m using the same style for multiple recipes and would like to=
+ fix them all.</div><div>Also, I&#39;m using=C2=A0<span style=3D"color: rgb=
+(0, 0, 0); white-space: pre-wrap;">WORKDIR=3D$SINGULARITY_ROOTFS and you&#3=
+9;re using </span><span style=3D"color: rgb(36, 41, 46); font-family: SFMon=
+o-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace=
+; font-size: 12px; white-space: pre;">WORKDIR=3D${SCIF_APPBASE}: what is th=
+e different between </span><span style=3D"color: rgb(0, 0, 0); white-space:=
+ pre-wrap;">$SINGULARITY_ROOTFS and </span><span style=3D"color: rgb(36, 41=
+, 46); font-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, =
+Menlo, Courier, monospace; font-size: 12px; white-space: pre;">SCIF_APPBASE=
+ please? doesn&#39;t it matter which one i use? (they both seem to work sim=
+ilarly)</span></div><div><br>On Wednesday, May 8, 2019 at 12:42:17 PM UTC-7=
+, vanessa wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin=
+-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"lt=
+r"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr">Hey Samy,<div><br></d=
+iv><div>You are using the SCIF app in a weird way - when you define any sec=
+tion for &quot;lammps&quot; it will automatically generate a home for it un=
+der /scif/apps/llamps, and environment variables for the name, base, etc. a=
+re available when you run it.</div><div>In either case, I tweaked your reci=
+pe with Jason&#39; suggestion to demonstrate the fix:</div><div><br></div><=
+div><a href=3D"https://gist.github.com/vsoch/7a7d41d166a846badf723b1462a9db=
+46" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http=
+s://www.google.com/url?q\x3dhttps%3A%2F%2Fgist.github.com%2Fvsoch%2F7a7d41d=
+166a846badf723b1462a9db46\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEuJ8Ln8a6=
+vIVOzxSoYcMiItXs2qQ&#39;;return true;" onclick=3D"this.href=3D&#39;https://=
+www.google.com/url?q\x3dhttps%3A%2F%2Fgist.github.com%2Fvsoch%2F7a7d41d166a=
+846badf723b1462a9db46\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEuJ8Ln8a6vIVO=
+zxSoYcMiItXs2qQ&#39;;return true;">https://gist.github.com/vsoch/<wbr>7a7d4=
+1d166a846badf723b1462a9db<wbr>46</a><br></div><div><br></div><div>Here is a=
+n example running without changing the results directory:</div><div><br></d=
+iv><div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex=
+;border-left:1px solid rgb(204,204,204);padding-left:1ex">$ singularity run=
+ --app lammps lamps.simg=C2=A0<br>lammps is running.<br>Single node Output =
+file is vanessa-ThinkPad-T460s_lammps_<wbr>2019_05_08.results and log is va=
+nessa-ThinkPad-T460s_lammps_<wbr>2019_05_08 and results dir is /home/vaness=
+a/lammps</blockquote></div><div><br></div><div>and here is with a custom re=
+sults folder:</div><div><br></div><div><blockquote class=3D"gmail_quote" st=
+yle=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padd=
+ing-left:1ex">$ SINGULARITYENV_CUSTOM_RESULTS_<wbr>DIR=3D/tmp/pancakes sing=
+ularity run --app lammps lamps.simg=C2=A0<br>lammps is running.<br>Single n=
+ode Output file is vanessa-ThinkPad-T460s_lammps_<wbr>2019_05_08.results an=
+d log is vanessa-ThinkPad-T460s_lammps_<wbr>2019_05_08 and results dir is /=
+tmp/pancakes</blockquote></div><div><br></div><div>Notice how $SCIF_APPNAME=
+ can be used when running llamps i(the echo for the appname) nstead of sett=
+ing a global environment variable. Try this to see all the envars that are =
+available to you for lammps:<br></div><div><br></div><div><blockquote class=
+=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rg=
+b(204,204,204);padding-left:1ex">$ singularity exec --app lammps lamps.simg=
+ env | grep SCIF_APP<br>SCIF_APPROOT_lammps=3D/scif/<wbr>apps/lammps<br>SCI=
+F_APPMETA=3D/scif/apps/<wbr>lammps/scif<br>SCIF_APPRUN_lammps=3D/scif/apps/=
+<wbr>lammps/scif/runscript<br>SCIF_APPLABELS_lammps=3D/scif/<wbr>apps/lammp=
+s/scif/labels.json<br>SCIF_APPDATA=3D/scif/data/lammps<br>SCIF_APPROOT=3D/s=
+cif/apps/lammps<br>SCIF_APPLIB_lammps=3D/scif/apps/<wbr>lammps/lib<br>SCIF_=
+APPDATA_lammps=3D/scif/<wbr>data/lammps<br>SCIF_APPINPUT=3D/scif/data/<wbr>=
+lammps/input<br>SCIF_APPBIN_lammps=3D/scif/apps/<wbr>lammps/bin<br>SCIF_APP=
+S=3D/scif/apps<br>SCIF_APPOUTPUT=3D/scif/data/<wbr>lammps/output<br>SCIF_AP=
+PMETA_lammps=3D/scif/<wbr>apps/lammps/scif<br>SCIF_APPNAME=3Dlammps</blockq=
+uote></div><div><br></div><div>Good team work, y&#39;all! :)</div><div><br>=
+</div><div>Best,</div><div><br></div><div>Vanessa</div></div></div></div></=
+div><br><div class=3D"gmail_quote"><div dir=3D"ltr">On Wed, May 8, 2019 at =
+3:06 PM Samy &lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-m=
+ailto=3D"QNt42m2CAgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;jav=
+ascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;re=
+turn true;">sma...@gmail.com</a>&gt; wrote:<br></div><blockquote class=3D"g=
+mail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204=
+,204,204);padding-left:1ex"><div dir=3D"ltr">Thanks for doing that. I attac=
+hed a simplified recipe with the same content of the #environment section i=
+ have in the original recipe.<br><br>On Wednesday, May 8, 2019 at 10:59:44 =
+AM UTC-7, vanessa wrote:<blockquote class=3D"gmail_quote" style=3D"margin:0=
+px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"><=
+div dir=3D"ltr">Can you provide a (dummy) recipe with a similar entrypoint?=
+ I installed Singularity 2.6 for you this morning so I&#39;m ready to go! I=
+t will suck if it&#39;s an old bug that doesn&#39;t pass the variables to t=
+he SCIF apps.</div><br><div class=3D"gmail_quote"><div dir=3D"ltr">On Wed, =
+May 8, 2019 at 1:54 PM Samy &lt;<a rel=3D"nofollow">sma...@gmail.com</a>&gt=
+; wrote:<br></div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px=
+ 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"><div di=
+r=3D"ltr">This still doesn&#39;t override RESULTS_DIR original value :(<div=
+>Any other ideas?</div><div><br></div><div>Thanks,<br><br>On Wednesday, May=
+ 8, 2019 at 9:27:08 AM UTC-7, vanessa wrote:<blockquote class=3D"gmail_quot=
+e" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204)=
+;padding-left:1ex"><div dir=3D"ltr"><div dir=3D"ltr">The variable RESULTS_D=
+IR is already defined (with a previous $OUTPUT) so you would probably do be=
+tter to try changing RESULTS_DIR directly:<div><br></div><div><blockquote c=
+lass=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px soli=
+d rgb(204,204,204);padding-left:1ex">$ SINGULARITYENV_RESULTS_DIR=3D<wbr>so=
+mething singularity exec busybox.simg env | grep RESULTS_DIR<br>RESULTS_DIR=
+=3Dsomething</blockquote></div><div><br></div></div></div><br><div class=3D=
+"gmail_quote"><div dir=3D"ltr">On Wed, May 8, 2019 at 12:07 PM Samy &lt;<a =
+rel=3D"nofollow">sma...@gmail.com</a>&gt; wrote:<br></div><blockquote class=
+=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rg=
+b(204,204,204);padding-left:1ex"><div dir=3D"ltr">Hello everyone,<div><br><=
+/div><div>I&#39;m using singularity 2.6 . I have this variable to setup the=
+ out put folder path like this:</div><div><br></div><div><font face=3D"cour=
+ier new, monospace">=C2=A0 =C2=A0 %environment<br></font></div><div><div><f=
+ont face=3D"courier new, monospace">=C2=A0 =C2=A0 OUTPUT=3D${HOME}</font></=
+div><div><font face=3D"courier new, monospace">=C2=A0 =C2=A0 APPNAME=3D&quo=
+t;lammps&quot;</font></div><div><font face=3D"courier new, monospace">=C2=
+=A0 =C2=A0 RESULTS_DIR=3D${OUTPUT}/${<wbr>APPNAME}</font></div></div><div><=
+font face=3D"courier new, monospace"><br></font></div><div><div><font face=
+=3D"courier new, monospace">=C2=A0 =C2=A0 %apprun lammps</font></div></div>=
+<div><font face=3D"courier new, monospace">=C2=A0 =C2=A0 &lt;runcommand&gt;=
+=C2=A0|tee -a $RESULTS_DIR/</font></div><div><br></div><div><br></div><div>=
+I wold like to override this directory depending the situation.</div><div>I=
+ tried:</div><div><font face=3D"courier new, monospace">=C2=A0 =C2=A0 =C2=
+=A0 export SINGULARITYENV_OUTPUT=3D/<wbr>localdisk/<br></font></div><div><f=
+ont face=3D"courier new, monospace">=C2=A0 =C2=A0 =C2=A0 singularity run --=
+app lammps container.simg</font><br></div><div><br></div><div>But that stil=
+l writes the files to the $HOME directory.</div><div><br></div><div>Any lea=
+ds please how to get this variable customized without changing and rebuildi=
+ng the container every time? thank you.</div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">si...@lbl.gov</a>.<br>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><div>(=
+603) 321-0676</div></div></div></div>
+</blockquote></div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">si...@lbl.gov</a>.<br>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><div>(=
+603) 321-0676</div></div></div></div>
+</blockquote></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+QNt42m2CAgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singu...@lbl.<wbr>gov</a>.<br>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><div>(=
+603) 321-0676</div></div></div></div>
+</blockquote></div></div>
+------=_Part_43_1587433421.1557345407908--
+
+------=_Part_42_1622629569.1557345407907--

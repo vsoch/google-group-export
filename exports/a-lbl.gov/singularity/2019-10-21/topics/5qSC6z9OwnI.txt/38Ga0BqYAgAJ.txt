@@ -1,0 +1,180 @@
+Date: Mon, 19 Jun 2017 13:09:37 -0700 (PDT)
+From: Michael Yourshaw <myou...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <e260966b-f676-4a8f-a8a6-e9e1c6194de8@lbl.gov>
+In-Reply-To: <CAM=pu++LYv4Mt+6MAZjv9WJ1YVefNQWLtS3WHRFThh-a8pNG4A@mail.gmail.com>
+References: <eb59c921-09cd-40f2-b442-70a032b044fc@lbl.gov>
+ <CAM=pu++LYv4Mt+6MAZjv9WJ1YVefNQWLtS3WHRFThh-a8pNG4A@mail.gmail.com>
+Subject: Re: [Singularity] Problems with /environment and PATH
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_3870_2099779873.1497902978041"
+
+------=_Part_3870_2099779873.1497902978041
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_3871_746257916.1497902978042"
+
+------=_Part_3871_746257916.1497902978042
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Thanks, Vanessa! That worked.
+
+Probably a good idea to change the online documentation at Getting Started 
+with Bootstrap under Best Practices for Bootstrapping where it says "If you 
+require any special environment variables to be defined, add them the 
+/environment file inside the container." 
+<http://singularity.lbl.gov/bootstrap-image>
+
+
+
+On Monday, June 19, 2017 at 12:11:58 PM UTC-6, vanessa wrote:
+>
+> Hey Michael!
+>
+> Echoing into the /environment file isn't the way to do it anymore - we 
+> added an easier way, you would want to define an %environment section in 
+> your bootstrap script, and put all the variables and exports there,eg:
+>
+> %environment
+> DINOSAUR_HOME=cave
+> export DINOSAUR_HOME
+>
+> Give that a try!
+>
+> Best,
+>
+> Vanessa
+>
+> On Mon, Jun 19, 2017 at 11:09 AM, Michael Yourshaw <my...@gmail.com 
+> <javascript:>> wrote:
+>
+>> I am using Singularity 2.3-dist.
+>>
+>> I want to have the same specific PATH in a container, regardless whether 
+>> I run "shell" or "exec". This PATH will not be not the same as the PATH 
+>> value outside the container.
+>>
+>> I have the following as the last step under %post in my .def file (note 
+>> that this path prioritizes /usr/apps:/usr/local/bin:/usr/local/sbin):
+>>
+>> ```
+>> cat << 'EOF' > /environment
+>> # Define any environment init code here
+>>
+>> if test -z "${SINGULARITY_INIT}"; then
+>>     
+>> PATH=/usr/apps:/usr/local/bin:/usr/local/sbin:/bin:/sbin:/usr/bin:/usr/sbin
+>>     PS1="Singularity.${SINGULARITY_CONTAINER}> ${PS1}"
+>>     SINGULARITY_INIT=1
+>>     export PATH PS1 SINGULARITY_INIT
+>> fi
+>> EOF
+>> ```
+>>
+>> I have confirmed that this custom /environment file exists in the 
+>> container and works as expected if I source it inside a "shell" container.
+>>
+>> However, what I actually observe is that if I use "shell", PATH is 
+>> `/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin`, which I 
+>> believe may come from the default /environment.
+>>
+>> If I use "exec", PATH is inherited from the non-container PATH, and is 
+>> full of irrelevancies: 
+>> `/home/yoursham/apps/python-3/bin:/home/yoursham/spack/bin:...`
+>>
+>> In both the "shell" and "exec" cases, it appears that my custom 
+>> /environment is not being sourced, PATH is not the desired value, and 
+>> ${SINGULARITY_INIT} is an empty string.
+>>
+>> What is necessary to consistently get a specific PATH inside a container?
+>>
+>> Thanks.
+>>
+>>  
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_3871_746257916.1497902978042
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Thanks, Vanessa! That worked.<br><br>Probably a good idea =
+to change the online documentation at <a href=3D"http://singularity.lbl.gov=
+/bootstrap-image">Getting Started with Bootstrap<font color=3D"#000000"> un=
+der Best Practices for Bootstrapping where it says &quot;If you require any=
+ special environment variables to be defined, add them the <code class=3D"h=
+ighlighter-rouge">/environment</code> file inside the container.&quot;</fon=
+t></a><br><br><br><br>On Monday, June 19, 2017 at 12:11:58 PM UTC-6, vaness=
+a wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0=
+.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">Hey M=
+ichael!<div><br></div><div>Echoing into the /environment file isn&#39;t the=
+ way to do it anymore - we added an easier way, you would want to define an=
+ %environment section in your bootstrap script, and put all the variables a=
+nd exports there,eg:</div><div><br></div><div>%environment</div><div>DINOSA=
+UR_HOME=3Dcave</div><div>export DINOSAUR_HOME</div><div><br></div><div>Give=
+ that a try!</div><div><br></div><div>Best,</div><div><br></div><div>Vaness=
+a</div></div><div><br><div class=3D"gmail_quote">On Mon, Jun 19, 2017 at 11=
+:09 AM, Michael Yourshaw <span dir=3D"ltr">&lt;<a href=3D"javascript:" targ=
+et=3D"_blank" gdf-obfuscated-mailto=3D"vXcN9y3sBAAJ" rel=3D"nofollow" onmou=
+sedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.h=
+ref=3D&#39;javascript:&#39;;return true;">my...@gmail.com</a>&gt;</span> wr=
+ote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border=
+-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">I am using Singular=
+ity 2.3-dist.<br><br>I want to have the same specific PATH in a container, =
+regardless whether I run &quot;shell&quot; or &quot;exec&quot;. This PATH w=
+ill not be not the same as the PATH value outside the container.<br><br>I h=
+ave the following as the last step under %post in my .def file (note that t=
+his path prioritizes /usr/apps:/usr/local/bin:/usr/<wbr>local/sbin):<br><br=
+>```<br>cat &lt;&lt; &#39;EOF&#39; &gt; /environment<br># Define any enviro=
+nment init code here<br><br>if test -z &quot;${SINGULARITY_INIT}&quot;; the=
+n<br>=C2=A0=C2=A0=C2=A0 PATH=3D/usr/apps:/usr/local/bin:<wbr>/usr/local/sbi=
+n:/bin:/sbin:/<wbr>usr/bin:/usr/sbin<br>=C2=A0=C2=A0=C2=A0 PS1=3D&quot;Sing=
+ularity.${<wbr>SINGULARITY_CONTAINER}&gt; ${PS1}&quot;<br>=C2=A0=C2=A0=C2=
+=A0 SINGULARITY_INIT=3D1<br>=C2=A0=C2=A0=C2=A0 export PATH PS1 SINGULARITY_=
+INIT<br>fi<br>EOF<br>```<br><br>I have confirmed that this custom /environm=
+ent file exists in the container and works as expected if I source it insid=
+e a &quot;shell&quot; container.<br><br>However, what I actually observe is=
+ that if I use &quot;shell&quot;, PATH is `/bin:/sbin:/usr/bin:/usr/<wbr>sb=
+in:/usr/local/bin:/usr/<wbr>local/sbin`, which I believe may come from the =
+default /environment.<br><br>If I use &quot;exec&quot;, PATH is inherited f=
+rom the non-container PATH, and is full of irrelevancies: `/home/yoursham/a=
+pps/python-3/<wbr>bin:/home/yoursham/spack/bin:.<wbr>..`<br><br>In both the=
+ &quot;shell&quot; and &quot;exec&quot; cases, it appears that my custom /e=
+nvironment is not being sourced, PATH is not the desired value, and ${SINGU=
+LARITY_INIT} is an empty string.<br><br>What is necessary to consistently g=
+et a specific PATH inside a container?<br><br>Thanks.<span><font color=3D"#=
+888888"><br><br>=C2=A0<br></font></span></div><span><font color=3D"#888888"=
+>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+vXcN9y3sBAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div>=
+<div>(603) 321-0676</div></div></div></div>
+</div>
+</blockquote></div>
+------=_Part_3871_746257916.1497902978042--
+
+------=_Part_3870_2099779873.1497902978041--

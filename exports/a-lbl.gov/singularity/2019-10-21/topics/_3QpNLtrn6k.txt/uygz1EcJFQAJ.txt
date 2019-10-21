@@ -1,0 +1,328 @@
+Date: Sat, 10 Aug 2019 08:40:25 -0700 (PDT)
+From: Jack Cook <jackc...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <7b709d27-bc79-481e-9723-2b47fc68cca5@lbl.gov>
+In-Reply-To: <CAGfAqt-ZY7FHsT6k9uwL2BKW=0hREUhE-LAqkoeF6UkqWdocmg@mail.gmail.com>
+References: <40a2d8d4-9803-4965-843e-db77a56728c9@lbl.gov> <CAM=pu++1pgDvK-eO_SRJCrUzsSSOWBCLwu_Lbx981SKgwjrKyQ@mail.gmail.com>
+ <CAGfAqt-ZY7FHsT6k9uwL2BKW=0hREUhE-LAqkoeF6UkqWdocmg@mail.gmail.com>
+Subject: Re: [Singularity] Unable to run container which tries to "touch"
+ file system
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1512_1288424142.1565451626096"
+
+------=_Part_1512_1288424142.1565451626096
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1513_2076099134.1565451626096"
+
+------=_Part_1513_2076099134.1565451626096
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+I appreciate both of your responses. I made the change and had to tweak the 
+mkdir to chmod -R since the build process complained that the directory 
+already exists. Unfortunately I ran into an issue with the Cloud remote 
+build execution complaining about:
+
+FATAL:   Sending file did not succeed: 507 
+Upload would exceed quota
+FATAL:   While performing build: build image size <= 0
+
+I will need to wait until the guy with sudo privileges gets back and have 
+him build locally so we don't have this issue. In the meantime, I will try 
+Vanessa's suggestion on the container that was built for me.
+
+Thanks, 
+
+Jack
+
+
+On Thursday, August 8, 2019 at 2:39:51 PM UTC-5, Jason Stover wrote:
+>
+> The other thing to try, is in your definition file, add the following 
+> near the end of your %post: 
+>
+> mkdir -m 1777 /usr/local/cuda/compat 
+>
+> Then when you run singularity, add the `--writable-tmpfs` flag. 
+>
+> This is basically, making that directory the same permission as `/tmp` 
+> ... Then the tmpfs will let you write to that location, since the 
+> permissions on the directory allow it. 
+>
+> -J 
+>
+> On Thu, Aug 8, 2019 at 2:11 PM v <v...@gmail.com <javascript:>> wrote: 
+> > 
+> > Hey Jack, 
+> > 
+> > It looks like the software is trying to write temporary checkpoint files 
+> to '/usr/local/cuda/compat/. So - either you can find some command to 
+> disable that, or you can try binding that location to somewhere writable on 
+> the host (and hoping nothing else is kept in there so nothing breaks!) 
+> E.g., 
+> > 
+> >> singularity run --bind /tmp/checkpoints:/usr/local/cuda/compat 
+> container.sif 
+> > 
+> > 
+> > What you won't be able to do is write (touch or similar) in the 
+> container binary - sif is read only. 
+> > 
+> > Best, 
+> > 
+> > Vanessa 
+> > 
+> > On Thu, Aug 8, 2019 at 3:04 PM Jack Cook <ja...@gmail.com 
+> <javascript:>> wrote: 
+> >> 
+> >> I have built a Singularity container against the docker container (see 
+> definition file below). 
+> >> 
+> >> The container builds, however when I run it I get the following error: 
+> >> 
+> >> bash-4.2$ singularity run tenssorrt-server.sif 
+> >> 
+> >> touch: cannot touch 
+> '/usr/local/cuda/compat/.418.67.XXXXXXXXXX.checked': Read-only file system 
+> >> 
+> >> 
+> >> Apparently the startup scripts are trying to touch the file system 
+> which does not work for me as I am not sudo. 
+> >> 
+> >> 
+> >> I am running version: 
+> >> 
+> >> 
+> >> bash-4.2$ singularity --version 
+> >> 
+> >> singularity version 3.2.1-1.1.el7 
+> >> 
+> >> 
+> >> Is there anything that can be done about this? 
+> >> 
+> >> 
+> >> Thanks, 
+> >> 
+> >> 
+> >> Jack 
+> >> 
+> >> 
+> >> 
+> >> 
+> >> Definition File 
+> >> 
+> >> ----------------- 
+> >> 
+> >> 
+> >> BootStrap: docker 
+> >> From: nvcr.io/nvidia/tensorrtserver:19.06-py3 
+> >> 
+> >> %post 
+> >> 
+> >> apt-get update && apt-get install -y ksh 
+> >> 
+> >> %environment 
+> >> 
+> >> %files 
+> >> 
+> >> %runscript 
+> >> 
+> >> %labels 
+> >> 
+> >> -- 
+> >> You received this message because you are subscribed to the Google 
+> Groups "singularity" group. 
+> >> To unsubscribe from this group and stop receiving emails from it, send 
+> an email to si...@lbl.gov <javascript:>. 
+> >> To view this discussion on the web visit 
+> https://groups.google.com/a/lbl.gov/d/msgid/singularity/40a2d8d4-9803-4965-843e-db77a56728c9%40lbl.gov. 
+>
+> > 
+> > 
+> > 
+> > -- 
+> > Vanessa Villamia Sochat 
+> > Stanford University '16 
+> > (603) 321-0676 
+> > 
+> > -- 
+> > You received this message because you are subscribed to the Google 
+> Groups "singularity" group. 
+> > To unsubscribe from this group and stop receiving emails from it, send 
+> an email to si...@lbl.gov <javascript:>. 
+> > To view this discussion on the web visit 
+> https://groups.google.com/a/lbl.gov/d/msgid/singularity/CAM%3Dpu%2B%2B1pgDvK-eO_SRJCrUzsSSOWBCLwu_Lbx981SKgwjrKyQ%40mail.gmail.com. 
+>
+>
+
+------=_Part_1513_2076099134.1565451626096
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">I appreciate both of your responses. I made the change and=
+ had to tweak the mkdir to chmod -R since the build process complained that=
+ the directory already exists. Unfortunately I ran into an issue with the C=
+loud remote build execution complaining about:<div><br></div><div><div>FATA=
+L:=C2=A0 =C2=A0Sending file did not succeed: 507=C2=A0</div><div><span styl=
+e=3D"white-space:pre">=09</span>Upload would exceed quota</div><div>FATAL:=
+=C2=A0 =C2=A0While performing build: build image size &lt;=3D 0</div><div><=
+br></div><div>I will need to wait until the guy with sudo privileges gets b=
+ack and have him build locally so we don&#39;t have this issue. In the mean=
+time, I will try Vanessa&#39;s suggestion on the container that was built f=
+or me.</div><div><br></div><div>Thanks,=C2=A0</div><div><br></div><div>Jack=
+</div><div><br></div><br>On Thursday, August 8, 2019 at 2:39:51 PM UTC-5, J=
+ason Stover wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;marg=
+in-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;">The other th=
+ing to try, is in your definition file, add the following
+<br>near the end of your %post:
+<br>
+<br>mkdir -m 1777 /usr/local/cuda/compat
+<br>
+<br>Then when you run singularity, add the `--writable-tmpfs` flag.
+<br>
+<br>This is basically, making that directory the same permission as `/tmp`
+<br>... Then the tmpfs will let you write to that location, since the
+<br>permissions on the directory allow it.
+<br>
+<br>-J
+<br>
+<br>On Thu, Aug 8, 2019 at 2:11 PM v &lt;<a href=3D"javascript:" target=3D"=
+_blank" gdf-obfuscated-mailto=3D"W1genM_FFAAJ" rel=3D"nofollow" onmousedown=
+=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D=
+&#39;javascript:&#39;;return true;">v...@gmail.com</a>&gt; wrote:
+<br>&gt;
+<br>&gt; Hey Jack,
+<br>&gt;
+<br>&gt; It looks like the software is trying to write temporary checkpoint=
+ files to &#39;/usr/local/cuda/compat/. So - either you can find some comma=
+nd to disable that, or you can try binding that location to somewhere writa=
+ble on the host (and hoping nothing else is kept in there so nothing breaks=
+!) E.g.,
+<br>&gt;
+<br>&gt;&gt; singularity run --bind /tmp/checkpoints:/usr/local/<wbr>cuda/c=
+ompat container.sif
+<br>&gt;
+<br>&gt;
+<br>&gt; What you won&#39;t be able to do is write (touch or similar) in th=
+e container binary - sif is read only.
+<br>&gt;
+<br>&gt; Best,
+<br>&gt;
+<br>&gt; Vanessa
+<br>&gt;
+<br>&gt; On Thu, Aug 8, 2019 at 3:04 PM Jack Cook &lt;<a href=3D"javascript=
+:" target=3D"_blank" gdf-obfuscated-mailto=3D"W1genM_FFAAJ" rel=3D"nofollow=
+" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D=
+"this.href=3D&#39;javascript:&#39;;return true;">ja...@gmail.com</a>&gt; wr=
+ote:
+<br>&gt;&gt;
+<br>&gt;&gt; I have built a Singularity container against the docker contai=
+ner (see definition file below).
+<br>&gt;&gt;
+<br>&gt;&gt; The container builds, however when I run it I get the followin=
+g error:
+<br>&gt;&gt;
+<br>&gt;&gt; bash-4.2$ singularity run tenssorrt-server.sif
+<br>&gt;&gt;
+<br>&gt;&gt; touch: cannot touch &#39;/usr/local/cuda/compat/.418.<wbr>67.X=
+XXXXXXXXX.checked&#39;: Read-only file system
+<br>&gt;&gt;
+<br>&gt;&gt;
+<br>&gt;&gt; Apparently the startup scripts are trying to touch the file sy=
+stem which does not work for me as I am not sudo.
+<br>&gt;&gt;
+<br>&gt;&gt;
+<br>&gt;&gt; I am running version:
+<br>&gt;&gt;
+<br>&gt;&gt;
+<br>&gt;&gt; bash-4.2$ singularity --version
+<br>&gt;&gt;
+<br>&gt;&gt; singularity version 3.2.1-1.1.el7
+<br>&gt;&gt;
+<br>&gt;&gt;
+<br>&gt;&gt; Is there anything that can be done about this?
+<br>&gt;&gt;
+<br>&gt;&gt;
+<br>&gt;&gt; Thanks,
+<br>&gt;&gt;
+<br>&gt;&gt;
+<br>&gt;&gt; Jack
+<br>&gt;&gt;
+<br>&gt;&gt;
+<br>&gt;&gt;
+<br>&gt;&gt;
+<br>&gt;&gt; Definition File
+<br>&gt;&gt;
+<br>&gt;&gt; -----------------
+<br>&gt;&gt;
+<br>&gt;&gt;
+<br>&gt;&gt; BootStrap: docker
+<br>&gt;&gt; From: <a href=3D"http://nvcr.io/nvidia/tensorrtserver:19.06-py=
+3" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http:=
+//www.google.com/url?q\x3dhttp%3A%2F%2Fnvcr.io%2Fnvidia%2Ftensorrtserver%3A=
+19.06-py3\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFUjCR4iReo4ui1aa7FaAhjAlk=
+prA&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.google.com/ur=
+l?q\x3dhttp%3A%2F%2Fnvcr.io%2Fnvidia%2Ftensorrtserver%3A19.06-py3\x26sa\x3d=
+D\x26sntz\x3d1\x26usg\x3dAFQjCNFUjCR4iReo4ui1aa7FaAhjAlkprA&#39;;return tru=
+e;">nvcr.io/nvidia/tensorrtserver:<wbr>19.06-py3</a>
+<br>&gt;&gt;
+<br>&gt;&gt; %post
+<br>&gt;&gt;
+<br>&gt;&gt; apt-get update &amp;&amp; apt-get install -y ksh
+<br>&gt;&gt;
+<br>&gt;&gt; %environment
+<br>&gt;&gt;
+<br>&gt;&gt; %files
+<br>&gt;&gt;
+<br>&gt;&gt; %runscript
+<br>&gt;&gt;
+<br>&gt;&gt; %labels
+<br>&gt;&gt;
+<br>&gt;&gt; --
+<br>&gt;&gt; You received this message because you are subscribed to the Go=
+ogle Groups &quot;singularity&quot; group.
+<br>&gt;&gt; To unsubscribe from this group and stop receiving emails from =
+it, send an email to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscat=
+ed-mailto=3D"W1genM_FFAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39=
+;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39=
+;;return true;">singu...@lbl.<wbr>gov</a>.
+<br>&gt;&gt; To view this discussion on the web visit <a href=3D"https://gr=
+oups.google.com/a/lbl.gov/d/msgid/singularity/40a2d8d4-9803-4965-843e-db77a=
+56728c9%40lbl.gov" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.h=
+ref=3D&#39;https://groups.google.com/a/lbl.gov/d/msgid/singularity/40a2d8d4=
+-9803-4965-843e-db77a56728c9%40lbl.gov&#39;;return true;" onclick=3D"this.h=
+ref=3D&#39;https://groups.google.com/a/lbl.gov/d/msgid/singularity/40a2d8d4=
+-9803-4965-843e-db77a56728c9%40lbl.gov&#39;;return true;">https://groups.go=
+ogle.com/a/<wbr>lbl.gov/d/msgid/singularity/<wbr>40a2d8d4-9803-4965-843e-<w=
+br>db77a56728c9%40lbl.gov</a>.
+<br>&gt;
+<br>&gt;
+<br>&gt;
+<br>&gt; --
+<br>&gt; Vanessa Villamia Sochat
+<br>&gt; Stanford University &#39;16
+<br>&gt; (603) 321-0676
+<br>&gt;
+<br>&gt; --
+<br>&gt; You received this message because you are subscribed to the Google=
+ Groups &quot;singularity&quot; group.
+<br>&gt; To unsubscribe from this group and stop receiving emails from it, =
+send an email to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-m=
+ailto=3D"W1genM_FFAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;jav=
+ascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;re=
+turn true;">singu...@lbl.<wbr>gov</a>.
+<br>&gt; To view this discussion on the web visit <a href=3D"https://groups=
+.google.com/a/lbl.gov/d/msgid/singularity/CAM%3Dpu%2B%2B1pgDvK-eO_SRJCrUzsS=
+SOWBCLwu_Lbx981SKgwjrKyQ%40mail.gmail.com" target=3D"_blank" rel=3D"nofollo=
+w" onmousedown=3D"this.href=3D&#39;https://groups.google.com/a/lbl.gov/d/ms=
+gid/singularity/CAM%3Dpu%2B%2B1pgDvK-eO_SRJCrUzsSSOWBCLwu_Lbx981SKgwjrKyQ%4=
+0mail.gmail.com&#39;;return true;" onclick=3D"this.href=3D&#39;https://grou=
+ps.google.com/a/lbl.gov/d/msgid/singularity/CAM%3Dpu%2B%2B1pgDvK-eO_SRJCrUz=
+sSSOWBCLwu_Lbx981SKgwjrKyQ%40mail.gmail.com&#39;;return true;">https://grou=
+ps.google.com/a/<wbr>lbl.gov/d/msgid/singularity/<wbr>CAM%3Dpu%2B%2B1pgDvK-=
+eO_<wbr>SRJCrUzsSSOWBCLwu_<wbr>Lbx981SKgwjrKyQ%40mail.gmail.<wbr>com</a>.
+<br></blockquote></div></div>
+------=_Part_1513_2076099134.1565451626096--
+
+------=_Part_1512_1288424142.1565451626096--

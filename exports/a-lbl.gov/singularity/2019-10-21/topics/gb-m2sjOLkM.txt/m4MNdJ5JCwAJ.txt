@@ -1,0 +1,959 @@
+X-Received: by 10.99.66.197 with SMTP id p188mr48336828pga.143.1481667789661;
+        Tue, 13 Dec 2016 14:23:09 -0800 (PST)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.36.61.206 with SMTP id n197ls3220847itn.3.canary-gmail; Tue,
+ 13 Dec 2016 14:23:09 -0800 (PST)
+X-Received: by 10.84.209.227 with SMTP id y90mr201890662plh.111.1481667789004;
+        Tue, 13 Dec 2016 14:23:09 -0800 (PST)
+Return-Path: <gmku...@lbl.gov>
+Received: from fe4.lbl.gov (fe4.lbl.gov. [128.3.41.71])
+        by mx.google.com with ESMTP id o3si49658868pfj.172.2016.12.13.14.23.08
+        for <singu...@lbl.gov>;
+        Tue, 13 Dec 2016 14:23:08 -0800 (PST)
+Received-SPF: pass (google.com: domain of gmku...@lbl.gov designates 209.85.215.72 as permitted sender) client-ip=209.85.215.72;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of gmku...@lbl.gov designates 209.85.215.72 as permitted sender) smtp.mailfrom=gmku...@lbl.gov
+X-Ironport-SBRS: 2.8
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2GhAQCic1BYgEjXVdFTChwBAQQBAQoBARcBAQQBAQoBAYJIRAEBAQEBPzp2EAeDPKEigmGFFI0RgUYbJQMeAQyFdgKBdgdAEwEBAQEBAQEBAQEBAhABAQkNCQkbMoIzBAIDEQUEBD0KAy8BAQEBAQEBAQEBAQEBAQEaAg0xAyoBBAEaAQgEJzALCQILJQgBCQICIQEPAwEFARwGCAcEARwEiDADDwgFCY0lkQs/jACBbDyHPw2DSQEBCAEBAQEBASISiweCSIFSBgsBaoI2gl0FjwF9hQKFNjUBhk+GcINrgXRRh3iGC4lbhDeCSRQegRQPEgFzDBkfWAOCfDgDHIF+HTQHhixHgWcBAQE
+X-IronPort-AV: E=Sophos;i="5.33,342,1477983600"; 
+   d="scan'208,217";a="57975325"
+Received: from mail-lf0-f72.google.com ([209.85.215.72])
+  by fe4.lbl.gov with ESMTP; 13 Dec 2016 14:23:05 -0800
+Received: by mail-lf0-f72.google.com with SMTP id c13so318861lfg.4
+        for <singu...@lbl.gov>; Tue, 13 Dec 2016 14:23:05 -0800 (PST)
+X-Gm-Message-State: AKaTC02ns3Csr4dQ9LEAx4odz2PF2WQEa7nVE+6wTcziCvJARt2QMFKfMsMAJTg16/v1PP0/EOrBYNWt4xwxQ28mox8N968Mk/quvTCteyQuh3J9l2LCCh2qAa7cbj0w2gZTqRoo+eR+8+gEWeQOpHk6gUw=
+X-Received: by 10.25.77.204 with SMTP id a195mr10124329lfb.97.1481667784635;
+        Tue, 13 Dec 2016 14:23:04 -0800 (PST)
+X-Received: by 10.25.77.204 with SMTP id a195mr10124319lfb.97.1481667784298;
+ Tue, 13 Dec 2016 14:23:04 -0800 (PST)
+MIME-Version: 1.0
+Received: by 10.25.215.105 with HTTP; Tue, 13 Dec 2016 14:23:03 -0800 (PST)
+In-Reply-To: <CALa-s5bUVYu3BM4JJM-Y3R+XRa36haG2YRvz+-umeaJPMGNJyQ@mail.gmail.com>
+References: <CALa-s5bUVYu3BM4JJM-Y3R+XRa36haG2YRvz+-umeaJPMGNJyQ@mail.gmail.com>
+From: "Gregory M. Kurtzer" <gmku...@lbl.gov>
+Date: Tue, 13 Dec 2016 14:23:03 -0800
+Message-ID: <CAN7etTxWomVDTO6WrXS=sFvo+7v7so4x1UEb_eCB=GcQF_26dQ@mail.gmail.com>
+Subject: Re: [Singularity] Problem building cento6 container from ubuntu14.04
+To: singularity <singu...@lbl.gov>
+Content-Type: multipart/alternative; boundary=001a114065b2f56299054391a95c
+
+--001a114065b2f56299054391a95c
+Content-Type: text/plain; charset=UTF-8
+
+Hi Tin,
+
+Sorry for the late response. The cause of this problem has to do with the
+RPM database not being readable from the version of the Berkeley DB
+libraries installed within the container. This misalignment of BDB versions
+occurs because the build host creates the RPM DB using a newer version of
+BDB then what is installed inside the container.
+
+The specific error that you are seeing is a symptom of this. YUM can not
+identify the $releasever because the RPM is unreadable from within the
+container.
+
+There are some workarounds... One is to create a bootstrap container that
+has the same version of BDB as the container you are trying to create. In
+essence you will be running a container from within a container which works
+just fine. The other option is to dump the RPM database and then reimport
+it. I remember Tru figured out a pretty reliable method to do this,
+hopefully he will chime in.
+
+Greg
+
+On Sun, Dec 4, 2016 at 5:41 PM, tin h <tin...@gmail.com> wrote:
+
+>
+> Hi folks!
+>
+>
+> I was trying to build a centos 6 container from Ubuntu 14.04, and got
+> stuck in a problem where it complains about invalid release url:
+>
+>
+>  sudo singularity bootstrap /opt/singularity_repo/centos6.img centos6.def
+> [sudo] password for sn:
+> Bootstrap initialization
+> Checking bootstrap definition
+> Executing Prebootstrap module
+> Not bootstrapping core container
+> Executing Postbootstrap module
+> + echo 'Hello from inside the container'
+> Hello from inside the container
+> + yum -y install vim-minimal
+> Loaded plugins: fastestmirror
+> Setting up Install Process
+> Loading mirror speeds from cached hostfile
+> YumRepo Error: All mirror URLs are not using ftp, http[s] or file.
+>  Eg. Invalid release/
+> removing mirrorlist with no valid mirrors: /var/cache/yum/x86_64/$release
+> ver/base/mirrorlist.txt
+> Error: Cannot find a valid baseurl for repo: base
+> ERROR: Aborting with RETVAL=255
+>
+>
+> The centos.def is essentially the example that comes with singularity 2.2,
+> with OSVersion changed to 6.
+> I tried adding "releasever: 6" or "6Server" to this file, but the same
+> error result.
+> The file does work when I try to build a container from a RHEL6 machine.
+> I am only getting the error in Ubuntu.
+> Any idea on how I could fix this?
+>
+> Much thanks in advance!
+> Tin
+>
+>
+> Here are more details:
+>
+>
+> centos.def ::
+>
+> BootStrap: yum
+> OSVersion: 6
+> MirrorURL: http://mirror.centos.org/centos-%{OSVERSION}/%{
+> OSVERSION}/os/$basearch/
+> Include: yum
+>
+> %runscript
+>     echo "This is what happens when you run the container..."
+>
+> %post
+>     echo "Hello from inside the container"
+>     yum -y install vim-minimal
+>
+>
+>
+>
+> verbose run ::
+>
+>
+> $ sudo singularity -vvvv bootstrap /tmp/centos.img centos.def
+> increasing verbosity level (5)
+> ending argument loop
+> Exec'ing: /usr/local/libexec/singularity/cli/bootstrap.exec
+> /opt/singularity_repo/centos6.imgVERBOSE [U=0,P=10438]
+>  message.c:52:init()                        : Set messagelevel to: 5
+> VERBOSE [U=0,P=10438]      image-mount.c:53:main()                    :
+> Obtaining container name from environment variable
+> DEBUG   [U=0,P=10438]      util/util.c:102:envar_path()               :
+> Checking environment variable is valid path: 'SINGULARITY_IMAGE'
+> VERBOSE [U=0,P=10438]      util/util.c:50:envar()                     :
+> Checking input from environment: 'SINGULARITY_IMAGE'
+> DEBUG   [U=0,P=10438]      util/util.c:52:envar()                     :
+> Checking environment variable is defined: SINGULARITY_IMAGE
+> DEBUG   [U=0,P=10438]      util/util.c:58:envar()                     :
+> Checking environment variable length (<= 4096): SINGULARITY_IMAGE
+> DEBUG   [U=0,P=10438]      util/util.c:64:envar()                     :
+> Checking environment variable has allowed characters: SINGULARITY_IMAGE
+> VERBOSE [U=0,P=10438]      util/util.c:87:envar()                     :
+> Obtained input from environment 'SINGULARITY_IMAGE' =
+> '/opt/singularity_repo/centos6.img'
+> DEBUG   [U=0,P=10438]      privilege.c:66:singularity_priv_init()     :
+> Called singularity_priv_init(void)
+> VERBOSE [U=0,P=10438]      util/util.c:50:envar()                     :
+> Checking input from environment: 'SINGULARITY_TARGET_UID'
+> DEBUG   [U=0,P=10438]      util/util.c:52:envar()                     :
+> Checking environment variable is defined: SINGULARITY_TARGET_UID
+> VERBOSE [U=0,P=10438]      util/util.c:54:envar()                     :
+> Environment variable is NULL: SINGULARITY_TARGET_UID
+> VERBOSE [U=0,P=10438]      util/util.c:50:envar()                     :
+> Checking input from environment: 'SINGULARITY_TARGET_GID'
+> DEBUG   [U=0,P=10438]      util/util.c:52:envar()                     :
+> Checking environment variable is defined: SINGULARITY_TARGET_GID
+> VERBOSE [U=0,P=10438]      util/util.c:54:envar()                     :
+> Environment variable is NULL: SINGULARITY_TARGET_GID
+> DEBUG   [U=0,P=10438]      privilege.c:131:singularity_priv_init()    :
+> Returning singularity_priv_init(void)
+> VERBOSE [U=0,P=10438]      config_parser.c:43:singularity_config_open():
+> Opening configuration file: /usr/local/etc/singularity/singularity.conf
+> DEBUG   [U=0,P=10438]      sessiondir.c:60:singularity_sessiondir_init():
+> Checking Singularity configuration for 'sessiondir prefix'
+> DEBUG   [U=0,P=10438]      config_parser.c:62:singularity_config_rewind():
+> Rewinding configuration file
+> DEBUG   [U=0,P=10438]      util/util.c:102:envar_path()               :
+> Checking environment variable is valid path: 'SINGULARITY_SESSIONDIR'
+> VERBOSE [U=0,P=10438]      util/util.c:50:envar()                     :
+> Checking input from environment: 'SINGULARITY_SESSIONDIR'
+> DEBUG   [U=0,P=10438]      util/util.c:52:envar()                     :
+> Checking environment variable is defined: SINGULARITY_SESSIONDIR
+> VERBOSE [U=0,P=10438]      util/util.c:54:envar()                     :
+> Environment variable is NULL: SINGULARITY_SESSIONDIR
+> DEBUG   [U=0,P=10438]      config_parser.c:80:singularity_config_get_value():
+> Called singularity_config_get_value(sessiondir prefix)
+> DEBUG   [U=0,P=10438]      config_parser.c:99:singularity_config_get_value():
+> No configuration file entry found for 'sessiondir prefix'
+> DEBUG   [U=0,P=10438]      sessiondir.c:75:singularity_sessiondir_init():
+> Set sessiondir to: /tmp/.singularity-session-0.64512.9705044
+> DEBUG   [U=0,P=10438]      util/file.c:245:s_mkpath()                 :
+> Creating directory: /tmp/.singularity-session-0.64512.9705044
+> DEBUG   [U=0,P=10438]      sessiondir.c:91:singularity_sessiondir_init():
+> Opening sessiondir file descriptor
+> DEBUG   [U=0,P=10438]      sessiondir.c:97:singularity_sessiondir_init():
+> Setting shared flock() on session directory
+> DEBUG   [U=0,P=10438]      util/util.c:92:envar_defined()             :
+> Checking if environment variable is defined: SINGULARITY_NOSESSIONCLEANUP
+> VERBOSE [U=0,P=10438]      util/util.c:94:envar_defined()             :
+> Environment variable is undefined: SINGULARITY_NOSESSIONCLEANUP
+> DEBUG   [U=0,P=10438]      util/util.c:92:envar_defined()             :
+> Checking if environment variable is defined: SINGULARITY_NOCLEANUP
+> VERBOSE [U=0,P=10438]      util/util.c:94:envar_defined()             :
+> Environment variable is undefined: SINGULARITY_NOCLEANUP
+> VERBOSE [U=0,P=10438]      fork.c:74:singularity_fork()               :
+> Forking child process
+> VERBOSE [U=0,P=10438]      fork.c:90:singularity_fork()               :
+> Hello from parent process
+> DEBUG   [U=0,P=10438]      fork.c:109:singularity_fork()              :
+> Assigning sigaction()s
+> DEBUG   [U=0,P=10438]      fork.c:140:singularity_fork()              :
+> Creating generic signal pipes
+> DEBUG   [U=0,P=10438]      fork.c:148:singularity_fork()              :
+> Creating sigcld signal pipes
+> DEBUG   [U=0,P=10438]      fork.c:170:singularity_fork()              :
+> Waiting on signal from watchdog
+> VERBOSE [U=0,P=10440]      fork.c:78:singularity_fork()               :
+> Hello from child process
+> DEBUG   [U=0,P=10440]      fork.c:81:singularity_fork()               :
+> Closing watchdog write pipe
+> DEBUG   [U=0,P=10440]      fork.c:86:singularity_fork()               :
+> Child process is returning control to process thread
+> VERBOSE [U=0,P=10440]      user.c:66:singularity_ns_user_unshare()    :
+> Not virtualizing USER namespace: running as root
+> DEBUG   [U=0,P=10440]      config_parser.c:62:singularity_config_rewind():
+> Rewinding configuration file
+> DEBUG   [U=0,P=10440]      config_parser.c:107:singularity_config_get_bool():
+> Called singularity_config_get_bool(mount slave, 0)
+> DEBUG   [U=0,P=10440]      config_parser.c:80:singularity_config_get_value():
+> Called singularity_config_get_value(mount slave)
+> VERBOSE [U=0,P=10440]      config_parser.c:91:singularity_config_get_value():
+> Got config key mount slave (= 'yes')
+> DEBUG   [U=0,P=10440]      config_parser.c:113:singularity_config_get_bool():
+> Return singularity_config_get_bool(mount slave, 0) = 1
+> DEBUG   [U=0,P=10440]      privilege.c:147:singularity_priv_escalate():
+> Running as root, not changing privileges
+> DEBUG   [U=0,P=10440]      mnt.c:54:singularity_ns_mnt_unshare()      :
+> Virtualizing FS namespace
+> DEBUG   [U=0,P=10440]      mnt.c:61:singularity_ns_mnt_unshare()      :
+> Virtualizing mount namespace
+> DEBUG   [U=0,P=10440]      mnt.c:70:singularity_ns_mnt_unshare()      :
+> Making mounts slave
+> DEBUG   [U=0,P=10440]      privilege.c:174:singularity_priv_drop()    :
+> Running as root, not changing privileges
+> DEBUG   [U=0,P=10440]      rootfs.c:71:singularity_rootfs_init()      :
+> Checking on container source type
+> DEBUG   [U=0,P=10440]      config_parser.c:62:singularity_config_rewind():
+> Rewinding configuration file
+> DEBUG   [U=0,P=10440]      rootfs.c:80:singularity_rootfs_init()      :
+> Figuring out where to mount Singularity container
+> DEBUG   [U=0,P=10440]      config_parser.c:80:singularity_config_get_value():
+> Called singularity_config_get_value(container dir)
+> VERBOSE [U=0,P=10440]      config_parser.c:91:singularity_config_get_value():
+> Got config key container dir (= '/var/singularity/mnt')
+> DEBUG   [U=0,P=10440]      rootfs.c:86:singularity_rootfs_init()      :
+> Set image mount path to: /var/singularity/mnt
+> DEBUG   [U=0,P=10440]      image.c:52:rootfs_image_init()             :
+> Inializing container rootfs image subsystem
+> DEBUG   [U=0,P=10440]      util/util.c:92:envar_defined()             :
+> Checking if environment variable is defined: SINGULARITY_WRITABLE
+> VERBOSE [U=0,P=10440]      util/util.c:97:envar_defined()             :
+> Environment variable is defined: SINGULARITY_WRITABLE
+> DEBUG   [U=0,P=10440]      util/util.c:92:envar_defined()             :
+> Checking if environment variable is defined: SINGULARITY_NOIMAGELOCK
+> VERBOSE [U=0,P=10440]      util/util.c:97:envar_defined()             :
+> Environment variable is defined: SINGULARITY_NOIMAGELOCK
+> DEBUG   [U=0,P=10440]      image.c:75:rootfs_image_init()             :
+> Obtaining exclusive write lock on image
+> VERBOSE [U=0,P=10440]      image-util.c:48:singularity_image_check()  :
+> Checking file is a Singularity image
+> DEBUG   [U=0,P=10440]      image-util.c:59:singularity_image_check()  :
+> Checking if first line matches key
+> VERBOSE [U=0,P=10440]      image-util.c:62:singularity_image_check()  :
+> File is a valid Singularity image
+> DEBUG   [U=0,P=10440]      rootfs.c:117:singularity_rootfs_mount()    :
+> Mounting image
+> DEBUG   [U=0,P=10440]      rootfs.c:119:singularity_rootfs_mount()    :
+> Checking for rootfs_source directory: /var/singularity/mnt/source
+> DEBUG   [U=0,P=10440]      rootfs.c:130:singularity_rootfs_mount()    :
+> Checking for overlay_mount directory: /var/singularity/mnt/overlay
+> DEBUG   [U=0,P=10440]      rootfs.c:141:singularity_rootfs_mount()    :
+> Checking for overlay_final directory: /var/singularity/mnt/final
+> DEBUG   [U=0,P=10440]      image.c:119:rootfs_image_mount()           :
+> Binding image to loop device
+> DEBUG   [U=0,P=10440]      sessiondir.c:149:singularity_sessiondir_get():
+> Returning: /tmp/.singularity-session-0.64512.9705044
+> DEBUG   [U=0,P=10440]      loop-control.c:65:singularity_loop_bind()  :
+> Opening image loop device file: /tmp/.singularity-session-0.64
+> 512.9705044/image_loop_dev
+> DEBUG   [U=0,P=10440]      loop-control.c:71:singularity_loop_bind()  :
+> Requesting exclusive flock() on loop_dev lockfile
+> DEBUG   [U=0,P=10440]      loop-control.c:94:singularity_loop_bind()  :
+> Calculating image offset
+> VERBOSE [U=0,P=10440]      image-util.c:77:singularity_image_offset() :
+> Calculating image offset
+> VERBOSE [U=0,P=10440]      image-util.c:86:singularity_image_offset() :
+> Found image at an offset of 31 bytes
+> DEBUG   [U=0,P=10440]      image-util.c:91:singularity_image_offset() :
+> Returning image_offset(image_fp) = 31
+> DEBUG   [U=0,P=10440]      privilege.c:147:singularity_priv_escalate():
+> Running as root, not changing privileges
+> DEBUG   [U=0,P=10440]      loop-control.c:101:singularity_loop_bind() :
+> Finding next available loop device...
+> VERBOSE [U=0,P=10440]      loop-control.c:133:singularity_loop_bind() :
+> Found avaialble loop device: /dev/loop1
+> DEBUG   [U=0,P=10440]      loop-control.c:135:singularity_loop_bind() :
+> Setting loop device flags
+> DEBUG   [U=0,P=10440]      privilege.c:174:singularity_priv_drop()    :
+> Running as root, not changing privileges
+> VERBOSE [U=0,P=10440]      loop-control.c:145:singularity_loop_bind() :
+> Using loop device: /dev/loop1
+> DEBUG   [U=0,P=10440]      loop-control.c:147:singularity_loop_bind() :
+> Writing active loop device name (/dev/loop1) to loop file cache:
+> /tmp/.singularity-session-0.64512.9705044/image_loop_dev
+> DEBUG   [U=0,P=10440]      util/file.c:327:fileput()                  :
+> Called fileput(/tmp/.singularity-session-0.64512.9705044/image_loop_dev,
+> /dev/loop1)
+> DEBUG   [U=0,P=10440]      loop-control.c:153:singularity_loop_bind() :
+> Resetting exclusive flock() to shared on image_loop_file
+> DEBUG   [U=0,P=10440]      loop-control.c:156:singularity_loop_bind() :
+> Returning singularity_loop_bind(image_fp) = loop_fp
+> VERBOSE [U=0,P=10440]      image.c:127:rootfs_image_mount()           :
+> Mounting image in read/write
+> DEBUG   [U=0,P=10440]      privilege.c:147:singularity_priv_escalate():
+> Running as root, not changing privileges
+> DEBUG   [U=0,P=10440]      privilege.c:174:singularity_priv_drop()    :
+> Running as root, not changing privileges
+> DEBUG   [U=0,P=10440]      privilege.c:147:singularity_priv_escalate():
+> Running as root, not changing privileges
+> VERBOSE [U=0,P=10440]      rootfs.c:222:singularity_rootfs_mount()    :
+> Binding the ROOTFS_SOURCE to OVERLAY_FINAL (/var/singularity/mnt/source->
+> /var/singularity/mnt/final)
+> DEBUG   [U=0,P=10440]      privilege.c:174:singularity_priv_drop()    :
+> Running as root, not changing privileges
+> DEBUG   [U=0,P=10440]      rootfs.c:64:singularity_rootfs_dir()       :
+> Returning singularity_rootfs_dir: /var/singularity/mnt/final
+> VERBOSE [U=0,P=10440]      image-mount.c:70:main()                    :
+> Setting SINGULARITY_ROOTFS to '/var/singularity/mnt/final'
+> DEBUG   [U=0,P=10440]      rootfs.c:64:singularity_rootfs_dir()       :
+> Returning singularity_rootfs_dir: /var/singularity/mnt/final
+> VERBOSE [U=0,P=10440]      fork.c:74:singularity_fork()               :
+> Forking child process
+> VERBOSE [U=0,P=10440]      fork.c:90:singularity_fork()               :
+> Hello from parent process
+> DEBUG   [U=0,P=10440]      fork.c:109:singularity_fork()              :
+> Assigning sigaction()s
+> DEBUG   [U=0,P=10440]      fork.c:140:singularity_fork()              :
+> Creating generic signal pipes
+> DEBUG   [U=0,P=10440]      fork.c:148:singularity_fork()              :
+> Creating sigcld signal pipes
+> DEBUG   [U=0,P=10440]      fork.c:170:singularity_fork()              :
+> Waiting on signal from watchdog
+> VERBOSE [U=0,P=10447]      fork.c:78:singularity_fork()               :
+> Hello from child process
+> DEBUG   [U=0,P=10447]      fork.c:81:singularity_fork()               :
+> Closing watchdog write pipe
+> DEBUG   [U=0,P=10447]      fork.c:86:singularity_fork()               :
+> Child process is returning control to process thread
+> Bootstrap initialization
+> Checking bootstrap definition
+> Executing Prebootstrap module
+> VERBOSE [U=0,P=10475]      message.c:52:init()                        :
+> Set messagelevel to: 5
+> DEBUG   [U=0,P=10475]      get-section.c:66:main()                    :
+> Iterating through /proc/mounts
+> Not bootstrapping core container
+> Executing Postbootstrap module
+> VERBOSE [U=0,P=10499]      message.c:52:init()                        :
+> Set messagelevel to: 5
+> DEBUG   [U=0,P=10499]      get-section.c:66:main()                    :
+> Iterating through /proc/mounts
+> VERBOSE [U=0,P=10516]      message.c:52:init()                        :
+> Set messagelevel to: 5
+> DEBUG   [U=0,P=10516]      get-section.c:66:main()                    :
+> Iterating through /proc/mounts
+> + echo 'Hello from inside the container'
+> Hello from inside the container
+> + yum -y install vim-minimal
+> Loaded plugins: fastestmirror
+> Setting up Install Process
+> Loading mirror speeds from cached hostfile
+> YumRepo Error: All mirror URLs are not using ftp, http[s] or file.
+>  Eg. Invalid release/
+> removing mirrorlist with no valid mirrors: /var/cache/yum/x86_64/$release
+> ver/base/mirrorlist.txt
+> Error: Cannot find a valid baseurl for repo: base
+> ERROR: Aborting with RETVAL=255
+> DEBUG   [U=0,P=10440]      fork.c:52:handle_sigchld()                 :
+> Checking child pids: 10447 10447
+> DEBUG   [U=0,P=10440]      fork.c:54:handle_sigchld()                 :
+> Forwarding signal through sigchld_signal_wpipe
+> DEBUG   [U=0,P=10440]      fork.c:196:singularity_fork()              :
+> Parent process is exiting
+> DEBUG   [U=0,P=10440]      fork.c:237:singularity_fork_exec()         :
+> Waiting on child process
+> DEBUG   [U=0,P=10438]      fork.c:52:handle_sigchld()                 :
+> Checking child pids: 10440 10440
+> DEBUG   [U=0,P=10438]      fork.c:54:handle_sigchld()                 :
+> Forwarding signal through sigchld_signal_wpipe
+> DEBUG   [U=0,P=10438]      fork.c:196:singularity_fork()              :
+> Parent process is exiting
+> DEBUG   [U=0,P=10438]      util/util.c:102:envar_path()               :
+> Checking environment variable is valid path: 'SINGULARITY_RUNDIR'
+> VERBOSE [U=0,P=10438]      util/util.c:50:envar()                     :
+> Checking input from environment: 'SINGULARITY_RUNDIR'
+> DEBUG   [U=0,P=10438]      util/util.c:52:envar()                     :
+> Checking environment variable is defined: SINGULARITY_RUNDIR
+> VERBOSE [U=0,P=10438]      util/util.c:54:envar()                     :
+> Environment variable is NULL: SINGULARITY_RUNDIR
+> DEBUG   [U=0,P=10438]      sessiondir.c:111:singularity_sessiondir_init():
+> Cleanup thread waiting on child...
+> DEBUG   [U=0,P=10438]      sessiondir.c:116:singularity_sessiondir_init():
+> Checking to see if we are the last process running in this sessiondir
+> VERBOSE [U=0,P=10438]      sessiondir.c:118:singularity_sessiondir_init():
+> Cleaning sessiondir: /tmp/.singularity-session-0.64512.9705044
+> DEBUG   [U=0,P=10438]      util/file.c:267:s_rmdir()                  :
+> Removing directory: /tmp/.singularity-session-0.64512.9705044
+>
+>
+> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+>
+
+
+
+-- 
+Gregory M. Kurtzer
+HPC Systems Architect and Technology Developer
+Lawrence Berkeley National Laboratory HPCS
+University of California Berkeley Research IT
+Singularity Linux Containers (http://singularity.lbl.gov/)
+Warewulf Cluster Management (http://warewulf.lbl.gov/)
+GitHub: https://github.com/gmkurtzer, Twitter: https://twitter.com/gmkurtzer
+
+--001a114065b2f56299054391a95c
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Tin,<div><br></div><div>Sorry for the late response. Th=
+e cause of this problem has to do with the RPM database not being readable =
+from the version of the Berkeley DB libraries installed within the containe=
+r. This misalignment of BDB versions occurs because the build host creates =
+the RPM DB using a newer version of BDB then what is installed inside the c=
+ontainer.</div><div><br></div><div>The specific error that you are seeing i=
+s a symptom of this. YUM can not identify the $releasever because the RPM i=
+s unreadable from within the container.</div><div><br></div><div>There are =
+some workarounds... One is to create a bootstrap container that has the sam=
+e version of BDB as the container you are trying to create. In essence you =
+will be running a container from within a container which works just fine. =
+The other option is to dump the RPM database and then reimport it. I rememb=
+er Tru figured out a pretty reliable method to do this, hopefully he will c=
+hime in.</div><div><br></div><div>Greg</div></div><div class=3D"gmail_extra=
+"><br><div class=3D"gmail_quote">On Sun, Dec 4, 2016 at 5:41 PM, tin h <spa=
+n dir=3D"ltr">&lt;<a href=3D"mailto:tin...@gmail.com" target=3D"_blank">tin=
+...@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" st=
+yle=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div =
+dir=3D"ltr"><div><br></div><div>Hi folks!</div><div><br></div><div class=3D=
+"gmail_quote"><div dir=3D"ltr"><div><span style=3D"font-size:12.8px"><font =
+face=3D"monospace, monospace"><br></font></span></div><div><div><font face=
+=3D"monospace, monospace">I was trying to build a centos 6 container from U=
+buntu 14.04, and got stuck in a problem where it complains about invalid re=
+lease url:=C2=A0</font></div></div><div><font face=3D"monospace, monospace"=
+><br></font></div><div><font face=3D"monospace, monospace"><br></font></div=
+><div><div><font face=3D"monospace, monospace">=C2=A0sudo singularity boots=
+trap /opt/singularity_repo/centos6.<wbr>img centos6.def=C2=A0</font></div><=
+div><font face=3D"monospace, monospace">[sudo] password for sn:=C2=A0</font=
+></div><div><font face=3D"monospace, monospace">Bootstrap initialization</f=
+ont></div><div><font face=3D"monospace, monospace">Checking bootstrap defin=
+ition</font></div><div><font face=3D"monospace, monospace">Executing Preboo=
+tstrap module</font></div><div><font face=3D"monospace, monospace">Not boot=
+strapping core container</font></div><div><font face=3D"monospace, monospac=
+e">Executing Postbootstrap module</font></div><div><font face=3D"monospace,=
+ monospace">+ echo &#39;Hello from inside the container&#39;</font></div><d=
+iv><font face=3D"monospace, monospace">Hello from inside the container</fon=
+t></div><div><font face=3D"monospace, monospace">+ yum -y install vim-minim=
+al</font></div><div><font face=3D"monospace, monospace">Loaded plugins: fas=
+testmirror</font></div><div><font face=3D"monospace, monospace">Setting up =
+Install Process</font></div><div><font face=3D"monospace, monospace">Loadin=
+g mirror speeds from cached hostfile</font></div><div><font face=3D"monospa=
+ce, monospace">YumRepo Error: All mirror URLs are not using ftp, http[s] or=
+ file.</font></div><div><font face=3D"monospace, monospace">=C2=A0Eg. Inval=
+id release/</font></div><div><font face=3D"monospace, monospace">removing m=
+irrorlist with no valid mirrors: /var/cache/yum/x86_64/$release<wbr>ver/bas=
+e/mirrorlist.txt</font></div><div><font face=3D"monospace, monospace">Error=
+: Cannot find a valid baseurl for repo: base</font></div><div><font face=3D=
+"monospace, monospace">ERROR: Aborting with RETVAL=3D255</font></div></div>=
+<div><font face=3D"monospace, monospace"><br></font></div><div><font face=
+=3D"monospace, monospace"><br></font></div><div><font face=3D"monospace, mo=
+nospace">The centos.def is essentially the example that comes with singular=
+ity 2.2, with OSVersion changed to 6.</font></div><div><font face=3D"monosp=
+ace, monospace">I tried adding &quot;releasever: 6&quot; or &quot;6Server&q=
+uot; to this file, but the same error result.</font></div><div><font face=
+=3D"monospace, monospace">The file does work when I try to build a containe=
+r from a RHEL6 machine.=C2=A0 I am only getting the error in Ubuntu. =C2=A0=
+</font></div><div><font face=3D"monospace, monospace">Any idea on how I cou=
+ld fix this?</font></div><div><font face=3D"monospace, monospace"><br></fon=
+t></div><div><font face=3D"monospace, monospace">Much thanks in advance!</f=
+ont></div><div><font face=3D"monospace, monospace">Tin</font></div><div><fo=
+nt face=3D"monospace, monospace"><br></font></div><div><font face=3D"monosp=
+ace, monospace"><br></font></div><div><font face=3D"monospace, monospace">H=
+ere are more details:</font></div><div><font face=3D"monospace, monospace">=
+<br></font></div><div><font face=3D"monospace, monospace"><br></font></div>=
+<div><font face=3D"monospace, monospace">centos.def ::</font></div><div><fo=
+nt face=3D"monospace, monospace"><br></font></div><div><font face=3D"monosp=
+ace, monospace"><div>BootStrap: yum</div><div>OSVersion: 6</div><div>Mirror=
+URL: <a href=3D"http://mirror.centos.org/centos-%%7BOSVERSION%7D/%%7BOSVERS=
+ION%7D/os/$basearch/" target=3D"_blank">http://mirror.centos.org/<wbr>cento=
+s-%{OSVERSION}/%{<wbr>OSVERSION}/os/$basearch/</a></div><div>Include: yum</=
+div><div><br></div><div>%runscript<br></div><div>=C2=A0 =C2=A0 echo &quot;T=
+his is what happens when you run the container...&quot;</div><div><br></div=
+><div>%post</div><div>=C2=A0 =C2=A0 echo &quot;Hello from inside the contai=
+ner&quot;</div><div>=C2=A0 =C2=A0 yum -y install vim-minimal</div><div><br>=
+</div></font></div><div><font face=3D"monospace, monospace"><br></font></di=
+v><div><font face=3D"monospace, monospace"><br></font></div><div><font face=
+=3D"monospace, monospace"><br></font></div><div><font face=3D"monospace, mo=
+nospace">verbose run ::</font></div><div><font face=3D"monospace, monospace=
+"><br></font></div><div><font face=3D"monospace, monospace"><br></font></di=
+v><div><div><font face=3D"monospace, monospace">$ sudo singularity -vvvv bo=
+otstrap /tmp/centos.img centos.def=C2=A0</font></div><div><font face=3D"mon=
+ospace, monospace">increasing verbosity level (5)</font></div><div><font fa=
+ce=3D"monospace, monospace">ending argument loop</font></div><div><font fac=
+e=3D"monospace, monospace">Exec&#39;ing: /usr/local/libexec/singularity<wbr=
+>/cli/bootstrap.exec /opt/singularity_repo/centos6.<wbr>imgVERBOSE [U=3D0,P=
+=3D10438] =C2=A0 =C2=A0 =C2=A0message.c:52:init() =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0: Set messagelev=
+el to: 5</font></div><div><font face=3D"monospace, monospace">VERBOSE [U=3D=
+0,P=3D10438] =C2=A0 =C2=A0 =C2=A0image-mount.c:53:main() =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0: Obtaining container n=
+ame from environment variable</font></div><div><font face=3D"monospace, mon=
+ospace">DEBUG =C2=A0 [U=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=A0util/util.c:102:=
+envar_path() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Checking en=
+vironment variable is valid path: &#39;SINGULARITY_IMAGE&#39;</font></div><=
+div><font face=3D"monospace, monospace">VERBOSE [U=3D0,P=3D10438] =C2=A0 =
+=C2=A0 =C2=A0util/util.c:50:envar() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Checking input from environment: &#39;SIN=
+GULARITY_IMAGE&#39;</font></div><div><font face=3D"monospace, monospace">DE=
+BUG =C2=A0 [U=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=A0util/util.c:52:envar() =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Checki=
+ng environment variable is defined: SINGULARITY_IMAGE</font></div><div><fon=
+t face=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10438] =C2=A0 =C2=
+=A0 =C2=A0util/util.c:58:envar() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 : Checking environment variable length (&lt;=3D=
+ 4096): SINGULARITY_IMAGE</font></div><div><font face=3D"monospace, monospa=
+ce">DEBUG =C2=A0 [U=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=A0util/util.c:64:envar=
+() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : =
+Checking environment variable has allowed characters: SINGULARITY_IMAGE</fo=
+nt></div><div><font face=3D"monospace, monospace">VERBOSE [U=3D0,P=3D10438]=
+ =C2=A0 =C2=A0 =C2=A0util/util.c:87:envar() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Obtained input from environment &#=
+39;SINGULARITY_IMAGE&#39; =3D &#39;/opt/singularity_repo/centos6<wbr>.img&#=
+39;</font></div><div><font face=3D"monospace, monospace">DEBUG =C2=A0 [U=3D=
+0,P=3D10438] =C2=A0 =C2=A0 =C2=A0privilege.c:66:singularity_pr<wbr>iv_init(=
+) =C2=A0 =C2=A0 : Called singularity_priv_init(void)</font></div><div><font=
+ face=3D"monospace, monospace">VERBOSE [U=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=
+=A0util/util.c:50:envar() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 : Checking input from environment: &#39;SINGULARITY_TA=
+RGET_UID&#39;</font></div><div><font face=3D"monospace, monospace">DEBUG =
+=C2=A0 [U=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=A0util/util.c:52:envar() =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Checking e=
+nvironment variable is defined: SINGULARITY_TARGET_UID</font></div><div><fo=
+nt face=3D"monospace, monospace">VERBOSE [U=3D0,P=3D10438] =C2=A0 =C2=A0 =
+=C2=A0util/util.c:54:envar() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 : Environment variable is NULL: SINGULARITY_TARGET=
+_UID</font></div><div><font face=3D"monospace, monospace">VERBOSE [U=3D0,P=
+=3D10438] =C2=A0 =C2=A0 =C2=A0util/util.c:50:envar() =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Checking input from envi=
+ronment: &#39;SINGULARITY_TARGET_GID&#39;</font></div><div><font face=3D"mo=
+nospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=A0util=
+/util.c:52:envar() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 : Checking environment variable is defined: SINGULARITY_TARGE=
+T_GID</font></div><div><font face=3D"monospace, monospace">VERBOSE [U=3D0,P=
+=3D10438] =C2=A0 =C2=A0 =C2=A0util/util.c:54:envar() =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Environment variable is =
+NULL: SINGULARITY_TARGET_GID</font></div><div><font face=3D"monospace, mono=
+space">DEBUG =C2=A0 [U=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=A0privilege.c:131:s=
+ingularity_p<wbr>riv_init() =C2=A0 =C2=A0: Returning singularity_priv_init(=
+void)</font></div><div><font face=3D"monospace, monospace">VERBOSE [U=3D0,P=
+=3D10438] =C2=A0 =C2=A0 =C2=A0config_parser.c:43:singularit<wbr>y_config_op=
+en(): Opening configuration file: /usr/local/etc/singularity/sin<wbr>gulari=
+ty.conf</font></div><div><font face=3D"monospace, monospace">DEBUG =C2=A0 [=
+U=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=A0sessiondir.c:60:singularity_s<wbr>essi=
+ondir_init(): Checking Singularity configuration for &#39;sessiondir prefix=
+&#39;</font></div><div><font face=3D"monospace, monospace">DEBUG =C2=A0 [U=
+=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=A0config_parser.c:62:singularit<wbr>y_con=
+fig_rewind(): Rewinding configuration file</font></div><div><font face=3D"m=
+onospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=A0uti=
+l/util.c:102:envar_path() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+: Checking environment variable is valid path: &#39;SINGULARITY_SESSIONDIR&=
+#39;</font></div><div><font face=3D"monospace, monospace">VERBOSE [U=3D0,P=
+=3D10438] =C2=A0 =C2=A0 =C2=A0util/util.c:50:envar() =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Checking input from envi=
+ronment: &#39;SINGULARITY_SESSIONDIR&#39;</font></div><div><font face=3D"mo=
+nospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=A0util=
+/util.c:52:envar() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 : Checking environment variable is defined: SINGULARITY_SESSI=
+ONDIR</font></div><div><font face=3D"monospace, monospace">VERBOSE [U=3D0,P=
+=3D10438] =C2=A0 =C2=A0 =C2=A0util/util.c:54:envar() =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Environment variable is =
+NULL: SINGULARITY_SESSIONDIR</font></div><div><font face=3D"monospace, mono=
+space">DEBUG =C2=A0 [U=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=A0config_parser.c:8=
+0:singularit<wbr>y_config_get_value(): Called singularity_config_get_value(=
+s<wbr>essiondir prefix)</font></div><div><font face=3D"monospace, monospace=
+">DEBUG =C2=A0 [U=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=A0config_parser.c:99:sin=
+gularit<wbr>y_config_get_value(): No configuration file entry found for &#3=
+9;sessiondir prefix&#39;</font></div><div><font face=3D"monospace, monospac=
+e">DEBUG =C2=A0 [U=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=A0sessiondir.c:75:singu=
+larity_s<wbr>essiondir_init(): Set sessiondir to: /tmp/.singularity-session=
+-0.64<wbr>512.9705044</font></div><div><font face=3D"monospace, monospace">=
+DEBUG =C2=A0 [U=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=A0util/file.c:245:s_mkpath=
+() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Creating direc=
+tory: /tmp/.singularity-session-0.64<wbr>512.9705044</font></div><div><font=
+ face=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10438] =C2=A0 =C2=A0=
+ =C2=A0sessiondir.c:91:singularity_s<wbr>essiondir_init(): Opening sessiond=
+ir file descriptor</font></div><div><font face=3D"monospace, monospace">DEB=
+UG =C2=A0 [U=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=A0sessiondir.c:97:singularity=
+_s<wbr>essiondir_init(): Setting shared flock() on session directory</font>=
+</div><div><font face=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D1043=
+8] =C2=A0 =C2=A0 =C2=A0util/util.c:92:envar_defined(<wbr>) =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 : Checking if environment variable is defined: =
+SINGULARITY_NOSESSIONCLEANUP</font></div><div><font face=3D"monospace, mono=
+space">VERBOSE [U=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=A0util/util.c:94:envar_d=
+efined(<wbr>) =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Environment varia=
+ble is undefined: SINGULARITY_NOSESSIONCLEANUP</font></div><div><font face=
+=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=
+=A0util/util.c:92:envar_defined(<wbr>) =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 : Checking if environment variable is defined: SINGULARITY_NOCLEANUP=
+</font></div><div><font face=3D"monospace, monospace">VERBOSE [U=3D0,P=3D10=
+438] =C2=A0 =C2=A0 =C2=A0util/util.c:94:envar_defined(<wbr>) =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 : Environment variable is undefined: SINGULARIT=
+Y_NOCLEANUP</font></div><div><font face=3D"monospace, monospace">VERBOSE [U=
+=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=A0fork.c:74:singularity_fork() =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Forking child process</font></div>=
+<div><font face=3D"monospace, monospace">VERBOSE [U=3D0,P=3D10438] =C2=A0 =
+=C2=A0 =C2=A0fork.c:90:singularity_fork() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 : Hello from parent process</font></div><div><font face=
+=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=
+=A0fork.c:109:singularity_fork() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0: Assigning sigaction()s</font></div><div><font face=3D"monospace, mo=
+nospace">DEBUG =C2=A0 [U=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=A0fork.c:140:sing=
+ularity_fork() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0: Creating g=
+eneric signal pipes</font></div><div><font face=3D"monospace, monospace">DE=
+BUG =C2=A0 [U=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=A0fork.c:148:singularity_for=
+k() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0: Creating sigcld signa=
+l pipes</font></div><div><font face=3D"monospace, monospace">DEBUG =C2=A0 [=
+U=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=A0fork.c:170:singularity_fork() =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0: Waiting on signal from watchdog<=
+/font></div><div><font face=3D"monospace, monospace">VERBOSE [U=3D0,P=3D104=
+40] =C2=A0 =C2=A0 =C2=A0fork.c:78:singularity_fork() =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 : Hello from child process</font></div><div><fo=
+nt face=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=
+=A0 =C2=A0fork.c:81:singularity_fork() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 : Closing watchdog write pipe</font></div><div><font face=3D"=
+monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0fo=
+rk.c:86:singularity_fork() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ : Child process is returning control to process thread</font></div><div><f=
+ont face=3D"monospace, monospace">VERBOSE [U=3D0,P=3D10440] =C2=A0 =C2=A0 =
+=C2=A0user.c:66:singularity_ns_user<wbr>_unshare() =C2=A0 =C2=A0: Not virtu=
+alizing USER namespace: running as root</font></div><div><font face=3D"mono=
+space, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0config=
+_parser.c:62:singularit<wbr>y_config_rewind(): Rewinding configuration file=
+</font></div><div><font face=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=
+=3D10440] =C2=A0 =C2=A0 =C2=A0config_parser.c:107:singulari<wbr>ty_config_g=
+et_bool(): Called singularity_config_get_bool(mo<wbr>unt slave, 0)</font></=
+div><div><font face=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440]=
+ =C2=A0 =C2=A0 =C2=A0config_parser.c:80:singularit<wbr>y_config_get_value()=
+: Called singularity_config_get_value(m<wbr>ount slave)</font></div><div><f=
+ont face=3D"monospace, monospace">VERBOSE [U=3D0,P=3D10440] =C2=A0 =C2=A0 =
+=C2=A0config_parser.c:91:singularit<wbr>y_config_get_value(): Got config ke=
+y mount slave (=3D &#39;yes&#39;)</font></div><div><font face=3D"monospace,=
+ monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0config_parse=
+r.c:113:singulari<wbr>ty_config_get_bool(): Return singularity_config_get_b=
+ool(mo<wbr>unt slave, 0) =3D 1</font></div><div><font face=3D"monospace, mo=
+nospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0privilege.c:147=
+:singularity_p<wbr>riv_escalate(): Running as root, not changing privileges=
+</font></div><div><font face=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=
+=3D10440] =C2=A0 =C2=A0 =C2=A0mnt.c:54:singularity_ns_mnt_u<wbr>nshare() =
+=C2=A0 =C2=A0 =C2=A0: Virtualizing FS namespace</font></div><div><font face=
+=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=
+=A0mnt.c:61:singularity_ns_mnt_u<wbr>nshare() =C2=A0 =C2=A0 =C2=A0: Virtual=
+izing mount namespace</font></div><div><font face=3D"monospace, monospace">=
+DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0mnt.c:70:singularity_ns_=
+mnt_u<wbr>nshare() =C2=A0 =C2=A0 =C2=A0: Making mounts slave</font></div><d=
+iv><font face=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=
+=A0 =C2=A0 =C2=A0privilege.c:174:singularity_p<wbr>riv_drop() =C2=A0 =C2=A0=
+: Running as root, not changing privileges</font></div><div><font face=3D"m=
+onospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0roo=
+tfs.c:71:singularity_rootf<wbr>s_init() =C2=A0 =C2=A0 =C2=A0: Checking on c=
+ontainer source type</font></div><div><font face=3D"monospace, monospace">D=
+EBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0config_parser.c:62:singul=
+arit<wbr>y_config_rewind(): Rewinding configuration file</font></div><div><=
+font face=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =
+=C2=A0 =C2=A0rootfs.c:80:singularity_rootf<wbr>s_init() =C2=A0 =C2=A0 =C2=
+=A0: Figuring out where to mount Singularity container</font></div><div><fo=
+nt face=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=
+=A0 =C2=A0config_parser.c:80:singularit<wbr>y_config_get_value(): Called si=
+ngularity_config_get_value(c<wbr>ontainer dir)</font></div><div><font face=
+=3D"monospace, monospace">VERBOSE [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0con=
+fig_parser.c:91:singularit<wbr>y_config_get_value(): Got config key contain=
+er dir (=3D &#39;/var/singularity/mnt&#39;)</font></div><div><font face=3D"=
+monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0ro=
+otfs.c:86:singularity_rootf<wbr>s_init() =C2=A0 =C2=A0 =C2=A0: Set image mo=
+unt path to: /var/singularity/mnt</font></div><div><font face=3D"monospace,=
+ monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0image.c:52:r=
+ootfs_image_init(<wbr>) =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Inializ=
+ing container rootfs image subsystem</font></div><div><font face=3D"monospa=
+ce, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0util/util=
+.c:92:envar_defined(<wbr>) =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Chec=
+king if environment variable is defined: SINGULARITY_WRITABLE</font></div><=
+div><font face=3D"monospace, monospace">VERBOSE [U=3D0,P=3D10440] =C2=A0 =
+=C2=A0 =C2=A0util/util.c:97:envar_defined(<wbr>) =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 : Environment variable is defined: SINGULARITY_WRITABLE</=
+font></div><div><font face=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=
+=3D10440] =C2=A0 =C2=A0 =C2=A0util/util.c:92:envar_defined(<wbr>) =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Checking if environment variable is de=
+fined: SINGULARITY_NOIMAGELOCK</font></div><div><font face=3D"monospace, mo=
+nospace">VERBOSE [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0util/util.c:97:envar=
+_defined(<wbr>) =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Environment var=
+iable is defined: SINGULARITY_NOIMAGELOCK</font></div><div><font face=3D"mo=
+nospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0imag=
+e.c:75:rootfs_image_init(<wbr>) =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 :=
+ Obtaining exclusive write lock on image</font></div><div><font face=3D"mon=
+ospace, monospace">VERBOSE [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0image-util=
+.c:48:singularity_i<wbr>mage_check() =C2=A0: Checking file is a Singularity=
+ image</font></div><div><font face=3D"monospace, monospace">DEBUG =C2=A0 [U=
+=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0image-util.c:59:singularity_i<wbr>mage_=
+check() =C2=A0: Checking if first line matches key</font></div><div><font f=
+ace=3D"monospace, monospace">VERBOSE [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0=
+image-util.c:62:singularity_i<wbr>mage_check() =C2=A0: File is a valid Sing=
+ularity image</font></div><div><font face=3D"monospace, monospace">DEBUG =
+=C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0rootfs.c:117:singularity_root<=
+wbr>fs_mount() =C2=A0 =C2=A0: Mounting image</font></div><div><font face=3D=
+"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0r=
+ootfs.c:119:singularity_root<wbr>fs_mount() =C2=A0 =C2=A0: Checking for roo=
+tfs_source directory: /var/singularity/mnt/source</font></div><div><font fa=
+ce=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =
+=C2=A0rootfs.c:130:singularity_root<wbr>fs_mount() =C2=A0 =C2=A0: Checking =
+for overlay_mount directory: /var/singularity/mnt/overlay</font></div><div>=
+<font face=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =
+=C2=A0 =C2=A0rootfs.c:141:singularity_root<wbr>fs_mount() =C2=A0 =C2=A0: Ch=
+ecking for overlay_final directory: /var/singularity/mnt/final</font></div>=
+<div><font face=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=
+=A0 =C2=A0 =C2=A0image.c:119:rootfs_image_moun<wbr>t() =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 : Binding image to loop device</font></div><div><font face=
+=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=
+=A0sessiondir.c:149:singularity_<wbr>sessiondir_get(): Returning: /tmp/.sin=
+gularity-session-0.64<wbr>512.9705044</font></div><div><font face=3D"monosp=
+ace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0loop-con=
+trol.c:65:singularity<wbr>_loop_bind() =C2=A0: Opening image loop device fi=
+le: /tmp/.singularity-session-0.64<wbr>512.9705044/image_loop_dev</font></d=
+iv><div><font face=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =
+=C2=A0 =C2=A0 =C2=A0loop-control.c:71:singularity<wbr>_loop_bind() =C2=A0: =
+Requesting exclusive flock() on loop_dev lockfile</font></div><div><font fa=
+ce=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =
+=C2=A0loop-control.c:94:singularity<wbr>_loop_bind() =C2=A0: Calculating im=
+age offset</font></div><div><font face=3D"monospace, monospace">VERBOSE [U=
+=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0image-util.c:77:singularity_i<wbr>mage_=
+offset() : Calculating image offset</font></div><div><font face=3D"monospac=
+e, monospace">VERBOSE [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0image-util.c:86=
+:singularity_i<wbr>mage_offset() : Found image at an offset of 31 bytes</fo=
+nt></div><div><font face=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D1=
+0440] =C2=A0 =C2=A0 =C2=A0image-util.c:91:singularity_i<wbr>mage_offset() :=
+ Returning image_offset(image_fp) =3D 31</font></div><div><font face=3D"mon=
+ospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0privi=
+lege.c:147:singularity_p<wbr>riv_escalate(): Running as root, not changing =
+privileges</font></div><div><font face=3D"monospace, monospace">DEBUG =C2=
+=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0loop-control.c:101:singularit<wbr=
+>y_loop_bind() : Finding next available loop device...</font></div><div><fo=
+nt face=3D"monospace, monospace">VERBOSE [U=3D0,P=3D10440] =C2=A0 =C2=A0 =
+=C2=A0loop-control.c:133:singularit<wbr>y_loop_bind() : Found avaialble loo=
+p device: /dev/loop1</font></div><div><font face=3D"monospace, monospace">D=
+EBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0loop-control.c:135:singul=
+arit<wbr>y_loop_bind() : Setting loop device flags</font></div><div><font f=
+ace=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =
+=C2=A0privilege.c:174:singularity_p<wbr>riv_drop() =C2=A0 =C2=A0: Running a=
+s root, not changing privileges</font></div><div><font face=3D"monospace, m=
+onospace">VERBOSE [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0loop-control.c:145:=
+singularit<wbr>y_loop_bind() : Using loop device: /dev/loop1</font></div><d=
+iv><font face=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=
+=A0 =C2=A0 =C2=A0loop-control.c:147:singularit<wbr>y_loop_bind() : Writing =
+active loop device name (/dev/loop1) to loop file cache: /tmp/.singularity-=
+session-0.64<wbr>512.9705044/image_loop_dev</font></div><div><font face=3D"=
+monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0ut=
+il/file.c:327:fileput() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0: Called fileput(/tmp/.singularity-sess<wbr>ion-0.64512.970504=
+4/image_loop<wbr>_dev, /dev/loop1)</font></div><div><font face=3D"monospace=
+, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0loop-contro=
+l.c:153:singularit<wbr>y_loop_bind() : Resetting exclusive flock() to share=
+d on image_loop_file</font></div><div><font face=3D"monospace, monospace">D=
+EBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0loop-control.c:156:singul=
+arit<wbr>y_loop_bind() : Returning singularity_loop_bind(image_fp<wbr>) =3D=
+ loop_fp</font></div><div><font face=3D"monospace, monospace">VERBOSE [U=3D=
+0,P=3D10440] =C2=A0 =C2=A0 =C2=A0image.c:127:rootfs_image_moun<wbr>t() =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Mounting image in read/write</font></div>=
+<div><font face=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=
+=A0 =C2=A0 =C2=A0privilege.c:147:singularity_p<wbr>riv_escalate(): Running =
+as root, not changing privileges</font></div><div><font face=3D"monospace, =
+monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0privilege.c:1=
+74:singularity_p<wbr>riv_drop() =C2=A0 =C2=A0: Running as root, not changin=
+g privileges</font></div><div><font face=3D"monospace, monospace">DEBUG =C2=
+=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0privilege.c:147:singularity_p<wbr=
+>riv_escalate(): Running as root, not changing privileges</font></div><div>=
+<font face=3D"monospace, monospace">VERBOSE [U=3D0,P=3D10440] =C2=A0 =C2=A0=
+ =C2=A0rootfs.c:222:singularity_root<wbr>fs_mount() =C2=A0 =C2=A0: Binding =
+the ROOTFS_SOURCE to OVERLAY_FINAL (/var/singularity/mnt/source-&gt;<wbr>/v=
+ar/singularity/mnt/final)</font></div><div><font face=3D"monospace, monospa=
+ce">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0privilege.c:174:sing=
+ularity_p<wbr>riv_drop() =C2=A0 =C2=A0: Running as root, not changing privi=
+leges</font></div><div><font face=3D"monospace, monospace">DEBUG =C2=A0 [U=
+=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0rootfs.c:64:singularity_rootf<wbr>s_dir=
+() =C2=A0 =C2=A0 =C2=A0 : Returning singularity_rootfs_dir: /var/singularit=
+y/mnt/final</font></div><div><font face=3D"monospace, monospace">VERBOSE [U=
+=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0image-mount.c:70:main() =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0: Setting SINGULARIT=
+Y_ROOTFS to &#39;/var/singularity/mnt/final&#39;</font></div><div><font fac=
+e=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=
+=A0rootfs.c:64:singularity_rootf<wbr>s_dir() =C2=A0 =C2=A0 =C2=A0 : Returni=
+ng singularity_rootfs_dir: /var/singularity/mnt/final</font></div><div><fon=
+t face=3D"monospace, monospace">VERBOSE [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=
+=A0fork.c:74:singularity_fork() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 : Forking child process</font></div><div><font face=3D"monospace, mo=
+nospace">VERBOSE [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0fork.c:90:singularit=
+y_fork() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Hello from pare=
+nt process</font></div><div><font face=3D"monospace, monospace">DEBUG =C2=
+=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0fork.c:109:singularity_fork() =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0: Assigning sigaction()s</font=
+></div><div><font face=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D104=
+40] =C2=A0 =C2=A0 =C2=A0fork.c:140:singularity_fork() =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0: Creating generic signal pipes</font></div><div=
+><font face=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =
+=C2=A0 =C2=A0fork.c:148:singularity_fork() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0: Creating sigcld signal pipes</font></div><div><font face=
+=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=
+=A0fork.c:170:singularity_fork() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0: Waiting on signal from watchdog</font></div><div><font face=3D"mono=
+space, monospace">VERBOSE [U=3D0,P=3D10447] =C2=A0 =C2=A0 =C2=A0fork.c:78:s=
+ingularity_fork() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Hello =
+from child process</font></div><div><font face=3D"monospace, monospace">DEB=
+UG =C2=A0 [U=3D0,P=3D10447] =C2=A0 =C2=A0 =C2=A0fork.c:81:singularity_fork(=
+) =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Closing watchdog write=
+ pipe</font></div><div><font face=3D"monospace, monospace">DEBUG =C2=A0 [U=
+=3D0,P=3D10447] =C2=A0 =C2=A0 =C2=A0fork.c:86:singularity_fork() =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Child process is returning control=
+ to process thread</font></div><div><font face=3D"monospace, monospace">Boo=
+tstrap initialization</font></div><div><font face=3D"monospace, monospace">=
+Checking bootstrap definition</font></div><div><font face=3D"monospace, mon=
+ospace">Executing Prebootstrap module</font></div><div><font face=3D"monosp=
+ace, monospace">VERBOSE [U=3D0,P=3D10475] =C2=A0 =C2=A0 =C2=A0message.c:52:=
+init() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0: Set messagelevel to: 5</font></div><div><font face=3D"mo=
+nospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10475] =C2=A0 =C2=A0 =C2=A0get-=
+section.c:66:main() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0: Iterating through /proc/mounts</font></div><div><font face=
+=3D"monospace, monospace">Not bootstrapping core container</font></div><div=
+><font face=3D"monospace, monospace">Executing Postbootstrap module</font><=
+/div><div><font face=3D"monospace, monospace">VERBOSE [U=3D0,P=3D10499] =C2=
+=A0 =C2=A0 =C2=A0message.c:52:init() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0: Set messagelevel to: 5</font=
+></div><div><font face=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D104=
+99] =C2=A0 =C2=A0 =C2=A0get-section.c:66:main() =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0: Iterating through /proc/mounts<=
+/font></div><div><font face=3D"monospace, monospace">VERBOSE [U=3D0,P=3D105=
+16] =C2=A0 =C2=A0 =C2=A0message.c:52:init() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0: Set messagelevel to: =
+5</font></div><div><font face=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,=
+P=3D10516] =C2=A0 =C2=A0 =C2=A0get-section.c:66:main() =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0: Iterating through /proc/=
+mounts</font></div><div><font face=3D"monospace, monospace">+ echo &#39;Hel=
+lo from inside the container&#39;</font></div><div><font face=3D"monospace,=
+ monospace">Hello from inside the container</font></div><div><font face=3D"=
+monospace, monospace">+ yum -y install vim-minimal</font></div><div><font f=
+ace=3D"monospace, monospace">Loaded plugins: fastestmirror</font></div><div=
+><font face=3D"monospace, monospace">Setting up Install Process</font></div=
+><div><font face=3D"monospace, monospace">Loading mirror speeds from cached=
+ hostfile</font></div><div><font face=3D"monospace, monospace">YumRepo Erro=
+r: All mirror URLs are not using ftp, http[s] or file.</font></div><div><fo=
+nt face=3D"monospace, monospace">=C2=A0Eg. Invalid release/</font></div><di=
+v><font face=3D"monospace, monospace">removing mirrorlist with no valid mir=
+rors: /var/cache/yum/x86_64/$release<wbr>ver/base/mirrorlist.txt</font></di=
+v><div><font face=3D"monospace, monospace">Error: Cannot find a valid baseu=
+rl for repo: base</font></div><div><font face=3D"monospace, monospace">ERRO=
+R: Aborting with RETVAL=3D255</font></div><div><font face=3D"monospace, mon=
+ospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0fork.c:52:handle=
+_sigchld() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Checki=
+ng child pids: 10447 10447</font></div><div><font face=3D"monospace, monosp=
+ace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0fork.c:54:handle_si=
+gchld() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Forwardin=
+g signal through sigchld_signal_wpipe</font></div><div><font face=3D"monosp=
+ace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0fork.c:1=
+96:singularity_fork() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0: Par=
+ent process is exiting</font></div><div><font face=3D"monospace, monospace"=
+>DEBUG =C2=A0 [U=3D0,P=3D10440] =C2=A0 =C2=A0 =C2=A0fork.c:237:singularity_=
+fork_e<wbr>xec() =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Waiting on child process</fo=
+nt></div><div><font face=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D1=
+0438] =C2=A0 =C2=A0 =C2=A0fork.c:52:handle_sigchld() =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Checking child pids: 10440 10440</font=
+></div><div><font face=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D104=
+38] =C2=A0 =C2=A0 =C2=A0fork.c:54:handle_sigchld() =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Forwarding signal through sigchld_signal_=
+wpipe</font></div><div><font face=3D"monospace, monospace">DEBUG =C2=A0 [U=
+=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=A0fork.c:196:singularity_fork() =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0: Parent process is exiting</font>=
+</div><div><font face=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D1043=
+8] =C2=A0 =C2=A0 =C2=A0util/util.c:102:envar_path() =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 : Checking environment variable is valid path: =
+&#39;SINGULARITY_RUNDIR&#39;</font></div><div><font face=3D"monospace, mono=
+space">VERBOSE [U=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=A0util/util.c:50:envar()=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Ch=
+ecking input from environment: &#39;SINGULARITY_RUNDIR&#39;</font></div><di=
+v><font face=3D"monospace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10438] =C2=A0=
+ =C2=A0 =C2=A0util/util.c:52:envar() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Checking environment variable is defined:=
+ SINGULARITY_RUNDIR</font></div><div><font face=3D"monospace, monospace">VE=
+RBOSE [U=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=A0util/util.c:54:envar() =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Environmen=
+t variable is NULL: SINGULARITY_RUNDIR</font></div><div><font face=3D"monos=
+pace, monospace">DEBUG =C2=A0 [U=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=A0session=
+dir.c:111:singularity_<wbr>sessiondir_init(): Cleanup thread waiting on chi=
+ld...</font></div><div><font face=3D"monospace, monospace">DEBUG =C2=A0 [U=
+=3D0,P=3D10438] =C2=A0 =C2=A0 =C2=A0sessiondir.c:116:singularity_<wbr>sessi=
+ondir_init(): Checking to see if we are the last process running in this se=
+ssiondir</font></div><div><font face=3D"monospace, monospace">VERBOSE [U=3D=
+0,P=3D10438] =C2=A0 =C2=A0 =C2=A0sessiondir.c:118:singularity_<wbr>sessiond=
+ir_init(): Cleaning sessiondir: /tmp/.singularity-session-0.64<wbr>512.9705=
+044</font></div><div><font face=3D"monospace, monospace">DEBUG =C2=A0 [U=3D=
+0,P=3D10438] =C2=A0 =C2=A0 =C2=A0util/file.c:267:s_rmdir() =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0: Removing directory: /tmp/=
+.singularity-session-0.64<wbr>512.9705044</font></div></div><span class=3D"=
+HOEnZb"><font color=3D"#888888"><div><br></div></font></span></div><span cl=
+ass=3D"HOEnZb"><font color=3D"#888888">
+</font></span></div><span class=3D"HOEnZb"><font color=3D"#888888"><br></fo=
+nt></span></div><span class=3D"HOEnZb"><font color=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singularity+u=
+nsubscribe@lbl.<wbr>gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div class=3D"gmail_signature" data-smartmail=3D"gmail_signature"><div di=
+r=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"=
+><div dir=3D"ltr"><div dir=3D"ltr"><div>Gregory M. Kurtzer</div><div>HPC Sy=
+stems Architect and Technology Developer</div><div>Lawrence Berkeley Nation=
+al Laboratory HPCS<br>University of California Berkeley Research IT<br>Sing=
+ularity Linux Containers=C2=A0(<a href=3D"http://singularity.lbl.gov/" targ=
+et=3D"_blank">http://singularity.lbl.gov/</a>)</div><div>Warewulf Cluster M=
+anagement=C2=A0(<a href=3D"http://warewulf.lbl.gov/" target=3D"_blank">http=
+://warewulf.lbl.gov/</a>)</div><div>GitHub:=C2=A0<a href=3D"https://github.=
+com/gmkurtzer" target=3D"_blank">https://github.com/gmkurtzer</a>,=C2=A0<sp=
+an style=3D"font-size:12.8px">Twitter:=C2=A0</span><a href=3D"https://twitt=
+er.com/gmkurtzer" style=3D"font-size:12.8px" target=3D"_blank">https://twit=
+ter.com/gmkurtzer</a></div></div></div></div></div></div></div></div></div>=
+</div></div>
+</div>
+
+--001a114065b2f56299054391a95c--

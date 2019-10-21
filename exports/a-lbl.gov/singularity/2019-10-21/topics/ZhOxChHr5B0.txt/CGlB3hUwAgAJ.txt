@@ -1,0 +1,1921 @@
+Date: Tue, 9 May 2017 15:27:38 -0700 (PDT)
+From: M Noon <saad...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <0a12c9b2-315c-40d5-ae71-4fc5c30b009c@lbl.gov>
+In-Reply-To: <CAGfAqt9SfQguxemnSva3B2j+e_howThkwt4EVBNSpwQ5cJ1c7Q@mail.gmail.com>
+References: <9c275bb2-1dd9-49ee-b7b3-25d6ff146607@lbl.gov> <db862cf4-c3ad-4453-8ac5-54c81e092c61@lbl.gov>
+ <CAM=pu+JiEAL87uZ0TMoUyem62D2Vu-rg0DX6Nbueu=2rpdJFBw@mail.gmail.com>
+ <42547cd7-56d6-42ff-9d97-9f4006fe66b2@lbl.gov> <CAGfAqt_ejXKuq7TpAQjANAdjorKZ90zkpUEomuzRvX5_QkGFaw@mail.gmail.com>
+ <9c7d3165-0f78-4ba7-8ac5-0a57c5ef68ba@lbl.gov>
+ <CAGfAqt9SfQguxemnSva3B2j+e_howThkwt4EVBNSpwQ5cJ1c7Q@mail.gmail.com>
+Subject: Re: [Singularity] Re: Cant find or run installed APP from within
+ the container
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2305_987347800.1494368858454"
+
+------=_Part_2305_987347800.1494368858454
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2306_754549889.1494368858457"
+
+------=_Part_2306_754549889.1494368858457
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi Jason, 
+
+Yes, I am using a new definition files shared by Vanessa.. ON STAR git page 
+these are the instructions for installation.. There no 'make install' 
+command in the instrucions.. it works when I install it locally outside the 
+container.
+
+# Alternatively, get STAR source using git
+git clone https://github.com/alexdobin/STAR.gitcd STAR/source
+# Build STAR
+make STAR
+
+
+
+ here it is:
+
+Bootstrap:docker
+From: centos:7
+%labels
+CREATOR vso...@stanford.edu
+%environment
+PATH=$PATH/STAR/bin/Linux_x86_64
+%post
+# commands to be executed inside container during bootstrap
+yum -y groupinstall "Development Tools"
+# Install OpenMPI
+git clone https://github.com/open-mpi/ompi.git
+cd ompi
+./autogen.pl
+./configure --prefix=/usr/local
+make
+make install
+# Instal "zlib1g" to aviod installation error
+yum -y install zlib-devel
+# Install Star
+cd /
+git clone https://github.com/alexdobin/STAR.git
+cd STAR/source
+make STAR
+mkdir - p /extra/mnoon 
+mkdir -p /rsgrps/zarnescu/
+%runscript
+echo "Arguments received: $*"
+exec /usr/bin/python "$@"
+%test
+python --version
+STAR --version 
+On Tuesday, May 9, 2017 at 3:21:35 PM UTC-7, Jason Stover wrote:
+>
+> Hi, 
+>
+>   Has your definition file changed since you originally posted it? In 
+> the definition file you're doing ... 
+>
+>     cd ompi 
+>     # Build OpenMPI in the working directory 
+>       [ ... ] 
+>     # Install STAR -  get STAR source using git 
+>     git clone https://github.com/alexdobin/STAR.git 
+>     cd STAR/source 
+>
+>   So... from my reading of that, you're checking the STAR source out, 
+> into the ompi clone, as you're never changing from the ompi 
+> directory.... 
+>
+>   I'm guessing that path is:  /root/ompi/STAR 
+>
+>   You are also not doing a "make install" after STAR is built... so 
+> the STAR binary is probably just sitting in the STAR source 
+> directory... 
+>
+> -J 
+>
+>
+> On Tue, May 9, 2017 at 5:11 PM, M Noon <sa...@gmail.com <javascript:>> 
+> wrote: 
+> > Hi Jason, 
+> > 
+> > its on my path: 
+> > 
+> > echo $PATH 
+> > 
+> > 
+> /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin/STAR/bin/Linux_x86_64 
+>
+> > 
+> > 
+> > 
+> > The problem is that I cant find it here "/bin/STAR/" or any other 
+> directory 
+> > in the path.. I dont understand this behavior.. this is could be 
+> something 
+> > very very trivial that I am missing. 
+> > 
+> > 
+> > Thanks, 
+> > 
+> > M 
+> > 
+> > 
+> > On Tuesday, May 9, 2017 at 2:16:45 PM UTC-7, Jason Stover wrote: 
+> >> 
+> >> Hi, 
+> >> 
+> >> > + STAR --version 
+> >> > /.test: line 5: STAR: command not found 
+> >> 
+> >> What is your $PATH value, and is the location of the STAR binary 
+> included? 
+> >> 
+> >> -J 
+> >> 
+> >> 
+> >> On Tue, May 9, 2017 at 4:02 PM, M Noon <sa...@gmail.com> wrote: 
+> >> > Hi Vanessa, 
+> >> > 
+> >> > I tried from scratch, created a new img and so on: I still get the 
+> same 
+> >> > error: 
+> >> > 
+> >> > g++ -c  -O3 -pipe -Wall -Wextra  bam_cat.c 
+> >> > 
+> >> > g++ -o STAR  -O3 -pipe -std=c++11 -Wall -Wextra -fopenmp 
+> >> > -D'COMPILATION_TIME_PLACE="Tue May 9 06:18:22 UTC 2017 
+> :/STAR/source"' 
+> >> > SharedMemory.o PackedArray.o SuffixArrayFuns.o STAR.o Parameters.o 
+> >> > InOutStreams.o SequenceFuns.o Genome.o Chain.o Stats.o Transcript.o 
+> >> > Transcript_alignScore.o ReadAlign.o ReadAlign_storeAligns.o 
+> >> > ReadAlign_stitchPieces.o ReadAlign_multMapSelect.o 
+> >> > ReadAlign_mapOneRead.o 
+> >> > readLoad.o ReadAlignChunk.o ReadAlignChunk_processChunks.o 
+> >> > ReadAlignChunk_mapChunk.o OutSJ.o outputSJ.o blocksOverlap.o 
+> >> > ThreadControl.o 
+> >> > sysRemoveDir.o ReadAlign_maxMappableLength2strands.o binarySearch2.o 
+> >> > ReadAlign_outputAlignments.o ReadAlign_outputTranscriptSAM.o 
+> >> > ReadAlign_outputTranscriptSJ.o ReadAlign_outputTranscriptCIGARp.o 
+> >> > ReadAlign_createExtendWindowsWithAlign.o 
+> ReadAlign_assignAlignToWindow.o 
+> >> > ReadAlign_oneRead.o ReadAlign_stitchWindowSeeds.o 
+> >> > ReadAlign_chimericDetection.o stitchWindowAligns.o extendAlign.o 
+> >> > stitchAlignToTranscript.o alignSmithWaterman.o genomeGenerate.o 
+> >> > genomeParametersWrite.o genomeScanFastaFiles.o genomeSAindex.o 
+> >> > Genome_insertSequences.o insertSeqSA.o funCompareUintAndSuffixes.o 
+> >> > sortSuffixesBucket.o funCompareUintAndSuffixesMemcmp.o 
+> TimeFunctions.o 
+> >> > ErrorWarning.o loadGTF.o streamFuns.o stringSubstituteAll.o 
+> >> > Transcriptome.o 
+> >> > Transcriptome_quantAlign.o ReadAlign_quantTranscriptome.o 
+> >> > Quantifications.o 
+> >> > Transcriptome_geneCountsAddAlign.o sjdbLoadFromFiles.o 
+> >> > sjdbLoadFromStream.o 
+> >> > sjdbPrepare.o sjdbBuildIndex.o sjdbInsertJunctions.o 
+> mapThreadsSpawn.o 
+> >> > Parameters_openReadsFiles.cpp Parameters_closeReadsFiles.cpp 
+> BAMoutput.o 
+> >> > BAMfunctions.o ReadAlign_alignBAM.o BAMbinSortByCoordinate.o 
+> >> > signalFromBAM.o 
+> >> > bamRemoveDuplicates.o BAMbinSortUnmapped.o bam_cat.o 
+> GlobalVariables.cpp 
+> >> > -pthread -Lhtslib -Bstatic -lhts -Bdynamic -lz -lrt 
+> >> > 
+> >> > Parameters_openReadsFiles.cpp: In member function 'void 
+> >> > Parameters::openReadsFiles()': 
+> >> > 
+> >> > Parameters_openReadsFiles.cpp:30:20: warning: variable 'imate' might 
+> be 
+> >> > clobbered by 'longjmp' or 'vfork' [-Wclobbered] 
+> >> > 
+> >> >           for (uint imate=0;imate<readNmates;imate++) {//open readIn 
+> >> > files 
+> >> > 
+> >> >                     ^ 
+> >> > 
+> >> > + mkdir -p /extra/mnoon 
+> >> > 
+> >> > + mkdir -p /rsgrps/zarnescu/ 
+> >> > 
+> >> > Adding environment to container 
+> >> > 
+> >> > Adding deffile section labels to container 
+> >> > 
+> >> > Running test scriptlet 
+> >> > 
+> >> > + python --version 
+> >> > 
+> >> > Python 2.7.5 
+> >> > 
+> >> > + STAR --version 
+> >> > 
+> >> > /.test: line 5: STAR: command not found 
+> >> > 
+> >> > ERROR: Aborting with RETVAL=255 
+> >> > 
+> >> > 
+> >> > 
+> >> > On Tuesday, May 9, 2017 at 1:42:25 PM UTC-7, vanessa wrote: 
+> >> >> 
+> >> >> Hey M Noon, 
+> >> >> 
+> >> >> It's telling you STAR already exists, which tells me that you are 
+> >> >> trying 
+> >> >> to bootstrap again (on a failed image) without re-creating the 
+> image. 
+> >> >> Generally when you try things for a second time, you want to start 
+> with 
+> >> >> a 
+> >> >> new image, because the git clone is going to fail when it sees the 
+> old 
+> >> >> STAR 
+> >> >> directory is already there. 
+> >> >> 
+> >> >> Best, 
+> >> >> 
+> >> >> Vanessa 
+> >> >> 
+> >> >> On Tue, May 9, 2017 at 4:29 PM, M Noon <sa...@gmail.com> wrote: 
+> >> >>> 
+> >> >>> No, It didn't help. I comment out both mkdir commands. 
+> >> >>> 
+> >> >>> sudo singularity bootstrap starMPI.img starMPI.def 
+> >> >>> 
+> >> >>> [sudo] password for mnoon: 
+> >> >>> 
+> >> >>> Sanitizing environment 
+> >> >>> 
+> >> >>> Building from bootstrap definition recipe 
+> >> >>> 
+> >> >>> Adding base Singularity environment to container 
+> >> >>> 
+> >> >>> Docker image path: index.docker.io/library/centos:7 
+> >> >>> 
+> >> >>> Cache folder set to /root/.singularity/docker 
+> >> >>> 
+> >> >>> Exploding layer: 
+> >> >>> 
+> >> >>> 
+> sha256:93857f76ae30d903bbdad13fbf7fad95ce1c0b52b7d5644651e01c6c7a906312.tar.gz 
+>
+> >> >>> 
+> >> >>> Exploding layer: 
+> >> >>> 
+> >> >>> 
+> sha256:9326ff949485e53c2403126b5422ad659cb2176bddbc511461da81c10703a50c.tar.gz 
+>
+> >> >>> 
+> >> >>> User defined %runscript found! Taking priority. 
+> >> >>> 
+> >> >>> Running post scriptlet 
+> >> >>> 
+> >> >>> + yum -y groupinstall 'Development Tools' 
+> >> >>> 
+> >> >>> Loaded plugins: fastestmirror, ovl 
+> >> >>> 
+> >> >>> Loading mirror speeds from cached hostfile 
+> >> >>> 
+> >> >>>  * base: repo1.sea.innoscale.net 
+> >> >>> 
+> >> >>>  * extras: centos.firehosted.com 
+> >> >>> 
+> >> >>>  * updates: mirrors.sonic.net 
+> >> >>> 
+> >> >>> Maybe run: yum groups mark install (see man yum) 
+> >> >>> 
+> >> >>> No packages in any requested group available to install or update 
+> >> >>> 
+> >> >>> + yum -y install zlib-devel 
+> >> >>> 
+> >> >>> Loaded plugins: fastestmirror, ovl 
+> >> >>> 
+> >> >>> Loading mirror speeds from cached hostfile 
+> >> >>> 
+> >> >>>  * base: repo1.sea.innoscale.net 
+> >> >>> 
+> >> >>>  * extras: centos.firehosted.com 
+> >> >>> 
+> >> >>>  * updates: mirrors.sonic.net 
+> >> >>> 
+> >> >>> Resolving Dependencies 
+> >> >>> 
+> >> >>> --> Running transaction check 
+> >> >>> 
+> >> >>> ---> Package zlib-devel.x86_64 0:1.2.7-17.el7 will be installed 
+> >> >>> 
+> >> >>> --> Finished Dependency Resolution 
+> >> >>> 
+> >> >>> 
+> >> >>> Dependencies Resolved 
+> >> >>> 
+> >> >>> 
+> >> >>> 
+> >> >>> 
+> >> >>> 
+> ============================================================================================================================================================== 
+>
+> >> >>> 
+> >> >>>  Package                                Arch 
+> >> >>> Version                                     Repository 
+> >> >>> Size 
+> >> >>> 
+> >> >>> 
+> >> >>> 
+> >> >>> 
+> ============================================================================================================================================================== 
+>
+> >> >>> 
+> >> >>> Installing: 
+> >> >>> 
+> >> >>>  zlib-devel                             x86_64 
+> >> >>> 1.2.7-17.el7                                base 
+> >> >>> 50 k 
+> >> >>> 
+> >> >>> 
+> >> >>> Transaction Summary 
+> >> >>> 
+> >> >>> 
+> >> >>> 
+> >> >>> 
+> ============================================================================================================================================================== 
+>
+> >> >>> 
+> >> >>> Install  1 Package 
+> >> >>> 
+> >> >>> 
+> >> >>> Total download size: 50 k 
+> >> >>> 
+> >> >>> Installed size: 132 k 
+> >> >>> 
+> >> >>> Downloading packages: 
+> >> >>> 
+> >> >>> warning: 
+> >> >>> 
+> >> >>> 
+> /var/cache/yum/x86_64/7/base/packages/zlib-devel-1.2.7-17.el7.x86_64.rpm: 
+> >> >>> Header V3 RSA/SHA256 Signature, key ID f4a80eb5: NOKEY 
+> >> >>> 
+> >> >>> Public key for zlib-devel-1.2.7-17.el7.x86_64.rpm is not installed 
+> >> >>> 
+> >> >>> zlib-devel-1.2.7-17.el7.x86_64.rpm 
+> >> >>> |  50 kB  00:00:00 
+> >> >>> 
+> >> >>> Retrieving key from file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 
+> >> >>> 
+> >> >>> Importing GPG key 0xF4A80EB5: 
+> >> >>> 
+> >> >>>  Userid     : "CentOS-7 Key (CentOS 7 Official Signing Key) 
+> >> >>> <se...@centos.org>" 
+> >> >>> 
+> >> >>>  Fingerprint: 6341 ab27 53d7 8a78 a7c2 7bb1 24c6 a8a7 f4a8 0eb5 
+> >> >>> 
+> >> >>>  Package    : centos-release-7-3.1611.el7.centos.x86_64 (@CentOS) 
+> >> >>> 
+> >> >>>  From       : /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 
+> >> >>> 
+> >> >>> Running transaction check 
+> >> >>> 
+> >> >>> Running transaction test 
+> >> >>> 
+> >> >>> Transaction test succeeded 
+> >> >>> 
+> >> >>> Running transaction 
+> >> >>> 
+> >> >>>   Installing : zlib-devel-1.2.7-17.el7.x86_64 
+> >> >>> 1/1 
+> >> >>> 
+> >> >>>   Verifying  : zlib-devel-1.2.7-17.el7.x86_64 
+> >> >>> 1/1 
+> >> >>> 
+> >> >>> 
+> >> >>> Installed: 
+> >> >>> 
+> >> >>>   zlib-devel.x86_64 0:1.2.7-17.el7 
+> >> >>> 
+> >> >>> 
+> >> >>> Complete! 
+> >> >>> 
+> >> >>> + cd / 
+> >> >>> 
+> >> >>> + git clone https://github.com/alexdobin/STAR.git 
+> >> >>> 
+> >> >>> fatal: destination path 'STAR' already exists and is not an empty 
+> >> >>> directory. 
+> >> >>> 
+> >> >>> ERROR: Aborting with RETVAL=255 
+> >> >>> 
+> >> >>> 
+> >> >>> 
+> >> >>> On Monday, May 8, 2017 at 5:05:07 PM UTC-7, M Noon wrote: 
+> >> >>>> 
+> >> >>>> Hi team, 
+> >> >>>> 
+> >> >>>> I am in the stage of getting familiarized with Singularity and 
+> don't 
+> >> >>>> know many details about it. I am trying to build a container with 
+> MPI 
+> >> >>>> libraries and genome aligner (STAR) that could be tested on HPC. 
+> >> >>>> After facing many errors, I succeeded to install both MPI 
+> libraries 
+> >> >>>> and 
+> >> >>>> STAR. I am using Centos7. I am git-cloning both tools within 
+> %POST. 
+> >> >>>> Logically, both programs/executables should be at 
+> "/usr/local/bin". 
+> >> >>>> Well, I do see mpi and it can be invoked when I am in shell mode. 
+> >> >>>> Despite 
+> >> >>>> great deal of efforts I couldn't find STAR executable or any 
+> folder 
+> >> >>>> that 
+> >> >>>> was/should have been cloned within the container. I may be missing 
+> >> >>>> something 
+> >> >>>> very trivial but I can't seem to work it out yet. 
+> >> >>>> Here is my Definition file: 
+> >> >>>> 
+> >> >>>> 
+> >> >>>> BootStrap: yum 
+> >> >>>> 
+> >> >>>> OSVersion: 7 
+> >> >>>> 
+> >> >>>> MirrorURL: 
+> >> >>>> 
+> >> >>>> 
+> http://mirror.centos.org/centos-%{OSVERSION}/%{OSVERSION}/os/$basearch/ 
+> >> >>>> 
+> >> >>>> Include: yum wget 
+> >> >>>> 
+> >> >>>> # best to build up container using kickstart mentality. 
+> >> >>>> 
+> >> >>>> # ie, to add more packages to image, 
+> >> >>>> 
+> >> >>>> # re-run bootstrap command again. 
+> >> >>>> 
+> >> >>>> # bootstrap on existing image will build on top of it, not 
+> >> >>>> overwriting 
+> >> >>>> it/restarting from scratch 
+> >> >>>> 
+> >> >>>> # singularity .def file is like kickstart file 
+> >> >>>> 
+> >> >>>> # unix commands can be run, but if there is any error, the 
+> bootstrap 
+> >> >>>> process ends 
+> >> >>>> 
+> >> >>>> 
+> >> >>>> 
+> >> >>>> %setup 
+> >> >>>> 
+> >> >>>>    # commands to be executed on host outside container during 
+> >> >>>> bootstrap 
+> >> >>>> 
+> >> >>>> 
+> >> >>>> 
+> >> >>>> %post 
+> >> >>>> 
+> >> >>>>     # commands to be executed inside container during bootstrap 
+> >> >>>> 
+> >> >>>>     yum -y groupinstall "Development Tools" 
+> >> >>>> 
+> >> >>>> 
+> >> >>>> 
+> >> >>>> #    # Clone the OpenMPI GitHub master branch in current directory 
+> >> >>>> (on 
+> >> >>>> host) 
+> >> >>>> 
+> >> >>>>     git clone https://github.com/open-mpi/ompi.git 
+> >> >>>> 
+> >> >>>>     cd ompi 
+> >> >>>> 
+> >> >>>> 
+> >> >>>>     # Build OpenMPI in the working directory 
+> >> >>>> 
+> >> >>>>     ./autogen.pl 
+> >> >>>> 
+> >> >>>>     ./configure --prefix=/usr/local 
+> >> >>>> 
+> >> >>>>     make 
+> >> >>>> 
+> >> >>>>     make install 
+> >> >>>> 
+> >> >>>> # 
+> >> >>>> 
+> >> >>>> 
+> >> >>>> 
+> >> >>>>     # Instal "zlib1g" to aviod installation error 
+> >> >>>> 
+> >> >>>>     yum -y install zlib-devel 
+> >> >>>> 
+> >> >>>> 
+> >> >>>> 
+> >> >>>>     # Install STAR -  get STAR source using git 
+> >> >>>> 
+> >> >>>>     git clone https://github.com/alexdobin/STAR.git 
+> >> >>>> 
+> >> >>>>     cd STAR/source 
+> >> >>>> 
+> >> >>>> 
+> >> >>>>     echo "Within STAR" 
+> >> >>>> 
+> >> >>>>     echo "pwd" 
+> >> >>>> 
+> >> >>>> 
+> >> >>>>     # Build STAR 
+> >> >>>> 
+> >> >>>>     make STAR 
+> >> >>>> 
+> >> >>>> 
+> >> >>>>     echo $PATH 
+> >> >>>> 
+> >> >>>>     STAR --version 
+> >> >>>> 
+> >> >>>> 
+> >> >>>>     echo "OUT of Star Dir" 
+> >> >>>> 
+> >> >>>>     STAR --version 
+> >> >>>> 
+> >> >>>> 
+> >> >>>>     /usr/bin/STAR --help 
+> >> >>>> 
+> >> >>>> 
+> >> >>>> 
+> >> >>>>     # create bind points for storage.  Replace netid as 
+> appropriate 
+> >> >>>> 
+> >> >>>>     mkdir /extra/mnoon /rsgrps/zarnescu/ 
+> >> >>>> 
+> >> >>>>     exit 0 
+> >> >>>> 
+> >> >>>> 
+> >> >>>> 
+> >> >>>> 
+> >> >>>>  %runscript 
+> >> >>>> 
+> >> >>>>    # commands to be executed when the container runs 
+> >> >>>> 
+> >> >>>>    echo "Arguments received: $*" 
+> >> >>>> 
+> >> >>>>    exec /usr/bin/python "$@" 
+> >> >>>> 
+> >> >>>> 
+> >> >>>> 
+> >> >>>> 
+> >> >>>>  %test 
+> >> >>>> 
+> >> >>>>    # commands to be executed within container at close of 
+> bootstrap 
+> >> >>>> process 
+> >> >>>> 
+> >> >>>>    python --version 
+> >> >>>> 
+> >> >>>>    STAR --version 
+> >> >>>> 
+> >> >>>> 
+> >> >>>> 
+> >> >>>> 
+> >> >>>> 
+> >> >>>> I also tried to install (git clone) STAR using this alternative 
+> >> >>>> method, 
+> >> >>>> below: 
+> >> >>>> 
+> >> >>>> sudo singularity exec -w centosMPI_star.img 
+> >> >>>> 
+> >> >>>> git clone https://github.com/alexdobin/STAR.git 
+> >> >>>> 
+> >> >>>> cd STAR/source/ 
+> >> >>>> 
+> >> >>>> singularity exec ../../centosMPI_star.img make STAR 
+> >> >>>> 
+> >> >>>> 
+> >> >>>> When I do 
+> >> >>>> 
+> >> >>>> singularity shell centosMPI_star.img 
+> >> >>>> 
+> >> >>>> 
+> >> >>>> I can't find STAR in any possible directory other than the clonned 
+> >> >>>> version on /home/mnoon 
+> >> >>>> 
+> >> >>>> 
+> >> >>>> Can you please tell me what am I doing wrong? Also, Where should 
+> the 
+> >> >>>> installed tool/executable be located with the container? 
+> >> >>>> 
+> >> >>>> 
+> >> >>>> Regards, 
+> >> >>>> 
+> >> >>>> M 
+> >> >>>> 
+> >> >>>> 
+> >> >>> -- 
+> >> >>> You received this message because you are subscribed to the Google 
+> >> >>> Groups 
+> >> >>> "singularity" group. 
+> >> >>> To unsubscribe from this group and stop receiving emails from it, 
+> send 
+> >> >>> an 
+> >> >>> email to singu...@lbl.gov. 
+> >> >> 
+> >> >> 
+> >> >> 
+> >> >> 
+> >> >> -- 
+> >> >> Vanessa Villamia Sochat 
+> >> >> Stanford University '16 
+> >> >> (603) 321-0676 
+> >> > 
+> >> > -- 
+> >> > You received this message because you are subscribed to the Google 
+> >> > Groups 
+> >> > "singularity" group. 
+> >> > To unsubscribe from this group and stop receiving emails from it, 
+> send 
+> >> > an 
+> >> > email to singu...@lbl.gov. 
+> > 
+> > -- 
+> > You received this message because you are subscribed to the Google 
+> Groups 
+> > "singularity" group. 
+> > To unsubscribe from this group and stop receiving emails from it, send 
+> an 
+> > email to singu...@lbl.gov <javascript:>. 
+>
+
+------=_Part_2306_754549889.1494368858457
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Jason,=C2=A0<div><br></div><div>Yes, I am using a new d=
+efinition files shared by Vanessa.. ON STAR git page these are the instruct=
+ions for installation.. There no &#39;make install&#39; command in the inst=
+rucions.. it works when I install it locally outside the container.</div><d=
+iv><pre style=3D"box-sizing: border-box; font-family: SFMono-Regular, Conso=
+las, &quot;Liberation Mono&quot;, Menlo, Courier, monospace; font-size: 13.=
+6px; font-stretch: normal; line-height: 1.45; word-wrap: normal; padding: 1=
+6px; overflow: auto; background-color: rgb(246, 248, 250); border-radius: 3=
+px; word-break: normal; color: rgb(36, 41, 46);"><span class=3D"pl-c" style=
+=3D"box-sizing: border-box; color: rgb(150, 152, 150);"><span class=3D"pl-c=
+" style=3D"box-sizing: border-box;">#</span> Alternatively, get STAR source=
+ using git</span>
+git clone https://github.com/alexdobin/STAR.git
+<span class=3D"pl-c1" style=3D"box-sizing: border-box; color: rgb(0, 134, 1=
+79);">cd</span> STAR/source
+
+<span class=3D"pl-c" style=3D"box-sizing: border-box; color: rgb(150, 152, =
+150);"><span class=3D"pl-c" style=3D"box-sizing: border-box;">#</span> Buil=
+d STAR</span>
+make STAR
+</pre></div><div><br></div><div><br></div><div>=C2=A0here it is:</div><div>=
+<br></div><div><table class=3D"highlight tab-size js-file-line-container" d=
+ata-tab-size=3D"8" style=3D"box-sizing: border-box; border-collapse: collap=
+se; tab-size: 8; color: rgb(36, 41, 46); font-family: -apple-system, system=
+-ui, &quot;Segoe UI&quot;, Helvetica, Arial, sans-serif, &quot;Apple Color =
+Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;; font-=
+size: 14px;"><tbody style=3D"box-sizing: border-box;"><tr style=3D"box-sizi=
+ng: border-box;"><td id=3D"file-singularity-LC1" class=3D"blob-code blob-co=
+de-inner js-file-line" style=3D"box-sizing: border-box; padding-right: 10px=
+; padding-left: 10px; position: relative; line-height: 20px; vertical-align=
+: top; overflow: visible; font-family: SFMono-Regular, Consolas, &quot;Libe=
+ration Mono&quot;, Menlo, Courier, monospace; font-size: 12px; word-wrap: n=
+ormal; white-space: pre;">Bootstrap:docker</td></tr><tr style=3D"box-sizing=
+: border-box;"><td id=3D"file-singularity-L2" class=3D"blob-num js-line-num=
+ber" data-line-number=3D"2" style=3D"box-sizing: border-box; padding-right:=
+ 10px; padding-left: 10px; width: 50px; min-width: 50px; font-family: SFMon=
+o-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace=
+; font-size: 12px; line-height: 20px; color: rgba(27, 31, 35, 0.298039); te=
+xt-align: right; white-space: nowrap; vertical-align: top; cursor: pointer;=
+ user-select: none;"></td><td id=3D"file-singularity-LC2" class=3D"blob-cod=
+e blob-code-inner js-file-line" style=3D"box-sizing: border-box; padding-ri=
+ght: 10px; padding-left: 10px; position: relative; line-height: 20px; verti=
+cal-align: top; overflow: visible; font-family: SFMono-Regular, Consolas, &=
+quot;Liberation Mono&quot;, Menlo, Courier, monospace; font-size: 12px; wor=
+d-wrap: normal; white-space: pre;">From: centos:7</td></tr><tr style=3D"box=
+-sizing: border-box;"><td id=3D"file-singularity-L3" class=3D"blob-num js-l=
+ine-number" data-line-number=3D"3" style=3D"box-sizing: border-box; padding=
+-right: 10px; padding-left: 10px; width: 50px; min-width: 50px; font-family=
+: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, mo=
+nospace; font-size: 12px; line-height: 20px; color: rgba(27, 31, 35, 0.2980=
+39); text-align: right; white-space: nowrap; vertical-align: top; cursor: p=
+ointer; user-select: none;"></td><td id=3D"file-singularity-LC3" class=3D"b=
+lob-code blob-code-inner js-file-line" style=3D"box-sizing: border-box; pad=
+ding-right: 10px; padding-left: 10px; position: relative; line-height: 20px=
+; vertical-align: top; overflow: visible; font-family: SFMono-Regular, Cons=
+olas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace; font-size: 12=
+px; word-wrap: normal; white-space: pre;">
+</td></tr><tr style=3D"box-sizing: border-box;"><td id=3D"file-singularity-=
+L4" class=3D"blob-num js-line-number" data-line-number=3D"4" style=3D"box-s=
+izing: border-box; padding-right: 10px; padding-left: 10px; width: 50px; mi=
+n-width: 50px; font-family: SFMono-Regular, Consolas, &quot;Liberation Mono=
+&quot;, Menlo, Courier, monospace; font-size: 12px; line-height: 20px; colo=
+r: rgba(27, 31, 35, 0.298039); text-align: right; white-space: nowrap; vert=
+ical-align: top; cursor: pointer; user-select: none;"></td><td id=3D"file-s=
+ingularity-LC4" class=3D"blob-code blob-code-inner js-file-line" style=3D"b=
+ox-sizing: border-box; padding-right: 10px; padding-left: 10px; position: r=
+elative; line-height: 20px; vertical-align: top; overflow: visible; font-fa=
+mily: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier=
+, monospace; font-size: 12px; word-wrap: normal; white-space: pre;">%labels=
+</td></tr><tr style=3D"box-sizing: border-box;"><td id=3D"file-singularity-=
+L5" class=3D"blob-num js-line-number" data-line-number=3D"5" style=3D"box-s=
+izing: border-box; padding-right: 10px; padding-left: 10px; width: 50px; mi=
+n-width: 50px; font-family: SFMono-Regular, Consolas, &quot;Liberation Mono=
+&quot;, Menlo, Courier, monospace; font-size: 12px; line-height: 20px; colo=
+r: rgba(27, 31, 35, 0.298039); text-align: right; white-space: nowrap; vert=
+ical-align: top; cursor: pointer; user-select: none;"></td><td id=3D"file-s=
+ingularity-LC5" class=3D"blob-code blob-code-inner js-file-line" style=3D"b=
+ox-sizing: border-box; padding-right: 10px; padding-left: 10px; position: r=
+elative; line-height: 20px; vertical-align: top; overflow: visible; font-fa=
+mily: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier=
+, monospace; font-size: 12px; word-wrap: normal; white-space: pre;">CREATOR=
+ vso...@stanford.edu</td></tr><tr style=3D"box-sizing: border-box;"><td id=
+=3D"file-singularity-L6" class=3D"blob-num js-line-number" data-line-number=
+=3D"6" style=3D"box-sizing: border-box; padding-right: 10px; padding-left: =
+10px; width: 50px; min-width: 50px; font-family: SFMono-Regular, Consolas, =
+&quot;Liberation Mono&quot;, Menlo, Courier, monospace; font-size: 12px; li=
+ne-height: 20px; color: rgba(27, 31, 35, 0.298039); text-align: right; whit=
+e-space: nowrap; vertical-align: top; cursor: pointer; user-select: none;">=
+</td><td id=3D"file-singularity-LC6" class=3D"blob-code blob-code-inner js-=
+file-line" style=3D"box-sizing: border-box; padding-right: 10px; padding-le=
+ft: 10px; position: relative; line-height: 20px; vertical-align: top; overf=
+low: visible; font-family: SFMono-Regular, Consolas, &quot;Liberation Mono&=
+quot;, Menlo, Courier, monospace; font-size: 12px; word-wrap: normal; white=
+-space: pre;">
+</td></tr><tr style=3D"box-sizing: border-box;"><td id=3D"file-singularity-=
+L7" class=3D"blob-num js-line-number" data-line-number=3D"7" style=3D"box-s=
+izing: border-box; padding-right: 10px; padding-left: 10px; width: 50px; mi=
+n-width: 50px; font-family: SFMono-Regular, Consolas, &quot;Liberation Mono=
+&quot;, Menlo, Courier, monospace; font-size: 12px; line-height: 20px; colo=
+r: rgba(27, 31, 35, 0.298039); text-align: right; white-space: nowrap; vert=
+ical-align: top; cursor: pointer; user-select: none;"></td><td id=3D"file-s=
+ingularity-LC7" class=3D"blob-code blob-code-inner js-file-line" style=3D"b=
+ox-sizing: border-box; padding-right: 10px; padding-left: 10px; position: r=
+elative; line-height: 20px; vertical-align: top; overflow: visible; font-fa=
+mily: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier=
+, monospace; font-size: 12px; word-wrap: normal; white-space: pre;">%enviro=
+nment</td></tr><tr style=3D"box-sizing: border-box;"><td id=3D"file-singula=
+rity-L8" class=3D"blob-num js-line-number" data-line-number=3D"8" style=3D"=
+box-sizing: border-box; padding-right: 10px; padding-left: 10px; width: 50p=
+x; min-width: 50px; font-family: SFMono-Regular, Consolas, &quot;Liberation=
+ Mono&quot;, Menlo, Courier, monospace; font-size: 12px; line-height: 20px;=
+ color: rgba(27, 31, 35, 0.298039); text-align: right; white-space: nowrap;=
+ vertical-align: top; cursor: pointer; user-select: none;"></td><td id=3D"f=
+ile-singularity-LC8" class=3D"blob-code blob-code-inner js-file-line" style=
+=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10px; positi=
+on: relative; line-height: 20px; vertical-align: top; overflow: visible; fo=
+nt-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Co=
+urier, monospace; font-size: 12px; word-wrap: normal; white-space: pre;">  =
+  PATH=3D$PATH/STAR/bin/Linux_x86_64</td></tr><tr style=3D"box-sizing: bord=
+er-box;"><td id=3D"file-singularity-L9" class=3D"blob-num js-line-number" d=
+ata-line-number=3D"9" style=3D"box-sizing: border-box; padding-right: 10px;=
+ padding-left: 10px; width: 50px; min-width: 50px; font-family: SFMono-Regu=
+lar, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace; font=
+-size: 12px; line-height: 20px; color: rgba(27, 31, 35, 0.298039); text-ali=
+gn: right; white-space: nowrap; vertical-align: top; cursor: pointer; user-=
+select: none;"></td><td id=3D"file-singularity-LC9" class=3D"blob-code blob=
+-code-inner js-file-line" style=3D"box-sizing: border-box; padding-right: 1=
+0px; padding-left: 10px; position: relative; line-height: 20px; vertical-al=
+ign: top; overflow: visible; font-family: SFMono-Regular, Consolas, &quot;L=
+iberation Mono&quot;, Menlo, Courier, monospace; font-size: 12px; word-wrap=
+: normal; white-space: pre;">
+</td></tr><tr style=3D"box-sizing: border-box;"><td id=3D"file-singularity-=
+L10" class=3D"blob-num js-line-number" data-line-number=3D"10" style=3D"box=
+-sizing: border-box; padding-right: 10px; padding-left: 10px; width: 50px; =
+min-width: 50px; font-family: SFMono-Regular, Consolas, &quot;Liberation Mo=
+no&quot;, Menlo, Courier, monospace; font-size: 12px; line-height: 20px; co=
+lor: rgba(27, 31, 35, 0.298039); text-align: right; white-space: nowrap; ve=
+rtical-align: top; cursor: pointer; user-select: none;"></td><td id=3D"file=
+-singularity-LC10" class=3D"blob-code blob-code-inner js-file-line" style=
+=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10px; positi=
+on: relative; line-height: 20px; vertical-align: top; overflow: visible; fo=
+nt-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Co=
+urier, monospace; font-size: 12px; word-wrap: normal; white-space: pre;">%p=
+ost</td></tr><tr style=3D"box-sizing: border-box;"><td id=3D"file-singulari=
+ty-L11" class=3D"blob-num js-line-number" data-line-number=3D"11" style=3D"=
+box-sizing: border-box; padding-right: 10px; padding-left: 10px; width: 50p=
+x; min-width: 50px; font-family: SFMono-Regular, Consolas, &quot;Liberation=
+ Mono&quot;, Menlo, Courier, monospace; font-size: 12px; line-height: 20px;=
+ color: rgba(27, 31, 35, 0.298039); text-align: right; white-space: nowrap;=
+ vertical-align: top; cursor: pointer; user-select: none;"></td><td id=3D"f=
+ile-singularity-LC11" class=3D"blob-code blob-code-inner js-file-line" styl=
+e=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10px; posit=
+ion: relative; line-height: 20px; vertical-align: top; overflow: visible; f=
+ont-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, C=
+ourier, monospace; font-size: 12px; word-wrap: normal; white-space: pre;"> =
+   # commands to be executed inside container during bootstrap</td></tr><tr=
+ style=3D"box-sizing: border-box;"><td id=3D"file-singularity-L12" class=3D=
+"blob-num js-line-number" data-line-number=3D"12" style=3D"box-sizing: bord=
+er-box; padding-right: 10px; padding-left: 10px; width: 50px; min-width: 50=
+px; font-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Men=
+lo, Courier, monospace; font-size: 12px; line-height: 20px; color: rgba(27,=
+ 31, 35, 0.298039); text-align: right; white-space: nowrap; vertical-align:=
+ top; cursor: pointer; user-select: none;"></td><td id=3D"file-singularity-=
+LC12" class=3D"blob-code blob-code-inner js-file-line" style=3D"box-sizing:=
+ border-box; padding-right: 10px; padding-left: 10px; position: relative; l=
+ine-height: 20px; vertical-align: top; overflow: visible; font-family: SFMo=
+no-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospac=
+e; font-size: 12px; word-wrap: normal; white-space: pre;">    yum -y groupi=
+nstall &quot;Development Tools&quot;</td></tr><tr style=3D"box-sizing: bord=
+er-box;"><td id=3D"file-singularity-L13" class=3D"blob-num js-line-number" =
+data-line-number=3D"13" style=3D"box-sizing: border-box; padding-right: 10p=
+x; padding-left: 10px; width: 50px; min-width: 50px; font-family: SFMono-Re=
+gular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace; fo=
+nt-size: 12px; line-height: 20px; color: rgba(27, 31, 35, 0.298039); text-a=
+lign: right; white-space: nowrap; vertical-align: top; cursor: pointer; use=
+r-select: none;"></td><td id=3D"file-singularity-LC13" class=3D"blob-code b=
+lob-code-inner js-file-line" style=3D"box-sizing: border-box; padding-right=
+: 10px; padding-left: 10px; position: relative; line-height: 20px; vertical=
+-align: top; overflow: visible; font-family: SFMono-Regular, Consolas, &quo=
+t;Liberation Mono&quot;, Menlo, Courier, monospace; font-size: 12px; word-w=
+rap: normal; white-space: pre;">
+</td></tr><tr style=3D"box-sizing: border-box;"><td id=3D"file-singularity-=
+L14" class=3D"blob-num js-line-number" data-line-number=3D"14" style=3D"box=
+-sizing: border-box; padding-right: 10px; padding-left: 10px; width: 50px; =
+min-width: 50px; font-family: SFMono-Regular, Consolas, &quot;Liberation Mo=
+no&quot;, Menlo, Courier, monospace; font-size: 12px; line-height: 20px; co=
+lor: rgba(27, 31, 35, 0.298039); text-align: right; white-space: nowrap; ve=
+rtical-align: top; cursor: pointer; user-select: none;"></td><td id=3D"file=
+-singularity-LC14" class=3D"blob-code blob-code-inner js-file-line" style=
+=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10px; positi=
+on: relative; line-height: 20px; vertical-align: top; overflow: visible; fo=
+nt-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Co=
+urier, monospace; font-size: 12px; word-wrap: normal; white-space: pre;">  =
+  # Install OpenMPI</td></tr><tr style=3D"box-sizing: border-box;"><td id=
+=3D"file-singularity-L15" class=3D"blob-num js-line-number" data-line-numbe=
+r=3D"15" style=3D"box-sizing: border-box; padding-right: 10px; padding-left=
+: 10px; width: 50px; min-width: 50px; font-family: SFMono-Regular, Consolas=
+, &quot;Liberation Mono&quot;, Menlo, Courier, monospace; font-size: 12px; =
+line-height: 20px; color: rgba(27, 31, 35, 0.298039); text-align: right; wh=
+ite-space: nowrap; vertical-align: top; cursor: pointer; user-select: none;=
+"></td><td id=3D"file-singularity-LC15" class=3D"blob-code blob-code-inner =
+js-file-line" style=3D"box-sizing: border-box; padding-right: 10px; padding=
+-left: 10px; position: relative; line-height: 20px; vertical-align: top; ov=
+erflow: visible; font-family: SFMono-Regular, Consolas, &quot;Liberation Mo=
+no&quot;, Menlo, Courier, monospace; font-size: 12px; word-wrap: normal; wh=
+ite-space: pre;">    git clone https://github.com/open-mpi/ompi.git</td></t=
+r><tr style=3D"box-sizing: border-box;"><td id=3D"file-singularity-L16" cla=
+ss=3D"blob-num js-line-number" data-line-number=3D"16" style=3D"box-sizing:=
+ border-box; padding-right: 10px; padding-left: 10px; width: 50px; min-widt=
+h: 50px; font-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;=
+, Menlo, Courier, monospace; font-size: 12px; line-height: 20px; color: rgb=
+a(27, 31, 35, 0.298039); text-align: right; white-space: nowrap; vertical-a=
+lign: top; cursor: pointer; user-select: none;"></td><td id=3D"file-singula=
+rity-LC16" class=3D"blob-code blob-code-inner js-file-line" style=3D"box-si=
+zing: border-box; padding-right: 10px; padding-left: 10px; position: relati=
+ve; line-height: 20px; vertical-align: top; overflow: visible; font-family:=
+ SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, mon=
+ospace; font-size: 12px; word-wrap: normal; white-space: pre;">    cd ompi<=
+/td></tr><tr style=3D"box-sizing: border-box;"><td id=3D"file-singularity-L=
+17" class=3D"blob-num js-line-number" data-line-number=3D"17" style=3D"box-=
+sizing: border-box; padding-right: 10px; padding-left: 10px; width: 50px; m=
+in-width: 50px; font-family: SFMono-Regular, Consolas, &quot;Liberation Mon=
+o&quot;, Menlo, Courier, monospace; font-size: 12px; line-height: 20px; col=
+or: rgba(27, 31, 35, 0.298039); text-align: right; white-space: nowrap; ver=
+tical-align: top; cursor: pointer; user-select: none;"></td><td id=3D"file-=
+singularity-LC17" class=3D"blob-code blob-code-inner js-file-line" style=3D=
+"box-sizing: border-box; padding-right: 10px; padding-left: 10px; position:=
+ relative; line-height: 20px; vertical-align: top; overflow: visible; font-=
+family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Couri=
+er, monospace; font-size: 12px; word-wrap: normal; white-space: pre;">    .=
+/autogen.pl</td></tr><tr style=3D"box-sizing: border-box;"><td id=3D"file-s=
+ingularity-L18" class=3D"blob-num js-line-number" data-line-number=3D"18" s=
+tyle=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10px; wi=
+dth: 50px; min-width: 50px; font-family: SFMono-Regular, Consolas, &quot;Li=
+beration Mono&quot;, Menlo, Courier, monospace; font-size: 12px; line-heigh=
+t: 20px; color: rgba(27, 31, 35, 0.298039); text-align: right; white-space:=
+ nowrap; vertical-align: top; cursor: pointer; user-select: none;"></td><td=
+ id=3D"file-singularity-LC18" class=3D"blob-code blob-code-inner js-file-li=
+ne" style=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10p=
+x; position: relative; line-height: 20px; vertical-align: top; overflow: vi=
+sible; font-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, =
+Menlo, Courier, monospace; font-size: 12px; word-wrap: normal; white-space:=
+ pre;">    ./configure --prefix=3D/usr/local</td></tr><tr style=3D"box-sizi=
+ng: border-box;"><td id=3D"file-singularity-L19" class=3D"blob-num js-line-=
+number" data-line-number=3D"19" style=3D"box-sizing: border-box; padding-ri=
+ght: 10px; padding-left: 10px; width: 50px; min-width: 50px; font-family: S=
+FMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monos=
+pace; font-size: 12px; line-height: 20px; color: rgba(27, 31, 35, 0.298039)=
+; text-align: right; white-space: nowrap; vertical-align: top; cursor: poin=
+ter; user-select: none;"></td><td id=3D"file-singularity-LC19" class=3D"blo=
+b-code blob-code-inner js-file-line" style=3D"box-sizing: border-box; paddi=
+ng-right: 10px; padding-left: 10px; position: relative; line-height: 20px; =
+vertical-align: top; overflow: visible; font-family: SFMono-Regular, Consol=
+as, &quot;Liberation Mono&quot;, Menlo, Courier, monospace; font-size: 12px=
+; word-wrap: normal; white-space: pre;">    make</td></tr><tr style=3D"box-=
+sizing: border-box;"><td id=3D"file-singularity-L20" class=3D"blob-num js-l=
+ine-number" data-line-number=3D"20" style=3D"box-sizing: border-box; paddin=
+g-right: 10px; padding-left: 10px; width: 50px; min-width: 50px; font-famil=
+y: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, m=
+onospace; font-size: 12px; line-height: 20px; color: rgba(27, 31, 35, 0.298=
+039); text-align: right; white-space: nowrap; vertical-align: top; cursor: =
+pointer; user-select: none;"></td><td id=3D"file-singularity-LC20" class=3D=
+"blob-code blob-code-inner js-file-line" style=3D"box-sizing: border-box; p=
+adding-right: 10px; padding-left: 10px; position: relative; line-height: 20=
+px; vertical-align: top; overflow: visible; font-family: SFMono-Regular, Co=
+nsolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace; font-size: =
+12px; word-wrap: normal; white-space: pre;">    make install</td></tr><tr s=
+tyle=3D"box-sizing: border-box;"><td id=3D"file-singularity-L21" class=3D"b=
+lob-num js-line-number" data-line-number=3D"21" style=3D"box-sizing: border=
+-box; padding-right: 10px; padding-left: 10px; width: 50px; min-width: 50px=
+; font-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo=
+, Courier, monospace; font-size: 12px; line-height: 20px; color: rgba(27, 3=
+1, 35, 0.298039); text-align: right; white-space: nowrap; vertical-align: t=
+op; cursor: pointer; user-select: none;"></td><td id=3D"file-singularity-LC=
+21" class=3D"blob-code blob-code-inner js-file-line" style=3D"box-sizing: b=
+order-box; padding-right: 10px; padding-left: 10px; position: relative; lin=
+e-height: 20px; vertical-align: top; overflow: visible; font-family: SFMono=
+-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;=
+ font-size: 12px; word-wrap: normal; white-space: pre;">    # Instal &quot;=
+zlib1g&quot; to aviod installation error</td></tr><tr style=3D"box-sizing: =
+border-box;"><td id=3D"file-singularity-L22" class=3D"blob-num js-line-numb=
+er" data-line-number=3D"22" style=3D"box-sizing: border-box; padding-right:=
+ 10px; padding-left: 10px; width: 50px; min-width: 50px; font-family: SFMon=
+o-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace=
+; font-size: 12px; line-height: 20px; color: rgba(27, 31, 35, 0.298039); te=
+xt-align: right; white-space: nowrap; vertical-align: top; cursor: pointer;=
+ user-select: none;"></td><td id=3D"file-singularity-LC22" class=3D"blob-co=
+de blob-code-inner js-file-line" style=3D"box-sizing: border-box; padding-r=
+ight: 10px; padding-left: 10px; position: relative; line-height: 20px; vert=
+ical-align: top; overflow: visible; font-family: SFMono-Regular, Consolas, =
+&quot;Liberation Mono&quot;, Menlo, Courier, monospace; font-size: 12px; wo=
+rd-wrap: normal; white-space: pre;">    yum -y install zlib-devel</td></tr>=
+<tr style=3D"box-sizing: border-box;"><td id=3D"file-singularity-L23" class=
+=3D"blob-num js-line-number" data-line-number=3D"23" style=3D"box-sizing: b=
+order-box; padding-right: 10px; padding-left: 10px; width: 50px; min-width:=
+ 50px; font-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, =
+Menlo, Courier, monospace; font-size: 12px; line-height: 20px; color: rgba(=
+27, 31, 35, 0.298039); text-align: right; white-space: nowrap; vertical-ali=
+gn: top; cursor: pointer; user-select: none;"></td><td id=3D"file-singulari=
+ty-LC23" class=3D"blob-code blob-code-inner js-file-line" style=3D"box-sizi=
+ng: border-box; padding-right: 10px; padding-left: 10px; position: relative=
+; line-height: 20px; vertical-align: top; overflow: visible; font-family: S=
+FMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monos=
+pace; font-size: 12px; word-wrap: normal; white-space: pre;">
+</td></tr><tr style=3D"box-sizing: border-box;"><td id=3D"file-singularity-=
+L24" class=3D"blob-num js-line-number" data-line-number=3D"24" style=3D"box=
+-sizing: border-box; padding-right: 10px; padding-left: 10px; width: 50px; =
+min-width: 50px; font-family: SFMono-Regular, Consolas, &quot;Liberation Mo=
+no&quot;, Menlo, Courier, monospace; font-size: 12px; line-height: 20px; co=
+lor: rgba(27, 31, 35, 0.298039); text-align: right; white-space: nowrap; ve=
+rtical-align: top; cursor: pointer; user-select: none;"></td><td id=3D"file=
+-singularity-LC24" class=3D"blob-code blob-code-inner js-file-line" style=
+=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10px; positi=
+on: relative; line-height: 20px; vertical-align: top; overflow: visible; fo=
+nt-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Co=
+urier, monospace; font-size: 12px; word-wrap: normal; white-space: pre;">  =
+  # Install Star</td></tr><tr style=3D"box-sizing: border-box;"><td id=3D"f=
+ile-singularity-L25" class=3D"blob-num js-line-number" data-line-number=3D"=
+25" style=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10p=
+x; width: 50px; min-width: 50px; font-family: SFMono-Regular, Consolas, &qu=
+ot;Liberation Mono&quot;, Menlo, Courier, monospace; font-size: 12px; line-=
+height: 20px; color: rgba(27, 31, 35, 0.298039); text-align: right; white-s=
+pace: nowrap; vertical-align: top; cursor: pointer; user-select: none;"></t=
+d><td id=3D"file-singularity-LC25" class=3D"blob-code blob-code-inner js-fi=
+le-line" style=3D"box-sizing: border-box; padding-right: 10px; padding-left=
+: 10px; position: relative; line-height: 20px; vertical-align: top; overflo=
+w: visible; font-family: SFMono-Regular, Consolas, &quot;Liberation Mono&qu=
+ot;, Menlo, Courier, monospace; font-size: 12px; word-wrap: normal; white-s=
+pace: pre;">    cd /</td></tr><tr style=3D"box-sizing: border-box;"><td id=
+=3D"file-singularity-L26" class=3D"blob-num js-line-number" data-line-numbe=
+r=3D"26" style=3D"box-sizing: border-box; padding-right: 10px; padding-left=
+: 10px; width: 50px; min-width: 50px; font-family: SFMono-Regular, Consolas=
+, &quot;Liberation Mono&quot;, Menlo, Courier, monospace; font-size: 12px; =
+line-height: 20px; color: rgba(27, 31, 35, 0.298039); text-align: right; wh=
+ite-space: nowrap; vertical-align: top; cursor: pointer; user-select: none;=
+"></td><td id=3D"file-singularity-LC26" class=3D"blob-code blob-code-inner =
+js-file-line" style=3D"box-sizing: border-box; padding-right: 10px; padding=
+-left: 10px; position: relative; line-height: 20px; vertical-align: top; ov=
+erflow: visible; font-family: SFMono-Regular, Consolas, &quot;Liberation Mo=
+no&quot;, Menlo, Courier, monospace; font-size: 12px; word-wrap: normal; wh=
+ite-space: pre;">    git clone https://github.com/alexdobin/STAR.git</td></=
+tr><tr style=3D"box-sizing: border-box;"><td id=3D"file-singularity-L27" cl=
+ass=3D"blob-num js-line-number" data-line-number=3D"27" style=3D"box-sizing=
+: border-box; padding-right: 10px; padding-left: 10px; width: 50px; min-wid=
+th: 50px; font-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot=
+;, Menlo, Courier, monospace; font-size: 12px; line-height: 20px; color: rg=
+ba(27, 31, 35, 0.298039); text-align: right; white-space: nowrap; vertical-=
+align: top; cursor: pointer; user-select: none;"></td><td id=3D"file-singul=
+arity-LC27" class=3D"blob-code blob-code-inner js-file-line" style=3D"box-s=
+izing: border-box; padding-right: 10px; padding-left: 10px; position: relat=
+ive; line-height: 20px; vertical-align: top; overflow: visible; font-family=
+: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, mo=
+nospace; font-size: 12px; word-wrap: normal; white-space: pre;">    cd STAR=
+/source</td></tr><tr style=3D"box-sizing: border-box;"><td id=3D"file-singu=
+larity-L28" class=3D"blob-num js-line-number" data-line-number=3D"28" style=
+=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10px; width:=
+ 50px; min-width: 50px; font-family: SFMono-Regular, Consolas, &quot;Libera=
+tion Mono&quot;, Menlo, Courier, monospace; font-size: 12px; line-height: 2=
+0px; color: rgba(27, 31, 35, 0.298039); text-align: right; white-space: now=
+rap; vertical-align: top; cursor: pointer; user-select: none;"></td><td id=
+=3D"file-singularity-LC28" class=3D"blob-code blob-code-inner js-file-line"=
+ style=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10px; =
+position: relative; line-height: 20px; vertical-align: top; overflow: visib=
+le; font-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Men=
+lo, Courier, monospace; font-size: 12px; word-wrap: normal; white-space: pr=
+e;">    make STAR</td></tr><tr style=3D"box-sizing: border-box;"><td id=3D"=
+file-singularity-L29" class=3D"blob-num js-line-number" data-line-number=3D=
+"29" style=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10=
+px; width: 50px; min-width: 50px; font-family: SFMono-Regular, Consolas, &q=
+uot;Liberation Mono&quot;, Menlo, Courier, monospace; font-size: 12px; line=
+-height: 20px; color: rgba(27, 31, 35, 0.298039); text-align: right; white-=
+space: nowrap; vertical-align: top; cursor: pointer; user-select: none;"></=
+td><td id=3D"file-singularity-LC29" class=3D"blob-code blob-code-inner js-f=
+ile-line" style=3D"box-sizing: border-box; padding-right: 10px; padding-lef=
+t: 10px; position: relative; line-height: 20px; vertical-align: top; overfl=
+ow: visible; font-family: SFMono-Regular, Consolas, &quot;Liberation Mono&q=
+uot;, Menlo, Courier, monospace; font-size: 12px; word-wrap: normal; white-=
+space: pre;">    mkdir - p /extra/mnoon </td></tr><tr style=3D"box-sizing: =
+border-box;"><td id=3D"file-singularity-L30" class=3D"blob-num js-line-numb=
+er" data-line-number=3D"30" style=3D"box-sizing: border-box; padding-right:=
+ 10px; padding-left: 10px; width: 50px; min-width: 50px; font-family: SFMon=
+o-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace=
+; font-size: 12px; line-height: 20px; color: rgba(27, 31, 35, 0.298039); te=
+xt-align: right; white-space: nowrap; vertical-align: top; cursor: pointer;=
+ user-select: none;"></td><td id=3D"file-singularity-LC30" class=3D"blob-co=
+de blob-code-inner js-file-line" style=3D"box-sizing: border-box; padding-r=
+ight: 10px; padding-left: 10px; position: relative; line-height: 20px; vert=
+ical-align: top; overflow: visible; font-family: SFMono-Regular, Consolas, =
+&quot;Liberation Mono&quot;, Menlo, Courier, monospace; font-size: 12px; wo=
+rd-wrap: normal; white-space: pre;">    mkdir -p /rsgrps/zarnescu/</td></tr=
+><tr style=3D"box-sizing: border-box;"><td id=3D"file-singularity-L31" clas=
+s=3D"blob-num js-line-number" data-line-number=3D"31" style=3D"box-sizing: =
+border-box; padding-right: 10px; padding-left: 10px; width: 50px; min-width=
+: 50px; font-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;,=
+ Menlo, Courier, monospace; font-size: 12px; line-height: 20px; color: rgba=
+(27, 31, 35, 0.298039); text-align: right; white-space: nowrap; vertical-al=
+ign: top; cursor: pointer; user-select: none;"></td><td id=3D"file-singular=
+ity-LC31" class=3D"blob-code blob-code-inner js-file-line" style=3D"box-siz=
+ing: border-box; padding-right: 10px; padding-left: 10px; position: relativ=
+e; line-height: 20px; vertical-align: top; overflow: visible; font-family: =
+SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, mono=
+space; font-size: 12px; word-wrap: normal; white-space: pre;">
+</td></tr><tr style=3D"box-sizing: border-box;"><td id=3D"file-singularity-=
+L32" class=3D"blob-num js-line-number" data-line-number=3D"32" style=3D"box=
+-sizing: border-box; padding-right: 10px; padding-left: 10px; width: 50px; =
+min-width: 50px; font-family: SFMono-Regular, Consolas, &quot;Liberation Mo=
+no&quot;, Menlo, Courier, monospace; font-size: 12px; line-height: 20px; co=
+lor: rgba(27, 31, 35, 0.298039); text-align: right; white-space: nowrap; ve=
+rtical-align: top; cursor: pointer; user-select: none;"></td><td id=3D"file=
+-singularity-LC32" class=3D"blob-code blob-code-inner js-file-line" style=
+=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10px; positi=
+on: relative; line-height: 20px; vertical-align: top; overflow: visible; fo=
+nt-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Co=
+urier, monospace; font-size: 12px; word-wrap: normal; white-space: pre;">%r=
+unscript</td></tr><tr style=3D"box-sizing: border-box;"><td id=3D"file-sing=
+ularity-L33" class=3D"blob-num js-line-number" data-line-number=3D"33" styl=
+e=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10px; width=
+: 50px; min-width: 50px; font-family: SFMono-Regular, Consolas, &quot;Liber=
+ation Mono&quot;, Menlo, Courier, monospace; font-size: 12px; line-height: =
+20px; color: rgba(27, 31, 35, 0.298039); text-align: right; white-space: no=
+wrap; vertical-align: top; cursor: pointer; user-select: none;"></td><td id=
+=3D"file-singularity-LC33" class=3D"blob-code blob-code-inner js-file-line"=
+ style=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10px; =
+position: relative; line-height: 20px; vertical-align: top; overflow: visib=
+le; font-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Men=
+lo, Courier, monospace; font-size: 12px; word-wrap: normal; white-space: pr=
+e;">
+</td></tr><tr style=3D"box-sizing: border-box;"><td id=3D"file-singularity-=
+L34" class=3D"blob-num js-line-number" data-line-number=3D"34" style=3D"box=
+-sizing: border-box; padding-right: 10px; padding-left: 10px; width: 50px; =
+min-width: 50px; font-family: SFMono-Regular, Consolas, &quot;Liberation Mo=
+no&quot;, Menlo, Courier, monospace; font-size: 12px; line-height: 20px; co=
+lor: rgba(27, 31, 35, 0.298039); text-align: right; white-space: nowrap; ve=
+rtical-align: top; cursor: pointer; user-select: none;"></td><td id=3D"file=
+-singularity-LC34" class=3D"blob-code blob-code-inner js-file-line" style=
+=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10px; positi=
+on: relative; line-height: 20px; vertical-align: top; overflow: visible; fo=
+nt-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Co=
+urier, monospace; font-size: 12px; word-wrap: normal; white-space: pre;">  =
+ echo &quot;Arguments received: $*&quot;</td></tr><tr style=3D"box-sizing: =
+border-box;"><td id=3D"file-singularity-L35" class=3D"blob-num js-line-numb=
+er" data-line-number=3D"35" style=3D"box-sizing: border-box; padding-right:=
+ 10px; padding-left: 10px; width: 50px; min-width: 50px; font-family: SFMon=
+o-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace=
+; font-size: 12px; line-height: 20px; color: rgba(27, 31, 35, 0.298039); te=
+xt-align: right; white-space: nowrap; vertical-align: top; cursor: pointer;=
+ user-select: none;"></td><td id=3D"file-singularity-LC35" class=3D"blob-co=
+de blob-code-inner js-file-line" style=3D"box-sizing: border-box; padding-r=
+ight: 10px; padding-left: 10px; position: relative; line-height: 20px; vert=
+ical-align: top; overflow: visible; font-family: SFMono-Regular, Consolas, =
+&quot;Liberation Mono&quot;, Menlo, Courier, monospace; font-size: 12px; wo=
+rd-wrap: normal; white-space: pre;">   exec /usr/bin/python &quot;$@&quot;<=
+/td></tr><tr style=3D"box-sizing: border-box;"><td id=3D"file-singularity-L=
+36" class=3D"blob-num js-line-number" data-line-number=3D"36" style=3D"box-=
+sizing: border-box; padding-right: 10px; padding-left: 10px; width: 50px; m=
+in-width: 50px; font-family: SFMono-Regular, Consolas, &quot;Liberation Mon=
+o&quot;, Menlo, Courier, monospace; font-size: 12px; line-height: 20px; col=
+or: rgba(27, 31, 35, 0.298039); text-align: right; white-space: nowrap; ver=
+tical-align: top; cursor: pointer; user-select: none;"></td><td id=3D"file-=
+singularity-LC36" class=3D"blob-code blob-code-inner js-file-line" style=3D=
+"box-sizing: border-box; padding-right: 10px; padding-left: 10px; position:=
+ relative; line-height: 20px; vertical-align: top; overflow: visible; font-=
+family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Couri=
+er, monospace; font-size: 12px; word-wrap: normal; white-space: pre;">
+</td></tr><tr style=3D"box-sizing: border-box;"><td id=3D"file-singularity-=
+L37" class=3D"blob-num js-line-number" data-line-number=3D"37" style=3D"box=
+-sizing: border-box; padding-right: 10px; padding-left: 10px; width: 50px; =
+min-width: 50px; font-family: SFMono-Regular, Consolas, &quot;Liberation Mo=
+no&quot;, Menlo, Courier, monospace; font-size: 12px; line-height: 20px; co=
+lor: rgba(27, 31, 35, 0.298039); text-align: right; white-space: nowrap; ve=
+rtical-align: top; cursor: pointer; user-select: none;"></td><td id=3D"file=
+-singularity-LC37" class=3D"blob-code blob-code-inner js-file-line" style=
+=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10px; positi=
+on: relative; line-height: 20px; vertical-align: top; overflow: visible; fo=
+nt-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Co=
+urier, monospace; font-size: 12px; word-wrap: normal; white-space: pre;">%t=
+est</td></tr><tr style=3D"box-sizing: border-box;"><td id=3D"file-singulari=
+ty-L38" class=3D"blob-num js-line-number" data-line-number=3D"38" style=3D"=
+box-sizing: border-box; padding-right: 10px; padding-left: 10px; width: 50p=
+x; min-width: 50px; font-family: SFMono-Regular, Consolas, &quot;Liberation=
+ Mono&quot;, Menlo, Courier, monospace; font-size: 12px; line-height: 20px;=
+ color: rgba(27, 31, 35, 0.298039); text-align: right; white-space: nowrap;=
+ vertical-align: top; cursor: pointer; user-select: none;"></td><td id=3D"f=
+ile-singularity-LC38" class=3D"blob-code blob-code-inner js-file-line" styl=
+e=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10px; posit=
+ion: relative; line-height: 20px; vertical-align: top; overflow: visible; f=
+ont-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, C=
+ourier, monospace; font-size: 12px; word-wrap: normal; white-space: pre;">
+</td></tr><tr style=3D"box-sizing: border-box;"><td id=3D"file-singularity-=
+L39" class=3D"blob-num js-line-number" data-line-number=3D"39" style=3D"box=
+-sizing: border-box; padding-right: 10px; padding-left: 10px; width: 50px; =
+min-width: 50px; font-family: SFMono-Regular, Consolas, &quot;Liberation Mo=
+no&quot;, Menlo, Courier, monospace; font-size: 12px; line-height: 20px; co=
+lor: rgba(27, 31, 35, 0.298039); text-align: right; white-space: nowrap; ve=
+rtical-align: top; cursor: pointer; user-select: none;"></td><td id=3D"file=
+-singularity-LC39" class=3D"blob-code blob-code-inner js-file-line" style=
+=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10px; positi=
+on: relative; line-height: 20px; vertical-align: top; overflow: visible; fo=
+nt-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Co=
+urier, monospace; font-size: 12px; word-wrap: normal; white-space: pre;">  =
+ python --version</td></tr><tr style=3D"box-sizing: border-box;"><td id=3D"=
+file-singularity-L40" class=3D"blob-num js-line-number" data-line-number=3D=
+"40" style=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10=
+px; width: 50px; min-width: 50px; font-family: SFMono-Regular, Consolas, &q=
+uot;Liberation Mono&quot;, Menlo, Courier, monospace; font-size: 12px; line=
+-height: 20px; color: rgba(27, 31, 35, 0.298039); text-align: right; white-=
+space: nowrap; vertical-align: top; cursor: pointer; user-select: none;"></=
+td><td id=3D"file-singularity-LC40" class=3D"blob-code blob-code-inner js-f=
+ile-line" style=3D"box-sizing: border-box; padding-right: 10px; padding-lef=
+t: 10px; position: relative; line-height: 20px; vertical-align: top; overfl=
+ow: visible; font-family: SFMono-Regular, Consolas, &quot;Liberation Mono&q=
+uot;, Menlo, Courier, monospace; font-size: 12px; word-wrap: normal; white-=
+space: pre;">   STAR --version
+
+
+</td></tr></tbody></table><br>On Tuesday, May 9, 2017 at 3:21:35 PM UTC-7, =
+Jason Stover wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;mar=
+gin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;">Hi,
+<br>
+<br>=C2=A0 Has your definition file changed since you originally posted it?=
+ In
+<br>the definition file you&#39;re doing ...
+<br>
+<br>=C2=A0 =C2=A0 cd ompi
+<br>=C2=A0 =C2=A0 # Build OpenMPI in the working directory
+<br>=C2=A0 =C2=A0 =C2=A0 [ ... ]
+<br>=C2=A0 =C2=A0 # Install STAR - =C2=A0get STAR source using git
+<br>=C2=A0 =C2=A0 git clone <a href=3D"https://github.com/alexdobin/STAR.gi=
+t" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;https=
+://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Falexdobin%2FSTAR.git\=
+x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFSIcANP_fuVBCs3obg1KggJVxIKw&#39;;r=
+eturn true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dht=
+tps%3A%2F%2Fgithub.com%2Falexdobin%2FSTAR.git\x26sa\x3dD\x26sntz\x3d1\x26us=
+g\x3dAFQjCNFSIcANP_fuVBCs3obg1KggJVxIKw&#39;;return true;">https://github.c=
+om/alexdobin/<wbr>STAR.git</a>
+<br>=C2=A0 =C2=A0 cd STAR/source
+<br>
+<br>=C2=A0 So... from my reading of that, you&#39;re checking the STAR sour=
+ce out,
+<br>into the ompi clone, as you&#39;re never changing from the ompi
+<br>directory....
+<br>
+<br>=C2=A0 I&#39;m guessing that path is: =C2=A0/root/ompi/STAR
+<br>
+<br>=C2=A0 You are also not doing a &quot;make install&quot; after STAR is =
+built... so
+<br>the STAR binary is probably just sitting in the STAR source
+<br>directory...
+<br>
+<br>-J
+<br>
+<br>
+<br>On Tue, May 9, 2017 at 5:11 PM, M Noon &lt;<a href=3D"javascript:" targ=
+et=3D"_blank" gdf-obfuscated-mailto=3D"EXXIcWRkAAAJ" rel=3D"nofollow" onmou=
+sedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.h=
+ref=3D&#39;javascript:&#39;;return true;">sa...@gmail.com</a>&gt; wrote:
+<br>&gt; Hi Jason,
+<br>&gt;
+<br>&gt; its on my path:
+<br>&gt;
+<br>&gt; echo $PATH
+<br>&gt;
+<br>&gt; /usr/local/sbin:/usr/local/<wbr>bin:/usr/sbin:/usr/bin:/sbin:/<wbr=
+>bin/STAR/bin/Linux_x86_64
+<br>&gt;
+<br>&gt;
+<br>&gt;
+<br>&gt; The problem is that I cant find it here &quot;/bin/STAR/&quot; or =
+any other directory
+<br>&gt; in the path.. I dont understand this behavior.. this is could be s=
+omething
+<br>&gt; very very trivial that I am missing.
+<br>&gt;
+<br>&gt;
+<br>&gt; Thanks,
+<br>&gt;
+<br>&gt; M
+<br>&gt;
+<br>&gt;
+<br>&gt; On Tuesday, May 9, 2017 at 2:16:45 PM UTC-7, Jason Stover wrote:
+<br>&gt;&gt;
+<br>&gt;&gt; Hi,
+<br>&gt;&gt;
+<br>&gt;&gt; &gt; + STAR --version
+<br>&gt;&gt; &gt; /.test: line 5: STAR: command not found
+<br>&gt;&gt;
+<br>&gt;&gt; What is your $PATH value, and is the location of the STAR bina=
+ry included?
+<br>&gt;&gt;
+<br>&gt;&gt; -J
+<br>&gt;&gt;
+<br>&gt;&gt;
+<br>&gt;&gt; On Tue, May 9, 2017 at 4:02 PM, M Noon &lt;<a>sa...@gmail.com<=
+/a>&gt; wrote:
+<br>&gt;&gt; &gt; Hi Vanessa,
+<br>&gt;&gt; &gt;
+<br>&gt;&gt; &gt; I tried from scratch, created a new img and so on: I stil=
+l get the same
+<br>&gt;&gt; &gt; error:
+<br>&gt;&gt; &gt;
+<br>&gt;&gt; &gt; g++ -c =C2=A0-O3 -pipe -Wall -Wextra =C2=A0bam_cat.c
+<br>&gt;&gt; &gt;
+<br>&gt;&gt; &gt; g++ -o STAR =C2=A0-O3 -pipe -std=3Dc++11 -Wall -Wextra -f=
+openmp
+<br>&gt;&gt; &gt; -D&#39;COMPILATION_TIME_PLACE=3D&quot;Tue May 9 06:18:22 =
+UTC 2017 :/STAR/source&quot;&#39;
+<br>&gt;&gt; &gt; SharedMemory.o PackedArray.o SuffixArrayFuns.o STAR.o Par=
+ameters.o
+<br>&gt;&gt; &gt; InOutStreams.o SequenceFuns.o Genome.o Chain.o Stats.o Tr=
+anscript.o
+<br>&gt;&gt; &gt; Transcript_alignScore.o ReadAlign.o ReadAlign_storeAligns=
+.o
+<br>&gt;&gt; &gt; ReadAlign_stitchPieces.o ReadAlign_multMapSelect.o
+<br>&gt;&gt; &gt; ReadAlign_mapOneRead.o
+<br>&gt;&gt; &gt; readLoad.o ReadAlignChunk.o ReadAlignChunk_processChunks.=
+o
+<br>&gt;&gt; &gt; ReadAlignChunk_mapChunk.o OutSJ.o outputSJ.o blocksOverla=
+p.o
+<br>&gt;&gt; &gt; ThreadControl.o
+<br>&gt;&gt; &gt; sysRemoveDir.o ReadAlign_<wbr>maxMappableLength2strands.o=
+ binarySearch2.o
+<br>&gt;&gt; &gt; ReadAlign_outputAlignments.o ReadAlign_outputTranscriptSA=
+M.<wbr>o
+<br>&gt;&gt; &gt; ReadAlign_outputTranscriptSJ.o ReadAlign_<wbr>outputTrans=
+criptCIGARp.o
+<br>&gt;&gt; &gt; ReadAlign_<wbr>createExtendWindowsWithAlign.o ReadAlign_a=
+ssignAlignToWindow.<wbr>o
+<br>&gt;&gt; &gt; ReadAlign_oneRead.o ReadAlign_stitchWindowSeeds.o
+<br>&gt;&gt; &gt; ReadAlign_chimericDetection.o stitchWindowAligns.o extend=
+Align.o
+<br>&gt;&gt; &gt; stitchAlignToTranscript.o alignSmithWaterman.o genomeGene=
+rate.o
+<br>&gt;&gt; &gt; genomeParametersWrite.o genomeScanFastaFiles.o genomeSAin=
+dex.o
+<br>&gt;&gt; &gt; Genome_insertSequences.o insertSeqSA.o funCompareUintAndS=
+uffixes.o
+<br>&gt;&gt; &gt; sortSuffixesBucket.o funCompareUintAndSuffixesMemcm<wbr>p=
+.o TimeFunctions.o
+<br>&gt;&gt; &gt; ErrorWarning.o loadGTF.o streamFuns.o stringSubstituteAll=
+.o
+<br>&gt;&gt; &gt; Transcriptome.o
+<br>&gt;&gt; &gt; Transcriptome_quantAlign.o ReadAlign_quantTranscriptome.o
+<br>&gt;&gt; &gt; Quantifications.o
+<br>&gt;&gt; &gt; Transcriptome_<wbr>geneCountsAddAlign.o sjdbLoadFromFiles=
+.o
+<br>&gt;&gt; &gt; sjdbLoadFromStream.o
+<br>&gt;&gt; &gt; sjdbPrepare.o sjdbBuildIndex.o sjdbInsertJunctions.o mapT=
+hreadsSpawn.o
+<br>&gt;&gt; &gt; Parameters_openReadsFiles.cpp Parameters_closeReadsFiles.=
+cpp BAMoutput.o
+<br>&gt;&gt; &gt; BAMfunctions.o ReadAlign_alignBAM.o BAMbinSortByCoordinat=
+e.o
+<br>&gt;&gt; &gt; signalFromBAM.o
+<br>&gt;&gt; &gt; bamRemoveDuplicates.o BAMbinSortUnmapped.o bam_cat.o Glob=
+alVariables.cpp
+<br>&gt;&gt; &gt; -pthread -Lhtslib -Bstatic -lhts -Bdynamic -lz -lrt
+<br>&gt;&gt; &gt;
+<br>&gt;&gt; &gt; Parameters_openReadsFiles.cpp: In member function &#39;vo=
+id
+<br>&gt;&gt; &gt; Parameters::openReadsFiles()&#39;:
+<br>&gt;&gt; &gt;
+<br>&gt;&gt; &gt; Parameters_openReadsFiles.cpp:<wbr>30:20: warning: variab=
+le &#39;imate&#39; might be
+<br>&gt;&gt; &gt; clobbered by &#39;longjmp&#39; or &#39;vfork&#39; [-Wclob=
+bered]
+<br>&gt;&gt; &gt;
+<br>&gt;&gt; &gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 for (uint imate=3D0;im=
+ate&lt;readNmates;<wbr>imate++) {//open readIn
+<br>&gt;&gt; &gt; files
+<br>&gt;&gt; &gt;
+<br>&gt;&gt; &gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 ^
+<br>&gt;&gt; &gt;
+<br>&gt;&gt; &gt; + mkdir -p /extra/mnoon
+<br>&gt;&gt; &gt;
+<br>&gt;&gt; &gt; + mkdir -p /rsgrps/zarnescu/
+<br>&gt;&gt; &gt;
+<br>&gt;&gt; &gt; Adding environment to container
+<br>&gt;&gt; &gt;
+<br>&gt;&gt; &gt; Adding deffile section labels to container
+<br>&gt;&gt; &gt;
+<br>&gt;&gt; &gt; Running test scriptlet
+<br>&gt;&gt; &gt;
+<br>&gt;&gt; &gt; + python --version
+<br>&gt;&gt; &gt;
+<br>&gt;&gt; &gt; Python 2.7.5
+<br>&gt;&gt; &gt;
+<br>&gt;&gt; &gt; + STAR --version
+<br>&gt;&gt; &gt;
+<br>&gt;&gt; &gt; /.test: line 5: STAR: command not found
+<br>&gt;&gt; &gt;
+<br>&gt;&gt; &gt; ERROR: Aborting with RETVAL=3D255
+<br>&gt;&gt; &gt;
+<br>&gt;&gt; &gt;
+<br>&gt;&gt; &gt;
+<br>&gt;&gt; &gt; On Tuesday, May 9, 2017 at 1:42:25 PM UTC-7, vanessa wrot=
+e:
+<br>&gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; Hey M Noon,
+<br>&gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; It&#39;s telling you STAR already exists, which tells=
+ me that you are
+<br>&gt;&gt; &gt;&gt; trying
+<br>&gt;&gt; &gt;&gt; to bootstrap again (on a failed image) without re-cre=
+ating the image.
+<br>&gt;&gt; &gt;&gt; Generally when you try things for a second time, you =
+want to start with
+<br>&gt;&gt; &gt;&gt; a
+<br>&gt;&gt; &gt;&gt; new image, because the git clone is going to fail whe=
+n it sees the old
+<br>&gt;&gt; &gt;&gt; STAR
+<br>&gt;&gt; &gt;&gt; directory is already there.
+<br>&gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; Best,
+<br>&gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; Vanessa
+<br>&gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; On Tue, May 9, 2017 at 4:29 PM, M Noon &lt;<a>sa...@g=
+mail.com</a>&gt; wrote:
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; No, It didn&#39;t help. I comment out both mkdir =
+commands.
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; sudo singularity bootstrap starMPI.img starMPI.de=
+f
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; [sudo] password for mnoon:
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Sanitizing environment
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Building from bootstrap definition recipe
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Adding base Singularity environment to container
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Docker image path: <a href=3D"http://index.docker=
+.io/library/centos:7" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"thi=
+s.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Findex.docker.io%2=
+Flibrary%2Fcentos%3A7\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPHFCrCFlPYJG=
+1kYWLuJO-ON1ULw&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.g=
+oogle.com/url?q\x3dhttp%3A%2F%2Findex.docker.io%2Flibrary%2Fcentos%3A7\x26s=
+a\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPHFCrCFlPYJG1kYWLuJO-ON1ULw&#39;;retur=
+n true;">index.docker.io/library/<wbr>centos:7</a>
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Cache folder set to /root/.singularity/docker
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Exploding layer:
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; sha256:<wbr>93857f76ae30d903bbdad13fbf7fad<wbr>95=
+ce1c0b52b7d5644651e01c6c7a90<wbr>6312.tar.gz
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Exploding layer:
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; sha256:<wbr>9326ff949485e53c2403126b5422ad<wbr>65=
+9cb2176bddbc511461da81c10703<wbr>a50c.tar.gz
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; User defined %runscript found! Taking priority.
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Running post scriptlet
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; + yum -y groupinstall &#39;Development Tools&#39;
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Loaded plugins: fastestmirror, ovl
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Loading mirror speeds from cached hostfile
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; =C2=A0* base: <a href=3D"http://repo1.sea.innosca=
+le.net" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;=
+http://www.google.com/url?q\x3dhttp%3A%2F%2Frepo1.sea.innoscale.net\x26sa\x=
+3dD\x26sntz\x3d1\x26usg\x3dAFQjCNELn2-5uRkR5qld-Ol3xjnoOyRxrw&#39;;return t=
+rue;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F=
+%2Frepo1.sea.innoscale.net\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNELn2-5uR=
+kR5qld-Ol3xjnoOyRxrw&#39;;return true;">repo1.sea.innoscale.net</a>
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; =C2=A0* extras: <a href=3D"http://centos.firehost=
+ed.com" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;=
+http://www.google.com/url?q\x3dhttp%3A%2F%2Fcentos.firehosted.com\x26sa\x3d=
+D\x26sntz\x3d1\x26usg\x3dAFQjCNHz9rsAY7Hl5Zh5V7Hq2vFOLDUz2w&#39;;return tru=
+e;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2=
+Fcentos.firehosted.com\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHz9rsAY7Hl5Z=
+h5V7Hq2vFOLDUz2w&#39;;return true;">centos.firehosted.com</a>
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; =C2=A0* updates: <a href=3D"http://mirrors.sonic.=
+net" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;htt=
+p://www.google.com/url?q\x3dhttp%3A%2F%2Fmirrors.sonic.net\x26sa\x3dD\x26sn=
+tz\x3d1\x26usg\x3dAFQjCNHO-U8hEwCDZnvJ7Hzb6UiuP5btJw&#39;;return true;" onc=
+lick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fmirror=
+s.sonic.net\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHO-U8hEwCDZnvJ7Hzb6UiuP=
+5btJw&#39;;return true;">mirrors.sonic.net</a>
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Maybe run: yum groups mark install (see man yum)
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; No packages in any requested group available to i=
+nstall or update
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; + yum -y install zlib-devel
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Loaded plugins: fastestmirror, ovl
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Loading mirror speeds from cached hostfile
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; =C2=A0* base: <a href=3D"http://repo1.sea.innosca=
+le.net" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;=
+http://www.google.com/url?q\x3dhttp%3A%2F%2Frepo1.sea.innoscale.net\x26sa\x=
+3dD\x26sntz\x3d1\x26usg\x3dAFQjCNELn2-5uRkR5qld-Ol3xjnoOyRxrw&#39;;return t=
+rue;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F=
+%2Frepo1.sea.innoscale.net\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNELn2-5uR=
+kR5qld-Ol3xjnoOyRxrw&#39;;return true;">repo1.sea.innoscale.net</a>
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; =C2=A0* extras: <a href=3D"http://centos.firehost=
+ed.com" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;=
+http://www.google.com/url?q\x3dhttp%3A%2F%2Fcentos.firehosted.com\x26sa\x3d=
+D\x26sntz\x3d1\x26usg\x3dAFQjCNHz9rsAY7Hl5Zh5V7Hq2vFOLDUz2w&#39;;return tru=
+e;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2=
+Fcentos.firehosted.com\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHz9rsAY7Hl5Z=
+h5V7Hq2vFOLDUz2w&#39;;return true;">centos.firehosted.com</a>
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; =C2=A0* updates: <a href=3D"http://mirrors.sonic.=
+net" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;htt=
+p://www.google.com/url?q\x3dhttp%3A%2F%2Fmirrors.sonic.net\x26sa\x3dD\x26sn=
+tz\x3d1\x26usg\x3dAFQjCNHO-U8hEwCDZnvJ7Hzb6UiuP5btJw&#39;;return true;" onc=
+lick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fmirror=
+s.sonic.net\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHO-U8hEwCDZnvJ7Hzb6UiuP=
+5btJw&#39;;return true;">mirrors.sonic.net</a>
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Resolving Dependencies
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; --&gt; Running transaction check
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; ---&gt; Package zlib-devel.x86_64 0:1.2.7-17.el7 =
+will be installed
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; --&gt; Finished Dependency Resolution
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Dependencies Resolved
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=
+=3D=3D
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; =C2=A0Package =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0Arch
+<br>&gt;&gt; &gt;&gt;&gt; Version =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 Repository
+<br>&gt;&gt; &gt;&gt;&gt; Size
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=
+=3D=3D
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Installing:
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; =C2=A0zlib-devel =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 x86_64
+<br>&gt;&gt; &gt;&gt;&gt; 1.2.7-17.el7 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0base
+<br>&gt;&gt; &gt;&gt;&gt; 50 k
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Transaction Summary
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=
+=3D=3D
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Install =C2=A01 Package
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Total download size: 50 k
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Installed size: 132 k
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Downloading packages:
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; warning:
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; /var/cache/yum/x86_64/7/base/<wbr>packages/zlib-d=
+evel-1.2.7-17.<wbr>el7.x86_64.rpm:
+<br>&gt;&gt; &gt;&gt;&gt; Header V3 RSA/SHA256 Signature, key ID f4a80eb5: =
+NOKEY
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Public key for zlib-devel-1.2.7-17.el7.x86_<wbr>6=
+4.rpm is not installed
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; zlib-devel-1.2.7-17.el7.x86_<wbr>64.rpm
+<br>&gt;&gt; &gt;&gt;&gt; | =C2=A050 kB =C2=A000:00:00
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Retrieving key from file:///etc/pki/rpm-gpg/RPM-<=
+wbr>GPG-KEY-CentOS-7
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Importing GPG key 0xF4A80EB5:
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; =C2=A0Userid =C2=A0 =C2=A0 : &quot;CentOS-7 Key (=
+CentOS 7 Official Signing Key)
+<br>&gt;&gt; &gt;&gt;&gt; &lt;<a>se...@centos.org</a>&gt;&quot;
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; =C2=A0Fingerprint: 6341 ab27 53d7 8a78 a7c2 7bb1 =
+24c6 a8a7 f4a8 0eb5
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; =C2=A0Package =C2=A0 =C2=A0: centos-release-7-3.1=
+611.el7.<wbr>centos.x86_64 (@CentOS)
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; =C2=A0From =C2=A0 =C2=A0 =C2=A0 : /etc/pki/rpm-gp=
+g/RPM-GPG-KEY-<wbr>CentOS-7
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Running transaction check
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Running transaction test
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Transaction test succeeded
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Running transaction
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; =C2=A0 Installing : zlib-devel-1.2.7-17.el7.x86_6=
+4
+<br>&gt;&gt; &gt;&gt;&gt; 1/1
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; =C2=A0 Verifying =C2=A0: zlib-devel-1.2.7-17.el7.=
+x86_64
+<br>&gt;&gt; &gt;&gt;&gt; 1/1
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Installed:
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; =C2=A0 zlib-devel.x86_64 0:1.2.7-17.el7
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; Complete!
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; + cd /
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; + git clone <a href=3D"https://github.com/alexdob=
+in/STAR.git" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D=
+&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Falexdobin%2=
+FSTAR.git\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFSIcANP_fuVBCs3obg1KggJVx=
+IKw&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.com/u=
+rl?q\x3dhttps%3A%2F%2Fgithub.com%2Falexdobin%2FSTAR.git\x26sa\x3dD\x26sntz\=
+x3d1\x26usg\x3dAFQjCNFSIcANP_fuVBCs3obg1KggJVxIKw&#39;;return true;">https:=
+//github.com/alexdobin/<wbr>STAR.git</a>
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; fatal: destination path &#39;STAR&#39; already ex=
+ists and is not an empty
+<br>&gt;&gt; &gt;&gt;&gt; directory.
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; ERROR: Aborting with RETVAL=3D255
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; On Monday, May 8, 2017 at 5:05:07 PM UTC-7, M Noo=
+n wrote:
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; Hi team,
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; I am in the stage of getting familiarized wit=
+h Singularity and don&#39;t
+<br>&gt;&gt; &gt;&gt;&gt;&gt; know many details about it. I am trying to bu=
+ild a container with MPI
+<br>&gt;&gt; &gt;&gt;&gt;&gt; libraries and genome aligner (STAR) that coul=
+d be tested on HPC.
+<br>&gt;&gt; &gt;&gt;&gt;&gt; After facing many errors, I succeeded to inst=
+all both MPI libraries
+<br>&gt;&gt; &gt;&gt;&gt;&gt; and
+<br>&gt;&gt; &gt;&gt;&gt;&gt; STAR. I am using Centos7. I am git-cloning bo=
+th tools within %POST.
+<br>&gt;&gt; &gt;&gt;&gt;&gt; Logically, both programs/executables should b=
+e at &quot;/usr/local/bin&quot;.
+<br>&gt;&gt; &gt;&gt;&gt;&gt; Well, I do see mpi and it can be invoked when=
+ I am in shell mode.
+<br>&gt;&gt; &gt;&gt;&gt;&gt; Despite
+<br>&gt;&gt; &gt;&gt;&gt;&gt; great deal of efforts I couldn&#39;t find STA=
+R executable or any folder
+<br>&gt;&gt; &gt;&gt;&gt;&gt; that
+<br>&gt;&gt; &gt;&gt;&gt;&gt; was/should have been cloned within the contai=
+ner. I may be missing
+<br>&gt;&gt; &gt;&gt;&gt;&gt; something
+<br>&gt;&gt; &gt;&gt;&gt;&gt; very trivial but I can&#39;t seem to work it =
+out yet.
+<br>&gt;&gt; &gt;&gt;&gt;&gt; Here is my Definition file:
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; BootStrap: yum
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; OSVersion: 7
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; MirrorURL:
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; <a href=3D"http://mirror.centos.org/centos-%%=
+7BOSVERSION%7D/%%7BOSVERSION%7D/os/$basearch/" target=3D"_blank" rel=3D"nof=
+ollow" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%=
+3A%2F%2Fmirror.centos.org%2Fcentos-%25%257BOSVERSION%257D%2F%25%257BOSVERSI=
+ON%257D%2Fos%2F%24basearch%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHfH2H=
+jUXZK-hJjm03wlVLzlhIsAw&#39;;return true;" onclick=3D"this.href=3D&#39;http=
+://www.google.com/url?q\x3dhttp%3A%2F%2Fmirror.centos.org%2Fcentos-%25%257B=
+OSVERSION%257D%2F%25%257BOSVERSION%257D%2Fos%2F%24basearch%2F\x26sa\x3dD\x2=
+6sntz\x3d1\x26usg\x3dAFQjCNHfH2HjUXZK-hJjm03wlVLzlhIsAw&#39;;return true;">=
+http://mirror.centos.org/<wbr>centos-%{OSVERSION}/%{<wbr>OSVERSION}/os/$bas=
+earch/</a>
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; Include: yum wget
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; # best to build up container using kickstart =
+mentality.
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; # ie, to add more packages to image,
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; # re-run bootstrap command again.
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; # bootstrap on existing image will build on t=
+op of it, not
+<br>&gt;&gt; &gt;&gt;&gt;&gt; overwriting
+<br>&gt;&gt; &gt;&gt;&gt;&gt; it/restarting from scratch
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; # singularity .def file is like kickstart fil=
+e
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; # unix commands can be run, but if there is a=
+ny error, the bootstrap
+<br>&gt;&gt; &gt;&gt;&gt;&gt; process ends
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; %setup
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0# commands to be executed on hos=
+t outside container during
+<br>&gt;&gt; &gt;&gt;&gt;&gt; bootstrap
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; %post
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0 # commands to be executed insid=
+e container during bootstrap
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0 yum -y groupinstall &quot;Devel=
+opment Tools&quot;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; # =C2=A0 =C2=A0# Clone the OpenMPI GitHub mas=
+ter branch in current directory
+<br>&gt;&gt; &gt;&gt;&gt;&gt; (on
+<br>&gt;&gt; &gt;&gt;&gt;&gt; host)
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0 git clone <a href=3D"https://gi=
+thub.com/open-mpi/ompi.git" target=3D"_blank" rel=3D"nofollow" onmousedown=
+=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.c=
+om%2Fopen-mpi%2Fompi.git\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHkJkIiHe57=
+PQPH8fjCJd0WODJBdw&#39;;return true;" onclick=3D"this.href=3D&#39;https://w=
+ww.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fopen-mpi%2Fompi.git\x26sa=
+\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHkJkIiHe57PQPH8fjCJd0WODJBdw&#39;;return=
+ true;">https://github.com/open-mpi/<wbr>ompi.git</a>
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0 cd ompi
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0 # Build OpenMPI in the working =
+directory
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0 ./<a href=3D"http://autogen.pl"=
+ target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://=
+www.google.com/url?q\x3dhttp%3A%2F%2Fautogen.pl\x26sa\x3dD\x26sntz\x3d1\x26=
+usg\x3dAFQjCNGEYzu34evgRVViE--Qmz6RqdG5Lw&#39;;return true;" onclick=3D"thi=
+s.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fautogen.pl\x26sa\=
+x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGEYzu34evgRVViE--Qmz6RqdG5Lw&#39;;return =
+true;">autogen.pl</a>
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0 ./configure --prefix=3D/usr/loc=
+al
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0 make
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0 make install
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; #
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0 # Instal &quot;zlib1g&quot; to =
+aviod installation error
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0 yum -y install zlib-devel
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0 # Install STAR - =C2=A0get STAR=
+ source using git
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0 git clone <a href=3D"https://gi=
+thub.com/alexdobin/STAR.git" target=3D"_blank" rel=3D"nofollow" onmousedown=
+=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.c=
+om%2Falexdobin%2FSTAR.git\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFSIcANP_f=
+uVBCs3obg1KggJVxIKw&#39;;return true;" onclick=3D"this.href=3D&#39;https://=
+www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Falexdobin%2FSTAR.git\x26=
+sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFSIcANP_fuVBCs3obg1KggJVxIKw&#39;;retu=
+rn true;">https://github.com/alexdobin/<wbr>STAR.git</a>
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0 cd STAR/source
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0 echo &quot;Within STAR&quot;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0 echo &quot;pwd&quot;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0 # Build STAR
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0 make STAR
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0 echo $PATH
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0 STAR --version
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0 echo &quot;OUT of Star Dir&quot=
+;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0 STAR --version
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0 /usr/bin/STAR --help
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0 # create bind points for storag=
+e. =C2=A0Replace netid as appropriate
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0 mkdir /extra/mnoon /rsgrps/zarn=
+escu/
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0 exit 0
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0%runscript
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0# commands to be executed when t=
+he container runs
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0echo &quot;Arguments received: $=
+*&quot;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0exec /usr/bin/python &quot;$@&qu=
+ot;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0%test
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0# commands to be executed within=
+ container at close of bootstrap
+<br>&gt;&gt; &gt;&gt;&gt;&gt; process
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0python --version
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; =C2=A0 =C2=A0STAR --version
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; I also tried to install (git clone) STAR usin=
+g this alternative
+<br>&gt;&gt; &gt;&gt;&gt;&gt; method,
+<br>&gt;&gt; &gt;&gt;&gt;&gt; below:
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; sudo singularity exec -w centosMPI_star.img
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; git clone <a href=3D"https://github.com/alexd=
+obin/STAR.git" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=
+=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Falexdobi=
+n%2FSTAR.git\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFSIcANP_fuVBCs3obg1Kgg=
+JVxIKw&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.co=
+m/url?q\x3dhttps%3A%2F%2Fgithub.com%2Falexdobin%2FSTAR.git\x26sa\x3dD\x26sn=
+tz\x3d1\x26usg\x3dAFQjCNFSIcANP_fuVBCs3obg1KggJVxIKw&#39;;return true;">htt=
+ps://github.com/alexdobin/<wbr>STAR.git</a>
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; cd STAR/source/
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; singularity exec ../../centosMPI_star.img mak=
+e STAR
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; When I do
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; singularity shell centosMPI_star.img
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; I can&#39;t find STAR in any possible directo=
+ry other than the clonned
+<br>&gt;&gt; &gt;&gt;&gt;&gt; version on /home/mnoon
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; Can you please tell me what am I doing wrong?=
+ Also, Where should the
+<br>&gt;&gt; &gt;&gt;&gt;&gt; installed tool/executable be located with the=
+ container?
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; Regards,
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt; M
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt;&gt;
+<br>&gt;&gt; &gt;&gt;&gt; --
+<br>&gt;&gt; &gt;&gt;&gt; You received this message because you are subscri=
+bed to the Google
+<br>&gt;&gt; &gt;&gt;&gt; Groups
+<br>&gt;&gt; &gt;&gt;&gt; &quot;singularity&quot; group.
+<br>&gt;&gt; &gt;&gt;&gt; To unsubscribe from this group and stop receiving=
+ emails from it, send
+<br>&gt;&gt; &gt;&gt;&gt; an
+<br>&gt;&gt; &gt;&gt;&gt; email to <a>singu...@lbl.gov</a>.
+<br>&gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt;
+<br>&gt;&gt; &gt;&gt; --
+<br>&gt;&gt; &gt;&gt; Vanessa Villamia Sochat
+<br>&gt;&gt; &gt;&gt; Stanford University &#39;16
+<br>&gt;&gt; &gt;&gt; (603) 321-0676
+<br>&gt;&gt; &gt;
+<br>&gt;&gt; &gt; --
+<br>&gt;&gt; &gt; You received this message because you are subscribed to t=
+he Google
+<br>&gt;&gt; &gt; Groups
+<br>&gt;&gt; &gt; &quot;singularity&quot; group.
+<br>&gt;&gt; &gt; To unsubscribe from this group and stop receiving emails =
+from it, send
+<br>&gt;&gt; &gt; an
+<br>&gt;&gt; &gt; email to <a>singu...@lbl.gov</a>.
+<br>&gt;
+<br>&gt; --
+<br>&gt; You received this message because you are subscribed to the Google=
+ Groups
+<br>&gt; &quot;singularity&quot; group.
+<br>&gt; To unsubscribe from this group and stop receiving emails from it, =
+send an
+<br>&gt; email to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-=
+mailto=3D"EXXIcWRkAAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;ja=
+vascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;r=
+eturn true;">singularity...@lbl.<wbr>gov</a>.
+<br></blockquote></div></div>
+------=_Part_2306_754549889.1494368858457--
+
+------=_Part_2305_987347800.1494368858454--

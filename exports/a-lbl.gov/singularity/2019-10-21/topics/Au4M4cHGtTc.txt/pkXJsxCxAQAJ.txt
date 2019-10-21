@@ -1,0 +1,383 @@
+Date: Fri, 13 Oct 2017 09:51:17 -0700 (PDT)
+From: Michael Galloway <michael....@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <b088840b-feaf-46ba-8c23-50265967356b@lbl.gov>
+In-Reply-To: <CAPqNE2VsR2YahtA=V42WXk+8ERTTUVuU=BiTiNWasNFAMtnTYQ@mail.gmail.com>
+References: <43e70f0f-e4c3-4876-aff5-ed8255ebbae4@lbl.gov> <CAHGBjRwXGr50wCTgknTD6TAhxoFc-hOvLr07qPw7YHeW3eqwdA@mail.gmail.com>
+ <942d5c3f-57a6-4d81-a4d9-5755b03fdc60@lbl.gov> <CAHGBjRxZ+D=Cbfr2OeaM3VFkDAUjKVY7xt4rw=bwZ-nBfUx1eg@mail.gmail.com>
+ <CAN9aCeeTjvu+gns3yNR05L4i7zWffUtUw9HzY+JDtdppymL2uQ@mail.gmail.com>
+ <CAPqNE2VsR2YahtA=V42WXk+8ERTTUVuU=BiTiNWasNFAMtnTYQ@mail.gmail.com>
+Subject: Re: [Singularity] Beginner Singularity question (StarCCM++)
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_7343_1735783368.1507913477457"
+
+------=_Part_7343_1735783368.1507913477457
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_7344_1932508466.1507913477457"
+
+------=_Part_7344_1932508466.1507913477457
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+I too would be interested in seeing if this workflow is successful. We as 
+well have struggled a bit with STARCCM+'s peculiarities.
+
+--- michael
+
+On Friday, October 13, 2017 at 1:19:16 AM UTC-4, John Hearns wrote:
+>
+> Matt, I would be interested in the answer to this one also.
+> For anyone not familiar with Star-CCM it is wrapped up in a very long and 
+> tortuous launcher script. I have had cause to look at this very closely in 
+> the past.  You can choose different MPIs though, as I recall Platform and 
+> OpenMPI at least. I don't think though you can specify anything of your own 
+> making...  As an aside the wrapper also makes the GUI difficult to launch 
+> under vglrun.
+>
+> On 12 October 2017 at 23:47, David Godlove <dav...@gmail.com 
+> <javascript:>> wrote:
+>
+>> You may also want to have a look at this thread:
+>>
+>>  
+>> https://groups.google.com/a/lbl.gov/forum/#!searchin/singularity/kombrink/singularity/3fvDLR07Ll8/s6pjgfg0CgAJ
+>>
+>> And in particular this script which is supposed to replace ssh in your 
+>> mpi container:
+>>
+>> https://pastebin.com/vqXXRzb5
+>>
+>> On Thu, Oct 12, 2017 at 3:31 PM, Andrew Rokitka <ar...@gmail.com 
+>> <javascript:>> wrote:
+>>
+>>> I've done something similar.  Take advantage of the 'singularity run' 
+>>> functionality to do this.  Executing *./starccm.img* is the same as 
+>>> running "*singularity run starccm.img*".   If you *ln -s starccm.img 
+>>> mpirun* and then execute ./mpirun, it too is the same as running "*singularity 
+>>> run starccm.img*".   In your run script, you can write a case statement 
+>>> that handles all of the commands you expect to consume and then execute 
+>>> them within the container accordingly.  Then you softlink those command 
+>>> names to starccm.img. For example (and this isn't meant to necessarily work 
+>>> in your environment):
+>>>
+>>> My image is: /misc/shared/images/analysis.img 
+>>>
+>>> In /misc/shared/bin, i have softlinks to 
+>>> /misc/shared/images/analysis.img for all of my commands, including all of 
+>>> the mpich commands
+>>>
+>>> I have my $PATH set with /misc/shared/bin first so that mpirun is 
+>>> /misc/shared/bin/mpirun and not /usr/bin/mpirun
+>>>
+>>> I have a runscript (I hope this formats correctly!) that allows you to 
+>>> run the softlinked commands and any options within the container itself:
+>>>
+>>> -------------------------------------------------------------
+>>>   EXEC_NAME=`basename $SINGULARITY_NAME || echo ""`
+>>>
+>>>   case $EXEC_NAME in
+>>>     R)
+>>>       CMD="/usr/bin/${EXEC_NAME}"
+>>>       ;;
+>>>     starccm)
+>>>       CMD="/misc/analysisprogram/${EXEC_NAME}"
+>>>       ;;
+>>>     
+>>> bt2line|check_callstack|clog2_join|clog2_print|clog2_repair|mpiexec.hydra|parkill|rlog_check_timeorder|rlog_print)
+>>>       CMD="/usr/bin/${EXEC_NAME}"
+>>>       ;;
+>>>     
+>>> clog2print|clog2TOslog2|clogprint|clogTOslog2|hydra_nameserver|hydra_persist|hydra_pmi_proxy|jumpshot|logconvertor|mpic++|mpicc|mpich2version|mpicxx|mpiexec|mpif77|mpif90|mpirun)
+>>>       CMD="/usr/lib64/mpi-mpich2/bin/${EXEC_NAME}"
+>>>       ;;
+>>>     *)
+>>>       CMD="Command not found"
+>>>       exit 1
+>>>   esac
+>>>
+>>>   cd $PWD
+>>>   $CMD $@
+>>>
+>>> -------------------------------------------------------------
+>>>
+>>> So what happens is if I run *R CMD INSTALL /tmp/boguspackage.tgz*, it's 
+>>> actually running R within the container.  I suspect you could fairly easily 
+>>> do something similar with starccm++.
+>>>
+>>>
+>>>
+>>> On Thu, Oct 12, 2017 at 2:53 PM, Matt Kijowski <mat...@gmail.com 
+>>> <javascript:>> wrote:
+>>>
+>>>> yes (ish).  I dont really care whether mpi runs inside the container or 
+>>>> outside.  But given that starccm+ seems to only work with its own built in 
+>>>> mpi I think I need it running within the container itself.
+>>>>
+>>>>
+>>>> On Thursday, October 12, 2017 at 2:48:04 PM UTC-4, Andrew Rokitka wrote:
+>>>>>
+>>>>> Just to clarify - you want mpi to run within the container itself?
+>>>>>
+>>>>> On Thu, Oct 12, 2017 at 2:41 PM, Matt Kijowski <mat...@gmail.com> 
+>>>>> wrote:
+>>>>>
+>>>>>> Hello all, we're just starting to use Singularity on our HPC system 
+>>>>>> in conjunction with Slurm and I am having some difficulties understanding 
+>>>>>> how to set up one of our containers (but I might be setting things up 
+>>>>>> wrong).
+>>>>>>
+>>>>>> So I understand why we would use mpirun outside of a container, but 
+>>>>>> what is a good configuration for a program (StarCCM++) that wraps its own 
+>>>>>> MPI and remote commands into its execution?
+>>>>>>
+>>>>>> Example.  I have a 64 node cluster and starccm++ installed into a 
+>>>>>> container.  If I want to run my job inside the container I execute: 
+>>>>>> *srun singularity exec starccm.img starccm+ options simfile*where 
+>>>>>> srun requests a compute node from slurm and executes the rest of the 
+>>>>>> command on that compute node.  The problem I have is with parallel jobs.  
+>>>>>> starccm+ wants to start its processes on the compute nodes itself (I can 
+>>>>>> specify what sort of remote shell to use and which compute nodes I have 
+>>>>>> requested via a machine list file in the options) but starccm+ is not aware 
+>>>>>> that it needs to launch a singularity container on the compute nodes first.
+>>>>>>
+>>>>>> My first thought is I need to launch the containers on the compute 
+>>>>>> nodes before executing the starccm++ parallel job so that when it uses SSH 
+>>>>>> to log in to the compute nodes the container is already running but I'm not 
+>>>>>> sure on how to accomplish this.  Any thoughts?
+>>>>>>
+>>>>>> -- 
+>>>>>> You received this message because you are subscribed to the Google 
+>>>>>> Groups "singularity" group.
+>>>>>> To unsubscribe from this group and stop receiving emails from it, 
+>>>>>> send an email to singu...@lbl.gov.
+>>>>>>
+>>>>>
+>>>>> -- 
+>>>> You received this message because you are subscribed to the Google 
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>> an email to singu...@lbl.gov <javascript:>.
+>>>>
+>>>
+>>> -- 
+>>> You received this message because you are subscribed to the Google 
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>> an email to singu...@lbl.gov <javascript:>.
+>>>
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+------=_Part_7344_1932508466.1507913477457
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">I too would be interested in seeing if this workflow is su=
+ccessful. We as well have struggled a bit with STARCCM+&#39;s peculiarities=
+.<div><br></div><div>--- michael<br><br>On Friday, October 13, 2017 at 1:19=
+:16 AM UTC-4, John Hearns wrote:<blockquote class=3D"gmail_quote" style=3D"=
+margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;=
+"><div dir=3D"ltr"><div>Matt, I would be interested in the answer to this o=
+ne also.</div><div>For anyone not familiar with Star-CCM it is wrapped up i=
+n a very long and tortuous launcher script. I have had cause to look at thi=
+s very closely in the past.=C2=A0 You can choose different MPIs though, as =
+I recall Platform and OpenMPI at least. I don&#39;t think though you can sp=
+ecify anything of your own making...=C2=A0 As an aside the wrapper also mak=
+es the GUI difficult to launch under vglrun.</div></div><div><br><div class=
+=3D"gmail_quote">On 12 October 2017 at 23:47, David Godlove <span dir=3D"lt=
+r">&lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"L=
+Zsk3uvGAQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#=
+39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;=
+">dav...@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quot=
+e" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">=
+<div dir=3D"ltr">You may also want to have a look at this thread:<div><br><=
+/div><div>=C2=A0<a href=3D"https://groups.google.com/a/lbl.gov/forum/#!sear=
+chin/singularity/kombrink/singularity/3fvDLR07Ll8/s6pjgfg0CgAJ" target=3D"_=
+blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://groups.goog=
+le.com/a/lbl.gov/forum/#!searchin/singularity/kombrink/singularity/3fvDLR07=
+Ll8/s6pjgfg0CgAJ&#39;;return true;" onclick=3D"this.href=3D&#39;https://gro=
+ups.google.com/a/lbl.gov/forum/#!searchin/singularity/kombrink/singularity/=
+3fvDLR07Ll8/s6pjgfg0CgAJ&#39;;return true;">https://groups.google.com/a/<wb=
+r>lbl.gov/forum/#!searchin/<wbr>singularity/kombrink/<wbr>singularity/3fvDL=
+R07Ll8/<wbr>s6pjgfg0CgAJ</a></div><div><br></div><div>And in particular thi=
+s script which is supposed to replace ssh in your mpi container:</div><div>=
+<br></div><div><a style=3D"margin:0px;padding:0px;border:0px;color:rgb(102,=
+17,204);font-family:Arial,Helvetica,sans-serif;font-size:13px" href=3D"http=
+s://pastebin.com/vqXXRzb5" rel=3D"nofollow" target=3D"_blank" onmousedown=
+=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fpastebin=
+.com%2FvqXXRzb5\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHaQI4svs0txeObI0qVo=
+4Irbe0Elw&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google=
+.com/url?q\x3dhttps%3A%2F%2Fpastebin.com%2FvqXXRzb5\x26sa\x3dD\x26sntz\x3d1=
+\x26usg\x3dAFQjCNHaQI4svs0txeObI0qVo4Irbe0Elw&#39;;return true;">https://pa=
+stebin.com/vqXXRzb5</a><br></div></div><div><div><div><br><div class=3D"gma=
+il_quote">On Thu, Oct 12, 2017 at 3:31 PM, Andrew Rokitka <span dir=3D"ltr"=
+>&lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"LZs=
+k3uvGAQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39=
+;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">=
+ar...@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" =
+style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><di=
+v dir=3D"ltr">I&#39;ve done something similar.=C2=A0 Take advantage of the =
+&#39;singularity run&#39; functionality to do this.=C2=A0 Executing <i>./st=
+arccm.img</i> is the same as running &quot;<i>singularity run starccm.img</=
+i>&quot;. =C2=A0 If you <i>ln -s starccm.img mpirun</i>=C2=A0and then execu=
+te ./mpirun, it too is the same as running &quot;<i>singularity run starccm=
+.img</i>&quot;. =C2=A0 In your run script, you can write a case statement t=
+hat handles all of the commands you expect to consume and then execute them=
+ within the container accordingly.=C2=A0 Then you softlink those command na=
+mes to starccm.img. For example (and this isn&#39;t meant to necessarily wo=
+rk in your environment):<div><br></div><div>My image is: /misc/shared/image=
+s/analysis.<wbr>img=C2=A0<br></div><div><br></div><div>In /misc/shared/bin,=
+ i have softlinks to /misc/shared/images/analysis.<wbr>img for all of my co=
+mmands, including all of the mpich commands</div><div><br></div><div>I have=
+ my $PATH set with /misc/shared/bin first so that mpirun is /misc/shared/bi=
+n/mpirun and not /usr/bin/mpirun</div><div><br></div><div>I have a runscrip=
+t (I hope this formats correctly!) that allows you to run the softlinked co=
+mmands and any options within the container itself:</div><div><font face=3D=
+"monospace, monospace"><br></font></div><div><font face=3D"monospace, monos=
+pace">------------------------------<wbr>------------------------------<wbr=
+>-</font></div><div><span style=3D"font-family:monospace,monospace">=C2=A0 =
+EXEC_NAME=3D`basename $SINGULARITY_NAME || echo &quot;&quot;`</span><br></d=
+iv><div><span style=3D"font-family:monospace,monospace"><br></span></div><d=
+iv><div><font face=3D"monospace, monospace">=C2=A0 case $EXEC_NAME in</font=
+></div><div><font face=3D"monospace, monospace">=C2=A0 =C2=A0 R)</font></di=
+v><div><font face=3D"monospace, monospace">=C2=A0 =C2=A0 =C2=A0 CMD=3D&quot=
+;/usr/bin/${EXEC_NAME}&quot;</font></div><div><span style=3D"font-family:mo=
+nospace,monospace">=C2=A0 =C2=A0 =C2=A0</span><span style=3D"font-family:mo=
+nospace,monospace">=C2=A0</span><font face=3D"monospace, monospace">;;</fon=
+t></div><div><font face=3D"monospace, monospace">=C2=A0 =C2=A0 starccm)</fo=
+nt></div><div><span style=3D"font-family:monospace,monospace">=C2=A0 =C2=A0=
+ =C2=A0</span><span style=3D"font-family:monospace,monospace">=C2=A0</span>=
+<font face=3D"monospace, monospace">CMD=3D&quot;/misc/analysisprogram/$<wbr=
+>{EXEC_NAME}&quot;</font></div><div><span style=3D"font-family:monospace,mo=
+nospace">=C2=A0 =C2=A0 =C2=A0</span><span style=3D"font-family:monospace,mo=
+nospace">=C2=A0</span><font face=3D"monospace, monospace">;;</font></div><d=
+iv><font face=3D"monospace, monospace">=C2=A0 =C2=A0 bt2line|check_callstac=
+k|clog2_<wbr>join|clog2_print|clog2_repair|<wbr>mpiexec.hydra|parkill|rlog_=
+<wbr>check_timeorder|rlog_print)</font></div><div><span style=3D"font-famil=
+y:monospace,monospace">=C2=A0 =C2=A0 =C2=A0</span><span style=3D"font-famil=
+y:monospace,monospace">=C2=A0</span><font face=3D"monospace, monospace">CMD=
+=3D&quot;/usr/bin/${EXEC_NAME}&quot;</font></div><div><span style=3D"font-f=
+amily:monospace,monospace">=C2=A0 =C2=A0 =C2=A0</span><span style=3D"font-f=
+amily:monospace,monospace">=C2=A0</span><font face=3D"monospace, monospace"=
+>;;</font></div><div><span style=3D"font-family:monospace,monospace">=C2=A0=
+ =C2=A0 clog2print|clog2TOslog2|<wbr>clogprint|clogTOslog2|hydra_<wbr>names=
+erver|hydra_persist|<wbr>hydra_pmi_proxy|jumpshot|<wbr>logconvertor|mpic++|=
+mpicc|<wbr>mpich2version|mpicxx|mpiexec|<wbr>mpif77|mpif90|mpirun)</span></=
+div><div><span style=3D"font-family:monospace,monospace">=C2=A0 =C2=A0 =C2=
+=A0</span><span style=3D"font-family:monospace,monospace">=C2=A0</span><fon=
+t face=3D"monospace, monospace">CMD=3D&quot;/usr/lib64/mpi-mpich2/<wbr>bin/=
+${EXEC_NAME}&quot;</font></div><div><span style=3D"font-family:monospace,mo=
+nospace">=C2=A0 =C2=A0 =C2=A0</span><span style=3D"font-family:monospace,mo=
+nospace">=C2=A0</span><font face=3D"monospace, monospace">;;</font></div><d=
+iv><font face=3D"monospace, monospace">=C2=A0 =C2=A0 *)</font></div><div><s=
+pan style=3D"font-family:monospace,monospace">=C2=A0 =C2=A0 =C2=A0</span><s=
+pan style=3D"font-family:monospace,monospace">=C2=A0</span><font face=3D"mo=
+nospace, monospace">CMD=3D&quot;Command not found&quot;</font></div><div><s=
+pan style=3D"font-family:monospace,monospace">=C2=A0 =C2=A0 =C2=A0</span><s=
+pan style=3D"font-family:monospace,monospace">=C2=A0</span><font face=3D"mo=
+nospace, monospace">exit 1</font></div><div><span style=3D"font-family:mono=
+space,monospace">=C2=A0 esac</span><br></div><div><span style=3D"font-famil=
+y:monospace,monospace"><br></span></div><div><font face=3D"monospace, monos=
+pace">=C2=A0 cd $PWD</font></div><div><font face=3D"monospace, monospace">=
+=C2=A0 $CMD $@</font></div><div><font face=3D"monospace, monospace"><br></f=
+ont></div><div><font face=3D"monospace, monospace">------------------------=
+------<wbr>------------------------------<wbr>-</font><br><div><div><br></d=
+iv><div>So what happens is if I run <i>R CMD INSTALL /tmp/boguspackage.tgz<=
+/i>, it&#39;s actually running R within the container.=C2=A0 I suspect you =
+could fairly easily do something similar with starccm++.</div><div><br><div=
+><br></div></div></div></div></div></div><div><div><div><br><div class=3D"g=
+mail_quote">On Thu, Oct 12, 2017 at 2:53 PM, Matt Kijowski <span dir=3D"ltr=
+">&lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"LZ=
+sk3uvGAQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#3=
+9;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;"=
+>mat...@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote=
+" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><=
+div dir=3D"ltr">yes (ish).=C2=A0 I dont really care whether mpi runs inside=
+ the container or outside.=C2=A0 But given that starccm+ seems to only work=
+ with its own built in mpi I think I need it running within the container i=
+tself.<span><br><br><br>On Thursday, October 12, 2017 at 2:48:04 PM UTC-4, =
+Andrew Rokitka wrote:</span><blockquote class=3D"gmail_quote" style=3D"marg=
+in:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><span><=
+div dir=3D"ltr">Just to clarify - you want mpi to run within the container =
+itself?</div></span><div><br><div class=3D"gmail_quote"><span>On Thu, Oct 1=
+2, 2017 at 2:41 PM, Matt Kijowski <span dir=3D"ltr">&lt;<a rel=3D"nofollow"=
+>mat...@gmail.com</a>&gt;</span> wrote:<br></span><blockquote class=3D"gmai=
+l_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left=
+:1ex"><span><div dir=3D"ltr">Hello all, we&#39;re just starting to use Sing=
+ularity on our HPC system in conjunction with Slurm and I am having some di=
+fficulties understanding how to set up one of our containers (but I might b=
+e setting things up wrong).<br><br>So I understand why we would use mpirun =
+outside of a container, but what is a good configuration for a program (Sta=
+rCCM++) that wraps its own MPI and remote commands into its execution?<br><=
+br>Example.=C2=A0 I have a 64 node cluster and starccm++ installed into a c=
+ontainer.=C2=A0 If I want to run my job inside the container I execute: <i>=
+srun singularity exec starccm.img starccm+ options simfile<br></i>where sru=
+n requests a compute node from slurm and executes the rest of the command o=
+n that compute node.=C2=A0 The problem I have is with parallel jobs.=C2=A0 =
+starccm+ wants to start its processes on the compute nodes itself (I can sp=
+ecify what sort of remote shell to use and which compute nodes I have reque=
+sted via a machine list file in the options) but starccm+ is not aware that=
+ it needs to launch a singularity container on the compute nodes first.<br>=
+<br>My first thought is I need to launch the containers on the compute node=
+s before executing the starccm++ parallel job so that when it uses SSH to l=
+og in to the compute nodes the container is already running but I&#39;m not=
+ sure on how to accomplish this.=C2=A0 Any thoughts?<span><font color=3D"#8=
+88888"><br><i></i></font></span></div></span><span><font color=3D"#888888">=
+<span>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br></span>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</font></span></blockquote></div><br></div>
+</blockquote></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+LZsk3uvGAQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+LZsk3uvGAQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+LZsk3uvGAQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br></div>
+</blockquote></div></div>
+------=_Part_7344_1932508466.1507913477457--
+
+------=_Part_7343_1735783368.1507913477457--

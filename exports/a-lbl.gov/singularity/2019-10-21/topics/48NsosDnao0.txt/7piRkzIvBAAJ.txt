@@ -1,0 +1,387 @@
+Date: Tue, 6 Jun 2017 07:28:58 -0700 (PDT)
+From: =?UTF-8?Q?Guillaume_DOLL=C3=89?= <dolle.g...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <403143d6-a8b7-429d-8735-b83fee20cc01@lbl.gov>
+In-Reply-To: <CAM=pu+KVbkxJWME-mj+Xj2nVaRcW6wBeQqkpDJcz8MAWJktcpg@mail.gmail.com>
+References: <d561f36e-3187-4bdf-ac27-bd29327253cc@lbl.gov> <8D30F910-975C-4988-BE09-A2A20A0F79AE@me.com>
+ <CAM=pu+JuajyEHHXj06UZ_8W5jD968+wFuuZgEHW4XD8g9tzrfg@mail.gmail.com> <0920ab9c-575a-41e0-bc5b-23edf52138f1@lbl.gov>
+ <CAM=pu+KVbkxJWME-mj+Xj2nVaRcW6wBeQqkpDJcz8MAWJktcpg@mail.gmail.com>
+Subject: Re: [Singularity] Private repo dockerhub auth bug ?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2086_1289276338.1496759338188"
+
+------=_Part_2086_1289276338.1496759338188
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2087_1257367894.1496759338189"
+
+------=_Part_2087_1257367894.1496759338189
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Hi Vanessa,
+
+Sorry for the late answer.
+After several tests, I seems it works if I run the `singularity import`=20
+command  but not `singularity bootstrap`.
+To reproduce on a public image :
+
+```
+export SINGULARITY_DOCKER_USERNAME=3Dtoto
+singularity create --force --size 2048 busybox.img
+singularity -vvv import busybox.img docker://busybox:latest
+
+# Or as sudoer
+sudo -E singularity -vvv import busybox.img docker://busybox:latest
+
+
+VERBOSE2 SINGULARITY_DOCKER_USERNAME found as toto
+VERBOSE2 SINGULARITY_DOCKER_PASSWORD found
+```
+works!
+
+Now with bootstrap based on singularityhub busybox spec file
+
+```
+export SINGULARITY_DOCKER_USERNAME=3Dtoto
+wget=20
+https://raw.githubusercontent.com/singularityware/singularity/master/exampl=
+es/docker/Singularity
+singularity create --force --size 2048 busybox.img
+sudo -E singularity -vvv import busybox.img docker://busybox:latest
+
+
+VERBOSE2 SINGULARITY_DOCKER_USERNAME not defined (None)
+VERBOSE2 SINGULARITY_DOCKER_PASSWORD found
+```
+
+Same with username set in the specfile.
+Maybe while using the specfile, the environment is reset somewhere ?
+
+Best,
+
+Guillaume
+
+
+Le vendredi 2 juin 2017 17:12:58 UTC+2, vanessa a =C3=A9crit :
+>
+> oh, so the password is hidden intentionally so that you don't accidentall=
+y=20
+> share it with others :) Are you able to add Docker username "vanessa" to=
+=20
+> your image so I can test/debug this?
+>
+> On Fri, Jun 2, 2017 at 3:02 AM, Guillaume DOLL=C3=89 <dol...@gmail.com=20
+> <javascript:>> wrote:
+>
+>> Hi Chris, Vanessa,
+>>
+>> I use the release version 2.3-master.gadf5259a of singularity.
+>>
+>> @Vanessa yes I confirm I exported the env variables.
+>> I tried different way (zshrc, bashrc, /etc/profile, or just in the shell=
+.
+>> I also tried in root (I always can echo the variable).
+>>
+>> ```
+>> $> export SINGULARITY_DOCKER_USERNAME=3Dtoto
+>> $> sudo singularity -vvv bootstrap myimage Singularity
+>>
+>> VERBOSE2 SINGULARITY_DOCKER_USERNAME not defined (None)
+>> SINGULARITY_DOCKER_PASSWORD found
+>> ```
+>> The weird thing is that the password is always "found" even if I don't=
+=20
+>> set it...
+>>
+>> If I just run a python interpreter
+>> ```
+>> import os
+>> os.environ.get("SINGULARITY_DOCKER_USERNAME")
+>> ```
+>> it works, it's weird :/
+>>
+>> .=20
+>>
+>> Le vendredi 2 juin 2017 07:15:53 UTC+2, vanessa a =C3=A9crit :
+>>>
+>>> From the debug I don't see that you have exported your docker username=
+=20
+>>> eg here:
+>>>
+>>> VERBOSE2 SINGULARITY_DOCKER_USERNAME not defined (None)
+>>>
+>>> Could you make sure this is exported as SINGULARITY_DOCKER_USERNAME and=
+=20
+>>> verify that it appears in the debug output?
+>>>
+>>> On Thu, Jun 1, 2017 at 5:30 PM, Christopher Watkins <chri...@me.com
+>>> > wrote:
+>>>
+>>>> Which version of Singularity are you using?
+>>>>
+>>>> I was having a similar problem with 2.2 but there was a fix in the dev=
+=20
+>>>> branch that solved my problem.=20
+>>>>
+>>>> I think they should have merged said fix into the 2.3 release. I am=20
+>>>> upgrading later today, so I can confirm then. Assuming that is your=20
+>>>> problem.=20
+>>>>
+>>>> On 2 Jun 2017, at 6:24 am, Guillaume DOLL=C3=89 <dol...@gmail.com>=20
+>>>> wrote:
+>>>>
+>>>> Hi all
+>>>>
+>>>> I've a problem with auth and dockerhub, when I try to bootstrap (`sudo=
+=20
+>>>> singularity bootstrap myimage Singularity`) a private dockerhub=20
+>>>> repository.
+>>>> I follow the documentation here=20
+>>>> http://singularity.lbl.gov/docs-docker#authentication-in-the-singulari=
+ty-build-file
+>>>>
+>>>> I tried to both method (with export (+bashrc +/etc/profle) and with=20
+>>>> specfile username,password) but I always get this debug output
+>>>>
+>>>> ```
+>>>> VERBOSE2 SINGULARITY_DOCKER_USERNAME not defined (None)
+>>>> VERBOSE2 SINGULARITY_DOCKER_PASSWORD found
+>>>> ...
+>>>>
+>>>> ERROR Improperly formed manifest, layers or fsLayers must be present
+>>>> ```
+>>>>
+>>>> If I test directly with
+>>>>
+>>>> ```
+>>>>
+>>>> CREDENTIAL=3D$(echo -n vanessa:[password] | base64)TOKEN=3D$(http 'htt=
+ps://auth.docker.io/token?service=3Dregistry.docker.io&scope=3Drepository:v=
+anessa/code-samples:pull' Authorization:"Basic $CREDENTIAL" | jq -r '.token=
+')
+>>>> http https://index.docker.io/v2/vanessa/code-samples/tags/list Authori=
+zation:"Bearer $TOKEN"
+>>>>
+>>>> ```
+>>>>
+>>>> It works, I get OK status.
+>>>>
+>>>> I guess there's there's something odd with my python `get.environ` on=
+=20
+>>>> my system (archlinux/ python 3.6.1).
+>>>> When I try to print the output of username in libexec/default.py=20
+>>>> os.environ.get(), the values are always None.
+>>>>
+>>>> Have someone any idea ? Or can confirm this problem ?
+>>>>
+>>>>
+>>>>
+>>>> --=20
+>>>> You received this message because you are subscribed to the Google=20
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send=
+=20
+>>>> an email to singu...@lbl.gov.
+>>>>
+>>>> --=20
+>>>> You received this message because you are subscribed to the Google=20
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send=
+=20
+>>>> an email to singu...@lbl.gov.
+>>>>
+>>>
+>>>
+>>>
+>>> --=20
+>>> Vanessa Villamia Sochat
+>>> Stanford University '16
+>>> (603) 321-0676
+>>>
+>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s=20
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n=20
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> --=20
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_2087_1257367894.1496759338189
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Vanessa,<br><br>Sorry for the late answer.<br>After sev=
+eral tests, I seems it works if I run the `singularity import` command=C2=
+=A0 but not `singularity bootstrap`.<br>To reproduce on a public image :<br=
+><br>```<br><span style=3D"color: rgb(56, 118, 29);">export SINGULARITY_DOC=
+KER_USERNAME=3Dtoto<br>singularity create --force --size 2048 busybox.img</=
+span><br><span style=3D"color: rgb(56, 118, 29);">singularity -vvv import b=
+usybox.img docker://busybox:latest<br><span style=3D"color: rgb(0, 0, 0);">=
+<br># Or as sudoer</span><br>sudo -E </span><span style=3D"color: rgb(56, 1=
+18, 29);">singularity -vvv import busybox.img docker://busybox:latest</span=
+><br><br><br><span style=3D"color: rgb(61, 133, 198);">VERBOSE2 SINGULARITY=
+_DOCKER_USERNAME found as toto<br>VERBOSE2 SINGULARITY_DOCKER_PASSWORD foun=
+d</span><br>```<br>works!<br><br>Now with bootstrap based on singularityhub=
+ busybox spec file<br><br>```<span style=3D"color: rgb(56, 118, 29);"></spa=
+n><br><span style=3D"color: rgb(56, 118, 29);"><span style=3D"color: rgb(56=
+, 118, 29);">export SINGULARITY_DOCKER_USERNAME=3Dtoto<br></span>wget https=
+://raw.githubusercontent.com/singularityware/singularity/master/examples/do=
+cker/Singularity<br></span><span style=3D"color: rgb(56, 118, 29);">singula=
+rity create --force --size 2048 busybox.img<br></span><span style=3D"color:=
+ rgb(56, 118, 29);">sudo -E </span><span style=3D"color: rgb(56, 118, 29);"=
+>singularity -vvv import busybox.img docker://busybox:latest<br><br><br><sp=
+an style=3D"color: rgb(11, 83, 148);">VERBOSE2 SINGULARITY_DOCKER_USERNAME =
+not defined (None)<br>VERBOSE2 SINGULARITY_DOCKER_PASSWORD found</span></sp=
+an><br>```<br><br>Same with username set in the specfile.<br>Maybe while us=
+ing the specfile, the environment is reset somewhere ?<br><br>Best,<br><br>=
+Guillaume<br><br><br>Le vendredi 2 juin 2017 17:12:58 UTC+2, vanessa a =C3=
+=A9crit=C2=A0:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-l=
+eft: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr"=
+>oh, so the password is hidden intentionally so that you don&#39;t accident=
+ally share it with others :) Are you able to add Docker username &quot;vane=
+ssa&quot; to your image so I can test/debug this?</div><div><br><div class=
+=3D"gmail_quote">On Fri, Jun 2, 2017 at 3:02 AM, Guillaume DOLL=C3=89 <span=
+ dir=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-m=
+ailto=3D"OXKzdClLBQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;jav=
+ascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;re=
+turn true;">dol...@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"=
+gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-=
+left:1ex"><div dir=3D"ltr">Hi Chris, Vanessa,<br><br>I use the release vers=
+ion 2.3-master.gadf5259a of singularity.<br><br>@Vanessa yes I confirm I ex=
+ported the env variables.<br> I tried different way (zshrc, bashrc, /etc/pr=
+ofile, or just in the shell.<br>I also tried in root (I always can echo the=
+ variable).<br><br>```<br><span style=3D"color:rgb(56,118,29)">$&gt; export=
+ SINGULARITY_DOCKER_USERNAME=3D<wbr>toto<br>$&gt; sudo singularity -vvv boo=
+tstrap myimage Singularity</span><br><br><span style=3D"color:rgb(61,133,19=
+8)"><span>VERBOSE2 SINGULARITY_DOCKER_USERNAME not defined (None)<br></span=
+>SINGULARITY_DOCKER_PASSWORD found</span><br>```<br>The weird thing is that=
+ the password is always &quot;found&quot; even if I don&#39;t set it...<br>=
+<br>If I just run a python interpreter<br>```<br><span style=3D"color:rgb(5=
+6,118,29)">import os<br>os.environ.get(&quot;SINGULARITY_<wbr>DOCKER_USERNA=
+ME&quot;)</span><br>```<br>it works, it&#39;s weird :/<br><br>. <br><span><=
+br>Le vendredi 2 juin 2017 07:15:53 UTC+2, vanessa a =C3=A9crit=C2=A0:</spa=
+n><blockquote class=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;bor=
+der-left:1px #ccc solid;padding-left:1ex"><span><div dir=3D"ltr">From the d=
+ebug I don&#39;t see that you have exported your docker username eg here:<d=
+iv><br></div><div><span style=3D"color:rgb(61,133,198);font-size:12.8px">VE=
+RBOSE2 SINGULARITY_DOCKER_USERNAME not defined (None)</span><br></div><div>=
+<span style=3D"color:rgb(61,133,198);font-size:12.8px"><br></span></div><di=
+v>Could you make sure this is exported as SINGULARITY_DOCKER_USERNAME and v=
+erify that it appears in the debug output?</div></div></span><div><br><div =
+class=3D"gmail_quote"><span>On Thu, Jun 1, 2017 at 5:30 PM, Christopher Wat=
+kins <span dir=3D"ltr">&lt;<a rel=3D"nofollow">chri...@me.com</a>&gt;</span=
+> wrote:<br></span><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 =
+.8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"auto"><span><=
+div></div><div>Which version of Singularity are you using?</div><div><br></=
+div><div>I was having a similar problem with 2.2 but there was a fix in the=
+ dev branch that solved my problem.=C2=A0</div><div><br></div><div>I think =
+they should have merged said fix into the 2.3 release. I am upgrading later=
+ today, so I can confirm then. Assuming that is your problem.=C2=A0</div></=
+span><div><div><span><div><br>On 2 Jun 2017, at 6:24 am, Guillaume DOLL=C3=
+=89 &lt;<a rel=3D"nofollow">dol...@gmail.com</a>&gt; wrote:<br><br></div></=
+span><blockquote type=3D"cite"><div><span><div dir=3D"ltr">Hi all<br><br>I&=
+#39;ve a problem with auth and dockerhub, when I try to bootstrap (`<span s=
+tyle=3D"color:rgb(204,0,0)">sudo singularity bootstrap myimage Singularity<=
+/span>`) a private dockerhub repository.<br>I follow the documentation here=
+ <a href=3D"http://singularity.lbl.gov/docs-docker#authentication-in-the-si=
+ngularity-build-file" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"thi=
+s.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.g=
+ov%2Fdocs-docker%23authentication-in-the-singularity-build-file\x26sa\x3dD\=
+x26sntz\x3d1\x26usg\x3dAFQjCNGI4-5mA9tEjXgrnSVh067PSX6KWQ&#39;;return true;=
+" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fs=
+ingularity.lbl.gov%2Fdocs-docker%23authentication-in-the-singularity-build-=
+file\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGI4-5mA9tEjXgrnSVh067PSX6KWQ&#=
+39;;return true;">http://singularity.lbl.gov/<wbr>docs-docker#authenticatio=
+n-in-<wbr>the-singularity-build-file</a><br><br>I tried to both method (wit=
+h export (+bashrc +/etc/profle) and with specfile username,password) but I =
+always get this debug output<br><br>```<br><span style=3D"color:rgb(61,133,=
+198)">VERBOSE2 SINGULARITY_DOCKER_USERNAME not defined (None)<br>VERBOSE2 S=
+INGULARITY_DOCKER_PASSWORD found</span><br><span style=3D"color:rgb(61,133,=
+198)">...<br><br>ERROR Improperly formed manifest, layers or fsLayers must =
+be present</span><br>```<br><br>If I test directly with<br><br>```<br><div>=
+<pre><span style=3D"color:rgb(61,133,198)"><code><span>CREDENTIAL</span><sp=
+an>=3D</span><span>$(</span><span>echo</span> -n vanessa:[password] | base6=
+4<span>)</span>
+<span>TOKEN</span><span>=3D</span><span>$(</span>http <span>&#39;<a href=3D=
+"https://auth.docker.io/token?service=3Dregistry.docker.io&amp;scope=3Drepo=
+sitory:vanessa/code-samples:pull" rel=3D"nofollow" target=3D"_blank" onmous=
+edown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Faut=
+h.docker.io%2Ftoken%3Fservice%3Dregistry.docker.io%26scope%3Drepository%3Av=
+anessa%2Fcode-samples%3Apull\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNE2eWTF=
+p3IeucYc4Y24BhL2qeUa9Q&#39;;return true;" onclick=3D"this.href=3D&#39;https=
+://www.google.com/url?q\x3dhttps%3A%2F%2Fauth.docker.io%2Ftoken%3Fservice%3=
+Dregistry.docker.io%26scope%3Drepository%3Avanessa%2Fcode-samples%3Apull\x2=
+6sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNE2eWTFp3IeucYc4Y24BhL2qeUa9Q&#39;;ret=
+urn true;">https://auth.docker.io/token?<wbr>service=3Dregistry.docker.io&a=
+mp;<wbr>scope=3Drepository:vanessa/code-<wbr>samples:pull</a>&#39;</span> A=
+uthorization:<span>&quot;Basic </span><span>$CREDENTIAL</span><span>&quot;<=
+/span> | jq -r <span>&#39;.token&#39;</span><span>)</span><br></code></span=
+><code><span style=3D"color:rgb(61,133,198)"><code>http <a href=3D"https://=
+index.docker.io/v2/vanessa/code-samples/tags/list" rel=3D"nofollow" target=
+=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3=
+dhttps%3A%2F%2Findex.docker.io%2Fv2%2Fvanessa%2Fcode-samples%2Ftags%2Flist\=
+x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGqIA6fdhn4L2cXbqGrMzZ0q5efzQ&#39;;r=
+eturn true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dht=
+tps%3A%2F%2Findex.docker.io%2Fv2%2Fvanessa%2Fcode-samples%2Ftags%2Flist\x26=
+sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGqIA6fdhn4L2cXbqGrMzZ0q5efzQ&#39;;retu=
+rn true;">https://index.docker.io/v2/<wbr>vanessa/code-samples/tags/list</a=
+> Authorization:<span>&quot;Bearer </span><span>$TOKEN</span><span>&quot;</=
+span></code></span>
+</code></pre>
+</div>```<br><br>It works, I get OK status.<br><br>I guess there&#39;s ther=
+e&#39;s something odd with my python `get.environ` on my system (archlinux/=
+ python 3.6.1).<br>When I try to print the output of username in libexec/de=
+fault.py os.environ.get(), the values are always None.<br><br>Have someone =
+any idea ? Or can confirm this problem ?<br><br><br><br></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br></span>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</div></blockquote></div></div></div><div><div><span>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br></span>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</div></div></blockquote></div><span><br><br clear=3D"all"><div><br></div>-=
+- <br><div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><=
+div><div><a value=3D"+16033210676">(603) 321-0676</a></div></div></div></di=
+v>
+</span></div>
+</blockquote></div>
+
+<p></p>
+
+-- <br><div><div>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+OXKzdClLBQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><d=
+iv>(603) 321-0676</div></div></div></div>
+</div>
+</blockquote></div>
+------=_Part_2087_1257367894.1496759338189--
+
+------=_Part_2086_1289276338.1496759338188--

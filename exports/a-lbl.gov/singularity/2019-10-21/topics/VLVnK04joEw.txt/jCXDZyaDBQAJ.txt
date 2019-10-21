@@ -1,0 +1,521 @@
+Date: Fri, 28 Oct 2016 01:13:16 -0700 (PDT)
+From: Stefan Kombrink <stefan....@googlemail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <b6199758-c299-41b8-b506-3b485112fc22@lbl.gov>
+In-Reply-To: <CAN7etTyvb52CtjDxZqVphBpHwQg+d9W7H72DEMuw4R_+=WDpGQ@mail.gmail.com>
+References: <9f087d24-a3d9-4e10-9d19-620041b5fd31@lbl.gov> <CAN7etTy76KQnzdnG8XCMZZL35=ackWg0cdTO3kYkUjV4nUquNQ@mail.gmail.com>
+ <AB7F66F3-4CE6-42BE-B18D-73A1A0EF4C3F@open-mpi.org> <a97f2a6b-fec9-404c-93e3-7e36530be033@lbl.gov>
+ <1ADF4713-7CC9-47A4-9F45-1E730637EA21@open-mpi.org>
+ <CAN7etTyvb52CtjDxZqVphBpHwQg+d9W7H72DEMuw4R_+=WDpGQ@mail.gmail.com>
+Subject: Re: [Singularity] Proprietary SW: howto restrict container access
+ to local computing site?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_77_73640517.1477642396978"
+
+------=_Part_77_73640517.1477642396978
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_78_76494194.1477642396978"
+
+------=_Part_78_76494194.1477642396978
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Okay, after giving it more thought I found another solution for our needs:
+
+Have a look at this little patch:
+
+--- src/lib/rootfs/image/image.c    2016-10-10 19:25:59.000000000 +0200
++++ /home/ul/ul_kiz/ul_l_nsn25/image.c    2016-10-28 10:04:26.974707586=20
++0200
+@@ -81,7 +81,16 @@
+     } else {
+         if ( ( image_fp =3D fopen(source, "r") ) =3D=3D NULL ) { // Flawfi=
+nder:=20
+ignore
+             singularity_message(ERROR, "Could not open image (read only)=
+=20
+%s: %s\n", source, strerror(errno));
+-            ABORT(255);
++            singularity_message(ERROR, "Trying with escalated=20
+privileges...\n");
++            singularity_priv_escalate();
++            if ( ( image_fp =3D fopen(source, "r") ) !=3D NULL ) {
++                singularity_message(ERROR, "Now we succeeded :)\n");
++            } else {
++                singularity_message(ERROR, "No, we again failed :('\n");
++                singularity_priv_drop();
++                ABORT(255);
++            }
++            singularity_priv_drop();
+         }
+     }
+
+----
+
+Here's the output when I run the patched exec:
+
+[ul_l_nsn25@adm02 ~]$ ls -lah vre2 && singularity exec -p vre2 ps aux  =20
+-rwx------ 1 root root 1.1G Oct 27 14:32 vre2
+ERROR  : Could not open image (read only) vre2: Permission denied
+ERROR  : Trying with escalated privileges...
+ERROR  : Now we succeeded :)
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+ul_l_ns+     1  0.0  0.0   7132   636 pts/0    R+   08:12   0:00 ps aux
+
+If I apply this exec.exec falls back to escalated privileges to open the=20
+singularity container. That way root can be the owner and have exclusive=20
+read/write access to it.
+As I understand any other command shouldn't have access to that container=
+=20
+then. Is there anything to be considered security-wise?
+Would be lovely to have such functionality merged into master.
+
+thanks and greetings Stefan
+
+
+
+Am Mittwoch, 26. Oktober 2016 23:48:11 UTC+2 schrieb Gregory M. Kurtzer:
+>
+> Even worse when you are dealing with users who have controlled software.=
+=20
+> Most container platforms don't offer the granularity of ACLs necessary to=
+=20
+> limit container access to a subset of users on a particular host.
+>
+> On second thought,... I don't even want to think about this... Purging=20
+> from memory so I can plead ignorance (which isn't hard for me). haha
+>
+>
+>
+> On Wed, Oct 26, 2016 at 1:24 PM, r...@open-mpi.org <javascript:> <
+> r...@open-mpi.org <javascript:>> wrote:
+>
+>>
+>> On Oct 26, 2016, at 1:10 PM, Stefan Kombrink <ste...@googlemail.com=20
+>> <javascript:>> wrote:
+>>
+>> Yeah, all these licensing issues are really complex .. :D
+>>
+>> Am Mittwoch, 26. Oktober 2016 21:00:58 UTC+2 schrieb r...@open-mpi.org:
+>>>
+>>> I=E2=80=99ve been pondering a related issue lately. Suppose I create a =
+container=20
+>>> that includes a licensed library, and then I migrate that container to=
+=20
+>>> another cluster. Depending on how the license is enforced (e.g., a lice=
+nse=20
+>>> manager daemon vs a local =E2=80=9Ctoken=E2=80=9D), I may now be operat=
+ing the container in=20
+>>> violation of the license.
+>>>
+>>> Now suppose I distribute the container - have I now enabled everyone to=
+=20
+>>> use that licensed software without paying for it? You have a similar=20
+>>> problem with your proposal - what if I distribute the encryption key al=
+ong=20
+>>> with the container?
+>>>
+>>
+>> Sure, if you distributed the private key that allows the access to the=
+=20
+>> encrypted container. In my use case, however, I'd prevent this from=20
+>> happening  by having it installed on our cluster with root-only access=
+=20
+>> exclusively.
+>> =20
+>>
+>>>
+>>> Related question: suppose the library is actually GPL. Now GPL doesn=E2=
+=80=99t=20
+>>> hold sway unless you distribute your software. If you statically link y=
+our=20
+>>> code against a GPL library and then distribute that binary, we know tha=
+t=20
+>>> makes your code subject to the GPL.
+>>>
+>>> However, if I put a GPL library in a container, and then distribute the=
+=20
+>>> container - have I now caused my code that links against that library a=
+t=20
+>>> runtime to become subject to GPL? I am distributing the combination, al=
+beit=20
+>>> they are not actually combined until you run the container.
+>>>
+>>
+>> Aaah took me long to understand what you actually meant: Technically no.=
+=20
+>> You're just not allowed to execute the container ... hehe
+>> Here's another one: If I containerize licensed software into encrypted=
+=20
+>> containers, can I be sued for distributing it? Or just for distributing =
+the=20
+>> private key?
+>>
+>>
+>> Oooohh...now my head really hurts! I honestly don=E2=80=99t know. You di=
+stributed=20
+>> the software, but it isn=E2=80=99t usable without the key...but you _did=
+_=20
+>> distribute it.
+>>
+>> Sounds like something to ask a lawyer.
+>>
+>> =20
+>>
+>>>
+>>> Makes my head hurt...
+>>> Ralph
+>>>
+>>>
+>>> On Oct 26, 2016, at 11:21 AM, Gregory M. Kurtzer <gm...@lbl.gov>=20
+>>> wrote:
+>>>
+>>> Hi Stefan,
+>>>
+>>> This is an interesting idea! There are a couple of ways to handle it=20
+>>> considering that Singularity has a privileged mode of operation... We c=
+an=20
+>>> look into encrypting the file system contained within the image and loc=
+ate=20
+>>> the key within a file that only has root access, then count on our=20
+>>> privileged code to read that in.
+>>>
+>>> Technically we can also do this by circumventing POSIX permissions on=
+=20
+>>> the image files, and allow containers that can only be read by root to =
+be=20
+>>> run by normal users, but then how do we implement this securely and=20
+>>> reliably? ... I am open to suggestions. :)
+>>>
+>>> Greg
+>>>
+>>> On Mon, Oct 24, 2016 at 2:40 AM, 'Stefan Kombrink' via singularity <
+>>> si...@lbl.gov> wrote:
+>>>
+>>>> Hi,
+>>>>
+>>>>  I wonder what are the possibilities to offer licensed SW containerize=
+d=20
+>>>> by singularity while still preventing users to copy the container.
+>>>> Right now we achieve this by allowing certain binaries to be executabl=
+e=20
+>>>> but not readable.
+>>>> If I get it right there is no way to let users run containers they=20
+>>>> can't read but execute.
+>>>> Anyways this approach using access rights seems very limited.
+>>>>
+>>>> I had that idea that containers might be encrypted using a key which=
+=20
+>>>> can be installed in the system alongside singularity and allow to decr=
+ypt=20
+>>>> the container during loading.
+>>>> The appropriate key could be loaded prior during the suid_exec part.
+>>>> Am I overlooking something?
+>>>> Is there an easier way to achieve what I want?
+>>>>
+>>>> I'd really love to come up with a viable solution for that problem as=
+=20
+>>>> it is an obstacle for containerization/virtualization which affects ma=
+ny SW=20
+>>>> suites we are currently offering...
+>>>>
+>>>> greets and thanks
+>>>> Stefan
+>>>>
+>>>> --=20
+>>>> You received this message because you are subscribed to the Google=20
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send=
+=20
+>>>> an email to singu...@lbl.gov.
+>>>>
+>>>
+>>>
+>>>
+>>> --=20
+>>> Gregory M. Kurtzer
+>>> HPC Systems Architect and Technology Developer
+>>> Lawrence Berkeley National Laboratory HPCS
+>>> University of California Berkeley Research IT
+>>> Singularity Linux Containers (http://singularity.lbl.gov/)
+>>> Warewulf Cluster Management (http://warewulf.lbl.gov/)
+>>> GitHub: https://github.com/gmkurtzer, Twitter:=20
+>>> https://twitter.com/gmkurtzer
+>>>
+>>> --=20
+>>> You received this message because you are subscribed to the Google=20
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send=
+=20
+>>> an email to singu...@lbl.gov.
+>>>
+>>>
+>>>
+>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s=20
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n=20
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> --=20
+> Gregory M. Kurtzer
+> HPC Systems Architect and Technology Developer
+> Lawrence Berkeley National Laboratory HPCS
+> University of California Berkeley Research IT
+> Singularity Linux Containers (http://singularity.lbl.gov/)
+> Warewulf Cluster Management (http://warewulf.lbl.gov/)
+> GitHub: https://github.com/gmkurtzer, Twitter:=20
+> https://twitter.com/gmkurtzer
+>
+
+------=_Part_78_76494194.1477642396978
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Okay, after giving it more thought I found another solutio=
+n for our needs:<br><br>Have a look at this little patch:<br><br>--- src/li=
+b/rootfs/image/image.c=C2=A0=C2=A0=C2=A0 2016-10-10 19:25:59.000000000 +020=
+0<br>+++ /home/ul/ul_kiz/ul_l_nsn25/image.c=C2=A0=C2=A0=C2=A0 2016-10-28 10=
+:04:26.974707586 +0200<br>@@ -81,7 +81,16 @@<br>=C2=A0=C2=A0=C2=A0=C2=A0 } =
+else {<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if ( ( image_fp =
+=3D fopen(source, &quot;r&quot;) ) =3D=3D NULL ) { // Flawfinder: ignore<br=
+>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 s=
+ingularity_message(ERROR, &quot;Could not open image (read only) %s: %s\n&q=
+uot;, source, strerror(errno));<br>-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0 ABORT(255);<br>+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 singularity_message(ERROR, &quot;Tryin=
+g with escalated privileges...\n&quot;);<br>+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 singularity_priv_escalate();<br>+=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if ( ( imag=
+e_fp =3D fopen(source, &quot;r&quot;) ) !=3D NULL ) {<br>+=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+ singularity_message(ERROR, &quot;Now we succeeded :)\n&quot;);<br>+=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 } else {<br>+=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0 singularity_message(ERROR, &quot;No, we again failed :(&#39=
+;\n&quot;);<br>+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 singularity_priv_drop();<br>+=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 ABORT(255);<br>+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0 }<br>+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0 singularity_priv_drop();<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0 }<br>=C2=A0=C2=A0=C2=A0=C2=A0 }<br><br>----<br><br>Here&#39=
+;s the output when I run the patched exec:<br><br>[ul_l_nsn25@adm02 ~]$ ls =
+-lah vre2 &amp;&amp; singularity exec -p vre2 ps aux=C2=A0=C2=A0 <br>-rwx--=
+---- 1 root root 1.1G Oct 27 14:32 vre2<br>ERROR=C2=A0 : Could not open ima=
+ge (read only) vre2: Permission denied<br>ERROR=C2=A0 : Trying with escalat=
+ed privileges...<br>ERROR=C2=A0 : Now we succeeded :)<br>USER=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0 PID %CPU %MEM=C2=A0=C2=A0=C2=A0 VSZ=C2=A0=C2=A0 RS=
+S TTY=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 STAT START=C2=A0=C2=A0 TIME COMMAND<br>=
+ul_l_ns+=C2=A0=C2=A0=C2=A0=C2=A0 1=C2=A0 0.0=C2=A0 0.0=C2=A0=C2=A0 7132=C2=
+=A0=C2=A0 636 pts/0=C2=A0=C2=A0=C2=A0 R+=C2=A0=C2=A0 08:12=C2=A0=C2=A0 0:00=
+ ps aux<br><br>If I apply this exec.exec falls back to escalated privileges=
+ to open the singularity container. That way root can be the owner and have=
+ exclusive read/write access to it.<br>As I understand any other command sh=
+ouldn&#39;t have access to that container then. Is there anything to be con=
+sidered security-wise?<br>Would be lovely to have such functionality merged=
+ into master.<br><br>thanks and greetings Stefan<br><br><br><br>Am Mittwoch=
+, 26. Oktober 2016 23:48:11 UTC+2 schrieb Gregory M. Kurtzer:<blockquote cl=
+ass=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px =
+#ccc solid;padding-left: 1ex;"><div dir=3D"ltr">Even worse when you are dea=
+ling with users who have controlled software. Most container platforms don&=
+#39;t offer the granularity of ACLs necessary to limit container access to =
+a subset of users on a particular host.<div><br><div>On second thought,... =
+I don&#39;t even want to think about this... Purging from memory so I can p=
+lead ignorance (which isn&#39;t hard for me). haha<div><br></div><div><br><=
+/div></div></div></div><div><br><div class=3D"gmail_quote">On Wed, Oct 26, =
+2016 at 1:24 PM, <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-m=
+ailto=3D"IUvZcoH8BAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;jav=
+ascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;re=
+turn true;">r...@open-mpi.org</a> <span dir=3D"ltr">&lt;<a href=3D"javascri=
+pt:" target=3D"_blank" gdf-obfuscated-mailto=3D"IUvZcoH8BAAJ" rel=3D"nofoll=
+ow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=
+=3D"this.href=3D&#39;javascript:&#39;;return true;">r...@open-mpi.org</a>&g=
+t;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0=
+ .8ex;border-left:1px #ccc solid;padding-left:1ex"><div style=3D"word-wrap:=
+break-word"><br><div><span><blockquote type=3D"cite"><div>On Oct 26, 2016, =
+at 1:10 PM, Stefan Kombrink &lt;<a href=3D"javascript:" target=3D"_blank" g=
+df-obfuscated-mailto=3D"IUvZcoH8BAAJ" rel=3D"nofollow" onmousedown=3D"this.=
+href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;java=
+script:&#39;;return true;">stefan....@googlemail.<wbr>com</a>&gt; wrote:</d=
+iv><br><div><div dir=3D"ltr">Yeah, all these licensing issues are really co=
+mplex .. :D<br><br>Am Mittwoch, 26. Oktober 2016 21:00:58 UTC+2 schrieb r..=
+.@<a href=3D"http://open-mpi.org" target=3D"_blank" rel=3D"nofollow" onmous=
+edown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fopen-=
+mpi.org\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEClYDPTzL7cxE5TWBJBLkXLY743=
+Q&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?=
+q\x3dhttp%3A%2F%2Fopen-mpi.org\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEClY=
+DPTzL7cxE5TWBJBLkXLY743Q&#39;;return true;">open-mpi.org</a>:<blockquote cl=
+ass=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-left:1px #cc=
+c solid;padding-left:1ex"><div style=3D"word-wrap:break-word">I=E2=80=99ve =
+been pondering a related issue lately. Suppose I create a container that in=
+cludes a licensed library, and then I migrate that container to another clu=
+ster. Depending on how the license is enforced (e.g., a license manager dae=
+mon vs a local =E2=80=9Ctoken=E2=80=9D), I may now be operating the contain=
+er in violation of the license.<div><br></div><div>Now suppose I distribute=
+ the container - have I now enabled everyone to use that licensed software =
+without paying for it? You have a similar problem with your proposal - what=
+ if I distribute the encryption key along with the container?</div></div></=
+blockquote><div><br>Sure, if you distributed the private key that allows th=
+e access to the encrypted container. In my use case, however, I&#39;d preve=
+nt this from happening=C2=A0 by having it installed on our cluster with roo=
+t-only access exclusively.<br>=C2=A0</div><blockquote class=3D"gmail_quote"=
+ style=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-lef=
+t:1ex"><div style=3D"word-wrap:break-word"><div><br></div><div>Related ques=
+tion: suppose the library is actually GPL. Now GPL doesn=E2=80=99t hold swa=
+y unless you distribute your software. If you statically link your code aga=
+inst a GPL library and then distribute that binary, we know that makes your=
+ code subject to the GPL.</div><div><br></div><div>However, if I put a GPL =
+library in a container, and then distribute the container - have I now caus=
+ed my code that links against that library at runtime to become subject to =
+GPL? I am distributing the combination, albeit they are not actually combin=
+ed until you run the container.</div></div></blockquote><div><br>Aaah took =
+me long to understand what you actually meant: Technically no. You&#39;re j=
+ust not allowed to execute the container ... hehe<br>Here&#39;s another one=
+: If I containerize licensed software into encrypted containers, can I be s=
+ued for distributing it? Or just for distributing the private key?<br></div=
+></div></div></blockquote><div><br></div></span>Oooohh...now my head really=
+ hurts! I honestly don=E2=80=99t know. You distributed the software, but it=
+ isn=E2=80=99t usable without the key...but you _did_ distribute it.</div><=
+div><br></div><div>Sounds like something to ask a lawyer.</div><div><div><d=
+iv><br><blockquote type=3D"cite"><div><div dir=3D"ltr"><div>=C2=A0</div><bl=
+ockquote class=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-l=
+eft:1px #ccc solid;padding-left:1ex"><div style=3D"word-wrap:break-word"><d=
+iv><br></div><div>Makes my head hurt...</div><div>Ralph</div><div><br></div=
+><div><br><div><blockquote type=3D"cite"><div>On Oct 26, 2016, at 11:21 AM,=
+ Gregory M. Kurtzer &lt;<a rel=3D"nofollow">gm...@lbl.gov</a>&gt; wrote:</d=
+iv><br><div><div dir=3D"ltr">Hi Stefan,<div><br></div><div>This is an inter=
+esting idea! There are a couple of ways to handle it considering that Singu=
+larity has a privileged mode of operation... We can look into encrypting th=
+e file system contained within the image and locate the key within a file t=
+hat only has root access, then count on our privileged code to read that in=
+.</div><div><br></div><div>Technically we can also do this by circumventing=
+ POSIX permissions on the image files, and allow containers that can only b=
+e read by root to be run by normal users, but then how do we implement this=
+ securely and reliably? ... I am open to suggestions. :)</div><div><br></di=
+v><div>Greg</div></div><div><br><div class=3D"gmail_quote">On Mon, Oct 24, =
+2016 at 2:40 AM, &#39;Stefan Kombrink&#39; via singularity <span dir=3D"ltr=
+">&lt;<a rel=3D"nofollow">si...@lbl.gov</a>&gt;</span> wrote:<br><blockquot=
+e class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc sol=
+id;padding-left:1ex"><div dir=3D"ltr">Hi,<br><br>=C2=A0I wonder what are th=
+e possibilities to offer licensed SW containerized by singularity while sti=
+ll preventing users to copy the container.<br>Right now we achieve this by =
+allowing certain binaries to be executable but not readable.<br>If I get it=
+ right there is no way to let users run containers they can&#39;t read but =
+execute.<br>Anyways this approach using access rights seems very limited.<b=
+r><br>I had that idea that containers might be encrypted using a key which =
+can be installed in the system alongside singularity and allow to decrypt t=
+he container during loading.<br>The appropriate key could be loaded prior d=
+uring the suid_exec part.<br>Am I overlooking something?<br>Is there an eas=
+ier way to achieve what I want?<br><br>I&#39;d really love to come up with =
+a viable solution for that problem as it is an obstacle for containerizatio=
+n/<wbr>virtualization which affects many SW suites we are currently offerin=
+g...<br><br>greets and thanks<span><font color=3D"#888888"><br>Stefan<br></=
+font></span></div><span><font color=3D"#888888"><div><br></div>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><d=
+iv dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div>Gregory M. Kurtzer</d=
+iv><div>HPC Systems Architect and Technology Developer</div><div>Lawrence B=
+erkeley National Laboratory HPCS<br>University of California Berkeley Resea=
+rch IT<br>Singularity Linux Containers=C2=A0(<a href=3D"http://singularity.=
+lbl.gov/" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#3=
+9;http://www.google.com/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.gov%2F\x26sa\=
+x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHITKHVjde-iKsg1vSOOrRt58XtEQ&#39;;return =
+true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2=
+F%2Fsingularity.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHITKHVjd=
+e-iKsg1vSOOrRt58XtEQ&#39;;return true;">http://<wbr>singularity.lbl.gov/</a=
+>)</div><div>Warewulf Cluster Management=C2=A0(<a href=3D"http://warewulf.l=
+bl.gov/" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#39=
+;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwarewulf.lbl.gov%2F\x26sa\x3dD=
+\x26sntz\x3d1\x26usg\x3dAFQjCNFPtSL1wiDx3C_BKcVgBhWc77Jxww&#39;;return true=
+;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2F=
+warewulf.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPtSL1wiDx3C_BK=
+cVgBhWc77Jxww&#39;;return true;">http://warewulf.<wbr>lbl.gov/</a>)</div><d=
+iv>GitHub:=C2=A0<a href=3D"https://github.com/gmkurtzer" rel=3D"nofollow" t=
+arget=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/url=
+?q\x3dhttps%3A%2F%2Fgithub.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x=
+3dAFQjCNHgwLrV-1wbChhxINJY_U3Xyjg2uw&#39;;return true;" onclick=3D"this.hre=
+f=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fgmkurtz=
+er\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHgwLrV-1wbChhxINJY_U3Xyjg2uw&#39=
+;;return true;">https://github.com/<wbr>gmkurtzer</a>,=C2=A0<span style=3D"=
+font-size:12.8px">Twitter:=C2=A0</span><a href=3D"https://twitter.com/gmkur=
+tzer" style=3D"font-size:12.8px" rel=3D"nofollow" target=3D"_blank" onmouse=
+down=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Ftwit=
+ter.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGiphjH-YHVVhLsK=
+sNsH_Zw5B_gRA&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.go=
+ogle.com/url?q\x3dhttps%3A%2F%2Ftwitter.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\=
+x3d1\x26usg\x3dAFQjCNGiphjH-YHVVhLsKsNsH_Zw5B_gRA&#39;;return true;">https:=
+//<wbr>twitter.com/gmkurtzer</a></div></div></div></div></div></div></div><=
+/div></div></div></div>
+</div><div><br></div>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</div></blockquote></div><br></div></div></blockquote></div></div></blockqu=
+ote></div><br></div></div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+IUvZcoH8BAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div=
+ dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div>Gregory M. Kurtzer</div=
+><div>HPC Systems Architect and Technology Developer</div><div>Lawrence Ber=
+keley National Laboratory HPCS<br>University of California Berkeley Researc=
+h IT<br>Singularity Linux Containers=C2=A0(<a href=3D"http://singularity.lb=
+l.gov/" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;=
+http://www.google.com/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.gov%2F\x26sa\x3=
+dD\x26sntz\x3d1\x26usg\x3dAFQjCNHITKHVjde-iKsg1vSOOrRt58XtEQ&#39;;return tr=
+ue;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%=
+2Fsingularity.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHITKHVjde-=
+iKsg1vSOOrRt58XtEQ&#39;;return true;">http://<wbr>singularity.lbl.gov/</a>)=
+</div><div>Warewulf Cluster Management=C2=A0(<a href=3D"http://warewulf.lbl=
+.gov/" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;h=
+ttp://www.google.com/url?q\x3dhttp%3A%2F%2Fwarewulf.lbl.gov%2F\x26sa\x3dD\x=
+26sntz\x3d1\x26usg\x3dAFQjCNFPtSL1wiDx3C_BKcVgBhWc77Jxww&#39;;return true;"=
+ onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwa=
+rewulf.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPtSL1wiDx3C_BKcV=
+gBhWc77Jxww&#39;;return true;">http://warewulf.<wbr>lbl.gov/</a>)</div><div=
+>GitHub:=C2=A0<a href=3D"https://github.com/gmkurtzer" target=3D"_blank" re=
+l=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q=
+\x3dhttps%3A%2F%2Fgithub.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3d=
+AFQjCNHgwLrV-1wbChhxINJY_U3Xyjg2uw&#39;;return true;" onclick=3D"this.href=
+=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fgmkurtze=
+r\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHgwLrV-1wbChhxINJY_U3Xyjg2uw&#39;=
+;return true;">https://github.com/<wbr>gmkurtzer</a>,=C2=A0<span style=3D"f=
+ont-size:12.8px">Twitter:=C2=A0</span><a href=3D"https://twitter.com/gmkurt=
+zer" style=3D"font-size:12.8px" target=3D"_blank" rel=3D"nofollow" onmoused=
+own=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Ftwitt=
+er.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGiphjH-YHVVhLsKs=
+NsH_Zw5B_gRA&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.goo=
+gle.com/url?q\x3dhttps%3A%2F%2Ftwitter.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x=
+3d1\x26usg\x3dAFQjCNGiphjH-YHVVhLsKsNsH_Zw5B_gRA&#39;;return true;">https:/=
+/<wbr>twitter.com/gmkurtzer</a></div></div></div></div></div></div></div></=
+div></div></div></div>
+</div>
+</blockquote></div>
+------=_Part_78_76494194.1477642396978--
+
+------=_Part_77_73640517.1477642396978--

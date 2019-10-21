@@ -1,0 +1,1818 @@
+Date: Wed, 28 Jun 2017 11:05:34 -0700 (PDT)
+From: Till <tsche...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <3ffd6533-5a1b-44b5-9213-5cdf186bcb8c@lbl.gov>
+In-Reply-To: <e1e727fe-29ec-4066-b1a8-4e2e2ff8d4fa@lbl.gov>
+References: <c370bf9e-e8b0-46f3-b37f-f3c7f4391452@lbl.gov>
+ <e1e727fe-29ec-4066-b1a8-4e2e2ff8d4fa@lbl.gov>
+Subject: Re: run command as USER inside %post
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_465_1919980244.1498673134477"
+
+------=_Part_465_1919980244.1498673134477
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_466_733365222.1498673134480"
+
+------=_Part_466_733365222.1498673134480
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Thanks for all your suggestions!
+
+It seems to work at least on my build system.
+I've set up a definition like this. But on the cluster I get an error ... 
+Do you know what might be wrong??
+
+Thanks,
+
+Till
+
+
+
+Bootstrap: docker
+From: ubuntu
+
+%post 
+        # Creating bind point for home directory!
+
+        mkdir /tsd
+       mkdir -p /tsd/p158/home/p158-uxscti
+
+
+
+        # Install software needed during bootstrap!
+
+        apt-get update && apt-get install -y git \
+                                       curl \
+                                       sudo \
+                                       locales \
+                                       python \
+                                       build-essential
+
+ # Adding meteor user and install meteor
+
+        adduser meteor-user
+       curl https://install.meteor.com/ | sh 
+        cd /usr/local
+       git clone https://github.com/akeshavan/mindcontrol 
+        cd /usr/local/mindcontrol       
+
+
+
+        # Adding bind point  for writable meteor directory!
+
+        mkdir -p /usr/local/mindcontrol/.meteor/local
+       chown -Rh meteor-user /usr/local/mindcontrol
+
+
+
+        # Meteor needs locale en_US.UTF-8
+
+        locale-gen en_US.UTF-8
+       export LC_ALL=en_US.UTF-8
+   # Run meteor as user to install updated packages
+
+        su -c "meteor update" meteor-user
+       su -c "meteor npm install --save babel-runtime" meteor-user
+       su -c "meteor npm install --save bcrypt" meteor-user 
+
+
+%runscript
+       
+       echo "Starting mindcontrol!"
+       cd /usr/local/mindcontrol
+       METEOR_OFFLINE_CATALOG=1 meteor
+
+
+When I run the container on my build linux instance it starts without any 
+problems!
+
+singularity run -B .meteor/local:/usr/local/mindcontrol/.meteor/local 
+mindcontrol.img
+Starting mindcontrol!
+[[[[[ /usr/local/mindcontrol ]]]]]            
+
+=> Started proxy.                             
+=> Started MongoDB.                           
+=> Started your app.                          
+
+=> App running at: http://localhost:3000/
+
+
+On the cluster I'm getting a permission denied error:
+
+
+Increasing verbosity level (6)
+Ending argument loop
+Singularity version: 2.3.1-dist
+Exec'ing: /usr/local/libexec/singularity/cli/run.exec
+Evaluating args: '-B .meteor/local:/usr/local/mindcontrol/.meteor/local 
+mindcontrol.img'
+VERBOSE [U=0,P=60628]      message_init()                            Set 
+messagelevel to: 6
+VERBOSE [U=0,P=60628]      singularity_config_parse()               
+ Initialize configuration file: /usr/local/etc/singularity/singularity.conf
+DEBUG   [U=0,P=60628]      singularity_config_parse()               
+ Starting parse of configuration file 
+/usr/local/etc/singularity/singularity.conf
+VERBOSE [U=0,P=60628]      singularity_config_parse()                Got 
+config key allow setuid = 'yes'
+VERBOSE [U=0,P=60628]      singularity_config_parse()                Got 
+config key max loop devices = '256'
+VERBOSE [U=0,P=60628]      singularity_config_parse()                Got 
+config key allow pid ns = 'yes'
+VERBOSE [U=0,P=60628]      singularity_config_parse()                Got 
+config key config passwd = 'yes'
+VERBOSE [U=0,P=60628]      singularity_config_parse()                Got 
+config key config group = 'yes'
+VERBOSE [U=0,P=60628]      singularity_config_parse()                Got 
+config key config resolv_conf = 'yes'
+VERBOSE [U=0,P=60628]      singularity_config_parse()                Got 
+config key mount proc = 'yes'
+VERBOSE [U=0,P=60628]      singularity_config_parse()                Got 
+config key mount sys = 'yes'
+VERBOSE [U=0,P=60628]      singularity_config_parse()                Got 
+config key mount dev = 'yes'
+VERBOSE [U=0,P=60628]      singularity_config_parse()                Got 
+config key mount home = 'yes'
+VERBOSE [U=0,P=60628]      singularity_config_parse()                Got 
+config key mount tmp = 'yes'
+VERBOSE [U=0,P=60628]      singularity_config_parse()                Got 
+config key mount hostfs = 'no'
+VERBOSE [U=0,P=60628]      singularity_config_parse()                Got 
+config key bind path = '/etc/localtime'
+VERBOSE [U=0,P=60628]      singularity_config_parse()                Got 
+config key bind path = '/etc/hosts'
+VERBOSE [U=0,P=60628]      singularity_config_parse()                Got 
+config key user bind control = 'yes'
+VERBOSE [U=0,P=60628]      singularity_config_parse()                Got 
+config key enable overlay = 'yes'
+VERBOSE [U=0,P=60628]      singularity_config_parse()                Got 
+config key mount slave = 'yes'
+VERBOSE [U=0,P=60628]      singularity_config_parse()                Got 
+config key sessiondir max size = '16'
+DEBUG   [U=0,P=60628]      singularity_config_parse()               
+ Finished parsing configuration file 
+'/usr/local/etc/singularity/singularity.conf'
+VERBOSE [U=0,P=60628]      singularity_registry_init()               
+Initializing Singularity Registry
+VERBOSE [U=0,P=60628]      singularity_registry_set()                Adding 
+value to registry: 'LIBEXECDIR' = '/usr/local/libexec'
+DEBUG   [U=0,P=60628]      singularity_registry_set()               
+ Returning singularity_registry_set(libexecdir, /usr/local/libexec) = 0
+VERBOSE [U=0,P=60628]      singularity_registry_set()                Adding 
+value to registry: 'COMMAND' = 'run'
+DEBUG   [U=0,P=60628]      singularity_registry_set()               
+ Returning singularity_registry_set(COMMAND, run) = 0
+VERBOSE [U=0,P=60628]      singularity_registry_set()                Adding 
+value to registry: 'MESSAGELEVEL' = '6'
+DEBUG   [U=0,P=60628]      singularity_registry_set()               
+ Returning singularity_registry_set(MESSAGELEVEL, 6) = 0
+VERBOSE [U=0,P=60628]      singularity_registry_set()                Adding 
+value to registry: 'VERSION' = '2.3.1-dist'
+DEBUG   [U=0,P=60628]      singularity_registry_set()               
+ Returning singularity_registry_set(version, 2.3.1-dist) = 0
+VERBOSE [U=0,P=60628]      singularity_registry_set()                Adding 
+value to registry: 'LOCALSTATEDIR' = '/usr/local/var'
+DEBUG   [U=0,P=60628]      singularity_registry_set()               
+ Returning singularity_registry_set(localstatedir, /usr/local/var) = 0
+VERBOSE [U=0,P=60628]      singularity_registry_set()                Adding 
+value to registry: 'SYSCONFDIR' = '/usr/local/etc'
+DEBUG   [U=0,P=60628]      singularity_registry_set()               
+ Returning singularity_registry_set(sysconfdir, /usr/local/etc) = 0
+VERBOSE [U=0,P=60628]      singularity_registry_set()                Adding 
+value to registry: 'BINDPATH' = 
+',.meteor/local:/usr/local/mindcontrol/.meteor/local'
+DEBUG   [U=0,P=60628]      singularity_registry_set()               
+ Returning singularity_registry_set(BINDPATH, 
+,.meteor/local:/usr/local/mindcontrol/.meteor/local) = 0
+VERBOSE [U=0,P=60628]      singularity_registry_set()                Adding 
+value to registry: 'BINDIR' = '/usr/local/bin'
+DEBUG   [U=0,P=60628]      singularity_registry_set()               
+ Returning singularity_registry_set(bindir, /usr/local/bin) = 0
+VERBOSE [U=0,P=60628]      singularity_registry_set()                Adding 
+value to registry: 'IMAGE' = 'mindcontrol.img'
+DEBUG   [U=0,P=60628]      singularity_registry_set()               
+ Returning singularity_registry_set(IMAGE, mindcontrol.img) = 0
+DEBUG   [U=0,P=60628]      singularity_registry_get()               
+ Returning NULL on 'HOME'
+DEBUG   [U=0,P=60628]      singularity_registry_get()               
+ Returning NULL on 'TARGET_UID'
+DEBUG   [U=0,P=60628]      singularity_registry_get()               
+ Returning NULL on 'TARGET_GID'
+DEBUG   [U=0,P=60628]      singularity_priv_init()                   
+Initializing user info
+DEBUG   [U=0,P=60628]      singularity_priv_init()                   Set 
+the calling user's username to: p158-uxscti
+DEBUG   [U=0,P=60628]      singularity_priv_init()                   
+Marking uinfo structure as ready
+DEBUG   [U=0,P=60628]      singularity_priv_init()                   
+Obtaining home directory
+VERBOSE [U=0,P=60628]      singularity_priv_init()                   Set 
+home (via getpwuid()) to: /tsd/p158/home/p158-uxscti
+VERBOSE [U=0,P=60628]      singularity_suid_init()                   
+Running SUID program workflow
+VERBOSE [U=0,P=60628]      singularity_suid_init()                   
+Checking program has appropriate permissions
+VERBOSE [U=0,P=60628]      singularity_suid_init()                   
+Checking configuration file is properly owned by root
+VERBOSE [U=0,P=60628]      singularity_suid_init()                   
+Checking if singularity.conf allows us to run as suid
+DEBUG   [U=0,P=60628]      singularity_config_get_bool_char_impl()   Called 
+singularity_config_get_bool(allow setuid, yes)
+DEBUG   [U=0,P=60628]      singularity_config_get_value_impl()       
+Returning configuration value allow setuid='yes'
+DEBUG   [U=0,P=60628]      singularity_config_get_bool_char_impl()   Return 
+singularity_config_get_bool(allow setuid, yes) = 1
+DEBUG   [U=0,P=60628]      singularity_registry_get()               
+ Returning NULL on 'NOSUID'
+VERBOSE [U=0,P=60628]      singularity_priv_userns()                 
+Invoking the user namespace
+DEBUG   [U=0,P=60628]      singularity_config_get_bool_char_impl()   Called 
+singularity_config_get_bool(allow user ns, yes)
+DEBUG   [U=0,P=60628]      singularity_config_get_value_impl()       No 
+configuration entry found for 'allow user ns'; returning default value 'yes'
+DEBUG   [U=0,P=60628]      singularity_config_get_bool_char_impl()   Return 
+singularity_config_get_bool(allow user ns, yes) = 1
+VERBOSE [U=0,P=60628]      singularity_priv_userns()                 Not 
+virtualizing USER namespace: running as SUID
+DEBUG   [U=0,P=60628]      singularity_priv_userns()                 
+Returning singularity_priv_init(void)
+DEBUG   [U=0,P=60628]      singularity_priv_drop()                   
+Dropping privileges to UID=1947, GID=2712 (5 supplementary GIDs)
+DEBUG   [U=0,P=60628]      singularity_priv_drop()                   
+Restoring supplementary groups
+DEBUG   [U=1947,P=60628]   singularity_priv_drop()                   
+Confirming we have correct UID/GID
+DEBUG   [U=1947,P=60628]   singularity_registry_get()               
+ Returning NULL on 'CLEANUPDIR'
+DEBUG   [U=1947,P=60628]   singularity_registry_get()               
+ Returning NULL on 'NOSESSIONCLEANUP'
+DEBUG   [U=1947,P=60628]   singularity_registry_get()               
+ Returning NULL on 'NOCLEANUP'
+DEBUG   [U=1947,P=60628]   singularity_cleanupd()                    Not 
+running a cleanup thread, no 'SINGULARITY_CLEANUPDIR' defined
+DEBUG   [U=1947,P=60628]   singularity_runtime_ns()                 
+ Calling: _singularity_runtime_ns_pid()
+DEBUG   [U=1947,P=60628]   singularity_config_get_bool_char_impl()   Called 
+singularity_config_get_bool(allow pid ns, yes)
+DEBUG   [U=1947,P=60628]   singularity_config_get_value_impl()       
+Returning configuration value allow pid ns='yes'
+DEBUG   [U=1947,P=60628]   singularity_config_get_bool_char_impl()   Return 
+singularity_config_get_bool(allow pid ns, yes) = 1
+DEBUG   [U=1947,P=60628]   singularity_registry_get()               
+ Returning NULL on 'UNSHARE_PID'
+VERBOSE [U=1947,P=60628]   singularity_runtime_ns_pid()              Not 
+virtualizing PID namespace on user request
+DEBUG   [U=1947,P=60628]   singularity_runtime_ns()                 
+ Calling: _singularity_runtime_ns_ipc()
+DEBUG   [U=1947,P=60628]   singularity_config_get_bool_char_impl()   Called 
+singularity_config_get_bool(allow ipc ns, yes)
+DEBUG   [U=1947,P=60628]   singularity_config_get_value_impl()       No 
+configuration entry found for 'allow ipc ns'; returning default value 'yes'
+DEBUG   [U=1947,P=60628]   singularity_config_get_bool_char_impl()   Return 
+singularity_config_get_bool(allow ipc ns, yes) = 1
+DEBUG   [U=1947,P=60628]   singularity_registry_get()               
+ Returning NULL on 'UNSHARE_IPC'
+VERBOSE [U=1947,P=60628]   singularity_runtime_ns_ipc()              Not 
+virtualizing IPC namespace on user request
+DEBUG   [U=1947,P=60628]   singularity_runtime_ns()                 
+ Calling: _singularity_runtime_ns_mnt()
+DEBUG   [U=1947,P=60628]   singularity_config_get_bool_char_impl()   Called 
+singularity_config_get_bool(mount slave, yes)
+DEBUG   [U=1947,P=60628]   singularity_config_get_value_impl()       
+Returning configuration value mount slave='yes'
+DEBUG   [U=1947,P=60628]   singularity_config_get_bool_char_impl()   Return 
+singularity_config_get_bool(mount slave, yes) = 1
+DEBUG   [U=1947,P=60628]   singularity_priv_escalate()               
+Temporarily escalating privileges (U=1947)
+DEBUG   [U=0,P=60628]      singularity_priv_escalate()               
+Clearing supplementary GIDs.
+DEBUG   [U=0,P=60628]      singularity_runtime_ns_mnt()             
+ Virtualizing FS namespace
+DEBUG   [U=0,P=60628]      singularity_runtime_ns_mnt()             
+ Virtualizing mount namespace
+DEBUG   [U=0,P=60628]      singularity_runtime_ns_mnt()              Making 
+mounts slave
+DEBUG   [U=0,P=60628]      singularity_priv_drop()                   
+Dropping privileges to UID=1947, GID=2712 (5 supplementary GIDs)
+DEBUG   [U=0,P=60628]      singularity_priv_drop()                   
+Restoring supplementary groups
+DEBUG   [U=1947,P=60628]   singularity_priv_drop()                   
+Confirming we have correct UID/GID
+DEBUG   [U=1947,P=60628]   singularity_sessiondir()                 
+ Setting sessiondir
+VERBOSE [U=1947,P=60628]   singularity_sessiondir()                  Using 
+session directory: /usr/local/var/singularity/mnt/session
+DEBUG   [U=1947,P=60628]   singularity_sessiondir()                 
+ Checking for session directory: /usr/local/var/singularity/mnt/session
+DEBUG   [U=1947,P=60628]   singularity_sessiondir()                 
+ Obtaining the default sessiondir size
+DEBUG   [U=1947,P=60628]   singularity_config_get_value_impl()       
+Returning configuration value sessiondir max size='16'
+DEBUG   [U=1947,P=60628]   singularity_sessiondir()                 
+ Converted sessiondir size to: 16
+DEBUG   [U=1947,P=60628]   singularity_sessiondir()                 
+ Creating the sessiondir size mount option length
+DEBUG   [U=1947,P=60628]   singularity_sessiondir()                  Got 
+size length of: 9
+DEBUG   [U=1947,P=60628]   singularity_sessiondir()                 
+ Creating the sessiondir size mount option string
+DEBUG   [U=1947,P=60628]   singularity_sessiondir()                 
+ Checking to make sure the string was allocated correctly
+DEBUG   [U=1947,P=60628]   singularity_priv_escalate()               
+Temporarily escalating privileges (U=1947)
+DEBUG   [U=0,P=60628]      singularity_priv_escalate()               
+Clearing supplementary GIDs.
+DEBUG   [U=0,P=60628]      singularity_sessiondir()                 
+ Mounting sessiondir tmpfs: /usr/local/var/singularity/mnt/session
+DEBUG   [U=0,P=60628]      singularity_priv_drop()                   
+Dropping privileges to UID=1947, GID=2712 (5 supplementary GIDs)
+DEBUG   [U=0,P=60628]      singularity_priv_drop()                   
+Restoring supplementary groups
+DEBUG   [U=1947,P=60628]   singularity_priv_drop()                   
+Confirming we have correct UID/GID
+VERBOSE [U=1947,P=60628]   singularity_registry_set()                Adding 
+value to registry: 'SESSIONDIR' = '/usr/local/var/singularity/mnt/session'
+DEBUG   [U=1947,P=60628]   singularity_registry_set()               
+ Returning singularity_registry_set(SESSIONDIR, 
+/usr/local/var/singularity/mnt/session) = 0
+DEBUG   [U=1947,P=60628]   singularity_registry_get()               
+ Returning value from registry: 'IMAGE' = 'mindcontrol.img'
+DEBUG   [U=1947,P=60628]   singularity_registry_get()               
+ Returning NULL on 'WRITABLE'
+DEBUG   [U=1947,P=60628]   singularity_config_get_value_impl()       No 
+configuration entry found for 'limit container owners'; returning default 
+value 'NULL'
+DEBUG   [U=1947,P=60628]   singularity_config_get_value_impl()       No 
+configuration entry found for 'limit container paths'; returning default 
+value 'NULL'
+DEBUG   [U=1947,P=60628]   singularity_image_open()                 
+ Opening file descriptor to image: mindcontrol.img
+VERBOSE [U=1947,P=60628]   singularity_image_check()                 
+Checking what kind of image we are mounting
+VERBOSE [U=1947,P=60628]   singularity_image_check_image()           
+Checking that file pointer is a Singularity image
+DEBUG   [U=1947,P=60628]   singularity_image_check_image()           First 
+line of image(fd=4): #!/usr/bin/env run-singularity
+
+DEBUG   [U=1947,P=60628]   singularity_image_check_image()           
+Checking if first line matches key
+VERBOSE [U=1947,P=60628]   singularity_image_check_image()           File 
+is a valid Singularity image
+DEBUG   [U=1947,P=60628]   singularity_config_get_value_impl()       
+Returning configuration value max loop devices='256'
+DEBUG   [U=1947,P=60628]   singularity_image_bind()                 
+ Entered singularity_image_bind()
+DEBUG   [U=1947,P=60628]   singularity_image_bind()                 
+ Converting max_loop_devs_string to int: '256'
+DEBUG   [U=1947,P=60628]   singularity_image_bind()                 
+ Converted max_loop_devs_string to int: '256' -> 256
+DEBUG   [U=1947,P=60628]   singularity_image_bind()                 
+ Checking if this image has been properly opened
+DEBUG   [U=1947,P=60628]   singularity_image_bind()                 
+ Checking if image is valid file
+DEBUG   [U=1947,P=60628]   singularity_image_bind()                 
+ Checking if image is already bound to a loop device
+DEBUG   [U=1947,P=60628]   singularity_registry_get()               
+ Returning NULL on 'WRITABLE'
+DEBUG   [U=1947,P=60628]   singularity_image_bind()                 
+ Setting loopdev open to: O_RDONLY
+DEBUG   [U=1947,P=60628]   singularity_image_bind()                 
+ Setting LO_FLAGS_AUTOCLEAR
+DEBUG   [U=1947,P=60628]   singularity_image_bind()                 
+ Calculating image offset
+VERBOSE [U=1947,P=60628]   singularity_image_check()                 
+Checking what kind of image we are mounting
+VERBOSE [U=1947,P=60628]   singularity_image_check_image()           
+Checking that file pointer is a Singularity image
+DEBUG   [U=1947,P=60628]   singularity_image_check_image()           First 
+line of image(fd=4): #!/usr/bin/env run-singularity
+
+DEBUG   [U=1947,P=60628]   singularity_image_check_image()           
+Checking if first line matches key
+VERBOSE [U=1947,P=60628]   singularity_image_check_image()           File 
+is a valid Singularity image
+VERBOSE [U=1947,P=60628]   singularity_image_offset()               
+ Calculating image offset
+VERBOSE [U=1947,P=60628]   singularity_image_offset()                Found 
+image at an offset of 31 bytes
+DEBUG   [U=1947,P=60628]   singularity_image_offset()               
+ Returning image_offset(image_fp) = 31
+DEBUG   [U=1947,P=60628]   singularity_priv_escalate()               
+Temporarily escalating privileges (U=1947)
+DEBUG   [U=0,P=60628]      singularity_priv_escalate()               
+Clearing supplementary GIDs.
+DEBUG   [U=0,P=60628]      singularity_image_bind()                 
+ Finding next available loop device...
+VERBOSE [U=0,P=60628]      singularity_image_bind()                  Found 
+available loop device: /dev/loop0
+DEBUG   [U=0,P=60628]      singularity_image_bind()                 
+ Setting loop device flags
+DEBUG   [U=0,P=60628]      singularity_priv_drop()                   
+Dropping privileges to UID=1947, GID=2712 (5 supplementary GIDs)
+DEBUG   [U=0,P=60628]      singularity_priv_drop()                   
+Restoring supplementary groups
+DEBUG   [U=1947,P=60628]   singularity_priv_drop()                   
+Confirming we have correct UID/GID
+VERBOSE [U=1947,P=60628]   singularity_image_bind()                  Using 
+loop device: /dev/loop0
+VERBOSE [U=1947,P=60628]   singularity_runtime_rootfs()              Set 
+container directory to: /usr/local/var/singularity/mnt/container
+DEBUG   [U=1947,P=60628]   singularity_runtime_rootfs()             
+ Checking for container directory
+DEBUG   [U=1947,P=60628]   singularity_runtime_rootfs()             
+ Returning container_directory: /usr/local/var/singularity/mnt/container
+DEBUG   [U=1947,P=60628]   chk_mode()                               
+ Checking exact mode (40755) on: /usr/local/var/singularity/mnt/container
+DEBUG   [U=1947,P=60628]   chk_mode()                                Found 
+appropriate mode on file: /usr/local/var/singularity/mnt/container
+VERBOSE [U=1947,P=60628]   singularity_image_mount()                 
+Checking what kind of image we are mounting
+VERBOSE [U=1947,P=60628]   singularity_image_mount()                 
+Attempting to mount as singularity image
+DEBUG   [U=1947,P=60628]   singularity_registry_get()               
+ Returning NULL on 'WRITABLE'
+DEBUG   [U=1947,P=60628]   singularity_priv_escalate()               
+Temporarily escalating privileges (U=1947)
+DEBUG   [U=0,P=60628]      singularity_priv_escalate()               
+Clearing supplementary GIDs.
+VERBOSE [U=0,P=60628]      singularity_image_mount_image_mount()     
+Mounting /dev/loop0 in read/only to: 
+/usr/local/var/singularity/mnt/container
+DEBUG   [U=0,P=60628]      singularity_priv_drop()                   
+Dropping privileges to UID=1947, GID=2712 (5 supplementary GIDs)
+DEBUG   [U=0,P=60628]      singularity_priv_drop()                   
+Restoring supplementary groups
+DEBUG   [U=1947,P=60628]   singularity_priv_drop()                   
+Confirming we have correct UID/GID
+DEBUG   [U=1947,P=60628]   singularity_runtime_rootfs()             
+ Returning container_directory: /usr/local/var/singularity/mnt/container
+DEBUG   [U=1947,P=60628]   action_ready()                           
+ Checking if container is valid at: /usr/local/var/singularity/mnt/container
+DEBUG   [U=1947,P=60628]   singularity_runtime_rootfs()             
+ Returning container_directory: /usr/local/var/singularity/mnt/container
+DEBUG   [U=1947,P=60628]   singularity_runtime_overlayfs()           
+Checking if overlayfs should be used
+DEBUG   [U=1947,P=60628]   singularity_config_get_bool_char_impl()   Called 
+singularity_config_get_bool(enable overlay, yes)
+DEBUG   [U=1947,P=60628]   singularity_config_get_value_impl()       
+Returning configuration value enable overlay='yes'
+DEBUG   [U=1947,P=60628]   singularity_config_get_bool_char_impl()   Return 
+singularity_config_get_bool(enable overlay, yes) = 1
+DEBUG   [U=1947,P=60628]   singularity_registry_get()               
+ Returning NULL on 'DISABLE_OVERLAYFS'
+DEBUG   [U=1947,P=60628]   singularity_registry_get()               
+ Returning NULL on 'WRITABLE'
+VERBOSE [U=1947,P=60628]   singularity_runtime_overlayfs()           
+OverlayFS not supported by host build
+DEBUG   [U=1947,P=60628]   singularity_runtime_rootfs()             
+ Returning container_directory: /usr/local/var/singularity/mnt/container
+VERBOSE [U=1947,P=60628]   singularity_runtime_mounts()             
+ Running all mount components
+DEBUG   [U=1947,P=60628]   singularity_runtime_rootfs()             
+ Returning container_directory: /usr/local/var/singularity/mnt/container
+DEBUG   [U=1947,P=60628]   singularity_config_get_bool_char_impl()   Called 
+singularity_config_get_bool(mount hostfs, no)
+DEBUG   [U=1947,P=60628]   singularity_config_get_value_impl()       
+Returning configuration value mount hostfs='no'
+DEBUG   [U=1947,P=60628]   singularity_config_get_bool_char_impl()   Return 
+singularity_config_get_bool(mount hostfs, no) = 0
+DEBUG   [U=1947,P=60628]   singularity_runtime_mount_hostfs()        Not 
+mounting host file systems per configuration
+DEBUG   [U=1947,P=60628]   singularity_runtime_rootfs()             
+ Returning container_directory: /usr/local/var/singularity/mnt/container
+DEBUG   [U=1947,P=60628]   singularity_registry_get()               
+ Returning NULL on 'CONTAIN'
+DEBUG   [U=1947,P=60628]   singularity_runtime_mount_binds()         
+Checking configuration file for 'bind path'
+VERBOSE [U=1947,P=60628]   singularity_runtime_mount_binds()         Found 
+'bind path' = /etc/localtime, /etc/localtime
+DEBUG   [U=1947,P=60628]   singularity_runtime_mount_binds()         
+Checking if bind point is already mounted: /etc/localtime
+DEBUG   [U=1947,P=60628]   singularity_runtime_rootfs()             
+ Returning container_directory: /usr/local/var/singularity/mnt/container
+DEBUG   [U=1947,P=60628]   check_mounted()                           
+Opening /proc/mounts
+DEBUG   [U=1947,P=60628]   check_mounted()                           
+Iterating through /proc/mounts
+DEBUG   [U=1947,P=60628]   singularity_priv_escalate()               
+Temporarily escalating privileges (U=1947)
+DEBUG   [U=0,P=60628]      singularity_priv_escalate()               
+Clearing supplementary GIDs.
+VERBOSE [U=0,P=60628]      singularity_runtime_mount_binds()         
+Binding '/etc/localtime' to 
+'/usr/local/var/singularity/mnt/container//etc/localtime'
+DEBUG   [U=0,P=60628]      singularity_priv_drop()                   
+Dropping privileges to UID=1947, GID=2712 (5 supplementary GIDs)
+DEBUG   [U=0,P=60628]      singularity_priv_drop()                   
+Restoring supplementary groups
+DEBUG   [U=1947,P=60628]   singularity_priv_drop()                   
+Confirming we have correct UID/GID
+VERBOSE [U=1947,P=60628]   singularity_runtime_mount_binds()         Found 
+'bind path' = /etc/hosts, /etc/hosts
+DEBUG   [U=1947,P=60628]   singularity_runtime_mount_binds()         
+Checking if bind point is already mounted: /etc/hosts
+DEBUG   [U=1947,P=60628]   singularity_runtime_rootfs()             
+ Returning container_directory: /usr/local/var/singularity/mnt/container
+DEBUG   [U=1947,P=60628]   check_mounted()                           
+Opening /proc/mounts
+DEBUG   [U=1947,P=60628]   check_mounted()                           
+Iterating through /proc/mounts
+DEBUG   [U=1947,P=60628]   singularity_priv_escalate()               
+Temporarily escalating privileges (U=1947)
+DEBUG   [U=0,P=60628]      singularity_priv_escalate()               
+Clearing supplementary GIDs.
+VERBOSE [U=0,P=60628]      singularity_runtime_mount_binds()         
+Binding '/etc/hosts' to 
+'/usr/local/var/singularity/mnt/container//etc/hosts'
+DEBUG   [U=0,P=60628]      singularity_priv_drop()                   
+Dropping privileges to UID=1947, GID=2712 (5 supplementary GIDs)
+DEBUG   [U=0,P=60628]      singularity_priv_drop()                   
+Restoring supplementary groups
+DEBUG   [U=1947,P=60628]   singularity_priv_drop()                   
+Confirming we have correct UID/GID
+DEBUG   [U=1947,P=60628]   singularity_runtime_rootfs()             
+ Returning container_directory: /usr/local/var/singularity/mnt/container
+DEBUG   [U=1947,P=60628]   singularity_runtime_mount_kernelfs()     
+ Checking configuration file for 'mount proc'
+DEBUG   [U=1947,P=60628]   singularity_config_get_bool_char_impl()   Called 
+singularity_config_get_bool(mount proc, yes)
+DEBUG   [U=1947,P=60628]   singularity_config_get_value_impl()       
+Returning configuration value mount proc='yes'
+DEBUG   [U=1947,P=60628]   singularity_config_get_bool_char_impl()   Return 
+singularity_config_get_bool(mount proc, yes) = 1
+DEBUG   [U=1947,P=60628]   singularity_registry_get()               
+ Returning NULL on 'PIDNS_ENABLED'
+DEBUG   [U=1947,P=60628]   singularity_priv_escalate()               
+Temporarily escalating privileges (U=1947)
+DEBUG   [U=0,P=60628]      singularity_priv_escalate()               
+Clearing supplementary GIDs.
+VERBOSE [U=0,P=60628]      singularity_runtime_mount_kernelfs()     
+ Bind-mounting host /proc
+DEBUG   [U=0,P=60628]      singularity_priv_drop()                   
+Dropping privileges to UID=1947, GID=2712 (5 supplementary GIDs)
+DEBUG   [U=0,P=60628]      singularity_priv_drop()                   
+Restoring supplementary groups
+DEBUG   [U=1947,P=60628]   singularity_priv_drop()                   
+Confirming we have correct UID/GID
+DEBUG   [U=1947,P=60628]   singularity_runtime_mount_kernelfs()     
+ Checking configuration file for 'mount sys'
+DEBUG   [U=1947,P=60628]   singularity_config_get_bool_char_impl()   Called 
+singularity_config_get_bool(mount sys, yes)
+DEBUG   [U=1947,P=60628]   singularity_config_get_value_impl()       
+Returning configuration value mount sys='yes'
+DEBUG   [U=1947,P=60628]   singularity_config_get_bool_char_impl()   Return 
+singularity_config_get_bool(mount sys, yes) = 1
+DEBUG   [U=1947,P=60628]   singularity_priv_escalate()               
+Temporarily escalating privileges (U=1947)
+DEBUG   [U=0,P=60628]      singularity_priv_escalate()               
+Clearing supplementary GIDs.
+VERBOSE [U=0,P=60628]      singularity_runtime_mount_kernelfs()     
+ Mounting /sys
+DEBUG   [U=0,P=60628]      singularity_priv_drop()                   
+Dropping privileges to UID=1947, GID=2712 (5 supplementary GIDs)
+DEBUG   [U=0,P=60628]      singularity_priv_drop()                   
+Restoring supplementary groups
+DEBUG   [U=1947,P=60628]   singularity_priv_drop()                   
+Confirming we have correct UID/GID
+DEBUG   [U=1947,P=60628]   singularity_runtime_rootfs()             
+ Returning container_directory: /usr/local/var/singularity/mnt/container
+DEBUG   [U=1947,P=60628]   singularity_registry_get()               
+ Returning NULL on 'CONTAIN'
+DEBUG   [U=1947,P=60628]   singularity_config_get_value_impl()       
+Returning configuration value mount dev='yes'
+DEBUG   [U=1947,P=60628]   singularity_runtime_mount_dev()           
+Checking configuration file for 'mount dev'
+DEBUG   [U=1947,P=60628]   singularity_config_get_bool_char_impl()   Called 
+singularity_config_get_bool(mount dev, yes)
+DEBUG   [U=1947,P=60628]   singularity_config_get_value_impl()       
+Returning configuration value mount dev='yes'
+DEBUG   [U=1947,P=60628]   singularity_config_get_bool_char_impl()   Return 
+singularity_config_get_bool(mount dev, yes) = 1
+DEBUG   [U=1947,P=60628]   singularity_priv_escalate()               
+Temporarily escalating privileges (U=1947)
+DEBUG   [U=0,P=60628]      singularity_priv_escalate()               
+Clearing supplementary GIDs.
+VERBOSE [U=0,P=60628]      singularity_runtime_mount_dev()           Bind 
+mounting /dev
+DEBUG   [U=0,P=60628]      singularity_priv_drop()                   
+Dropping privileges to UID=1947, GID=2712 (5 supplementary GIDs)
+DEBUG   [U=0,P=60628]      singularity_priv_drop()                   
+Restoring supplementary groups
+DEBUG   [U=1947,P=60628]   singularity_priv_drop()                   
+Confirming we have correct UID/GID
+DEBUG   [U=1947,P=60628]   singularity_runtime_rootfs()             
+ Returning container_directory: /usr/local/var/singularity/mnt/container
+DEBUG   [U=1947,P=60628]   singularity_config_get_bool_char_impl()   Called 
+singularity_config_get_bool(mount home, yes)
+DEBUG   [U=1947,P=60628]   singularity_config_get_value_impl()       
+Returning configuration value mount home='yes'
+DEBUG   [U=1947,P=60628]   singularity_config_get_bool_char_impl()   Return 
+singularity_config_get_bool(mount home, yes) = 1
+DEBUG   [U=1947,P=60628]   singularity_runtime_mount_home()         
+ Checking that home directry is configured: /tsd/p158/home/p158-uxscti
+DEBUG   [U=1947,P=60628]   singularity_runtime_mount_home()         
+ Checking if SINGULARITY_CONTAIN is set
+DEBUG   [U=1947,P=60628]   singularity_registry_get()               
+ Returning NULL on 'CONTAIN'
+DEBUG   [U=1947,P=60628]   singularity_runtime_mount_home()         
+ Checking if home directories are being influenced by user
+DEBUG   [U=1947,P=60628]   singularity_registry_get()               
+ Returning NULL on 'HOME'
+DEBUG   [U=1947,P=60628]   singularity_runtime_mount_home()         
+ Checking ownership of home directory source: /tsd/p158/home/p158-uxscti
+DEBUG   [U=1947,P=60628]   singularity_runtime_mount_home()         
+ Checking to make sure home directory destination is a full path: 
+/tsd/p158/home/p158-uxscti
+DEBUG   [U=1947,P=60628]   singularity_runtime_mount_home()         
+ Checking if home directory is already mounted: /tsd/p158/home/p158-uxscti
+DEBUG   [U=1947,P=60628]   singularity_runtime_rootfs()             
+ Returning container_directory: /usr/local/var/singularity/mnt/container
+DEBUG   [U=1947,P=60628]   check_mounted()                           
+Opening /proc/mounts
+DEBUG   [U=1947,P=60628]   check_mounted()                           
+Iterating through /proc/mounts
+DEBUG   [U=1947,P=60628]   singularity_runtime_mount_home()         
+ Checking if overlay is enabled
+DEBUG   [U=1947,P=60628]   singularity_runtime_mount_home()         
+ Staging home directory
+DEBUG   [U=1947,P=60628]   singularity_runtime_mount_home()         
+ Checking if sessiondir/tmpdir is set
+DEBUG   [U=1947,P=60628]   singularity_registry_get()               
+ Returning value from registry: 'SESSIONDIR' = 
+'/usr/local/var/singularity/mnt/session'
+DEBUG   [U=1947,P=60628]   singularity_runtime_mount_home()         
+ Identifying the base home directory: /tsd/p158/home/p158-uxscti
+DEBUG   [U=1947,P=60628]   basedir()                                 
+Obtaining basedir for: /tsd/p158/home/p158-uxscti
+DEBUG   [U=1947,P=60628]   basedir()                                 
+Iterating basedir: /tsd/p158/home/p158-uxscti
+DEBUG   [U=1947,P=60628]   basedir()                                 
+Iterating basedir: /tsd/p158/home
+DEBUG   [U=1947,P=60628]   basedir()                                 
+Iterating basedir: /tsd/p158
+DEBUG   [U=1947,P=60628]   basedir()                                 
+Iterating basedir: /tsd
+DEBUG   [U=1947,P=60628]   singularity_runtime_mount_home()         
+ Checking home directory base exists in container: /tsd
+DEBUG   [U=1947,P=60628]   singularity_runtime_mount_home()         
+ Creating temporary directory to stage home: 
+/usr/local/var/singularity/mnt/session/tsd/p158/home/p158-uxscti
+DEBUG   [U=1947,P=60628]   s_mkpath()                               
+ Creating directory: /usr/local/var/singularity/mnt/session/tsd
+DEBUG   [U=1947,P=60628]   s_mkpath()                               
+ Creating directory: /usr/local/var/singularity/mnt/session/tsd/p158
+DEBUG   [U=1947,P=60628]   s_mkpath()                               
+ Creating directory: /usr/local/var/singularity/mnt/session/tsd/p158/home
+DEBUG   [U=1947,P=60628]   s_mkpath()                               
+ Creating directory: 
+/usr/local/var/singularity/mnt/session/tsd/p158/home/p158-uxscti
+DEBUG   [U=1947,P=60628]   singularity_priv_escalate()               
+Temporarily escalating privileges (U=1947)
+DEBUG   [U=0,P=60628]      singularity_priv_escalate()               
+Clearing supplementary GIDs.
+VERBOSE [U=0,P=60628]      singularity_runtime_mount_home()         
+ Mounting home directory source to stage: /tsd/p158/home/p158-uxscti -> 
+/usr/local/var/singularity/mnt/session/tsd/p158/home/p158-uxscti
+ERROR   [U=0,P=60628]      singularity_runtime_mount_home()          Failed 
+to mount home directory /tsd/p158/home/p158-uxscti -> 
+/usr/local/var/singularity/mnt/session/tsd/p158/home/p158-uxscti: 
+Permission denied
+ABORT   [U=0,P=60628]      singularity_runtime_mount_home()          Retval 
+= 255
+
+
+Is there any obvious reason for this?
+
+> Thanks,
+Till
+
+
+
+
+On Tuesday, June 27, 2017 at 3:21:33 PM UTC-7, Martin Cuma wrote:
+>
+> Till,
+>
+> you can try to do the userspace installation in the %runscript section on 
+> the container's first invocation, as done here:
+>
+> https://github.com/CHPC-UofU/Singularity-ubuntu-wine-peakselector
+>
+> Though in this case the user stack ($APPDIR/wineprefix.tgz) is stored in 
+> the user space (or here, in "some" fixed space), not the container itself.
+>
+> MC
+>
+
+------=_Part_466_733365222.1498673134480
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div class=3D"gmail_default" style=3D"font-family: arial, =
+helvetica, sans-serif; font-size: small;">Thanks for all your suggestions!<=
+/div><div class=3D"gmail_default" style=3D"font-family: arial, helvetica, s=
+ans-serif; font-size: small;"><br></div><div class=3D"gmail_default" style=
+=3D"font-family: arial, helvetica, sans-serif; font-size: small;">It seems =
+to work at least on my build system.</div><div class=3D"gmail_default" styl=
+e=3D"font-family: arial, helvetica, sans-serif; font-size: small;">I&#39;ve=
+ set up a definition like this. But on the cluster I get an error ...=C2=A0=
+</div><div class=3D"gmail_default" style=3D"font-family: arial, helvetica, =
+sans-serif; font-size: small;">Do you know what might be wrong??</div><div =
+class=3D"gmail_default" style=3D"font-family: arial, helvetica, sans-serif;=
+ font-size: small;"><br></div><div class=3D"gmail_default" style=3D"font-fa=
+mily: arial, helvetica, sans-serif; font-size: small;">Thanks,</div><div cl=
+ass=3D"gmail_default" style=3D"font-family: arial, helvetica, sans-serif; f=
+ont-size: small;"><br></div><div class=3D"gmail_default" style=3D"font-fami=
+ly: arial, helvetica, sans-serif; font-size: small;">Till</div><div class=
+=3D"gmail_default" style=3D"font-family: arial, helvetica, sans-serif; font=
+-size: small;"><br></div><div class=3D"gmail_default" style=3D"font-family:=
+ arial, helvetica, sans-serif; font-size: small;"><br></div><div class=3D"g=
+mail_default" style=3D"font-family: arial, helvetica, sans-serif; font-size=
+: small;"><br></div><div class=3D"gmail_default" style=3D"font-family: aria=
+l, helvetica, sans-serif; font-size: small;"><div class=3D"prettyprint" sty=
+le=3D"background-color: rgb(250, 250, 250); border-color: rgb(187, 187, 187=
+); border-style: solid; border-width: 1px; word-wrap: break-word;"><code cl=
+ass=3D"prettyprint"><div class=3D"subprettyprint"><div class=3D"gmail_defau=
+lt" style=3D"font-family: arial, helvetica, sans-serif; background-color: r=
+gb(255, 255, 255);"><span style=3D"color: #606;" class=3D"styled-by-prettif=
+y">Bootstrap</span><span style=3D"color: #660;" class=3D"styled-by-prettify=
+">:</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> docker=
+</span></div><div class=3D"gmail_default" style=3D"font-family: arial, helv=
+etica, sans-serif; background-color: rgb(255, 255, 255);"><span style=3D"co=
+lor: #000;" class=3D"styled-by-prettify">From</span><span style=3D"color: #=
+660;" class=3D"styled-by-prettify">:</span><span style=3D"color: #000;" cla=
+ss=3D"styled-by-prettify"> ubuntu</span></div><div class=3D"gmail_default" =
+style=3D"font-family: arial, helvetica, sans-serif; background-color: rgb(2=
+55, 255, 255);"><span style=3D"color: #000;" class=3D"styled-by-prettify"><=
+br></span></div><div class=3D"gmail_default" style=3D"font-family: arial, h=
+elvetica, sans-serif; background-color: rgb(255, 255, 255);"><span style=3D=
+"color: #660;" class=3D"styled-by-prettify">%</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify">post </span></div><div class=3D"gmail_de=
+fault" style=3D"font-family: arial, helvetica, sans-serif; background-color=
+: rgb(255, 255, 255);"><span style=3D"color: #000;" class=3D"styled-by-pret=
+tify">=C2=A0 =C2=A0 =C2=A0 =C2=A0 </span><span style=3D"color: #800;" class=
+=3D"styled-by-prettify"># Creating bind point for home directory!</span></d=
+iv><div class=3D"gmail_default" style=3D"font-family: arial, helvetica, san=
+s-serif; background-color: rgb(255, 255, 255);"><span style=3D"color: #000;=
+" class=3D"styled-by-prettify"><br></span></div><div class=3D"gmail_default=
+" style=3D"font-family: arial, helvetica, sans-serif; background-color: rgb=
+(255, 255, 255);"><span style=3D"color: #000;" class=3D"styled-by-prettify"=
+>=C2=A0 =C2=A0 =C2=A0 =C2=A0 mkdir </span><span style=3D"color: #660;" clas=
+s=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"styl=
+ed-by-prettify">tsd</span></div><div class=3D"gmail_default" style=3D"font-=
+family: arial, helvetica, sans-serif; background-color: rgb(255, 255, 255);=
+"><span style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0mkdir </span><span style=3D"color: #660;" class=3D"styled-by-p=
+rettify">-</span><span style=3D"color: #000;" class=3D"styled-by-prettify">=
+p </span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</span>=
+<span style=3D"color: #000;" class=3D"styled-by-prettify">tsd</span><span s=
+tyle=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D"c=
+olor: #000;" class=3D"styled-by-prettify">p158</span><span style=3D"color: =
+#660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" cl=
+ass=3D"styled-by-prettify">home</span><span style=3D"color: #660;" class=3D=
+"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"styled-b=
+y-prettify">p158</span><span style=3D"color: #660;" class=3D"styled-by-pret=
+tify">-</span><span style=3D"color: #000;" class=3D"styled-by-prettify">uxs=
+cti</span></div><div class=3D"gmail_default" style=3D"font-family: arial, h=
+elvetica, sans-serif; background-color: rgb(255, 255, 255);"><span style=3D=
+"color: #000;" class=3D"styled-by-prettify"><br></span></div><div class=3D"=
+gmail_default" style=3D"font-family: arial, helvetica, sans-serif; backgrou=
+nd-color: rgb(255, 255, 255);"><span style=3D"color: #000;" class=3D"styled=
+-by-prettify"><br></span></div><div class=3D"gmail_default" style=3D"font-f=
+amily: arial, helvetica, sans-serif; background-color: rgb(255, 255, 255);"=
+><span style=3D"color: #000;" class=3D"styled-by-prettify"><br></span></div=
+><div class=3D"gmail_default" style=3D"font-family: arial, helvetica, sans-=
+serif; background-color: rgb(255, 255, 255);"><span style=3D"color: #000;" =
+class=3D"styled-by-prettify">=C2=A0 =C2=A0 =C2=A0 =C2=A0 </span><span style=
+=3D"color: #800;" class=3D"styled-by-prettify"># Install software needed du=
+ring bootstrap!</span></div><div class=3D"gmail_default" style=3D"font-fami=
+ly: arial, helvetica, sans-serif; background-color: rgb(255, 255, 255);"><s=
+pan style=3D"color: #000;" class=3D"styled-by-prettify"><br></span></div><d=
+iv class=3D"gmail_default" style=3D"font-family: arial, helvetica, sans-ser=
+if; background-color: rgb(255, 255, 255);"><span style=3D"color: #000;" cla=
+ss=3D"styled-by-prettify">=C2=A0 =C2=A0 =C2=A0 =C2=A0 apt</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color=
+: #008;" class=3D"styled-by-prettify">get</span><span style=3D"color: #000;=
+" class=3D"styled-by-prettify"> update </span><span style=3D"color: #660;" =
+class=3D"styled-by-prettify">&amp;&amp;</span><span style=3D"color: #000;" =
+class=3D"styled-by-prettify"> apt</span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">-</span><span style=3D"color: #008;" class=3D"style=
+d-by-prettify">get</span><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify"> install </span><span style=3D"color: #660;" class=3D"styled-by-pre=
+ttify">-</span><span style=3D"color: #000;" class=3D"styled-by-prettify">y =
+git </span><span style=3D"color: #660;" class=3D"styled-by-prettify">\</spa=
+n></div><div class=3D"gmail_default" style=3D"font-family: arial, helvetica=
+, sans-serif; background-color: rgb(255, 255, 255);"><span style=3D"color: =
+#000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0curl </span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">\</span></div><div class=3D"gmail_default" style=3D=
+"font-family: arial, helvetica, sans-serif; background-color: rgb(255, 255,=
+ 255);"><span style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0sudo </span><spa=
+n style=3D"color: #660;" class=3D"styled-by-prettify">\</span></div><div cl=
+ass=3D"gmail_default" style=3D"font-family: arial, helvetica, sans-serif; b=
+ackground-color: rgb(255, 255, 255);"><span style=3D"color: #000;" class=3D=
+"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0locales </span><span style=3D"color: #660;" class=3D"styled-by=
+-prettify">\</span></div><div class=3D"gmail_default" style=3D"font-family:=
+ arial, helvetica, sans-serif; background-color: rgb(255, 255, 255);"><span=
+ style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0python </span><span style=3D"c=
+olor: #660;" class=3D"styled-by-prettify">\</span></div><div class=3D"gmail=
+_default" style=3D"font-family: arial, helvetica, sans-serif; background-co=
+lor: rgb(255, 255, 255);"><span style=3D"color: #000;" class=3D"styled-by-p=
+rettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0build</span><span style=3D"color: #660;" class=3D"styled-by-prettify">-<=
+/span><span style=3D"color: #000;" class=3D"styled-by-prettify">essential<b=
+r><br></span><div class=3D"gmail_default" style=3D"color: rgb(34, 34, 34);"=
+><span style=3D"color: #000;" class=3D"styled-by-prettify">=C2=A0</span><sp=
+an style=3D"color: #800;" class=3D"styled-by-prettify"># Adding meteor user=
+ and install meteor</span></div><div class=3D"gmail_default" style=3D"color=
+: rgb(34, 34, 34);"><span style=3D"color: #000;" class=3D"styled-by-prettif=
+y"><br></span></div><div class=3D"gmail_default" style=3D"color: rgb(34, 34=
+, 34);"><span style=3D"color: #000;" class=3D"styled-by-prettify">=C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 adduser meteor</span><span style=3D"color: #660;" clas=
+s=3D"styled-by-prettify">-</span><span style=3D"color: #000;" class=3D"styl=
+ed-by-prettify">user</span></div><div class=3D"gmail_default" style=3D"colo=
+r: rgb(34, 34, 34);"><span style=3D"color: #000;" class=3D"styled-by-pretti=
+fy"> =C2=A0 =C2=A0 =C2=A0 =C2=A0curl https</span><span style=3D"color: #660=
+;" class=3D"styled-by-prettify">:</span><span style=3D"color: #800;" class=
+=3D"styled-by-prettify">//install.meteor.com/ | sh </span></div><div class=
+=3D"gmail_default" style=3D"color: rgb(34, 34, 34);"><span style=3D"color: =
+#800;" class=3D"styled-by-prettify">=C2=A0 =C2=A0 =C2=A0 =C2=A0 cd /usr/loc=
+al</span></div><div class=3D"gmail_default" style=3D"color: rgb(34, 34, 34)=
+;"><span style=3D"color: #800;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0git clone https://github.com/akeshavan/mindcontrol </span></d=
+iv><div class=3D"gmail_default" style=3D"color: rgb(34, 34, 34);"><span sty=
+le=3D"color: #800;" class=3D"styled-by-prettify">=C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 cd /usr/local/mindcontrol =C2=A0 =C2=A0 =C2=A0 </span></div><div class=
+=3D"gmail_default" style=3D"color: rgb(34, 34, 34);"><span style=3D"color: =
+#000;" class=3D"styled-by-prettify"><br></span></div><div class=3D"gmail_de=
+fault" style=3D"color: rgb(34, 34, 34);"><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"><br></span></div><div class=3D"gmail_default" style=
+=3D"color: rgb(34, 34, 34);"><span style=3D"color: #000;" class=3D"styled-b=
+y-prettify"><br></span></div><div class=3D"gmail_default" style=3D"color: r=
+gb(34, 34, 34);"><span style=3D"color: #000;" class=3D"styled-by-prettify">=
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 </span><span style=3D"color: #800;" class=3D"st=
+yled-by-prettify"># Adding bind point =C2=A0for writable meteor directory!<=
+/span></div><div class=3D"gmail_default" style=3D"color: rgb(34, 34, 34);">=
+<span style=3D"color: #000;" class=3D"styled-by-prettify"><br></span></div>=
+<div class=3D"gmail_default" style=3D"color: rgb(34, 34, 34);"><span style=
+=3D"color: #000;" class=3D"styled-by-prettify">=C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+mkdir </span><span style=3D"color: #660;" class=3D"styled-by-prettify">-</s=
+pan><span style=3D"color: #000;" class=3D"styled-by-prettify">p </span><spa=
+n style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify">usr</span><span style=3D"col=
+or: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #008;=
+" class=3D"styled-by-prettify">local</span><span style=3D"color: #660;" cla=
+ss=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"sty=
+led-by-prettify">mindcontrol</span><span style=3D"color: #660;" class=3D"st=
+yled-by-prettify">/.</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify">meteor</span><span style=3D"color: #660;" class=3D"styled-by-pret=
+tify">/</span><span style=3D"color: #008;" class=3D"styled-by-prettify">loc=
+al</span></div><div class=3D"gmail_default" style=3D"color: rgb(34, 34, 34)=
+;"><span style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0chown </span><span style=3D"color: #660;" class=3D"styled-by-=
+prettify">-</span><span style=3D"color: #606;" class=3D"styled-by-prettify"=
+>Rh</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> meteor=
+</span><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><s=
+pan style=3D"color: #000;" class=3D"styled-by-prettify">user </span><span s=
+tyle=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D"c=
+olor: #000;" class=3D"styled-by-prettify">usr</span><span style=3D"color: #=
+660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #008;" cla=
+ss=3D"styled-by-prettify">local</span><span style=3D"color: #660;" class=3D=
+"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"styled-b=
+y-prettify">mindcontrol</span></div><div class=3D"gmail_default" style=3D"c=
+olor: rgb(34, 34, 34);"><span style=3D"color: #000;" class=3D"styled-by-pre=
+ttify"><br></span></div><div class=3D"gmail_default" style=3D"color: rgb(34=
+, 34, 34);"><span style=3D"color: #000;" class=3D"styled-by-prettify"><br><=
+/span></div><div class=3D"gmail_default" style=3D"color: rgb(34, 34, 34);">=
+<span style=3D"color: #000;" class=3D"styled-by-prettify"><br></span></div>=
+<div class=3D"gmail_default" style=3D"color: rgb(34, 34, 34);"><span style=
+=3D"color: #000;" class=3D"styled-by-prettify">=C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+</span><span style=3D"color: #800;" class=3D"styled-by-prettify"># Meteor n=
+eeds locale en_US.UTF-8</span></div><div class=3D"gmail_default" style=3D"c=
+olor: rgb(34, 34, 34);"><span style=3D"color: #000;" class=3D"styled-by-pre=
+ttify"><br></span></div><div class=3D"gmail_default" style=3D"color: rgb(34=
+, 34, 34);"><span style=3D"color: #000;" class=3D"styled-by-prettify">=C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 locale</span><span style=3D"color: #660;" class=3D=
+"styled-by-prettify">-</span><span style=3D"color: #000;" class=3D"styled-b=
+y-prettify">gen en_US</span><span style=3D"color: #660;" class=3D"styled-by=
+-prettify">.</span><span style=3D"color: #000;" class=3D"styled-by-prettify=
+">UTF</span><span style=3D"color: #660;" class=3D"styled-by-prettify">-</sp=
+an><span style=3D"color: #066;" class=3D"styled-by-prettify">8</span></div>=
+<div class=3D"gmail_default" style=3D"color: rgb(34, 34, 34);"><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+</span><span style=3D"color: #008;" class=3D"styled-by-prettify">export</sp=
+an><span style=3D"color: #000;" class=3D"styled-by-prettify"> LC_ALL</span>=
+<span style=3D"color: #660;" class=3D"styled-by-prettify">=3D</span><span s=
+tyle=3D"color: #000;" class=3D"styled-by-prettify">en_US</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">.</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify">UTF</span><span style=3D"color: #660;=
+" class=3D"styled-by-prettify">-</span><span style=3D"color: #066;" class=
+=3D"styled-by-prettify">8</span></div><div><div class=3D"gmail_default" sty=
+le=3D"color: rgb(34, 34, 34);"><span style=3D"color: #000;" class=3D"styled=
+-by-prettify"> =C2=A0 =C2=A0</span><span style=3D"color: #800;" class=3D"st=
+yled-by-prettify"># Run meteor as user to install updated packages</span></=
+div><div class=3D"gmail_default" style=3D"color: rgb(34, 34, 34);"><span st=
+yle=3D"color: #000;" class=3D"styled-by-prettify"><br></span></div><div cla=
+ss=3D"gmail_default" style=3D"color: rgb(34, 34, 34);"><span style=3D"color=
+: #000;" class=3D"styled-by-prettify">=C2=A0 =C2=A0 =C2=A0 =C2=A0 su </span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span st=
+yle=3D"color: #000;" class=3D"styled-by-prettify">c </span><span style=3D"c=
+olor: #080;" class=3D"styled-by-prettify">&quot;meteor update&quot;</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify"> meteor</span><spa=
+n style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify">user</span></div><div class=
+=3D"gmail_default" style=3D"color: rgb(34, 34, 34);"><span style=3D"color: =
+#000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0su </span><=
+span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify">c </span><span style=3D"col=
+or: #080;" class=3D"styled-by-prettify">&quot;meteor npm install --save bab=
+el-runtime&quot;</span><span style=3D"color: #000;" class=3D"styled-by-pret=
+tify"> meteor</span><span style=3D"color: #660;" class=3D"styled-by-prettif=
+y">-</span><span style=3D"color: #000;" class=3D"styled-by-prettify">user</=
+span></div><div class=3D"gmail_default" style=3D"color: rgb(34, 34, 34);"><=
+span style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0su </span><span style=3D"color: #660;" class=3D"styled-by-prettif=
+y">-</span><span style=3D"color: #000;" class=3D"styled-by-prettify">c </sp=
+an><span style=3D"color: #080;" class=3D"styled-by-prettify">&quot;meteor n=
+pm install --save bcrypt&quot;</span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify"> meteor</span><span style=3D"color: #660;" class=3D"sty=
+led-by-prettify">-</span><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify">user </span></div><div class=3D"gmail_default" style=3D"color: rgb(=
+34, 34, 34);"><span style=3D"color: #000;" class=3D"styled-by-prettify"><br=
+></span></div><div class=3D"gmail_default" style=3D"color: rgb(34, 34, 34);=
+"><span style=3D"color: #000;" class=3D"styled-by-prettify"><br></span></di=
+v><div class=3D"gmail_default" style=3D"color: rgb(34, 34, 34);"><span styl=
+e=3D"color: #660;" class=3D"styled-by-prettify">%</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify">runscript</span></div><div class=3D"=
+gmail_default" style=3D"color: rgb(34, 34, 34);"><span style=3D"color: #000=
+;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0</span></div><d=
+iv class=3D"gmail_default" style=3D"color: rgb(34, 34, 34);"><span style=3D=
+"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0ech=
+o </span><span style=3D"color: #080;" class=3D"styled-by-prettify">&quot;St=
+arting mindcontrol!&quot;</span></div><div class=3D"gmail_default" style=3D=
+"color: rgb(34, 34, 34);"><span style=3D"color: #000;" class=3D"styled-by-p=
+rettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0cd </span><span style=3D"color: #660;"=
+ class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D=
+"styled-by-prettify">usr</span><span style=3D"color: #660;" class=3D"styled=
+-by-prettify">/</span><span style=3D"color: #008;" class=3D"styled-by-prett=
+ify">local</span><span style=3D"color: #660;" class=3D"styled-by-prettify">=
+/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">mindcontr=
+ol</span></div><div class=3D"gmail_default" style=3D"color: rgb(34, 34, 34)=
+;"><span style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0METEOR_OFFLINE_CATALOG</span><span style=3D"color: #660;" cla=
+ss=3D"styled-by-prettify">=3D</span><span style=3D"color: #066;" class=3D"s=
+tyled-by-prettify">1</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify"> meteor</span></div></div></div></div></code></div></div><div><br=
+></div><div><br></div><div><span style=3D"font-family: arial, helvetica, sa=
+ns-serif; font-size: small;">When I run the container on my build linux ins=
+tance it starts without any problems!</span><br></div><div><span style=3D"f=
+ont-family: arial, helvetica, sans-serif; font-size: small;"><br></span></d=
+iv><div><span style=3D"font-family: arial, helvetica, sans-serif; font-size=
+: small;"><div class=3D"prettyprint" style=3D"background-color: rgb(250, 25=
+0, 250); border-color: rgb(187, 187, 187); border-style: solid; border-widt=
+h: 1px; word-wrap: break-word;"><code class=3D"prettyprint"><div class=3D"s=
+ubprettyprint"><div class=3D"gmail_default" style=3D"font-family: arial, sa=
+ns-serif; background-color: rgb(255, 255, 255);"><font face=3D"arial, helve=
+tica, sans-serif"><span style=3D"color: #000;" class=3D"styled-by-prettify"=
+>singularity run </span><span style=3D"color: #660;" class=3D"styled-by-pre=
+ttify">-</span><span style=3D"color: #000;" class=3D"styled-by-prettify">B =
+</span><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><s=
+pan style=3D"color: #000;" class=3D"styled-by-prettify">meteor</span><span =
+style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D"=
+color: #008;" class=3D"styled-by-prettify">local</span><span style=3D"color=
+: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color: #080;" =
+class=3D"styled-by-prettify">/usr/</span><span style=3D"color: #008;" class=
+=3D"styled-by-prettify">local</span><span style=3D"color: #660;" class=3D"s=
+tyled-by-prettify">/</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify">mindcontrol</span><span style=3D"color: #660;" class=3D"styled-by=
+-prettify">/.</span><span style=3D"color: #000;" class=3D"styled-by-prettif=
+y">meteor</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/=
+</span><span style=3D"color: #008;" class=3D"styled-by-prettify">local</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify"> mindcontrol</s=
+pan><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><span=
+ style=3D"color: #000;" class=3D"styled-by-prettify">img</span></font></div=
+><div class=3D"gmail_default" style=3D"font-family: arial, sans-serif; back=
+ground-color: rgb(255, 255, 255);"><font face=3D"arial, helvetica, sans-ser=
+if"><span style=3D"color: #000;" class=3D"styled-by-prettify">Starting mind=
+control</span><span style=3D"color: #660;" class=3D"styled-by-prettify">!</=
+span></font></div><div class=3D"gmail_default" style=3D"font-family: arial,=
+ sans-serif; background-color: rgb(255, 255, 255);"><font face=3D"arial, he=
+lvetica, sans-serif"><span style=3D"color: #660;" class=3D"styled-by-pretti=
+fy">[[[[[</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> =
+</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</span><s=
+pan style=3D"color: #000;" class=3D"styled-by-prettify">usr</span><span sty=
+le=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D"col=
+or: #008;" class=3D"styled-by-prettify">local</span><span style=3D"color: #=
+660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" cla=
+ss=3D"styled-by-prettify">mindcontrol </span><span style=3D"color: #660;" c=
+lass=3D"styled-by-prettify">]]]]]</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0</span></=
+font></div><div class=3D"gmail_default" style=3D"font-family: arial, sans-s=
+erif; background-color: rgb(255, 255, 255);"><font face=3D"arial, helvetica=
+, sans-serif"><span style=3D"color: #000;" class=3D"styled-by-prettify"><br=
+></span></font></div><div class=3D"gmail_default" style=3D"font-family: ari=
+al, sans-serif; background-color: rgb(255, 255, 255);"><font face=3D"arial,=
+ helvetica, sans-serif"><span style=3D"color: #660;" class=3D"styled-by-pre=
+ttify">=3D&gt;</span><span style=3D"color: #000;" class=3D"styled-by-pretti=
+fy"> </span><span style=3D"color: #606;" class=3D"styled-by-prettify">Start=
+ed</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> proxy</=
+span><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><spa=
+n style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 </span></font></div><div class=3D"gmail_default" style=3D"font-family: =
+arial, sans-serif; background-color: rgb(255, 255, 255);"><font face=3D"ari=
+al, helvetica, sans-serif"><span style=3D"color: #660;" class=3D"styled-by-=
+prettify">=3D&gt;</span><span style=3D"color: #000;" class=3D"styled-by-pre=
+ttify"> </span><span style=3D"color: #606;" class=3D"styled-by-prettify">St=
+arted</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> </sp=
+an><span style=3D"color: #606;" class=3D"styled-by-prettify">MongoDB</span>=
+<span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><span sty=
+le=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 </span><=
+/font></div><div class=3D"gmail_default" style=3D"font-family: arial, sans-=
+serif; background-color: rgb(255, 255, 255);"><font face=3D"arial, helvetic=
+a, sans-serif"><span style=3D"color: #660;" class=3D"styled-by-prettify">=
+=3D&gt;</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> </=
+span><span style=3D"color: #606;" class=3D"styled-by-prettify">Started</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify"> your app</span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><span st=
+yle=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0</span></=
+font></div><div class=3D"gmail_default" style=3D"font-family: arial, sans-s=
+erif; background-color: rgb(255, 255, 255);"><font face=3D"arial, helvetica=
+, sans-serif"><span style=3D"color: #000;" class=3D"styled-by-prettify"><br=
+></span></font></div><div class=3D"gmail_default" style=3D"font-family: ari=
+al, sans-serif; background-color: rgb(255, 255, 255);"><font face=3D"arial,=
+ helvetica, sans-serif"><span style=3D"color: #660;" class=3D"styled-by-pre=
+ttify">=3D&gt;</span><span style=3D"color: #000;" class=3D"styled-by-pretti=
+fy"> </span><span style=3D"color: #606;" class=3D"styled-by-prettify">App</=
+span><span style=3D"color: #000;" class=3D"styled-by-prettify"> running at<=
+/span><span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><sp=
+an style=3D"color: #000;" class=3D"styled-by-prettify"> http</span><span st=
+yle=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D"co=
+lor: #800;" class=3D"styled-by-prettify">//localhost:3000/</span></font></d=
+iv></div></code></div><br><br></span></div><div>On the cluster I&#39;m gett=
+ing a permission denied error:</div><div><br></div><div><br></div><blockquo=
+te style=3D"margin: 0 0 0 40px; border: none; padding: 0px;"><div><div>Incr=
+easing verbosity level (6)</div></div><div><div>Ending argument loop</div><=
+/div><div><div>Singularity version: 2.3.1-dist</div></div><div><div>Exec&#3=
+9;ing: /usr/local/libexec/singularity/cli/run.exec</div></div><div><div>Eva=
+luating args: &#39;-B .meteor/local:/usr/local/mindcontrol/.meteor/local mi=
+ndcontrol.img&#39;</div></div><div><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =
+=C2=A0 =C2=A0message_init() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Set messagelevel to: 6<=
+/div></div><div><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singular=
+ity_config_parse() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0I=
+nitialize configuration file: /usr/local/etc/singularity/singularity.conf</=
+div></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0sing=
+ularity_config_parse() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0Starting parse of configuration file /usr/local/etc/singularity/singular=
+ity.conf</div></div><div><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=
+=A0singularity_config_parse() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0Got config key allow setuid =3D &#39;yes&#39;</div></div><div><di=
+v>VERBOSE [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_config_parse() =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Got config key max l=
+oop devices =3D &#39;256&#39;</div></div><div><div>VERBOSE [U=3D0,P=3D60628=
+] =C2=A0 =C2=A0 =C2=A0singularity_config_parse() =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Got config key allow pid ns =3D &#39;yes&#39=
+;</div></div><div><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singul=
+arity_config_parse() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0Got config key config passwd =3D &#39;yes&#39;</div></div><div><div>VERB=
+OSE [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_config_parse() =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Got config key config grou=
+p =3D &#39;yes&#39;</div></div><div><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =
+=C2=A0 =C2=A0singularity_config_parse() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0Got config key config resolv_conf =3D &#39;yes&#39;</di=
+v></div><div><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity=
+_config_parse() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Got =
+config key mount proc =3D &#39;yes&#39;</div></div><div><div>VERBOSE [U=3D0=
+,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_config_parse() =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Got config key mount sys =3D &#39;=
+yes&#39;</div></div><div><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=
+=A0singularity_config_parse() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0Got config key mount dev =3D &#39;yes&#39;</div></div><div><div>V=
+ERBOSE [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_config_parse() =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Got config key mount ho=
+me =3D &#39;yes&#39;</div></div><div><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =
+=C2=A0 =C2=A0singularity_config_parse() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0Got config key mount tmp =3D &#39;yes&#39;</div></div><=
+div><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_config_p=
+arse() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Got config ke=
+y mount hostfs =3D &#39;no&#39;</div></div><div><div>VERBOSE [U=3D0,P=3D606=
+28] =C2=A0 =C2=A0 =C2=A0singularity_config_parse() =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Got config key bind path =3D &#39;/etc/local=
+time&#39;</div></div><div><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=
+=A0singularity_config_parse() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0Got config key bind path =3D &#39;/etc/hosts&#39;</div></div><div=
+><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_config_pars=
+e() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Got config key u=
+ser bind control =3D &#39;yes&#39;</div></div><div><div>VERBOSE [U=3D0,P=3D=
+60628] =C2=A0 =C2=A0 =C2=A0singularity_config_parse() =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Got config key enable overlay =3D &#39;ye=
+s&#39;</div></div><div><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0s=
+ingularity_config_parse() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0Got config key mount slave =3D &#39;yes&#39;</div></div><div><div>VER=
+BOSE [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_config_parse() =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Got config key sessiond=
+ir max size =3D &#39;16&#39;</div></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D6=
+0628] =C2=A0 =C2=A0 =C2=A0singularity_config_parse() =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Finished parsing configuration file &#39;=
+/usr/local/etc/singularity/singularity.conf&#39;</div></div><div><div>VERBO=
+SE [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_registry_init() =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Initializing Singularity Registr=
+y</div></div><div><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singul=
+arity_registry_set() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0Adding value to registry: &#39;LIBEXECDIR&#39; =3D &#39;/usr/local/libex=
+ec&#39;</div></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =
+=C2=A0singularity_registry_set() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0Returning singularity_registry_set(libexecdir, /usr/local/libe=
+xec) =3D 0</div></div><div><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=
+=A0singularity_registry_set() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0Adding value to registry: &#39;COMMAND&#39; =3D &#39;run&#39;</di=
+v></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singul=
+arity_registry_set() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0Returning singularity_registry_set(COMMAND, run) =3D 0</div></div><div><=
+div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_registry_set(=
+) =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Adding value to re=
+gistry: &#39;MESSAGELEVEL&#39; =3D &#39;6&#39;</div></div><div><div>DEBUG =
+=C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_registry_set() =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Returning singularity_r=
+egistry_set(MESSAGELEVEL, 6) =3D 0</div></div><div><div>VERBOSE [U=3D0,P=3D=
+60628] =C2=A0 =C2=A0 =C2=A0singularity_registry_set() =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Adding value to registry: &#39;VERSION&#3=
+9; =3D &#39;2.3.1-dist&#39;</div></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60=
+628] =C2=A0 =C2=A0 =C2=A0singularity_registry_set() =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Returning singularity_registry_set(versio=
+n, 2.3.1-dist) =3D 0</div></div><div><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =
+=C2=A0 =C2=A0singularity_registry_set() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0Adding value to registry: &#39;LOCALSTATEDIR&#39; =3D &=
+#39;/usr/local/var&#39;</div></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628]=
+ =C2=A0 =C2=A0 =C2=A0singularity_registry_set() =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0Returning singularity_registry_set(localstatedi=
+r, /usr/local/var) =3D 0</div></div><div><div>VERBOSE [U=3D0,P=3D60628] =C2=
+=A0 =C2=A0 =C2=A0singularity_registry_set() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0Adding value to registry: &#39;SYSCONFDIR&#39; =3D =
+&#39;/usr/local/etc&#39;</div></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628=
+] =C2=A0 =C2=A0 =C2=A0singularity_registry_set() =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Returning singularity_registry_set(sysconfdi=
+r, /usr/local/etc) =3D 0</div></div><div><div>VERBOSE [U=3D0,P=3D60628] =C2=
+=A0 =C2=A0 =C2=A0singularity_registry_set() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0Adding value to registry: &#39;BINDPATH&#39; =3D &#=
+39;,.meteor/local:/usr/local/mindcontrol/.meteor/local&#39;</div></div><div=
+><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_regist=
+ry_set() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Returning s=
+ingularity_registry_set(BINDPATH, ,.meteor/local:/usr/local/mindcontrol/.me=
+teor/local) =3D 0</div></div><div><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =C2=
+=A0 =C2=A0singularity_registry_set() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0Adding value to registry: &#39;BINDIR&#39; =3D &#39;/usr/l=
+ocal/bin&#39;</div></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =
+=C2=A0 =C2=A0singularity_registry_set() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0Returning singularity_registry_set(bindir, /usr/local/b=
+in) =3D 0</div></div><div><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=
+=A0singularity_registry_set() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0Adding value to registry: &#39;IMAGE&#39; =3D &#39;mindcontrol.im=
+g&#39;</div></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =
+=C2=A0singularity_registry_set() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0Returning singularity_registry_set(IMAGE, mindcontrol.img) =3D=
+ 0</div></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0=
+singularity_registry_get() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0Returning NULL on &#39;HOME&#39;</div></div><div><div>DEBUG =C2=A0 [=
+U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_registry_get() =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Returning NULL on &#39;TARGET_=
+UID&#39;</div></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =
+=C2=A0singularity_registry_get() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0Returning NULL on &#39;TARGET_GID&#39;</div></div><div><div>DE=
+BUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_priv_init() =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Initializing=
+ user info</div></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=
+=A0 =C2=A0singularity_priv_init() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 Set the calling user&#39;s username to: p158-uxscti</=
+div></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0sing=
+ularity_priv_init() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 Marking uinfo structure as ready</div></div><div><div>DEBUG =C2=A0 =
+[U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_priv_init() =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Obtaining home directory<=
+/div></div><div><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singular=
+ity_priv_init() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 Set home (via getpwuid()) to: /tsd/p158/home/p158-uxscti</div></div><di=
+v><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_suid_init(=
+) =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Running SU=
+ID program workflow</div></div><div><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =
+=C2=A0 =C2=A0singularity_suid_init() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 Checking program has appropriate permissions</div>=
+</div><div><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_s=
+uid_init() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 C=
+hecking configuration file is properly owned by root</div></div><div><div>V=
+ERBOSE [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_suid_init() =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Checking if singul=
+arity.conf allows us to run as suid</div></div><div><div>DEBUG =C2=A0 [U=3D=
+0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_config_get_bool_char_impl() =
+=C2=A0 Called singularity_config_get_bool(allow setuid, yes)</div></div><di=
+v><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_confi=
+g_get_value_impl() =C2=A0 =C2=A0 =C2=A0 Returning configuration value allow=
+ setuid=3D&#39;yes&#39;</div></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628]=
+ =C2=A0 =C2=A0 =C2=A0singularity_config_get_bool_char_impl() =C2=A0 Return =
+singularity_config_get_bool(allow setuid, yes) =3D 1</div></div><div><div>D=
+EBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_registry_get(=
+) =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Returning NULL on =
+&#39;NOSUID&#39;</div></div><div><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =C2=
+=A0 =C2=A0singularity_priv_userns() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 Invoking the user namespace</div></div><div><div>DEBUG =
+=C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_config_get_bool_ch=
+ar_impl() =C2=A0 Called singularity_config_get_bool(allow user ns, yes)</di=
+v></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singul=
+arity_config_get_value_impl() =C2=A0 =C2=A0 =C2=A0 No configuration entry f=
+ound for &#39;allow user ns&#39;; returning default value &#39;yes&#39;</di=
+v></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singul=
+arity_config_get_bool_char_impl() =C2=A0 Return singularity_config_get_bool=
+(allow user ns, yes) =3D 1</div></div><div><div>VERBOSE [U=3D0,P=3D60628] =
+=C2=A0 =C2=A0 =C2=A0singularity_priv_userns() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 Not virtualizing USER namespace: running as SUI=
+D</div></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0s=
+ingularity_priv_userns() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 Returning singularity_priv_init(void)</div></div><div><div>DEBUG =C2=
+=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_priv_drop() =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Dropping privileges=
+ to UID=3D1947, GID=3D2712 (5 supplementary GIDs)</div></div><div><div>DEBU=
+G =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_priv_drop() =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Restoring suppl=
+ementary groups</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=
+=A0 singularity_priv_drop() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 Confirming we have correct UID/GID</div></div><div><div>D=
+EBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_registry_get() =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Returning NULL on &#39;CLEA=
+NUPDIR&#39;</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 s=
+ingularity_registry_get() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0Returning NULL on &#39;NOSESSIONCLEANUP&#39;</div></div><div><div>DEB=
+UG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_registry_get() =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Returning NULL on &#39;NOCLEAN=
+UP&#39;</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singu=
+larity_cleanupd() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0Not running a cleanup thread, no &#39;SINGULARITY_CLEANUPDIR&#=
+39; defined</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 s=
+ingularity_runtime_ns() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0Calling: _singularity_runtime_ns_pid()</div></div><div><div>DE=
+BUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_config_get_bool_char_imp=
+l() =C2=A0 Called singularity_config_get_bool(allow pid ns, yes)</div></div=
+><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_config_get_=
+value_impl() =C2=A0 =C2=A0 =C2=A0 Returning configuration value allow pid n=
+s=3D&#39;yes&#39;</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =
+=C2=A0 singularity_config_get_bool_char_impl() =C2=A0 Return singularity_co=
+nfig_get_bool(allow pid ns, yes) =3D 1</div></div><div><div>DEBUG =C2=A0 [U=
+=3D1947,P=3D60628] =C2=A0 singularity_registry_get() =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Returning NULL on &#39;UNSHARE_PID&#39;</=
+div></div><div><div>VERBOSE [U=3D1947,P=3D60628] =C2=A0 singularity_runtime=
+_ns_pid() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Not virtualizing =
+PID namespace on user request</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=
+=3D60628] =C2=A0 singularity_runtime_ns() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Calling: _singularity_runtime_ns_ipc()</div>=
+</div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_config=
+_get_bool_char_impl() =C2=A0 Called singularity_config_get_bool(allow ipc n=
+s, yes)</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singu=
+larity_config_get_value_impl() =C2=A0 =C2=A0 =C2=A0 No configuration entry =
+found for &#39;allow ipc ns&#39;; returning default value &#39;yes&#39;</di=
+v></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_conf=
+ig_get_bool_char_impl() =C2=A0 Return singularity_config_get_bool(allow ipc=
+ ns, yes) =3D 1</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=
+=A0 singularity_registry_get() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0Returning NULL on &#39;UNSHARE_IPC&#39;</div></div><div><div>V=
+ERBOSE [U=3D1947,P=3D60628] =C2=A0 singularity_runtime_ns_ipc() =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Not virtualizing IPC namespace on use=
+r request</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 sin=
+gularity_runtime_ns() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0Calling: _singularity_runtime_ns_mnt()</div></div><div><div>DEBUG=
+ =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_config_get_bool_char_impl()=
+ =C2=A0 Called singularity_config_get_bool(mount slave, yes)</div></div><di=
+v><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_config_get_valu=
+e_impl() =C2=A0 =C2=A0 =C2=A0 Returning configuration value mount slave=3D&=
+#39;yes&#39;</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 =
+singularity_config_get_bool_char_impl() =C2=A0 Return singularity_config_ge=
+t_bool(mount slave, yes) =3D 1</div></div><div><div>DEBUG =C2=A0 [U=3D1947,=
+P=3D60628] =C2=A0 singularity_priv_escalate() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 Temporarily escalating privileges (U=3D1947)</div></di=
+v><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_=
+priv_escalate() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Clearing s=
+upplementary GIDs.</div></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=
+=A0 =C2=A0 =C2=A0singularity_runtime_ns_mnt() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0Virtualizing FS namespace</div></div><div><div>DEBUG =
+=C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_runtime_ns_mnt() =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Virtualizing mount namespac=
+e</div></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0s=
+ingularity_runtime_ns_mnt() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0Making mounts slave</div></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =
+=C2=A0 =C2=A0 =C2=A0singularity_priv_drop() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Dropping privileges to UID=3D1947, GID=3D27=
+12 (5 supplementary GIDs)</div></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D6062=
+8] =C2=A0 =C2=A0 =C2=A0singularity_priv_drop() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Restoring supplementary groups</div></di=
+v><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_priv_drop(=
+) =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Confirming=
+ we have correct UID/GID</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60=
+628] =C2=A0 singularity_sessiondir() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0Setting sessiondir</div></div><div><div>VERBOSE [U=
+=3D1947,P=3D60628] =C2=A0 singularity_sessiondir() =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Using session directory: /usr/local/v=
+ar/singularity/mnt/session</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D=
+60628] =C2=A0 singularity_sessiondir() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0Checking for session directory: /usr/local/var/s=
+ingularity/mnt/session</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D6062=
+8] =C2=A0 singularity_sessiondir() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0Obtaining the default sessiondir size</div></div><d=
+iv><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_config_get_val=
+ue_impl() =C2=A0 =C2=A0 =C2=A0 Returning configuration value sessiondir max=
+ size=3D&#39;16&#39;</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628]=
+ =C2=A0 singularity_sessiondir() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0Converted sessiondir size to: 16</div></div><div><div>D=
+EBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_sessiondir() =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Creating the sessiondir=
+ size mount option length</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D6=
+0628] =C2=A0 singularity_sessiondir() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0Got size length of: 9</div></div><div><div>DEBUG=
+ =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_sessiondir() =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Creating the sessiondir siz=
+e mount option string</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628=
+] =C2=A0 singularity_sessiondir() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0Checking to make sure the string was allocated correct=
+ly</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularit=
+y_priv_escalate() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Temporar=
+ily escalating privileges (U=3D1947)</div></div><div><div>DEBUG =C2=A0 [U=
+=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_priv_escalate() =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Clearing supplementary GIDs.</div></=
+div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularit=
+y_sessiondir() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0Mounting sessiondir tmpfs: /usr/local/var/singularity/mnt/session</div><=
+/div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singulari=
+ty_priv_drop() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 Dropping privileges to UID=3D1947, GID=3D2712 (5 supplementary GIDs)</d=
+iv></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singu=
+larity_priv_drop() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 Restoring supplementary groups</div></div><div><div>DEBUG =C2=A0 [U=
+=3D1947,P=3D60628] =C2=A0 singularity_priv_drop() =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Confirming we have correct UID/GID</=
+div></div><div><div>VERBOSE [U=3D1947,P=3D60628] =C2=A0 singularity_registr=
+y_set() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Adding value=
+ to registry: &#39;SESSIONDIR&#39; =3D &#39;/usr/local/var/singularity/mnt/=
+session&#39;</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 =
+singularity_registry_set() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0Returning singularity_registry_set(SESSIONDIR, /usr/local/var/singul=
+arity/mnt/session) =3D 0</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60=
+628] =C2=A0 singularity_registry_get() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0Returning value from registry: &#39;IMAGE&#39; =3D &#39=
+;mindcontrol.img&#39;</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628=
+] =C2=A0 singularity_registry_get() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0Returning NULL on &#39;WRITABLE&#39;</div></div><div><div>=
+DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_config_get_value_impl(=
+) =C2=A0 =C2=A0 =C2=A0 No configuration entry found for &#39;limit containe=
+r owners&#39;; returning default value &#39;NULL&#39;</div></div><div><div>=
+DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_config_get_value_impl(=
+) =C2=A0 =C2=A0 =C2=A0 No configuration entry found for &#39;limit containe=
+r paths&#39;; returning default value &#39;NULL&#39;</div></div><div><div>D=
+EBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_image_open() =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Opening file descriptor=
+ to image: mindcontrol.img</div></div><div><div>VERBOSE [U=3D1947,P=3D60628=
+] =C2=A0 singularity_image_check() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 Checking what kind of image we are mounting</div></div><d=
+iv><div>VERBOSE [U=3D1947,P=3D60628] =C2=A0 singularity_image_check_image()=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Checking that file pointer is a Singula=
+rity image</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 si=
+ngularity_image_check_image() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 First line=
+ of image(fd=3D4): #!/usr/bin/env run-singularity</div></div><div><div><br>=
+</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_=
+image_check_image() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Checking if first li=
+ne matches key</div></div><div><div>VERBOSE [U=3D1947,P=3D60628] =C2=A0 sin=
+gularity_image_check_image() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 File is a v=
+alid Singularity image</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D6062=
+8] =C2=A0 singularity_config_get_value_impl() =C2=A0 =C2=A0 =C2=A0 Returnin=
+g configuration value max loop devices=3D&#39;256&#39;</div></div><div><div=
+>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_image_bind() =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Entered singularity_=
+image_bind()</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 =
+singularity_image_bind() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0Converting max_loop_devs_string to int: &#39;256&#39;</div></d=
+iv><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_image_bin=
+d() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Converted=
+ max_loop_devs_string to int: &#39;256&#39; -&gt; 256</div></div><div><div>=
+DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_image_bind() =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Checking if this ima=
+ge has been properly opened</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=
+=3D60628] =C2=A0 singularity_image_bind() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Checking if image is valid file</div></div><=
+div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_image_bind() =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Checking if i=
+mage is already bound to a loop device</div></div><div><div>DEBUG =C2=A0 [U=
+=3D1947,P=3D60628] =C2=A0 singularity_registry_get() =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Returning NULL on &#39;WRITABLE&#39;</div=
+></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_image=
+_bind() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Setti=
+ng loopdev open to: O_RDONLY</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=
+=3D60628] =C2=A0 singularity_image_bind() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Setting LO_FLAGS_AUTOCLEAR</div></div><div><=
+div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_image_bind() =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Calculating imag=
+e offset</div></div><div><div>VERBOSE [U=3D1947,P=3D60628] =C2=A0 singulari=
+ty_image_check() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Ch=
+ecking what kind of image we are mounting</div></div><div><div>VERBOSE [U=
+=3D1947,P=3D60628] =C2=A0 singularity_image_check_image() =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 Checking that file pointer is a Singularity image</div></=
+div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_image_ch=
+eck_image() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 First line of image(fd=3D4):=
+ #!/usr/bin/env run-singularity</div></div><div><div><br></div></div><div><=
+div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_image_check_image(=
+) =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Checking if first line matches key</di=
+v></div><div><div>VERBOSE [U=3D1947,P=3D60628] =C2=A0 singularity_image_che=
+ck_image() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 File is a valid Singularity i=
+mage</div></div><div><div>VERBOSE [U=3D1947,P=3D60628] =C2=A0 singularity_i=
+mage_offset() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Calcul=
+ating image offset</div></div><div><div>VERBOSE [U=3D1947,P=3D60628] =C2=A0=
+ singularity_image_offset() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0Found image at an offset of 31 bytes</div></div><div><div>DEBUG =
+=C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_image_offset() =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Returning image_offset(image_fp) =
+=3D 31</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singul=
+arity_priv_escalate() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Temp=
+orarily escalating privileges (U=3D1947)</div></div><div><div>DEBUG =C2=A0 =
+[U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_priv_escalate() =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Clearing supplementary GIDs.</div=
+></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singula=
+rity_image_bind() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0Finding next available loop device...</div></div><div><div>VERBOSE [U=
+=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_image_bind() =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Found available loop device=
+: /dev/loop0</div></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=
+=A0 =C2=A0singularity_image_bind() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0Setting loop device flags</div></div><div><div>DEBU=
+G =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_priv_drop() =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Dropping privil=
+eges to UID=3D1947, GID=3D2712 (5 supplementary GIDs)</div></div><div><div>=
+DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_priv_drop() =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Restoring su=
+pplementary groups</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =
+=C2=A0 singularity_priv_drop() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 Confirming we have correct UID/GID</div></div><div><di=
+v>VERBOSE [U=3D1947,P=3D60628] =C2=A0 singularity_image_bind() =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Using loop device: /dev=
+/loop0</div></div><div><div>VERBOSE [U=3D1947,P=3D60628] =C2=A0 singularity=
+_runtime_rootfs() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Set conta=
+iner directory to: /usr/local/var/singularity/mnt/container</div></div><div=
+><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_runtime_rootfs()=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Checking for container dir=
+ectory</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singul=
+arity_runtime_rootfs() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Retu=
+rning container_directory: /usr/local/var/singularity/mnt/container</div></=
+div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 chk_mode() =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Checking exact mode (40755) on: /usr/local/v=
+ar/singularity/mnt/container</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=
+=3D60628] =C2=A0 chk_mode() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Found app=
+ropriate mode on file: /usr/local/var/singularity/mnt/container</div></div>=
+<div><div>VERBOSE [U=3D1947,P=3D60628] =C2=A0 singularity_image_mount() =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Checking what kind of =
+image we are mounting</div></div><div><div>VERBOSE [U=3D1947,P=3D60628] =C2=
+=A0 singularity_image_mount() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 Attempting to mount as singularity image</div></div><div><div>DE=
+BUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_registry_get() =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Returning NULL on &#39;WRIT=
+ABLE&#39;</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 sin=
+gularity_priv_escalate() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 T=
+emporarily escalating privileges (U=3D1947)</div></div><div><div>DEBUG =C2=
+=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_priv_escalate() =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Clearing supplementary GIDs.<=
+/div></div><div><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singular=
+ity_image_mount_image_mount() =C2=A0 =C2=A0 Mounting /dev/loop0 in read/onl=
+y to: /usr/local/var/singularity/mnt/container</div></div><div><div>DEBUG =
+=C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_priv_drop() =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Dropping privilege=
+s to UID=3D1947, GID=3D2712 (5 supplementary GIDs)</div></div><div><div>DEB=
+UG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_priv_drop() =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Restoring suppl=
+ementary groups</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=
+=A0 singularity_priv_drop() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 Confirming we have correct UID/GID</div></div><div><div>D=
+EBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_runtime_rootfs() =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Returning container_directory: /u=
+sr/local/var/singularity/mnt/container</div></div><div><div>DEBUG =C2=A0 [U=
+=3D1947,P=3D60628] =C2=A0 action_ready() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Checking if =
+container is valid at: /usr/local/var/singularity/mnt/container</div></div>=
+<div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_runtime_root=
+fs() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Returning container_di=
+rectory: /usr/local/var/singularity/mnt/container</div></div><div><div>DEBU=
+G =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_runtime_overlayfs() =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 Checking if overlayfs should be used</div></di=
+v><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_config_get=
+_bool_char_impl() =C2=A0 Called singularity_config_get_bool(enable overlay,=
+ yes)</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singula=
+rity_config_get_value_impl() =C2=A0 =C2=A0 =C2=A0 Returning configuration v=
+alue enable overlay=3D&#39;yes&#39;</div></div><div><div>DEBUG =C2=A0 [U=3D=
+1947,P=3D60628] =C2=A0 singularity_config_get_bool_char_impl() =C2=A0 Retur=
+n singularity_config_get_bool(enable overlay, yes) =3D 1</div></div><div><d=
+iv>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_registry_get() =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Returning NULL on &#39;=
+DISABLE_OVERLAYFS&#39;</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D6062=
+8] =C2=A0 singularity_registry_get() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0Returning NULL on &#39;WRITABLE&#39;</div></div><div><div>=
+VERBOSE [U=3D1947,P=3D60628] =C2=A0 singularity_runtime_overlayfs() =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 OverlayFS not supported by host build</div></di=
+v><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_runtime_ro=
+otfs() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Returning container_=
+directory: /usr/local/var/singularity/mnt/container</div></div><div><div>VE=
+RBOSE [U=3D1947,P=3D60628] =C2=A0 singularity_runtime_mounts() =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Running all mount components</div></d=
+iv><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_runtime_r=
+ootfs() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Returning container=
+_directory: /usr/local/var/singularity/mnt/container</div></div><div><div>D=
+EBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_config_get_bool_char_im=
+pl() =C2=A0 Called singularity_config_get_bool(mount hostfs, no)</div></div=
+><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_config_get_=
+value_impl() =C2=A0 =C2=A0 =C2=A0 Returning configuration value mount hostf=
+s=3D&#39;no&#39;</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=
+=A0 singularity_config_get_bool_char_impl() =C2=A0 Return singularity_confi=
+g_get_bool(mount hostfs, no) =3D 0</div></div><div><div>DEBUG =C2=A0 [U=3D1=
+947,P=3D60628] =C2=A0 singularity_runtime_mount_hostfs() =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0Not mounting host file systems per configuration</div></div><div>=
+<div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_runtime_rootfs() =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Returning container_directo=
+ry: /usr/local/var/singularity/mnt/container</div></div><div><div>DEBUG =C2=
+=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_registry_get() =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Returning NULL on &#39;CONTAIN&#39=
+;</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity=
+_runtime_mount_binds() =C2=A0 =C2=A0 =C2=A0 =C2=A0 Checking configuration f=
+ile for &#39;bind path&#39;</div></div><div><div>VERBOSE [U=3D1947,P=3D6062=
+8] =C2=A0 singularity_runtime_mount_binds() =C2=A0 =C2=A0 =C2=A0 =C2=A0 Fou=
+nd &#39;bind path&#39; =3D /etc/localtime, /etc/localtime</div></div><div><=
+div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_runtime_mount_bind=
+s() =C2=A0 =C2=A0 =C2=A0 =C2=A0 Checking if bind point is already mounted: =
+/etc/localtime</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=
+=A0 singularity_runtime_rootfs() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0Returning container_directory: /usr/local/var/singularity/mnt/contain=
+er</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 check_moun=
+ted() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 Opening /proc/mounts</div></div><div><div>DEBUG =C2=
+=A0 [U=3D1947,P=3D60628] =C2=A0 check_mounted() =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Iterating t=
+hrough /proc/mounts</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =
+=C2=A0 singularity_priv_escalate() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 Temporarily escalating privileges (U=3D1947)</div></div><div><di=
+v>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_priv_escal=
+ate() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Clearing supplementa=
+ry GIDs.</div></div><div><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=
+=A0singularity_runtime_mount_binds() =C2=A0 =C2=A0 =C2=A0 =C2=A0 Binding &#=
+39;/etc/localtime&#39; to &#39;/usr/local/var/singularity/mnt/container//et=
+c/localtime&#39;</div></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0=
+ =C2=A0 =C2=A0singularity_priv_drop() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 Dropping privileges to UID=3D1947, GID=3D2712 (=
+5 supplementary GIDs)</div></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =
+=C2=A0 =C2=A0 =C2=A0singularity_priv_drop() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Restoring supplementary groups</div></div><=
+div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_priv_drop() =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Confirming w=
+e have correct UID/GID</div></div><div><div>VERBOSE [U=3D1947,P=3D60628] =
+=C2=A0 singularity_runtime_mount_binds() =C2=A0 =C2=A0 =C2=A0 =C2=A0 Found =
+&#39;bind path&#39; =3D /etc/hosts, /etc/hosts</div></div><div><div>DEBUG =
+=C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_runtime_mount_binds() =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 Checking if bind point is already mounted: /etc/hosts=
+</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_=
+runtime_rootfs() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Returning =
+container_directory: /usr/local/var/singularity/mnt/container</div></div><d=
+iv><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 check_mounted() =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 Opening /proc/mounts</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=
+=3D60628] =C2=A0 check_mounted() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Iterating through /proc/mo=
+unts</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singular=
+ity_priv_escalate() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Tempor=
+arily escalating privileges (U=3D1947)</div></div><div><div>DEBUG =C2=A0 [U=
+=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_priv_escalate() =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Clearing supplementary GIDs.</div></=
+div><div><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_run=
+time_mount_binds() =C2=A0 =C2=A0 =C2=A0 =C2=A0 Binding &#39;/etc/hosts&#39;=
+ to &#39;/usr/local/var/singularity/mnt/container//etc/hosts&#39;</div></di=
+v><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_=
+priv_drop() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+Dropping privileges to UID=3D1947, GID=3D2712 (5 supplementary GIDs)</div><=
+/div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singulari=
+ty_priv_drop() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 Restoring supplementary groups</div></div><div><div>DEBUG =C2=A0 [U=3D1=
+947,P=3D60628] =C2=A0 singularity_priv_drop() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Confirming we have correct UID/GID</div>=
+</div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_runtim=
+e_rootfs() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Returning contai=
+ner_directory: /usr/local/var/singularity/mnt/container</div></div><div><di=
+v>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_runtime_mount_kernel=
+fs() =C2=A0 =C2=A0 =C2=A0Checking configuration file for &#39;mount proc&#3=
+9;</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularit=
+y_config_get_bool_char_impl() =C2=A0 Called singularity_config_get_bool(mou=
+nt proc, yes)</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0=
+ singularity_config_get_value_impl() =C2=A0 =C2=A0 =C2=A0 Returning configu=
+ration value mount proc=3D&#39;yes&#39;</div></div><div><div>DEBUG =C2=A0 [=
+U=3D1947,P=3D60628] =C2=A0 singularity_config_get_bool_char_impl() =C2=A0 R=
+eturn singularity_config_get_bool(mount proc, yes) =3D 1</div></div><div><d=
+iv>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_registry_get() =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Returning NULL on &#39;=
+PIDNS_ENABLED&#39;</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =
+=C2=A0 singularity_priv_escalate() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 Temporarily escalating privileges (U=3D1947)</div></div><div><di=
+v>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_priv_escal=
+ate() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Clearing supplementa=
+ry GIDs.</div></div><div><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=
+=A0singularity_runtime_mount_kernelfs() =C2=A0 =C2=A0 =C2=A0Bind-mounting h=
+ost /proc</div></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0=
+ =C2=A0singularity_priv_drop() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 Dropping privileges to UID=3D1947, GID=3D2712 (5 suppl=
+ementary GIDs)</div></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =
+=C2=A0 =C2=A0singularity_priv_drop() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 Restoring supplementary groups</div></div><div><di=
+v>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_priv_drop() =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Confirming we have =
+correct UID/GID</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=
+=A0 singularity_runtime_mount_kernelfs() =C2=A0 =C2=A0 =C2=A0Checking confi=
+guration file for &#39;mount sys&#39;</div></div><div><div>DEBUG =C2=A0 [U=
+=3D1947,P=3D60628] =C2=A0 singularity_config_get_bool_char_impl() =C2=A0 Ca=
+lled singularity_config_get_bool(mount sys, yes)</div></div><div><div>DEBUG=
+ =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_config_get_value_impl() =C2=
+=A0 =C2=A0 =C2=A0 Returning configuration value mount sys=3D&#39;yes&#39;</=
+div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_co=
+nfig_get_bool_char_impl() =C2=A0 Return singularity_config_get_bool(mount s=
+ys, yes) =3D 1</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=
+=A0 singularity_priv_escalate() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 Temporarily escalating privileges (U=3D1947)</div></div><div><div>DE=
+BUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_priv_escalate(=
+) =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Clearing supplementary G=
+IDs.</div></div><div><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0sin=
+gularity_runtime_mount_kernelfs() =C2=A0 =C2=A0 =C2=A0Mounting /sys</div></=
+div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularit=
+y_priv_drop() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 Dropping privileges to UID=3D1947, GID=3D2712 (5 supplementary GIDs)</d=
+iv></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singu=
+larity_priv_drop() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 Restoring supplementary groups</div></div><div><div>DEBUG =C2=A0 [U=
+=3D1947,P=3D60628] =C2=A0 singularity_priv_drop() =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Confirming we have correct UID/GID</=
+div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_ru=
+ntime_rootfs() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Returning co=
+ntainer_directory: /usr/local/var/singularity/mnt/container</div></div><div=
+><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_registry_get() =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Returning NULL on &#=
+39;CONTAIN&#39;</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=
+=A0 singularity_config_get_value_impl() =C2=A0 =C2=A0 =C2=A0 Returning conf=
+iguration value mount dev=3D&#39;yes&#39;</div></div><div><div>DEBUG =C2=A0=
+ [U=3D1947,P=3D60628] =C2=A0 singularity_runtime_mount_dev() =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 Checking configuration file for &#39;mount dev&#39;</d=
+iv></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_con=
+fig_get_bool_char_impl() =C2=A0 Called singularity_config_get_bool(mount de=
+v, yes)</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singu=
+larity_config_get_value_impl() =C2=A0 =C2=A0 =C2=A0 Returning configuration=
+ value mount dev=3D&#39;yes&#39;</div></div><div><div>DEBUG =C2=A0 [U=3D194=
+7,P=3D60628] =C2=A0 singularity_config_get_bool_char_impl() =C2=A0 Return s=
+ingularity_config_get_bool(mount dev, yes) =3D 1</div></div><div><div>DEBUG=
+ =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_priv_escalate() =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Temporarily escalating privileges (U=
+=3D1947)</div></div><div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =
+=C2=A0singularity_priv_escalate() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 Clearing supplementary GIDs.</div></div><div><div>VERBOSE [U=3D0,P=
+=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_runtime_mount_dev() =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 Bind mounting /dev</div></div><div><div>DEBUG =C2=A0 =
+[U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_priv_drop() =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Dropping privileges to UI=
+D=3D1947, GID=3D2712 (5 supplementary GIDs)</div></div><div><div>DEBUG =C2=
+=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_priv_drop() =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Restoring supplemen=
+tary groups</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 s=
+ingularity_priv_drop() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 Confirming we have correct UID/GID</div></div><div><div>DEBUG =
+=C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_runtime_rootfs() =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Returning container_directory: /usr/l=
+ocal/var/singularity/mnt/container</div></div><div><div>DEBUG =C2=A0 [U=3D1=
+947,P=3D60628] =C2=A0 singularity_config_get_bool_char_impl() =C2=A0 Called=
+ singularity_config_get_bool(mount home, yes)</div></div><div><div>DEBUG =
+=C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_config_get_value_impl() =C2=
+=A0 =C2=A0 =C2=A0 Returning configuration value mount home=3D&#39;yes&#39;<=
+/div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_c=
+onfig_get_bool_char_impl() =C2=A0 Return singularity_config_get_bool(mount =
+home, yes) =3D 1</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=
+=A0 singularity_runtime_mount_home() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Chec=
+king that home directry is configured: /tsd/p158/home/p158-uxscti</div></di=
+v><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_runtime_mo=
+unt_home() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Checking if SINGULARITY_CONTAI=
+N is set</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 sing=
+ularity_registry_get() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0Returning NULL on &#39;CONTAIN&#39;</div></div><div><div>DEBUG =C2=A0 [U=
+=3D1947,P=3D60628] =C2=A0 singularity_runtime_mount_home() =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0Checking if home directories are being influenced by us=
+er</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularit=
+y_registry_get() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Ret=
+urning NULL on &#39;HOME&#39;</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=
+=3D60628] =C2=A0 singularity_runtime_mount_home() =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0Checking ownership of home directory source: /tsd/p158/home/p158-=
+uxscti</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singul=
+arity_runtime_mount_home() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Checking to ma=
+ke sure home directory destination is a full path: /tsd/p158/home/p158-uxsc=
+ti</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularit=
+y_runtime_mount_home() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Checking if home d=
+irectory is already mounted: /tsd/p158/home/p158-uxscti</div></div><div><di=
+v>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_runtime_rootfs() =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Returning container_directory:=
+ /usr/local/var/singularity/mnt/container</div></div><div><div>DEBUG =C2=A0=
+ [U=3D1947,P=3D60628] =C2=A0 check_mounted() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Opening /pro=
+c/mounts</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 chec=
+k_mounted() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 Iterating through /proc/mounts</div></div><div>=
+<div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_runtime_mount_hom=
+e() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Checking if overlay is enabled</div><=
+/div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_runtime=
+_mount_home() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Staging home directory</div=
+></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_runti=
+me_mount_home() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Checking if sessiondir/tm=
+pdir is set</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 s=
+ingularity_registry_get() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0Returning value from registry: &#39;SESSIONDIR&#39; =3D &#39;/usr/loc=
+al/var/singularity/mnt/session&#39;</div></div><div><div>DEBUG =C2=A0 [U=3D=
+1947,P=3D60628] =C2=A0 singularity_runtime_mount_home() =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0Identifying the base home directory: /tsd/p158/home/p158-u=
+xscti</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 basedir=
+() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Obtaining basedir for: /tsd/p158/=
+home/p158-uxscti</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=
+=A0 basedir() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Iterating basedir: /ts=
+d/p158/home/p158-uxscti</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D606=
+28] =C2=A0 basedir() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Iterating based=
+ir: /tsd/p158/home</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =
+=C2=A0 basedir() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Iterating basedir: =
+/tsd/p158</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 bas=
+edir() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Iterating basedir: /tsd</div>=
+</div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 singularity_runtim=
+e_mount_home() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Checking home directory ba=
+se exists in container: /tsd</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=
+=3D60628] =C2=A0 singularity_runtime_mount_home() =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0Creating temporary directory to stage home: /usr/local/var/singul=
+arity/mnt/session/tsd/p158/home/p158-uxscti</div></div><div><div>DEBUG =C2=
+=A0 [U=3D1947,P=3D60628] =C2=A0 s_mkpath() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0Creating directory: /usr/local/var/singularity/mnt/session/tsd</div><=
+/div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 s_mkpath() =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Creating directory: /usr/local/var/singulari=
+ty/mnt/session/tsd/p158</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D606=
+28] =C2=A0 s_mkpath() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Creating directo=
+ry: /usr/local/var/singularity/mnt/session/tsd/p158/home</div></div><div><d=
+iv>DEBUG =C2=A0 [U=3D1947,P=3D60628] =C2=A0 s_mkpath() =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0Creating directory: /usr/local/var/singularity/mnt/session=
+/tsd/p158/home/p158-uxscti</div></div><div><div>DEBUG =C2=A0 [U=3D1947,P=3D=
+60628] =C2=A0 singularity_priv_escalate() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 Temporarily escalating privileges (U=3D1947)</div></div><=
+div><div>DEBUG =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_pri=
+v_escalate() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Clearing supp=
+lementary GIDs.</div></div><div><div>VERBOSE [U=3D0,P=3D60628] =C2=A0 =C2=
+=A0 =C2=A0singularity_runtime_mount_home() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0Mounting home directory source to stage: /tsd/p158/home/p158-uxscti -&gt=
+; /usr/local/var/singularity/mnt/session/tsd/p158/home/p158-uxscti</div></d=
+iv><div><div>ERROR =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity=
+_runtime_mount_home() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Failed to mount hom=
+e directory /tsd/p158/home/p158-uxscti -&gt; /usr/local/var/singularity/mnt=
+/session/tsd/p158/home/p158-uxscti: Permission denied</div></div><div><div>=
+ABORT =C2=A0 [U=3D0,P=3D60628] =C2=A0 =C2=A0 =C2=A0singularity_runtime_moun=
+t_home() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Retval =3D 255</div></div></bloc=
+kquote><div><br></div><blockquote class=3D"gmail_quote" style=3D"margin: 0p=
+x 0px 0px 0.8ex; border-left: 1px solid rgb(204, 204, 204); padding-left: 1=
+ex;"></blockquote>Is there any obvious reason for this?<br><blockquote clas=
+s=3D"gmail_quote" style=3D"margin: 0px 0px 0px 0.8ex; border-left: 1px soli=
+d rgb(204, 204, 204); padding-left: 1ex;"><blockquote></blockquote></blockq=
+uote>Thanks,<br>Till<div><br><br></div><div><br></div><br>On Tuesday, June =
+27, 2017 at 3:21:33 PM UTC-7, Martin Cuma wrote:<blockquote class=3D"gmail_=
+quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;pa=
+dding-left: 1ex;"><div dir=3D"ltr">Till,<br><br>you can try to do the users=
+pace installation in the %runscript section on the container&#39;s first in=
+vocation, as done here:<br><br><a href=3D"https://github.com/CHPC-UofU/Sing=
+ularity-ubuntu-wine-peakselector" target=3D"_blank" rel=3D"nofollow" onmous=
+edown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgit=
+hub.com%2FCHPC-UofU%2FSingularity-ubuntu-wine-peakselector\x26sa\x3dD\x26sn=
+tz\x3d1\x26usg\x3dAFQjCNEyQbhD_WVMezMW03PTC3bW1zkgLw&#39;;return true;" onc=
+lick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgith=
+ub.com%2FCHPC-UofU%2FSingularity-ubuntu-wine-peakselector\x26sa\x3dD\x26snt=
+z\x3d1\x26usg\x3dAFQjCNEyQbhD_WVMezMW03PTC3bW1zkgLw&#39;;return true;">http=
+s://github.com/CHPC-UofU/<wbr>Singularity-ubuntu-wine-<wbr>peakselector</a>=
+<br><br>Though in this case the user stack ($APPDIR/wineprefix.tgz) is stor=
+ed in the user space (or here, in &quot;some&quot; fixed space), not the co=
+ntainer itself.<br><br>MC<br></div></blockquote></div>
+------=_Part_466_733365222.1498673134480--
+
+------=_Part_465_1919980244.1498673134477--

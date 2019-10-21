@@ -1,0 +1,185 @@
+Date: Thu, 22 Aug 2019 06:02:44 -0700 (PDT)
+From: xman <cshi...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Cc: thomas....@desy.de
+Message-Id: <ba011584-ed78-44b4-9113-9691f9d26633@lbl.gov>
+In-Reply-To: <f72097bb-1d13-9640-384b-d5944679fb14@desy.de>
+References: <22e002cc-8075-442c-bd51-ef99ae31d0bb@lbl.gov>
+ <33dd95b8-f89a-432c-8fc0-3d6b827dd989@lbl.gov>
+ <f72097bb-1d13-9640-384b-d5944679fb14@desy.de>
+Subject: Re: [Singularity] Re: ERROR [U=9488,P=56555] user_namespace_init()
+ Failed to create user namespace
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_249_1075322771.1566478964790"
+
+------=_Part_249_1075322771.1566478964790
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_250_453312076.1566478964791"
+
+------=_Part_250_453312076.1566478964791
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi,
+
+I got the same error "Failed to create user namespace". I read that CentOS 
+does not enable user namespace by default.
+So I added kernel arguments "namespace.unpriv_enable=1 
+user_namespace.enable=1" to enable it.
+
+After that, I get
+
+$ singularity build -f f30-dev.sif f30-dev.def 
+ERROR  : Failed to create container namespaces
+
+So I gave up, and just use sudo at the moment to work.
+
+My kernel:
+$ uname -a
+Linux knight 3.10.0-327.36.3.el7.xppsl_1.5.3.4380.x86_64 #1 SMP Wed Sep 20 
+16:32:04 UTC 2017 x86_64 x86_64 x86_64 GNU/Linux
+
+p/s: the kernel arguments may not enable user namespace properly, because I 
+still don't see /proc/sys/user/max_user_namespaces. May be the kernel is 
+not decent enough in CentOS 7.6.
+
+
+Regards,
+Shin Yee
+
+On Thursday, 22 August 2019 20:29:56 UTC+8, Thomas Hartmann wrote:
+>
+> Hi Katerina, 
+>
+> on the host machine, can you check if user namespaces are enabled, 
+> i.e., if 
+>    cat /proc/sys/user/max_user_namespaces 
+> returns some number > 0 
+>
+> can you also run 
+>   > uname -a 
+> to see, what kernel version you are on? 
+>
+> Is your Singularity image actually a sandbox image, i.e., an expanded 
+> directory tree? User namespaces will probably not work with a single 
+> file image. 
+> If your image is a single file, please try to convert it into a sandbox 
+> dir with 
+>   > singularity build --sandbox container.d container.img 
+> and then run shell on the container.d 
+>
+> Cheers, 
+>   Thomas 
+>
+>
+> On 22/08/2019 14.13, Katerina Papadaki wrote: 
+> > I have tried this too, but yet I get the same Error! 
+> > 
+> > $ rm -rf /tmp/homie && mkdir -p /tmp/homie && env -i singularity exec -C 
+> > -H /tmp/homie gstlal_all_inclusive_test_sandbox.img /bin/bash 
+> > ERROR  : Failed to create user namespace 
+> > 
+> > -- 
+> > You received this message because you are subscribed to the Google 
+> > Groups "singularity" group. 
+> > To unsubscribe from this group and stop receiving emails from it, send 
+> > an email to si...@lbl.gov <javascript:> 
+> > <mailto:singu...@lbl.gov <javascript:>>. 
+> > To view this discussion on the web visit 
+> > 
+> https://groups.google.com/a/lbl.gov/d/msgid/singularity/33dd95b8-f89a-432c-8fc0-3d6b827dd989%40lbl.gov 
+> > <
+> https://groups.google.com/a/lbl.gov/d/msgid/singularity/33dd95b8-f89a-432c-8fc0-3d6b827dd989%40lbl.gov?utm_medium=email&utm_source=footer>. 
+>
+>
+>
+------=_Part_250_453312076.1566478964791
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Hi,</div><div><br></div>I got the same error &quot;Fa=
+iled to create user namespace&quot;. I read that CentOS does not enable use=
+r namespace by default.<div>So I added kernel arguments &quot;namespace.unp=
+riv_enable=3D1 user_namespace.enable=3D1&quot; to enable it.</div><div><br>=
+</div><div>After that, I get</div><div><br></div><div><div>$ singularity bu=
+ild -f f30-dev.sif f30-dev.def=C2=A0</div><div>ERROR=C2=A0 : Failed to crea=
+te container namespaces</div></div><div><br></div><div>So I gave up, and ju=
+st use sudo at the moment to work.</div><div><br></div><div>My kernel:</div=
+><div><div>$ uname -a</div><div>Linux knight 3.10.0-327.36.3.el7.xppsl_1.5.=
+3.4380.x86_64 #1 SMP Wed Sep 20 16:32:04 UTC 2017 x86_64 x86_64 x86_64 GNU/=
+Linux</div><div><br></div><div>p/s: the kernel arguments may not enable use=
+r namespace properly, because I still don&#39;t see=C2=A0/proc/sys/user/max=
+_user_namespaces. May be the kernel is not decent enough in CentOS 7.6.</di=
+v><div><br></div><div><br></div><div>Regards,</div><div>Shin Yee</div><br>O=
+n Thursday, 22 August 2019 20:29:56 UTC+8, Thomas Hartmann  wrote:<blockquo=
+te class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left:=
+ 1px #ccc solid;padding-left: 1ex;">Hi Katerina,
+<br>
+<br>on the host machine, can you check if user namespaces are enabled,
+<br>i.e., if
+<br>=C2=A0 =C2=A0cat /proc/sys/user/max_user_<wbr>namespaces
+<br>returns some number &gt; 0
+<br>
+<br>can you also run
+<br>=C2=A0 &gt; uname -a
+<br>to see, what kernel version you are on?
+<br>
+<br>Is your Singularity image actually a sandbox image, i.e., an expanded
+<br>directory tree? User namespaces will probably not work with a single
+<br>file image.
+<br>If your image is a single file, please try to convert it into a sandbox
+<br>dir with
+<br>=C2=A0 &gt; singularity build --sandbox container.d container.img
+<br>and then run shell on the container.d
+<br>
+<br>Cheers,
+<br>=C2=A0 Thomas
+<br>
+<br>
+<br>On 22/08/2019 14.13, Katerina Papadaki wrote:
+<br>&gt; I have tried this too, but yet I get the same Error!
+<br>&gt;=20
+<br>&gt; $ rm -rf /tmp/homie &amp;&amp; mkdir -p /tmp/homie &amp;&amp; env =
+-i singularity exec -C
+<br>&gt; -H /tmp/homie gstlal_all_inclusive_test_<wbr>sandbox.img /bin/bash
+<br>&gt; ERROR=C2=A0 : Failed to create user namespace
+<br>&gt;=20
+<br>&gt; --=20
+<br>&gt; You received this message because you are subscribed to the Google
+<br>&gt; Groups &quot;singularity&quot; group.
+<br>&gt; To unsubscribe from this group and stop receiving emails from it, =
+send
+<br>&gt; an email to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscat=
+ed-mailto=3D"sti8-sKkDgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39=
+;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39=
+;;return true;">singu...@lbl.<wbr>gov</a>
+<br>&gt; &lt;mailto:<a href=3D"javascript:" target=3D"_blank" gdf-obfuscate=
+d-mailto=3D"sti8-sKkDgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;=
+javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;=
+;return true;">singularity+<wbr>unsub...@lbl.gov</a>&gt;.
+<br>&gt; To view this discussion on the web visit
+<br>&gt; <a href=3D"https://groups.google.com/a/lbl.gov/d/msgid/singularity=
+/33dd95b8-f89a-432c-8fc0-3d6b827dd989%40lbl.gov" target=3D"_blank" rel=3D"n=
+ofollow" onmousedown=3D"this.href=3D&#39;https://groups.google.com/a/lbl.go=
+v/d/msgid/singularity/33dd95b8-f89a-432c-8fc0-3d6b827dd989%40lbl.gov&#39;;r=
+eturn true;" onclick=3D"this.href=3D&#39;https://groups.google.com/a/lbl.go=
+v/d/msgid/singularity/33dd95b8-f89a-432c-8fc0-3d6b827dd989%40lbl.gov&#39;;r=
+eturn true;">https://groups.google.com/a/<wbr>lbl.gov/d/msgid/singularity/<=
+wbr>33dd95b8-f89a-432c-8fc0-<wbr>3d6b827dd989%40lbl.gov</a>
+<br>&gt; &lt;<a href=3D"https://groups.google.com/a/lbl.gov/d/msgid/singula=
+rity/33dd95b8-f89a-432c-8fc0-3d6b827dd989%40lbl.gov?utm_medium=3Demail&amp;=
+utm_source=3Dfooter" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this=
+.href=3D&#39;https://groups.google.com/a/lbl.gov/d/msgid/singularity/33dd95=
+b8-f89a-432c-8fc0-3d6b827dd989%40lbl.gov?utm_medium\x3demail\x26utm_source\=
+x3dfooter&#39;;return true;" onclick=3D"this.href=3D&#39;https://groups.goo=
+gle.com/a/lbl.gov/d/msgid/singularity/33dd95b8-f89a-432c-8fc0-3d6b827dd989%=
+40lbl.gov?utm_medium\x3demail\x26utm_source\x3dfooter&#39;;return true;">ht=
+tps://groups.google.com/a/<wbr>lbl.gov/d/msgid/singularity/<wbr>33dd95b8-f8=
+9a-432c-8fc0-<wbr>3d6b827dd989%40lbl.gov?utm_<wbr>medium=3Demail&amp;utm_so=
+urce=3Dfooter</a><wbr>&gt;.
+<br>
+<br></blockquote></div></div>
+------=_Part_250_453312076.1566478964791--
+
+------=_Part_249_1075322771.1566478964790--

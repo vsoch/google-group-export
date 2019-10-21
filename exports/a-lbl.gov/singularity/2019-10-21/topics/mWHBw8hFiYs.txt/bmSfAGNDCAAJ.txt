@@ -1,0 +1,490 @@
+Date: Tue, 10 Apr 2018 09:57:37 -0700 (PDT)
+From: Andrew McKay <andrew...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <f9042c29-4880-4150-92cb-af87a1f37f34@lbl.gov>
+In-Reply-To: <CAM=pu++juuVn+xitS6B9f1Rv_8AVX-KBFQpUxuVdiG6pEVpyiA@mail.gmail.com>
+References: <3f25d995-bdbc-4e11-90ac-e279709a641a@lbl.gov> <CAM=pu++1chEiYy=QKvYq+=JUZwkjpDPjSQQfYmuzjNxsxyoTSw@mail.gmail.com>
+ <5ea85658-34e6-494a-bbd7-2588f8708706@lbl.gov> <44537886-c613-4fe1-80bf-fc69af7edb3e@lbl.gov>
+ <CAM=pu+LcJ0hKyDiuFdNKQe+souBTQ-j7y8G=0FcTorso7GeKfg@mail.gmail.com> <46b6e469-a45e-4101-996d-72f7f28c16d9@lbl.gov>
+ <CAM=pu++juuVn+xitS6B9f1Rv_8AVX-KBFQpUxuVdiG6pEVpyiA@mail.gmail.com>
+Subject: Re: [Singularity] Same image, different versions of software
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_24233_1760551458.1523379457222"
+
+------=_Part_24233_1760551458.1523379457222
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_24234_1683399556.1523379457223"
+
+------=_Part_24234_1683399556.1523379457223
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Great, this worked, thank you Vanessa! The key was modifying the 
+permissions for the $JULIA_PKGDIR directory (chmod -R 777 /opt), but I 
+didn't need to do any binding on the sherlock cluster side of things. Not 
+sure if this will get me in trouble later, but for now I'm happy with this 
+approach :)
+
+I'll get my jobs running, hopefully this thread will be helpful to another 
+julian looking to make packages work (note: Pkg2, v0.6.2, not Pkg3 soon to 
+be renamed Pkg) and I'll try to get a working recipe on singularity hub 
+sometime.
+
+Thank you again!
+Andrew
+
+
+
+On Tuesday, April 10, 2018 at 6:08:40 AM UTC-7, vanessa wrote:
+>
+> Hey Andrew,
+>
+> You are doing great! Just a little bit more :)
+>
+> I also took your advice and adjusted to create a new root folder (/opt 
+>> seemed to be taken in my vagrant vm so used /duncanidaho) 
+>>
+>
+> I meant that you could install packages to a directory like opt (and you 
+> would need to change permissions) and then at runtime, bind it somewhere to 
+> your host:
+>
+>  singularity run --bind /scratch/users/vsochat/julia:/opt/stuff 
+> container.simg 
+>  
+> If you plan to install more packages for the image *on* the cluster, and 
+> if it's possible to do like R or Python and have a user owned package 
+> directory in home, then you could use the container as a shell for the 
+> primary julia, and install packages in your actual $HOME under ~/.julia 
+> (which is mounted automatically too so you can write there). This isn't a 
+> "share your image with a colleague and keep the same packages" but rather a 
+> working image. When it's time to publish your work, then you can install 
+> the final set to somewhere in the container (assuming writable isn't 
+> needed) and share that.
+>
+>>
+>> I'll try to post more code tomorrow if you think that would help. Thanks 
+>> again for all your help and looking forward to figuring this out! There are 
+>> a ton of package versioning issues in julia right now due to the intense 
+>> development and I need a container system for some image analysis pipelines 
+>> I'm working on. I'm pretty sure singularity is perfect for the task, I just 
+>> need a little help figuring out these hiccups :)
+>>
+>
+> Yeah sure thing!! :) 
+>
+> Best,
+>
+> Vanessa
+>
+>>
+>> Cheers!
+>> Andrew
+>>
+>>
+>>
+>>
+>> On Monday, April 9, 2018 at 6:58:34 PM UTC-7, vanessa wrote:
+>>>
+>>> Hey Andrew!
+>>>
+>>> I haven't used Julia but I'd be glad to help! I notice that you didn't 
+>>> put the JULIA_PKGDIR in the %environment section of the build recipe, which 
+>>> is where you would want it to be to persist when running on Sherlock. A 
+>>> general (silly but would work) thing you can do is keep files / etc. in a 
+>>> location in the container that is unlikely to be bound by the cluster (for 
+>>> example, on Sherlock /scratch /oak /share will be bound and if there is 
+>>> something there in the container, seeyalater!) So what about trying to 
+>>> install stuffs into a place like /opt, and then on Sherlock just bind /opt 
+>>> to somewhere on your scratch? That would be what I would try first! If you 
+>>> are still having trouble, please send me the rest of your files to go with 
+>>> the recipe, and some test/command that justifies a working state. I will 
+>>> help you to get this working - likely tomorrow because it's just about 10pm 
+>>> on the dinosaur side of the world.
+>>>
+>>> Best,
+>>>
+>>> Vanessa
+>>>
+>>> On Mon, Apr 9, 2018 at 9:12 PM, Andrew McKay <and...@gmail.com> 
+>>> wrote:
+>>>
+>>>> Along these lines, how would one best incorporate Julia packages into a 
+>>>> singularity container? I've been trying a few things but to no avail. Is 
+>>>> the best approach not to expose files? How would one do this?
+>>>>
+>>>> I think I need to create a directory in the container during the build 
+>>>> that is only within the container and I can access on the slurm cluster. To 
+>>>> these ends, I'm trying to export the JULIA_PKGDIR environmental variable 
+>>>> during the build, but on the cluster this isn't retained. For reference, 
+>>>> I'm pulling the official julia image from the docker site (
+>>>> https://hub.docker.com/_/julia/).
+>>>>
+>>>> Any help would be appreciated, and for reference, I'm working on the 
+>>>> stanford sherlock 2.0 cluster. I'm running vagrant on my mac with sudo and 
+>>>> singularity 2.4-dist, and 2.4.6 on the slurm cluster. My recipe for 
+>>>> troubleshooting is attached below.
+>>>>
+>>>> Thank you for your help!
+>>>> Andrew
+>>>>
+>>>>
+>>>> Bootstrap: docker
+>>>> From: julia:0.6.2
+>>>>
+>>>> %runscript
+>>>> exec echo "The runscript is the containers default runtime command!"
+>>>>
+>>>> %files
+>>>> img_proc_3.29.18.jl   # copied to root of container
+>>>> load_packages.jl
+>>>>
+>>>> %environment
+>>>>
+>>>> %labels
+>>>>
+>>>> %post
+>>>>
+>>>> echo 'Pkg.init(); Pkg.update(); Pkg.add("Flux");  using Flux;' > 
+>>>> script.jl
+>>>> /usr/local/julia/bin/julia script.jl
+>>>>
+>>>>
+>>>>
+>>>> On Tuesday, December 26, 2017 at 1:00:55 PM UTC-8, Tyler Benster wrote:
+>>>>>
+>>>>> Indeed, that was the problem! For now I've fixed by updating the git 
+>>>>> repo in ~/.julia on the HPC. For future reference, how can I build without 
+>>>>> exposing the files?
+>>>>>
+>>>>> Thanks, Vanessa!
+>>>>>
+>>>>> On Tuesday, December 26, 2017 at 7:06:31 AM UTC-8, vanessa wrote:
+>>>>>>
+>>>>>> Hey Tyler,
+>>>>>>
+>>>>>> When you do package update, aren't there some files in your home 
+>>>>>> directory that are used for the action? Eg, something like 
+>>>>>> $HOME/.julia/v4.0/REQUIRE. Then I would wonder about any settings that 
+>>>>>> might be triggering this difference on the host. For reference I'm reading 
+>>>>>> here --> 
+>>>>>> https://docs.julialang.org/en/release-0.4/manual/packages/#updating-packages. 
+>>>>>> You could try checking those locations, and then perhaps doing the build 
+>>>>>> without exposing those files.
+>>>>>>
+>>>>>> Best,
+>>>>>>
+>>>>>> Vanessa
+>>>>>>
+>>>>>> On Tue, Dec 26, 2017 at 2:28 AM, Tyler Benster <t...@stanford.edu> 
+>>>>>> wrote:
+>>>>>>
+>>>>>>> Hi all,
+>>>>>>>
+>>>>>>> I'm a new Singularity user and seem to be missing something basic, 
+>>>>>>> as I see two different versions of software when I run the same image on 
+>>>>>>> two different machines. When I run `sudo singularity build jl.simg 
+>>>>>>> Singularity && singularity exec jl.simg julia` followed by `julia> 
+>>>>>>> Pkg.installed("ClusterManagers")` on my local machine, I see that the 
+>>>>>>> version of ClusterManagers is "0.1.2+" as expected per the install 
+>>>>>>> by Pkg.clone(). But when I run on an HPC cluster using the same .simg file, 
+>>>>>>> the version is "0.1.2". What am I missing? Many thanks! 
+>>>>>>>
+>>>>>>> Singularity:
+>>>>>>> BootStrap: docker
+>>>>>>> From: julia:0.6.2
+>>>>>>>
+>>>>>>> %help
+>>>>>>>     Pass script to run as argument.
+>>>>>>>
+>>>>>>> %setup
+>>>>>>>     mkdir ${SINGULARITY_ROOTFS}/script
+>>>>>>> %files
+>>>>>>>     install_packages.jl /tmp
+>>>>>>>     main.jl /script
+>>>>>>>
+>>>>>>> %post
+>>>>>>>     /usr/local/julia/bin/julia /tmp/install_packages.jl
+>>>>>>>
+>>>>>>> %runscript
+>>>>>>>     if ["$*" = ""]; then
+>>>>>>>         julia ${SINGULARITY_ROOTFS}/script/main.jl
+>>>>>>>     else
+>>>>>>>         julia $*
+>>>>>>>     fi
+>>>>>>>
+>>>>>>> install_packages.jl:
+>>>>>>> Pkg.update()
+>>>>>>> Pkg.clone("https://github.com/JuliaParallel/ClusterManagers.jl
+>>>>>>> ","ClusterManagers")
+>>>>>>>
+>>>>>>> main.jl:
+>>>>>>> using ClusterManagers
+>>>>>>> println("hello, world")
+>>>>>>>
+>>>>>>>
+>>>>>>>
+>>>>>>> -- 
+>>>>>>> You received this message because you are subscribed to the Google 
+>>>>>>> Groups "singularity" group.
+>>>>>>> To unsubscribe from this group and stop receiving emails from it, 
+>>>>>>> send an email to singu...@lbl.gov.
+>>>>>>>
+>>>>>>
+>>>>>>
+>>>>>>
+>>>>>> -- 
+>>>>>> Vanessa Villamia Sochat
+>>>>>> Stanford University '16
+>>>>>> (603) 321-0676
+>>>>>>
+>>>>> -- 
+>>>> You received this message because you are subscribed to the Google 
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>> an email to singu...@lbl.gov.
+>>>>
+>>>
+>>>
+>>>
+>>> -- 
+>>> Vanessa Villamia Sochat
+>>> Stanford University '16
+>>> (603) 321-0676
+>>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_24234_1683399556.1523379457223
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Great, this worked, thank you Vanessa! The key was modifyi=
+ng the permissions for the $JULIA_PKGDIR directory (chmod -R 777 /opt), but=
+ I didn&#39;t need to do any binding on the sherlock cluster side of things=
+. Not sure if this will get me in trouble later, but for now I&#39;m happy =
+with this approach :)<div><br></div><div>I&#39;ll get my jobs running, hope=
+fully this thread will be helpful to another julian looking to make package=
+s work (note: Pkg2, v0.6.2, not Pkg3 soon to be renamed Pkg) and I&#39;ll t=
+ry to get a working recipe on singularity hub sometime.</div><div><br></div=
+><div>Thank you again!</div><div>Andrew<br><div><br></div><div><br><br>On T=
+uesday, April 10, 2018 at 6:08:40 AM UTC-7, vanessa wrote:<blockquote class=
+=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #cc=
+c solid;padding-left: 1ex;"><div dir=3D"ltr">Hey Andrew,<div><br></div><div=
+>You are doing great! Just a little bit more :)</div><div><br></div><div><d=
+iv class=3D"gmail_quote"><blockquote class=3D"gmail_quote" style=3D"margin:=
+0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">I =
+also took your advice and adjusted to create a new root folder (/opt seemed=
+ to be taken in my vagrant vm so used /duncanidaho) </div></blockquote><div=
+><br></div><div>I meant that you could install packages to a directory like=
+ opt (and you would need to change permissions) and then at runtime, bind i=
+t somewhere to your host:</div><div><br></div><div>=C2=A0singularity run --=
+bind /scratch/users/vsochat/julia:/<wbr>opt/stuff container.simg=C2=A0</div=
+><div>=C2=A0</div><div>If you plan to install more packages for the image <=
+i>on</i>=C2=A0the cluster, and if it&#39;s possible to do like R or Python =
+and have a user owned package directory in home, then you could use the con=
+tainer as a shell for the primary julia, and install packages in your actua=
+l $HOME under ~/.julia (which is mounted automatically too so you can write=
+ there). This isn&#39;t a &quot;share your image with a colleague and keep =
+the same packages&quot; but rather a working image. When it&#39;s time to p=
+ublish your work, then you can install the final set to somewhere in the co=
+ntainer (assuming writable isn&#39;t needed) and share that.</div><blockquo=
+te class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc so=
+lid;padding-left:1ex"><div dir=3D"ltr"><br></div></blockquote><blockquote c=
+lass=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;=
+padding-left:1ex"><div dir=3D"ltr"><div>I&#39;ll try to post more code tomo=
+rrow if you think that would help. Thanks again for all your help and looki=
+ng forward to figuring this out! There are a ton of package versioning issu=
+es in julia right now due to the intense development and I need a container=
+ system for some image analysis pipelines I&#39;m working on. I&#39;m prett=
+y sure singularity is perfect for the task, I just need a little help figur=
+ing out these hiccups :)</div></div></blockquote><div><br></div><div>Yeah s=
+ure thing!! :)=C2=A0</div><div><br></div><div>Best,</div><div><br></div><di=
+v>Vanessa</div><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex=
+;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr"><div><br></d=
+iv><div>Cheers!</div><span><font color=3D"#888888"><div>Andrew</div></font>=
+</span><div><br><div><br></div><div><span><br><br>On Monday, April 9, 2018 =
+at 6:58:34 PM UTC-7, vanessa wrote:</span><blockquote class=3D"gmail_quote"=
+ style=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-lef=
+t:1ex"><span><div dir=3D"ltr">Hey Andrew!<div><br></div><div>I haven&#39;t =
+used Julia but I&#39;d be glad to help! I notice that you didn&#39;t put th=
+e JULIA_PKGDIR in the %environment section of the build recipe, which is wh=
+ere you would want it to be to persist when running on Sherlock. A general =
+(silly but would work) thing you can do is keep files / etc. in a location =
+in the container that is unlikely to be bound by the cluster (for example, =
+on Sherlock /scratch /oak /share will be bound and if there is something th=
+ere in the container, seeyalater!) So what about trying to install stuffs i=
+nto a place like /opt, and then on Sherlock just bind /opt to somewhere on =
+your scratch? That would be what I would try first! If you are still having=
+ trouble, please send me the rest of your files to go with the recipe, and =
+some test/command that justifies a working state. I will help you to get th=
+is working - likely tomorrow because it&#39;s just about 10pm on the dinosa=
+ur side of the world.</div><div><br></div><div>Best,</div><div><br></div><d=
+iv>Vanessa</div></div></span><div><div><div><br><div class=3D"gmail_quote">=
+On Mon, Apr 9, 2018 at 9:12 PM, Andrew McKay <span dir=3D"ltr">&lt;<a rel=
+=3D"nofollow">and...@gmail.com</a>&gt;</span> wrote:<br><blockquote class=
+=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padd=
+ing-left:1ex"><div dir=3D"ltr"><div>Along these lines, how would one best i=
+ncorporate Julia packages into a singularity container? I&#39;ve been tryin=
+g a few things but to no avail. Is the best approach not to expose files? H=
+ow would one do this?</div><div><br></div><div>I think I need to create a d=
+irectory in the container during the build that is only within the containe=
+r and I can access on the slurm cluster. To these ends, I&#39;m trying to e=
+xport the JULIA_PKGDIR environmental variable during the build, but on the =
+cluster this isn&#39;t retained. For reference, I&#39;m pulling the officia=
+l julia image from the docker site (<a href=3D"https://hub.docker.com/_/jul=
+ia/" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;htt=
+ps://www.google.com/url?q\x3dhttps%3A%2F%2Fhub.docker.com%2F_%2Fjulia%2F\x2=
+6sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGm5hL7mjPYmED1gnGYauhEfMZQhA&#39;;ret=
+urn true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttp=
+s%3A%2F%2Fhub.docker.com%2F_%2Fjulia%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dA=
+FQjCNGm5hL7mjPYmED1gnGYauhEfMZQhA&#39;;return true;">https://hub.docker.com=
+/_/<wbr>julia/</a>).</div><div><br></div><div>Any help would be appreciated=
+, and for reference, I&#39;m working on the stanford sherlock 2.0 cluster. =
+I&#39;m running vagrant on my mac with sudo and singularity 2.4-dist, and 2=
+.4.6 on the slurm cluster. My recipe for troubleshooting is attached below.=
+</div><div><br></div><div>Thank you for your help!</div><div>Andrew</div><d=
+iv><br></div><div><br></div><div><div>Bootstrap: docker</div><div>From: jul=
+ia:0.6.2</div><div><br></div><div>%runscript</div><div>exec echo &quot;The =
+runscript is the containers default runtime command!&quot;</div><div><br></=
+div><div>%files</div><div>img_proc_3.29.18.jl=C2=A0 =C2=A0# copied to root =
+of container</div><div>load_packages.jl</div><div><br></div><div>%environme=
+nt</div><div><br></div><div>%labels</div><div><br></div><div>%post</div><di=
+v><br></div><div>echo &#39;Pkg.init(); Pkg.update(); Pkg.add(&quot;Flux&quo=
+t;);=C2=A0 using Flux;&#39; &gt; script.jl</div><div>/usr/local/julia/bin/j=
+ulia script.jl</div></div><div><div><div><br></div><br><br>On Tuesday, Dece=
+mber 26, 2017 at 1:00:55 PM UTC-8, Tyler Benster wrote:<blockquote class=3D=
+"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc soli=
+d;padding-left:1ex"><div dir=3D"ltr">Indeed, that was the problem! For now =
+I&#39;ve fixed by updating the git repo in ~/.julia on the HPC. For future =
+reference, how can I build without exposing the files?<div><br></div><div>T=
+hanks, Vanessa!<br><br>On Tuesday, December 26, 2017 at 7:06:31 AM UTC-8, v=
+anessa wrote:<blockquote class=3D"gmail_quote" style=3D"margin:0;margin-lef=
+t:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Hey T=
+yler,<div><br></div><div>When you do package update, aren&#39;t there some =
+files in your home directory that are used for the action? Eg, something li=
+ke $HOME/.julia/v4.0/REQUIRE. Then I would wonder about any settings that m=
+ight be triggering this difference on the host. For reference I&#39;m readi=
+ng here --&gt;=C2=A0<a href=3D"https://docs.julialang.org/en/release-0.4/ma=
+nual/packages/#updating-packages" rel=3D"nofollow" target=3D"_blank" onmous=
+edown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fdoc=
+s.julialang.org%2Fen%2Frelease-0.4%2Fmanual%2Fpackages%2F%23updating-packag=
+es\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGmp0hLbos74Jj6cLPL1p4p40VA3A&#39=
+;;return true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3=
+dhttps%3A%2F%2Fdocs.julialang.org%2Fen%2Frelease-0.4%2Fmanual%2Fpackages%2F=
+%23updating-packages\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGmp0hLbos74Jj6=
+cLPL1p4p40VA3A&#39;;return true;">https://docs.julialang.<wbr>org/en/releas=
+e-0.4/manual/<wbr>packages/#updating-packages</a>. You could try checking t=
+hose locations, and then perhaps doing the build without exposing those fil=
+es.</div><div><br></div><div>Best,</div><div><br></div><div>Vanessa</div></=
+div><div><br><div class=3D"gmail_quote">On Tue, Dec 26, 2017 at 2:28 AM, Ty=
+ler Benster <span dir=3D"ltr">&lt;<a rel=3D"nofollow">t...@stanford.edu</a>=
+&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0=
+ 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Hi al=
+l,<div><br></div><div>I&#39;m a new Singularity user and seem to be missing=
+ something basic, as I see two different versions of software when I run th=
+e same image on two different machines. When I run `sudo singularity build =
+jl.simg Singularity &amp;&amp; singularity exec jl.simg julia` followed by =
+`julia&gt; Pkg.installed(&quot;<wbr>ClusterManagers&quot;)` on my local mac=
+hine, I see that the version of=C2=A0<span style=3D"background-color:rgb(25=
+0,250,250);font-family:monospace">ClusterManagers</span>=C2=A0is &quot;0.1.=
+2+&quot; as expected per the install by Pkg.clone(). But when I run on an H=
+PC cluster using the same .simg file, the version is &quot;0.1.2&quot;. Wha=
+t am I missing? Many thanks!=C2=A0</div><div><br></div><div>Singularity:</d=
+iv><div><div style=3D"background-color:rgb(250,250,250);border-color:rgb(18=
+7,187,187);border-style:solid;border-width:1px;word-wrap:break-word"><code>=
+<div><div><font color=3D"#660066">BootStrap: docker</font></div><div><font =
+color=3D"#660066">From: julia:0.6.2</font></div><div><font color=3D"#660066=
+"><br></font></div><div><font color=3D"#660066">%help</font></div><div><fon=
+t color=3D"#660066">=C2=A0 =C2=A0 Pass script to run as argument.</font></d=
+iv><div><font color=3D"#660066"><br></font></div><div><font color=3D"#66006=
+6">%setup</font></div><div><font color=3D"#660066">=C2=A0 =C2=A0 mkdir ${SI=
+NGULARITY_ROOTFS}/script</font></div><div><font color=3D"#660066">%files</f=
+ont></div><div><font color=3D"#660066">=C2=A0 =C2=A0 install_packages.jl /t=
+mp</font></div><div><font color=3D"#660066">=C2=A0 =C2=A0 main.jl /script</=
+font></div><div><font color=3D"#660066"><br></font></div><div><font color=
+=3D"#660066">%post</font></div><div><font color=3D"#660066">=C2=A0 =C2=A0 /=
+usr/local/julia/bin/julia /tmp/install_packages.jl</font></div><div><font c=
+olor=3D"#660066"><br></font></div><div><font color=3D"#660066">%runscript</=
+font></div><div><font color=3D"#660066">=C2=A0 =C2=A0 if [&quot;$*&quot; =
+=3D &quot;&quot;]; then</font></div><div><font color=3D"#660066">=C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 julia ${SINGULARITY_ROOTFS}/script/<wbr>main.jl</font></d=
+iv><div><font color=3D"#660066">=C2=A0 =C2=A0 else</font></div><div><font c=
+olor=3D"#660066">=C2=A0 =C2=A0 =C2=A0 =C2=A0 julia $*</font></div><div><fon=
+t color=3D"#660066">=C2=A0 =C2=A0 fi</font></div></div></code></div><br>ins=
+tall_packages.jl:</div><div><div style=3D"background-color:rgb(250,250,250)=
+;border-color:rgb(187,187,187);border-style:solid;border-width:1px;word-wra=
+p:break-word"><code><div><div>Pkg.update()</div><div>Pkg.clone(&quot;<a hre=
+f=3D"https://github.com/JuliaParallel/ClusterManagers.jl" rel=3D"nofollow" =
+target=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/ur=
+l?q\x3dhttps%3A%2F%2Fgithub.com%2FJuliaParallel%2FClusterManagers.jl\x26sa\=
+x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFkICx2rq__wjnWmdOZVILZiXWhBQ&#39;;return =
+true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A=
+%2F%2Fgithub.com%2FJuliaParallel%2FClusterManagers.jl\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNFkICx2rq__wjnWmdOZVILZiXWhBQ&#39;;return true;">https://=
+github.com/<wbr>JuliaParallel/ClusterManagers.<wbr>jl</a>&quot;,&quot;Clust=
+erManagers&quot;)</div></div></code></div><div><br></div>main.jl:<br><div s=
+tyle=3D"background-color:rgb(250,250,250);border-color:rgb(187,187,187);bor=
+der-style:solid;border-width:1px;word-wrap:break-word"><code><div><div>usin=
+g ClusterManagers</div><div>println(&quot;hello, world&quot;)</div><span><f=
+ont color=3D"#888888"><div><br></div></font></span></div></code></div><span=
+><font color=3D"#888888"><br><br></font></span></div></div><span><font colo=
+r=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div>=
+<div>(603) 321-0676</div></div></div></div>
+</div>
+</blockquote></div></div></blockquote></div></div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><d=
+iv>(603) 321-0676</div></div></div></div>
+</div>
+</div></div></blockquote></div></div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+yYT0qOGWBwAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><d=
+iv>(603) 321-0676</div></div></div></div>
+</div></div>
+</blockquote></div></div></div>
+------=_Part_24234_1683399556.1523379457223--
+
+------=_Part_24233_1760551458.1523379457222--

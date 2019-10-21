@@ -1,0 +1,222 @@
+Date: Fri, 18 Aug 2017 09:01:46 -0700 (PDT)
+From: Carlos Guzman <cag...@eng.ucsd.edu>
+To: singularity <singu...@lbl.gov>
+Message-Id: <28f9e42c-becc-494f-b25b-cc5e75155046@lbl.gov>
+Subject: Possible problem accessing /dev/shm path in singularity container
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2362_440860774.1503072106045"
+
+------=_Part_2362_440860774.1503072106045
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2363_352193085.1503072106045"
+
+------=_Part_2363_352193085.1503072106045
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+## Version of Singularity:
+
+2.3.1
+
+### Expected behavior
+
+bamCoverage function will run and generate bigWig files
+
+### Actual behavior
+
+Getting a weird little error when trying to run bamCoverage for sequencing 
+data. Using Nextflow ... the majority of the pipeline works fine, this is 
+the only step that fails.
+
+```
+bamCoverage -b ${bam} -o ${mergeid}.RPKMnorm.bw -of bigwig -bs 
+${params.bamcoverage_bs} -p ${params.threads} --normalizeUsingRPKM 
+--smoothLength ${params.bamcoverage_smooth} -e ${params.bamcoverage_e} 
+--centerReads 2> ${mergeid}.bamcoverage_report.txt
+```
+
+```
+Traceback (most recent call last):
+  File "/opt/anaconda2/bin/bamCoverage", line 11, in <module>
+    main(args)
+  File 
+"/opt/anaconda2/lib/python2.7/site-packages/deeptools/bamCoverage.py", line 
+145, in main
+    scale_factor = get_scale_factor(args)
+  File 
+"/opt/anaconda2/lib/python2.7/site-packages/deeptools/getScaleFactor.py", 
+line 168, in get_scale_factor
+    bam_mapped, bam_mapped_total = get_num_kept_reads(args)
+  File 
+"/opt/anaconda2/lib/python2.7/site-packages/deeptools/getScaleFactor.py", 
+line 157, in get_num_kept_reads
+    ftk = fraction_kept(args)
+  File 
+"/opt/anaconda2/lib/python2.7/site-packages/deeptools/getScaleFactor.py", 
+line 127, in fraction_kept
+    verbose=args.verbose)
+  File "/opt/anaconda2/lib/python2.7/site-packages/deeptools/mapReduce.py", 
+line 141, in mapReduce
+    pool = multiprocessing.Pool(numberOfProcessors)
+  File "/opt/anaconda2/lib/python2.7/multiprocessing/__init__.py", line 
+232, in Pool
+    return Pool(processes, initializer, initargs, maxtasksperchild)
+  File "/opt/anaconda2/lib/python2.7/multiprocessing/pool.py", line 138, in 
+__init__
+    self._setup_queues()
+  File "/opt/anaconda2/lib/python2.7/multiprocessing/pool.py", line 234, in 
+_setup_queues
+    self._inqueue = SimpleQueue()
+  File "/opt/anaconda2/lib/python2.7/multiprocessing/queues.py", line 354, 
+in __init__
+    self._rlock = Lock()
+  File "/opt/anaconda2/lib/python2.7/multiprocessing/synchronize.py", line 
+147, in __init__
+    SemLock.__init__(self, SEMAPHORE, 1, 1)
+  File "/opt/anaconda2/lib/python2.7/multiprocessing/synchronize.py", line 
+75, in __init__
+    sl = self._semlock = _multiprocessing.SemLock(kind, value, maxvalue)
+OSError: [Errno 2] No such file or directory
+```
+
+This is deeptools version 2.5.3 inside a Singularity container installed 
+using anaconda2.
+
+After asking the deeptools dev, they told me the following:
+
+> After a bit of searching around, my only guess is that this is some sort 
+of
+> issue where the python multiprocessing module has problems accessing
+> /dev/shm in singularity. That's pretty obscure and not something 
+controlled
+> by deepTools.
+
+Here is my singularity file:
+
+```
+Bootstrap: docker
+From: ubuntu:latest
+
+%labels
+Maintainer cag...@ucsd.edu
+Version 1.0
+
+%environment
+export PATH="/opt/anaconda2/bin:$PATH"
+
+%post
+
+apt-get update
+
+apt-get install -y wget bzip2 perl gawk
+
+ln -s /bin/tar /bin/gtar
+
+wget https://repo.continuum.io/archive/Anaconda2-4.4.0-Linux-x86_64.sh
+
+bash Anaconda2-4.4.0-Linux-x86_64.sh -b -p /opt/anaconda2
+
+/opt/anaconda2/bin/conda install -c r r-base=3.3.2 r-essentials=1.5.2 
+r-devtools=1.12.0
+
+/opt/anaconda2/bin/conda install -c bioconda --yes bbmap samtools epic 
+deeptools macs2 bedtools bedops multiqc subread stringtie nextflow bowtie2 
+bwa hisat2 star fastqc gimmemotifs nucleoatac kallisto r-spp=1.14 
+bioconductor-biocinstaller=1.24.0 bioconductor-edger=3.16.5 
+bioconductor-deseq2=1.14.1 bioconductor-chipseeker=1.10.0
+
+wget -P /opt/anaconda2/bin http://hartleys.github.io/QoRTs/QoRTs.jar
+
+/opt/anaconda2/bin/R --slave -e 
+'install.packages("http://hartleys.github.io/QoRTs/QoRTs_LATEST.tar.gz", 
+repos=NULL, type="source")'
+```
+
+### Steps to reproduce behavior
+
+Above.
+
+
+------=_Part_2363_352193085.1503072106045
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>## Version of Singularity:</div><div><br></div><div>2=
+.3.1</div><div><br></div><div>### Expected behavior</div><div><br></div><di=
+v>bamCoverage function will run and generate bigWig files</div><div><br></d=
+iv><div>### Actual behavior</div><div><br></div><div>Getting a weird little=
+ error when trying to run bamCoverage for sequencing data. Using Nextflow .=
+.. the majority of the pipeline works fine, this is the only step that fail=
+s.</div><div><br></div><div>```</div><div>bamCoverage -b ${bam} -o ${mergei=
+d}.RPKMnorm.bw -of bigwig -bs ${params.bamcoverage_bs} -p ${params.threads}=
+ --normalizeUsingRPKM --smoothLength ${params.bamcoverage_smooth} -e ${para=
+ms.bamcoverage_e} --centerReads 2&gt; ${mergeid}.bamcoverage_report.txt</di=
+v><div>```</div><div><br></div><div>```</div><div>Traceback (most recent ca=
+ll last):</div><div>=C2=A0 File &quot;/opt/anaconda2/bin/bamCoverage&quot;,=
+ line 11, in &lt;module&gt;</div><div>=C2=A0 =C2=A0 main(args)</div><div>=
+=C2=A0 File &quot;/opt/anaconda2/lib/python2.7/site-packages/deeptools/bamC=
+overage.py&quot;, line 145, in main</div><div>=C2=A0 =C2=A0 scale_factor =
+=3D get_scale_factor(args)</div><div>=C2=A0 File &quot;/opt/anaconda2/lib/p=
+ython2.7/site-packages/deeptools/getScaleFactor.py&quot;, line 168, in get_=
+scale_factor</div><div>=C2=A0 =C2=A0 bam_mapped, bam_mapped_total =3D get_n=
+um_kept_reads(args)</div><div>=C2=A0 File &quot;/opt/anaconda2/lib/python2.=
+7/site-packages/deeptools/getScaleFactor.py&quot;, line 157, in get_num_kep=
+t_reads</div><div>=C2=A0 =C2=A0 ftk =3D fraction_kept(args)</div><div>=C2=
+=A0 File &quot;/opt/anaconda2/lib/python2.7/site-packages/deeptools/getScal=
+eFactor.py&quot;, line 127, in fraction_kept</div><div>=C2=A0 =C2=A0 verbos=
+e=3Dargs.verbose)</div><div>=C2=A0 File &quot;/opt/anaconda2/lib/python2.7/=
+site-packages/deeptools/mapReduce.py&quot;, line 141, in mapReduce</div><di=
+v>=C2=A0 =C2=A0 pool =3D multiprocessing.Pool(numberOfProcessors)</div><div=
+>=C2=A0 File &quot;/opt/anaconda2/lib/python2.7/multiprocessing/__init__.py=
+&quot;, line 232, in Pool</div><div>=C2=A0 =C2=A0 return Pool(processes, in=
+itializer, initargs, maxtasksperchild)</div><div>=C2=A0 File &quot;/opt/ana=
+conda2/lib/python2.7/multiprocessing/pool.py&quot;, line 138, in __init__</=
+div><div>=C2=A0 =C2=A0 self._setup_queues()</div><div>=C2=A0 File &quot;/op=
+t/anaconda2/lib/python2.7/multiprocessing/pool.py&quot;, line 234, in _setu=
+p_queues</div><div>=C2=A0 =C2=A0 self._inqueue =3D SimpleQueue()</div><div>=
+=C2=A0 File &quot;/opt/anaconda2/lib/python2.7/multiprocessing/queues.py&qu=
+ot;, line 354, in __init__</div><div>=C2=A0 =C2=A0 self._rlock =3D Lock()</=
+div><div>=C2=A0 File &quot;/opt/anaconda2/lib/python2.7/multiprocessing/syn=
+chronize.py&quot;, line 147, in __init__</div><div>=C2=A0 =C2=A0 SemLock.__=
+init__(self, SEMAPHORE, 1, 1)</div><div>=C2=A0 File &quot;/opt/anaconda2/li=
+b/python2.7/multiprocessing/synchronize.py&quot;, line 75, in __init__</div=
+><div>=C2=A0 =C2=A0 sl =3D self._semlock =3D _multiprocessing.SemLock(kind,=
+ value, maxvalue)</div><div>OSError: [Errno 2] No such file or directory</d=
+iv><div>```</div><div><br></div><div>This is deeptools version 2.5.3 inside=
+ a Singularity container installed using anaconda2.</div><div><br></div><di=
+v>After asking the deeptools dev, they told me the following:</div><div><br=
+></div><div>&gt; After a bit of searching around, my only guess is that thi=
+s is some sort of</div><div>&gt; issue where the python multiprocessing mod=
+ule has problems accessing</div><div>&gt; /dev/shm in singularity. That&#39=
+;s pretty obscure and not something controlled</div><div>&gt; by deepTools.=
+</div><div><br></div><div>Here is my singularity file:</div><div><br></div>=
+<div>```</div><div>Bootstrap: docker</div><div>From: ubuntu:latest</div><di=
+v><br></div><div>%labels</div><div>Maintainer cag...@ucsd.edu</div><div>Ver=
+sion 1.0</div><div><br></div><div>%environment</div><div>export PATH=3D&quo=
+t;/opt/anaconda2/bin:$PATH&quot;</div><div><br></div><div>%post</div><div><=
+br></div><div><span style=3D"white-space:pre">=09</span>apt-get update</div=
+><div><br></div><div><span style=3D"white-space:pre">=09</span>apt-get inst=
+all -y wget bzip2 perl gawk</div><div><br></div><div><span style=3D"white-s=
+pace:pre">=09</span>ln -s /bin/tar /bin/gtar</div><div><br></div><div><span=
+ style=3D"white-space:pre">=09</span>wget https://repo.continuum.io/archive=
+/Anaconda2-4.4.0-Linux-x86_64.sh</div><div><br></div><div><span style=3D"wh=
+ite-space:pre">=09</span>bash Anaconda2-4.4.0-Linux-x86_64.sh -b -p /opt/an=
+aconda2</div><div><br></div><div><span style=3D"white-space:pre">=09</span>=
+/opt/anaconda2/bin/conda install -c r r-base=3D3.3.2 r-essentials=3D1.5.2 r=
+-devtools=3D1.12.0</div><div><br></div><div><span style=3D"white-space:pre"=
+>=09</span>/opt/anaconda2/bin/conda install -c bioconda --yes bbmap samtool=
+s epic deeptools macs2 bedtools bedops multiqc subread stringtie nextflow b=
+owtie2 bwa hisat2 star fastqc gimmemotifs nucleoatac kallisto r-spp=3D1.14 =
+bioconductor-biocinstaller=3D1.24.0 bioconductor-edger=3D3.16.5 bioconducto=
+r-deseq2=3D1.14.1 bioconductor-chipseeker=3D1.10.0</div><div><br></div><div=
+><span style=3D"white-space:pre">=09</span>wget -P /opt/anaconda2/bin http:=
+//hartleys.github.io/QoRTs/QoRTs.jar</div><div><br></div><div><span style=
+=3D"white-space:pre">=09</span>/opt/anaconda2/bin/R --slave -e &#39;install=
+.packages(&quot;http://hartleys.github.io/QoRTs/QoRTs_LATEST.tar.gz&quot;, =
+repos=3DNULL, type=3D&quot;source&quot;)&#39;</div><div>```</div><div><br><=
+/div><div>### Steps to reproduce behavior</div><div><br></div><div>Above.</=
+div><div><br></div></div>
+------=_Part_2363_352193085.1503072106045--
+
+------=_Part_2362_440860774.1503072106045--

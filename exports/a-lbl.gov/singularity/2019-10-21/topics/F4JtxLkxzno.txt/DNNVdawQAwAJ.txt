@@ -1,0 +1,181 @@
+X-Received: by 10.31.238.196 with SMTP id m187mr37834614vkh.7.1469042842154;
+        Wed, 20 Jul 2016 12:27:22 -0700 (PDT)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.107.187.194 with SMTP id l185ls82619iof.35.gmail; Wed, 20 Jul
+ 2016 12:27:21 -0700 (PDT)
+X-Received: by 10.66.13.200 with SMTP id j8mr76924433pac.150.1469042841410;
+        Wed, 20 Jul 2016 12:27:21 -0700 (PDT)
+Return-Path: <vso...@gmail.com>
+Received: from fe4.lbl.gov (fe4.lbl.gov. [128.3.41.71])
+        by mx.google.com with ESMTPS id d2si4890405pfj.266.2016.07.20.12.27.21
+        for <singu...@lbl.gov>
+        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Wed, 20 Jul 2016 12:27:21 -0700 (PDT)
+Received-SPF: pass (google.com: domain of vso...@gmail.com designates 209.85.213.44 as permitted sender) client-ip=209.85.213.44;
+Authentication-Results: mx.google.com;
+       dkim=pass head...@gmail.com;
+       spf=pass (google.com: domain of vso...@gmail.com designates 209.85.213.44 as permitted sender) smtp.mailfrom=vso...@gmail.com
+X-Ironport-SBRS: 3.4
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2HdBwDqz49XhizVVdFaA4QVfAanSIR+V4Y4hj5BHocsBzsRAQEBAQEBAQMPAQEBCAsLCSEvQRABgX85CgYsAQEBAQEBAQEBAQEBAQEBGgIrExI0ER0BGx4DEhA3AiQBEQEFAVeHcwEDFwUJn2eCB4EyPjGLO4FqgloFhD0KGScNUoNgAgYQiWSGCoICCy2CWgWPAIomgTWEXohPgjqMf45hEh6BDw8lgjyBdxwygU2EFiqBGgEBAQ
+X-IronPort-AV: E=Sophos;i="5.28,395,1464678000"; 
+   d="scan'208,217";a="30213145"
+Received: from mail-vk0-f44.google.com ([209.85.213.44])
+  by fe4.lbl.gov with ESMTP; 20 Jul 2016 12:27:19 -0700
+Received: by mail-vk0-f44.google.com with SMTP id n129so37732948vke.3
+        for <singu...@lbl.gov>; Wed, 20 Jul 2016 12:27:19 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=mime-version:from:date:message-id:subject:to;
+        bh=wAIb1AshHv/rOdOd2yy2MmiJKinb3zVWnSzMAEwlneo=;
+        b=yxZHxgqQ0Bq9tq6r9QhVYnaip3JLAtfPIei2Sp5zGyJTa8XJw5m9VfmuzGgUWcsbtn
+         58RRLg20jMX4XF2GoW8MwHr3Q8KMlo4mXW0eOc1+yKGDygmzlDSIr2yq4tXm7nYojDm7
+         TkIdYnOFcyeZU/vlBALw5HOnMT3EW2YFjk5YpenmRAgJpf8ppkPegKkeJzLK0QTBKcaf
+         TE5wqbPDdzAThwWH94qy7AWZC+psrtuQFCOr5A4uudivPnw1kJ1pDXZb9wMUBK/DWaLA
+         x5Tw2ar9D56dzikumfZ711ubRE944JXDNfBI3lxqeq2Jcrx8im/IyGmJyUK1vrQc9Fk1
+         Zuyg==
+X-Gm-Message-State: ALyK8tK2gyc+LwQ3mpAVmWJZBbponkc/0ZMeq0LibPmUJCLumq16l6YCnT8u+pJptPLRJyq31cJXQe6WxJx1nQ==
+X-Received: by 10.176.69.161 with SMTP id u30mr23962049uau.135.1469042839075;
+ Wed, 20 Jul 2016 12:27:19 -0700 (PDT)
+MIME-Version: 1.0
+Received: by 10.31.230.133 with HTTP; Wed, 20 Jul 2016 12:26:59 -0700 (PDT)
+From: vanessa s <vso...@gmail.com>
+Date: Wed, 20 Jul 2016 12:26:59 -0700
+Message-ID: <CAM=pu+JpfVY9kFL21QDjkjfK4C_t53Jtrt2LMDzBJi1Cxe5X+Q@mail.gmail.com>
+Subject: Simplify bootstrap spec
+To: singularity@lbl.gov
+Content-Type: multipart/alternative; boundary=94eb2c11c9609542b30538163071
+
+--94eb2c11c9609542b30538163071
+Content-Type: text/plain; charset=UTF-8
+
+Hi everyone,
+
+I'm taking a look at the spec for a bootstrap definition:
+
+http://singularity.lbl.gov/#bootstrap
+
+And I'm wondering if, for some of the later commands, we might be able to
+simplify it a bit? I think there are two compelling reasons. *1)* a lot of
+the commands are a bit redundant, and would be hard(er) for developers to
+remember.* 2)* I think we might be able to make these files more akin to
+files that are well known (cough cough, Dockerfile).
+
+I am working on a function to export a Dockerfile to a Singularityfile (can
+we call it that? :P) so we can equivalently have a database of these
+Singularityfiles on something like Github - right now docker2singularity
+creates images, which is awesome, but it's not something easy to store
+/share and collaboratively work on. Here are some thoughts:
+
+- *DistType, MirrorURL, OSVersion* - these I think can stay as they are.
+However this is implemented, it's logically we would need to pull the base
+OS for a particular distribution and version, from a particular mirror.
+
+- *Setup*: "Setup creates the necessary starting point, files, and
+components for an OS to be bootstrapped. While it is not necessary, it is
+highly recommended as it will create some of the base and mandatory files" It
+would be really great if we could have this done anyway, perhaps after the
+above commands, but hide it from the file. Is there a reason it's needed to
+be there, instead of just being triggered after some event like installing
+the OS?
+
+- *Bootstrap:* "The main driver for the bootstrap operation. This will call
+either YUM or Apt (or other distribution tool) to start installing the
+packages onto the image". Ditto above!
+
+Ok, now we get to where I think we can simplify a LOT. For example, these
+commands:
+
+*- InstallPkgs, RunCmd:* could just be captured with the Dockerfile
+equivalent to RUN. I can't speak for everyone, but I'm comfortable with
+bootstrapping an OS and then writing "apt-get blargblarblarg" instead of
+InstallPkgs blargblargblarg.
+
+*- Cleanup: "*Cleanup any temporary files like YUM/Apt caches." I like this
+too, although again I think it could be captured with a RUN command.
+
+*- InstallFile:* This looks a lot like the Dockerfile command "ADD" [dest]
+[src]
+
+- *RunScript:* "Add a command line to the "runscript" invoked by
+'singularity run' or by executing the container directly. May be repeated
+to add multiple command lines." We could probably keep this as RunScript,
+because it's not quite like the CMD spec, and at this point the idea of a
+RunScript is a singularity specific thing. I think in the long run we would
+want better control / parsing of this thing so we can easily capture
+inputs, etc, but that's for another day!
+
+Again - this is important because people will be more open to working with
+something that looks similar to something they understand, and will like to
+see something like a massive repo of Singularityfiles they can use!
+
+Thoughts?
+
+Best,
+
+Vanessa
+
+-- 
+Vanessa Villamia Sochat
+Stanford University '16
+(603) 321-0676
+
+--94eb2c11c9609542b30538163071
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi everyone,<br><br>I&#39;m taking a look at the spec for =
+a bootstrap definition:<br><br><a href=3D"http://singularity.lbl.gov/#boots=
+trap">http://singularity.lbl.gov/#bootstrap</a><br><br>And I&#39;m wonderin=
+g if, for some of the later commands, we might be able to simplify it a bit=
+? I think there are two compelling reasons. <b>1)</b> a lot of the commands=
+ are a bit redundant, and would be hard(er) for developers to remember.<b> =
+2)</b> I think we might be able to make these files more akin to files that=
+ are well known (cough cough, Dockerfile).=C2=A0<div><br></div><div>I am wo=
+rking on a function to export a Dockerfile to a Singularityfile (can we cal=
+l it that? :P) so we can equivalently have a database of these Singularityf=
+iles on something like Github - right now docker2singularity creates images=
+, which is awesome, but it&#39;s not something easy to store /share and col=
+laboratively work on. Here are some thoughts:<br><br>- <b>DistType,=C2=A0Mi=
+rrorURL, OSVersion</b> - these I think can stay as they are. However this i=
+s implemented, it&#39;s logically we would need to pull the base OS for a p=
+articular distribution and version, from a particular mirror.<div><div><br>=
+</div><div>- <b>Setup</b>: <font color=3D"#0b5394">&quot;Setup creates the =
+necessary starting point, files, and components for an OS to be bootstrappe=
+d. While it is not necessary, it is highly recommended as it will create so=
+me of the base and mandatory files&quot; </font>It would be really great if=
+ we could have this done anyway, perhaps after the above commands, but hide=
+ it from the file. Is there a reason it&#39;s needed to be there, instead o=
+f just being triggered after some event like installing the OS?</div><div><=
+br></div><div>- <b>Bootstrap:</b>=C2=A0<font color=3D"#0b5394">&quot;The ma=
+in driver for the bootstrap operation. This will call either YUM or Apt (or=
+ other distribution tool) to start installing the packages onto the image&q=
+uot;.</font> Ditto above!</div><div><br></div><div>Ok, now we get to where =
+I think we can simplify a LOT. For example, these commands:</div><div><br><=
+b>- InstallPkgs, RunCmd:</b> could just be captured with the Dockerfile equ=
+ivalent to RUN. I can&#39;t speak for everyone, but I&#39;m comfortable wit=
+h bootstrapping an OS and then writing &quot;apt-get blargblarblarg&quot; i=
+nstead of InstallPkgs blargblargblarg.=C2=A0</div><div><br></div><div><b>- =
+Cleanup: <font color=3D"#0b5394">&quot;</font></b><font color=3D"#0b5394">C=
+leanup any temporary files like YUM/Apt caches.&quot;</font> I like this to=
+o, although again I think it could be captured with a RUN command.<br></div=
+><div><br></div><div><b>- InstallFile:</b>=C2=A0This looks a lot like the D=
+ockerfile command &quot;ADD&quot; [dest] [src]<br><br></div><div>- <b>RunSc=
+ript:</b><font color=3D"#0b5394">=C2=A0&quot;Add a command line to the &quo=
+t;runscript&quot; invoked by &#39;singularity run&#39; or by executing the =
+container directly. May be repeated to add multiple command lines.&quot;</f=
+ont> We could probably keep this as RunScript, because it&#39;s not quite l=
+ike the CMD spec, and at this point the idea of a RunScript is a singularit=
+y specific thing. I think in the long run we would want better control / pa=
+rsing of this thing so we can easily capture inputs, etc, but that&#39;s fo=
+r another day!</div><div><br></div><div>Again - this is important because p=
+eople will be more open to working with something that looks similar to som=
+ething they understand, and will like to see something like a massive repo =
+of Singularityfiles they can use!=C2=A0<br></div><div><br></div><div>Though=
+ts?</div><div><br></div><div>Best,</div><div><br></div><div>Vanessa<br clea=
+r=3D"all"><div><br></div>-- <br><div class=3D"gmail_signature" data-smartma=
+il=3D"gmail_signature">Vanessa Villamia Sochat<br>Stanford University &#39;=
+16<br><div><div><div>(603) 321-0676</div></div></div></div>
+</div></div></div></div>
+
+--94eb2c11c9609542b30538163071--

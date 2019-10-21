@@ -1,0 +1,254 @@
+Date: Thu, 4 Apr 2019 10:39:28 -0700 (PDT)
+From: Kevin <nl.v...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <dd6aefa5-69fc-4fc7-b353-9509116c483a@lbl.gov>
+In-Reply-To: <CAM=pu+J6NxXnvfwgvvCgrT5+1EfHNAbr=MbF4yzxAOC3dpmbsQ@mail.gmail.com>
+References: <59a5487d-20b5-42dd-9388-1a7330d9130c@lbl.gov>
+ <CAM=pu+J6NxXnvfwgvvCgrT5+1EfHNAbr=MbF4yzxAOC3dpmbsQ@mail.gmail.com>
+Subject: Re: [Singularity] how to treat config files during/after build
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1625_369832136.1554399568686"
+
+------=_Part_1625_369832136.1554399568686
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1626_1875345681.1554399568687"
+
+------=_Part_1626_1875345681.1554399568687
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Thanks Vanessa! 
+
+oh wow, I didn't expect this to be so much of a problem. Shouldn't there be 
+an option for singularity build to ignore everything in the user home 
+except the singularity config file itself? 
+Might not have been entirely clear from my initial post, but I do want all 
+build steps to write files in the /home of my container image to get 
+complete isolation (copying stuff from my home after build is rather a last 
+resort ;)).
+I mean, that behaviour seems super weird considering that singularity puts 
+reproducibility on its flag - its not even explicitly mentioned in the docs!
+I had an issue with R complaining about missing localization files on our 
+HPC before - kinda get why now...
+
+1. is also problematic since --writable is denoted a legancyformat (so 
+probably not a good idea to depend on that). Sandbox mode seems awefully 
+complicated (I do not want to build my container interactively ;)) 
+How weird would it be if the only option to get a reproducible singularity 
+container was by first building a docker container (fully isolated) and 
+then turning it in a singularity container image???
+
+Thanks again!
+
+Kevin
+
+On Thursday, 4 April 2019 18:27:38 UTC+1, vanessa wrote:
+>
+> It's a bit of a catch 22 - if you want to have a reproducible (read only) 
+> container with the config files, they obviously need to be in the container 
+> (but then you can't write / update them so you can't create the container 
+> in the first place). Have you tried:
+>    1. Developing with a writable container, and
+>    2. Saving for others to use as read only?
+>
+> This means developing your container using a Docker base (writable,which 
+> has complete isolation for some $USER that you create) or Singularity (also 
+> with writable), but saving the config files to a known home in the 
+> container, and then exporting the container to Singularity (and use --home 
+> to specify your custom read only home, and --containall to not use the host?
+>
+> On Thu, Apr 4, 2019 at 1:06 PM Kevin <n...@gmail.com <javascript:>> 
+> wrote:
+>
+>> Hey,
+>>
+>> so, this might an incredibly stupid question but I couldn't resolve it 
+>> using the docs - so here it is: 
+>>
+>> I am trying to create a singularity recipy file for building a completely 
+>> isolated jupyter notebook (+ R kernel) container. Here's my recipe:
+>>
+>> Bootstrap: docker
+>> From: rocker/verse:latest
+>>
+>> %post
+>>     apt-get update
+>>     apt-get -y install curl wget python3-pip
+>>
+>>     # install snakemake
+>>     pip3 install snakemake
+>>
+>>     # install jupyter notebook
+>>     python3 -m pip install jupyter
+>>     python3 -m pip install nbconvert
+>>
+>>     # install R packages
+>>     R -e "install.packages('IRkernel'); IRkernel::installspec(prefix = 
+>> '/usr/local', user = FALSE)"
+>>
+>> after building, I run this via
+>>
+>> singularity exec \
+>>  --bind $PWD:/run/user singularity-container-image.sif \
+>>  jupyter notebook \
+>>  --ip=127.0.0.1 --no-browser
+>>
+>> I need to bind /run/user since the image is read only and jupyter server 
+>> needs to write some stuff during execution.
+>> My problem is that jupyter puts a lot of essential config files in the 
+>> user home folder (e.g. the kernels). If I understand it correctly, 
+>> ~ is automatically mounted along with a few other directories in 
+>> singularity. I.e. when I run my build script the kernels are 
+>> actually written in my host home folder! 
+>> Trying to run my notebook on a different system thenobviously fails du to 
+>> the kernels not being present in the home folder.
+>> I find it extremely convenient that $PWD is mounted by default but how on 
+>> earth am I ever going to get reproducible results if
+>> all the configs in the home directory are by default not taken from 
+>> inside the container? 
+>>
+>> Could somebody shed some light on this for me? Do I need to tweak my 
+>> singularity config to only auto-bind $PWD? 
+>> How will that behave with a standard singularity installation where the 
+>> user home is again bound by default?
+>>
+>> Any help appreciated, thanks!
+>>
+>> Kevin
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to si...@lbl.gov <javascript:>.
+>>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_1626_1875345681.1554399568687
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Thanks Vanessa! <br></div><div><br></div><div>oh wow,=
+ I didn&#39;t expect this to be so much of a problem. Shouldn&#39;t there b=
+e an option for singularity build to ignore everything in the user home exc=
+ept the singularity config file itself? <br></div><div>Might not have been =
+entirely clear from my initial post, but I do want all build steps to write=
+ files in the /home of my container image to get complete isolation (copyin=
+g stuff from my home after build is rather a last resort ;)).</div><div>I m=
+ean, that behaviour seems super weird considering that singularity puts rep=
+roducibility on its flag - its not even explicitly mentioned in the docs!</=
+div><div>I had an issue with R complaining about missing localization files=
+ on our HPC before - kinda get why now...</div><div><br></div><div>1. is al=
+so problematic since --writable is denoted a legancyformat (so probably not=
+ a good idea to depend on that). Sandbox mode seems awefully complicated (I=
+ do not want to build my container interactively ;)) <br></div><div>How wei=
+rd would it be if the only option to get a reproducible singularity contain=
+er was by first building a docker container (fully isolated) and then turni=
+ng it in a singularity container image???<br></div><div><br></div><div>Than=
+ks again!</div><div><br></div><div>Kevin<br></div><div><br></div>On Thursda=
+y, 4 April 2019 18:27:38 UTC+1, vanessa wrote:<blockquote class=3D"gmail_qu=
+ote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padd=
+ing-left: 1ex;"><div dir=3D"ltr">It&#39;s a bit of a catch 22 - if you want=
+ to have a reproducible (read only) container with the config files, they o=
+bviously need to be in the container (but then you can&#39;t write / update=
+ them so you can&#39;t create the container in the first place). Have you t=
+ried:<div>=C2=A0 =C2=A01. Developing with a writable container, and</div><d=
+iv>=C2=A0 =C2=A02. Saving for others to use as read only?</div><div><br></d=
+iv><div>This means developing your container using a Docker base (writable,=
+which has complete isolation for some $USER that you create) or Singularity=
+ (also with writable), but saving the config files to a known home in the c=
+ontainer, and then exporting the container to Singularity (and use --home t=
+o specify your custom read only home, and --containall to not use the host?=
+</div></div><br><div class=3D"gmail_quote"><div dir=3D"ltr">On Thu, Apr 4, =
+2019 at 1:06 PM Kevin &lt;<a href=3D"javascript:" target=3D"_blank" gdf-obf=
+uscated-mailto=3D"mZJq4YStBQAJ" rel=3D"nofollow" onmousedown=3D"this.href=
+=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascri=
+pt:&#39;;return true;">n...@gmail.com</a>&gt; wrote:<br></div><blockquote c=
+lass=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px soli=
+d rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr"><div>Hey,</div><div><=
+br></div><div>so, this might an incredibly stupid question but I couldn&#39=
+;t resolve it using the docs - so here it is: <br></div><div><br></div><div=
+>I am trying to create a singularity recipy file for building a completely =
+isolated jupyter notebook (+ R kernel) container. Here&#39;s my recipe:</di=
+v><div><br></div><div><div style=3D"background-color:rgb(250,250,250);borde=
+r-color:rgb(187,187,187);border-style:solid;border-width:1px"><code><div><s=
+pan style=3D"color:rgb(102,0,102)">Bootstrap</span><span style=3D"color:rgb=
+(102,102,0)">:</span><span style=3D"color:rgb(0,0,0)"> docker<br></span><sp=
+an style=3D"color:rgb(102,0,102)">From</span><span style=3D"color:rgb(102,1=
+02,0)">:</span><span style=3D"color:rgb(0,0,0)"> rocker</span><span style=
+=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">verse</s=
+pan><span style=3D"color:rgb(102,102,0)">:</span><span style=3D"color:rgb(0=
+,0,0)">latest<br><br></span><span style=3D"color:rgb(102,102,0)">%</span><s=
+pan style=3D"color:rgb(0,0,0)">post<br>=C2=A0 =C2=A0 apt</span><span style=
+=3D"color:rgb(102,102,0)">-</span><span style=3D"color:rgb(0,0,136)">get</s=
+pan><span style=3D"color:rgb(0,0,0)"> update<br>=C2=A0 =C2=A0 apt</span><sp=
+an style=3D"color:rgb(102,102,0)">-</span><span style=3D"color:rgb(0,0,136)=
+">get</span><span style=3D"color:rgb(0,0,0)"> </span><span style=3D"color:r=
+gb(102,102,0)">-</span><span style=3D"color:rgb(0,0,0)">y install curl wget=
+ python3</span><span style=3D"color:rgb(102,102,0)">-</span><span style=3D"=
+color:rgb(0,0,0)">pip<br><br>=C2=A0 =C2=A0 </span><span style=3D"color:rgb(=
+136,0,0)"># install snakemake</span><span style=3D"color:rgb(0,0,0)"><br>=
+=C2=A0 =C2=A0 pip3 install snakemake<br><br>=C2=A0 =C2=A0 </span><span styl=
+e=3D"color:rgb(136,0,0)"># install jupyter notebook</span><span style=3D"co=
+lor:rgb(0,0,0)"><br>=C2=A0 =C2=A0 python3 </span><span style=3D"color:rgb(1=
+02,102,0)">-</span><span style=3D"color:rgb(0,0,0)">m pip install jupyter<b=
+r>=C2=A0 =C2=A0 python3 </span><span style=3D"color:rgb(102,102,0)">-</span=
+><span style=3D"color:rgb(0,0,0)">m pip install nbconvert<br><br>=C2=A0 =C2=
+=A0 </span><span style=3D"color:rgb(136,0,0)"># install R packages</span><s=
+pan style=3D"color:rgb(0,0,0)"><br>=C2=A0 =C2=A0 R </span><span style=3D"co=
+lor:rgb(102,102,0)">-</span><span style=3D"color:rgb(0,0,0)">e </span><span=
+ style=3D"color:rgb(0,136,0)">&quot;install.packages(&#39;IRkernel&#39;); I=
+Rkernel::installspec(prefix =3D &#39;/usr/local&#39;, user =3D FALSE)&quot;=
+</span></div></code></div></div><div><br></div><div>after building, I run t=
+his via</div><div><br></div><div><div style=3D"color:rgb(212,212,212);backg=
+round-color:rgb(30,30,30);font-family:&quot;Fira Code&quot;;font-weight:nor=
+mal;font-size:14px;line-height:19px;white-space:pre-wrap"><div><span style=
+=3D"color:rgb(212,212,212)">singularity </span><span style=3D"color:rgb(220=
+,220,170)">exec</span><span style=3D"color:rgb(212,212,212)"> \</span></div=
+><div><span style=3D"color:rgb(212,212,212)"> =C2=A0--bind </span><span sty=
+le=3D"color:rgb(156,220,254)">$PWD</span><span style=3D"color:rgb(212,212,2=
+12)">:/run/user singularity-container-image.<wbr>sif \</span></div><div><sp=
+an style=3D"color:rgb(212,212,212)"> =C2=A0jupyter notebook \</span></div><=
+div><span style=3D"color:rgb(212,212,212)"> =C2=A0--ip=3D127.0.0.1 --no-bro=
+wser</span></div></div><br></div><div>I need to bind /run/user since the im=
+age is read only and jupyter server needs to write some stuff during execut=
+ion.</div><div>My problem is that jupyter puts a lot of essential config fi=
+les in the user home folder (e.g. the kernels). If I understand it correctl=
+y, <br></div><div>~ is automatically mounted along with a few other directo=
+ries in singularity. I.e. when I run my build script the kernels are <br></=
+div><div>actually written in my host home folder! <br></div><div>Trying to =
+run my notebook on a different system thenobviously fails du to the kernels=
+ not being present in the home folder.</div><div>I find it extremely conven=
+ient that $PWD is mounted by default but how on earth am I ever going to ge=
+t reproducible results if</div><div>all the configs in the home directory a=
+re by default not taken from inside the container? <br></div><div><br></div=
+><div>Could somebody shed some light on this for me? Do I need to tweak my =
+singularity config to only auto-bind $PWD? <br></div><div>How will that beh=
+ave with a standard singularity installation where the user home is again b=
+ound by default?</div><div><br></div><div>Any help appreciated, thanks!</di=
+v><div><br></div><div>Kevin<br></div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+mZJq4YStBQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singu...@lbl.<wbr>gov</a>.<br>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><div>(=
+603) 321-0676</div></div></div></div>
+</blockquote></div>
+------=_Part_1626_1875345681.1554399568687--
+
+------=_Part_1625_369832136.1554399568686--

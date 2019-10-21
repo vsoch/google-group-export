@@ -1,0 +1,133 @@
+X-Received: by 10.107.137.15 with SMTP id l15mr37598881iod.34.1469837067105;
+        Fri, 29 Jul 2016 17:04:27 -0700 (PDT)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.107.20.68 with SMTP id 65ls2748310iou.16.gmail; Fri, 29 Jul
+ 2016 17:04:26 -0700 (PDT)
+X-Received: by 10.98.103.214 with SMTP id t83mr73637800pfj.158.1469837066699;
+        Fri, 29 Jul 2016 17:04:26 -0700 (PDT)
+Return-Path: <gmku...@lbl.gov>
+Received: from fe4.lbl.gov (fe4.lbl.gov. [128.3.41.71])
+        by mx.google.com with ESMTPS id h63si20909175pfd.38.2016.07.29.17.04.26
+        for <singu...@lbl.gov>
+        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Fri, 29 Jul 2016 17:04:26 -0700 (PDT)
+Received-SPF: pass (google.com: domain of gmku...@lbl.gov designates 209.85.215.71 as permitted sender) client-ip=209.85.215.71;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of gmku...@lbl.gov designates 209.85.215.71 as permitted sender) smtp.mailfrom=gmku...@lbl.gov
+X-Ironport-SBRS: 2.9
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2HvAADm7ZtXgUfXVdFdhBt8BrN+hQWBPUAkhS9KAoEjBzgUAQEBAQEBAQMPAQEJDQkJFzGCUAE5PAEBAQEBASMCDV8BBAESEVsLCwQHNwICIhIBBQEcBhMiiAcIBQmhUYEyPjGLO49vAQEIAgEfBRCKZ4dBgloFjwuEZYVDAYYXiGaBa4RbiHqMMYI5Eh6BDx6EUBwyiD4BAQE
+X-IronPort-AV: E=Sophos;i="5.28,441,1464678000"; 
+   d="scan'208,217";a="31117363"
+Received: from mail-lf0-f71.google.com ([209.85.215.71])
+  by fe4.lbl.gov with ESMTP; 29 Jul 2016 17:04:25 -0700
+Received: by mail-lf0-f71.google.com with SMTP id p85so43449200lfg.3
+        for <singu...@lbl.gov>; Fri, 29 Jul 2016 17:04:25 -0700 (PDT)
+X-Gm-Message-State: AEkoout4CzD2pJDUzv0CwBT5yVRSwXJ0n5efIlVgdLF1yh+E2ZgCDi7AYhA9PZL56IY5i/JOMJbmNVKmyOU/d8DT1BTPyj+fXHiMecvdzN9W4XFJV0b14TtyFq8XeS8VrUXrcaUGrCfP7/uNWnc0e8gcekQ=
+X-Received: by 10.46.32.10 with SMTP id g10mr14972029ljg.42.1469837064473;
+        Fri, 29 Jul 2016 17:04:24 -0700 (PDT)
+X-Received: by 10.46.32.10 with SMTP id g10mr14972025ljg.42.1469837064086;
+ Fri, 29 Jul 2016 17:04:24 -0700 (PDT)
+MIME-Version: 1.0
+Received: by 10.25.214.141 with HTTP; Fri, 29 Jul 2016 17:04:23 -0700 (PDT)
+In-Reply-To: <CAN7etTxB-=aMLO41vUAZAOGssHeCKJ28obV3Fng2CFTmf67FBw@mail.gmail.com>
+References: <CAN7etTxB-=aMLO41vUAZAOGssHeCKJ28obV3Fng2CFTmf67FBw@mail.gmail.com>
+From: "Gregory M. Kurtzer" <gmku...@lbl.gov>
+Date: Fri, 29 Jul 2016 17:04:23 -0700
+Message-ID: <CAN7etTxrOfmLPXhOctmqNToi3R3_82r3v_=kBrKuRNL36WOAeg@mail.gmail.com>
+Subject: Re: Bug found in v2.1 - container locking
+To: singularity <singu...@lbl.gov>
+Content-Type: multipart/alternative; boundary=001a1142c5181539140538cf1c7f
+
+--001a1142c5181539140538cf1c7f
+Content-Type: text/plain; charset=UTF-8
+
+If anyone needs a quick fix or wish to test, please pull the 2.x branch and
+rebuild from there. I set it such that the only root calling user has the
+ability to mount --writable and it doesn't try to obtain a lock unless
+--writable is passed and it is the root user requesting it.
+
+So shared locking will never occur on the image, and exclusive locking only
+occurs when making changes to the image (and now it also just warns if it
+can't obtain a lock).
+
+Thanks and sorry for the issue!
+
+On Fri, Jul 29, 2016 at 12:50 PM, Gregory M. Kurtzer <gmku...@lbl.gov>
+wrote:
+
+> There was a bug reported by Kilian here:
+>
+> https://github.com/gmkurtzer/singularity/issues/174
+>
+> If you have the container file on an NFS file system *and* have
+> local_lock=none (default) Singularity will fail to obtain the flock on the
+> image and bail out.
+>
+> Workarounds include moving the container to a different file system, or
+> use one of the other local_lock options for your NFS mount.
+>
+> The long term fix will be released next week'ish (as 2.1.1) and will
+> include a configuration file parameter fix to avoid all locking by
+> disabling an image from being writable (possibly only for non-root users).
+>
+> Thanks!
+>
+> --
+> Gregory M. Kurtzer
+> High Performance Computing Services (HPCS)
+> University of California
+> Lawrence Berkeley National Laboratory
+> One Cyclotron Road, Berkeley, CA 94720
+>
+
+
+
+-- 
+Gregory M. Kurtzer
+High Performance Computing Services (HPCS)
+University of California
+Lawrence Berkeley National Laboratory
+One Cyclotron Road, Berkeley, CA 94720
+
+--001a1142c5181539140538cf1c7f
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">If anyone needs a quick fix or wish to test, please pull t=
+he 2.x branch and rebuild from there. I set it such that the only root call=
+ing user has the ability to mount --writable and it doesn&#39;t try to obta=
+in a lock unless --writable is passed and it is the root user requesting it=
+.<div><br></div><div>So shared locking will never occur on the image, and e=
+xclusive locking only occurs when making changes to the image (and now it a=
+lso just warns if it can&#39;t obtain a lock).</div><div><br></div><div>Tha=
+nks and sorry for the issue!</div></div><div class=3D"gmail_extra"><br><div=
+ class=3D"gmail_quote">On Fri, Jul 29, 2016 at 12:50 PM, Gregory M. Kurtzer=
+ <span dir=3D"ltr">&lt;<a href=3D"mailto:gmku...@lbl.gov" target=3D"_blank"=
+>gmku...@lbl.gov</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote"=
+ style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><d=
+iv dir=3D"ltr">There was a bug reported by=C2=A0Kilian here:<div><br></div>=
+<div><a href=3D"https://github.com/gmkurtzer/singularity/issues/174" target=
+=3D"_blank">https://github.com/gmkurtzer/singularity/issues/174</a></div><d=
+iv><br></div><div>If you have the container file on an NFS file system *and=
+* have local_lock=3Dnone (default) Singularity will fail to obtain the floc=
+k on the image and bail out.</div><div><br></div><div>Workarounds include m=
+oving the container to a different file system, or use one of the other loc=
+al_lock options for your NFS mount.=C2=A0</div><div><br></div><div>The long=
+ term fix will be released next week&#39;ish (as 2.1.1) and will include a =
+configuration file parameter fix to avoid all locking by disabling an image=
+ from being writable (possibly only for non-root users).</div><div><div><br=
+></div><div>Thanks!</div><span class=3D"HOEnZb"><font color=3D"#888888"><di=
+v><br></div>-- <br><div><div dir=3D"ltr"><div>Gregory M. Kurtzer<br>High Pe=
+rformance Computing Services (HPCS)<br>University of California<br>Lawrence=
+ Berkeley National Laboratory<br>One Cyclotron Road, Berkeley, CA 94720</di=
+v></div></div>
+</font></span></div></div>
+</blockquote></div><br><br clear=3D"all"><div><br></div>-- <br><div class=
+=3D"gmail_signature" data-smartmail=3D"gmail_signature"><div dir=3D"ltr"><d=
+iv>Gregory M. Kurtzer<br>High Performance Computing Services (HPCS)<br>Univ=
+ersity of California<br>Lawrence Berkeley National Laboratory<br>One Cyclot=
+ron Road, Berkeley, CA 94720</div></div></div>
+</div>
+
+--001a1142c5181539140538cf1c7f--

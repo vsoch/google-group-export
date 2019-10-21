@@ -1,0 +1,277 @@
+Date: Wed, 26 Sep 2018 15:01:12 -0700 (PDT)
+From: =?UTF-8?Q?Micha=C5=82_T=2E_Lorenc?= <m.t....@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <fd7260cb-c1c0-4b69-8a28-20d81d0fad21@lbl.gov>
+In-Reply-To: <CACbNy8HGGBNH=f4dHSgZFQQcQ-Mo84sPRdC8hmOcyR+U6b10PA@mail.gmail.com>
+References: <3bd0d4b3-fc36-4ac0-ae1a-1495dcdecc70@lbl.gov>
+ <CACbNy8HGGBNH=f4dHSgZFQQcQ-Mo84sPRdC8hmOcyR+U6b10PA@mail.gmail.com>
+Subject: Re: [Singularity] Wrongly reported: No space left on device
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_8_37569981.1537999273091"
+
+------=_Part_8_37569981.1537999273091
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_9_2127858242.1537999273092"
+
+------=_Part_9_2127858242.1537999273092
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Hi Joana,
+I tried to use sandbox (*singularity build --sandbox 3d-dna-sandbox=20
+Singularity*) but now I got=20
+
+
+
+
+
+*Errors were encountered while=20
+processing: /tmp/apt-dpkg-install-gpR3vj/061-linux-libc-dev_4.9.110-3+deb9u=
+4_amd64.deb /tmp/apt-dpkg-install-gpR3vj/112-manpages-dev_4.10-2_all.debE:=
+=20
+Sub-process /usr/bin/dpkg returned an error code (1)ABORT: Aborting with=20
+RETVAL=3D255*
+
+with this Singularity file:
+
+BootStrap: docker
+From: debian:stretch-backports
+
+%help
+  A container with 3d-dna
+
+%environment
+  PATH=3D/opt/conda/bin:$PATH
+
+
+%post
+  apt-get update && apt-get -y upgrade
+  apt-get -y install \
+    build-essential \
+    wget \
+    bzip2 \
+    ca-certificates \
+    libglib2.0-0 \
+    libxext6 \
+    libsm6 \
+    libxrender1 \
+    git
+
+  rm -rf /var/lib/apt/lists/*
+  apt-get clean
+
+  # download and install Miniconda
+  echo 'export PATH=3D/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh
+  wget -c=20
+https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh
+    /bin/bash Miniconda2-latest-Linux-x86_64.sh -bfp /usr/local/
+
+  rm -rf Miniconda2-latest-Linux-x86_64.sh
+
+  # add bioconda channels
+  conda config --add channels defaults
+  conda config --add channels conda-forge
+  conda config --add channels bioconda
+  conda update conda
+ =20
+  # install 3d-dna dependecies
+  conda create -y --name 3d-dna lastz=3D1.0.4 openjdk=3D8.0.152 gawk=3D4.2.=
+1=20
+coreutils=3D8.30 parallel=3D20180522 python=3D2.7 numpy=3D1.15.1 scipy=3D1.=
+1.0=20
+matplotlib=3D2.2.3
+  conda clean --all --yes
+
+  # install 3d-dna
+  git clone https://github.com/theaidenlab/3d-dna.git
+
+%runscript
+   exec conda activate 3d-dna
+
+What did I miss?
+
+Thank you in advance,
+
+Michal
+
+
+
+
+On Wednesday, September 26, 2018 at 9:41:28 PM UTC+10, Joana Chavez wrote:
+>
+> Hello Michal, is your container using a ext3 file system? I would suggest=
+=20
+> running it with a sandbox if that's the case. Ext3 has an allotted amount=
+=20
+> of space which you might be exceeding, whereas a sandbox has much space.=
+=20
+> Other possibility would be to expand your image using* image expand* (=20
+> see this ->=20
+> https://www.sylabs.io/guides/2.6/user-guide/appendix.html?highlight=3Dima=
+ge%20expand#image-expand
+>  )
+>
+> If you would like to run it with a sandbox instead you could do so: *sudo=
+=20
+> singularity build --sandbox new_container old_container*
+>
+> Joana
+>
+>
+> On Wed, Sep 26, 2018 at 1:21 PM Micha=C5=82 T. Lorenc <m...@gmail.com=20
+> <javascript:>> wrote:
+>
+>> Hi,
+>> Despite my laptop has more than 30 GB free I Singularity reported *No=20
+>> space left on device*:=20
+>>
+>> Building Singularity image...
+>> tar: ./usr/local/envs/3d-dna/lib/libicui18n.a: Wrote only 2048 of 10240=
+=20
+>> bytes
+>> tar: ./usr/local/envs/3d-dna/lib/lib: Cannot mkdir: No space left on=20
+>> device
+>>
+>> I used the following commands:
+>>
+>>
+>>
+>> *docker run --rm -it --privileged -v $(pwd):/work=20
+>> deephorizons/singularity shcd worksingularity create 3d-dna.imgsingulari=
+ty=20
+>> bootstrap 3d-dna.img Singularity*
+>>
+>> What did I miss?
+>>
+>> Thank you in advance.
+>>
+>> Michal
+>>
+>>
+>>
+>>
+>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s=20
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n=20
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+> --=20
+> *Joana Chavez La Valle*
+> *Software Engineer*
+>
+> http://www.sylabs.io
+>
+
+------=_Part_9_2127858242.1537999273092
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Hi Joana,</div><div>I tried to use sandbox (<i>singul=
+arity build --sandbox 3d-dna-sandbox Singularity</i>) but now I got <br></d=
+iv><div><i><br></i></div><div><i>Errors were encountered while processing:<=
+br>=C2=A0/tmp/apt-dpkg-install-gpR3vj/061-linux-libc-dev_4.9.110-3+deb9u4_a=
+md64.deb<br>=C2=A0/tmp/apt-dpkg-install-gpR3vj/112-manpages-dev_4.10-2_all.=
+deb<br>E: Sub-process /usr/bin/dpkg returned an error code (1)<br>ABORT: Ab=
+orting with RETVAL=3D255</i></div><div><br></div><div>with this Singularity=
+ file:</div><div><br></div><div>BootStrap: docker<br>From: debian:stretch-b=
+ackports<br><br>%help<br>=C2=A0 A container with 3d-dna<br><br>%environment=
+<br>=C2=A0 PATH=3D/opt/conda/bin:$PATH<br><br><br>%post<br>=C2=A0 apt-get u=
+pdate &amp;&amp; apt-get -y upgrade<br>=C2=A0 apt-get -y install \<br>=C2=
+=A0=C2=A0=C2=A0 build-essential \<br>=C2=A0=C2=A0=C2=A0 wget \<br>=C2=A0=C2=
+=A0=C2=A0 bzip2 \<br>=C2=A0=C2=A0=C2=A0 ca-certificates \<br>=C2=A0=C2=A0=
+=C2=A0 libglib2.0-0 \<br>=C2=A0=C2=A0=C2=A0 libxext6 \<br>=C2=A0=C2=A0=C2=
+=A0 libsm6 \<br>=C2=A0=C2=A0=C2=A0 libxrender1 \<br>=C2=A0=C2=A0=C2=A0 git<=
+br><br>=C2=A0 rm -rf /var/lib/apt/lists/*<br>=C2=A0 apt-get clean<br><br>=
+=C2=A0 # download and install Miniconda<br>=C2=A0 echo &#39;export PATH=3D/=
+opt/conda/bin:$PATH&#39; &gt; /etc/profile.d/conda.sh<br>=C2=A0 wget -c htt=
+ps://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh<br>=C2=
+=A0=C2=A0=C2=A0 /bin/bash Miniconda2-latest-Linux-x86_64.sh -bfp /usr/local=
+/<br><br>=C2=A0 rm -rf Miniconda2-latest-Linux-x86_64.sh<br><br>=C2=A0 # ad=
+d bioconda channels<br>=C2=A0 conda config --add channels defaults<br>=C2=
+=A0 conda config --add channels conda-forge<br>=C2=A0 conda config --add ch=
+annels bioconda<br>=C2=A0 conda update conda<br>=C2=A0 <br>=C2=A0 # install=
+ 3d-dna dependecies<br>=C2=A0 conda create -y --name 3d-dna lastz=3D1.0.4 o=
+penjdk=3D8.0.152 gawk=3D4.2.1 coreutils=3D8.30 parallel=3D20180522 python=
+=3D2.7 numpy=3D1.15.1 scipy=3D1.1.0 matplotlib=3D2.2.3<br>=C2=A0 conda clea=
+n --all --yes<br><br>=C2=A0 # install 3d-dna<br>=C2=A0 git clone https://gi=
+thub.com/theaidenlab/3d-dna.git<br><br>%runscript<br>=C2=A0=C2=A0 exec cond=
+a activate 3d-dna<br></div><div><br></div><div>What did I miss?</div><div><=
+br></div><div>Thank you in advance,</div><div><br></div><div>Michal</div><d=
+iv><br></div><div><br></div><div><br></div><br>On Wednesday, September 26, =
+2018 at 9:41:28 PM UTC+10, Joana Chavez wrote:<blockquote class=3D"gmail_qu=
+ote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padd=
+ing-left: 1ex;"><div dir=3D"ltr"><div dir=3D"ltr">Hello Michal, is your con=
+tainer using a ext3 file system? I would suggest running it with a sandbox =
+if that&#39;s the case. Ext3 has an allotted amount of space which you migh=
+t be exceeding, whereas a sandbox has much space. Other possibility would b=
+e to expand your image using<b> image expand</b> ( see this -&gt;=C2=A0<a h=
+ref=3D"https://www.sylabs.io/guides/2.6/user-guide/appendix.html?highlight=
+=3Dimage%20expand#image-expand" target=3D"_blank" rel=3D"nofollow" onmoused=
+own=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fwww.s=
+ylabs.io%2Fguides%2F2.6%2Fuser-guide%2Fappendix.html%3Fhighlight%3Dimage%25=
+20expand%23image-expand\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNERBnECMImtV=
+iWLXJVXBza0TkfugQ&#39;;return true;" onclick=3D"this.href=3D&#39;https://ww=
+w.google.com/url?q\x3dhttps%3A%2F%2Fwww.sylabs.io%2Fguides%2F2.6%2Fuser-gui=
+de%2Fappendix.html%3Fhighlight%3Dimage%2520expand%23image-expand\x26sa\x3dD=
+\x26sntz\x3d1\x26usg\x3dAFQjCNERBnECMImtViWLXJVXBza0TkfugQ&#39;;return true=
+;">https://www.sylabs.io/<wbr>guides/2.6/user-guide/<wbr>appendix.html?high=
+light=3Dimage%<wbr>20expand#image-expand</a>=C2=A0)</div><div dir=3D"ltr"><=
+br></div><div dir=3D"ltr">If you would like to run it with a sandbox instea=
+d you could do so: <b>sudo singularity build --sandbox new_container old_co=
+ntainer</b><br><div><br></div><div>Joana<br><div><br></div></div></div></di=
+v><br><div class=3D"gmail_quote"><div dir=3D"ltr">On Wed, Sep 26, 2018 at 1=
+:21 PM Micha=C5=82 T. Lorenc &lt;<a href=3D"javascript:" target=3D"_blank" =
+gdf-obfuscated-mailto=3D"ytXpg-CwAAAJ" rel=3D"nofollow" onmousedown=3D"this=
+.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;jav=
+ascript:&#39;;return true;">m...@gmail.com</a>&gt; wrote:<br></div><blockqu=
+ote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc s=
+olid;padding-left:1ex"><div dir=3D"ltr"><div>Hi,</div><div>Despite my lapto=
+p has more than 30 GB free I Singularity reported <i>No space left on devic=
+e</i>: <br></div><div><br></div><div>Building Singularity image...<br>tar: =
+./usr/local/envs/3d-dna/lib/<wbr>libicui18n.a: Wrote only 2048 of 10240 byt=
+es<br>tar: ./usr/local/envs/3d-dna/lib/<wbr>lib: Cannot mkdir: No space lef=
+t on device<br></div><div><br></div><div>I used the following commands:</di=
+v><div><i>docker run --rm -it --privileged -v $(pwd):/work deephorizons/sin=
+gularity sh<br>cd work<br>singularity create 3d-dna.img<br>singularity boot=
+strap 3d-dna.img Singularity</i><br></div><div><br></div><div>What did I mi=
+ss?</div><div><br></div><div>Thank you in advance.</div><div><br></div><div=
+>Michal<br></div><div><br></div><div><br></div><div><br></div><div><br></di=
+v></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+ytXpg-CwAAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+><div dir=3D"ltr"><div><b><font face=3D"trebuchet ms, sans-serif" color=3D"=
+#000000">Joana Chavez La Valle</font></b></div><div><b><font face=3D"trebuc=
+het ms, sans-serif" color=3D"#000000">Software Engineer</font></b></div><di=
+v><b><font face=3D"trebuchet ms, sans-serif" color=3D"#000000"><img src=3D"=
+https://lh5.googleusercontent.com/proxy/SAgOev-DnLGm4Q4bqhQlDRhNfyxtO3foWzw=
+cYz4RJjE24w7zFgyWMR5RF8veWpSmGt5_krT4Yam-qzXQ8x1zCjlEU2A-c4Cdjxytx69Os8N8C7=
+yuJC36PKLepHstp93Figl8fMbMbykLPEDqBi1_pjhvTNqBcobW2DYETZ-Z2NsSH6TpgLtX8n5VA=
+5G_6nsb1IidN4MivLwCFdKr7Q=3Dw5000-h5000" width=3D"96" height=3D"96"><br></f=
+ont></b></div><div style=3D"color:rgb(80,0,80)"><font face=3D"trebuchet ms,=
+ sans-serif"><a href=3D"http://www.sylabs.io" target=3D"_blank" rel=3D"nofo=
+llow" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3=
+A%2F%2Fwww.sylabs.io\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGUqI0Hm7SpiDdx=
+6jbRPkKUi9qUJg&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.go=
+ogle.com/url?q\x3dhttp%3A%2F%2Fwww.sylabs.io\x26sa\x3dD\x26sntz\x3d1\x26usg=
+\x3dAFQjCNGUqI0Hm7SpiDdx6jbRPkKUi9qUJg&#39;;return true;">http://www.sylabs=
+.io</a></font></div></div></div>
+</blockquote></div>
+------=_Part_9_2127858242.1537999273092--
+
+------=_Part_8_37569981.1537999273091--

@@ -1,0 +1,168 @@
+Date: Thu, 14 Jan 2016 12:36:47 -0800 (PST)
+From: Harry Mangalam <hjman...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <1d682369-5ffe-4d09-8a01-6d6f90fe96d0@lbl.gov>
+In-Reply-To: <0ae120a6-c626-4b83-b730-061ecea12f58@lbl.gov>
+References: <1741184.jxojMXWia2@stunted>
+ <CAGfAqt9bRe8Z2k1+2=fugts8G_xM0Sb89ey3uBjgy-WhVnUzAw@mail.gmail.com>
+ <8cb2d3e1-2d43-4cd4-b11d-a5c619449663@lbl.gov>
+ <CAGfAqt8T-sLPb1ErK2a9VMr0_aWNDP2VOCj5VvbCvMrbi_Xq4Q@mail.gmail.com>
+ <0ae120a6-c626-4b83-b730-061ecea12f58@lbl.gov>
+Subject: Re: [Singularity] Could not escalate effective user privledges!
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1410_1860382039.1452803807821"
+
+------=_Part_1410_1860382039.1452803807821
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1411_949651111.1452803807821"
+
+------=_Part_1411_949651111.1452803807821
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+OK - some progress.
+
+When I changed the spec file Exec: line from:
+
+Exec: ./tacg
+to the full path:
+Exec: /home/hjm/tacg/tacg
+
+it was able to exec the spec file to the point where it got an error 
+message from the wrapped  tacg application:
+
+$ /home/hjm/tacg/tacg.sapp -h
+!!tempfile creation failed - que??
+
+this implies that it failed on the C code:
+
+tmpfp = tmpfile();
+
+do you have to explicitly include /tmp in the spec file to access the /tmp 
+dir?
+Hmm, doesn't look like it.
+
+$ singularity build tacg.sspec tacg.sapp
+...
+Installing dir: /tmp
+cp: cannot access '/tmp/kde-guest': Permission denied
+cp: cannot open '/tmp/foomatic-ui1jpB' for reading: Permission denied
+cp: cannot copy a directory, '/tmp', into itself, 
+'/tmp/.singularity.YKFUSJb/c/tmp'
+Error: failed processing file: 
+ERROR: Module install_files threw an error
+
+so why would a fairly common function call cause this failure?
+
+hjm
+
+
+
+On Wednesday, January 13, 2016 at 9:16:35 PM UTC-8, Harry Mangalam wrote:
+>
+> Thanks for all the late-night help, Jason.
+>
+> No, it's on a std /dev/sdb /home ext4 mount.
+>
+> And I definitely did not try the '-c' option.  
+>
+> I'll wait to hear from GMK; nothing that can't wait.
+>
+> Thanks again.
+>
+> On Wednesday, January 13, 2016 at 9:12:54 PM UTC-8, Jason Stover wrote:
+>>
+>> Hrmm.... GMK is probably going to need to look into this as I haven't 
+>> had a chance to really dig through everything, but that almost seems 
+>> like it's running containerized (-c option from what I remember), 
+>> which mean the outside file system isn't available. The only other 
+>> thing I can think of from recent discussions were.... is your $HOME 
+>> nfs mounted? 
+>>
+>> -J 
+>>
+>> On Wed, Jan 13, 2016 at 10:58 PM, Harry Mangalam <hj...@gmail.com> 
+>> wrote: 
+>> > Ugh.  Thanks - I though tit had been integrated into something else. 
+>> > OK - did that, rebuilt the sapp and now get an entirely new error: 
+>> > 
+>> > ./tacg.sapp -h 
+>> > /singularity.exec: line 2: (unreachable)/home/hjm/tacg/tacg: No such 
+>> file or 
+>> > directory 
+>> > 
+>> > so that file should be 'reachable' - it's there, world-readable, world 
+>> > executable. 
+>> > $ ls -l /home/hjm/tacg/tacg 
+>> > -rwxr-xr-x 2 hjm hjm 1495148 Oct 27 20:20 /home/hjm/tacg/tacg* 
+>> > 
+>> > unless I didn't write the spec file correctly..? 
+>> > 
+>>
+>
+------=_Part_1411_949651111.1452803807821
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">OK - some progress.<div><br></div><div>When I changed the =
+spec file Exec: line from:</div><div><br></div><div><div>Exec: ./tacg</div>=
+<div>to the full path:</div><div>Exec: /home/hjm/tacg/tacg</div><div><br></=
+div><div>it was able to exec the spec file to the point where it got an err=
+or message from the wrapped =C2=A0tacg application:</div><div><br></div><di=
+v><div>$ /home/hjm/tacg/tacg.sapp -h</div><div>!!tempfile creation failed -=
+ que??</div></div><div><br></div><div>this implies that it failed on the C =
+code:</div><div><br></div><div>tmpfp =3D tmpfile();<br></div><div><br></div=
+><div>do you have to explicitly include /tmp in the spec file to access the=
+ /tmp dir?</div><div>Hmm, doesn&#39;t look like it.</div><div><br></div><di=
+v><div>$ singularity build tacg.sspec tacg.sapp</div></div><div>...</div><d=
+iv><div>Installing dir: /tmp</div><div>cp: cannot access &#39;/tmp/kde-gues=
+t&#39;: Permission denied</div><div>cp: cannot open &#39;/tmp/foomatic-ui1j=
+pB&#39; for reading: Permission denied</div><div>cp: cannot copy a director=
+y, &#39;/tmp&#39;, into itself, &#39;/tmp/.singularity.YKFUSJb/c/tmp&#39;</=
+div><div>Error: failed processing file:=C2=A0</div><div>ERROR: Module insta=
+ll_files threw an error</div></div><div><br></div><div>so why would a fairl=
+y common function call cause this failure?</div><div><br></div><div>hjm</di=
+v><div><br></div><div><br></div><br>On Wednesday, January 13, 2016 at 9:16:=
+35 PM UTC-8, Harry Mangalam wrote:<blockquote class=3D"gmail_quote" style=
+=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: =
+1ex;"><div dir=3D"ltr">Thanks for all the late-night help, Jason.<div><br><=
+/div><div>No, it&#39;s on a std /dev/sdb /home ext4 mount.</div><div><br></=
+div><div>And I definitely did not try the &#39;-c&#39; option. =C2=A0</div>=
+<div><br></div><div>I&#39;ll wait to hear from GMK; nothing that can&#39;t =
+wait.</div><div><br></div><div>Thanks again.<br><br>On Wednesday, January 1=
+3, 2016 at 9:12:54 PM UTC-8, Jason Stover wrote:<blockquote class=3D"gmail_=
+quote" style=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc solid;paddi=
+ng-left:1ex">Hrmm.... GMK is probably going to need to look into this as I =
+haven&#39;t
+<br>had a chance to really dig through everything, but that almost seems
+<br>like it&#39;s running containerized (-c option from what I remember),
+<br>which mean the outside file system isn&#39;t available. The only other
+<br>thing I can think of from recent discussions were.... is your $HOME
+<br>nfs mounted?
+<br>
+<br>-J
+<br>
+<br>On Wed, Jan 13, 2016 at 10:58 PM, Harry Mangalam &lt;<a rel=3D"nofollow=
+">hj...@gmail.com</a>&gt; wrote:
+<br>&gt; Ugh. =C2=A0Thanks - I though tit had been integrated into somethin=
+g else.
+<br>&gt; OK - did that, rebuilt the sapp and now get an entirely new error:
+<br>&gt;
+<br>&gt; ./tacg.sapp -h
+<br>&gt; /singularity.exec: line 2: (unreachable)/home/hjm/tacg/<wbr>tacg: =
+No such file or
+<br>&gt; directory
+<br>&gt;
+<br>&gt; so that file should be &#39;reachable&#39; - it&#39;s there, world=
+-readable, world
+<br>&gt; executable.
+<br>&gt; $ ls -l /home/hjm/tacg/tacg
+<br>&gt; -rwxr-xr-x 2 hjm hjm 1495148 Oct 27 20:20 /home/hjm/tacg/tacg*
+<br>&gt;
+<br>&gt; unless I didn&#39;t write the spec file correctly..?
+<br>&gt;
+<br></blockquote></div></div></blockquote></div></div>
+------=_Part_1411_949651111.1452803807821--
+
+------=_Part_1410_1860382039.1452803807821--

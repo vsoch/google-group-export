@@ -1,0 +1,377 @@
+Date: Fri, 16 Feb 2018 09:01:58 -0800 (PST)
+From: Jonathan Greenberg <jgr...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <1a6409c9-6b5a-4855-8aee-2513b1238fe5@lbl.gov>
+In-Reply-To: <CAM=pu+J4boqGCAX88qoDBxfaBaq5Br7441bEQ6wFUag3XTwWPQ@mail.gmail.com>
+References: <284a8c42-445c-47e5-8cc1-405c938021ed@lbl.gov> <CAM=pu+Lp1yGvMFQpwDnqrW_OkE+RC+JZaSTG42mT1FU5C1Zpcw@mail.gmail.com>
+ <CADU1CX=KQ554XS5WRdrwhdzHDUWKB52sNMyx3Fdcdf2EgRJihQ@mail.gmail.com>
+ <CAA6Bz=e155LmEdK0SSAJF6gVG-HJ22A3psaFkHvEB-7+Xw9nPw@mail.gmail.com>
+ <CAPqNE2Wz_tWtuo=p3jL8rqyEweW67w1O57n9q=8U9-ED0JiKLQ@mail.gmail.com> <700125f2-d6b4-4d03-b1c4-8da8e1811dd0@lbl.gov>
+ <CAM=pu+J4boqGCAX88qoDBxfaBaq5Br7441bEQ6wFUag3XTwWPQ@mail.gmail.com>
+Subject: Re: [Singularity] Environments, symlinks, and license files...
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_3670_178207428.1518800518904"
+
+------=_Part_3670_178207428.1518800518904
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_3671_521122696.1518800518905"
+
+------=_Part_3671_521122696.1518800518905
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Its the next step I'm having a hard time figuring out -- the proper way to=
+=20
+create a symlink at container runtime (not during the container build=20
+phase) that has a degree of error checking (e.g. the env variable is unset=
+=20
+or the file does not exist).
+
+On Friday, February 16, 2018 at 8:36:00 AM UTC-8, vanessa wrote:
+>
+> If you have default settings running on your cluster (and the user's home=
+=20
+> is bound by default) then the "true" location should exist in the=20
+> container, and I think you could do something like this.
+>
+> On Fri, Feb 16, 2018 at 8:33 AM, Jonathan Greenberg <j...@gmail.com=20
+> <javascript:>> wrote:
+>
+>> Its just a text file that allows my whole organization to use the=20
+>> license, but it has to be placed in a very specific location.  That is w=
+hy=20
+>> I was hoping to symlink from a mounted directory given an environment=20
+>> variable.
+>>
+>> Is it possible to do this within a container definition?  Let's assume=
+=20
+>> the file is in the "true" location of:
+>>
+>> ~/mylicensefile.txt
+>>
+>> I set this as an environment variable of:
+>> MYLICENSEFILE=3D"~/mylicensefile.txt"
+>>
+>> And I want to have it appear at runtime within the singularity container=
+=20
+>> (say an Ubuntu one) at:
+>> /APPS/myapp/mylicensefile.txt (perhaps with the error check of if it is=
+=20
+>> missing from the "global environment" the symlink isn't created?)
+>>
+>> It seems like %files isn't the right method, because it occurs when=20
+>> building the container, right (so I'd be distributing my license file wh=
+ich=20
+>> is not ok)?  I want this post-build. =20
+>>
+>> --j
+>>
+>>
+>> On Friday, February 16, 2018 at 12:56:25 AM UTC-8, John Hearns wrote:
+>>>
+>>> " The container contains a piece of commercial software that, if it has=
+=20
+>>> a license file, will operate without restriction"
+>>>
+>>> May we ask how this software is licensed? Usually a node locked license=
+=20
+>>> will be keyed to tha MAC address of a machine.
+>>> I am assuming this is not a FlexLM style license, where the license=20
+>>> lives on a remote server - since you mention a license file is needed.
+>>> Out of curiosity, how then does the license restrict you to not run on=
+=20
+>>> other machines?
+>>>
+>>>
+>>>
+>>> On 16 February 2018 at 09:52, R=C3=A9my Dernat <r...@gmail.com> wrote:
+>>>
+>>>> Hi
+>>>>
+>>>> If you want to share a recipe, maybe using `%files` would be the best=
+=20
+>>>> method.
+>>>>
+>>>> Best regards,
+>>>>
+>>>> Le 16 f=C3=A9vr. 2018 08:17, "'Christophe Trophime' via singularity" <
+>>>> si...@lbl.gov> a =C3=A9crit :
+>>>>
+>>>>> Hey,=20
+>>>>> another solution, I've have experienced, is to mount the directory=20
+>>>>> holding the license file.=20
+>>>>>
+>>>>> On Thu, Feb 15, 2018 at 11:11 PM, v <v...@gmail.com> wrote:
+>>>>>
+>>>>>> Hey Jonathan,
+>>>>>>
+>>>>>> You should be able to pass it into the container like this:
+>>>>>>
+>>>>>> SINGULARITY_HELLO=3D"taco" singularity run mycontainer.simg
+>>>>>>
+>>>>>>
+>>>>>> and you can test like this:
+>>>>>>
+>>>>>>            # No variable...
+>>>>>>
+>>>>>> singularity exec mycontainer.simg env | grep HELLO
+>>>>>>
+>>>>>> # Variable!
+>>>>>>
+>>>>>> SINGULARITY_HELLO=3D"taco" singularity exec mycontainer.simg env | g=
+rep=20
+>>>>>> HELLO
+>>>>>> HELLO=3Dtaco
+>>>>>>
+>>>>>>
+>>>>>> So yes, I think it would work to pass the file into the environment=
+=20
+>>>>>> (and make sure the location is also mapping somewhere in the contain=
+er) and=20
+>>>>>> then fall back to some default if it's not provided.=20
+>>>>>>
+>>>>>> On Thu, Feb 15, 2018 at 10:52 AM, Jonathan Greenberg <
+>>>>>> j...@gmail.com> wrote:
+>>>>>>
+>>>>>>> Folks:
+>>>>>>>
+>>>>>>> I am building a container that I'd like a bit of feedback on.  Here=
+=20
+>>>>>>> are the issues:
+>>>>>>>
+>>>>>>> 1) I want the container to be public.
+>>>>>>> 2) The container contains a piece of commercial software that, if i=
+t=20
+>>>>>>> has a license file, will operate without restriction.
+>>>>>>> 3) The license file needs to be in a specific location within the=
+=20
+>>>>>>> app's install directory (e.g. ~/myapp/license_folder/license.txt)
+>>>>>>>
+>>>>>>> Obviously, I don't want to include the license file in the=20
+>>>>>>> singularity container.  So, I'm asking what might be the best pract=
+ice.  My=20
+>>>>>>> thought was for the user to set an environment variable=20
+>>>>>>> ("MY_LICENSE_FILE=3D/path/to/local/license") that the singularity c=
+ontainer,=20
+>>>>>>> if it finds, dynamically creates a symlink to at runtime.  Is this =
+the=20
+>>>>>>> right approach?  If so (or if not), how would I do this?
+>>>>>>>
+>>>>>>> --=20
+>>>>>>> You received this message because you are subscribed to the Google=
+=20
+>>>>>>> Groups "singularity" group.
+>>>>>>> To unsubscribe from this group and stop receiving emails from it,=
+=20
+>>>>>>> send an email to singu...@lbl.gov.
+>>>>>>>
+>>>>>>
+>>>>>>
+>>>>>>
+>>>>>> --=20
+>>>>>> Vanessa Villamia Sochat
+>>>>>> Stanford University '16
+>>>>>> (603) 321-0676
+>>>>>>
+>>>>>> --=20
+>>>>>> You received this message because you are subscribed to the Google=
+=20
+>>>>>> Groups "singularity" group.
+>>>>>> To unsubscribe from this group and stop receiving emails from it,=20
+>>>>>> send an email to singu...@lbl.gov.
+>>>>>>
+>>>>>
+>>>>> --=20
+>>>>> You received this message because you are subscribed to the Google=20
+>>>>> Groups "singularity" group.
+>>>>> To unsubscribe from this group and stop receiving emails from it, sen=
+d=20
+>>>>> an email to singu...@lbl.gov.
+>>>>>
+>>>> --=20
+>>>> You received this message because you are subscribed to the Google=20
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send=
+=20
+>>>> an email to singu...@lbl.gov.
+>>>>
+>>>
+>>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s=20
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n=20
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> --=20
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_3671_521122696.1518800518905
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Its the next step I&#39;m having a hard time figuring out =
+-- the proper way to create a symlink at container runtime (not during the =
+container build phase) that has a degree of error checking (e.g. the env va=
+riable is unset or the file does not exist).<br><br>On Friday, February 16,=
+ 2018 at 8:36:00 AM UTC-8, vanessa wrote:<blockquote class=3D"gmail_quote" =
+style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-l=
+eft: 1ex;"><div dir=3D"ltr">If you have default settings running on your cl=
+uster (and the user&#39;s home is bound by default) then the &quot;true&quo=
+t; location should exist in the container, and I think you could do somethi=
+ng like this.</div><div><br><div class=3D"gmail_quote">On Fri, Feb 16, 2018=
+ at 8:33 AM, Jonathan Greenberg <span dir=3D"ltr">&lt;<a href=3D"javascript=
+:" target=3D"_blank" gdf-obfuscated-mailto=3D"FhRGNKwTBQAJ" rel=3D"nofollow=
+" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D=
+"this.href=3D&#39;javascript:&#39;;return true;">j...@gmail.com</a>&gt;</sp=
+an> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;=
+border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Its just a te=
+xt file that allows my whole organization to use the license, but it has to=
+ be placed in a very specific location.=C2=A0 That is why I was hoping to s=
+ymlink from a mounted directory given an environment variable.<div><br></di=
+v><div>Is it possible to do this within a container definition?=C2=A0 Let&#=
+39;s assume the file is in the &quot;true&quot; location of:</div><div><br>=
+</div><div>~/mylicensefile.txt</div><div><br></div><div>I set this as an en=
+vironment variable of:</div><div>MYLICENSEFILE=3D&quot;~/<wbr>mylicensefile=
+.txt&quot;</div><div><br></div><div>And I want to have it appear at runtime=
+ within the singularity container (say an Ubuntu one) at:</div><div>/APPS/m=
+yapp/mylicensefile.txt (perhaps with the error check of if it is missing fr=
+om the &quot;global environment&quot; the symlink isn&#39;t created?)</div>=
+<div><br></div><div>It seems like %files isn&#39;t the right method, becaus=
+e it occurs when building the container, right (so I&#39;d be distributing =
+my license file which is not ok)?=C2=A0 I want this post-build.=C2=A0=C2=A0=
+</div><div><br></div><div>--j</div><div><span><br><br>On Friday, February 1=
+6, 2018 at 12:56:25 AM UTC-8, John Hearns wrote:</span><blockquote class=3D=
+"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc soli=
+d;padding-left:1ex"><span><div dir=3D"ltr"><div>&quot; The container contai=
+ns a piece of commercial software that, if it has a license file, will oper=
+ate without restriction&quot;</div><div><br></div><div>May we ask how this =
+software is licensed? Usually a node locked license will be keyed to tha MA=
+C address of a machine.</div><div>I am assuming this is not a FlexLM style =
+license, where the license lives on a remote server - since you mention a l=
+icense file is needed.</div><div>Out of curiosity, how then does the licens=
+e restrict you to not run on other machines?</div><div><br></div><div><br><=
+/div></div></span><div><br><div class=3D"gmail_quote"><span>On 16 February =
+2018 at 09:52, R=C3=A9my Dernat <span dir=3D"ltr">&lt;<a rel=3D"nofollow">r=
+...@gmail.com</a>&gt;</span> wrote:<br></span><blockquote class=3D"gmail_qu=
+ote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex=
+"><span><div dir=3D"auto">Hi<div dir=3D"auto"><br></div><div dir=3D"auto">I=
+f you want to share a recipe, maybe using `%files` would be the best method=
+.</div><div dir=3D"auto"><br></div><div dir=3D"auto">Best regards,</div></d=
+iv></span><div><div><div><br><div class=3D"gmail_quote"><span>Le=C2=A016 f=
+=C3=A9vr. 2018 08:17, &quot;&#39;Christophe Trophime&#39; via singularity&q=
+uot; &lt;<a rel=3D"nofollow">si...@lbl.gov</a>&gt; a =C3=A9crit=C2=A0:<br t=
+ype=3D"attribution"></span><blockquote class=3D"gmail_quote" style=3D"margi=
+n:0px 0px 0px 0.8ex;padding-left:1ex;border-left-color:rgb(204,204,204);bor=
+der-left-width:1px;border-left-style:solid"><span><div dir=3D"ltr">Hey,=C2=
+=A0<div>another solution, I&#39;ve have experienced, is to mount the direct=
+ory holding the license file.=C2=A0</div></div></span><div><br><div class=
+=3D"gmail_quote"><span>On Thu, Feb 15, 2018 at 11:11 PM, v <span dir=3D"ltr=
+">&lt;<a rel=3D"nofollow">v...@gmail.com</a>&gt;</span> wrote:<br></span><b=
+lockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;padding-l=
+eft:1ex;border-left-color:rgb(204,204,204);border-left-width:1px;border-lef=
+t-style:solid"><span><div dir=3D"ltr">Hey Jonathan,<div><br></div><div>You =
+should be able to pass it into the container like this:</div><div><br></div=
+><blockquote style=3D"margin:0px 0px 0px 40px;padding:0px;border:currentCol=
+or"><div><div style=3D"color:rgb(34,34,34);text-transform:none;text-indent:=
+0px;letter-spacing:normal;font-family:arial,sans-serif;font-size:small;font=
+-style:normal;font-weight:400;word-spacing:0px;white-space:normal">SINGULAR=
+ITY_HELLO=3D&quot;taco&quot; singularity run mycontainer.simg</div></div></=
+blockquote><div><div><br></div>and you can test like this:<br><br></div><di=
+v>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0# No variable...</div><blockquot=
+e style=3D"margin:0px 0px 0px 40px;padding:0px;border:currentColor"><div>si=
+ngularity exec mycontainer.simg env | grep HELLO</div><div><br></div></bloc=
+kquote><blockquote style=3D"margin:0px 0px 0px 40px;padding:0px;border:curr=
+entColor"><div># Variable!</div></blockquote><blockquote style=3D"margin:0p=
+x 0px 0px 40px;padding:0px;border:currentColor"><div>SINGULARITY_HELLO=3D&q=
+uot;taco&quot; singularity exec mycontainer.simg env | grep HELLO</div><div=
+><div>HELLO=3Dtaco</div></div></blockquote><div><br></div><div>So yes, I th=
+ink it would work to pass the file into the environment (and make sure the =
+location is also mapping somewhere in the container) and then fall back to =
+some default if it&#39;s not provided.=C2=A0</div></div></span><div><div><d=
+iv><br><div class=3D"gmail_quote"><span>On Thu, Feb 15, 2018 at 10:52 AM, J=
+onathan Greenberg <span dir=3D"ltr">&lt;<a rel=3D"nofollow">j...@gmail.com<=
+/a>&gt;</span> wrote:<br></span><blockquote class=3D"gmail_quote" style=3D"=
+margin:0px 0px 0px 0.8ex;padding-left:1ex;border-left-color:rgb(204,204,204=
+);border-left-width:1px;border-left-style:solid"><span><span><div dir=3D"lt=
+r">Folks:<div><br></div><div>I am building a container that I&#39;d like a =
+bit of feedback on.=C2=A0 Here are the issues:</div><div><br></div><div>1) =
+I want the container to be public.</div><div>2) The container contains a pi=
+ece of commercial software that, if it has a license file, will operate wit=
+hout restriction.</div><div>3) The license file needs to be in a specific l=
+ocation within the app&#39;s install directory (e.g. ~/myapp/license_folder=
+/<wbr>license.txt)</div><div><br></div><div>Obviously, I don&#39;t want to =
+include the license file in the singularity container.=C2=A0 So, I&#39;m as=
+king what might be the best practice.=C2=A0 My thought was for the user to =
+set an environment variable (&quot;MY_LICENSE_FILE=3D/path/to/<wbr>local/li=
+cense&quot;) that the singularity container, if it finds, dynamically creat=
+es a symlink to at runtime.=C2=A0 Is this the right approach?=C2=A0 If so (=
+or if not), how would I do this?</div></div>
+
+<p></p>
+
+-- <br></span>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br></span>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</blockquote></div><br><br clear=3D"all"><div><br></div></div></div><span><=
+span><font color=3D"#888888">-- <br><div>Vanessa Villamia Sochat<br>Stanfor=
+d University &#39;16<br><div><div><div><a value=3D"+16033210676">(603) 321-=
+0676</a></div></div></div></div>
+</font></span></span></div><div><div><span>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br></span>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</div></div></blockquote></div><br></div><span>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br></span>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</blockquote></div></div><span>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br></span>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</div></div></blockquote></div><br></div>
+</blockquote></div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+FhRGNKwTBQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><d=
+iv>(603) 321-0676</div></div></div></div>
+</div>
+</blockquote></div>
+------=_Part_3671_521122696.1518800518905--
+
+------=_Part_3670_178207428.1518800518904--

@@ -1,0 +1,384 @@
+Date: Thu, 2 Nov 2017 13:22:38 -0700 (PDT)
+From: Luigi Pertoldi <luigi.p...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <9ee2fa1b-40bc-4583-8555-a330903ea5f9@lbl.gov>
+In-Reply-To: <CAM=pu+LEzdAKd5G1JYmF85-wmhQAQLdoBtiaRF+FVzSWk8naOg@mail.gmail.com>
+References: <5d78d554-1e61-43b2-9ed9-c9a2af1deeb6@lbl.gov> <CAM=pu+JCex_VeU3VsvYhwP76piG=zXz4aJXwYX_3miCb6v7YzQ@mail.gmail.com>
+ <f25ae6c1-32de-4b48-bf16-dd38853d7603@lbl.gov>
+ <CAM=pu+LEzdAKd5G1JYmF85-wmhQAQLdoBtiaRF+FVzSWk8naOg@mail.gmail.com>
+Subject: Re: [Singularity] Best practices for managing dependencies between
+ apps
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1603_2062162344.1509654158955"
+
+------=_Part_1603_2062162344.1509654158955
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1604_1919491869.1509654158955"
+
+------=_Part_1604_1919491869.1509654158955
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Il giorno gioved=C3=AC 2 novembre 2017 20:13:32 UTC+1, vanessa ha scritto:
+>
+> Got it, but what if app B depends on app A but there are another apps=20
+>> C,D,E etc. that do not depend on app A? putting variables for app A in t=
+he=20
+>> %environment section would be too much... I mean, when using app D also=
+=20
+>> unnecessary variables belonging to A will be available=20
+>>
+>>>
+> If they depend on one another some would argue it's not a modular, but=20
+> there is a way to make it work! The answer is... just to source it.
+>
+
+> Bootstrap: docker
+> From: ubuntu
+>
+> %environment
+>     ALLHERE=3DIdontknow
+>     export ALLHERE
+>
+> %appenv bar
+>     BARISHERE=3Dyes
+>     export BARISHERE
+>
+> %apprun foo   =20
+>     exec echo "RUNNING FOO"
+>
+> %appenv foo
+> *    . "${APPROOT_bar}/scif/env/90-environment.sh"*
+>     FOOISHERE=3Dyes
+>     export FOOISHERE
+>
+>
+> This will currently work.
+>
+=20
+Thanks!
+=20
+
+> We can then we can run foo, and see bar is active:
+>
+> $ singularity exec --app foo foo.simg env | grep ISHERE
+> *BARISHERE=3Dyes*
+> *FOOISHERE=3Dyes*
+>
+>
+> or just run bar, it's still on it's own
+>
+> $ singularity exec --app bar foo.simg env | grep ISHERE
+> BARISHERE=3Dyes
+>
+>
+> and nothing added to the global environment
+>
+> $ singularity exec foo.simg env | grep ISHERE
+>
+>            $
+>
+> But I would argue that line is a bit messy, and we should add an=20
+> environment variable for *${APPENV_bar} *that references that file, so=20
+> you would do:
+>
+> %appenv foo
+> *    . "${APPENV_bar}"*
+>     FOOISHERE=3Dyes
+>     export FOOISHERE
+>
+>
+> what are your thoughts?
+>
+Yeah, that would be certainly a good idea! To me this seems to be a very=20
+useful feature...
+
+> =20
+>
+=20
+>
+>> =20
+>>>
+>>>> Say that app B depends on app A (at build and run time app A must be=
+=20
+>>>> present in LD_LIBRARY_PATH and PATH, for example), then I would write =
+the=20
+>>>> recipe file as follows:
+>>>>
+>>>> %appinstall A
+>>>>     <...install steps...>
+>>>>
+>>>> %appinstall B
+>>>>     export PATH=3D$APPROOT_A/bin
+>>>>     export LD_LIBRARY_PATH=3D$APPROOT_A/lib=20
+>>>>
+>>>     <...install steps...>
+>>>>
+>>>> Ah, so you don't need the first two lines. The lib directory is=20
+>>> automatically added to the LD_LIBRARY_PATH and bin to PATH when you run=
+ /=20
+>>> shell / interact with app "B" so that section should just be:
+>>>
+>>> %appinstall B
+>>>>     <....intall steps...>
+>>>
+>>>
+>> Wait... omitting those lines app A will not be added automatically to=20
+>> PATH when interacting with app B (for example with "singularity --app B=
+=20
+>> <image>") unless I explicitly set this in the "%environment" or "%appenv=
+ B"=20
+>> section...=20
+>>
+>>> =20
+>>>
+>> =20
+>>>
+>>>> %appenv B
+>>>>     export PATH=3D$APPROOT_A/bin
+>>>>
+>>> I use the APPROOT_A variable here not APPROOT_B...=20
+>>
+>>>     export LD_LIBRARY_PATH=3D$APPROOT_A/lib
+>>>>
+>>>>
+>>> ditto here.
+>>> =20
+>>>
+>>>> And that's ok, everything works when I run "singularity --app B=20
+>>>> <image>". Anyway, suppose that the "%appenv A" section exports a lot o=
+f=20
+>>>> other useful variables that should also be exported when dealing with =
+app=20
+>>>> B, wouldn't it be nice to provide a more neat method to accomplish thi=
+s=20
+>>>> (i.e. a built-in method to specify dependencies)? Am I missing somethi=
+ng?
+>>>>
+>>>> Oh yes! So in this case, just put those variables in the global=20
+>>> %environment. Then they will be available for all to share :)
+>>>
+>>> Best,
+>>>
+>>> Vanessa
+>>>
+>>>
+>>>> =20
+>>>
+>>>> Thanks so much,
+>>>> Luigi
+>>>>
+>>>> --=20
+>>>> You received this message because you are subscribed to the Google=20
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send=
+=20
+>>>> an email to singu...@lbl.gov.
+>>>>
+>>>
+>>>
+>>>
+>>> --=20
+>>> Vanessa Villamia Sochat
+>>> Stanford University '16
+>>> (603) 321-0676
+>>>
+>>
+>> Thanks for the quick response!
+>> Cheers,
+>> Luigi=20
+>>
+>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s=20
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n=20
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> --=20
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+Cheers,
+Luigi=20
+
+------=_Part_1604_1919491869.1509654158955
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Il giorno gioved=C3=AC 2 novembre 2017 20:13:32 UTC+1, van=
+essa ha scritto:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin=
+-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"lt=
+r"><div><div class=3D"gmail_quote"><blockquote class=3D"gmail_quote" style=
+=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding=
+-left:1ex"><div dir=3D"ltr"><div>Got it, but what if app B depends on app A=
+ but there are another apps C,D,E etc. that do not depend on app A? putting=
+ variables for app A in the %environment section would be too much... I mea=
+n, when using app D also unnecessary variables belonging to A will be avail=
+able=C2=A0</div><span><blockquote class=3D"gmail_quote" style=3D"margin:0px=
+ 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"><di=
+v dir=3D"ltr"><div><div class=3D"gmail_quote"><div></div></div></div></div>=
+</blockquote></span></div></blockquote><div><br></div><div>If they depend o=
+n one another some would argue it&#39;s not a modular, but there is a way t=
+o make it work! The answer is... just to source it.</div></div></div></div>=
+</blockquote><blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-le=
+ft: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">=
+<blockquote style=3D"margin:0px 0px 0px 40px;border:none;padding:0px"><div>=
+<div class=3D"gmail_quote"><div><br></div></div></div><div><div class=3D"gm=
+ail_quote"><div><div>Bootstrap: docker</div></div></div></div><div><div cla=
+ss=3D"gmail_quote"><div><div>From: ubuntu</div></div></div></div><div><div =
+class=3D"gmail_quote"><div><div><br></div></div></div></div><div><div class=
+=3D"gmail_quote"><div><div>%environment</div></div></div></div><div><div cl=
+ass=3D"gmail_quote"><div><div>=C2=A0 =C2=A0 ALLHERE=3DIdontknow</div></div>=
+</div></div><div><div class=3D"gmail_quote"><div><div>=C2=A0 =C2=A0 export =
+ALLHERE</div></div></div></div><div><div class=3D"gmail_quote"><div><div><b=
+r></div></div></div></div><div><div class=3D"gmail_quote"><div><div>%appenv=
+ bar</div></div></div></div><div><div class=3D"gmail_quote"><div><div>=C2=
+=A0 =C2=A0 BARISHERE=3Dyes</div></div></div></div><div><div class=3D"gmail_=
+quote"><div><div>=C2=A0 =C2=A0 export BARISHERE</div></div></div></div><div=
+><div class=3D"gmail_quote"><div><div><br></div></div></div></div><div><div=
+ class=3D"gmail_quote"><div><div>%apprun foo=C2=A0 =C2=A0=C2=A0</div></div>=
+</div></div><div><div class=3D"gmail_quote"><div><div>=C2=A0 =C2=A0 exec ec=
+ho &quot;RUNNING FOO&quot;</div></div></div></div><div><div class=3D"gmail_=
+quote"><div><div><br></div></div></div></div><div><div class=3D"gmail_quote=
+"><div><div>%appenv foo</div></div></div></div><div><div class=3D"gmail_quo=
+te"><div><div><b>=C2=A0 =C2=A0 . &quot;${APPROOT_bar}/scif/env/90-<wbr>envi=
+ronment.sh&quot;</b></div></div></div></div><div><div class=3D"gmail_quote"=
+><div><div>=C2=A0 =C2=A0 FOOISHERE=3Dyes</div></div></div></div><div><div c=
+lass=3D"gmail_quote"><div><div>=C2=A0 =C2=A0 export FOOISHERE</div></div></=
+div></div></blockquote><div><div class=3D"gmail_quote"><div><br></div><div>=
+This will currently work.</div></div></div></div></blockquote><div>=C2=A0</=
+div><div>Thanks!</div><div>=C2=A0</div><blockquote class=3D"gmail_quote" st=
+yle=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-lef=
+t: 1ex;"><div dir=3D"ltr"><div><div class=3D"gmail_quote"><div>We can then =
+we can run foo, and see bar is active:</div><div><br></div></div></div><blo=
+ckquote style=3D"margin:0 0 0 40px;border:none;padding:0px"><div><div class=
+=3D"gmail_quote"><div><div>$ singularity exec --app foo foo.simg env | grep=
+ ISHERE</div></div></div></div><div><div class=3D"gmail_quote"><div><div><b=
+>BARISHERE=3Dyes</b></div></div></div></div><div><div class=3D"gmail_quote"=
+><div><div><b>FOOISHERE=3Dyes</b></div></div></div></div></blockquote><div>=
+<div class=3D"gmail_quote"><div><br></div><div>or just run bar, it&#39;s st=
+ill on it&#39;s own</div><div><br></div></div></div><blockquote style=3D"ma=
+rgin:0 0 0 40px;border:none;padding:0px"><div><div class=3D"gmail_quote"><d=
+iv><div>$ singularity exec --app bar foo.simg env | grep ISHERE</div></div>=
+</div></div><div><div class=3D"gmail_quote"><div><div>BARISHERE=3Dyes</div>=
+</div></div></div></blockquote><div><div class=3D"gmail_quote"><div><br></d=
+iv><div>and nothing added to the global environment</div><div><br></div></d=
+iv></div><blockquote style=3D"margin:0 0 0 40px;border:none;padding:0px"><d=
+iv><div class=3D"gmail_quote"><div><div>$ singularity exec foo.simg env | g=
+rep ISHERE</div></div></div></div></blockquote><div><div class=3D"gmail_quo=
+te"><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0$</div><div><br></div><di=
+v>But I would argue that line is a bit messy, and we should add an environm=
+ent variable for <b>${APPENV_bar} </b>that references that file, so you wou=
+ld do:</div><div><br></div><div><blockquote style=3D"margin:0px 0px 0px 40p=
+x;border:none;padding:0px"><div><div class=3D"gmail_quote">%appenv foo</div=
+></div><div><div class=3D"gmail_quote"><b>=C2=A0 =C2=A0 . &quot;${APPENV_ba=
+r}&quot;</b></div></div><div><div class=3D"gmail_quote">=C2=A0 =C2=A0 FOOIS=
+HERE=3Dyes</div></div><div><div class=3D"gmail_quote">=C2=A0 =C2=A0 export =
+FOOISHERE</div></div></blockquote><div><div class=3D"gmail_quote"></div></d=
+iv></div><div><br></div><div>what are your thoughts?</div></div></div></div=
+></blockquote><div>Yeah, that would be certainly a good idea! To me this se=
+ems to be a very useful feature...</div><blockquote class=3D"gmail_quote" s=
+tyle=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-le=
+ft: 1ex;"><div dir=3D"ltr"><div><div class=3D"gmail_quote"><div>=C2=A0</div=
+></div></div></div></blockquote><blockquote class=3D"gmail_quote" style=3D"=
+margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;=
+"><div dir=3D"ltr"><div><div class=3D"gmail_quote"><div></div><div>=C2=A0</=
+div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;bor=
+der-left:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr"><spa=
+n><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;borde=
+r-left:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr"><div><=
+div class=3D"gmail_quote"><div>=C2=A0</div><blockquote class=3D"gmail_quote=
+" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);=
+padding-left:1ex"><div dir=3D"ltr"><div></div><div>Say that app B depends o=
+n app A (at build and run time app A must be present in LD_LIBRARY_PATH and=
+ PATH, for example), then I would write the recipe file as follows:</div><d=
+iv><br></div><div>%appinstall A</div><div>=C2=A0 =C2=A0 &lt;...install step=
+s...&gt;</div><div><br></div><div>%appinstall B</div><div>=C2=A0 =C2=A0 exp=
+ort PATH=3D$APPROOT_A/bin</div><div>=C2=A0 =C2=A0 export LD_LIBRARY_PATH=3D=
+$APPROOT_A/<wbr>lib=C2=A0</div></div></blockquote><blockquote class=3D"gmai=
+l_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,20=
+4,204);padding-left:1ex"><div dir=3D"ltr"><div>=C2=A0 =C2=A0 &lt;...install=
+ steps...&gt;</div><div><br></div></div></blockquote><div>Ah, so you don&#3=
+9;t need the first two lines. The lib directory is automatically added to t=
+he LD_LIBRARY_PATH and bin to PATH when you run / shell / interact with app=
+ &quot;B&quot; so that section should just be:</div><div><br></div><blockqu=
+ote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px=
+ solid rgb(204,204,204);padding-left:1ex">%appinstall B<br>=C2=A0 =C2=A0 &l=
+t;....intall steps...&gt;</blockquote><div></div></div></div></div></blockq=
+uote><div><br></div></span><div>Wait... omitting those lines app A will not=
+ be added automatically to PATH when interacting with app B (for example wi=
+th &quot;singularity --app B &lt;image&gt;&quot;) unless I explicitly set t=
+his in the &quot;%environment&quot; or &quot;%appenv B&quot; section...=C2=
+=A0</div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8e=
+x;border-left:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr"=
+><div><div class=3D"gmail_quote"><div>=C2=A0<br></div></div></div></div></b=
+lockquote><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8=
+ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr=
+"><div><div class=3D"gmail_quote"><div></div><div>=C2=A0</div><blockquote c=
+lass=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px soli=
+d rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr"><div></div><div>%appe=
+nv B</div><div><div>=C2=A0 =C2=A0 export PATH=3D$APPROOT_A/bin</div></div><=
+/div></blockquote></div></div></div></blockquote><div>I use the APPROOT_A v=
+ariable here not APPROOT_B...=C2=A0</div><blockquote class=3D"gmail_quote" =
+style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);pa=
+dding-left:1ex"><div dir=3D"ltr"><div><div class=3D"gmail_quote"><span><blo=
+ckquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left=
+:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr"><div><div>=
+=C2=A0 =C2=A0 export LD_LIBRARY_PATH=3D$APPROOT_A/lib</div></div><div><br><=
+/div></div></blockquote><div><br></div><div>ditto here.</div><div>=C2=A0</d=
+iv><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;bord=
+er-left:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr"><div>=
+</div><div>And that&#39;s ok, everything works when I run &quot;singularity=
+ --app B &lt;image&gt;&quot;. Anyway, suppose that the &quot;%appenv A&quot=
+; section exports a lot of other useful variables that should also be expor=
+ted when dealing with app B, wouldn&#39;t it be nice to provide a more neat=
+ method to accomplish this (i.e. a built-in method to specify dependencies)=
+? Am I missing something?</div><div><br></div></div></blockquote><div>Oh ye=
+s! So in this case, just put those variables in the global %environment. Th=
+en they will be available for all to share :)</div><div><br></div><div>Best=
+,</div><div><br>Vanessa</div><div><br></div><div><blockquote class=3D"gmail=
+_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204=
+,204);padding-left:1ex"><br></blockquote></div><div>=C2=A0</div></span><blo=
+ckquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left=
+:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr"><div></div><=
+div>Thanks so much,</div><div>Luigi</div></div><span><font color=3D"#888888=
+"><span>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br></span>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</font></span></blockquote></div><span><br><br clear=3D"all"><div><br></div=
+>-- <br><div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div=
+><div><div><a value=3D"+16033210676">(603) 321-0676</a></div></div></div></=
+div></span></div></div></blockquote><div><br></div><div>Thanks for the quic=
+k response!</div><div>Cheers,</div><div>Luigi=C2=A0</div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+CiO7glhbBwAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><d=
+iv>(603) 321-0676</div></div></div></div></div></div></blockquote><div><br>=
+</div><div>Cheers,</div><div>Luigi=C2=A0</div></div>
+------=_Part_1604_1919491869.1509654158955--
+
+------=_Part_1603_2062162344.1509654158955--

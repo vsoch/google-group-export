@@ -1,0 +1,392 @@
+Date: Mon, 9 Jan 2017 14:53:54 -0800 (PST)
+From: David Godlove <davidg...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <fbb18ed3-3e5b-4461-8e5f-223c45bfbe6b@lbl.gov>
+In-Reply-To: <CAOivMdTODqC2Xiw9Y8obEK=qu28Xj6ER+zL4Zbz_17TvBcaw+g@mail.gmail.com>
+References: <CALa-s5bvcarR1nDAXeaU1JR-do5H76W1tbcUkK5OM1ACruDZyQ@mail.gmail.com>
+ <abe434d5-7efc-ca49-14b2-398b36d80b77@microway.com> <CAOivMdSdTgCEurPHzOtYEP4-OfrEYQtUAB2-2yp7Gd_U7_S_qw@mail.gmail.com>
+ <CAOivMdTODqC2Xiw9Y8obEK=qu28Xj6ER+zL4Zbz_17TvBcaw+g@mail.gmail.com>
+Subject: Re: [Singularity] is there length limit to the container definition
+ file?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_359_613810544.1484002434714"
+
+------=_Part_359_613810544.1484002434714
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_360_1428959543.1484002434714"
+
+------=_Part_360_1428959543.1484002434714
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+I just hit this issue too.  As a temporary work around (if you don't feel 
+comfortable modifying the singularity source code) I think you can put the 
+scriptlet into a separate file and then scp it from the host system into 
+your container and run it. 
+
+On Friday, January 6, 2017 at 10:04:11 AM UTC-5, Michael Bauer wrote:
+>
+> Just a quick follow up:
+>
+> The function in charge of getting the scriplet first allocates 2048 
+> maximum for the string, however it was supposed to re allocate additional 
+> memory each time strjoin() is called (meaning it would have no maximum 
+> size). However, strjoin() limits the string size to 2*2048 + 1. I (or 
+> anybody with the time) can simply go in and remove the strjoin call and 
+> replace it with calls to realloc and sprintf and we should be good to go.
+>
+> Michael
+>
+> On Jan 6, 2017 9:58 AM, "Michael Bauer" <b...@umich.edu <javascript:>> 
+> wrote:
+>
+>> Hi guys,
+>>
+>> As you pointed out Eliot, the scriplets are parsed as one long line. I 
+>> had though that I allowed those lines to be indefinitely wrong, but it's 
+>> definitely possible that I mistakenly limited the entire scriplet to size 
+>> 2048. Each line is supposed to allocate a maximum of size 2048, but the 
+>> scriplet as a whole should not share this maximum. I will take a look and 
+>> get back to you guys with a fix if this is the case.
+>>
+>> Cheers,
+>> Michael Bauer
+>>
+>> On Jan 6, 2017 9:45 AM, "Eliot Eshelman" <e...@microway.com 
+>> <javascript:>> wrote:
+>>
+>>> I was going to ask about this, too. I hit the length limit when adding 
+>>> CUDA support to a container.
+>>>
+>>> As far as I can see, Singularity parses the scriptlet and passes it as 
+>>> one long line to the shell. I'd been guessing that might be the reason for 
+>>> a length limit, but hoping someone has an idea how to lift that limit.
+>>>
+>>> Eliot
+>>>
+>>>
+>>>
+>>> On 01/06/2017 12:49 AM, tin h wrote:
+>>>
+>>> Hi folks, 
+>>>
+>>>
+>>> I am writting a container definiton file to install circos, which has a 
+>>> lot of dependencies.  so the definiton file got to be fairly big. 
+>>>  unfortunately it seems to stop before the end of the script.
+>>>
+>>>
+>>> To test for limit, I updated the centos.def from the example directory 
+>>> with something like the following into the %post section:
+>>>
+>>>
+>>>     test -d /var/singularity || mkdir /var/singularity
+>>>
+>>>     touch                         
+>>>  /var/singularity/singularity_bootstart.log
+>>>
+>>>     date                        >> 
+>>> /var/singularity/singularity_bootstart.log
+>>>
+>>>  
+>>>
+>>>         echo hello world.  testing 1 ... >> 
+>>> /var/singularity/singularity_bootstart.log
+>>>
+>>>         echo hello world.  testing 2 ... >> 
+>>> /var/singularity/singularity_bootstart.log
+>>>
+>>>         ...
+>>>
+>>>         echo hello world.  testing 150 ... >> 
+>>> /var/singularity/singularity_bootstart.log
+>>>
+>>>
+>>>
+>>> but the singularity bootstrap process repeatedly stops a line "testing 
+>>> 24".
+>>>
+>>> am I hitting some buffer limit?
+>>>
+>>>
+>>>
+>>>
+>>> singularity version: at least 2.2.  I think this machine has the "head" 
+>>> version from commit 4afe40f
+>>>
+>>>
+>>> host: centos-6
+>>>
+>>>
+>>> Thanks!
+>>>
+>>> Tin
+>>>
+>>>
+>>> -- 
+>>> You received this message because you are subscribed to the Google 
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>> an email to <javascript:>singu...@lbl.gov <javascript:>.
+>>>
+>>>
+>>> -- 
+>>> Eliot Eshelman, Vice President
+>>> Strategic Accounts and HPC Initiatives
+>>>
+>>> Microway, Inc.
+>>> 12 Richards Road, Plymouth, MA 02360
+>>> (508) 732-5534
+>>> e...@microway.com <javascript:>
+>>> http://www.microway.com 
+>>>
+>>> -- 
+>>> You received this message because you are subscribed to the Google 
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>> an email to singu...@lbl.gov <javascript:>.
+>>>
+>>
+------=_Part_360_1428959543.1484002434714
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">I just hit this issue too. =C2=A0As a temporary work aroun=
+d (if you don&#39;t feel comfortable modifying the singularity source code)=
+ I think you can put the scriptlet into a separate file and then scp it fro=
+m the host system into your container and run it.=C2=A0<br><br>On Friday, J=
+anuary 6, 2017 at 10:04:11 AM UTC-5, Michael Bauer wrote:<blockquote class=
+=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #cc=
+c solid;padding-left: 1ex;"><div dir=3D"auto">Just a quick follow up:<div d=
+ir=3D"auto"><br></div><div dir=3D"auto">The function in charge of getting t=
+he scriplet first allocates 2048 maximum for the string, however it was sup=
+posed to re allocate additional memory each time strjoin() is called (meani=
+ng it would have no maximum size). However, strjoin() limits the string siz=
+e to 2*2048 + 1. I (or anybody with the time) can simply go in and remove t=
+he strjoin call and replace it with calls to realloc and sprintf and we sho=
+uld be good to go.</div><div dir=3D"auto"><br></div><div dir=3D"auto">Micha=
+el</div></div><div><br><div class=3D"gmail_quote">On Jan 6, 2017 9:58 AM, &=
+quot;Michael Bauer&quot; &lt;<a href=3D"javascript:" target=3D"_blank" gdf-=
+obfuscated-mailto=3D"gm8rr-TzEAAJ" rel=3D"nofollow" onmousedown=3D"this.hre=
+f=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascr=
+ipt:&#39;;return true;">b...@umich.edu</a>&gt; wrote:<br type=3D"attributio=
+n"><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left=
+:1px #ccc solid;padding-left:1ex"><div dir=3D"auto">Hi guys,<div dir=3D"aut=
+o"><br></div><div dir=3D"auto">As you pointed out Eliot, the scriplets are =
+parsed as one long line. I had though that I allowed those lines to be inde=
+finitely wrong, but it&#39;s definitely possible that I mistakenly limited =
+the entire scriplet to size 2048. Each line is supposed to allocate a maxim=
+um of size 2048, but the scriplet as a whole should not share this maximum.=
+ I will take a look and get back to you guys with a fix if this is the case=
+.</div><div dir=3D"auto"><br></div><div dir=3D"auto">Cheers,</div><div dir=
+=3D"auto">Michael Bauer</div></div><div><br><div class=3D"gmail_quote">On J=
+an 6, 2017 9:45 AM, &quot;Eliot Eshelman&quot; &lt;<a href=3D"javascript:" =
+target=3D"_blank" gdf-obfuscated-mailto=3D"gm8rr-TzEAAJ" rel=3D"nofollow" o=
+nmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"th=
+is.href=3D&#39;javascript:&#39;;return true;">e...@microway.com</a>&gt; wro=
+te:<br type=3D"attribution"><blockquote class=3D"gmail_quote" style=3D"marg=
+in:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">
+ =20
+   =20
+ =20
+  <div bgcolor=3D"#FFFFFF" text=3D"#000000">
+    <div>I was going to ask about this, too. I
+      hit the length limit when adding CUDA support to a container.<br>
+      <br>
+      As far as I can see, Singularity parses the scriptlet and passes
+      it as one long line to the shell. I&#39;d been guessing that might be
+      the reason for a length limit, but hoping someone has an idea how
+      to lift that limit.<br>
+      <br>
+      Eliot<br>
+      <br>
+      <br>
+      <br>
+      On 01/06/2017 12:49 AM, tin h wrote:<br>
+    </div>
+    <blockquote type=3D"cite">
+      <p><u></u>Hi folks,=C2=A0<u></u></p>
+      <p><u></u><br>
+        <u></u></p>
+      <u></u>
+        <p><u></u>I am writting a container definiton file to
+            install circos, which has a lot of dependencies. =C2=A0so the
+            definiton file got to be fairly big. =C2=A0unfortunately it see=
+ms
+            to stop before the end of the script.<u></u></p>
+        <u></u>
+          <p><u></u><br>
+            <u></u></p>
+          <u></u>
+            <p><u></u>To test for limit, I updated the centos.def
+                from the example directory with something like the
+                following into the %post section:<u></u></p>
+            <u></u>
+              <p><u></u><u></u></p>
+              <p><u></u><br>
+                <u></u></p>
+              <u></u>
+                <p><u></u><u></u></p>
+                <p><u></u>=C2=A0 =C2=A0 test -d /var/singularity || mkdir
+                    /var/singularity<u></u></p>
+                <u></u>
+                  <p><u></u>=C2=A0 =C2=A0 touch =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+                      =C2=A0/var/singularity/singularity_<wbr>bootstart.log=
+<u></u></p>
+                  <u></u>
+                    <p><u></u>=C2=A0 =C2=A0 date =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0
+                        =C2=A0&gt;&gt;
+                        /var/singularity/singularity_<wbr>bootstart.log<u><=
+/u></p>
+                    <u></u>
+                      <p><u></u>=C2=A0<u></u></p>
+                      <u></u>
+                        <p><u></u>=C2=A0 =C2=A0 =C2=A0 =C2=A0 echo hello wo=
+rld.
+                            =C2=A0testing 1 ... &gt;&gt;
+                            /var/singularity/singularity_<wbr>bootstart.log=
+<br>
+                          <u></u></p>
+                        <u></u>
+                          <p><u></u>=C2=A0 =C2=A0 =C2=A0 =C2=A0 echo hello =
+world.
+                              =C2=A0testing 2 ... &gt;&gt;
+                              /var/singularity/singularity_<wbr>bootstart.l=
+og<u></u></p>
+                          <u></u><u></u>
+                              <p><u></u>=C2=A0 =C2=A0 =C2=A0 =C2=A0 ...<u><=
+/u></p>
+                              <u></u><u></u>
+                                  <p><u></u><u></u></p>
+                                  <p><u></u>=C2=A0 =C2=A0 =C2=A0 =C2=A0 ech=
+o hello
+                                      world. =C2=A0testing 150 ... &gt;&gt;
+                                      /var/singularity/singularity_<wbr>boo=
+tstart.log<u></u></p>
+                                  <u></u><u></u>
+                                      <p><u></u><br>
+                                        <u></u></p>
+                                      <u></u>
+                                        <p><u></u><br>
+                                          <u></u></p>
+                                        <u></u>
+                                          <p><u></u>but the
+                                              singularity bootstrap
+                                              process repeatedly stops a
+                                              line &quot;testing 24&quot;.<=
+u></u></p>
+                                          <u></u>
+                                            <p><u></u>am I
+                                                hitting some buffer
+                                                limit?<u></u></p>
+                                            <u></u>
+                                              <p><u></u><br>
+                                                <u></u></p>
+                                              <u></u>
+                                                <p><u></u><br>
+                                                  <u></u></p>
+                                                <u></u>
+                                                  <p><u></u><br>
+                                                    <u></u></p>
+                                                  <u></u>
+                                                    <p><u></u>singularity
+                                                        version: at
+                                                        least 2.2.=C2=A0 I
+                                                        think this
+                                                        machine has the
+                                                        &quot;head&quot; ve=
+rsion
+                                                        from
+                                                        commit=C2=A04afe40f=
+<u></u></p>
+                                                    <u></u>
+                                                      <p><u></u><br>
+                                                        <u></u></p>
+                                                      <u></u>
+                                                        <p><u></u>host:
+                                                          centos-6<u></u></=
+p>
+                                                        <u></u>
+                                                          <p><u></u><br>
+                                                          <u></u></p>
+                                                          <u></u>
+                                                          <p><u></u>Thanks!=
+<u></u></p>
+                                                          <u></u>
+                                                          <p><u></u>Tin<u><=
+/u></p>
+                                                          <u></u>
+                                                          <p><u></u><br>
+                                                          <u></u></p>
+                                                          <u></u><u></u>
+                                                          -- <br>
+                                                          You received
+                                                          this message
+                                                          because you
+                                                          are subscribed
+                                                          to the Google
+                                                          Groups
+                                                          &quot;singularity=
+&quot;
+                                                          group.<br>
+                                                          To unsubscribe
+                                                          from this
+                                                          group and stop
+                                                          receiving
+                                                          emails from
+                                                          it, send an
+                                                          email to <a href=
+=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"gm8rr-TzEAAJ" r=
+el=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return tru=
+e;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;"></a><a href=
+=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"gm8rr-TzEAAJ" r=
+el=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return tru=
+e;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">singularity.=
+..@lbl.<wbr>gov</a>.<br>
+                                                          <u></u><u></u><u>=
+</u><u></u><u></u><u></u><u></u><u></u><u></u><u></u><u></u><u></u><u></u><=
+u></u><u></u><u></u><u></u><u></u><u></u><u></u><u></u><u></u><u></u><u></u=
+><u></u><u></u><u></u><u></u><u></u><u></u><u></u></blockquote>
+    <p><br>
+    </p>
+    <div>-- <br>
+      Eliot Eshelman, Vice President<br>
+      Strategic Accounts and HPC Initiatives<br>
+      <br>
+      Microway, Inc.<br>
+      12 Richards Road, Plymouth, MA 02360<br>
+      <a value=3D"+15087325534">(508) 732-5534</a><br>
+      <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"gm=
+8rr-TzEAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#3=
+9;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;"=
+>e...@microway.com</a><br>
+      <a href=3D"http://www.microway.com" target=3D"_blank" rel=3D"nofollow=
+" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F=
+%2Fwww.microway.com\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHImpPms3JmLjA04=
+mu-2k6n-2s3jg&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.goo=
+gle.com/url?q\x3dhttp%3A%2F%2Fwww.microway.com\x26sa\x3dD\x26sntz\x3d1\x26u=
+sg\x3dAFQjCNHImpPms3JmLjA04mu-2k6n-2s3jg&#39;;return true;">http://www.micr=
+oway.com</a>
+    </div>
+  </div>
+
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+gm8rr-TzEAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</blockquote></div></div>
+</blockquote></div></div>
+</blockquote></div>
+------=_Part_360_1428959543.1484002434714--
+
+------=_Part_359_613810544.1484002434714--

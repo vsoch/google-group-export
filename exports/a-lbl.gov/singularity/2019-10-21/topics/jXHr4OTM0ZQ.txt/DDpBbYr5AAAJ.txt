@@ -1,0 +1,206 @@
+Date: Wed, 1 Mar 2017 15:12:15 -0800 (PST)
+From: Todd Gamblin <tgam...@llnl.gov>
+To: singularity <singu...@lbl.gov>
+Message-Id: <0cb36e83-901b-4f01-988f-9e514a87e784@lbl.gov>
+In-Reply-To: <CAN7etTwWz2dnwpO4F+osHOGXi+sY5OTCfDf=in+KupFkF=SmZA@mail.gmail.com>
+References: <1f92fe2c-5535-44ec-bca4-4b47f415c83e@lbl.gov> <5218828d-d47b-455d-9b48-617363509a15@lbl.gov>
+ <CABWwhHqye6SWo140hau-6nsf3b4H20SPNWU9_9QUUpx5uo4brQ@mail.gmail.com>
+ <c9ca4810-4e73-471b-b8fd-dda9a7447d72@lbl.gov> <CAN9aCec_o1hZP=5_9etRTDcRnrU3XLe3gnfBPuPx82iu52ovxg@mail.gmail.com>
+ <20170301122605.GY14538@sillage.bis.pasteur.fr> <CABWwhHp3g7Rq5S=h28R6e4bdV22XY=90W_NAqzRfjYjLiGNA-w@mail.gmail.com>
+ <d674f9b4-d986-4b95-a395-e48c59b111ab@lbl.gov>
+ <CAN7etTwWz2dnwpO4F+osHOGXi+sY5OTCfDf=in+KupFkF=SmZA@mail.gmail.com>
+Subject: Re: [Singularity] Re: $HOME mounting in a container-modification
+ session
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_0_1102425992.1488409935369"
+
+------=_Part_0_1102425992.1488409935369
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1_93971959.1488409935371"
+
+------=_Part_1_93971959.1488409935371
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Greg:
+
+On Wednesday, March 1, 2017 at 9:18:38 AM UTC-8, Gregory M. Kurtzer wrote:
+>
+>
+> On Wed, Mar 1, 2017 at 9:07 AM, Robin Goldstone <go...@llnl.gov 
+> <javascript:>> wrote:
+>
+>> This brings me to what I see as the biggest challenge in our environment 
+>> (HPC facility).  If we want to let users run singularity containers on our 
+>> systems, they need a place where they are root so they can build the 
+>> container.  And we don't give users root on our systems for a myriad of 
+>> reasons, one being shared filesystems.  So they need to find some place 
+>> else to build their container.  Some of them have access to a Linux desktop 
+>> where they have root, others have to get more creative.  And if they build 
+>> it somewhere else, they won't have access to their home directory, which 
+>> probably contains stuff they need to build their application.
+>>
+>
+> I have some plans, fixes and ideas for this:
+>
+> 1. In the newest development work we are doing, a user can create an image 
+> and import to that image as non root. That makes this possible: 
+> `singularity create tensorflow.img; singularity import tensorflow.img 
+> docker://tensorflow:latest` without being root. note: This does not work 
+> for bootstrapping, only importing.
+>
+> 2. Singularity Hub (and/or DockerHub) can be used to build images today. 
+> Singularity Hub (shub) integrates with ones GitHub repository, and using 
+> continuous integration, will generate a new container that you can then 
+> reference via `singularity shell shub://....`.
+>
+> 3. I have a vision for a build service (that has yet to be built). The 
+> build service would integrate directly with Singularity and allow someone 
+> to remote build a container using the generalized bootstrap syntax as we 
+> use now. For example: `singularity bootstrap-remote container.img 
+> file.def`. that command would send the file.def to a build server, and 
+> would wait until the build server was done, at which point it would 
+> download the resultant container.img. For all practical purposes, the build 
+> process could have been local.
+>
+
+Those all sound exciting!
+
+I've got another use case to bounce off of you that I think will address a 
+lot of peoples' concerns about, "containerized HPC container build 
+environments", as Stefan put it above.
+
+First some points:
+
+
+1. I think most container users want to be root so they can do things like 
+install packages using the system package manager.  That is great, but it's 
+hard when singularity sudo == bash sudo, as mentioned above.  
+
+2. I suspect that most of our users don't necessarily need more system 
+packages.  They need to build their custom HPC packages and snapshot 
+*those* to send to someone else.  They could do that in their home 
+directory.
+
+3. If you had a user space package manager (like Spack, https://spack.io) 
+that could install all your HPC dependencies in your home directory, you 
+could really easily build your dependencies AND your application in your 
+home directory.
+
+
+Current issues:
+
+1. Home directories have different mount points across different systems.
+2. Users have different uids across systems.
+
+
+Both of these make it hard to build in your home directory and then share 
+what you did with someone else.
+
+What if you had a well known path, like /home/mysingularity, that was 
+*always* owned by the user running the container.  So, if I launch a 
+container as tgamblin, that mount point shows up in the container, and it 
+is owned by tgamblin.  If I build something there as tgamblin, it'll stay 
+be in the container, and when I give it to user rgoldstone, she launches 
+the container and the /home/mysingularity directory is owned by rgoldstone. 
+ Now I have a location where I can build the same way I'm used to, even 
+without root, and I can easily share that mount with other users.
+
+This would allow our users to build containers the same way they currently 
+do on our clusters, without them having to understand any fancy filesystem 
+mounts, overlay semantics, or external build farms.  Coupled with Spack (an 
+entirely user-space package manager) they could also easily build their 
+dependencies in the "myuser" directory, without worrying about portability 
+concerns that arise from differently named home directories on different 
+systems.
+
+Does that make sense, and would it be an easy tweak?  Or am I missing 
+something?
+
+-Todd
+
+
+
+------=_Part_1_93971959.1488409935371
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Greg:<br><br>On Wednesday, March 1, 2017 at 9:18:38 AM UTC=
+-8, Gregory M. Kurtzer wrote:<blockquote class=3D"gmail_quote" style=3D"mar=
+gin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><=
+div dir=3D"ltr"><div><br><div class=3D"gmail_quote">On Wed, Mar 1, 2017 at =
+9:07 AM, Robin Goldstone <span dir=3D"ltr">&lt;<a href=3D"javascript:" targ=
+et=3D"_blank" gdf-obfuscated-mailto=3D"VCLjbj7mAAAJ" rel=3D"nofollow" onmou=
+sedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.h=
+ref=3D&#39;javascript:&#39;;return true;">go...@llnl.gov</a>&gt;</span> wro=
+te:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-=
+left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">This brings me to wh=
+at I see as the biggest challenge in our environment (HPC facility).=C2=A0 =
+If we want to let users run singularity containers on our systems, they nee=
+d a place where they are root so they can build the container.=C2=A0 And we=
+ don&#39;t give users root on our systems for a myriad of reasons, one bein=
+g shared filesystems.=C2=A0 So they need to find some place else to build t=
+heir container.=C2=A0 Some of them have access to a Linux desktop where the=
+y have root, others have to get more creative.=C2=A0 And if they build it s=
+omewhere else, they won&#39;t have access to their home directory, which pr=
+obably contains stuff they need to build their application.<br></div></bloc=
+kquote><div><br></div><div>I have some plans, fixes and ideas for this:</di=
+v><div><br></div><div>1. In the newest development work we are doing, a use=
+r can create an image and import to that image as non root. That makes this=
+ possible: `singularity create tensorflow.img; singularity import tensorflo=
+w.img docker://tensorflow:latest` without being root. note: This does not w=
+ork for bootstrapping, only importing.</div><div><br></div><div>2. Singular=
+ity Hub (and/or DockerHub) can be used to build images today. Singularity H=
+ub (shub) integrates with ones GitHub repository, and using continuous inte=
+gration, will generate a new container that you can then reference via `sin=
+gularity shell shub://....`.</div><div><br></div><div>3. I have a vision fo=
+r a build service (that has yet to be built). The build service would integ=
+rate directly with Singularity and allow someone to remote build a containe=
+r using the generalized bootstrap syntax as we use now. For example: `singu=
+larity bootstrap-remote container.img file.def`. that command would send th=
+e file.def to a build server, and would wait until the build server was don=
+e, at which point it would download the resultant container.img. For all pr=
+actical purposes, the build process could have been local.</div></div></div=
+></div></blockquote><div><br></div><div>Those all sound exciting!</div><div=
+><br></div><div>I&#39;ve got another use case to bounce off of you that I t=
+hink will address a lot of peoples&#39; concerns about, &quot;containerized=
+ HPC container build environments&quot;, as Stefan put it above.</div><div>=
+<br></div><div>First some points:</div><div><blockquote style=3D"margin: 0 =
+0 0 40px; border: none; padding: 0px;"><div><br></div><div>1. I think most =
+container users want to be root so they can do things like install packages=
+ using the system package manager. =C2=A0That is great, but it&#39;s hard w=
+hen singularity sudo =3D=3D bash sudo, as mentioned above. =C2=A0</div><div=
+><br></div><div>2. I suspect that most of our users don&#39;t necessarily n=
+eed more system packages. =C2=A0They need to build their custom HPC package=
+s and snapshot *those* to send to someone else. =C2=A0They could do that in=
+ their home directory.</div><div><br></div><div>3. If you had a user space =
+package manager (like Spack, https://spack.io) that could install all your =
+HPC dependencies in your home directory, you could really easily build your=
+ dependencies AND your application in your home directory.</div></blockquot=
+e></div><div><br></div><div>Current issues:</div><div><br></div><blockquote=
+ style=3D"margin: 0 0 0 40px; border: none; padding: 0px;"><div>1. Home dir=
+ectories have different mount points across different systems.</div><div>2.=
+ Users have different uids across systems.</div></blockquote><div><br></div=
+><div>Both of these make it hard to build in your home directory and then s=
+hare what you did with someone else.</div><div><br></div><div>What if you h=
+ad a well known path, like /home/mysingularity, that was *always* owned by =
+the user running the container. =C2=A0So, if I launch a container as tgambl=
+in, that mount point shows up in the container, and it is owned by tgamblin=
+. =C2=A0If I build something there as tgamblin, it&#39;ll stay be in the co=
+ntainer, and when I give it to user rgoldstone, she launches the container =
+and the /home/mysingularity directory is owned by rgoldstone. =C2=A0Now I h=
+ave a location where I can build the same way I&#39;m used to, even without=
+ root, and I can easily share that mount with other users.</div><div><br></=
+div><div>This would allow our users to build containers the same way they c=
+urrently do on our clusters, without them having to understand any fancy fi=
+lesystem mounts, overlay semantics, or external build farms. =C2=A0Coupled =
+with Spack (an entirely user-space package manager) they could also easily =
+build their dependencies in the &quot;myuser&quot; directory, without worry=
+ing about portability concerns that arise from differently named home direc=
+tories on different systems.</div><div><br></div><div>Does that make sense,=
+ and would it be an easy tweak? =C2=A0Or am I missing something?</div><div>=
+<br></div><div>-Todd</div><div><br></div><div><br></div></div>
+------=_Part_1_93971959.1488409935371--
+
+------=_Part_0_1102425992.1488409935369--

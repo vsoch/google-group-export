@@ -1,0 +1,147 @@
+Date: Fri, 28 Dec 2018 00:45:23 -0800 (PST)
+From: Andy Hochberg <de.ang...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <3a707dbb-63fe-4a80-a029-b032b5a3a70f@lbl.gov>
+In-Reply-To: <CAM=pu++1s-b2=xPcwZnC0PXQFgX2J8O3bgHSo3gHcWVEuboFMw@mail.gmail.com>
+References: <7fa18c02-a8ec-4c7c-962e-6e5e12103581@lbl.gov> <368e6fe1-1f9f-4637-a15e-b64b215d586d@lbl.gov>
+ <CAM=pu+K+MsyjqPN2MtMKEjeDHV33otLOUp6k_xD+0MvOF6AKog@mail.gmail.com> <0b72a629-10dd-4ebf-a7f0-ea178419a31e@lbl.gov>
+ <CAM=pu++1s-b2=xPcwZnC0PXQFgX2J8O3bgHSo3gHcWVEuboFMw@mail.gmail.com>
+Subject: Re: [Singularity] Re: mapping host users when running image as root
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2128_2070558080.1545986723827"
+
+------=_Part_2128_2070558080.1545986723827
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2129_1638268779.1545986723828"
+
+------=_Part_2129_1638268779.1545986723828
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+
+
+>
+> I think we need to step back and re-assess your strategy, because that 
+> also makes me a bit nervous.
+>
+>
+Yes, maybe I should explain this unnerving setup of mine a little more! 
+This containerised hub will be running on a particular node of a HPC 
+cluster. This node will host not only the hub but various other servers 
+(e.g. a Shiny Server), all using SSL and exposed only to the internal 
+network, which will be accessed by cluster users. 
+
+Containers seemed like a good idea to isolate these servers which each come 
+with their jungle of dependencies. The hub will have access to a shared 
+folder to write and edit the notebooks (one subfolder per whitelisted 
+user). 
+
+In this context, PAM authentication seemed the way to go. It is both simple 
+and would allow users to enter their UNIX credentials to authenticate on 
+these servers and transparently edit the notebooks "as themselves" on the 
+shared network storage space (which is bound to the container at runtime). 
+I never used OAuth, but there would need to be a way to map OAuthenticator 
+users (e.g. GitHub usernames) to HPC users, which is likely to also require 
+some binding of sensitive files to make the container aware of them. In any 
+case, because the users should be able to do file operations through the 
+container "as themselves", I think some kind of user mapping to the host is 
+unavoidable.
+
+But given your replies, I am starting to wonder whether containerising the 
+hub and these other servers may be more dangerous than simply running them 
+as root outside of a container.  On the other hand, in both cases sensitive 
+files are writable only by root and readable by the same users inside as 
+outside the container.  
+
+
+> Important: This jupyterhub/jupyterhub image contains only the Hub itself, 
+> with no configuration. In general, one needs to make a derivative image, 
+> with at least a jupyterhub_config.py setting up an Authenticator and/or a 
+> Spawner. 
+
+ 
+
+> And perhaps this default image is mostly for getting it up and running 
+> quickly (for a single user) or testing? But note that I've never deployed 
+> one of these, so this is just intuition.  
+
+
+I think you are referring to the documentation for the jupyterhub docker 
+image (https://jupyterhub.readthedocs.io/en/stable/quickstart-docker.html). 
+I am not using that, but another one that I built using a dockerfile, then 
+registered locally (and confusingly has the same name). It is a bit more 
+complex than the default image, which, you are right, is mostly used for 
+testing.
+
+
+
+------=_Part_2129_1638268779.1545986723828
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div><br></div><div><blockquote class=3D"gmail_quote" styl=
+e=3D"margin: 0px 0px 0px 0.8ex; border-left: 1px solid rgb(204, 204, 204); =
+padding-left: 1ex;"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div=
+ dir=3D"ltr"><div><br></div>I think we need to step back and re-assess your=
+ strategy, because that also makes me a bit nervous.<div><br></div><div></d=
+iv></div></div></div></div></blockquote></div><div><br></div><div>Yes, mayb=
+e I should explain this unnerving setup of mine a little more! This contain=
+erised hub will be running on a particular node of a HPC cluster. This node=
+ will host not only the hub but various other servers (e.g. a Shiny Server)=
+, all using SSL and exposed only to the internal network, which will be acc=
+essed by cluster users.=C2=A0</div><div><br></div><div>Containers seemed li=
+ke a good idea to isolate these servers which each come with their jungle o=
+f dependencies. The hub will have access to a shared folder to write and ed=
+it the notebooks (one subfolder per whitelisted user).=C2=A0</div><div><br>=
+</div><div>In this context, PAM authentication seemed the way to go. It is =
+both simple and would allow users to enter their UNIX credentials to authen=
+ticate on these servers and transparently edit the notebooks &quot;as thems=
+elves&quot; on the shared network storage space (which is bound to the cont=
+ainer at runtime). I never used OAuth, but there would need to be a way to =
+map OAuthenticator users (e.g. GitHub usernames) to HPC users, which is lik=
+ely to also require some binding of sensitive files to make the container a=
+ware of them. In any case, because the users should be able to do file oper=
+ations through the container &quot;as themselves&quot;, I think some kind o=
+f user mapping to the host is unavoidable.</div><div><br></div><div>But giv=
+en your replies, I am starting to wonder whether containerising the hub and=
+ these other servers may be more dangerous than simply running them as root=
+ outside of a container.=C2=A0 On the other hand, in both cases sensitive f=
+iles are writable only by root and readable by the same users inside as out=
+side the container.=C2=A0=C2=A0</div><div><br></div><div><div dir=3D"ltr"><=
+div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><blockquote class=3D"gmai=
+l_quote" style=3D"margin: 0px 0px 0px 0.8ex; border-left: 1px solid rgb(204=
+, 204, 204); padding-left: 1ex;"><br><span style=3D"font-weight: bolder; co=
+lor: rgb(36, 67, 87); font-family: &quot;Open Sans&quot;, sans-serif; font-=
+size: 14px;">Important:</span><span style=3D"color: rgb(36, 67, 87); font-f=
+amily: &quot;Open Sans&quot;, sans-serif; font-size: 14px;">=C2=A0This=C2=
+=A0</span><code style=3D"padding: 0.1em 0.4em; font-family: &quot;Ubuntu Mo=
+no&quot;, consolas, monaco, monospace; font-size: 0.95em; background-color:=
+ rgb(245, 245, 245); border-radius: 1px; color: rgb(36, 67, 87);">jupyterhu=
+b/<wbr>jupyterhub</code><span style=3D"color: rgb(36, 67, 87); font-family:=
+ &quot;Open Sans&quot;, sans-serif; font-size: 14px;">=C2=A0image contains =
+only the Hub itself, with no configuration. In general, one needs to make a=
+ derivative image, with at least a=C2=A0</span><code style=3D"padding: 0.1e=
+m 0.4em; font-family: &quot;Ubuntu Mono&quot;, consolas, monaco, monospace;=
+ font-size: 0.95em; background-color: rgb(245, 245, 245); border-radius: 1p=
+x; color: rgb(36, 67, 87);">jupyterhub_config.py</code><span style=3D"color=
+: rgb(36, 67, 87); font-family: &quot;Open Sans&quot;, sans-serif; font-siz=
+e: 14px;">=C2=A0setting up an Authenticator and/or a Spawner.=C2=A0</span><=
+/blockquote><div>=C2=A0</div><blockquote class=3D"gmail_quote" style=3D"mar=
+gin: 0px 0px 0px 0.8ex; border-left: 1px solid rgb(204, 204, 204); padding-=
+left: 1ex;">And perhaps this default image is mostly for getting it up and =
+running quickly (for a single user) or testing? But note that I&#39;ve neve=
+r deployed one of these, so this is just intuition.=C2=A0=C2=A0</blockquote=
+></div></div></div></div><br><div class=3D"gmail_quote"></div></div><div>I =
+think you are referring to the documentation for the jupyterhub docker imag=
+e (https://jupyterhub.readthedocs.io/en/stable/quickstart-docker.html). I a=
+m not using that, but another one that I built using a dockerfile, then reg=
+istered locally (and confusingly has the same name). It is a bit more compl=
+ex than the default image, which, you are right, is mostly used for testing=
+.</div><div><br></div><div><br></div><div><blockquote class=3D"gmail_quote"=
+ style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-=
+left: 1ex;">
+</blockquote></div></div>
+------=_Part_2129_1638268779.1545986723828--
+
+------=_Part_2128_2070558080.1545986723827--

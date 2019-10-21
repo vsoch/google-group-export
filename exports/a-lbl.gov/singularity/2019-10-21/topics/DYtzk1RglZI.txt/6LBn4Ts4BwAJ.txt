@@ -1,0 +1,133 @@
+Date: Fri, 7 Dec 2018 05:08:30 -0800 (PST)
+From: "felix...@jncc.gov.uk" <felix...@jncc.gov.uk>
+To: singularity <singu...@lbl.gov>
+Message-Id: <bb491a49-6a94-42da-b429-619ecd5aa3eb@lbl.gov>
+Subject: Issues migrating to singularity from self contained docker
+ instance.
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_741_91076578.1544188110293"
+
+------=_Part_741_91076578.1544188110293
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_742_1162284550.1544188110294"
+
+------=_Part_742_1162284550.1544188110294
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi 
+
+We've created a containerised workflow in docker originally designed to run 
+as a selfcontained unit of work on AWS. It can also be used on data 
+scientists own machines etc for specific peices of work. In these use cases 
+it works fine. However we now have access to a HPC environment with 
+singularity and am having some problems getting it to work there.
+
+The container is developed into two parts, a base container that 
+encapsulates the primary tooling and a derived workflow container that adds 
+the luigi workflow itself.
+
+My first task is to get the base contaier, running the tooling to work. The 
+problem is that the conda environment won't instantiate properly. I'm 
+testing this outside of HPC environment on a AWS ubnutu 18.04 instance 
+running Singularity 2.5.2. 
+
+The .bashrc script for the root user in the docker container has the 
+following elements:
+
+    . /opt/conda/etc/profile.d/conda.sh
+    conda activate base
+
+I'm trying to get thise to run in the %runscript portion of the Singularity 
+recipie. However I get the following errors:
+/.singularity.d/runscript: 6: 
+/opt/conda/etc/conda/activate.d/gdal-activate.sh: [[: not found
+/.singularity.d/runscript: 10: 
+/opt/conda/etc/conda/activate.d/gdal-activate.sh: [[: not found
+/.singularity.d/runscript: 27: 
+/opt/conda/etc/conda/activate.d/gdal-activate.sh: [[: not found
+/.singularity.d/runscript: 6: 
+/opt/conda/etc/conda/activate.d/geotiff-activate.sh: [[: not found
+/.singularity.d/runscript: 6: 
+/opt/conda/etc/conda/activate.d/proj4-activate.sh: [[: not found
+
+However if I shell into the container and run the same commands everything 
+works.
+
+
+The second issue I have is that the profile contains a number of files that 
+contain conda configs. 
+
+Given that the profile will depend on the user that is running the 
+container how do I introduce these files at run time?
+Its also worth noting that  I will need to isolate the conda environment 
+and associated settings supplied by this container from the users hpc 
+environment because they will have similar divergent environemnts and 
+settings in place. The fact that singularity shares the users profile in 
+this case is a significant hinderance. I believe I can use -C and --userns 
+to overcome this but how can I ensure the structure of the runtime 
+environment.
+
+I should point out I'm not a conda expert or a data scientist, just a 
+generalist developer tasked with the automation of this tooling so I could 
+be missing something in conda that would help with this problem also.
+
+For reference. The docker container is here: 
+https://hub.docker.com/r/jncc/arcsi-base/
+The Source code is here: 
+https://github.com/jncc/s2-ard-processor/tree/master/base
+
+Cheers 
+Felix
+
+------=_Part_742_1162284550.1544188110294
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Hi=C2=A0</div><div><br></div><div>We&#39;ve created a=
+ containerised workflow in docker originally designed to run as a selfconta=
+ined unit of work on AWS. It can also be used on data scientists own machin=
+es etc for specific peices of work. In these use cases it works fine. Howev=
+er we now have access to a HPC environment with singularity and am having s=
+ome problems getting it to work there.</div><div><br></div><div>The contain=
+er is developed into two parts, a base container that encapsulates the prim=
+ary tooling and a derived workflow container that adds the luigi workflow i=
+tself.</div><div><br></div><div>My first task is to get the base contaier, =
+running the tooling to work. The problem is that the conda environment won&=
+#39;t instantiate properly. I&#39;m testing this outside of HPC environment=
+ on a AWS ubnutu 18.04 instance running Singularity 2.5.2.=C2=A0</div><div>=
+<br></div><div>The .bashrc script for the root user in the docker container=
+ has the following elements:</div><div><br></div><div>=C2=A0 =C2=A0 . /opt/=
+conda/etc/profile.d/conda.sh</div><div>=C2=A0 =C2=A0 conda activate base</d=
+iv><div><br></div><div>I&#39;m trying to get thise to run in the %runscript=
+ portion of the Singularity recipie. However I get the following errors:</d=
+iv><div>/.singularity.d/runscript: 6: /opt/conda/etc/conda/activate.d/gdal-=
+activate.sh: [[: not found</div><div>/.singularity.d/runscript: 10: /opt/co=
+nda/etc/conda/activate.d/gdal-activate.sh: [[: not found</div><div>/.singul=
+arity.d/runscript: 27: /opt/conda/etc/conda/activate.d/gdal-activate.sh: [[=
+: not found</div><div>/.singularity.d/runscript: 6: /opt/conda/etc/conda/ac=
+tivate.d/geotiff-activate.sh: [[: not found</div><div>/.singularity.d/runsc=
+ript: 6: /opt/conda/etc/conda/activate.d/proj4-activate.sh: [[: not found</=
+div><div><br></div><div>However if I shell into the container and run the s=
+ame commands everything works.</div><div><br></div><div><br></div><div>The =
+second issue I have is that the profile contains a number of files that con=
+tain conda configs.=C2=A0</div><div><br></div><div>Given that the profile w=
+ill depend on the user that is running the container how do I introduce the=
+se files at run time?</div><div>Its also worth noting that=C2=A0 I will nee=
+d to isolate the conda environment and associated settings supplied by this=
+ container from the users hpc environment because they will have similar di=
+vergent environemnts and settings in place. The fact that singularity share=
+s the users profile in this case is a significant hinderance. I believe I c=
+an use -C and --userns to overcome this but how can I ensure the structure =
+of the runtime environment.</div><div><br></div><div>I should point out I&#=
+39;m not a conda expert or a data scientist, just a generalist developer ta=
+sked with the automation of this tooling so I could be missing something in=
+ conda that would help with this problem also.</div><div><br></div><div>For=
+ reference. The docker container is here: https://hub.docker.com/r/jncc/arc=
+si-base/</div><div>The Source code is here: https://github.com/jncc/s2-ard-=
+processor/tree/master/base</div><div><br></div><div>Cheers=C2=A0</div><div>=
+Felix</div></div>
+------=_Part_742_1162284550.1544188110294--
+
+------=_Part_741_91076578.1544188110293--

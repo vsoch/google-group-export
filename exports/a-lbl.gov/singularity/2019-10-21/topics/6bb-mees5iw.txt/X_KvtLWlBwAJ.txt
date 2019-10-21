@@ -1,0 +1,358 @@
+Date: Wed, 10 Apr 2019 01:47:11 -0700 (PDT)
+From: Michael <mdayan....@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <f7561332-9c05-4441-8095-edbd6986a941@lbl.gov>
+In-Reply-To: <CADgKzdxQtdyV5oJny2b+jtN+2=ozTA6=fekgFFuSnA80s1hmww@mail.gmail.com>
+References: <1eb8ee73-7e47-40e9-aaa6-0a659515ea8e@lbl.gov> <FAD134AF-CF05-464B-B4C2-628BE75FAD3F@gmail.com>
+ <CADgKzdyC-E1t-QfiuAxaJnXxweOgtr5_yWphC4JWE04KyLkESA@mail.gmail.com> <CALa-s5Y3yHg2GHyv_Z2YCqYPW2TGjOginn1sctewADBEDUA2pw@mail.gmail.com>
+ <CADgKzdxQtdyV5oJny2b+jtN+2=ozTA6=fekgFFuSnA80s1hmww@mail.gmail.com>
+Subject: Re: [Singularity] Recommended way to run several applications
+ within Singularity
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2067_378674863.1554886031663"
+
+------=_Part_2067_378674863.1554886031663
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2068_253411951.1554886031663"
+
+------=_Part_2068_253411951.1554886031663
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi All,
+
+I am faced with the exact same problem as Ivan originally posted: I have 
+one host singularity container (because HPC) and within this container I 
+would like to run various "guest" isolated containers (Docker or 
+Singularity).
+
+As far as I know Next Flow doesn't solve the original problem as it is 
+still based on a single-layer of containers (what if two containers need 
+different versions of common libraries?). Would anyone know a solution to 
+this problem? It seems running singularity within singularity is not 
+possible (would be glad to be told the opposite) and i saw no information 
+on running docker containers within a singularity container.
+
+Michael
+
+On Sunday, February 19, 2017 at 9:38:03 AM UTC+1, Paolo Di Tommaso wrote:
+>
+> I think trying to reduce the container size is always a good idea.
+>
+> Said that, IMO small containers are needed much more when working with 
+> Docker, because images need to be downloaded from the hub and stored 
+> locally in each node. So you would waste not just storage but also 
+> bandwidth. 
+>
+> Since the Singularity image is shared between all nodes, I would not worry 
+> about the size image and go for a fat container. 
+>
+>
+> Cheers,
+> Paolo
+>
+>
+> On Wed, Feb 15, 2017 at 7:15 PM, tin h <t...@gmail.com <javascript:>> 
+> wrote:
+>
+>> Thanks for the very interesting thread!  nextflow is very interesting. 
+>>
+>> One thing that I still wonder is, how big should each of the container be?
+>> For instance, CoreOS don't come with any package manager, and tiny 
+>> containers contain perform very specific task.  Many containers may be 
+>> strung together to perform a "not so complex task", just like one would 
+>> string several pipes together on the unix command line.
+>>
+>> For HPC workflow, many tiny containers may not make sense?  If the goal 
+>> is to provide a single image file that contain the workflow, then this 
+>> would be a fat container, more akin to a VM than to a package?   I think 
+>> the default singularity image is 768MB, so tiny container is probably not 
+>> what was intended.
+>>
+>> The granularity question probably don't have one fast and hard answer, 
+>> but it would be interesting to hear what container size others are building 
+>> out there, and where is the line when one say "this should go to a separate 
+>> container"?
+>>
+>> For example, when I created a container for circos, I put gcc, gd, perl 
+>> and a slew of CPAN modules in it.  The resulting image was ~1.7GB.  Was 
+>> this a good stopping point?  If the user wanted other, say, bioinformatics 
+>> tools, they should go on a different container rather than build on top of 
+>> this one?
+>>
+>> Cheers,
+>> Tin
+>>
+>>
+>> On Mon, Feb 13, 2017 at 11:02 AM, Paolo Di Tommaso <pao...@gmail.com 
+>> <javascript:>> wrote:
+>>
+>>> Hi Ivan, 
+>>>
+>>> As mentioned by Vanessa you may be interested to Nextflow. 
+>>>
+>>> https://www.nextflow.io/blog/2016/more-fun-containers-hpc.html
+>>>
+>>>
+>>> In a nutshell it's a pipeline orchestration tool for scientific 
+>>> workflows. It handles transparently Docker and Singularity containers and 
+>>> allows you to scale your workload on different resource schedulers (SGE, 
+>>> SLURM, etc) and the cloud (AWS). 
+>>>
+>>>
+>>> Disclaimer, I'm the author. 
+>>>
+>>>
+>>> Cheers,
+>>> Paolo
+>>>
+>>>
+>>> On Mon, Feb 13, 2017 at 7:39 PM, vanessa s <v...@gmail.com 
+>>> <javascript:>> wrote:
+>>>
+>>>> Hi Ivan,
+>>>>
+>>>> Singularity doesn't yet have orchestration, and there is no "best 
+>>>> practices" defined for this so I can walk you through the options. I am 
+>>>> doing an analysis that implements a bunch of tools across genomics, and I 
+>>>> found it easiest to install them into one container and then call the 
+>>>> container as an executable for different functions (and if you need help 
+>>>> with issuing commands with exec we can talk about this too). Your other 
+>>>> option of course is to go with modularity, and create different contains 
+>>>> for different software suites, which might make sense if you are using 
+>>>> already modular docker containers. For orchestration I would suggest 
+>>>> plugging the container as an executable into your workflow software of 
+>>>> choice. I know that nextflow has already been used various times and there 
+>>>> are examples to start with!
+>>>>
+>>>> We have users and developers for nextflow also on our slack, so I would 
+>>>> suggest jumping on and chatting with everyone to work through specific 
+>>>> questions. I am currently traveling but can help via this list or slack if 
+>>>> you want to discuss details.
+>>>>
+>>>> Best,
+>>>>
+>>>> Vanessa
+>>>>
+>>>> On Feb 13, 2017, at 10:01 AM, Ivan Gonzalez <i...@gmail.com 
+>>>> <javascript:>> wrote:
+>>>>
+>>>> Hi,
+>>>>
+>>>> I would like to run a workflow that involves several applications 
+>>>> running within a Singularity container. My question is if there is a way to 
+>>>> "compose" a Singularity container from several Docker containers or, more 
+>>>> generally which is the recommended way to deal with this case.
+>>>>
+>>>> To be more specific, let say I have applications A and B which I can 
+>>>> docker-pull from some registry. These applications are independent (so 
+>>>> building does not require the other). I would like to build a workflow 
+>>>> where A's output is used as B's input. Or, maybe slightly more complex, 
+>>>> where A calls B as an external program.
+>>>>
+>>>> One option would be to build a Docker image containing A and B, but 
+>>>> this imposes some restrictions, such as the docker base image being the 
+>>>> same for the two apps. Is this the recommended way? Or should I build one 
+>>>> Singularity container per Docker container and then find a way to combine 
+>>>> them in the host?
+>>>>
+>>>> Thanks in advance!
+>>>>
+>>>> Ivan
+>>>>
+>>>> -- 
+>>>> You received this message because you are subscribed to the Google 
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>> an email to si...@lbl.gov <javascript:>.
+>>>>
+>>>> -- 
+>>>> You received this message because you are subscribed to the Google 
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>> an email to si...@lbl.gov <javascript:>.
+>>>>
+>>>
+>>> -- 
+>>> You received this message because you are subscribed to the Google 
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>> an email to si...@lbl.gov <javascript:>.
+>>>
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to si...@lbl.gov <javascript:>.
+>>
+>
+>
+------=_Part_2068_253411951.1554886031663
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi All,<div><br></div><div>I am faced with the exact same =
+problem as Ivan originally posted: I have one host singularity container (b=
+ecause HPC) and within this container I would like to run various &quot;gue=
+st&quot; isolated containers (Docker or Singularity).</div><div><br></div><=
+div>As far as I know Next Flow doesn&#39;t solve the original problem as it=
+ is still based on a single-layer of containers (what if two containers nee=
+d different versions of common libraries?). Would anyone know a solution to=
+ this problem? It seems running singularity within singularity is not possi=
+ble (would be glad to be told the opposite) and i saw no information on run=
+ning docker containers within a singularity container.</div><div><br></div>=
+<div>Michael<br><br>On Sunday, February 19, 2017 at 9:38:03 AM UTC+1, Paolo=
+ Di Tommaso wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;marg=
+in-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"=
+ltr">I think trying to reduce the container size is always a good idea.<div=
+><br>Said that, IMO small containers are needed much more when working with=
+ Docker, because images need to be downloaded from the hub and stored local=
+ly in each node. So you would waste not just storage but also bandwidth.=C2=
+=A0</div><div><br>Since the Singularity image is shared between all nodes, =
+I would not worry about the size image and go for a fat container.=C2=A0</d=
+iv><div><br></div><div><br></div><div>Cheers,<br>Paolo</div><div><br></div>=
+</div><div><br><div class=3D"gmail_quote">On Wed, Feb 15, 2017 at 7:15 PM, =
+tin h <span dir=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_blank" gdf-o=
+bfuscated-mailto=3D"WwgCk5t7EgAJ" rel=3D"nofollow" onmousedown=3D"this.href=
+=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascri=
+pt:&#39;;return true;">t...@gmail.com</a>&gt;</span> wrote:<br><blockquote =
+class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid=
+;padding-left:1ex"><div dir=3D"ltr">Thanks for the very interesting thread!=
+ =C2=A0nextflow is very interesting.=C2=A0<div><br></div><div>One thing tha=
+t I still wonder is, how big should each of the container be?</div><div>For=
+ instance, CoreOS don&#39;t come with any package manager, and tiny contain=
+ers contain perform very specific task.=C2=A0 Many containers may be strung=
+ together to perform a &quot;not so complex task&quot;, just like one would=
+ string several pipes together on the unix command line.</div><div><br></di=
+v><div>For HPC workflow, many tiny containers may not make sense?=C2=A0 If =
+the goal is to provide a single image file that contain the workflow, then =
+this would be a fat container, more akin to a VM than to a package? =C2=A0 =
+I think the default singularity image is 768MB, so tiny container is probab=
+ly not what was intended.</div><div><br></div><div>The granularity question=
+ probably don&#39;t have one fast and hard answer, but it would be interest=
+ing to hear what container size others are building out there, and where is=
+ the line when one say &quot;this should go to a separate container&quot;?<=
+/div><div><br></div><div>For example, when I created a container for circos=
+, I put gcc, gd, perl and a slew of CPAN modules in it.=C2=A0 The resulting=
+ image was ~1.7GB.=C2=A0 Was this a good stopping point?=C2=A0 If the user =
+wanted other, say, bioinformatics tools, they should go on a different cont=
+ainer rather than build on top of this one?</div><div><br></div><div>Cheers=
+,</div><div>Tin</div><div><br></div></div><div><div><div><br><div class=3D"=
+gmail_quote">On Mon, Feb 13, 2017 at 11:02 AM, Paolo Di Tommaso <span dir=
+=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailt=
+o=3D"WwgCk5t7EgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascr=
+ipt:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return=
+ true;">pao...@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmai=
+l_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left=
+:1ex"><div dir=3D"ltr">Hi Ivan,=C2=A0<div><br></div><div>As mentioned by Va=
+nessa you may be interested to Nextflow.=C2=A0</div><div><br></div><div><a =
+href=3D"https://www.nextflow.io/blog/2016/more-fun-containers-hpc.html" tar=
+get=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www=
+.google.com/url?q\x3dhttps%3A%2F%2Fwww.nextflow.io%2Fblog%2F2016%2Fmore-fun=
+-containers-hpc.html\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEV6tqHrm0VFO3j=
+zfa7rhEvU9g0Og&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.g=
+oogle.com/url?q\x3dhttps%3A%2F%2Fwww.nextflow.io%2Fblog%2F2016%2Fmore-fun-c=
+ontainers-hpc.html\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEV6tqHrm0VFO3jzf=
+a7rhEvU9g0Og&#39;;return true;">https://www.nextflow.io/blog/<wbr>2016/more=
+-fun-containers-hpc.<wbr>html</a><br></div><div><br></div><div><br></div><d=
+iv>In a nutshell it&#39;s a pipeline orchestration tool for scientific work=
+flows. It handles transparently Docker and Singularity containers and allow=
+s you to scale your workload on different resource schedulers (SGE, SLURM, =
+etc) and the cloud (AWS).=C2=A0</div><div><br></div><div><br></div><div>Dis=
+claimer, I&#39;m the author.=C2=A0</div><div><br></div><div><br></div><div>=
+Cheers,<br>Paolo</div><div><br></div></div><div><div><div><br><div class=3D=
+"gmail_quote">On Mon, Feb 13, 2017 at 7:39 PM, vanessa s <span dir=3D"ltr">=
+&lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"WwgC=
+k5t7EgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;=
+;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">v=
+...@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" st=
+yle=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div =
+dir=3D"auto"><div>Hi Ivan,</div><div><br></div><div>Singularity doesn&#39;t=
+ yet have orchestration, and there is no &quot;best practices&quot; defined=
+ for this so I can walk you through the options. I am doing an analysis tha=
+t implements a bunch of tools across genomics, and I found it easiest to in=
+stall them into one container and then call the container as an executable =
+for different functions (and if you need help with issuing commands with ex=
+ec we can talk about this too). Your other option of course is to go with m=
+odularity, and create different contains for different software suites, whi=
+ch might make sense if you are using already modular docker containers. For=
+ orchestration I would suggest plugging the container as an executable into=
+ your workflow software of choice. I know that nextflow has already been us=
+ed various times and there are examples to start with!</div><div><br></div>=
+<div>We have users and developers for nextflow also on our slack, so I woul=
+d suggest jumping on and chatting with everyone to work through specific qu=
+estions. I am currently traveling but can help via this list or slack if yo=
+u want to discuss details.<br><br>Best,<div><br></div><div>Vanessa</div></d=
+iv><div><div><div><br>On Feb 13, 2017, at 10:01 AM, Ivan Gonzalez &lt;<a hr=
+ef=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"WwgCk5t7EgAJ"=
+ rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return t=
+rue;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">i...@gmail=
+.com</a>&gt; wrote:<br><br></div><blockquote type=3D"cite"><div><div dir=3D=
+"ltr">Hi,<br><br>I would like to run a workflow that involves several appli=
+cations running within a Singularity container. My question is if there is =
+a way to &quot;compose&quot; a Singularity container from several Docker co=
+ntainers or, more generally which is the recommended way to deal with this =
+case.<br><br>To be more specific, let say I have applications A and B which=
+ I can docker-pull from some registry. These applications are independent (=
+so building does not require the other). I would like to build a workflow w=
+here A&#39;s output is used as B&#39;s input. Or, maybe slightly more compl=
+ex, where A calls B as an external program.<br><br>One option would be to b=
+uild a Docker image containing A and B, but this imposes some restrictions,=
+ such as the docker base image being the same for the two apps. Is this the=
+ recommended way? Or should I build one Singularity container per Docker co=
+ntainer and then find a way to combine them in the host?<br><br>Thanks in a=
+dvance!<br><br>Ivan<br></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+WwgCk5t7EgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singu...@lbl.<wbr>gov</a>.<br>
+</div></blockquote></div></div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+WwgCk5t7EgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singu...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+WwgCk5t7EgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singu...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+WwgCk5t7EgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singu...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br></div>
+</blockquote></div></div>
+------=_Part_2068_253411951.1554886031663--
+
+------=_Part_2067_378674863.1554886031663--

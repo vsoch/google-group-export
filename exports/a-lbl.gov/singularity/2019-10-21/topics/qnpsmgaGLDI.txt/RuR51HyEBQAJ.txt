@@ -1,0 +1,602 @@
+Date: Mon, 10 Jun 2019 13:36:52 -0700 (PDT)
+From: Dean Pettinga <dean...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <1e966ec5-e71d-48bf-9ca4-ba43fd7fece3@lbl.gov>
+In-Reply-To: <CAM=pu+L7BL89E6or5ATQ7qZnQ8HhUj7X=cm6H9GAEapg2kSVWg@mail.gmail.com>
+References: <4e3f0796-dbb8-48ac-a786-28ee3ff9f7f8@lbl.gov> <CAM=pu++9g7EHN1b0DArLbBmrqaLSusyhNLRuVWLzTbKJAGH5kQ@mail.gmail.com>
+ <ece8a25d-5717-496b-a8ef-aa60cca30391@lbl.gov>
+ <CAM=pu+L7BL89E6or5ATQ7qZnQ8HhUj7X=cm6H9GAEapg2kSVWg@mail.gmail.com>
+Subject: Re: [Singularity] Mounting to Singularity container invoked by
+ snakemake on HPC cluster
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_621_750424249.1560199012553"
+
+------=_Part_621_750424249.1560199012553
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_622_1527536021.1560199012554"
+
+------=_Part_622_1527536021.1560199012554
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hey Vanessa,
+
+I've run in debug mode, e.g.
+snakemake --use-singularity --debug
+
+i believe the relevant info from the output is below:
+
+RuleException:
+
+CalledProcessError in line 141 of /secondary/projects/bbc/research/
+smk_pipeline/Snakefile:
+
+Command ' singularity exec --home 
+/secondary/projects/bbc/research/smk_pipeline  --bind 
+/secondary/projects/bbc/tools/dean_miniconda3/lib/python3.6/site-packages:/mnt/snakemake 
+/secondary/projects/bbc/research/smk_pipeline/.snakemake/singularity/2f95debcc77a32fc723cdf8a4ad18fa2.simg 
+bash -c 'set -euo pipefail;  Rscript -e '\''rmarkdown::render(
+"scripts/edgeR_longReport.Rmd",output_format="html_document")'\'''' 
+returned non-zero exit status 255.
+
+ File "/secondary/projects/bbc/research/smk_pipeline/Snakefile", line 141, 
+in __rule_edgeR_longReport
+
+ File 
+"/secondary/projects/bbc/tools/dean_miniconda3/lib/python3.6/concurrent/futures/thread.py"
+, line 56, in run
+
+I *am* working in a subdirectory of my $HOME directory. It seems like this 
+may be the root of the issue.
+
+-Dean
+
+On Tuesday, June 4, 2019 at 5:20:46 PM UTC-4, vanessa wrote:
+>
+> Can you try running with debug? I'm looking at the Snakemake source code 
+> and I see a few things. First, snakemake is creating a mountpoint for 
+> itself:
+>
+> SNAKEMAKE_MOUNTPOINT = "/mnt/snakemake"
+>
+>
+> which is added as a bind to the container (and I haven't looked further 
+> but I'm guessing things like the Snakefile are bound here) 
+>
+> args += " --bind {}:{}".format(SNAKEMAKE_SEARCHPATH, SNAKEMAKE_MOUNTPOINT)
+>
+> It might be good to run a test and just list what is included that. What 
+> I'm also noticing for the shellcmd function (possibly this is used when you 
+> run a singularity command, since it uses exec despite it's name) is that 
+> the os.getcwd() is always bound as --home
+>
+> cmd = "{} singularity exec --home {} {} {} {} -c '{}'".format(
+> envvars, os.getcwd(), args, img_path, shell_executable,
+> cmd.replace("'", r"'\''"))
+> logger.debug(cmd)
+>
+>
+> Are you working in a folder that is a subset of your actual home? It seems 
+> to be having trouble with that particular bind. Either way, if you might be 
+> able to run in debug so we see any commands that are printed? The full code 
+> is here, for those interested:
+>
+>
+> https://bitbucket.org/snakemake/snakemake/src/master/snakemake/singularity.py
+>
+>
+>
+> On Tue, Jun 4, 2019 at 4:52 PM Dean Pettinga <de...@gmail.com 
+> <javascript:>> wrote:
+>
+>> Hey Vanessa,
+>>
+>> to answer those few things:
+>>
+>> - I'm able to shell into the container and bind anything i want with -B 
+>> option
+>> - I've been using --singularity-args in an attempt to bind, but thus far, 
+>> it has not worked, leading me to believe it might be an issue to do with 
+>> snakemake or the session folder.
+>> - haven't looked at sci-f too closely, but i don't think it's going to be 
+>> helpful for my situation.
+>> - My pipeline uses at most 8-16 parallel processes, so i'm planning to 
+>> pull the s-hub container as i'm hoping to make this easily reproducible for 
+>> other users.
+>>
+>> I'm still at a bit of an impasse...
+>> -Dean
+>>
+>> On Tuesday, June 4, 2019 at 11:01:32 AM UTC-4, vanessa wrote:
+>>>
+>>> I've used Snakemake + Singularity (without the official 
+>>> --with-singularity) flag, here is the repo if it's helpful: 
+>>> https://github.com/sci-f/snakemake.scif
+>>>
+>>> A few things to try:
+>>>
+>>>  - I would first shell into the container (that works) and see what 
+>>> binds you have, by default. If your cluster disabled some set of mounts, 
+>>> that could be the issue, or you might need to ask for them.
+>>>  - I'm looking at the Singularity command group 
+>>> <https://snakemake.readthedocs.io/en/stable/executable.html?highlight=singularity#SINGULARITY>, 
+>>> and I wonder if you can try setting --singularity-args to make binds to 
+>>> your system that are needed? It does seem like something might be up with 
+>>> the session folder, others can comment too :)
+>>>  - If your pipeline doesn't have needs beyond singularity, you could 
+>>> also try the approach I linked above, adding the snakemake deps into a 
+>>> container first, and then running it.
+>>>  - Finally, I would recommend pulling an image first and then setting 
+>>> --singularity-dir to where it is, that way you can reuse the same image and 
+>>> not be pulling a gazillion if you run this in parallel.
+>>>
+>>> Best,
+>>>
+>>> Vanessa
+>>>
+>>> On Tue, Jun 4, 2019 at 10:44 AM Dean Pettinga <de...@gmail.com> wrote:
+>>>
+>>>> I'm currently trying to implement a snakemake workflow on a HPC cluster 
+>>>> using singularity containers for specific rules.
+>>>>
+>>>> I'm having issues when mounting to the singularity container invoked by 
+>>>> snakemake.
+>>>> $ cd /path/to/smk_pipeline
+>>>> $ snakemake --use-singularity
+>>>> ERROR  : Failed to mount home directory /path/to/smk_pipeline -> /cm/
+>>>> local/apps/singularity/2.4.2/var/singularity/mnt/session/path/to/
+>>>> smk_pipeline: Permission denied
+>>>> The rule being run invokes a container hosted at singularity-hub, but 
+>>>> it errors out before it's able to do anything. 
+>>>>
+>>>> If i shell into a container interactively, no such problem occurs.
+>>>> $ singularity shell rnaseq.simg
+>>>> Singularity: Invoking an interactive shell within container...
+>>>> Singularity rnaseq.simg:~>
+>>>>
+>>>> I think it might be due to the fact that write permissions on /cm/local
+>>>> /apps/singularity/2.4.2/var/singularity/mnt/ are set to 0755.
+>>>> One of our HPC admins suggested that I try to use a different mount 
+>>>> point for singularity, but I haven't been able to find any information on 
+>>>> this topic in the documentation...
+>>>>
+>>>> I'm confused about why singularity is unable to mount any directories 
+>>>> when invoked by snakemake, rather than by myself directly as a user. This 
+>>>> may be a question more fit for the snakemake folks, but i thought i'd start 
+>>>> here.
+>>>>
+>>>> cheers,
+>>>> Dean
+>>>>
+>>>> -- 
+>>>> You received this message because you are subscribed to the Google 
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>> an email to si...@lbl.gov.
+>>>> To view this discussion on the web visit 
+>>>> https://groups.google.com/a/lbl.gov/d/msgid/singularity/4e3f0796-dbb8-48ac-a786-28ee3ff9f7f8%40lbl.gov 
+>>>> <https://groups.google.com/a/lbl.gov/d/msgid/singularity/4e3f0796-dbb8-48ac-a786-28ee3ff9f7f8%40lbl.gov?utm_medium=email&utm_source=footer>
+>>>> .
+>>>>
+>>>
+>>>
+>>> -- 
+>>> Vanessa Villamia Sochat
+>>> Stanford University '16
+>>> (603) 321-0676
+>>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to si...@lbl.gov <javascript:>.
+>> To view this discussion on the web visit 
+>> https://groups.google.com/a/lbl.gov/d/msgid/singularity/ece8a25d-5717-496b-a8ef-aa60cca30391%40lbl.gov 
+>> <https://groups.google.com/a/lbl.gov/d/msgid/singularity/ece8a25d-5717-496b-a8ef-aa60cca30391%40lbl.gov?utm_medium=email&utm_source=footer>
+>> .
+>>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_622_1527536021.1560199012554
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hey Vanessa,<div><br></div><div>I&#39;ve run in debug mode=
+, e.g.</div><div class=3D"prettyprint" style=3D"background-color: rgb(250, =
+250, 250); border-color: rgb(187, 187, 187); border-style: solid; border-wi=
+dth: 1px; overflow-wrap: break-word;"><code class=3D"prettyprint"><div clas=
+s=3D"subprettyprint"><span style=3D"color: #000;" class=3D"styled-by-pretti=
+fy">snakemake </span><span style=3D"color: #660;" class=3D"styled-by-pretti=
+fy">--</span><span style=3D"color: #008;" class=3D"styled-by-prettify">use<=
+/span><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><sp=
+an style=3D"color: #000;" class=3D"styled-by-prettify">singularity </span><=
+span style=3D"color: #660;" class=3D"styled-by-prettify">--</span><span sty=
+le=3D"color: #000;" class=3D"styled-by-prettify">debug</span></div></code><=
+/div><div><br></div><div>i believe the relevant info from the output is bel=
+ow:<br><div class=3D"prettyprint" style=3D"background-color: rgb(250, 250, =
+250); border-color: rgb(187, 187, 187); border-style: solid; border-width: =
+1px; overflow-wrap: break-word;"><code class=3D"prettyprint"><div class=3D"=
+subprettyprint"><p class=3D"p1"><span class=3D"s1"><span style=3D"color: #6=
+06;" class=3D"styled-by-prettify">RuleException</span><span style=3D"color:=
+ #660;" class=3D"styled-by-prettify">:</span></span></p><p class=3D"p1"><sp=
+an class=3D"s1"><span style=3D"color: #606;" class=3D"styled-by-prettify">C=
+alledProcessError</span><span style=3D"color: #000;" class=3D"styled-by-pre=
+ttify"> </span><span style=3D"color: #008;" class=3D"styled-by-prettify">in=
+</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> line </sp=
+an><span style=3D"color: #066;" class=3D"styled-by-prettify">141</span><spa=
+n style=3D"color: #000;" class=3D"styled-by-prettify"> of </span><span styl=
+e=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify">secondary</span><span style=3D"color=
+: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" =
+class=3D"styled-by-prettify">projects</span><span style=3D"color: #660;" cl=
+ass=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"st=
+yled-by-prettify">bbc</span><span style=3D"color: #660;" class=3D"styled-by=
+-prettify">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify=
+">research</span><span style=3D"color: #660;" class=3D"styled-by-prettify">=
+/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">smk_pipel=
+ine</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</span=
+><span style=3D"color: #606;" class=3D"styled-by-prettify">Snakefile</span>=
+<span style=3D"color: #660;" class=3D"styled-by-prettify">:</span></span></=
+p><p class=3D"p1"><span class=3D"s1"><span style=3D"color: #606;" class=3D"=
+styled-by-prettify">Command</span><span style=3D"color: #000;" class=3D"sty=
+led-by-prettify"> </span><span style=3D"color: #080;" class=3D"styled-by-pr=
+ettify">&#39; singularity exec --home /secondary/projects/bbc/research/smk_=
+pipeline</span><span class=3D"Apple-converted-space"><span style=3D"color: =
+#080;" class=3D"styled-by-prettify"> =C2=A0</span></span><span style=3D"col=
+or: #080;" class=3D"styled-by-prettify">--bind /secondary/projects/bbc/tool=
+s/dean_miniconda3/lib/python3.6/site-packages:/mnt/snakemake /secondary/pro=
+jects/bbc/research/smk_pipeline/.snakemake/singularity/2f95debcc77a32fc723c=
+df8a4ad18fa2.simg bash -c &#39;</span><span style=3D"color: #008;" class=3D=
+"styled-by-prettify">set</span><span style=3D"color: #000;" class=3D"styled=
+-by-prettify"> </span><span style=3D"color: #660;" class=3D"styled-by-prett=
+ify">-</span><span style=3D"color: #000;" class=3D"styled-by-prettify">euo =
+pipefail</span><span style=3D"color: #660;" class=3D"styled-by-prettify">;<=
+/span><span class=3D"Apple-converted-space"><span style=3D"color: #000;" cl=
+ass=3D"styled-by-prettify"> =C2=A0</span></span><span style=3D"color: #606;=
+" class=3D"styled-by-prettify">Rscript</span><span style=3D"color: #000;" c=
+lass=3D"styled-by-prettify"> </span><span style=3D"color: #660;" class=3D"s=
+tyled-by-prettify">-</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify">e </span><span style=3D"color: #080;" class=3D"styled-by-prettify=
+">&#39;\&#39;&#39;</span><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify">rmarkdown</span><span style=3D"color: #660;" class=3D"styled-by-pre=
+ttify">::</span><span style=3D"color: #000;" class=3D"styled-by-prettify">r=
+ender</span><span style=3D"color: #660;" class=3D"styled-by-prettify">(</sp=
+an><span style=3D"color: #080;" class=3D"styled-by-prettify">&quot;scripts/=
+edgeR_longReport.Rmd&quot;</span><span style=3D"color: #660;" class=3D"styl=
+ed-by-prettify">,</span><span style=3D"color: #000;" class=3D"styled-by-pre=
+ttify">output_format</span><span style=3D"color: #660;" class=3D"styled-by-=
+prettify">=3D</span><span style=3D"color: #080;" class=3D"styled-by-prettif=
+y">&quot;html_document&quot;</span><span style=3D"color: #660;" class=3D"st=
+yled-by-prettify">)</span><span style=3D"color: #080;" class=3D"styled-by-p=
+rettify">&#39;\&#39;&#39;&#39;&#39;</span><span style=3D"color: #000;" clas=
+s=3D"styled-by-prettify"> returned non</span><span style=3D"color: #660;" c=
+lass=3D"styled-by-prettify">-</span><span style=3D"color: #000;" class=3D"s=
+tyled-by-prettify">zero </span><span style=3D"color: #008;" class=3D"styled=
+-by-prettify">exit</span><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify"> status </span><span style=3D"color: #066;" class=3D"styled-by-pret=
+tify">255.</span></span></p><p class=3D"p1"><span class=3D"s1"><span class=
+=3D"Apple-converted-space"><span style=3D"color: #000;" class=3D"styled-by-=
+prettify"> =C2=A0</span></span><span style=3D"color: #606;" class=3D"styled=
+-by-prettify">File</span><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify"> </span><span style=3D"color: #080;" class=3D"styled-by-prettify">&=
+quot;/secondary/projects/bbc/research/smk_pipeline/Snakefile&quot;</span><s=
+pan style=3D"color: #660;" class=3D"styled-by-prettify">,</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"> line </span><span style=3D"=
+color: #066;" class=3D"styled-by-prettify">141</span><span style=3D"color: =
+#660;" class=3D"styled-by-prettify">,</span><span style=3D"color: #000;" cl=
+ass=3D"styled-by-prettify"> </span><span style=3D"color: #008;" class=3D"st=
+yled-by-prettify">in</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify"> __rule_edgeR_longReport</span></span></p><p class=3D"p1"><span c=
+lass=3D"s1"><span class=3D"Apple-converted-space"><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify"> =C2=A0</span></span><span style=3D"color:=
+ #606;" class=3D"styled-by-prettify">File</span><span style=3D"color: #000;=
+" class=3D"styled-by-prettify"> </span><span style=3D"color: #080;" class=
+=3D"styled-by-prettify">&quot;/secondary/projects/bbc/tools/dean_miniconda3=
+/lib/python3.6/concurrent/futures/thread.py&quot;</span><span style=3D"colo=
+r: #660;" class=3D"styled-by-prettify">,</span><span style=3D"color: #000;"=
+ class=3D"styled-by-prettify"> line </span><span style=3D"color: #066;" cla=
+ss=3D"styled-by-prettify">56</span><span style=3D"color: #660;" class=3D"st=
+yled-by-prettify">,</span><span style=3D"color: #000;" class=3D"styled-by-p=
+rettify"> </span><span style=3D"color: #008;" class=3D"styled-by-prettify">=
+in</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> run</sp=
+an></span></p></div></code></div><div><br></div></div><div>I <i><b>am</b></=
+i> working in a subdirectory of my $HOME directory. It seems like this may =
+be the root of the issue.</div><div><br></div><div>-Dean</div><div><br>On T=
+uesday, June 4, 2019 at 5:20:46 PM UTC-4, vanessa wrote:<blockquote class=
+=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #cc=
+c solid;padding-left: 1ex;"><div dir=3D"ltr">Can you try running with debug=
+? I&#39;m looking at the Snakemake source code and I see a few things. Firs=
+t, snakemake is creating a mountpoint for itself:<div><br></div><div><div s=
+tyle=3D"line-height:18px"><blockquote class=3D"gmail_quote" style=3D"color:=
+rgb(0,0,0);font-family:SFMono-Medium,&quot;SF Mono&quot;,&quot;Segoe UI Mon=
+o&quot;,&quot;Roboto Mono&quot;,&quot;Ubuntu Mono&quot;,Menlo,monospace;fon=
+t-size:13px;white-space:pre;background-color:rgb(255,255,254);margin:0px 0p=
+x 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"><span =
+style=3D"color:rgb(101,84,192)">SNAKEMAKE_MOUNTPOINT</span> =3D <span style=
+=3D"color:rgb(9,101,69)">&quot;/mnt/snakemake&quot;</span></blockquote><div=
+ style=3D"color:rgb(0,0,0);font-family:SFMono-Medium,&quot;SF Mono&quot;,&q=
+uot;Segoe UI Mono&quot;,&quot;Roboto Mono&quot;,&quot;Ubuntu Mono&quot;,Men=
+lo,monospace;font-size:13px;white-space:pre;background-color:rgb(255,255,25=
+4)"><br></div><div style=3D"color:rgb(0,0,0);font-family:SFMono-Medium,&quo=
+t;SF Mono&quot;,&quot;Segoe UI Mono&quot;,&quot;Roboto Mono&quot;,&quot;Ubu=
+ntu Mono&quot;,Menlo,monospace;font-size:13px;white-space:pre;background-co=
+lor:rgb(255,255,254)"><span style=3D"background-color:rgb(255,255,255);colo=
+r:rgb(34,34,34);font-family:Arial,Helvetica,sans-serif;font-size:small;whit=
+e-space:normal">which is added as a bind to the container (and I haven&#39;=
+t looked further but I&#39;m guessing things like the Snakefile are bound h=
+ere)=C2=A0</span></div><div style=3D"color:rgb(0,0,0);font-family:SFMono-Me=
+dium,&quot;SF Mono&quot;,&quot;Segoe UI Mono&quot;,&quot;Roboto Mono&quot;,=
+&quot;Ubuntu Mono&quot;,Menlo,monospace;font-size:13px;white-space:pre;back=
+ground-color:rgb(255,255,254)"><span style=3D"background-color:rgb(255,255,=
+255);color:rgb(34,34,34);font-family:Arial,Helvetica,sans-serif;font-size:s=
+mall;white-space:normal"><br></span></div><div style=3D"color:rgb(0,0,0);fo=
+nt-family:SFMono-Medium,&quot;SF Mono&quot;,&quot;Segoe UI Mono&quot;,&quot=
+;Roboto Mono&quot;,&quot;Ubuntu Mono&quot;,Menlo,monospace;font-size:13px;w=
+hite-space:pre;background-color:rgb(255,255,254)"><div style=3D"line-height=
+:18px"><div><span style=3D"color:rgb(32,32,32)">args</span> +=3D <span styl=
+e=3D"color:rgb(9,101,69)">&quot; --bind {}:{}&quot;</span>.<span style=3D"c=
+olor:rgb(9,30,66);font-weight:bold">format</span>(<span style=3D"color:rgb(=
+101,84,192)">SNAKEMAKE_<wbr>SEARCHPATH</span>, <span style=3D"color:rgb(101=
+,84,192)">SNAKEMAKE_MOUNTPOINT</span>)</div><div><br></div></div></div><div=
+ style=3D"line-height:18px"><div><span style=3D"background-color:rgb(255,25=
+5,255)">It might be good to run a test and just list what is included that.=
+ What I&#39;m also noticing for the shellcmd function (possibly this is use=
+d when you run a singularity command, since it uses exec despite it&#39;s n=
+ame) is that the os.getcwd() is always bound as --home</span></div><div><sp=
+an style=3D"background-color:rgb(255,255,255)"><br></span></div><div><div s=
+tyle=3D"color:rgb(0,0,0);background-color:rgb(255,255,254);font-family:SFMo=
+no-Medium,&quot;SF Mono&quot;,&quot;Segoe UI Mono&quot;,&quot;Roboto Mono&q=
+uot;,&quot;Ubuntu Mono&quot;,Menlo,monospace;font-size:13px;line-height:18p=
+x;white-space:pre"><div>    <span style=3D"color:rgb(32,32,32)">cmd</span> =
+=3D <span style=3D"color:rgb(9,101,69)">&quot;{} singularity exec --home {}=
+ {} {} {} -c &#39;{}&#39;&quot;</span>.<span style=3D"color:rgb(9,30,66);fo=
+nt-weight:bold">format</span>(<br></div><div>        <span style=3D"color:r=
+gb(32,32,32)">envvars</span>, <span style=3D"color:rgb(32,32,32)">os</span>=
+.<span style=3D"color:rgb(32,32,32)">getcwd</span>(), <span style=3D"color:=
+rgb(32,32,32)">args</span>, <span style=3D"color:rgb(32,32,32)">img_path</s=
+pan>, <span style=3D"color:rgb(32,32,32)">shell_executable</span>,</div><di=
+v>        <span style=3D"color:rgb(32,32,32)">cmd</span>.<span style=3D"col=
+or:rgb(32,32,32)">replace</span>(<span style=3D"color:rgb(9,101,69)">&quot;=
+&#39;&quot;</span>, <span style=3D"color:rgb(32,32,32)">r</span><span style=
+=3D"color:rgb(9,101,69)">&quot;&#39;\&#39;&#39;&quot;</span>))</div><div>  =
+  <span style=3D"color:rgb(32,32,32)">logger</span>.<span style=3D"color:rg=
+b(32,32,32)">debug</span>(<span style=3D"color:rgb(32,32,32)">cmd</span>)</=
+div></div></div><div><span style=3D"background-color:rgb(255,255,255)"><br>=
+</span></div><div><span style=3D"background-color:rgb(255,255,255)"><br></s=
+pan></div><div><span style=3D"background-color:rgb(255,255,255)">Are you wo=
+rking in a folder that is a subset of your actual home? It seems to be havi=
+ng trouble with that particular bind. Either way, if you might be able to r=
+un in debug so we see any commands that are printed? The full code is here,=
+ for those interested:</span></div><div><span style=3D"background-color:rgb=
+(255,255,255)"><br></span></div><div><a href=3D"https://bitbucket.org/snake=
+make/snakemake/src/master/snakemake/singularity.py" target=3D"_blank" rel=
+=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\=
+x3dhttps%3A%2F%2Fbitbucket.org%2Fsnakemake%2Fsnakemake%2Fsrc%2Fmaster%2Fsna=
+kemake%2Fsingularity.py\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGSGgUSPBB0P=
+o5PwL8ZFJ23Ao4c9w&#39;;return true;" onclick=3D"this.href=3D&#39;https://ww=
+w.google.com/url?q\x3dhttps%3A%2F%2Fbitbucket.org%2Fsnakemake%2Fsnakemake%2=
+Fsrc%2Fmaster%2Fsnakemake%2Fsingularity.py\x26sa\x3dD\x26sntz\x3d1\x26usg\x=
+3dAFQjCNGSGgUSPBB0Po5PwL8ZFJ23Ao4c9w&#39;;return true;">https://bitbucket.o=
+rg/<wbr>snakemake/snakemake/src/<wbr>master/snakemake/singularity.<wbr>py</=
+a><span style=3D"background-color:rgb(255,255,255)"><br></span></div><div><=
+span style=3D"background-color:rgb(255,255,255)"><br></span></div></div><di=
+v style=3D"color:rgb(0,0,0);font-family:SFMono-Medium,&quot;SF Mono&quot;,&=
+quot;Segoe UI Mono&quot;,&quot;Roboto Mono&quot;,&quot;Ubuntu Mono&quot;,Me=
+nlo,monospace;font-size:13px;white-space:pre;background-color:rgb(255,255,2=
+54);line-height:18px"><br></div></div></div></div><br><div class=3D"gmail_q=
+uote"><div dir=3D"ltr">On Tue, Jun 4, 2019 at 4:52 PM Dean Pettinga &lt;<a =
+href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"MaslSZLbAQA=
+J" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return=
+ true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">de...@gm=
+ail.com</a>&gt; wrote:<br></div><blockquote class=3D"gmail_quote" style=3D"=
+margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-lef=
+t:1ex"><div dir=3D"ltr">Hey Vanessa,<div><br></div><div>to answer those few=
+ things:<div><br></div><div>- I&#39;m able to shell into the container and =
+bind anything i want with -B option</div><div>- I&#39;ve been using --singu=
+larity-args in an attempt to bind, but thus far, it has not worked, leading=
+ me to believe it might be an issue to do with snakemake or the session fol=
+der.</div><div>- haven&#39;t looked at sci-f too closely, but i don&#39;t t=
+hink it&#39;s going to be helpful for my situation.</div><div>- My pipeline=
+ uses at most 8-16 parallel processes, so i&#39;m planning to pull the s-hu=
+b container as i&#39;m hoping to make this easily reproducible for other us=
+ers.<br></div><div><br></div><div>I&#39;m still at a bit of an impasse...</=
+div><div>-Dean</div><div><br>On Tuesday, June 4, 2019 at 11:01:32 AM UTC-4,=
+ vanessa wrote:<blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0p=
+x 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"><div dir=
+=3D"ltr">I&#39;ve used Snakemake=C2=A0+ Singularity (without the official -=
+-with-singularity) flag, here is the repo if it&#39;s helpful:=C2=A0<a href=
+=3D"https://github.com/sci-f/snakemake.scif" rel=3D"nofollow" target=3D"_bl=
+ank" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%=
+3A%2F%2Fgithub.com%2Fsci-f%2Fsnakemake.scif\x26sa\x3dD\x26sntz\x3d1\x26usg\=
+x3dAFQjCNFWU7150ZppGifH7LqbTAYiyC7r9Q&#39;;return true;" onclick=3D"this.hr=
+ef=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsci-f%=
+2Fsnakemake.scif\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFWU7150ZppGifH7Lqb=
+TAYiyC7r9Q&#39;;return true;">https://github.com/<wbr>sci-f/snakemake.scif<=
+/a><div><br></div><div>A few things to try:</div><div><br></div><div>=C2=A0=
+- I would first shell into the container (that works) and see what binds yo=
+u have, by default. If your cluster disabled some set of mounts, that could=
+ be the issue, or you might need to ask for them.</div><div>=C2=A0- I&#39;m=
+ looking at the <a href=3D"https://snakemake.readthedocs.io/en/stable/execu=
+table.html?highlight=3Dsingularity#SINGULARITY" rel=3D"nofollow" target=3D"=
+_blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhtt=
+ps%3A%2F%2Fsnakemake.readthedocs.io%2Fen%2Fstable%2Fexecutable.html%3Fhighl=
+ight%3Dsingularity%23SINGULARITY\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNG8=
+F9wsoNeRdSEWUIzFCfOOixRDOw&#39;;return true;" onclick=3D"this.href=3D&#39;h=
+ttps://www.google.com/url?q\x3dhttps%3A%2F%2Fsnakemake.readthedocs.io%2Fen%=
+2Fstable%2Fexecutable.html%3Fhighlight%3Dsingularity%23SINGULARITY\x26sa\x3=
+dD\x26sntz\x3d1\x26usg\x3dAFQjCNG8F9wsoNeRdSEWUIzFCfOOixRDOw&#39;;return tr=
+ue;">Singularity command group</a>, and I wonder if you can try setting --s=
+ingularity-args to make binds to your system that are needed? It does seem =
+like something might be up with the session folder, others can comment too =
+:)</div><div>=C2=A0- If your pipeline doesn&#39;t have needs beyond singula=
+rity, you could also try the approach I linked above, adding the snakemake =
+deps into a container first, and then running it.</div><div>=C2=A0- Finally=
+, I would recommend pulling an image first and then setting --singularity-d=
+ir to where it is, that way you can reuse the same image and not be pulling=
+ a gazillion if you run this in parallel.</div><div><br></div><div>Best,</d=
+iv><div><br></div><div>Vanessa</div></div><br><div class=3D"gmail_quote"><d=
+iv dir=3D"ltr">On Tue, Jun 4, 2019 at 10:44 AM Dean Pettinga &lt;<a rel=3D"=
+nofollow">de...@gmail.com</a>&gt; wrote:<br></div><blockquote class=3D"gmai=
+l_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,20=
+4,204);padding-left:1ex"><div dir=3D"ltr"><div>I&#39;m currently trying to =
+implement a snakemake workflow on a HPC cluster using singularity container=
+s for specific rules.</div><div><br></div><div>I&#39;m having issues when m=
+ounting to the singularity container invoked by snakemake.</div><div><div s=
+tyle=3D"background-color:rgb(250,250,250);border-color:rgb(187,187,187);bor=
+der-style:solid;border-width:1px"><code><div><span style=3D"color:rgb(0,0,0=
+)">$ cd </span><span style=3D"color:rgb(102,102,0)">/</span><font color=3D"=
+#000000"><span style=3D"color:rgb(0,0,0)">path</span><span style=3D"color:r=
+gb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">to</span></font><sp=
+an style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">=
+smk_pipeline<br>$ snakemake </span><span style=3D"color:rgb(102,102,0)">--<=
+/span><span style=3D"color:rgb(0,0,136)">use</span><span style=3D"color:rgb=
+(102,102,0)">-</span><span style=3D"color:rgb(0,0,0)">singularity<br>ERROR =
+=C2=A0</span><span style=3D"color:rgb(102,102,0)">:</span><span style=3D"co=
+lor:rgb(0,0,0)"> </span><span style=3D"color:rgb(102,0,102)">Failed</span><=
+span style=3D"color:rgb(0,0,0)"> to mount home directory </span><span style=
+=3D"color:rgb(102,102,0)">/</span><font color=3D"#000000"><span style=3D"co=
+lor:rgb(0,0,0)">path</span><span style=3D"color:rgb(102,102,0)">/</span><sp=
+an style=3D"color:rgb(0,0,0)">to</span></font><span style=3D"color:rgb(102,=
+102,0)">/</span><span style=3D"color:rgb(0,0,0)">smk_pipeline </span><span =
+style=3D"color:rgb(102,102,0)">-&gt;</span><span style=3D"color:rgb(0,0,0)"=
+> </span><span style=3D"color:rgb(0,136,0)">/cm/</span><span style=3D"color=
+:rgb(0,0,136)">local</span><span style=3D"color:rgb(102,102,0)">/</span><sp=
+an style=3D"color:rgb(0,0,0)">apps</span><span style=3D"color:rgb(102,102,0=
+)">/</span><span style=3D"color:rgb(0,0,0)">singularity</span><span style=
+=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,102,102)">2.4<=
+/span><span style=3D"color:rgb(102,102,0)"><wbr>.</span><span style=3D"colo=
+r:rgb(0,102,102)">2</span><span style=3D"color:rgb(102,102,0)">/</span><spa=
+n style=3D"color:rgb(0,0,136)">var</span><span style=3D"color:rgb(102,102,0=
+)">/</span><span style=3D"color:rgb(0,0,0)">singularity</span><span style=
+=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">mnt</spa=
+n><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0=
+,0)">session</span><span style=3D"color:rgb(102,102,0)"><wbr>/</span><font =
+color=3D"#000000"><span style=3D"color:rgb(0,0,0)">path</span><span style=
+=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">to</span=
+></font><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:r=
+gb(0,0,0)">smk_pipeline</span><span style=3D"color:rgb(102,102,0)">:</span>=
+<span style=3D"color:rgb(0,0,0)"> </span><span style=3D"color:rgb(102,0,102=
+)">Permission</span><span style=3D"color:rgb(0,0,0)"> denied</span></div></=
+code></div></div><div>The rule being run invokes a container hosted at sing=
+ularity-hub, but it errors out before it&#39;s able to do anything.=C2=A0</=
+div><div style=3D"color:rgb(51,51,51);font-family:Roboto"><br></div><div>If=
+ i shell into a container interactively, no such problem occurs.</div><div =
+style=3D"background-color:rgb(250,250,250);border-color:rgb(187,187,187);bo=
+rder-style:solid;border-width:1px"><code><div><span style=3D"color:rgb(0,0,=
+0)">$ singularity shell rnaseq</span><span style=3D"color:rgb(102,102,0)">.=
+</span><span style=3D"color:rgb(0,0,0)">simg<br></span><span style=3D"color=
+:rgb(102,0,102)">Singularity</span><span style=3D"color:rgb(102,102,0)">:</=
+span><span style=3D"color:rgb(0,0,0)"> </span><span style=3D"color:rgb(102,=
+0,102)">Invoking</span><span style=3D"color:rgb(0,0,0)"> an interactive she=
+ll within container</span><span style=3D"color:rgb(102,102,0)">...</span><s=
+pan style=3D"color:rgb(0,0,0)"><br></span><span style=3D"color:rgb(102,0,10=
+2)">Singularity</span><span style=3D"color:rgb(0,0,0)"> rnaseq</span><span =
+style=3D"color:rgb(102,102,0)">.</span><span style=3D"color:rgb(0,0,0)">sim=
+g</span><span style=3D"color:rgb(102,102,0)">:~&gt;</span></div></code></di=
+v><div><br>I think it might be due to the fact that write permissions on=C2=
+=A0<span style=3D"font-family:monospace;background-color:rgb(250,250,250);c=
+olor:rgb(0,136,0)">/cm/</span><span style=3D"font-family:monospace;backgrou=
+nd-color:rgb(250,250,250);color:rgb(0,0,136)">local</span><span style=3D"fo=
+nt-family:monospace;background-color:rgb(250,250,250);color:rgb(102,102,0)"=
+>/</span><span style=3D"font-family:monospace;background-color:rgb(250,250,=
+250);color:rgb(0,0,0)">apps</span><span style=3D"font-family:monospace;back=
+ground-color:rgb(250,250,250);color:rgb(102,102,0)">/</span><span style=3D"=
+font-family:monospace;background-color:rgb(250,250,250);color:rgb(0,0,0)">s=
+ingularity</span><span style=3D"font-family:monospace;background-color:rgb(=
+250,250,250);color:rgb(102,102,0)">/</span><span style=3D"font-family:monos=
+pace;background-color:rgb(250,250,250);color:rgb(0,102,102)"><wbr>2.4</span=
+><span style=3D"font-family:monospace;background-color:rgb(250,250,250);col=
+or:rgb(102,102,0)">.</span><span style=3D"font-family:monospace;background-=
+color:rgb(250,250,250);color:rgb(0,102,102)">2</span><span style=3D"font-fa=
+mily:monospace;background-color:rgb(250,250,250);color:rgb(102,102,0)">/</s=
+pan><span style=3D"font-family:monospace;background-color:rgb(250,250,250);=
+color:rgb(0,0,136)">var</span><span style=3D"font-family:monospace;backgrou=
+nd-color:rgb(250,250,250);color:rgb(102,102,0)">/</span><span style=3D"font=
+-family:monospace;background-color:rgb(250,250,250);color:rgb(0,0,0)">singu=
+larity</span><span style=3D"font-family:monospace;background-color:rgb(250,=
+250,250);color:rgb(102,102,0)">/</span><span style=3D"font-family:monospace=
+;background-color:rgb(250,250,250);color:rgb(0,0,0)">mnt</span><span style=
+=3D"font-family:monospace;background-color:rgb(250,250,250);color:rgb(102,1=
+02,0)">/</span>=C2=A0are set to=C2=A00755.</div><div>One of our HPC admins =
+suggested that I try to use a different mount point for singularity, but I =
+haven&#39;t been able to find any information on this topic in the document=
+ation...</div><div><br></div><div>I&#39;m confused about why singularity is=
+ unable to mount any directories when invoked by snakemake, rather than by =
+myself directly as a user. This may be a question more fit for the snakemak=
+e folks, but i thought i&#39;d start here.</div><div><br></div><div>cheers,=
+</div><div>Dean</div><div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">si...@lbl.gov</a>.<br>
+To view this discussion on the web visit <a href=3D"https://groups.google.c=
+om/a/lbl.gov/d/msgid/singularity/4e3f0796-dbb8-48ac-a786-28ee3ff9f7f8%40lbl=
+.gov?utm_medium=3Demail&amp;utm_source=3Dfooter" rel=3D"nofollow" target=3D=
+"_blank" onmousedown=3D"this.href=3D&#39;https://groups.google.com/a/lbl.go=
+v/d/msgid/singularity/4e3f0796-dbb8-48ac-a786-28ee3ff9f7f8%40lbl.gov?utm_me=
+dium\x3demail\x26utm_source\x3dfooter&#39;;return true;" onclick=3D"this.hr=
+ef=3D&#39;https://groups.google.com/a/lbl.gov/d/msgid/singularity/4e3f0796-=
+dbb8-48ac-a786-28ee3ff9f7f8%40lbl.gov?utm_medium\x3demail\x26utm_source\x3d=
+footer&#39;;return true;">https://groups.google.com/a/<wbr>lbl.gov/d/msgid/=
+singularity/<wbr>4e3f0796-dbb8-48ac-a786-<wbr>28ee3ff9f7f8%40lbl.gov</a>.<b=
+r>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><div>(=
+603) 321-0676</div></div></div></div>
+</blockquote></div></div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+MaslSZLbAQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singu...@lbl.<wbr>gov</a>.<br>
+To view this discussion on the web visit <a href=3D"https://groups.google.c=
+om/a/lbl.gov/d/msgid/singularity/ece8a25d-5717-496b-a8ef-aa60cca30391%40lbl=
+.gov?utm_medium=3Demail&amp;utm_source=3Dfooter" target=3D"_blank" rel=3D"n=
+ofollow" onmousedown=3D"this.href=3D&#39;https://groups.google.com/a/lbl.go=
+v/d/msgid/singularity/ece8a25d-5717-496b-a8ef-aa60cca30391%40lbl.gov?utm_me=
+dium\x3demail\x26utm_source\x3dfooter&#39;;return true;" onclick=3D"this.hr=
+ef=3D&#39;https://groups.google.com/a/lbl.gov/d/msgid/singularity/ece8a25d-=
+5717-496b-a8ef-aa60cca30391%40lbl.gov?utm_medium\x3demail\x26utm_source\x3d=
+footer&#39;;return true;">https://groups.google.com/a/<wbr>lbl.gov/d/msgid/=
+singularity/<wbr>ece8a25d-5717-496b-a8ef-<wbr>aa60cca30391%40lbl.gov</a>.<b=
+r>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><div>(=
+603) 321-0676</div></div></div></div>
+</blockquote></div></div>
+------=_Part_622_1527536021.1560199012554--
+
+------=_Part_621_750424249.1560199012553--

@@ -1,0 +1,361 @@
+Date: Wed, 17 May 2017 04:57:02 -0700 (PDT)
+From: =?UTF-8?Q?Guillaume_DOLL=C3=89?= <dolle.g...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <de928412-94b7-46e6-8317-f25c13e2a577@lbl.gov>
+In-Reply-To: <CAM=pu++QZR1FYaCWSiMt8ynmvg7Vg_98dBOodtc_3f=JZU1w+A@mail.gmail.com>
+References: <0c8f63fa-efd7-438e-a78f-1f51f374931e@lbl.gov>
+ <CAM=pu++QZR1FYaCWSiMt8ynmvg7Vg_98dBOodtc_3f=JZU1w+A@mail.gmail.com>
+Subject: Re: [Singularity] Singularity shell script and directory
+ priviledges
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2942_1109205555.1495022222402"
+
+------=_Part_2942_1109205555.1495022222402
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2943_160676153.1495022222402"
+
+------=_Part_2943_160676153.1495022222402
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Thank you Vanessa for the detailed answer !!
+
+I use singularity version 2.2.99 currently.
+
+> For permissions, you can generally think of the files/folders permissions=
+=20
+in the container akin to how you would think of files/permissions anywhere=
+=20
+else. The user inside the container is the same user outside the container,=
+=20
+so you would set > permissions, etc, likely in your bootstrap file. I don't=
+=20
+see how you would make any kind of changes to the container if you do not=
+=20
+have write access to it.
+
+In fact, I'd like to give write access to users for a folder=20
+"/opt/tutorial". It seems that "-w/--writable" option is available only in=
+=20
+sudo mode right (for security reason I guess) ?=20
+
+Currently, what I do is copying this directory during the shell script=20
+/.shell to the bind /home (cp -r /opt/tutorial ~).
+For me it's ok if users are using the "--contain" to avoid erasing files.=
+=20
+But I think it can be a little bit "overkill" if you have several giga to=
+=20
+copy :).
+
+I wonder if it'd be possible to specify in the bootstrap to mount=20
+automatically (in singularity working directory) /opt/tutorial on the host=
+=20
+with write access,=20
+or something equivalent ?
+
+B.R,
+
+Guillaume
+
+
+
+
+Le mercredi 17 mai 2017 05:31:47 UTC+2, vanessa a =C3=A9crit :
+>
+> Hey Guilluame,
+>
+>>
+>> I've two questions regarding boostrap files:
+>>
+>> 1) From what I understand, *%runscript* is executed during `singularity=
+=20
+>> run` only. (It writes /singularity file in the container. There's also a=
+=20
+>> /.run file).=20
+>>
+>
+> I'm guessing that you are using Singularity 2.1 or 2.2, since you are=20
+> talking about /singularity and /.run. For this older version, these two=
+=20
+> things are actual files, and you are correct that /runscript is executed=
+=20
+> when the user does `singularity run container.img`. The .run file is=20
+> actually just a little script to check for the actual runscript, and laun=
+ch=20
+> a shell if it's not found.
+>
+> Now, this is a bit different for Singularity later versions (specifically=
+=20
+> 2.3 in the development branch). We now have a "file" for the runscript at=
+=20
+> /singularity, but it has changed from an actual file to a symbolic link t=
+o=20
+> the *actual* file, which is in the singularity metadata folder and more=
+=20
+> appropriately called runscript ( /.singularity.d/runscript). For the old =
+/.run=20
+>  file, this is also more clearly organized into =20
+> /.singularity.d/actions/run.
+>
+> To be clear, when you do "run" it doesn't write the runscript at that=20
+> time, it just runs it. The writing of the runscript can only happen when=
+=20
+> you do create followed by bootstrap or import. For the earlier versions o=
+f=20
+> Singularity, both of these commands require sudo. For later, you can do a=
+=20
+> non sudo import, eg:
+>
+>    singularity create container.img
+>    singularity import docker://ubuntu container.img
+>
+> or you can just shell, but that of course doesn't use the runscript :) We=
+=20
+> can look at the example run (actions)
+>
+> Singularity ubuntu:~> cat /.singularity.d/actions/run  =20
+>> #!/bin/sh
+>> for script in /.singularity.d/env/*.sh; do
+>>     if [ -f "$script" ]; then
+>>         . $script
+>>     fi
+>> done
+>> if test -x /.singularity.d/runscript; then
+>>     exec /.singularity.d/runscript "$@"
+>> else
+>>     echo "No Singularity runscript found, executing /bin/sh"
+>>     exec /bin/sh "$@"
+>> fi
+>
+>
+>  So you see, we are just sourcing the environment, testing for the=20
+> runscript, if it exists, we use exec to return it as the calling process,=
+=20
+> else we tell the user it doesn't exist and shell them in.
+>
+> Is there a kind of
+>> *%shellscript *to execute bash commands using `singularity shell` ? (I=
+=20
+>> figure there's a /.shell file)
+>>
+>>
+> The /.shell file (or in Singularity development branch=20
+> /.singularity.d/actions/shell, is akin to its siblings, it just does=20
+> little checks to make sure when you shell into the container, you hit the=
+=20
+> right one. We can look at an example:
+>
+> Singularity ubuntu:~> cat /.singularity.d/actions/shell=20
+>> #!/bin/sh
+>> for script in /.singularity.d/env/*.sh; do
+>>     if [ -f "$script" ]; then
+>>         . $script
+>>     fi
+>> done
+>> if test -n "$SINGULARITY_SHELL" -a -x "$SINGULARITY_SHELL"; then
+>>     exec $SINGULARITY_SHELL "$@"
+>>     echo "ERROR: Failed running shell as defined by=20
+>> '\$SINGULARITY_SHELL'" 1>&2
+>>     exit 1
+>> elif test -x /bin/bash; then
+>>     SHELL=3D/bin/bash
+>>     PS1=3D"Singularity $SINGULARITY_CONTAINER:\\w> "
+>>     export SHELL PS1
+>>     exec /bin/bash --norc "$@"
+>> elif test -x /bin/sh; then
+>>     SHELL=3D/bin/sh
+>>     export SHELL
+>>     exec /bin/sh "$@"
+>> else
+>>     echo "ERROR: /bin/sh does not exist in container" 1>&2
+>> fi
+>> exit 1
+>
+> =20
+> You see we are sourcing all the environment variables so they are=20
+> available to the user, then we are checking to see if the user has a shel=
+l=20
+> of choice specified, and then falling back to /bin/sh, and specifying the=
+=20
+> little prompt you see (/Singularity ubuntu in the example above) with $PS=
+1,=20
+> and then executing it (and then you shell in!) and of course if this fail=
+s,=20
+> you get an error message.
+>
+> 2) Is it possible to set read/write access to container specific=20
+>> directories for users (no sudo, with or without -w) ? (If yes how?)
+>>
+>> For permissions, you can generally think of the files/folders permission=
+s=20
+> in the container akin to how you would think of files/permissions anywher=
+e=20
+> else. The user inside the container is the same user outside the containe=
+r,=20
+> so you would set permissions, etc, likely in your bootstrap file. I don't=
+=20
+> see how you would make any kind of changes to the container if you do not=
+=20
+> have write access to it.
+>
+> Best,
+>
+> Vanessa=20
+>
+>>
+>> B. Regards
+>>
+>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s=20
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n=20
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> --=20
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_2943_160676153.1495022222402
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Thank you Vanessa for the detailed answer !!<br><br>I use =
+singularity version 2.2.99 currently.<br><br>&gt; For permissions, you can =
+generally think of the files/folders=20
+permissions in the container akin to how you would think of=20
+files/permissions anywhere else. The user inside the container is the=20
+same user outside the container, so you would set &gt; permissions, etc,=20
+likely in your bootstrap file. I don&#39;t see how you would make any kind=
+=20
+of changes to the container if you do not have write access to it.<br><br>I=
+n fact, I&#39;d like to give write access to users for a folder &quot;/opt/=
+tutorial&quot;. It seems that &quot;-w/--writable&quot; option is available=
+ only in sudo mode right (for security reason I guess) ? <br><br>Currently,=
+ what I do is copying this directory during the shell script /.shell to the=
+ bind /home (cp -r /opt/tutorial ~).<br>For me it&#39;s ok if users are usi=
+ng the &quot;--contain&quot; to avoid erasing files. But I think it can be =
+a little bit &quot;overkill&quot; if you have several giga to copy :).<br><=
+br>I wonder if it&#39;d be possible to specify in the bootstrap to mount au=
+tomatically (in singularity working directory) /opt/tutorial on the host wi=
+th write access, <br>or something equivalent ?<br><br>B.R,<br><br>Guillaume=
+<br><br><br><br><br>Le mercredi 17 mai 2017 05:31:47 UTC+2, vanessa a =C3=
+=A9crit=C2=A0:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-l=
+eft: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr"=
+>Hey Guilluame,<div><div class=3D"gmail_quote"><blockquote class=3D"gmail_q=
+uote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,2=
+04);padding-left:1ex"><div dir=3D"ltr"><br>I&#39;ve two questions regarding=
+ boostrap files:<br><br> 1) From what I understand, <b>%runscript</b> is ex=
+ecuted during `<span style=3D"color:rgb(56,118,29)">singularity run`</span>=
+ only. (It writes<span style=3D"color:rgb(204,0,0)"> /singularity </span>fi=
+le in the container. There&#39;s also a <span style=3D"color:rgb(204,0,0)">=
+/.run</span> file). </div></blockquote><div><br></div><div>I&#39;m guessing=
+ that you are using Singularity 2.1 or 2.2, since you are talking about /si=
+ngularity and /.run. For this older version, these two things are actual fi=
+les, and you are correct that /runscript is executed when the user does `<s=
+pan style=3D"color:rgb(56,118,29)">singularity run container.img`. </span>T=
+he .run file is actually just a little script to check for the actual runsc=
+ript, and launch a shell if it&#39;s not found.</div><div><br></div><div>No=
+w, this is a bit different for Singularity later versions (specifically 2.3=
+ in the development branch). We now have a &quot;file&quot; for the runscri=
+pt at /singularity, but it has changed from an actual file to a symbolic li=
+nk to the <i>actual</i>=C2=A0file, which is in the singularity metadata fol=
+der and more appropriately called runscript (<span style=3D"color:rgb(204,0=
+,0)">=C2=A0</span><span style=3D"color:rgb(204,0,0)">/.singularity.d/runscr=
+ipt</span>). For the old=C2=A0<span style=3D"color:rgb(204,0,0)">/.run =C2=
+=A0</span>file, this is also more clearly organized into=C2=A0<span style=
+=3D"color:rgb(204,0,0)">=C2=A0</span><span style=3D"color:rgb(204,0,0)">/.s=
+ingularity.d/actions/<wbr>run.</span></div><div><br></div><div>To be clear,=
+ when you do &quot;run&quot; it doesn&#39;t write the runscript at that tim=
+e, it just runs it. The writing of the runscript can only happen when you d=
+o create followed by bootstrap or import. For the earlier versions of Singu=
+larity, both of these commands require sudo. For later, you can do a non su=
+do import, eg:</div><div><br></div><div>=C2=A0 =C2=A0singularity create con=
+tainer.img</div><div>=C2=A0 =C2=A0singularity import docker://ubuntu contai=
+ner.img</div><div><br></div><div>or you can just shell, but that of course =
+doesn&#39;t use the runscript :) We can look at the example run (actions)</=
+div><div><br></div><div><blockquote class=3D"gmail_quote" style=3D"margin:0=
+px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"><=
+font color=3D"#0000ff">Singularity ubuntu:~&gt; cat /.singularity.d/actions=
+/run =C2=A0=C2=A0<br>#!/bin/sh<br>for script in /.singularity.d/env/*.sh; d=
+o<br>=C2=A0 =C2=A0 if [ -f &quot;$script&quot; ]; then<br>=C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 . $script<br>=C2=A0 =C2=A0 fi<br>done<br>if test -x /.singularit=
+y.d/runscript; then<br>=C2=A0 =C2=A0 exec /.singularity.d/runscript &quot;$=
+@&quot;<br>else<br>=C2=A0 =C2=A0 echo &quot;No Singularity runscript found,=
+ executing /bin/sh&quot;<br>=C2=A0 =C2=A0 exec /bin/sh &quot;$@&quot;<br>fi=
+</font></blockquote></div><div><font color=3D"#0000ff"><br></font></div><di=
+v>=C2=A0So you see, we are just sourcing the environment, testing for the r=
+unscript, if it exists, we use exec to return it as the calling process, el=
+se we tell the user it doesn&#39;t exist and shell them in.</div><div><br><=
+/div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;bo=
+rder-left:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr">Is =
+there a kind of<br><b>%shellscript </b>to execute bash commands using `<spa=
+n style=3D"color:rgb(56,118,29)">singularity shell</span>` ? (I figure ther=
+e&#39;s a <span style=3D"color:rgb(204,0,0)">/.shell</span> file)<br><br></=
+div></blockquote><div><br></div><div>The=C2=A0<span style=3D"color:rgb(204,=
+0,0)">/.shell</span>=C2=A0file (or in Singularity development branch=C2=A0<=
+span style=3D"color:rgb(204,0,0)">/.singularity.d/<wbr>actions/shell</span>=
+, is akin to its siblings, it just does little checks to make sure when you=
+ shell into the container, you hit the right one. We can look at an example=
+:</div><div><br></div><div><blockquote class=3D"gmail_quote" style=3D"margi=
+n:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex=
+"><font color=3D"#0000ff">Singularity ubuntu:~&gt; cat /.singularity.d/acti=
+ons/shell=C2=A0<br>#!/bin/sh<br>for script in /.singularity.d/env/*.sh; do<=
+br>=C2=A0 =C2=A0 if [ -f &quot;$script&quot; ]; then<br>=C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 . $script<br>=C2=A0 =C2=A0 fi<br>done<br>if test -n &quot;$SINGU=
+LARITY_SHELL&quot; -a -x &quot;$SINGULARITY_SHELL&quot;; then<br>=C2=A0 =C2=
+=A0 exec $SINGULARITY_SHELL &quot;$@&quot;<br>=C2=A0 =C2=A0 echo &quot;ERRO=
+R: Failed running shell as defined by &#39;\$SINGULARITY_SHELL&#39;&quot; 1=
+&gt;&amp;2<br>=C2=A0 =C2=A0 exit 1<br>elif test -x /bin/bash; then<br>=C2=
+=A0 =C2=A0 SHELL=3D/bin/bash<br>=C2=A0 =C2=A0 PS1=3D&quot;Singularity $SING=
+ULARITY_CONTAINER:\\w&gt; &quot;<br>=C2=A0 =C2=A0 export SHELL PS1<br>=C2=
+=A0 =C2=A0 exec /bin/bash --norc &quot;$@&quot;<br>elif test -x /bin/sh; th=
+en<br>=C2=A0 =C2=A0 SHELL=3D/bin/sh<br>=C2=A0 =C2=A0 export SHELL<br>=C2=A0=
+ =C2=A0 exec /bin/sh &quot;$@&quot;<br>else<br>=C2=A0 =C2=A0 echo &quot;ERR=
+OR: /bin/sh does not exist in container&quot; 1&gt;&amp;2<br>fi<br>exit 1</=
+font></blockquote></div><div>=C2=A0</div><div>You see we are sourcing all t=
+he environment variables so they are available to the user, then we are che=
+cking to see if the user has a shell of choice specified, and then falling =
+back to /bin/sh, and specifying the little prompt you see (/Singularity ubu=
+ntu in the example above) with $PS1, and then executing it (and then you sh=
+ell in!) and of course if this fails, you get an error message.</div><div><=
+br></div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8e=
+x;border-left:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr"=
+>2) Is it possible to set read/write access to container specific directori=
+es for users (no sudo, with or without -w) ? (If yes how?)<br><br></div></b=
+lockquote><div>For permissions, you can generally think of the files/folder=
+s permissions in the container akin to how you would think of files/permiss=
+ions anywhere else. The user inside the container is the same user outside =
+the container, so you would set permissions, etc, likely in your bootstrap =
+file. I don&#39;t see how you would make any kind of changes to the contain=
+er if you do not have write access to it.</div><div><br></div><div>Best,</d=
+iv><div><br></div><div>Vanessa=C2=A0</div><blockquote class=3D"gmail_quote"=
+ style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);p=
+adding-left:1ex"><div dir=3D"ltr"><br>B. Regards<span><font color=3D"#88888=
+8"><br></font></span></div><span><font color=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+Im49wrFHCAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div>=
+<div>(603) 321-0676</div></div></div></div>
+</div></div>
+</blockquote></div>
+------=_Part_2943_160676153.1495022222402--
+
+------=_Part_2942_1109205555.1495022222402--

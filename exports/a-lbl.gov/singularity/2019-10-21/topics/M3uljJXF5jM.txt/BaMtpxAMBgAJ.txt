@@ -1,0 +1,385 @@
+Date: Mon, 3 Jun 2019 13:35:10 -0700 (PDT)
+From: Vang Le Quy <lqva...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <7e919c42-bcc5-4ca3-8eb6-8bb9beceb580@lbl.gov>
+In-Reply-To: <CAOivMdSWY9UExxAThXwj2G7iXb5rDV2XwAPknyw6rA_P_nydQw@mail.gmail.com>
+References: <c38c08a4-3974-44ad-937a-235ff4b54b56@lbl.gov> <CAOivMdSeiK61wF-XvxFsUgZri7dL9x4EaL2b2cTnXbn8hQ2FXg@mail.gmail.com>
+ <09e448cc-3bbe-47f7-b7e9-105892c6135e@lbl.gov>
+ <CAOivMdSWY9UExxAThXwj2G7iXb5rDV2XwAPknyw6rA_P_nydQw@mail.gmail.com>
+Subject: Re: [Singularity] some security questions
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1919_1011624759.1559594110546"
+
+------=_Part_1919_1011624759.1559594110546
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1920_497933723.1559594110547"
+
+------=_Part_1920_497933723.1559594110547
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+
+Oh yes, got it. I forgot totally about that %setup section. 
+Case closed. 
+
+Thank you, Michael.
+
+Kind regards
+Vang
+
+On Monday, June 3, 2019 at 10:22:49 PM UTC+2, Michael Bauer wrote:
+>
+> Hi Vang,
+>
+> I mean that users of singbuild group can only run sudo if they run `sudo 
+>> singularity build <imagename>.sif Singularity.def`. All other commands are 
+>> not runnable, for example if users run `sudo singularity shell myimage.sif 
+>> `, they system will require password.  And if even password is provided 
+>> correctly, users will actually get a message saying something like "users 
+>> is not allowed to run sudo with command /usr/local/bin/singularity". With 
+>> that said, is it still a security problem? 
+>>
+>
+> Unfortunately yes, this is exactly equivalent to giving members of that 
+> group full and unrestricted sudo access. A user who can run `singularity 
+> build *` as root can run arbitrary commands as the root user on the host 
+> from within the `%setup` section of the definition file. There is no safe 
+> workaround to allow users to build images from a definition file when they 
+> are not trusted to have full root access on the system.
+>
+> - Michael 
+>
+> On Mon, Jun 3, 2019 at 9:08 PM Vang Le Quy <lq...@gmail.com 
+> <javascript:>> wrote:
+>
+>> Hi Michael
+>> Thank you for your answers. They are very informative. I have only one 
+>> clarification regarding my question 1 and the corresponding answer: I mean 
+>> that users of singbuild group can only run sudo if they run `sudo 
+>> singularity build <imagename>.sif Singularity.def`. All other commands are 
+>> not runnable, for example if users run `sudo singularity shell myimage.sif 
+>> `, they system will require password.  And if even password is provided 
+>> correctly, users will actually get a message saying something like "users 
+>> is not allowed to run sudo with command /usr/local/bin/singularity". With 
+>> that said, is it still a security problem? 
+>>
+>> Apart from that, a remote build can be an option in many cases. 
+>>
+>> Cheers,
+>> Vang
+>>
+>> On Monday, June 3, 2019 at 4:56:02 PM UTC+2, Michael Bauer wrote:
+>>
+>>> Hi,
+>>>
+>>> I'm one of the primary developers/architects of Singularity so I should 
+>>> be able to answer your questions
+>>>
+>>> 1. Will it degrade security if I allow (using `sudoers`) a specific 
+>>>> group of users (i.e. members of `singbuild` group) to use `sudo` for _only_ 
+>>>> running `sudo singularity build *`. 
+>>>
+>>> This is not safe for a shared cluster. This is equivalent to giving all 
+>>> users of the `singbuild` group unrestricted access to root privilege. If 
+>>> you need a service which can help your users build containers without 
+>>> needing SSH access to a Linux machine where they have root, I would 
+>>> recommend exploring the Build Service <https://cloud.sylabs.io/builder> 
+>>> offered by Sylabs. Currently it is only available as a cloud service, but 
+>>> on premise licensing will also be possible shortly.
+>>>
+>>> 2. Can malicious images be used to cause harm on execution 
+>>>> server/cluster? For example, can a root-escalating shell program be 
+>>>> unpacked to host file system and gain root? 
+>>>
+>>> No. Specifically, it is never possible for an unprivileged host user to 
+>>> make use of a malicious image to gain new privileges on the host machine. 
+>>> If such an image or other vulnerability is discovered, this should be 
+>>> considered a critical security bug in either Singularity or the Linux 
+>>> kernel and should be handled as outlined in the Sylabs security policy 
+>>> <https://www.sylabs.io/singularity/security-policy/>. It is also 
+>>> impossible to extract malicious files from the image as after extraction 
+>>> they would be owned by the user, not as root.
+>>>
+>>> 3. What  are security consequence of setting `root default capabilities 
+>>>> = full` in $PREFIX/etc/singularity/singularity.conf:
+>>>
+>>> By default, when running a singularity command with root privileges 
+>>> (such as `sudo singularity shell $IMAGE`) the payload process spawned in 
+>>> the container context will have UID/GID 0 but have no Linux capabilities 
+>>> <http://man7.org/linux/man-pages/man7/capabilities.7.html>. In practice 
+>>> this will mean that you will still appear as the `root` user, but certain 
+>>> privileged operations will still be unable to be performed. No matter what 
+>>> is set in the configuration file, this behavior is still controllable by 
+>>> the `root` user via the `--keep-privs` & `--no-privs` flag. 
+>>>
+>>> I hope this helped to clear up confusion
+>>>
+>>> Cheers,
+>>> Michael Bauer
+>>>
+>>> On Mon, Jun 3, 2019 at 4:28 PM Vang Le Quy <lq...@gmail.com> wrote:
+>>>
+>>>>
+>>>> Hi,
+>>>> My appologies if these questions have been asked before. I just can't 
+>>>> find relevant answers right now.
+>>>>
+>>>> ## Version of Singularity:
+>>>>
+>>>> 3.2.0-484.gcfb8e2f
+>>>>
+>>>>
+>>>>
+>>>> ## Here are the questions:
+>>>>
+>>>> 1. Will it degrade security if I allow (using `sudoers`) a specific 
+>>>> group of users (i.e. members of `singbuild` group) to use `sudo` for _only_ 
+>>>> running `sudo singularity build *`. The * stands for the rest of build 
+>>>> command. The coressponding sudoer entry is this: 
+>>>>
+>>>>
+>>>> %singbuild ALL=(ALL) NOPASSWD: /usr/local/bin/singularity build *
+>>>>
+>>>>
+>>>> 2. Can malicious images be used to cause harm on execution 
+>>>> server/cluster? For example, can a root-escalating shell program be 
+>>>> unpacked to host file system and gain root? 
+>>>>
+>>>> 3. What  are security consequence of setting `root default capabilities 
+>>>> = full` in $PREFIX/etc/singularity/singularity.conf:
+>>>>
+>>>> # ROOT DEFAULT CAPABILITIES: [full/file/no]
+>>>> # DEFAULT: no
+>>>> # Define default root capability set kept during runtime
+>>>> # - full: keep all capabilities (same as --keep-privs)
+>>>> # - file: keep capabilities configured in 
+>>>> ${prefix}/etc/singularity/capabilities/user.root
+>>>> # - no: no capabilities (same as --no-privs)
+>>>> root default capabilities = full
+>>>>
+>>>>
+>>>> -- 
+>>>> You received this message because you are subscribed to the Google 
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>> an email to si...@lbl.gov.
+>>>> To view this discussion on the web visit 
+>>>> https://groups.google.com/a/lbl.gov/d/msgid/singularity/c38c08a4-3974-44ad-937a-235ff4b54b56%40lbl.gov 
+>>>> <https://groups.google.com/a/lbl.gov/d/msgid/singularity/c38c08a4-3974-44ad-937a-235ff4b54b56%40lbl.gov?utm_medium=email&utm_source=footer>
+>>>> .
+>>>>
+>>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to si...@lbl.gov <javascript:>.
+>> To view this discussion on the web visit 
+>> https://groups.google.com/a/lbl.gov/d/msgid/singularity/09e448cc-3bbe-47f7-b7e9-105892c6135e%40lbl.gov 
+>> <https://groups.google.com/a/lbl.gov/d/msgid/singularity/09e448cc-3bbe-47f7-b7e9-105892c6135e%40lbl.gov?utm_medium=email&utm_source=footer>
+>> .
+>>
+>
+------=_Part_1920_497933723.1559594110547
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><br><div>Oh yes, got it. I forgot totally about that %setu=
+p section. <br></div><div>Case closed. <br></div><div><br></div><div>Thank =
+you, Michael.</div><div><br></div><div>Kind regards</div><div>Vang</div><di=
+v><br></div>On Monday, June 3, 2019 at 10:22:49 PM UTC+2, Michael Bauer wro=
+te:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;=
+border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">Hi Vang,<d=
+iv><br></div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px =
+0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex">I mean that =
+users of singbuild group can only run sudo if they run `sudo singularity bu=
+ild &lt;imagename&gt;.sif Singularity.def`. All other commands are not runn=
+able, for example if users run `sudo singularity shell myimage.sif `, they =
+system will require password.=C2=A0 And if even password is provided correc=
+tly, users will actually get a message saying something like &quot;users is=
+ not allowed to run sudo with command /usr/local/bin/singularity&quot;. Wit=
+h that said, is it still a security problem?=C2=A0<br></blockquote><div><br=
+></div><div>Unfortunately yes, this is exactly equivalent to giving members=
+ of that group full and unrestricted sudo access. A user who can run `singu=
+larity build *` as root can run arbitrary commands as the root user on the =
+host from within the `%setup` section of the definition file. There is no s=
+afe workaround to allow users to build images from a definition file when t=
+hey are not trusted to have full root access on the system.</div><div><br><=
+/div><div>- Michael=C2=A0<br></div></div><br><div class=3D"gmail_quote"><di=
+v dir=3D"ltr">On Mon, Jun 3, 2019 at 9:08 PM Vang Le Quy &lt;<a href=3D"jav=
+ascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"CgGYrEsPBgAJ" rel=3D"n=
+ofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onc=
+lick=3D"this.href=3D&#39;javascript:&#39;;return true;">lq...@gmail.com</a>=
+&gt; wrote:<br></div><blockquote class=3D"gmail_quote" style=3D"margin:0px =
+0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"><div=
+ dir=3D"ltr"><div>Hi Michael</div><div>Thank you for your answers. They are=
+ very informative. I have only one clarification regarding my question 1 an=
+d the corresponding answer: I mean that users of singbuild group can only r=
+un sudo if they run `sudo singularity build &lt;imagename&gt;.sif Singulari=
+ty.def`. All other commands are not runnable, for example if users run `sud=
+o singularity shell myimage.sif `, they system will require password.=C2=A0=
+ And if even password is provided correctly, users will actually get a mess=
+age saying something like &quot;users is not allowed to run sudo with comma=
+nd /usr/local/bin/singularity&quot;. With that said, is it still a security=
+ problem? <br></div><div><br></div><div>Apart from that, a remote build can=
+ be an option in many cases. <br></div><div><br></div><div>Cheers,</div><di=
+v>Vang<br></div><br>On Monday, June 3, 2019 at 4:56:02 PM UTC+2, Michael Ba=
+uer wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px=
+ 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D=
+"ltr"><div dir=3D"ltr">Hi,<div><br></div><div>I&#39;m one of the primary de=
+velopers/architects of Singularity so I should be able to answer your quest=
+ions</div><div><br></div><div><blockquote class=3D"gmail_quote" style=3D"ma=
+rgin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:=
+1ex">1. Will it degrade security if I allow (using `sudoers`) a specific gr=
+oup of users (i.e. members of `singbuild` group) to use `sudo` for _only_ r=
+unning `sudo singularity build *`.=C2=A0</blockquote></div><div>This is not=
+ safe for a shared cluster. This is equivalent to giving all users of the `=
+singbuild` group unrestricted access to root privilege. If you need a servi=
+ce which can help your users build containers without needing SSH access to=
+ a Linux machine where they have root, I would recommend exploring the <a h=
+ref=3D"https://cloud.sylabs.io/builder" rel=3D"nofollow" target=3D"_blank" =
+onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F=
+%2Fcloud.sylabs.io%2Fbuilder\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNH6LGcK=
+xPs4K41MchMeZ6cHpm5F0g&#39;;return true;" onclick=3D"this.href=3D&#39;https=
+://www.google.com/url?q\x3dhttps%3A%2F%2Fcloud.sylabs.io%2Fbuilder\x26sa\x3=
+dD\x26sntz\x3d1\x26usg\x3dAFQjCNH6LGcKxPs4K41MchMeZ6cHpm5F0g&#39;;return tr=
+ue;">Build Service</a> offered by Sylabs. Currently it is only available as=
+ a cloud service, but on premise licensing will also be possible shortly.</=
+div><div><br></div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0p=
+x 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex">2. Can=
+ malicious images be used to cause harm on execution server/cluster? For ex=
+ample, can a root-escalating shell program be unpacked to host file system =
+and gain root?=C2=A0</blockquote><div>No. Specifically, it is never possibl=
+e for an unprivileged host user to make use of a malicious image to gain ne=
+w privileges on the host machine. If such an image or other vulnerability i=
+s discovered, this should be considered a critical security bug in either S=
+ingularity or the Linux kernel and should be handled as outlined in the <a =
+href=3D"https://www.sylabs.io/singularity/security-policy/" rel=3D"nofollow=
+" target=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/=
+url?q\x3dhttps%3A%2F%2Fwww.sylabs.io%2Fsingularity%2Fsecurity-policy%2F\x26=
+sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHkrl2f5FS-RwH362zTGcgGP3nuOg&#39;;retu=
+rn true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps=
+%3A%2F%2Fwww.sylabs.io%2Fsingularity%2Fsecurity-policy%2F\x26sa\x3dD\x26snt=
+z\x3d1\x26usg\x3dAFQjCNHkrl2f5FS-RwH362zTGcgGP3nuOg&#39;;return true;">Syla=
+bs security policy</a>. It is also impossible to extract malicious files fr=
+om the image as after extraction they would be owned by the user, not as ro=
+ot.</div><div><br></div><div><blockquote class=3D"gmail_quote" style=3D"mar=
+gin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1=
+ex">3. What=C2=A0 are security consequence of setting `root default capabil=
+ities =3D full` in $PREFIX/etc/singularity/<wbr>singularity.conf:</blockquo=
+te><div>By default, when running a singularity command with root privileges=
+ (such as `sudo singularity shell $IMAGE`) the payload process spawned in t=
+he container context will have UID/GID 0 but have no <a href=3D"http://man7=
+.org/linux/man-pages/man7/capabilities.7.html" rel=3D"nofollow" target=3D"_=
+blank" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%=
+3A%2F%2Fman7.org%2Flinux%2Fman-pages%2Fman7%2Fcapabilities.7.html\x26sa\x3d=
+D\x26sntz\x3d1\x26usg\x3dAFQjCNE50EMdDSfQTJNLrPPC5cFD08WZBQ&#39;;return tru=
+e;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2=
+Fman7.org%2Flinux%2Fman-pages%2Fman7%2Fcapabilities.7.html\x26sa\x3dD\x26sn=
+tz\x3d1\x26usg\x3dAFQjCNE50EMdDSfQTJNLrPPC5cFD08WZBQ&#39;;return true;">Lin=
+ux capabilities</a>. In practice this will mean that you will still appear =
+as the `root` user, but certain privileged operations will still be unable =
+to be performed. No matter what is set in the configuration file, this beha=
+vior is still controllable by the `root` user via the `--keep-privs` &amp; =
+`--no-privs` flag.=C2=A0</div><br></div><div>I hope this helped to clear up=
+ confusion</div><div><br></div><div>Cheers,</div><div>Michael Bauer</div></=
+div><br><div class=3D"gmail_quote"><div dir=3D"ltr">On Mon, Jun 3, 2019 at =
+4:28 PM Vang Le Quy &lt;<a rel=3D"nofollow">lq...@gmail.com</a>&gt; wrote:<=
+br></div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8e=
+x;border-left:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr"=
+><div><br></div><div>Hi,<br>My appologies if these questions have been aske=
+d before. I just can&#39;t find relevant answers right now.</div><div><br><=
+/div><div><font size=3D"2">## Version of Singularity:</font><br><br><div st=
+yle=3D"background-color:rgb(250,250,250);border-color:rgb(187,187,187);bord=
+er-style:solid;border-width:1px;margin-left:40px"><code><div><span style=3D=
+"color:rgb(0,102,102)">3.2</span><span style=3D"color:rgb(102,102,0)">.</sp=
+an><span style=3D"color:rgb(0,102,102)">0</span><span style=3D"color:rgb(10=
+2,102,0)">-</span><span style=3D"color:rgb(0,102,102)">484.gcfb8e2f</span><=
+/div></code></div><br><br><br>## Here are the questions:</div><div><br></di=
+v><div>1. Will it degrade security if I allow (using `sudoers`) a specific =
+group of users (i.e. members of `singbuild` group) to use `sudo` for _only_=
+ running `sudo singularity build *`. The * stands for the rest of build com=
+mand. The coressponding sudoer entry is this: <br></div><div style=3D"backg=
+round-color:rgb(250,250,250);border-color:rgb(187,187,187);border-style:sol=
+id;border-width:1px"><code><div><span style=3D"color:rgb(0,0,0)"><br><br></=
+span><div style=3D"margin-left:40px"><span style=3D"color:rgb(102,102,0)">%=
+</span><span style=3D"color:rgb(0,0,0)">singbuild ALL</span><span style=3D"=
+color:rgb(102,102,0)">=3D(</span><span style=3D"color:rgb(0,0,0)">ALL</span=
+><span style=3D"color:rgb(102,102,0)">)</span><span style=3D"color:rgb(0,0,=
+0)"> NOPASSWD</span><span style=3D"color:rgb(102,102,0)">:</span><span styl=
+e=3D"color:rgb(0,0,0)"> </span><span style=3D"color:rgb(0,136,0)">/usr/</sp=
+an><span style=3D"color:rgb(0,0,136)">local</span><span style=3D"color:rgb(=
+102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">bin</span><span style=
+=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">singular=
+ity build </span><span style=3D"color:rgb(102,102,0)">*</span><span style=
+=3D"color:rgb(0,0,0)"><br></span></div></div></code></div><div><br><br>2. C=
+an malicious images be used to cause harm on execution server/cluster? For =
+example, can a root-escalating shell program be unpacked to host file syste=
+m and gain root? <br><br>3. What=C2=A0 are security consequence of setting =
+`root default capabilities =3D full` in $PREFIX/etc/singularity/<wbr>singul=
+arity.conf:</div><div><br></div><div style=3D"margin-left:40px"><span style=
+=3D"font-family:&quot;courier new&quot;,monospace"><div style=3D"background=
+-color:rgb(250,250,250);border-color:rgb(187,187,187);border-style:solid;bo=
+rder-width:1px"><code><div><span style=3D"color:rgb(136,0,0)"># ROOT DEFAUL=
+T CAPABILITIES: [full/file/no]</span><span style=3D"color:rgb(0,0,0)"><br><=
+/span><span style=3D"color:rgb(136,0,0)"># DEFAULT: no</span><span style=3D=
+"color:rgb(0,0,0)"><br></span><span style=3D"color:rgb(136,0,0)"># Define d=
+efault root capability set kept during runtime</span><span style=3D"color:r=
+gb(0,0,0)"><br></span><span style=3D"color:rgb(136,0,0)"># - full: keep all=
+ capabilities (same as --keep-privs)</span><span style=3D"color:rgb(0,0,0)"=
+><br></span><span style=3D"color:rgb(136,0,0)"># - file: keep capabilities =
+configured in ${prefix}/etc/singularity/<wbr>capabilities/user.root</span><=
+span style=3D"color:rgb(0,0,0)"><br></span><span style=3D"color:rgb(136,0,0=
+)"># - no: no capabilities (same as --no-privs)</span><span style=3D"color:=
+rgb(0,0,0)"><br>root </span><span style=3D"color:rgb(0,0,136)">default</spa=
+n><span style=3D"color:rgb(0,0,0)"> capabilities </span><span style=3D"colo=
+r:rgb(102,102,0)">=3D</span><span style=3D"color:rgb(0,0,0)"> full</span></=
+div></code></div><br></span><br></div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">si...@lbl.gov</a>.<br>
+To view this discussion on the web visit <a href=3D"https://groups.google.c=
+om/a/lbl.gov/d/msgid/singularity/c38c08a4-3974-44ad-937a-235ff4b54b56%40lbl=
+.gov?utm_medium=3Demail&amp;utm_source=3Dfooter" rel=3D"nofollow" target=3D=
+"_blank" onmousedown=3D"this.href=3D&#39;https://groups.google.com/a/lbl.go=
+v/d/msgid/singularity/c38c08a4-3974-44ad-937a-235ff4b54b56%40lbl.gov?utm_me=
+dium\x3demail\x26utm_source\x3dfooter&#39;;return true;" onclick=3D"this.hr=
+ef=3D&#39;https://groups.google.com/a/lbl.gov/d/msgid/singularity/c38c08a4-=
+3974-44ad-937a-235ff4b54b56%40lbl.gov?utm_medium\x3demail\x26utm_source\x3d=
+footer&#39;;return true;">https://groups.google.com/a/<wbr>lbl.gov/d/msgid/=
+singularity/<wbr>c38c08a4-3974-44ad-937a-<wbr>235ff4b54b56%40lbl.gov</a>.<b=
+r>
+</blockquote></div></div>
+</blockquote></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+CgGYrEsPBgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singu...@lbl.<wbr>gov</a>.<br>
+To view this discussion on the web visit <a href=3D"https://groups.google.c=
+om/a/lbl.gov/d/msgid/singularity/09e448cc-3bbe-47f7-b7e9-105892c6135e%40lbl=
+.gov?utm_medium=3Demail&amp;utm_source=3Dfooter" target=3D"_blank" rel=3D"n=
+ofollow" onmousedown=3D"this.href=3D&#39;https://groups.google.com/a/lbl.go=
+v/d/msgid/singularity/09e448cc-3bbe-47f7-b7e9-105892c6135e%40lbl.gov?utm_me=
+dium\x3demail\x26utm_source\x3dfooter&#39;;return true;" onclick=3D"this.hr=
+ef=3D&#39;https://groups.google.com/a/lbl.gov/d/msgid/singularity/09e448cc-=
+3bbe-47f7-b7e9-105892c6135e%40lbl.gov?utm_medium\x3demail\x26utm_source\x3d=
+footer&#39;;return true;">https://groups.google.com/a/<wbr>lbl.gov/d/msgid/=
+singularity/<wbr>09e448cc-3bbe-47f7-b7e9-<wbr>105892c6135e%40lbl.gov</a>.<b=
+r>
+</blockquote></div>
+</blockquote></div>
+------=_Part_1920_497933723.1559594110547--
+
+------=_Part_1919_1011624759.1559594110546--

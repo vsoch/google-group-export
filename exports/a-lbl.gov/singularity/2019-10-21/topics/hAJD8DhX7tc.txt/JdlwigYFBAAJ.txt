@@ -1,0 +1,120 @@
+Date: Tue, 26 Sep 2017 15:13:07 -0700 (PDT)
+From: Benjamin McGough <bmcg...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <c1d20296-2d88-43d5-9b71-7566ba73a838@lbl.gov>
+Subject: Too many levels of symbolic links - autofs, automount, namespaces,
+ and singularity
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_7926_809498100.1506463987085"
+
+------=_Part_7926_809498100.1506463987085
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_7927_585266249.1506463987085"
+
+------=_Part_7927_585266249.1506463987085
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+We have several interactive compute servers for our users. Over the last 
+few months, we have deployed singularity, and have several users who are 
+making heavy use of it!
+
+Correlated with that use have been numerous contacts due to the 'Too many 
+levels of symbolic links' error.
+
+I am familiar with the issues posted and the workaround in the development 
+branch right now, and I think that will likely solve the issue for most 
+users, but not us unfortunately. Also, we see this error on automounted 
+directories for users who do not use singularity at all. I suspect autofs 
+is in a bad state as a result of the namespace collision/misunderstanding.
+
+My understanding of the workaround in singularity is that you simply open 
+directories listed in the config file before you leave the namespace. This 
+makes everything work as autofs expects things to work (our autofs - Ubuntu 
+14.04 3.13.0-68 I believe to be namespace agnostic). The reason it does not 
+work for us is that we use automount for our users' home directories. We 
+would have a config file several thousand lines long and this would defeat 
+most of the benefit of autofs in the first place. We are looking at 
+narrowing the user list down to the actual users, and gating access with 
+the config file change necessary for new users, but we would rather not do 
+that.
+
+Finally, I am still in the dark about the errors outside singularity and 
+what state the automounter is in when producing these errors. I have 
+observed the following simultaneously:
+
+one user's home directory produces the error on every attempted access, and 
+I am unable to unmount it manually (umount: dir: not mounted)
+unmounted directories can be mounted by running `ls` but there is about a 
+30 second timeout before it happens - once mounted they return directory 
+contents quickly
+another user's home directory was producing the error, but after a time I 
+was able to mount it and read it again, so it had unmounted successfully at 
+some point
+
+My investigations are a bit stymied right now as autofs is very opaque. The 
+`automount` service/daemon simply manages the mount points and spends 
+almost all of its life in sigtimedwait. All the cool stuff happens in the 
+kernel.
+
+Also to note is that Ubuntu 14.04 is not blessed with systemd and we are 
+not running docker or any other container systems, so I do not know of any 
+other software other than singularity using namespaces on the systems.
+
+I hope other singluarity users and contributors who have had any 
+experiences with this issue can chime in on what they have seen, and maybe 
+we can figure out if we are just running systems too old for this, or if 
+there is a fix that will make everyone happy.
+
+Thanks,
+
+-Ben
+
+------=_Part_7927_585266249.1506463987085
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">We have several interactive compute servers for our users.=
+ Over the last few months, we have deployed singularity, and have several u=
+sers who are making heavy use of it!<div><br></div><div>Correlated with tha=
+t use have been numerous contacts due to the &#39;Too many levels of symbol=
+ic links&#39; error.</div><div><br></div><div>I am familiar with the issues=
+ posted and the workaround in the development branch right now, and I think=
+ that will likely solve the issue for most users, but not us unfortunately.=
+ Also, we see this error on automounted directories for users who do not us=
+e singularity at all. I suspect autofs is in a bad state as a result of the=
+ namespace collision/misunderstanding.</div><div><br></div><div>My understa=
+nding of the workaround in singularity is that you simply open directories =
+listed in the config file before you leave the namespace. This makes everyt=
+hing work as autofs expects things to work (our autofs - Ubuntu 14.04 3.13.=
+0-68 I believe to be namespace agnostic). The reason it does not work for u=
+s is that we use automount for our users&#39; home directories. We would ha=
+ve a config file several thousand lines long and this would defeat most of =
+the benefit of autofs in the first place. We are looking at narrowing the u=
+ser list down to the actual users, and gating access with the config file c=
+hange necessary for new users, but we would rather not do that.</div><div><=
+br></div><div>Finally, I am still in the dark about the errors outside sing=
+ularity and what state the automounter is in when producing these errors. I=
+ have observed the following simultaneously:</div><div><br></div><div>one u=
+ser&#39;s home directory produces the error on every attempted access, and =
+I am unable to unmount it manually (umount: dir: not mounted)</div><div>unm=
+ounted directories can be mounted by running `ls` but there is about a 30 s=
+econd timeout before it happens - once mounted they return directory conten=
+ts quickly</div><div>another user&#39;s home directory was producing the er=
+ror, but after a time I was able to mount it and read it again, so it had u=
+nmounted successfully at some point</div><div><br></div><div>My investigati=
+ons are a bit stymied right now as autofs is very opaque. The `automount` s=
+ervice/daemon simply manages the mount points and spends almost all of its =
+life in sigtimedwait. All the cool stuff happens in the kernel.</div><div><=
+br></div><div>Also to note is that Ubuntu 14.04 is not blessed with systemd=
+ and we are not running docker or any other container systems, so I do not =
+know of any other software other than singularity using namespaces on the s=
+ystems.</div><div><br></div><div>I hope other singluarity users and contrib=
+utors who have had any experiences with this issue can chime in on what the=
+y have seen, and maybe we can figure out if we are just running systems too=
+ old for this, or if there is a fix that will make everyone happy.</div><di=
+v><br></div><div>Thanks,</div><div><br></div><div>-Ben</div></div>
+------=_Part_7927_585266249.1506463987085--
+
+------=_Part_7926_809498100.1506463987085--

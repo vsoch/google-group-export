@@ -1,0 +1,366 @@
+Date: Fri, 20 Jan 2017 11:35:47 -0800 (PST)
+From: Nekel-Seyew <kswe...@nd.edu>
+To: singularity <singu...@lbl.gov>
+Message-Id: <ed329cec-e992-447c-88bc-890d5eca4adb@lbl.gov>
+In-Reply-To: <CAN7etTx=oOCof=eKdVJz4YWmVBmM-MFCyY0UgFbKjr8KQYeNVA@mail.gmail.com>
+References: <CAK1reXjjYf+fqRdxqmQYaq-qTN+Y65=duF8_8Hvj1yPrTZrA9A@mail.gmail.com>
+ <CAN7etTybZpna6bzK=QHHk0WUi52WX3jpQ6G2Fs7pG7zvHeU3fQ@mail.gmail.com> <CAK1reXhEvoySm0Uh2kxJS_K8SJd2bYSG_iKMD2z2KYDOf=SHEA@mail.gmail.com>
+ <CAN7etTx=oOCof=eKdVJz4YWmVBmM-MFCyY0UgFbKjr8KQYeNVA@mail.gmail.com>
+Subject: Re: [Singularity] /usr/people... home directory masks /usr in
+ Singularity image
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2784_833277128.1484940947334"
+
+------=_Part_2784_833277128.1484940947334
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2785_804217943.1484940947335"
+
+------=_Part_2785_804217943.1484940947335
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+I've tried this, using the released 2.2, but it still says that the 
+/real/path in  --home /real/path:/container_path has permission denied.
+
+-Kyle
+
+On Friday, January 20, 2017 at 1:11:05 PM UTC-5, Gregory M. Kurtzer wrote:
+>
+> I think this was fixed in the 2.2 branch of Github. Will you test that, 
+> and confirm?
+>
+> Thanks!
+>
+> On Thu, Jan 19, 2017 at 8:47 PM, Peter van Heusden <p...@sanbi.ac.za 
+> <javascript:>> wrote:
+>
+>> Hi Greg
+>>
+>> Thanks, this works, but only with "sudo singularity". Otherwise I get:
+>>
+>> ERROR  : Home directory ownership incorrect: /usr/people/pvh:/home/pvh
+>> ABORT  : Retval = 255
+>>
+>> And here is partial debug output:
+>>
+>> DEBUG   [U=1124,P=542]     mount-util.c:42:check_mounted()            : 
+>> Opening /proc/mounts
+>> DEBUG   [U=1124,P=542]     mount-util.c:48:check_mounted()            : 
+>> Iterating through /proc/mounts
+>> DEBUG   [U=1124,P=542]     util/util.c:102:envar_path()               : 
+>> Checking environment variable is valid path: 'SINGULARITY_HOME'
+>> VERBOSE [U=1124,P=542]     util/util.c:50:envar()                     : 
+>> Checking input from environment: 'SINGULARITY_HOME'
+>> DEBUG   [U=1124,P=542]     util/util.c:52:envar()                     : 
+>> Checking environment variable is defined: SINGULARITY_HOME
+>> DEBUG   [U=1124,P=542]     util/util.c:58:envar()                     : 
+>> Checking environment variable length (<= 4096): SINGULARITY_HOME
+>> DEBUG   [U=1124,P=542]     util/util.c:64:envar()                     : 
+>> Checking environment variable has allowed characters: SINGULARITY_HOME
+>> VERBOSE [U=1124,P=542]     util/util.c:87:envar()                     : 
+>> Obtained input from environment 'SINGULARITY_HOME' = 
+>> '/usr/people/pvh:/home/pvh'
+>> DEBUG   [U=1124,P=542]     
+>> config_parser.c:62:singularity_config_rewind(): Rewinding configuration file
+>> DEBUG   [U=1124,P=542]     
+>> config_parser.c:107:singularity_config_get_bool(): Called 
+>> singularity_config_get_bool(user bind control, 1)
+>> DEBUG   [U=1124,P=542]     
+>> config_parser.c:80:singularity_config_get_value(): Called 
+>> singularity_config_get_value(user bind control)
+>> VERBOSE [U=1124,P=542]     
+>> config_parser.c:91:singularity_config_get_value(): Got config key user bind 
+>> control (= 'yes')
+>> DEBUG   [U=1124,P=542]     
+>> config_parser.c:113:singularity_config_get_bool(): Return 
+>> singularity_config_get_bool(user bind control, 1) = 1
+>> VERBOSE [U=1124,P=542]     home.c:86:singularity_mount_home()         : 
+>> Set the home directory source (via envar) to: /usr/people/pvh:/home/pvh
+>> DEBUG   [U=1124,P=542]     util/file.c:247:s_mkpath()                 : 
+>> Creating directory: /tmp/.singularity-session-1124.2050.8814447/usr
+>> DEBUG   [U=1124,P=542]     util/file.c:247:s_mkpath()                 : 
+>> Creating directory: /tmp/.singularity-session-1124.2050.8814447/usr/people
+>> DEBUG   [U=1124,P=542]     util/file.c:247:s_mkpath()                 : 
+>> Creating directory: 
+>> /tmp/.singularity-session-1124.2050.8814447/usr/people/pvh
+>> DEBUG   [U=1124,P=542]     home.c:129:singularity_mount_home()        : 
+>> Checking permissions on home directory: /usr/people/pvh:/home/pvh
+>> DEBUG   [U=1124,P=542]     util/file.c:180:is_owner()                 : 
+>> Checking ownership on /usr/people/pvh:/home/pvh
+>> ERROR   [U=1124,P=542]     home.c:131:singularity_mount_home()        : 
+>> Home directory ownership incorrect: /usr/people/pvh:/home/pvh
+>> ABORT   [U=1124,P=542]     home.c:132:singularity_mount_home()        : 
+>> Retval = 255
+>>
+>> That "Checking ownership on" message is an extra debug message I put in 
+>> is_owner. It looks like it is checking ownership on the whole 
+>> /usr/people/pvh:/home/pvh thing rather than /usr/people/pvh ? I might be 
+>> reading this wrong though.
+>>
+>> Peter
+>>
+>> On Thu, 19 Jan 2017 at 18:01 Gregory M. Kurtzer <gm...@lbl.gov 
+>> <javascript:>> wrote:
+>>
+>>> Hi Peter,
+>>>
+>>> There is a workaround you can do in 2.2 (but we will need to come up 
+>>> with a better fix for that for 2.3). 
+>>>
+>>> Try the option:
+>>>
+>>>  -H /usr/people/username:/home/username 
+>>>
+>>> And if that works export that out in an environment variable in 
+>>> /etc/singularity/init as:
+>>>
+>>> SINGULARITY_HOME=...
+>>> export SINGULARITY_HOME
+>>>
+>>> Hopefully that works! Good luck. 
+>>>
+>>> Greg
+>>>
+>>>
+>>> On Thu, Jan 19, 2017 at 5:37 AM Peter van Heusden <p...@sanbi.ac.za 
+>>> <javascript:>> wrote:
+>>>
+>>>> Hi there
+>>>>
+>>>> The home directories on our cluster are /usr/people/<username>. This 
+>>>> causes chaos with Singularity images, as /usr ends up containing simply 
+>>>> /usr/people/<username> and /usr/bin, /usr/local, etc go missing.
+>>>>
+>>>> I cannot seem to change this behaviour, no matter what combination of 
+>>>> -c, -H and other flags I use. This is with singularity 2.2.
+>>>>
+>>>> Any ideas how to work around this?
+>>>>
+>>>> Thanks,
+>>>> Peter
+>>>>
+>>>>
+>>>>
+>>>>
+>>>>
+>>>>
+>>>>
+>>>>
+>>>> -- 
+>>>>
+>>>>
+>>>> You received this message because you are subscribed to the Google 
+>>>> Groups "singularity" group.
+>>>>
+>>>>
+>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>> an email to singu...@lbl.gov <javascript:>.
+>>>>
+>>>>
+>>>> -- 
+>>> You received this message because you are subscribed to the Google 
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>> an email to singu...@lbl.gov <javascript:>.
+>>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> -- 
+> Gregory M. Kurtzer
+> HPC Systems Architect and Technology Developer
+> Lawrence Berkeley National Laboratory HPCS
+> University of California Berkeley Research IT
+> Singularity Linux Containers (http://singularity.lbl.gov/)
+> Warewulf Cluster Management (http://warewulf.lbl.gov/)
+> GitHub: https://github.com/gmkurtzer, Twitter: 
+> https://twitter.com/gmkurtzer
+>
+
+------=_Part_2785_804217943.1484940947335
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">I&#39;ve tried this, using the released 2.2, but it still =
+says that the /real/path in=C2=A0 --home /real/path:/container_path has per=
+mission denied.<br><br>-Kyle<br><br>On Friday, January 20, 2017 at 1:11:05 =
+PM UTC-5, Gregory M. Kurtzer wrote:<blockquote class=3D"gmail_quote" style=
+=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: =
+1ex;"><div dir=3D"ltr">I think this was fixed in the 2.2 branch of Github. =
+Will you test that, and confirm?<div><br></div><div>Thanks!</div></div><div=
+><br><div class=3D"gmail_quote">On Thu, Jan 19, 2017 at 8:47 PM, Peter van =
+Heusden <span dir=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_blank" gdf=
+-obfuscated-mailto=3D"S3F9sHdlCQAJ" rel=3D"nofollow" onmousedown=3D"this.hr=
+ef=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javasc=
+ript:&#39;;return true;">p...@sanbi.ac.za</a>&gt;</span> wrote:<br><blockqu=
+ote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc s=
+olid;padding-left:1ex"><div dir=3D"ltr">Hi Greg<div><br></div><div>Thanks, =
+this works, but only with &quot;sudo singularity&quot;. Otherwise I get:</d=
+iv><div><br></div><div><div>ERROR =C2=A0: Home directory ownership incorrec=
+t: /usr/people/pvh:/home/pvh</div><div>ABORT =C2=A0: Retval =3D 255</div></=
+div><div><br></div><div>And here is partial debug output:</div><div><br></d=
+iv><div><div>DEBUG =C2=A0 [U=3D1124,P=3D542] =C2=A0 =C2=A0 mount-util.c:42:=
+check_mounted(<wbr>) =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0: Opening /pr=
+oc/mounts</div><div>DEBUG =C2=A0 [U=3D1124,P=3D542] =C2=A0 =C2=A0 mount-uti=
+l.c:48:check_mounted(<wbr>) =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0: Iter=
+ating through /proc/mounts</div><div>DEBUG =C2=A0 [U=3D1124,P=3D542] =C2=A0=
+ =C2=A0 util/util.c:102:envar_path() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 : Checking environment variable is valid path: &#39;SINGULARITY_=
+HOME&#39;</div><div>VERBOSE [U=3D1124,P=3D542] =C2=A0 =C2=A0 util/util.c:50=
+:envar() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 : Checking input from environment: &#39;SINGULARITY_HOME&#39;</div><div=
+>DEBUG =C2=A0 [U=3D1124,P=3D542] =C2=A0 =C2=A0 util/util.c:52:envar() =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Checki=
+ng environment variable is defined: SINGULARITY_HOME</div><div>DEBUG =C2=A0=
+ [U=3D1124,P=3D542] =C2=A0 =C2=A0 util/util.c:58:envar() =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Checking environment=
+ variable length (&lt;=3D 4096): SINGULARITY_HOME</div><div>DEBUG =C2=A0 [U=
+=3D1124,P=3D542] =C2=A0 =C2=A0 util/util.c:64:envar() =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Checking environment var=
+iable has allowed characters: SINGULARITY_HOME</div><div>VERBOSE [U=3D1124,=
+P=3D542] =C2=A0 =C2=A0 util/util.c:87:envar() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Obtained input from environment=
+ &#39;SINGULARITY_HOME&#39; =3D &#39;/usr/people/pvh:/home/pvh&#39;</div><d=
+iv>DEBUG =C2=A0 [U=3D1124,P=3D542] =C2=A0 =C2=A0 config_parser.c:62:<wbr>si=
+ngularity_config_rewind(): Rewinding configuration file</div><div>DEBUG =C2=
+=A0 [U=3D1124,P=3D542] =C2=A0 =C2=A0 config_parser.c:107:<wbr>singularity_c=
+onfig_get_bool(): Called singularity_config_get_bool(<wbr>user bind control=
+, 1)</div><div>DEBUG =C2=A0 [U=3D1124,P=3D542] =C2=A0 =C2=A0 config_parser.=
+c:80:<wbr>singularity_config_get_value()<wbr>: Called singularity_config_ge=
+t_value(<wbr>user bind control)</div><div>VERBOSE [U=3D1124,P=3D542] =C2=A0=
+ =C2=A0 config_parser.c:91:<wbr>singularity_config_get_value()<wbr>: Got co=
+nfig key user bind control (=3D &#39;yes&#39;)</div><div>DEBUG =C2=A0 [U=3D=
+1124,P=3D542] =C2=A0 =C2=A0 config_parser.c:113:<wbr>singularity_config_get=
+_bool(): Return singularity_config_get_bool(<wbr>user bind control, 1) =3D =
+1</div><div>VERBOSE [U=3D1124,P=3D542] =C2=A0 =C2=A0 home.c:86:singularity_=
+mount_<wbr>home() =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Set the home directory sour=
+ce (via envar) to: /usr/people/pvh:/home/pvh</div><div>DEBUG =C2=A0 [U=3D11=
+24,P=3D542] =C2=A0 =C2=A0 util/file.c:247:s_mkpath() =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Creating directory: /tmp/.singularity-=
+session-<wbr>1124.2050.8814447/usr</div><div>DEBUG =C2=A0 [U=3D1124,P=3D542=
+] =C2=A0 =C2=A0 util/file.c:247:s_mkpath() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 : Creating directory: /tmp/.singularity-session-<w=
+br>1124.2050.8814447/usr/people</div><div>DEBUG =C2=A0 [U=3D1124,P=3D542] =
+=C2=A0 =C2=A0 util/file.c:247:s_mkpath() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 : Creating directory: /tmp/.singularity-session-<wbr>=
+1124.2050.8814447/usr/people/<wbr>pvh</div><div>DEBUG =C2=A0 [U=3D1124,P=3D=
+542] =C2=A0 =C2=A0 home.c:129:singularity_mount_<wbr>home() =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0: Checking permissions on home directory: /usr/people/pvh:/hom=
+e/pvh</div><div>DEBUG =C2=A0 [U=3D1124,P=3D542] =C2=A0 =C2=A0 util/file.c:1=
+80:is_owner() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : Che=
+cking ownership on /usr/people/pvh:/home/pvh</div><div>ERROR =C2=A0 [U=3D11=
+24,P=3D542] =C2=A0 =C2=A0 home.c:131:singularity_mount_<wbr>home() =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0: Home directory ownership incorrect: /usr/people/pvh:/=
+home/pvh</div><div>ABORT =C2=A0 [U=3D1124,P=3D542] =C2=A0 =C2=A0 home.c:132=
+:singularity_mount_<wbr>home() =C2=A0 =C2=A0 =C2=A0 =C2=A0: Retval =3D 255<=
+/div><div><br></div><div>That &quot;Checking ownership on&quot; message is =
+an extra debug message I put in is_owner. It looks like it is checking owne=
+rship on the whole /usr/people/pvh:/home/pvh thing rather than /usr/people/=
+pvh ? I might be reading this wrong though.</div><span><font color=3D"#8888=
+88"><div><br></div><div>Peter</div></font></span><div><div><div><br></div><=
+div class=3D"gmail_quote"><div dir=3D"ltr">On Thu, 19 Jan 2017 at 18:01 Gre=
+gory M. Kurtzer &lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscate=
+d-mailto=3D"S3F9sHdlCQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;=
+javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;=
+;return true;">gm...@lbl.gov</a>&gt; wrote:<br></div><blockquote class=3D"g=
+mail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-l=
+eft:1ex"><div>Hi Peter,</div><div><br></div><div>There is a workaround you =
+can do in 2.2 (but we will need to come up with a better fix for that for 2=
+.3).=C2=A0</div><div><br></div><div>Try the option:</div><div><br></div><di=
+v>=C2=A0-H /usr/people/username:/home/<wbr>username=C2=A0</div><div><br></d=
+iv><div>And if that works export that out in an environment variable in /et=
+c/singularity/init as:</div><div><br></div><div>SINGULARITY_HOME=3D...</div=
+><div>export SINGULARITY_HOME</div><div><br></div><div>Hopefully that works=
+! Good luck.=C2=A0</div><div><br></div><div>Greg</div><div><br></div><div><=
+br><div class=3D"gmail_quote"></div></div><div><div class=3D"gmail_quote"><=
+div>On Thu, Jan 19, 2017 at 5:37 AM Peter van Heusden &lt;<a href=3D"javasc=
+ript:" target=3D"_blank" gdf-obfuscated-mailto=3D"S3F9sHdlCQAJ" rel=3D"nofo=
+llow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclic=
+k=3D"this.href=3D&#39;javascript:&#39;;return true;">p...@sanbi.ac.za</a>&g=
+t; wrote:<br></div></div></div><div><div class=3D"gmail_quote"><blockquote =
+class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid=
+;padding-left:1ex"><div>Hi there<div><br></div><div>The home directories on=
+ our cluster are /usr/people/&lt;username&gt;. This causes chaos with Singu=
+larity images, as /usr ends up containing simply /usr/people/&lt;username&g=
+t; and /usr/bin, /usr/local, etc go missing.</div><div><br></div><div>I can=
+not seem to change this behaviour, no matter what combination of -c, -H and=
+ other flags I use. This is with singularity 2.2.</div><div><br></div><div>=
+Any ideas how to work around this?</div><div><br></div><div>Thanks,</div><d=
+iv>Peter</div></div><br><br><br><br><p></p><br><br><br><br>-- <br><br><br>Y=
+ou received this message because you are subscribed to the Google Groups &q=
+uot;singularity&quot; group.<br><br><br>To unsubscribe from this group and =
+stop receiving emails from it, send an email to <a href=3D"javascript:" tar=
+get=3D"_blank" gdf-obfuscated-mailto=3D"S3F9sHdlCQAJ" rel=3D"nofollow" onmo=
+usedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.=
+href=3D&#39;javascript:&#39;;return true;">singularity...@lbl.<wbr>gov</a>.=
+<br><br><br></blockquote></div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+S3F9sHdlCQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</blockquote></div></div></div></div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+S3F9sHdlCQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div=
+ dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div>Gregory M. Kurtzer</div=
+><div>HPC Systems Architect and Technology Developer</div><div>Lawrence Ber=
+keley National Laboratory HPCS<br>University of California Berkeley Researc=
+h IT<br>Singularity Linux Containers=C2=A0(<a href=3D"http://singularity.lb=
+l.gov/" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;=
+http://www.google.com/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.gov%2F\x26sa\x3=
+dD\x26sntz\x3d1\x26usg\x3dAFQjCNHITKHVjde-iKsg1vSOOrRt58XtEQ&#39;;return tr=
+ue;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%=
+2Fsingularity.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHITKHVjde-=
+iKsg1vSOOrRt58XtEQ&#39;;return true;">http://<wbr>singularity.lbl.gov/</a>)=
+</div><div>Warewulf Cluster Management=C2=A0(<a href=3D"http://warewulf.lbl=
+.gov/" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;h=
+ttp://www.google.com/url?q\x3dhttp%3A%2F%2Fwarewulf.lbl.gov%2F\x26sa\x3dD\x=
+26sntz\x3d1\x26usg\x3dAFQjCNFPtSL1wiDx3C_BKcVgBhWc77Jxww&#39;;return true;"=
+ onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwa=
+rewulf.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPtSL1wiDx3C_BKcV=
+gBhWc77Jxww&#39;;return true;">http://warewulf.<wbr>lbl.gov/</a>)</div><div=
+>GitHub:=C2=A0<a href=3D"https://github.com/gmkurtzer" target=3D"_blank" re=
+l=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q=
+\x3dhttps%3A%2F%2Fgithub.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3d=
+AFQjCNHgwLrV-1wbChhxINJY_U3Xyjg2uw&#39;;return true;" onclick=3D"this.href=
+=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fgmkurtze=
+r\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHgwLrV-1wbChhxINJY_U3Xyjg2uw&#39;=
+;return true;">https://github.com/<wbr>gmkurtzer</a>,=C2=A0<span style=3D"f=
+ont-size:12.8px">Twitter:=C2=A0</span><a href=3D"https://twitter.com/gmkurt=
+zer" style=3D"font-size:12.8px" target=3D"_blank" rel=3D"nofollow" onmoused=
+own=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Ftwitt=
+er.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGiphjH-YHVVhLsKs=
+NsH_Zw5B_gRA&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.goo=
+gle.com/url?q\x3dhttps%3A%2F%2Ftwitter.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x=
+3d1\x26usg\x3dAFQjCNGiphjH-YHVVhLsKsNsH_Zw5B_gRA&#39;;return true;">https:/=
+/<wbr>twitter.com/gmkurtzer</a></div></div></div></div></div></div></div></=
+div></div></div></div>
+</div>
+</blockquote></div>
+------=_Part_2785_804217943.1484940947335--
+
+------=_Part_2784_833277128.1484940947334--

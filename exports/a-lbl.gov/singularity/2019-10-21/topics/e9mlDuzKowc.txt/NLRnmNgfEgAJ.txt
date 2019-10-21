@@ -1,0 +1,313 @@
+Date: Tue, 10 Jan 2017 02:40:53 -0800 (PST)
+From: Chris Collins <cca...@googlemail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <e23a02cf-a55c-4da5-bf0f-72c449c49e44@lbl.gov>
+In-Reply-To: <4c1b65a3-6283-4b2a-be50-03e7650a155c@lbl.gov>
+References: <5161117d-8823-45f9-a320-d35642b6278d@lbl.gov>
+ <CAN7etTwTe_fHzof4ACoU2L48kp14K5y2nvustjaJXfEwf2MOFQ@mail.gmail.com>
+ <4c1b65a3-6283-4b2a-be50-03e7650a155c@lbl.gov>
+Subject: Re: [Singularity] Singularity within Docker: could not virtualize
+ mount namespace
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1453_1323259074.1484044853453"
+
+------=_Part_1453_1323259074.1484044853453
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1454_652792764.1484044853454"
+
+------=_Part_1454_652792764.1484044853454
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi,
+
+Just to fill in some details on this for those interested, having resumed 
+looking at this post-Christmas....
+
+In my (VM) test environment, the obvious indicators are that the docker 
+container is running non-privilege (I'm even starting docker with 
+--privileged=false) and docker inspect is showing:
+
+[root@centos7base ~]# docker inspect --format='{{.HostConfig.Privileged}}' 
+test-docker
+false
+
+However, within the container, things are a bit different - using an 
+approach suggested 
+at http://stackoverflow.com/questions/32144575/how-to-know-if-a-docker-container-is-running-in-privileged-mode 
+specifically the following, seems to indicate I have at least some 
+privilege. I guess that is why singularity works here.
+
+ip link add dummy0 type dummy >/dev/nullif [[ $? -eq 0 ]]; then
+    PRIVILEGED=true
+    # clean the dummy0 link
+    ip link delete dummy0 >/dev/nullelse
+    PRIVILEGED=falsefi
+
+
+On my real production servers, the docker inspect comes back the same, but 
+the above code errors with "Operation not permitted".
+
+I've only recently started looking at Docker and singularity, so I need to 
+do a little more investigation i.e. is there some global Docker setting 
+impacting here or is there something within the container that allows this? 
+
+Either way, as things stand it is a no go in my production environment, 
+which is a real shame.
+
+Thanks anyway,
+
+Chris
+
+On Tuesday, 27 December 2016 22:05:25 UTC, Chris Collins wrote:
+>
+> Hi Greg,
+>
+> Thanks for getting back to me with that. 
+>
+> That does sound right, and I'm pretty sure Docker in my production env 
+> isn't setting privileged, while journalctl is recording the launch with 
+> privileged=false.
+>
+> However, unless I'm missing something, the Docker in my VM test 
+> environment (where singularity works) doesn't explicitly use the 
+> --privileged option and from journalctl it also looks like privileged is 
+> false.
+>
+> Could there be anything else that would result in similar behaviour? Does 
+> anyone know if there is a way of actually testing privilege requirements 
+> from within a docker container?
+>
+> Thanks,
+>
+> Chris
+>
+> On Saturday, 24 December 2016 01:50:51 UTC, Gregory M. Kurtzer wrote:
+>>
+>> Hi Chris,
+>>
+>> To use Singularity within a Docker container I think you must use the 
+>> --privileged Docker option. 
+>>
+>> Hope that helps!
+>>
+>> Greg 
+>>
+>>
+>> On Fri, Dec 23, 2016 at 3:08 PM 'Chris Collins' via singularity <
+>> si...@lbl.gov> wrote:
+>>
+>>> Hi,
+>>>
+>>> I've just starting playing around with Singularity as a way of 
+>>> potentially providing access to containerised workflows. I am however 
+>>> running into some issues with getting it working in my already Docker based 
+>>> production environment. I've got a simple example working in a similar test 
+>>> environment (though not exactly the same) but in principal, I know 
+>>> Singularity works fine from within Docker.
+>>>
+>>> Anyway, the error I'm getting is:
+>>>
+>>> singularity shell -C docker-anaconda27.img
+>>> ERROR  : Could not virtualize mount namespace: Operation not permitted
+>>> ABORT  : Retval = 255
+>>>
+>>> I'm running as root at this stage to rule out any permission issue. A 
+>>> snip of the debug output doesn't make anything clearer:
+>>>
+>>> VERBOSE [U=0,P=41280]      pid.c:54:singularity_ns_pid_unshare()      : 
+>>> Not virtualizing PID namespace by configuration
+>>> DEBUG   [U=0,P=41280]     
+>>>  config_parser.c:62:singularity_config_rewind(): Rewinding configuration 
+>>> file
+>>> DEBUG   [U=0,P=41280]     
+>>>  config_parser.c:107:singularity_config_get_bool(): Called 
+>>> singularity_config_get_bool(mount slave, 0)
+>>> DEBUG   [U=0,P=41280]     
+>>>  config_parser.c:80:singularity_config_get_value(): Called 
+>>> singularity_config_get_value(mount slave)
+>>> VERBOSE [U=0,P=41280]     
+>>>  config_parser.c:91:singularity_config_get_value(): Got config key mount 
+>>> slave (= 'no')
+>>> DEBUG   [U=0,P=41280]     
+>>>  config_parser.c:118:singularity_config_get_bool(): Return 
+>>> singularity_config_get_bool(mount slave, 0) = 0
+>>> DEBUG   [U=0,P=41280]      privilege.c:147:singularity_priv_escalate(): 
+>>> Running as root, not changing privileges
+>>> DEBUG   [U=0,P=41280]      mnt.c:54:singularity_ns_mnt_unshare()      : 
+>>> Virtualizing FS namespace
+>>> DEBUG   [U=0,P=41280]      mnt.c:61:singularity_ns_mnt_unshare()      : 
+>>> Virtualizing mount namespace
+>>> ERROR   [U=0,P=41280]      mnt.c:63:singularity_ns_mnt_unshare()      : 
+>>> Could not virtualize mount namespace: Operation not permitted
+>>>
+>>> I have "allow pid ns = no" as this was also kicking up an error. I've 
+>>> tried setting all mount options in the conf to no.
+>>>
+>>> The same command from the same installation works fine on the bare metal 
+>>> system.
+>>>
+>>> Does anyone have any suggestions of what might be the issue or at least 
+>>> where to start looking?
+>>>
+>>> Thanks very much,
+>>>
+>>> Chris
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>> -- 
+>>>
+>>>
+>>> You received this message because you are subscribed to the Google 
+>>> Groups "singularity" group.
+>>>
+>>>
+>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>> an email to singu...@lbl.gov.
+>>>
+>>>
+>>>
+------=_Part_1454_652792764.1484044853454
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi,<div><br></div><div>Just to fill in some details on thi=
+s for those interested, having resumed looking at this post-Christmas....</=
+div><div><br></div><div>In my (VM) test environment, the obvious indicators=
+ are that the docker container is running non-privilege (I&#39;m even start=
+ing docker with --privileged=3Dfalse) and docker inspect is showing:</div><=
+div><br></div><div><div>[root@centos7base ~]# docker inspect --format=3D&#3=
+9;{{.HostConfig.Privileged}}&#39; test-docker</div><div>false</div></div><d=
+iv><br></div><div>However, within the container, things are a bit different=
+ - using an approach suggested at=C2=A0http://stackoverflow.com/questions/3=
+2144575/how-to-know-if-a-docker-container-is-running-in-privileged-mode spe=
+cifically the following, seems to indicate I have at least some privilege. =
+I guess that is why singularity works here.</div><div><br></div><div><pre c=
+lass=3D"lang-bash prettyprint prettyprinted" style=3D"padding: 5px; width: =
+auto; max-height: 600px; overflow: auto; font-family: Consolas, Menlo, Mona=
+co, &quot;Lucida Console&quot;, &quot;Liberation Mono&quot;, &quot;DejaVu S=
+ans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quo=
+t;, monospace, sans-serif; color: rgb(57, 51, 24); word-wrap: normal; backg=
+round-color: rgb(239, 240, 241);"><code style=3D"font-family: Consolas, Men=
+lo, Monaco, &quot;Lucida Console&quot;, &quot;Liberation Mono&quot;, &quot;=
+DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier=
+ New&quot;, monospace, sans-serif; white-space: inherit;"><span class=3D"pl=
+n" style=3D"color: rgb(48, 51, 54);">ip link add dummy0 type dummy </span><=
+span class=3D"pun" style=3D"color: rgb(48, 51, 54);">&gt;/</span><span clas=
+s=3D"pln" style=3D"color: rgb(48, 51, 54);">dev</span><span class=3D"pun" s=
+tyle=3D"color: rgb(48, 51, 54);">/</span><span class=3D"pln" style=3D"color=
+: rgb(48, 51, 54);">null
+</span><span class=3D"kwd" style=3D"color: rgb(16, 16, 148);">if</span><spa=
+n class=3D"pln" style=3D"color: rgb(48, 51, 54);"> </span><span class=3D"pu=
+n" style=3D"color: rgb(48, 51, 54);">[[</span><span class=3D"pln" style=3D"=
+color: rgb(48, 51, 54);"> $</span><span class=3D"pun" style=3D"color: rgb(4=
+8, 51, 54);">?</span><span class=3D"pln" style=3D"color: rgb(48, 51, 54);">=
+ </span><span class=3D"pun" style=3D"color: rgb(48, 51, 54);">-</span><span=
+ class=3D"pln" style=3D"color: rgb(48, 51, 54);">eq </span><span class=3D"l=
+it" style=3D"color: rgb(125, 39, 39);">0</span><span class=3D"pln" style=3D=
+"color: rgb(48, 51, 54);"> </span><span class=3D"pun" style=3D"color: rgb(4=
+8, 51, 54);">]];</span><span class=3D"pln" style=3D"color: rgb(48, 51, 54);=
+"> </span><span class=3D"kwd" style=3D"color: rgb(16, 16, 148);">then</span=
+><span class=3D"pln" style=3D"color: rgb(48, 51, 54);">
+    PRIVILEGED</span><span class=3D"pun" style=3D"color: rgb(48, 51, 54);">=
+=3D</span><span class=3D"pln" style=3D"color: rgb(48, 51, 54);">true
+    </span><span class=3D"com" style=3D"color: rgb(133, 140, 147);"># clean=
+ the dummy0 link</span><span class=3D"pln" style=3D"color: rgb(48, 51, 54);=
+">
+    ip link delete dummy0 </span><span class=3D"pun" style=3D"color: rgb(48=
+, 51, 54);">&gt;/</span><span class=3D"pln" style=3D"color: rgb(48, 51, 54)=
+;">dev</span><span class=3D"pun" style=3D"color: rgb(48, 51, 54);">/</span>=
+<span class=3D"pln" style=3D"color: rgb(48, 51, 54);">null
+</span><span class=3D"kwd" style=3D"color: rgb(16, 16, 148);">else</span><s=
+pan class=3D"pln" style=3D"color: rgb(48, 51, 54);">
+    PRIVILEGED</span><span class=3D"pun" style=3D"color: rgb(48, 51, 54);">=
+=3D</span><span class=3D"pln" style=3D"color: rgb(48, 51, 54);">false
+</span><span class=3D"kwd" style=3D"color: rgb(16, 16, 148);">fi</span></co=
+de></pre></div><div><br></div><div>On my real production servers, the docke=
+r inspect comes back the same, but the above code errors with &quot;Operati=
+on not permitted&quot;.<br></div><div><br></div><div>I&#39;ve only recently=
+ started looking at Docker and singularity, so I need to do a little more i=
+nvestigation i.e. is there some global Docker setting impacting here or is =
+there something within the container that allows this?=C2=A0</div><div><br>=
+</div><div>Either way, as things stand it is a no go in my production envir=
+onment, which is a real shame.</div><div><br></div><div>Thanks anyway,</div=
+><div><br></div><div>Chris</div><div><br>On Tuesday, 27 December 2016 22:05=
+:25 UTC, Chris Collins  wrote:<blockquote class=3D"gmail_quote" style=3D"ma=
+rgin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;">=
+<div dir=3D"ltr">Hi Greg,<div><br></div><div>Thanks for getting back to me =
+with that.=C2=A0</div><div><br></div><div>That does sound right, and I&#39;=
+m pretty sure Docker in my production env isn&#39;t setting privileged, whi=
+le journalctl is recording the launch with privileged=3Dfalse.</div><div><b=
+r></div><div>However, unless I&#39;m missing something, the Docker in my VM=
+ test environment (where singularity works) doesn&#39;t explicitly use the =
+--privileged option and from journalctl it also looks like privileged is fa=
+lse.</div><div><br></div><div>Could there be anything else that would resul=
+t in similar behaviour? Does anyone know if there is a way of actually test=
+ing privilege requirements from within a docker container?</div><div><br></=
+div><div>Thanks,</div><div><br></div><div>Chris</div><div><br>On Saturday, =
+24 December 2016 01:50:51 UTC, Gregory M. Kurtzer  wrote:<blockquote class=
+=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc s=
+olid;padding-left:1ex"><div>Hi Chris,</div><div><br></div><div>To use Singu=
+larity within a Docker container I think you must use the --privileged Dock=
+er option.=C2=A0</div><div><br></div><div>Hope that helps!</div><div><br></=
+div><div>Greg=C2=A0</div><div><br></div><div><br></div><div><div class=3D"g=
+mail_quote"><div>On Fri, Dec 23, 2016 at 3:08 PM &#39;Chris Collins&#39; vi=
+a singularity &lt;<a rel=3D"nofollow">si...@lbl.gov</a>&gt; wrote:<br></div=
+><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1=
+px #ccc solid;padding-left:1ex"><div>Hi,<div><br></div><div>I&#39;ve just s=
+tarting playing around with Singularity as a way of potentially providing a=
+ccess to containerised workflows. I am however running into some issues wit=
+h getting it working in my already Docker based production environment. I&#=
+39;ve got a simple example working in a similar test environment (though no=
+t exactly the same) but in principal, I know Singularity works fine from wi=
+thin Docker.</div><div><br></div><div>Anyway, the error I&#39;m getting is:=
+</div><div><br></div><div><div>singularity shell -C docker-anaconda27.img</=
+div><div>ERROR =C2=A0: Could not virtualize mount namespace: Operation not =
+permitted</div><div>ABORT =C2=A0: Retval =3D 255</div></div><div><br></div>=
+<div>I&#39;m running as root at this stage to rule out any permission issue=
+. A snip of the debug output doesn&#39;t make anything clearer:<br></div><d=
+iv><br></div><div><div>VERBOSE [U=3D0,P=3D41280] =C2=A0 =C2=A0 =C2=A0pid.c:=
+54:singularity_ns_pid_<wbr>unshare() =C2=A0 =C2=A0 =C2=A0: Not virtualizing=
+ PID namespace by configuration</div><div>DEBUG =C2=A0 [U=3D0,P=3D41280] =
+=C2=A0 =C2=A0 =C2=A0config_parser.c:62:<wbr>singularity_config_rewind(): Re=
+winding configuration file</div><div>DEBUG =C2=A0 [U=3D0,P=3D41280] =C2=A0 =
+=C2=A0 =C2=A0config_parser.c:107:<wbr>singularity_config_get_bool(): Called=
+ singularity_config_get_bool(<wbr>mount slave, 0)</div><div>DEBUG =C2=A0 [U=
+=3D0,P=3D41280] =C2=A0 =C2=A0 =C2=A0config_parser.c:80:<wbr>singularity_con=
+fig_get_value()<wbr>: Called singularity_config_get_value(<wbr>mount slave)=
+</div><div>VERBOSE [U=3D0,P=3D41280] =C2=A0 =C2=A0 =C2=A0config_parser.c:91=
+:<wbr>singularity_config_get_value()<wbr>: Got config key mount slave (=3D =
+&#39;no&#39;)</div><div>DEBUG =C2=A0 [U=3D0,P=3D41280] =C2=A0 =C2=A0 =C2=A0=
+config_parser.c:118:<wbr>singularity_config_get_bool(): Return singularity_=
+config_get_bool(<wbr>mount slave, 0) =3D 0</div><div>DEBUG =C2=A0 [U=3D0,P=
+=3D41280] =C2=A0 =C2=A0 =C2=A0privilege.c:147:singularity_<wbr>priv_escalat=
+e(): Running as root, not changing privileges</div><div>DEBUG =C2=A0 [U=3D0=
+,P=3D41280] =C2=A0 =C2=A0 =C2=A0mnt.c:54:singularity_ns_mnt_<wbr>unshare() =
+=C2=A0 =C2=A0 =C2=A0: Virtualizing FS namespace</div><div>DEBUG =C2=A0 [U=
+=3D0,P=3D41280] =C2=A0 =C2=A0 =C2=A0mnt.c:61:singularity_ns_mnt_<wbr>unshar=
+e() =C2=A0 =C2=A0 =C2=A0: Virtualizing mount namespace</div><div>ERROR =C2=
+=A0 [U=3D0,P=3D41280] =C2=A0 =C2=A0 =C2=A0mnt.c:63:singularity_ns_mnt_<wbr>=
+unshare() =C2=A0 =C2=A0 =C2=A0: Could not virtualize mount namespace: Opera=
+tion not permitted</div></div><div><br></div><div>I have &quot;allow pid ns=
+ =3D no&quot; as this was also kicking up an error. I&#39;ve tried setting =
+all mount options in the conf to no.</div><div><br></div><div>The same comm=
+and from the same installation works fine on the bare metal system.</div><d=
+iv><br></div><div>Does anyone have any suggestions of what might be the iss=
+ue or at least where to start looking?</div><div><br></div><div>Thanks very=
+ much,</div><div><br></div><div>Chris</div></div><br><br><br><br><p></p><br=
+><br><br><br>-- <br><br><br>You received this message because you are subsc=
+ribed to the Google Groups &quot;singularity&quot; group.<br><br><br>To uns=
+ubscribe from this group and stop receiving emails from it, send an email t=
+o <a rel=3D"nofollow">singu...@lbl.gov</a>.<br><br><br></blockquote></div><=
+/div>
+</blockquote></div></div></blockquote></div></div>
+------=_Part_1454_652792764.1484044853454--
+
+------=_Part_1453_1323259074.1484044853453--

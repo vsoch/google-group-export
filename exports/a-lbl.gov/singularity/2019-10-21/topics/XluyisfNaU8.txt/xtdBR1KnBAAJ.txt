@@ -1,0 +1,412 @@
+Date: Mon, 26 Jun 2017 06:10:58 -0700 (PDT)
+From: John Galt <spe...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <c601ad24-7be4-492c-9321-98c024dd7340@lbl.gov>
+In-Reply-To: <CAM=pu+K_cEGP3wQZpjNqSVxWOYAgZ_dd7xbG0vV57jb3zF_CwQ@mail.gmail.com>
+References: <8073395e-e1da-4751-b26b-2cbbfd89c391@lbl.gov> <CAM=pu++C8U7g113XCepjzgmN=-_v_uHpsrDmmQTotG2Ha+i0Jg@mail.gmail.com>
+ <f7b5ce58-169a-4ff6-bc12-c118ebe4c3dd@lbl.gov>
+ <CAM=pu+K_cEGP3wQZpjNqSVxWOYAgZ_dd7xbG0vV57jb3zF_CwQ@mail.gmail.com>
+Subject: Re: [Singularity] Auto-remove indentation for %runscript
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1678_2121486009.1498482658910"
+
+------=_Part_1678_2121486009.1498482658910
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1679_11020635.1498482658911"
+
+------=_Part_1679_11020635.1498482658911
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Thanks Vanessa. I'll make some time for the spacing.
+
+On Friday, June 23, 2017 at 5:11:28 PM UTC-5, vanessa wrote:
+>
+> Yeah I agree, I think we should have a check if the user's runscript=20
+> starts with a #!, and if so, use that. For example, when I do that now:
+>
+> BootStrap: docker
+>> From: centos:7
+>> %runscript
+>> #!/usr/bin/env python
+>> print('hello')
+>
+>
+> I get this whakadoo:
+>
+> singularity inspect -r centos.img=20
+>> #!/bin/sh=20
+>> #!/usr/bin/env python
+>> print('hello')
+>
+>
+> The exception to the above is given that a user doesn't put a runscript i=
+n=20
+> the bootstrap, then we use what is found with docker exec (first priority=
+)=20
+> and then cmd (second, unless specified to be used, and in both cases=20
+> /bin/sh is used. (see here=20
+> <https://github.com/singularityware/singularity/blob/adf5259ac94d7b213c64=
+9f073dcda32459b0c8b7/libexec/python/docker/tasks.py#L103>)=20
+> but in your case above, the user provided runscript overrides that=20
+> completely.
+>
+> I'll create an issue about the check, and then the spacing would be up to=
+=20
+> you :)
+>
+> Best,
+>
+> Vanessa
+>
+> On Fri, Jun 23, 2017 at 2:23 PM, John Galt <s...@gmail.com <javascript:>
+> > wrote:
+>
+>> Hi Vanessa,=20
+>>
+>> Thanks for your reply. Please see the example below. Technically it does=
+=20
+>> not create any issue but it would still make sense to remove the first=
+=20
+>> level of indentation of the %runscript to align everything with the=20
+>> *#!/bin/bash* of the */.singularity.d/runscript.*
+>> On the other hand, having this indentation in the definition file really=
+=20
+>> helps to distinguish the different sections "=C3=A0 la Python".=20
+>> What do you think ?
+>>
+>> By the way, regarding the runscript, by default the shell is sh (
+>> *#!/bin/sh*). Is there a way to indicate which interpreter to use ?=20
+>> (bash, csh, Python?). Perhaps *#!/usr/bin/env INTERPRETER* could be an=
+=20
+>> alternative (or similar) but I am not sure of the portability. Or adding=
+ a=20
+>> keyword after the *%runscript* definition ? (such as *%runscript=20
+>> /bin/bash* or *%runscript /bin/python*)
+>> Any comment ?
+>>
+>>
+>> The definition file
+>>
+>> %runscript
+>>   # If used through a batch (SLURM, LSF...) do not use temp but a scratc=
+h
+>>   # space by providing the SINGULARITY_TMPDIR variable to Singularity
+>>   TEMPDIR=3D$(mktemp -p "${TMPDIR:-/tmp}" -d tmp.XXXX)
+>>
+>>   echo "Creating and relocating into temporary directory $TEMPDIR..."
+>>   cd $TEMPDIR
+>>   export WINEPREFIX=3D$TEMPDIR/wineprefix
+>>   export WINEARCH=3Dwin32
+>>
+>>   echo "Restoring wineprefix..."
+>>   tar -xzf /apps/wineprefix.tar.gz
+>>
+>>   echo "Executing software..."
+>>   wine "c:Local\my.exe"
+>>
+>>   echo "Clean session"
+>>   wineboot --end-session
+>>
+>>
+>> %files
+>>   ./wineprefix.tar.gz /apps/wineprefix.tar.gz
+>>
+>> %post
+>>   dpkg --add-architecture i386
+>>   apt update
+>>   apt install -y wine
+>>
+>>   # add directories for HPC systems
+>>   mkdir -p /gpfs
+>>   mkdir /lustre
+>>
+>>   # for for the wineprefix
+>>   mkdir /apps
+>>
+>>
+>> The resulting */.singularity.d/runscript*
+>>
+>> #!/bin/sh
+>>
+>>
+>>   # If used through a batch (SLURM, LSF...) do not use temp but a scratc=
+h
+>>   # space by providing the SINGULARITY_TMPDIR variable to Singularity
+>>   TEMPDIR=3D$(mktemp -p "${TMPDIR:-/tmp}" -d tmp.XXXX)
+>>
+>>
+>>   echo "Creating and relocating into temporary directory $TEMPDIR..."
+>>   cd $TEMPDIR
+>>
+>>
+>>   export WINEPREFIX=3D$TEMPDIR/wineprefix
+>>   export WINEARCH=3Dwin32
+>>
+>>
+>>   echo "Restoring wineprefix..."
+>>   tar -xzf /apps/wineprefix.tar.gz
+>>
+>>
+>>   echo "Executing software..."
+>>   wine "c:Local\GRTMPS\HSI\grtRunHPC.exe"
+>>
+>>
+>>   echo "Clean session"
+>>   wineboot --end-session
+>>
+>>
+>>
+>>
+>>
+>> On Friday, June 23, 2017 at 3:17:42 PM UTC-5, vanessa wrote:
+>>>
+>>> What is the concern with having an indentation?
+>>>
+>>> On Fri, Jun 23, 2017 at 1:10 PM, John Galt <s...@gmail.com> wrote:
+>>>
+>>>> Hi,
+>>>>
+>>>> I just noticed that the %runscript code added to the definition file=
+=20
+>>>> was indented also in the images /.singularity.d/runscript.
+>>>>
+>>>> Would this make sense to remove the first level of indentation when=20
+>>>> building the container ?
+>>>>
+>>>> Thanks !
+>>>>
+>>>> John
+>>>>
+>>>> --=20
+>>>> You received this message because you are subscribed to the Google=20
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send=
+=20
+>>>> an email to singu...@lbl.gov.
+>>>>
+>>>
+>>>
+>>>
+>>> --=20
+>>> Vanessa Villamia Sochat
+>>> Stanford University '16
+>>> (603) 321-0676
+>>>
+>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s=20
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n=20
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> --=20
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_1679_11020635.1498482658911
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Thanks Vanessa. I&#39;ll make some time for the spacing.<b=
+r><br>On Friday, June 23, 2017 at 5:11:28 PM UTC-5, vanessa wrote:<blockquo=
+te class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left:=
+ 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">Yeah I agree, I think =
+we should have a check if the user&#39;s runscript starts with a #!, and if=
+ so, use that. For example, when I do that now:<div><br><blockquote class=
+=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rg=
+b(204,204,204);padding-left:1ex">BootStrap: docker<br>From: centos:7<br>%ru=
+nscript<br>#!/usr/bin/env python<br>print(&#39;hello&#39;)</blockquote><div=
+><br></div><div>I get this whakadoo:</div><div><br></div><div><blockquote c=
+lass=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px soli=
+d rgb(204,204,204);padding-left:1ex">singularity inspect -r centos.img=C2=
+=A0<br>#!/bin/sh=C2=A0<br>#!/usr/bin/env python<br>print(&#39;hello&#39;)</=
+blockquote></div><div><br></div></div><div>The exception to the above is gi=
+ven that a user doesn&#39;t put a runscript in the bootstrap, then we use w=
+hat is found with docker exec (first priority) and then cmd (second, unless=
+ specified to be used, and in both cases /bin/sh is used. (<a href=3D"https=
+://github.com/singularityware/singularity/blob/adf5259ac94d7b213c649f073dcd=
+a32459b0c8b7/libexec/python/docker/tasks.py#L103" target=3D"_blank" rel=3D"=
+nofollow" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dh=
+ttps%3A%2F%2Fgithub.com%2Fsingularityware%2Fsingularity%2Fblob%2Fadf5259ac9=
+4d7b213c649f073dcda32459b0c8b7%2Flibexec%2Fpython%2Fdocker%2Ftasks.py%23L10=
+3\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNE7jpW4KTy4lptMxklTCYyv4qNmZg&#39;=
+;return true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3d=
+https%3A%2F%2Fgithub.com%2Fsingularityware%2Fsingularity%2Fblob%2Fadf5259ac=
+94d7b213c649f073dcda32459b0c8b7%2Flibexec%2Fpython%2Fdocker%2Ftasks.py%23L1=
+03\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNE7jpW4KTy4lptMxklTCYyv4qNmZg&#39=
+;;return true;">see here</a>) but in your case above, the user provided run=
+script overrides that completely.</div><div><br></div><div>I&#39;ll create =
+an issue about the check, and then the spacing would be up to you :)</div><=
+div><br></div><div>Best,</div><div><br></div><div>Vanessa</div></div><div><=
+br><div class=3D"gmail_quote">On Fri, Jun 23, 2017 at 2:23 PM, John Galt <s=
+pan dir=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscate=
+d-mailto=3D"4HPhvOIjAgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;=
+javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;=
+;return true;">s...@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D=
+"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding=
+-left:1ex"><div dir=3D"ltr"><div>Hi Vanessa,=C2=A0</div><div><br></div><div=
+>Thanks for your reply. Please see the example below. Technically it does n=
+ot create any issue but it would still make sense to remove the first level=
+ of indentation of the %runscript to align everything with the <i>#!/bin/ba=
+sh</i> of the=C2=A0<i>/.singularity.d/runscript.</i></div><div>On the other=
+ hand, having this indentation in the definition file really helps to disti=
+nguish the different sections &quot;=C3=A0 la Python&quot;.=C2=A0</div><div=
+>What do you think ?</div><div><br></div><div>By the way, regarding the run=
+script, by default the shell is sh (<i>#!/bin/sh</i>). Is there a way to in=
+dicate which interpreter to use ? (bash, csh, Python?). Perhaps <i>#!/usr/b=
+in/env INTERPRETER</i>=C2=A0could be an alternative (or similar) but I am n=
+ot sure of the portability. Or adding a keyword after the <i>%runscript</i>=
+ definition ? (such as <i>%runscript /bin/bash</i> or <i>%runscript /bin/py=
+thon</i>)</div><div>Any comment ?</div><div><br></div><div><br></div><div>T=
+he definition file</div><br><div style=3D"background-color:rgb(250,250,250)=
+;border-color:rgb(187,187,187);border-style:solid;border-width:1px;word-wra=
+p:break-word"><code><div><span style=3D"color:#660">%</span><span style=3D"=
+color:#000">runscript<br>=C2=A0 </span><span style=3D"color:#800"># If used=
+ through a batch (SLURM, LSF...) do not use temp but a scratch</span><span =
+style=3D"color:#000"><br>=C2=A0 </span><span style=3D"color:#800"># space b=
+y providing the SINGULARITY_TMPDIR variable to Singularity</span><span styl=
+e=3D"color:#000"><br>=C2=A0 TEMPDIR</span><span style=3D"color:#660">=3D</s=
+pan><span style=3D"color:#000">$</span><span style=3D"color:#660">(</span><=
+span style=3D"color:#000">mktemp </span><span style=3D"color:#660">-</span>=
+<span style=3D"color:#000">p </span><span style=3D"color:#080">&quot;${TMPD=
+IR:-/tmp}&quot;</span><span style=3D"color:#000"> </span><span style=3D"col=
+or:#660">-</span><span style=3D"color:#000">d tmp</span><span style=3D"colo=
+r:#660">.</span><span style=3D"color:#000">XXXX</span><span style=3D"color:=
+#660">)</span><span style=3D"color:#000"><br><br>=C2=A0 echo </span><span s=
+tyle=3D"color:#080">&quot;Creating and relocating into temporary directory =
+$TEMPDIR...&quot;</span><span style=3D"color:#000"><br>=C2=A0 cd $TEMPDIR<b=
+r>=C2=A0 </span><span style=3D"color:#008">export</span><span style=3D"colo=
+r:#000"> WINEPREFIX</span><span style=3D"color:#660">=3D</span><span style=
+=3D"color:#000">$TEMPDIR</span><span style=3D"color:#660">/</span><span sty=
+le=3D"color:#000">wineprefix<br>=C2=A0 </span><span style=3D"color:#008">ex=
+port</span><span style=3D"color:#000"> WINEARCH</span><span style=3D"color:=
+#660">=3D</span><span style=3D"color:#000">win32<br><br>=C2=A0 echo </span>=
+<span style=3D"color:#080">&quot;Restoring wineprefix...&quot;</span><span =
+style=3D"color:#000"><br>=C2=A0 tar </span><span style=3D"color:#660">-</sp=
+an><span style=3D"color:#000">xzf </span><span style=3D"color:#660">/</span=
+><span style=3D"color:#000">apps</span><span style=3D"color:#660">/</span><=
+span style=3D"color:#000">wineprefix</span><span style=3D"color:#660">.</sp=
+an><span style=3D"color:#000">tar</span><span style=3D"color:#660">.</span>=
+<span style=3D"color:#000">gz<br><br>=C2=A0 echo </span><span style=3D"colo=
+r:#080">&quot;Executing software...&quot;</span><span style=3D"color:#000">=
+<br>=C2=A0 wine </span><span style=3D"color:#080">&quot;c:Local\my.exe&quot=
+;</span><span style=3D"color:#000"><br><br>=C2=A0 echo </span><span style=
+=3D"color:#080">&quot;Clean session&quot;</span><span style=3D"color:#000">=
+<br>=C2=A0 wineboot </span><span style=3D"color:#660">--</span><span style=
+=3D"color:#008">end</span><span style=3D"color:#660">-</span><span style=3D=
+"color:#000">session<br><br><br></span><span style=3D"color:#660">%</span><=
+span style=3D"color:#000">files<br>=C2=A0 </span><span style=3D"color:#660"=
+>./</span><span style=3D"color:#000">wineprefix</span><span style=3D"color:=
+#660">.</span><span style=3D"color:#000">tar</span><span style=3D"color:#66=
+0">.</span><span style=3D"color:#000">gz </span><span style=3D"color:#660">=
+/</span><span style=3D"color:#000">apps</span><span style=3D"color:#660">/<=
+/span><span style=3D"color:#000">wineprefix</span><span style=3D"color:#660=
+">.</span><span style=3D"color:#000">tar</span><span style=3D"color:#660">.=
+</span><span style=3D"color:#000">gz<br><br></span><span style=3D"color:#66=
+0">%</span><span style=3D"color:#000">post<br>=C2=A0 dpkg </span><span styl=
+e=3D"color:#660">--</span><span style=3D"color:#000">add</span><span style=
+=3D"color:#660">-</span><span style=3D"color:#000">architecture i386<br>=C2=
+=A0 apt update<br>=C2=A0 apt install </span><span style=3D"color:#660">-</s=
+pan><span style=3D"color:#000">y wine<br><br>=C2=A0 </span><span style=3D"c=
+olor:#800"># add directories for HPC systems</span><span style=3D"color:#00=
+0"><br>=C2=A0 mkdir </span><span style=3D"color:#660">-</span><span style=
+=3D"color:#000">p </span><span style=3D"color:#660">/</span><span style=3D"=
+color:#000">gpfs<br>=C2=A0 mkdir </span><span style=3D"color:#660">/</span>=
+<span style=3D"color:#000">lustre<br><br>=C2=A0 </span><span style=3D"color=
+:#800"># for for the wineprefix</span><span style=3D"color:#000"><br>=C2=A0=
+ mkdir </span><span style=3D"color:#660">/</span><span style=3D"color:#000"=
+>apps</span></div></code></div><div><br></div><div><br></div><div>The resul=
+ting <i>/.singularity.d/runscript</i></div><div><br></div><div><div style=
+=3D"background-color:rgb(250,250,250);border-color:rgb(187,187,187);border-=
+style:solid;border-width:1px;word-wrap:break-word"><code><div><span style=
+=3D"color:#800">#!/bin/sh</span><span style=3D"color:#000"><br><br><br>=C2=
+=A0 </span><span style=3D"color:#800"># If used through a batch (SLURM, LSF=
+...) do not use temp but a scratch</span><span style=3D"color:#000"><br>=C2=
+=A0 </span><span style=3D"color:#800"># space by providing the SINGULARITY_=
+TMPDIR variable to Singularity</span><span style=3D"color:#000"><br>=C2=A0 =
+TEMPDIR</span><span style=3D"color:#660">=3D</span><span style=3D"color:#00=
+0">$</span><span style=3D"color:#660">(</span><span style=3D"color:#000">mk=
+temp </span><span style=3D"color:#660">-</span><span style=3D"color:#000">p=
+ </span><span style=3D"color:#080">&quot;${TMPDIR:-/tmp}&quot;</span><span =
+style=3D"color:#000"> </span><span style=3D"color:#660">-</span><span style=
+=3D"color:#000">d tmp</span><span style=3D"color:#660">.</span><span style=
+=3D"color:#000">XXXX</span><span style=3D"color:#660">)</span><span style=
+=3D"color:#000"><br><br><br>=C2=A0 echo </span><span style=3D"color:#080">&=
+quot;Creating and relocating into temporary directory $TEMPDIR...&quot;</sp=
+an><span style=3D"color:#000"><br>=C2=A0 cd $TEMPDIR<br><br><br>=C2=A0 </sp=
+an><span style=3D"color:#008">export</span><span style=3D"color:#000"> WINE=
+PREFIX</span><span style=3D"color:#660">=3D</span><span style=3D"color:#000=
+">$TEMPDIR</span><span style=3D"color:#660">/</span><span style=3D"color:#0=
+00">wineprefix<br>=C2=A0 </span><span style=3D"color:#008">export</span><sp=
+an style=3D"color:#000"> WINEARCH</span><span style=3D"color:#660">=3D</spa=
+n><span style=3D"color:#000">win32<br><br><br>=C2=A0 echo </span><span styl=
+e=3D"color:#080">&quot;Restoring wineprefix...&quot;</span><span style=3D"c=
+olor:#000"><br>=C2=A0 tar </span><span style=3D"color:#660">-</span><span s=
+tyle=3D"color:#000">xzf </span><span style=3D"color:#660">/</span><span sty=
+le=3D"color:#000">apps</span><span style=3D"color:#660">/</span><span style=
+=3D"color:#000">wineprefix</span><span style=3D"color:#660">.</span><span s=
+tyle=3D"color:#000">tar</span><span style=3D"color:#660">.</span><span styl=
+e=3D"color:#000">gz<br><br><br>=C2=A0 echo </span><span style=3D"color:#080=
+">&quot;Executing software...&quot;</span><span style=3D"color:#000"><br>=
+=C2=A0 wine </span><span style=3D"color:#080">&quot;c:Local\GRTMPS\HSI\grtR=
+unHPC.<wbr>exe&quot;</span><span style=3D"color:#000"><br><br><br>=C2=A0 ec=
+ho </span><span style=3D"color:#080">&quot;Clean session&quot;</span><span =
+style=3D"color:#000"><br>=C2=A0 wineboot </span><span style=3D"color:#660">=
+--</span><span style=3D"color:#008">end</span><span style=3D"color:#660">-<=
+/span><span style=3D"color:#000">session</span></div></code></div><div><br>=
+</div></div><span><div><br></div><div><br></div><div><br></div><div><br></d=
+iv>On Friday, June 23, 2017 at 3:17:42 PM UTC-5, vanessa wrote:</span><bloc=
+kquote class=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-lef=
+t:1px #ccc solid;padding-left:1ex"><span><div dir=3D"ltr">What is the conce=
+rn with having an indentation?</div></span><div><br><div class=3D"gmail_quo=
+te"><span>On Fri, Jun 23, 2017 at 1:10 PM, John Galt <span dir=3D"ltr">&lt;=
+<a rel=3D"nofollow">s...@gmail.com</a>&gt;</span> wrote:<br></span><blockqu=
+ote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc s=
+olid;padding-left:1ex"><span><div dir=3D"ltr">Hi,<div><br></div><div>I just=
+ noticed that the %runscript code added to the definition file was indented=
+ also in the images /.singularity.d/runscript.</div><div><br></div><div>Wou=
+ld this make sense to remove the first level of indentation when building t=
+he container ?</div><div><br></div><div>Thanks !</div><span><font color=3D"=
+#888888"><div><br></div><div>John</div></font></span></div></span><span><fo=
+nt color=3D"#888888"><span>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br></span>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</font></span></blockquote></div><span><br><br clear=3D"all"><div><br></div=
+>-- <br><div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div=
+><div><div><a value=3D"+16033210676">(603) 321-0676</a></div></div></div></=
+div>
+</span></div>
+</blockquote></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+4HPhvOIjAgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><d=
+iv>(603) 321-0676</div></div></div></div>
+</div>
+</blockquote></div>
+------=_Part_1679_11020635.1498482658911--
+
+------=_Part_1678_2121486009.1498482658910--

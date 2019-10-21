@@ -1,0 +1,195 @@
+Date: Mon, 17 Oct 2016 00:15:45 -0700 (PDT)
+From: Stefan Kombrink <stefan....@googlemail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <5266588c-07c5-406f-9db8-b8e171e4ead1@lbl.gov>
+In-Reply-To: <CAN7etTwfBEAMJpPvnybaLZcrVMB_-4EvbS=7R2mZYCb78JNzfw@mail.gmail.com>
+References: <5b8127fd-590b-47af-89ca-3422f514aaf8@lbl.gov>
+ <CAN7etTwfBEAMJpPvnybaLZcrVMB_-4EvbS=7R2mZYCb78JNzfw@mail.gmail.com>
+Subject: Re: [Singularity] unprivileged singularity container in rhel7.2 ?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1752_1843725933.1476688545683"
+
+------=_Part_1752_1843725933.1476688545683
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1753_1137217206.1476688545683"
+
+------=_Part_1753_1137217206.1476688545683
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi Greg thanks for clarification :)
+
+I can understand the decision for setsuid...
+
+Am Freitag, 14. Oktober 2016 15:43:24 UTC+2 schrieb Gregory M. Kurtzer:
+>
+> Hi Stefan,
+>
+> The user namespace is like the shiny golden unicorn that everybody wants, 
+> but it is generally not considered stable in the kernels that many 
+> distributions are using. The user namespace has created lots of CVEs, DOSs, 
+> and a variety of kernel panics and thus Red Hat has not enabled it by 
+> default in RHEL7.2. They are calling it a "technology preview" and not 
+> supporting that feature. Additionally their implementation is half baked 
+> because it does not include all of the features as you will find in later 
+> kernels (e.g.  the ability to virtualization other mount namespaces from 
+> the user namespace). 
+>
+> This is one reason why the SUID pathway is preferred,... So singularity 
+> works on today's systems. Also because even on the latest systems, and 
+> kernels, the ability to mount Singularity images is not supported via user 
+> namespace. Hopefully that will change sometime soon, but until then the 
+> SUID code will be our pretend unicorn. Lol
+>
+> Greg
+>
+>
+> On Friday, October 14, 2016, 'Stefan Kombrink' via singularity <
+> si...@lbl.gov <javascript:>> wrote:
+>
+>> Dear community,
+>>
+>>  I've tested singularity 2.2 on ubuntu and it is possible to mount 
+>> containers in user space like so:
+>>
+>>
+>> ls -lah /usr/local/libexec/singularity/sexec*
+>> -rwxr-xr-x 1 root root  59K Oct 13 14:55 
+>> /usr/local/libexec/singularity/sexec
+>> -rwxr-xr-x 1 root root 361K Oct 13 14:55 
+>> /usr/local/libexec/singularity/sexec-suid
+>>
+>> singularity exec -u ~/vre.tar.gz /bin/bash
+>> Opening gzip compressed archive, stand by...
+>> stefan@meltingpot:~$  exit
+>> exit
+>>
+>>
+>> I've tried it on our compute nodes running RHEL 7.2 and it seems I had to 
+>> enable user namespaces by adding the following kernel parameter:
+>> user_namespace.enable=1
+>>
+>> But now I still do not succeed:
+>>
+>> singularity exec -u test/vre.tar.gz /bin/bash
+>> Opening gzip compressed archive, stand by...
+>> ERROR  : Could not virtualize mount namespace: Operation not permitted
+>> ABORT  : Retval = 255
+>>
+>> Do I have to enable mount namespaces, too?
+>> What can be the unwanted consequences of having user/mount namespaces 
+>> enabled?
+>>
+>> thanks for enlighening :D
+>> Stefan
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov.
+>>
+>
+>
+> -- 
+> Gregory M. Kurtzer
+> HPC Systems Architect and Technology Developer
+> Lawrence Berkeley National Laboratory HPCS
+> University of California Berkeley Research IT
+> Singularity Linux Containers (http://singularity.lbl.gov/)
+> Warewulf Cluster Management (http://warewulf.lbl.gov/)
+> GitHub: https://github.com/gmkurtzer, Twitter: 
+> https://twitter.com/gmkurtzer
+>
+>
+------=_Part_1753_1137217206.1476688545683
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Greg thanks for clarification :)<br><br>I can understan=
+d the decision for setsuid...<br><br>Am Freitag, 14. Oktober 2016 15:43:24 =
+UTC+2 schrieb Gregory M. Kurtzer:<blockquote class=3D"gmail_quote" style=3D=
+"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex=
+;">Hi Stefan,<div><br></div><div>The user namespace is like the shiny golde=
+n unicorn that everybody wants, but it is generally not considered stable i=
+n the kernels that many distributions are using. The user namespace has cre=
+ated lots of CVEs, DOSs, and a variety of kernel panics and thus Red Hat ha=
+s not enabled it by default in RHEL7.2. They are calling it a &quot;technol=
+ogy preview&quot; and not supporting that feature. Additionally their imple=
+mentation is half baked because it does not include all of the features as =
+you will find in later kernels (e.g. =C2=A0the ability to virtualization ot=
+her mount namespaces from the user namespace).=C2=A0</div><div><br></div><d=
+iv>This is one reason why the SUID pathway is preferred,... So singularity =
+works on today&#39;s systems. Also because even on the latest systems, and =
+kernels, the ability to mount Singularity images is not supported via user =
+namespace. Hopefully that will change sometime soon, but until then the SUI=
+D code will be our pretend=C2=A0unicorn. Lol</div><div><br></div><div>Greg<=
+/div><div><br></div><div><br>On Friday, October 14, 2016, &#39;Stefan Kombr=
+ink&#39; via singularity &lt;<a href=3D"javascript:" target=3D"_blank" gdf-=
+obfuscated-mailto=3D"EpReIdOFAwAJ" rel=3D"nofollow" onmousedown=3D"this.hre=
+f=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascr=
+ipt:&#39;;return true;">si...@lbl.gov</a>&gt; wrote:<br><blockquote class=
+=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padd=
+ing-left:1ex"><div dir=3D"ltr">Dear community,<br><br>=C2=A0I&#39;ve tested=
+ singularity 2.2 on ubuntu and it is possible to mount containers in user s=
+pace like so:<br><br><br>ls -lah /usr/local/libexec/<wbr>singularity/sexec*=
+<br>-rwxr-xr-x 1 root root=C2=A0 59K Oct 13 14:55 /usr/local/libexec/<wbr>s=
+ingularity/sexec<br>-rwxr-xr-x 1 root root 361K Oct 13 14:55 /usr/local/lib=
+exec/<wbr>singularity/sexec-suid<br><br>singularity exec -u ~/vre.tar.gz /b=
+in/bash<br>Opening gzip compressed archive, stand by...<br>stefan@meltingpo=
+t:~$=C2=A0 exit<br>exit<br><br><br>I&#39;ve tried it on our compute nodes r=
+unning RHEL 7.2 and it seems I had to enable user namespaces by adding the =
+following kernel parameter:<br>user_namespace.enable=3D1<br><br>But now I s=
+till do not succeed:<br><br>singularity exec -u test/vre.tar.gz /bin/bash<b=
+r>Opening gzip compressed archive, stand by...<br>ERROR=C2=A0 : Could not v=
+irtualize mount namespace: Operation not permitted<br>ABORT=C2=A0 : Retval =
+=3D 255<br><br>Do I have to enable mount namespaces, too?<br>What can be th=
+e unwanted consequences of having user/mount namespaces enabled?<br><br>tha=
+nks for enlighening :D<br>Stefan<br></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a>singularity+unsubscribe@lbl.<wbr>gov</a>.<br>
+</blockquote></div><br><br>-- <br><div dir=3D"ltr"><div><div dir=3D"ltr"><d=
+iv><div dir=3D"ltr"><div><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"=
+><div>Gregory M. Kurtzer</div><div>HPC Systems Architect and Technology Dev=
+eloper</div><div>Lawrence Berkeley National Laboratory HPCS<br>University o=
+f California Berkeley Research IT<br>Singularity Linux Containers=C2=A0(<a =
+href=3D"http://singularity.lbl.gov/" target=3D"_blank" rel=3D"nofollow" onm=
+ousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fsi=
+ngularity.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHITKHVjde-iKsg=
+1vSOOrRt58XtEQ&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.go=
+ogle.com/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.gov%2F\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNHITKHVjde-iKsg1vSOOrRt58XtEQ&#39;;return true;">http://<=
+wbr>singularity.lbl.gov/</a>)</div><div>Warewulf Cluster Management=C2=A0(<=
+a href=3D"http://warewulf.lbl.gov/" target=3D"_blank" rel=3D"nofollow" onmo=
+usedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwar=
+ewulf.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPtSL1wiDx3C_BKcVg=
+BhWc77Jxww&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.google=
+.com/url?q\x3dhttp%3A%2F%2Fwarewulf.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26u=
+sg\x3dAFQjCNFPtSL1wiDx3C_BKcVgBhWc77Jxww&#39;;return true;">http://warewulf=
+.<wbr>lbl.gov/</a>)</div><div>GitHub:=C2=A0<a href=3D"https://github.com/gm=
+kurtzer" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39=
+;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fgmkurtzer\x26sa=
+\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHgwLrV-1wbChhxINJY_U3Xyjg2uw&#39;;return=
+ true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3=
+A%2F%2Fgithub.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHgwLr=
+V-1wbChhxINJY_U3Xyjg2uw&#39;;return true;">https://github.com/<wbr>gmkurtze=
+r</a>,=C2=A0<span style=3D"font-size:12.8px">Twitter:=C2=A0</span><a href=
+=3D"https://twitter.com/gmkurtzer" style=3D"font-size:12.8px" target=3D"_bl=
+ank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.google.co=
+m/url?q\x3dhttps%3A%2F%2Ftwitter.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x2=
+6usg\x3dAFQjCNGiphjH-YHVVhLsKsNsH_Zw5B_gRA&#39;;return true;" onclick=3D"th=
+is.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Ftwitter.com%2F=
+gmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGiphjH-YHVVhLsKsNsH_Zw5B_=
+gRA&#39;;return true;">https://<wbr>twitter.com/gmkurtzer</a></div></div></=
+div></div></div></div></div></div></div></div><br>
+</blockquote></div>
+------=_Part_1753_1137217206.1476688545683--
+
+------=_Part_1752_1843725933.1476688545683--

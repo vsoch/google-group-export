@@ -1,0 +1,581 @@
+Date: Wed, 16 Jan 2019 09:20:08 -0800 (PST)
+From: =?UTF-8?Q?=C3=9Cmit_Seren?= <uemit...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Cc: thomas....@desy.de
+Message-Id: <48796e63-2b96-44e1-8358-98822c10a434@lbl.gov>
+In-Reply-To: <97c62b1a-86db-22ae-63de-31ba6d5a880e@desy.de>
+References: <b3454a41-87f1-4cbb-87f0-d5fca9b90901@lbl.gov>
+ <CAM=pu+JtTMFLMustTK+yBvgc4Ynv2BGWdFrkPKLE0R7VLzVAag@mail.gmail.com>
+ <CAO6cBp1fmLs5m49UWOYacBgL4CdACA5SGJHCA74fLALJGvo8RQ@mail.gmail.com>
+ <CAM=pu++P1BqR1+Teumm6T1yHOuC0hYQfi+PrgHLjx3t7vG2whQ@mail.gmail.com>
+ <CAO6cBp1+aBAfsm2zL66+Wv9asdOh2E0nA=vSKdRXs1EtX5HwYg@mail.gmail.com>
+ <7023bfa8-2a8c-46e1-b9f8-5097f469682c@lbl.gov>
+ <13dafcf8-375e-c0a1-014d-da43268c1c94@fzu.cz>
+ <97c62b1a-86db-22ae-63de-31ba6d5a880e@desy.de>
+Subject: Re: [Singularity] Is Singularity hub down?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2650_1160151330.1547659208408"
+
+------=_Part_2650_1160151330.1547659208408
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2651_977743225.1547659208409"
+
+------=_Part_2651_977743225.1547659208409
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+
+We also have issues but it's related to a wrongly configured DNS record for 
+www.singularity-hub.org
+
+$ dig www.singularity-hub.org
+
+; <<>> DiG 9.11.3-1ubuntu1.3-Ubuntu <<>> www.singularity-hub.org
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 13956
+;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 4096
+;; QUESTION SECTION:
+;www.singularity-hub.org.       IN      A
+
+;; ANSWER SECTION:
+*www.singularity-hub.org. 397737 IN      A       13.72.107.243*
+
+;; Query time: 0 msec
+;; SERVER: 172.16.80.12#53(172.16.80.12)
+;; WHEN: Wed Jan 16 18:12:38 CET 2019
+
+$ dig @9.9.9.9 www.singularity-hub.org
+
+; <<>> DiG 9.11.3-1ubuntu1.3-Ubuntu <<>> @9.9.9.9 www.singularity-hub.org
+; (1 server found)
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 19264
+;; flags: qr rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 4096
+;; QUESTION SECTION:
+;www.singularity-hub.org.       IN      A
+
+;; ANSWER SECTION:
+*www.singularity-hub.org. 300    IN      CNAME   singularity-hub.org.*
+singularity-hub.org.    300     IN      A       35.197.63.182
+
+;; Query time: 414 msec
+;; SERVER: 9.9.9.9#53(9.9.9.9)
+;; WHEN: Wed Jan 16 18:12:43 CET 2019
+;; MSG SIZE  rcvd: 82
+
+
+It seems that at some point in the past *www*.singularity-hub.org was an A 
+record with a very long TTL pointing to a wrong/non-accessible IP (
+*13.72.107.243*).
+This was apparently changed to a cname pointing to singularity-hub.org 
+recently. 
+Because of the high TTL local DNS resolver still resolve this to the wrong 
+IP, however will return the right IP when querying the google nameserver 
+which is unsuprising because the site is hosted there.
+
+Either wait 4 days until TTL is gone or clear your local DNS resolvers
+
+
+On Wednesday, January 16, 2019 at 12:35:25 PM UTC+1, Thomas Hartmann wrote:
+>
+> Hi all, 
+>
+> probably all with issues getting to Singularity-Hub could try to check, 
+> what their native DNS resolvers answer and what they see from Google or 
+> Quad9? 
+>
+> I do not see any issues and our local DNS servers answer the same [1] as 
+> the Quad9 [2] or the Google DNS Servers. 
+>
+> Cheers, 
+>   Thomas 
+>
+> [1] 
+> > dig A singularity-hub.org 
+> ... 
+> ;; ANSWER SECTION: 
+> singularity-hub.org.        91        IN        A        35.197.63.182 
+>
+> > dig AAAA singularity-hub.org 
+> ... 
+> ;; ANSWER SECTION: 
+> singularity-hub.org.        300        IN        SOA        
+> ns-cloud-e1.googledomains.com. 
+> cloud-dns-hostmaster.google.com. 1 21600 3600 259200 300 
+>
+> > dig ANY singularity-hub.org 
+> ... 
+> ;; ANSWER SECTION: 
+> singularity-hub.org.        21600        IN        SOA        
+> ns-cloud-e1.googledomains.com. 
+> cloud-dns-hostmaster.google.com. 1 21600 3600 259200 300 
+> singularity-hub.org.        151        IN        A        35.197.63.182 
+> singularity-hub.org.        21600        IN        NS        
+> ns-cloud-e1.googledomains.com. 
+> singularity-hub.org.        21600        IN        NS        
+> ns-cloud-e2.googledomains.com. 
+> singularity-hub.org.        21600        IN        NS        
+> ns-cloud-e3.googledomains.com. 
+> singularity-hub.org.        21600        IN        NS        
+> ns-cloud-e4.googledomains.com. 
+>
+>
+>
+> [2] 
+> > dig @9.9.9.9 A singularity-hub.org 
+> singularity-hub.org.        300        IN        A        35.197.63.182 
+>
+> > dig @9.9.9.9 AAAA singularity-hub.org 
+> singularity-hub.org.        300        IN        SOA        
+> ns-cloud-e1.googledomains.com. 
+> cloud-dns-hostmaster.google.com. 1 21600 3600 259200 300 
+>
+> > dig @9.9.9.9 ANY singularity-hub.org 
+> singularity-hub.org.        21600        IN        NS        
+> ns-cloud-e2.googledomains.com. 
+> singularity-hub.org.        21600        IN        NS        
+> ns-cloud-e4.googledomains.com. 
+> singularity-hub.org.        21600        IN        SOA        
+> ns-cloud-e1.googledomains.com. 
+> cloud-dns-hostmaster.google.com. 1 21600 3600 259200 300 
+> singularity-hub.org.        21600        IN        NS        
+> ns-cloud-e1.googledomains.com. 
+> singularity-hub.org.        300        IN        A        35.197.63.182 
+> singularity-hub.org.        21600        IN        NS        
+> ns-cloud-e3.googledomains.com. 
+>
+>
+> On 16/01/2019 12.11, Josef Dvoracek wrote: 
+> >> now it does not work at all. 
+> > 
+> > Could you please share what do you see in the output from "security" tab 
+> > in developer pane in chrome (press F12)? 
+> > I can not reproduce this. (webpage is fine and SSL looks good too.) 
+> > This could be something interesting.. 
+> > 
+> > cheers 
+> > 
+> > Josef Dvoracek 
+> > fzu.cz/~jose 
+> > 
+> > On 16. 01. 19 12:01, Dominik Handler wrote: 
+> >> Hi, 
+> >> 
+> >> I fear it is still not working for me. The webpage was briefly working 
+> >> for me this morning in Chrome, but now it does not work at all. 
+> >> Pulling images from the command-line on our compute cluster did not 
+> >> work in the morning. 
+> >> 
+> >> Is there anything to help the problem? 
+> >> 
+> >> 
+> >> 
+> > 
+>
+>
+------=_Part_2651_977743225.1547659208409
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div><br></div><div>We also have issues but it&#39;s relat=
+ed to a wrongly configured DNS record for www.singularity-hub.org</div><div=
+><br></div><div><div>$ dig www.singularity-hub.org</div><div><br></div><div=
+>; &lt;&lt;&gt;&gt; DiG 9.11.3-1ubuntu1.3-Ubuntu &lt;&lt;&gt;&gt; www.singu=
+larity-hub.org</div><div>;; global options: +cmd</div><div>;; Got answer:</=
+div><div>;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: NOERROR, id: 13=
+956</div><div>;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITI=
+ONAL: 1</div><div><br></div><div>;; OPT PSEUDOSECTION:</div><div>; EDNS: ve=
+rsion: 0, flags:; udp: 4096</div><div>;; QUESTION SECTION:</div><div>;www.s=
+ingularity-hub.org.=C2=A0 =C2=A0 =C2=A0 =C2=A0IN=C2=A0 =C2=A0 =C2=A0 A</div=
+><div><br></div><div>;; ANSWER SECTION:</div><div><b>www.singularity-hub.or=
+g. 397737 IN=C2=A0 =C2=A0 =C2=A0 A=C2=A0 =C2=A0 =C2=A0 =C2=A013.72.107.243<=
+/b></div><div><br></div><div>;; Query time: 0 msec</div><div>;; SERVER: 172=
+.16.80.12#53(172.16.80.12)</div><div>;; WHEN: Wed Jan 16 18:12:38 CET 2019<=
+/div></div><div><br></div><div><div>$ dig @9.9.9.9 www.singularity-hub.org<=
+/div><div><br></div><div>; &lt;&lt;&gt;&gt; DiG 9.11.3-1ubuntu1.3-Ubuntu &l=
+t;&lt;&gt;&gt; @9.9.9.9 www.singularity-hub.org</div><div>; (1 server found=
+)</div><div>;; global options: +cmd</div><div>;; Got answer:</div><div>;; -=
+&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: NOERROR, id: 19264</div><div=
+>;; flags: qr rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1</div>=
+<div><br></div><div>;; OPT PSEUDOSECTION:</div><div>; EDNS: version: 0, fla=
+gs:; udp: 4096</div><div>;; QUESTION SECTION:</div><div>;www.singularity-hu=
+b.org.=C2=A0 =C2=A0 =C2=A0 =C2=A0IN=C2=A0 =C2=A0 =C2=A0 A</div><div><br></d=
+iv><div>;; ANSWER SECTION:</div><div><b>www.singularity-hub.org. 300=C2=A0 =
+=C2=A0 IN=C2=A0 =C2=A0 =C2=A0 CNAME=C2=A0 =C2=A0singularity-hub.org.</b></d=
+iv><div>singularity-hub.org.=C2=A0 =C2=A0 300=C2=A0 =C2=A0 =C2=A0IN=C2=A0 =
+=C2=A0 =C2=A0 A=C2=A0 =C2=A0 =C2=A0 =C2=A035.197.63.182</div><div><br></div=
+><div>;; Query time: 414 msec</div><div>;; SERVER: 9.9.9.9#53(9.9.9.9)</div=
+><div>;; WHEN: Wed Jan 16 18:12:43 CET 2019</div><div>;; MSG SIZE=C2=A0 rcv=
+d: 82</div></div><div><br></div><div><br></div>It seems that at some point =
+in the past <b>www</b>.singularity-hub.org was an A record with a very long=
+ TTL pointing to a wrong/non-accessible IP (<b>13.72.107.243</b>).<div>This=
+ was apparently changed to a cname pointing to singularity-hub.org recently=
+. <br>Because of the high TTL local DNS resolver still resolve this to the =
+wrong IP, however will return the right IP when querying the google nameser=
+ver which is unsuprising because the site is hosted there.</div><div><br>Ei=
+ther wait 4 days until TTL is gone or clear your local DNS resolvers<br><di=
+v><br><br>On Wednesday, January 16, 2019 at 12:35:25 PM UTC+1, Thomas Hartm=
+ann wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left:=
+ 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;">Hi all,
+<br>
+<br>probably all with issues getting to Singularity-Hub could try to check,
+<br>what their native DNS resolvers answer and what they see from Google or
+<br>Quad9?
+<br>
+<br>I do not see any issues and our local DNS servers answer the same [1] a=
+s
+<br>the Quad9 [2] or the Google DNS Servers.
+<br>
+<br>Cheers,
+<br>=C2=A0 Thomas
+<br>
+<br>[1]
+<br>&gt; dig A <a href=3D"http://singularity-hub.org" target=3D"_blank" rel=
+=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x=
+3dhttp%3A%2F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCN=
+FPWPkfR8oVlPwFepzSjGwCivmehw&#39;;return true;" onclick=3D"this.href=3D&#39=
+;http://www.google.com/url?q\x3dhttp%3A%2F%2Fsingularity-hub.org\x26sa\x3dD=
+\x26sntz\x3d1\x26usg\x3dAFQjCNFPWPkfR8oVlPwFepzSjGwCivmehw&#39;;return true=
+;">singularity-hub.org</a>
+<br>...
+<br>;; ANSWER SECTION:
+<br><a href=3D"http://singularity-hub.org" target=3D"_blank" rel=3D"nofollo=
+w" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2=
+F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPWPkfR8oVl=
+PwFepzSjGwCivmehw&#39;;return true;" onclick=3D"this.href=3D&#39;http://www=
+.google.com/url?q\x3dhttp%3A%2F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNFPWPkfR8oVlPwFepzSjGwCivmehw&#39;;return true;">singular=
+ity-hub.org</a>.=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>91=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0IN=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0A=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=
+35.197.63.182
+<br>
+<br>&gt; dig AAAA <a href=3D"http://singularity-hub.org" target=3D"_blank" =
+rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?=
+q\x3dhttp%3A%2F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQ=
+jCNFPWPkfR8oVlPwFepzSjGwCivmehw&#39;;return true;" onclick=3D"this.href=3D&=
+#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fsingularity-hub.org\x26sa\x=
+3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPWPkfR8oVlPwFepzSjGwCivmehw&#39;;return t=
+rue;">singularity-hub.org</a>
+<br>...
+<br>;; ANSWER SECTION:
+<br><a href=3D"http://singularity-hub.org" target=3D"_blank" rel=3D"nofollo=
+w" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2=
+F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPWPkfR8oVl=
+PwFepzSjGwCivmehw&#39;;return true;" onclick=3D"this.href=3D&#39;http://www=
+.google.com/url?q\x3dhttp%3A%2F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNFPWPkfR8oVlPwFepzSjGwCivmehw&#39;;return true;">singular=
+ity-hub.org</a>.=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>300=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0IN=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0SOA=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=
+=A0<a href=3D"http://ns-cloud-e1.googledomains.com" target=3D"_blank" rel=
+=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://ns-cloud-e1.googledoma=
+ins.com&#39;;return true;" onclick=3D"this.href=3D&#39;http://ns-cloud-e1.g=
+oogledomains.com&#39;;return true;">ns-cloud-e1.googledomains.<wbr>com</a>.
+<br><a href=3D"http://cloud-dns-hostmaster.google.com" target=3D"_blank" re=
+l=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://cloud-dns-hostmaster.=
+google.com&#39;;return true;" onclick=3D"this.href=3D&#39;http://cloud-dns-=
+hostmaster.google.com&#39;;return true;">cloud-dns-hostmaster.google.<wbr>c=
+om</a>. 1 21600 3600 259200 300
+<br>
+<br>&gt; dig ANY <a href=3D"http://singularity-hub.org" target=3D"_blank" r=
+el=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q=
+\x3dhttp%3A%2F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQj=
+CNFPWPkfR8oVlPwFepzSjGwCivmehw&#39;;return true;" onclick=3D"this.href=3D&#=
+39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fsingularity-hub.org\x26sa\x3=
+dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPWPkfR8oVlPwFepzSjGwCivmehw&#39;;return tr=
+ue;">singularity-hub.org</a>
+<br>...
+<br>;; ANSWER SECTION:
+<br><a href=3D"http://singularity-hub.org" target=3D"_blank" rel=3D"nofollo=
+w" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2=
+F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPWPkfR8oVl=
+PwFepzSjGwCivmehw&#39;;return true;" onclick=3D"this.href=3D&#39;http://www=
+.google.com/url?q\x3dhttp%3A%2F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNFPWPkfR8oVlPwFepzSjGwCivmehw&#39;;return true;">singular=
+ity-hub.org</a>.=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>21600=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0IN=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0SOA=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=C2=A0=
+=C2=A0<a href=3D"http://ns-cloud-e1.googledomains.com" target=3D"_blank" re=
+l=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://ns-cloud-e1.googledom=
+ains.com&#39;;return true;" onclick=3D"this.href=3D&#39;http://ns-cloud-e1.=
+googledomains.com&#39;;return true;">ns-cloud-e1.googledomains.<wbr>com</a>=
+.
+<br><a href=3D"http://cloud-dns-hostmaster.google.com" target=3D"_blank" re=
+l=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://cloud-dns-hostmaster.=
+google.com&#39;;return true;" onclick=3D"this.href=3D&#39;http://cloud-dns-=
+hostmaster.google.com&#39;;return true;">cloud-dns-hostmaster.google.<wbr>c=
+om</a>. 1 21600 3600 259200 300
+<br><a href=3D"http://singularity-hub.org" target=3D"_blank" rel=3D"nofollo=
+w" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2=
+F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPWPkfR8oVl=
+PwFepzSjGwCivmehw&#39;;return true;" onclick=3D"this.href=3D&#39;http://www=
+.google.com/url?q\x3dhttp%3A%2F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNFPWPkfR8oVlPwFepzSjGwCivmehw&#39;;return true;">singular=
+ity-hub.org</a>.=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>151=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0IN=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0A=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=
+35.197.63.182
+<br><a href=3D"http://singularity-hub.org" target=3D"_blank" rel=3D"nofollo=
+w" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2=
+F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPWPkfR8oVl=
+PwFepzSjGwCivmehw&#39;;return true;" onclick=3D"this.href=3D&#39;http://www=
+.google.com/url?q\x3dhttp%3A%2F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNFPWPkfR8oVlPwFepzSjGwCivmehw&#39;;return true;">singular=
+ity-hub.org</a>.=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>21600=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0IN=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0NS=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=
+=C2=A0<a href=3D"http://ns-cloud-e1.googledomains.com" target=3D"_blank" re=
+l=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://ns-cloud-e1.googledom=
+ains.com&#39;;return true;" onclick=3D"this.href=3D&#39;http://ns-cloud-e1.=
+googledomains.com&#39;;return true;">ns-cloud-e1.googledomains.<wbr>com</a>=
+.
+<br><a href=3D"http://singularity-hub.org" target=3D"_blank" rel=3D"nofollo=
+w" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2=
+F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPWPkfR8oVl=
+PwFepzSjGwCivmehw&#39;;return true;" onclick=3D"this.href=3D&#39;http://www=
+.google.com/url?q\x3dhttp%3A%2F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNFPWPkfR8oVlPwFepzSjGwCivmehw&#39;;return true;">singular=
+ity-hub.org</a>.=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>21600=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0IN=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0NS=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=
+=C2=A0<a href=3D"http://ns-cloud-e2.googledomains.com" target=3D"_blank" re=
+l=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://ns-cloud-e2.googledom=
+ains.com&#39;;return true;" onclick=3D"this.href=3D&#39;http://ns-cloud-e2.=
+googledomains.com&#39;;return true;">ns-cloud-e2.googledomains.<wbr>com</a>=
+.
+<br><a href=3D"http://singularity-hub.org" target=3D"_blank" rel=3D"nofollo=
+w" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2=
+F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPWPkfR8oVl=
+PwFepzSjGwCivmehw&#39;;return true;" onclick=3D"this.href=3D&#39;http://www=
+.google.com/url?q\x3dhttp%3A%2F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNFPWPkfR8oVlPwFepzSjGwCivmehw&#39;;return true;">singular=
+ity-hub.org</a>.=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>21600=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0IN=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0NS=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=
+=C2=A0<a href=3D"http://ns-cloud-e3.googledomains.com" target=3D"_blank" re=
+l=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://ns-cloud-e3.googledom=
+ains.com&#39;;return true;" onclick=3D"this.href=3D&#39;http://ns-cloud-e3.=
+googledomains.com&#39;;return true;">ns-cloud-e3.googledomains.<wbr>com</a>=
+.
+<br><a href=3D"http://singularity-hub.org" target=3D"_blank" rel=3D"nofollo=
+w" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2=
+F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPWPkfR8oVl=
+PwFepzSjGwCivmehw&#39;;return true;" onclick=3D"this.href=3D&#39;http://www=
+.google.com/url?q\x3dhttp%3A%2F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNFPWPkfR8oVlPwFepzSjGwCivmehw&#39;;return true;">singular=
+ity-hub.org</a>.=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>21600=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0IN=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0NS=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=
+=C2=A0<a href=3D"http://ns-cloud-e4.googledomains.com" target=3D"_blank" re=
+l=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://ns-cloud-e4.googledom=
+ains.com&#39;;return true;" onclick=3D"this.href=3D&#39;http://ns-cloud-e4.=
+googledomains.com&#39;;return true;">ns-cloud-e4.googledomains.<wbr>com</a>=
+.
+<br>
+<br>
+<br>
+<br>[2]
+<br>&gt; dig @<a href=3D"http://9.9.9.9" target=3D"_blank" rel=3D"nofollow"=
+ onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%=
+2F9.9.9.9\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGZYUG9FC7zNcsdPJi4U-WQ59A=
+_DA&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.google.com/ur=
+l?q\x3dhttp%3A%2F%2F9.9.9.9\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGZYUG9F=
+C7zNcsdPJi4U-WQ59A_DA&#39;;return true;">9.9.9.9</a> A <a href=3D"http://si=
+ngularity-hub.org" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.h=
+ref=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fsingularity-hub.org\=
+x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPWPkfR8oVlPwFepzSjGwCivmehw&#39;;r=
+eturn true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhtt=
+p%3A%2F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPWPk=
+fR8oVlPwFepzSjGwCivmehw&#39;;return true;">singularity-hub.org</a>
+<br><a href=3D"http://singularity-hub.org" target=3D"_blank" rel=3D"nofollo=
+w" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2=
+F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPWPkfR8oVl=
+PwFepzSjGwCivmehw&#39;;return true;" onclick=3D"this.href=3D&#39;http://www=
+.google.com/url?q\x3dhttp%3A%2F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNFPWPkfR8oVlPwFepzSjGwCivmehw&#39;;return true;">singular=
+ity-hub.org</a>.=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>300=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0IN=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0A=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=
+35.197.63.182
+<br>
+<br>&gt; dig @<a href=3D"http://9.9.9.9" target=3D"_blank" rel=3D"nofollow"=
+ onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%=
+2F9.9.9.9\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGZYUG9FC7zNcsdPJi4U-WQ59A=
+_DA&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.google.com/ur=
+l?q\x3dhttp%3A%2F%2F9.9.9.9\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGZYUG9F=
+C7zNcsdPJi4U-WQ59A_DA&#39;;return true;">9.9.9.9</a> AAAA <a href=3D"http:/=
+/singularity-hub.org" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"thi=
+s.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fsingularity-hub.o=
+rg\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPWPkfR8oVlPwFepzSjGwCivmehw&#39=
+;;return true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3d=
+http%3A%2F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFP=
+WPkfR8oVlPwFepzSjGwCivmehw&#39;;return true;">singularity-hub.org</a>
+<br><a href=3D"http://singularity-hub.org" target=3D"_blank" rel=3D"nofollo=
+w" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2=
+F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPWPkfR8oVl=
+PwFepzSjGwCivmehw&#39;;return true;" onclick=3D"this.href=3D&#39;http://www=
+.google.com/url?q\x3dhttp%3A%2F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNFPWPkfR8oVlPwFepzSjGwCivmehw&#39;;return true;">singular=
+ity-hub.org</a>.=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>300=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0IN=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0SOA=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=
+=A0<a href=3D"http://ns-cloud-e1.googledomains.com" target=3D"_blank" rel=
+=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://ns-cloud-e1.googledoma=
+ins.com&#39;;return true;" onclick=3D"this.href=3D&#39;http://ns-cloud-e1.g=
+oogledomains.com&#39;;return true;">ns-cloud-e1.googledomains.<wbr>com</a>.
+<br><a href=3D"http://cloud-dns-hostmaster.google.com" target=3D"_blank" re=
+l=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://cloud-dns-hostmaster.=
+google.com&#39;;return true;" onclick=3D"this.href=3D&#39;http://cloud-dns-=
+hostmaster.google.com&#39;;return true;">cloud-dns-hostmaster.google.<wbr>c=
+om</a>. 1 21600 3600 259200 300
+<br>
+<br>&gt; dig @<a href=3D"http://9.9.9.9" target=3D"_blank" rel=3D"nofollow"=
+ onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%=
+2F9.9.9.9\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGZYUG9FC7zNcsdPJi4U-WQ59A=
+_DA&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.google.com/ur=
+l?q\x3dhttp%3A%2F%2F9.9.9.9\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGZYUG9F=
+C7zNcsdPJi4U-WQ59A_DA&#39;;return true;">9.9.9.9</a> ANY <a href=3D"http://=
+singularity-hub.org" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this=
+.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fsingularity-hub.or=
+g\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPWPkfR8oVlPwFepzSjGwCivmehw&#39;=
+;return true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dh=
+ttp%3A%2F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPW=
+PkfR8oVlPwFepzSjGwCivmehw&#39;;return true;">singularity-hub.org</a>
+<br><a href=3D"http://singularity-hub.org" target=3D"_blank" rel=3D"nofollo=
+w" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2=
+F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPWPkfR8oVl=
+PwFepzSjGwCivmehw&#39;;return true;" onclick=3D"this.href=3D&#39;http://www=
+.google.com/url?q\x3dhttp%3A%2F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNFPWPkfR8oVlPwFepzSjGwCivmehw&#39;;return true;">singular=
+ity-hub.org</a>.=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>21600=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0IN=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0NS=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=
+=C2=A0<a href=3D"http://ns-cloud-e2.googledomains.com" target=3D"_blank" re=
+l=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://ns-cloud-e2.googledom=
+ains.com&#39;;return true;" onclick=3D"this.href=3D&#39;http://ns-cloud-e2.=
+googledomains.com&#39;;return true;">ns-cloud-e2.googledomains.<wbr>com</a>=
+.
+<br><a href=3D"http://singularity-hub.org" target=3D"_blank" rel=3D"nofollo=
+w" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2=
+F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPWPkfR8oVl=
+PwFepzSjGwCivmehw&#39;;return true;" onclick=3D"this.href=3D&#39;http://www=
+.google.com/url?q\x3dhttp%3A%2F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNFPWPkfR8oVlPwFepzSjGwCivmehw&#39;;return true;">singular=
+ity-hub.org</a>.=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>21600=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0IN=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0NS=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=
+=C2=A0<a href=3D"http://ns-cloud-e4.googledomains.com" target=3D"_blank" re=
+l=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://ns-cloud-e4.googledom=
+ains.com&#39;;return true;" onclick=3D"this.href=3D&#39;http://ns-cloud-e4.=
+googledomains.com&#39;;return true;">ns-cloud-e4.googledomains.<wbr>com</a>=
+.
+<br><a href=3D"http://singularity-hub.org" target=3D"_blank" rel=3D"nofollo=
+w" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2=
+F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPWPkfR8oVl=
+PwFepzSjGwCivmehw&#39;;return true;" onclick=3D"this.href=3D&#39;http://www=
+.google.com/url?q\x3dhttp%3A%2F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNFPWPkfR8oVlPwFepzSjGwCivmehw&#39;;return true;">singular=
+ity-hub.org</a>.=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>21600=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0IN=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0SOA=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=C2=A0=
+=C2=A0<a href=3D"http://ns-cloud-e1.googledomains.com" target=3D"_blank" re=
+l=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://ns-cloud-e1.googledom=
+ains.com&#39;;return true;" onclick=3D"this.href=3D&#39;http://ns-cloud-e1.=
+googledomains.com&#39;;return true;">ns-cloud-e1.googledomains.<wbr>com</a>=
+.
+<br><a href=3D"http://cloud-dns-hostmaster.google.com" target=3D"_blank" re=
+l=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://cloud-dns-hostmaster.=
+google.com&#39;;return true;" onclick=3D"this.href=3D&#39;http://cloud-dns-=
+hostmaster.google.com&#39;;return true;">cloud-dns-hostmaster.google.<wbr>c=
+om</a>. 1 21600 3600 259200 300
+<br><a href=3D"http://singularity-hub.org" target=3D"_blank" rel=3D"nofollo=
+w" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2=
+F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPWPkfR8oVl=
+PwFepzSjGwCivmehw&#39;;return true;" onclick=3D"this.href=3D&#39;http://www=
+.google.com/url?q\x3dhttp%3A%2F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNFPWPkfR8oVlPwFepzSjGwCivmehw&#39;;return true;">singular=
+ity-hub.org</a>.=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>21600=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0IN=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0NS=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=
+=C2=A0<a href=3D"http://ns-cloud-e1.googledomains.com" target=3D"_blank" re=
+l=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://ns-cloud-e1.googledom=
+ains.com&#39;;return true;" onclick=3D"this.href=3D&#39;http://ns-cloud-e1.=
+googledomains.com&#39;;return true;">ns-cloud-e1.googledomains.<wbr>com</a>=
+.
+<br><a href=3D"http://singularity-hub.org" target=3D"_blank" rel=3D"nofollo=
+w" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2=
+F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPWPkfR8oVl=
+PwFepzSjGwCivmehw&#39;;return true;" onclick=3D"this.href=3D&#39;http://www=
+.google.com/url?q\x3dhttp%3A%2F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNFPWPkfR8oVlPwFepzSjGwCivmehw&#39;;return true;">singular=
+ity-hub.org</a>.=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>300=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0IN=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0A=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=
+35.197.63.182
+<br><a href=3D"http://singularity-hub.org" target=3D"_blank" rel=3D"nofollo=
+w" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2=
+F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPWPkfR8oVl=
+PwFepzSjGwCivmehw&#39;;return true;" onclick=3D"this.href=3D&#39;http://www=
+.google.com/url?q\x3dhttp%3A%2F%2Fsingularity-hub.org\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNFPWPkfR8oVlPwFepzSjGwCivmehw&#39;;return true;">singular=
+ity-hub.org</a>.=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>21600=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0IN=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0NS=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=
+=C2=A0<a href=3D"http://ns-cloud-e3.googledomains.com" target=3D"_blank" re=
+l=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://ns-cloud-e3.googledom=
+ains.com&#39;;return true;" onclick=3D"this.href=3D&#39;http://ns-cloud-e3.=
+googledomains.com&#39;;return true;">ns-cloud-e3.googledomains.<wbr>com</a>=
+.
+<br>
+<br>
+<br>On 16/01/2019 12.11, Josef Dvoracek wrote:
+<br>&gt;&gt; now it does not work at all.
+<br>&gt;=20
+<br>&gt; Could you please share what do you see in the output from &quot;se=
+curity&quot; tab
+<br>&gt; in developer pane in chrome (press F12)?
+<br>&gt; I can not reproduce this. (webpage is fine and SSL looks good too.=
+)
+<br>&gt; This could be something interesting..
+<br>&gt;=20
+<br>&gt; cheers
+<br>&gt;=20
+<br>&gt; Josef Dvoracek
+<br>&gt; <a href=3D"http://fzu.cz/~jose" target=3D"_blank" rel=3D"nofollow"=
+ onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%=
+2Ffzu.cz%2F~jose\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFHPU2xM7loM4sEpx5P=
+DXijH3hQ4w&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.google=
+.com/url?q\x3dhttp%3A%2F%2Ffzu.cz%2F~jose\x26sa\x3dD\x26sntz\x3d1\x26usg\x3=
+dAFQjCNFHPU2xM7loM4sEpx5PDXijH3hQ4w&#39;;return true;">fzu.cz/~jose</a>
+<br>&gt;=20
+<br>&gt; On 16. 01. 19 12:01, Dominik Handler wrote:
+<br>&gt;&gt; Hi,
+<br>&gt;&gt;
+<br>&gt;&gt; I fear it is still not working for me. The webpage was briefly=
+ working
+<br>&gt;&gt; for me this morning in Chrome, but now it does not work at all=
+.
+<br>&gt;&gt; Pulling images from the command-line on our compute cluster di=
+d not
+<br>&gt;&gt; work in the morning.
+<br>&gt;&gt;
+<br>&gt;&gt; Is there anything to help the problem?
+<br>&gt;&gt;
+<br>&gt;&gt;
+<br>&gt;&gt;
+<br>&gt;=20
+<br>
+<br></blockquote></div></div></div>
+------=_Part_2651_977743225.1547659208409--
+
+------=_Part_2650_1160151330.1547659208408--

@@ -1,0 +1,250 @@
+Date: Wed, 13 Sep 2017 08:10:29 -0700 (PDT)
+From: Mike <mgj...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <1acc2b7e-c7b2-4f77-b3da-fe5ba0965419@lbl.gov>
+Subject: Singularity pull/import of some images from docker hub suddenly
+ stopped working
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_4205_1018033545.1505315429872"
+
+------=_Part_4205_1018033545.1505315429872
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_4206_1983979638.1505315429872"
+
+------=_Part_4206_1983979638.1505315429872
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hello,
+
+It seems that for some images from dockerhub, singularity pull or import 
+fails with an error message
+
+ERROR Improperly formed manifest, layers or fsLayers must be present
+
+Example:
+
+ $ sudo singularity pull --size 1024 docker://ubuntu:latest
+Initializing Singularity image subsystem
+Opening image file: ubuntu-latest.img
+Creating 1024MiB image
+Binding image to loop
+Creating file system within image
+Image is done: ubuntu-latest.img
+Docker image path: index.docker.io/library/ubuntu:latest
+ERROR Improperly formed manifest, layers or fsLayers must be present
+
+Same with import to existing .img file.
+The problem also occurs with other images, e.g. for ubuntu:16.04, 
+ubuntu:16.04.1, ubuntu:16.04.3, ubuntu:14.04, debian:stable
+
+But, for ubuntu:14.04.1 and centos:latest, the images download and run 
+fine. I have no problem pulling and running any of those images with docker.
+
+The problem began less than 24 hours ago (now is 13 Sep. 2017, 13:00 UTC). 
+I cross checked by rolling back my virtual test host system to a snapshot 
+and by installing singularity on a clean physical host. My hosts are 
+running Ubuntu 16.04.3 LTS.
+
+The output from "singularity -vvvv import" is
+
+ $ singularity create -s 1024 ubuntu.img
+Initializing Singularity image subsystem
+Opening image file: ubuntu.img
+Creating 1024MiB image
+Binding image to loop
+Creating file system within image
+Image is done: ubuntu.img
+
+ $ sudo singularity -vvvv import ubuntu.img docker://ubuntu:latest
+Increasing verbosity level (5)
+Ending argument loop
+Singularity version: 2.3.1-master.ga47422c
+Exec'ing: /usr/local/libexec/singularity/cli/import.exec
+VERBOSE2 SINGULARITY_COMMAND_ASIS found as False
+VERBOSE2 SINGULARITY_ROOTFS not defined (None)
+VERBOSE2 SINGULARITY_METADATA_FOLDER found as None/.singularity.d
+VERBOSE2 SINGULARITY_FIX_PERMS found as False
+VERBOSE2 SINGULARITY_COLORIZE not defined (None)
+VERBOSE2 SINGULARITY_DISABLE_CACHE found as False
+VERBOSE2 SINGULARITY_CACHEDIR found as /root/.singularity
+VERBOSE2 SINGULARITY_ENVIRONMENT found as None/.singularity.d/environment
+VERBOSE2 SINGULARITY_RUNSCRIPT found as None/singularity
+VERBOSE2 SINGULARITY_TESTFILE found as None/.singularity.d/test
+VERBOSE2 SINGULARITY_DEFFILE found as None/.singularity.d/Singularity
+VERBOSE2 SINGULARITY_ENVBASE found as None/.singularity.d/env
+VERBOSE2 SINGULARITY_LABELFILE found as None/.singularity.d/labels.json
+VERBOSE2 SINGULARITY_INCLUDECMD found as False
+VERBOSE2 SINGULARITY_PULLFOLDER found as /home/c102mf/junk
+VERBOSE2 SHUB_NAMEBYHASH not defined (None)
+VERBOSE2 SHUB_NAMEBYCOMMIT not defined (None)
+VERBOSE2 SHUB_CONTAINERNAME not defined (None)
+VERBOSE2 SINGULARITY_CONTENTS found as /tmp/.singularity-layers.ZYNCdB4H
+VERBOSE2 SINGULARITY_PYTHREADS found as 9
+VERBOSE2 SINGULARITY_CONTAINER found as docker://ubuntu:latest
+DEBUG Found uri docker://
+DEBUG 
+*** STARTING DOCKER IMPORT PYTHON  ****
+DEBUG Docker layers and (env,labels,runscript) will be written to: 
+/tmp/.singularity-layers.ZYNCdB4H
+VERBOSE2 SINGULARITY_DOCKER_USERNAME not defined (None)
+VERBOSE2 SINGULARITY_DOCKER_PASSWORD found
+DEBUG Starting Docker IMPORT, includes environment, runscript, and metadata.
+VERBOSE Docker image: ubuntu:latest
+VERBOSE2 Specified Docker ENTRYPOINT as %runscript.
+DEBUG Headers found: Content-Type,Accept
+VERBOSE Registry: index.docker.io
+VERBOSE Namespace: library
+VERBOSE Repo Name: ubuntu
+VERBOSE Repo Tag: latest
+VERBOSE Version: None
+VERBOSE Obtaining tags: https://index.docker.io/v2/library/ubuntu/tags/list
+DEBUG GET https://index.docker.io/v2/library/ubuntu/tags/list
+DEBUG Http Error with code 401
+DEBUG GET 
+https://auth.docker.io/token?service=registry.docker.io&expires_in=9000&scope=repository:library/ubuntu:pull
+DEBUG Headers found: Content-Type,Authorization,Accept
+VERBOSE3 Response on obtaining token is None.
+Docker image path: index.docker.io/library/ubuntu:latest
+VERBOSE Obtaining manifest: 
+https://index.docker.io/v2/library/ubuntu/manifests/latest
+DEBUG GET https://index.docker.io/v2/library/ubuntu/manifests/latest
+ERROR Improperly formed manifest, layers or fsLayers must be present
+
+I see no substantial deviation for the cases that work
+
+[...]
+VERBOSE Obtaining tags: https://index.docker.io/v2/library/centos/tags/list
+DEBUG GET https://index.docker.io/v2/library/centos/tags/list
+DEBUG Http Error with code 401
+DEBUG GET 
+https://auth.docker.io/token?service=registry.docker.io&expires_in=9000&scope=repository:library/centos:pull
+DEBUG Headers found: Content-Type,Authorization,Accept
+VERBOSE3 Response on obtaining token is None.
+Docker image path: index.docker.io/library/centos:latest
+VERBOSE Obtaining manifest: 
+https://index.docker.io/v2/library/centos/manifests/latest
+DEBUG GET https://index.docker.io/v2/library/centos/manifests/latest
+DEBUG Image manifest version 2.2 found.
+DEBUG Adding digest 
+sha256:74f0853ba93b37c8152648905c48965c774d5a7d2de1967aef86ef0144561f62
+VERBOSE Obtaining manifest: 
+https://index.docker.io/v2/library/centos/manifests/latest
+DEBUG GET https://index.docker.io/v2/library/centos/manifests/latest
+Cache folder set to /root/.singularity/docker
+DEBUG Using 9 workers for multiprocess.
+VERBOSE3 Found Docker command (Entrypoint) None
+VERBOSE3 Found Docker command (Cmd) /bin/bash
+VERBOSE3 Adding Docker CMD as Singularity runscript...
+DEBUG /bin/bash
+[...]
+
+even the 401 error is present.
+
+I can only suppose that something in the way dockerhub are delivering their 
+images has changed that is partially incompatible with Singularity. I'd 
+appreciate any help - I am just in the process of convincing our users that 
+Singularity is the way to go with complex software installations - too bad 
+if it seems not to work.
+
+Thanks! Mike
+
+
+
+
+
+
+------=_Part_4206_1983979638.1505315429872
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hello,<br><br>It seems that for some images from dockerhub=
+, singularity pull or import fails with an error message<br><br><span style=
+=3D"font-family: courier new,monospace;"><span style=3D"color: rgb(255, 0, =
+0);">ERROR </span>Improperly formed manifest, layers or fsLayers must be pr=
+esent</span><br><br>Example:<br><br><span style=3D"font-family: courier new=
+,monospace;">=C2=A0$ sudo singularity pull --size 1024 docker://ubuntu:late=
+st<br>Initializing Singularity image subsystem<br>Opening image file: ubunt=
+u-latest.img<br>Creating 1024MiB image<br>Binding image to loop<br>Creating=
+ file system within image<br>Image is done: ubuntu-latest.img<br>Docker ima=
+ge path: index.docker.io/library/ubuntu:latest<br>ERROR Improperly formed m=
+anifest, layers or fsLayers must be present</span><br><br>Same with import =
+to existing .img file.<br>The problem also occurs with other images, e.g. f=
+or ubuntu:16.04, ubuntu:16.04.1, ubuntu:16.04.3, ubuntu:14.04, debian:stabl=
+e<br><br>But, for ubuntu:14.04.1 and centos:latest, the images download and=
+ run fine. I have no problem pulling and running any of those images with d=
+ocker.<br><br>The problem began less than 24 hours ago (now is 13 Sep. 2017=
+, 13:00 UTC). I cross checked by rolling back my virtual test host system t=
+o a snapshot and by installing singularity on a clean physical host. My hos=
+ts are running Ubuntu 16.04.3 LTS.<br><br>The output from &quot;singularity=
+ -vvvv import&quot; is<br><br><span style=3D"font-family: courier new,monos=
+pace;">=C2=A0$ singularity create -s 1024 ubuntu.img<br>Initializing Singul=
+arity image subsystem<br>Opening image file: ubuntu.img<br>Creating 1024MiB=
+ image<br>Binding image to loop<br>Creating file system within image<br>Ima=
+ge is done: ubuntu.img<br><br>=C2=A0$ sudo singularity -vvvv import ubuntu.=
+img docker://ubuntu:latest<br>Increasing verbosity level (5)<br>Ending argu=
+ment loop<br>Singularity version: 2.3.1-master.ga47422c<br>Exec&#39;ing: /u=
+sr/local/libexec/singularity/cli/import.exec<br>VERBOSE2 SINGULARITY_COMMAN=
+D_ASIS found as False<br>VERBOSE2 SINGULARITY_ROOTFS not defined (None)<br>=
+VERBOSE2 SINGULARITY_METADATA_FOLDER found as None/.singularity.d<br>VERBOS=
+E2 SINGULARITY_FIX_PERMS found as False<br>VERBOSE2 SINGULARITY_COLORIZE no=
+t defined (None)<br>VERBOSE2 SINGULARITY_DISABLE_CACHE found as False<br>VE=
+RBOSE2 SINGULARITY_CACHEDIR found as /root/.singularity<br>VERBOSE2 SINGULA=
+RITY_ENVIRONMENT found as None/.singularity.d/environment<br>VERBOSE2 SINGU=
+LARITY_RUNSCRIPT found as None/singularity<br>VERBOSE2 SINGULARITY_TESTFILE=
+ found as None/.singularity.d/test<br>VERBOSE2 SINGULARITY_DEFFILE found as=
+ None/.singularity.d/Singularity<br>VERBOSE2 SINGULARITY_ENVBASE found as N=
+one/.singularity.d/env<br>VERBOSE2 SINGULARITY_LABELFILE found as None/.sin=
+gularity.d/labels.json<br>VERBOSE2 SINGULARITY_INCLUDECMD found as False<br=
+>VERBOSE2 SINGULARITY_PULLFOLDER found as /home/c102mf/junk<br>VERBOSE2 SHU=
+B_NAMEBYHASH not defined (None)<br>VERBOSE2 SHUB_NAMEBYCOMMIT not defined (=
+None)<br>VERBOSE2 SHUB_CONTAINERNAME not defined (None)<br>VERBOSE2 SINGULA=
+RITY_CONTENTS found as /tmp/.singularity-layers.ZYNCdB4H<br>VERBOSE2 SINGUL=
+ARITY_PYTHREADS found as 9<br>VERBOSE2 SINGULARITY_CONTAINER found as docke=
+r://ubuntu:latest<br>DEBUG Found uri docker://<br>DEBUG <br>*** STARTING DO=
+CKER IMPORT PYTHON=C2=A0 ****<br>DEBUG Docker layers and (env,labels,runscr=
+ipt) will be written to: /tmp/.singularity-layers.ZYNCdB4H<br>VERBOSE2 SING=
+ULARITY_DOCKER_USERNAME not defined (None)<br>VERBOSE2 SINGULARITY_DOCKER_P=
+ASSWORD found<br>DEBUG Starting Docker IMPORT, includes environment, runscr=
+ipt, and metadata.<br>VERBOSE Docker image: ubuntu:latest<br>VERBOSE2 Speci=
+fied Docker ENTRYPOINT as %runscript.<br>DEBUG Headers found: Content-Type,=
+Accept<br>VERBOSE Registry: index.docker.io<br>VERBOSE Namespace: library<b=
+r>VERBOSE Repo Name: ubuntu<br>VERBOSE Repo Tag: latest<br>VERBOSE Version:=
+ None<br>VERBOSE Obtaining tags: https://index.docker.io/v2/library/ubuntu/=
+tags/list<br>DEBUG GET https://index.docker.io/v2/library/ubuntu/tags/list<=
+br>DEBUG Http Error with code 401<br>DEBUG GET https://auth.docker.io/token=
+?service=3Dregistry.docker.io&amp;expires_in=3D9000&amp;scope=3Drepository:=
+library/ubuntu:pull<br>DEBUG Headers found: Content-Type,Authorization,Acce=
+pt<br>VERBOSE3 Response on obtaining token is None.<br>Docker image path: i=
+ndex.docker.io/library/ubuntu:latest<br>VERBOSE Obtaining manifest: https:/=
+/index.docker.io/v2/library/ubuntu/manifests/latest<br>DEBUG GET https://in=
+dex.docker.io/v2/library/ubuntu/manifests/latest<br>ERROR Improperly formed=
+ manifest, layers or fsLayers must be present</span><br><br>I see no substa=
+ntial deviation for the cases that work<br><br><span style=3D"font-family: =
+courier new,monospace;">[...]<br>VERBOSE Obtaining tags: https://index.dock=
+er.io/v2/library/centos/tags/list<br>DEBUG GET https://index.docker.io/v2/l=
+ibrary/centos/tags/list<br>DEBUG Http Error with code 401<br>DEBUG GET http=
+s://auth.docker.io/token?service=3Dregistry.docker.io&amp;expires_in=3D9000=
+&amp;scope=3Drepository:library/centos:pull<br>DEBUG Headers found: Content=
+-Type,Authorization,Accept<br>VERBOSE3 Response on obtaining token is None.=
+<br>Docker image path: index.docker.io/library/centos:latest<br>VERBOSE Obt=
+aining manifest: https://index.docker.io/v2/library/centos/manifests/latest=
+<br>DEBUG GET https://index.docker.io/v2/library/centos/manifests/latest<br=
+>DEBUG Image manifest version 2.2 found.<br>DEBUG Adding digest sha256:74f0=
+853ba93b37c8152648905c48965c774d5a7d2de1967aef86ef0144561f62<br>VERBOSE Obt=
+aining manifest: https://index.docker.io/v2/library/centos/manifests/latest=
+<br>DEBUG GET https://index.docker.io/v2/library/centos/manifests/latest<br=
+>Cache folder set to /root/.singularity/docker<br>DEBUG Using 9 workers for=
+ multiprocess.<br>VERBOSE3 Found Docker command (Entrypoint) None<br>VERBOS=
+E3 Found Docker command (Cmd) /bin/bash<br>VERBOSE3 Adding Docker CMD as Si=
+ngularity runscript...<br>DEBUG /bin/bash<br>[...]</span><br><br>even the 4=
+01 error is present.<br><br>I can only suppose that something in the way do=
+ckerhub are delivering their images has changed that is partially incompati=
+ble with Singularity. I&#39;d appreciate any help - I am just in the proces=
+s of convincing our users that Singularity is the way to go with complex so=
+ftware installations - too bad if it seems not to work.<br><br>Thanks! Mike=
+<br><br><br><br><br><br></div>
+------=_Part_4206_1983979638.1505315429872--
+
+------=_Part_4205_1018033545.1505315429872--

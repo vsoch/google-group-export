@@ -1,0 +1,187 @@
+X-Received: by 10.157.23.232 with SMTP id j95mr852023otj.132.1485452217736;
+        Thu, 26 Jan 2017 09:36:57 -0800 (PST)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.36.28.73 with SMTP id c70ls4512593itc.5.canary-gmail; Thu, 26
+ Jan 2017 09:36:57 -0800 (PST)
+X-Received: by 10.99.253.81 with SMTP id m17mr4466349pgj.78.1485452217066;
+        Thu, 26 Jan 2017 09:36:57 -0800 (PST)
+Return-Path: <gmku...@lbl.gov>
+Received: from fe3.lbl.gov (fe3.lbl.gov. [128.3.41.68])
+        by mx.google.com with ESMTP id b65si1955068pfb.138.2017.01.26.09.36.56
+        for <singu...@lbl.gov>;
+        Thu, 26 Jan 2017 09:36:57 -0800 (PST)
+Received-SPF: pass (google.com: domain of gmku...@lbl.gov designates 209.85.213.197 as permitted sender) client-ip=209.85.213.197;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of gmku...@lbl.gov designates 209.85.213.197 as permitted sender) smtp.mailfrom=gmku...@lbl.gov
+X-Ironport-SBRS: 2.7
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2GSAQByMopYf8XVVdFXBx0YBwwYB4I4RgEBAQEBQT94EQeDRpwRgmKFJId9hSuBShsoHwEMgkCDNgKCJQc/GAEBAQEBAQEBAQEBAhABAQkLCwobMYIzBAIDEgUEBD0KAy4BAQEBAQEBAQEBAQEBAQEBGgINMQMqAQQBIyswCwsLNwICIQEPAwEFARwGCAcEARwEiSUDEAgFCaFMP4wCgiWHPQ2DKgEBCAEBAQEBIxKLKIJRgUoRAQmDGYJfBZAthRCFWzgBhmSHA4QOgXdThD+JaIoDIYcRFB6BFA8Qcw0vHgk0XgWBbIF/MwUcYwGBHh81B4Y1DxcDLYFnAQEB
+X-IronPort-AV: E=Sophos;i="5.33,290,1477983600"; 
+   d="scan'208,217";a="62139875"
+Received: from mail-yb0-f197.google.com ([209.85.213.197])
+  by fe3.lbl.gov with ESMTP; 26 Jan 2017 09:36:43 -0800
+Received: by mail-yb0-f197.google.com with SMTP id f67so326856657ybc.4
+        for <singu...@lbl.gov>; Thu, 26 Jan 2017 09:36:43 -0800 (PST)
+X-Gm-Message-State: AIkVDXLNKygMLn0MN6KudJlbQwX53XRxZexVucf35ni0FrGNAZ321UVZS4P6fWCpDsLLegcgHFY/SoclO3VU2S0pED2q7pwvdYnTX8uoGY+z2NRamuWaiQVpjvWX4BA8yS0kxyqpflAm3slz1sszFF1dNRg=
+X-Received: by 10.129.108.215 with SMTP id h206mr2616598ywc.164.1485452202601;
+        Thu, 26 Jan 2017 09:36:42 -0800 (PST)
+X-Received: by 10.129.108.215 with SMTP id h206mr2616581ywc.164.1485452202393;
+ Thu, 26 Jan 2017 09:36:42 -0800 (PST)
+MIME-Version: 1.0
+Received: by 10.129.153.2 with HTTP; Thu, 26 Jan 2017 09:36:41 -0800 (PST)
+In-Reply-To: <CAA6Bz=e3u1yAB_UTanvESXBcowLhixZqnkOoqb=Pyjc_oV+WjA@mail.gmail.com>
+References: <CAA6Bz=fUpAGk1DMk+Z_62YnbnFhfD7f6prnozdCJkwfar_mbgw@mail.gmail.com>
+ <CAA6Bz=e3u1yAB_UTanvESXBcowLhixZqnkOoqb=Pyjc_oV+WjA@mail.gmail.com>
+From: "Gregory M. Kurtzer" <gmku...@lbl.gov>
+Date: Thu, 26 Jan 2017 09:36:41 -0800
+Message-ID: <CAN7etTyhqj1t_Kk9Tr6aC-V0K1F=6H3gwzQeNPsorTLaQu9D-g@mail.gmail.com>
+Subject: Re: [Singularity] Re: Checkpointing in singularity
+To: singularity <singu...@lbl.gov>
+Content-Type: multipart/alternative; boundary=001a114dc75edaf410054702cae9
+
+--001a114dc75edaf410054702cae9
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+I will look into this in more detail. There are some technical difficulties
+that Singularity would have rather then Docker, LXC and OpenVZ namely
+because they all run daemons as root, so it is the root process which
+invokes the checkpointing. Singularity doesn't use a root owned daemon and
+thus the calls to ptrace() from CRIU would not work.
+
+As I said, I will investigate this before the release of 2.3, but please
+submit a feature enhancement request via the Github issue tracker (just to
+be sure I don't forget).
+
+Thanks!
+
+On Thu, Jan 26, 2017 at 7:01 AM, R=C3=A9my Dernat <rem...@gmail.com> wrote:
+
+> Sorry, for the wrong handling.
+>
+> So, you already have CRIU directly on docker, LXC  or even OpenVZ :
+>  - https://criu.org/Docker
+>  - https://criu.org/LXC
+>  - https://criu.org/OpenVZ
+>
+> Is there any plan to include CRIU in the next versions of singularity ?
+>
+> There are many advantages to use freezing/restoring techs for a container=
+.
+> For example, in a HPC environment, you can think to migrate a running job
+> from a host to another if anything went wrong or if you need more resourc=
+es.
+>
+> Best regards
+>
+> R=C3=A9my
+>
+> 2017-01-26 15:55 GMT+01:00 R=C3=A9my Dernat <rem...@gmail.com>:
+>
+>> Hi,
+>>
+>> After reading documentation and FAQ, I saw this :
+>> http://singularity.lbl.gov/faq#can-a-singularity-container
+>> -be-suspended-or-check-pointed
+>>
+>> However, this means that the checkpoint method is included in the
+>> software design. As an HPC system administrator, you generally have to
+>> install applications but you do not have a deep knowledge (or even the
+>> permission or the sources) of each app, except for those you code yourse=
+lf.
+>>
+>> For some containers technologies, there is the possibility to use CRIU,
+>> ie :
+>>
+>
+> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+>
+
+
+
+--=20
+Gregory M. Kurtzer
+HPC Systems Architect and Technology Developer
+Lawrence Berkeley National Laboratory HPCS
+University of California Berkeley Research IT
+Singularity Linux Containers (http://singularity.lbl.gov/)
+Warewulf Cluster Management (http://warewulf.lbl.gov/)
+GitHub: https://github.com/gmkurtzer, Twitter: https://twitter.com/gmkurtze=
+r
+
+--001a114dc75edaf410054702cae9
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">I will look into this in more detail. There are some techn=
+ical difficulties that Singularity would have rather then Docker, LXC and O=
+penVZ namely because they all run daemons as root, so it is the root proces=
+s which invokes the checkpointing. Singularity doesn&#39;t use a root owned=
+ daemon and thus the calls to ptrace() from CRIU would not work.<div><br></=
+div><div>As I said, I will investigate this before the release of 2.3, but =
+please submit a feature enhancement request via the Github issue tracker (j=
+ust to be sure I don&#39;t forget).</div><div><br></div><div>Thanks!</div><=
+/div><div class=3D"gmail_extra"><br><div class=3D"gmail_quote">On Thu, Jan =
+26, 2017 at 7:01 AM, R=C3=A9my Dernat <span dir=3D"ltr">&lt;<a href=3D"mail=
+to:rem...@gmail.com" target=3D"_blank">rem...@gmail.com</a>&gt;</span> wrot=
+e:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-l=
+eft:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Sorry, for the wrong =
+handling.<div><br></div><div>So, you already have CRIU directly on docker, =
+LXC =C2=A0or even OpenVZ :</div><div>=C2=A0- <a href=3D"https://criu.org/Do=
+cker" target=3D"_blank">https://criu.org/Docker</a><br></div><div>=C2=A0- <=
+a href=3D"https://criu.org/LXC" target=3D"_blank">https://criu.org/LXC</a><=
+br></div><div>=C2=A0-=C2=A0<a href=3D"https://criu.org/OpenVZ" target=3D"_b=
+lank">https://criu.org/OpenVZ</a></div><div><br></div><div>Is there any pla=
+n to include CRIU in the next versions of singularity ?</div><div><br></div=
+><div>There are many advantages to use freezing/restoring techs for a conta=
+iner. For example, in a HPC environment, you can think to migrate a running=
+ job from a host to another if anything went wrong or if you need more reso=
+urces.</div><div><br></div><div>Best regards</div><span class=3D"HOEnZb"><f=
+ont color=3D"#888888"><div><br></div><div>R=C3=A9my</div></font></span></di=
+v><div class=3D"HOEnZb"><div class=3D"h5"><div class=3D"gmail_extra"><br><d=
+iv class=3D"gmail_quote">2017-01-26 15:55 GMT+01:00 R=C3=A9my Dernat <span =
+dir=3D"ltr">&lt;<a href=3D"mailto:rem...@gmail.com" target=3D"_blank">rem..=
+.@gmail.com</a>&gt;</span>:<br><blockquote class=3D"gmail_quote" style=3D"m=
+argin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"l=
+tr">Hi,<div><br></div><div>After reading documentation and FAQ, I saw this =
+:=C2=A0<a href=3D"http://singularity.lbl.gov/faq#can-a-singularity-containe=
+r-be-suspended-or-check-pointed" target=3D"_blank">http://singularity.lbl.g=
+ov/f<wbr>aq#can-a-singularity-container<wbr>-be-suspended-or-check-pointed<=
+/a></div><div><br></div><div>However, this means that the checkpoint method=
+ is included in the software design. As an HPC system administrator, you ge=
+nerally have to install applications but you do not have a deep knowledge (=
+or even the permission or the sources) of each app, except for those you co=
+de yourself.</div><div><br></div><div>For some containers technologies, the=
+re is the possibility to use CRIU, ie :</div></div>
+</blockquote></div><br></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singularity+u=
+nsubscribe@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div class=3D"gmail_signature" data-smartmail=3D"gmail_signature"><div dir=
+=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr">=
+<div dir=3D"ltr"><div dir=3D"ltr"><div>Gregory M. Kurtzer</div><div>HPC Sys=
+tems Architect and Technology Developer</div><div>Lawrence Berkeley Nationa=
+l Laboratory HPCS<br>University of California Berkeley Research IT<br>Singu=
+larity Linux Containers=C2=A0(<a href=3D"http://singularity.lbl.gov/" targe=
+t=3D"_blank">http://singularity.lbl.gov/</a>)</div><div>Warewulf Cluster Ma=
+nagement=C2=A0(<a href=3D"http://warewulf.lbl.gov/" target=3D"_blank">http:=
+//warewulf.lbl.gov/</a>)</div><div>GitHub:=C2=A0<a href=3D"https://github.c=
+om/gmkurtzer" target=3D"_blank">https://github.com/gmkurtzer</a>,=C2=A0<spa=
+n style=3D"font-size:12.8px">Twitter:=C2=A0</span><a href=3D"https://twitte=
+r.com/gmkurtzer" style=3D"font-size:12.8px" target=3D"_blank">https://twitt=
+er.com/gmkurtzer</a></div></div></div></div></div></div></div></div></div><=
+/div></div>
+</div>
+
+--001a114dc75edaf410054702cae9--

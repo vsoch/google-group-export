@@ -1,0 +1,1295 @@
+Date: Thu, 20 Oct 2016 15:08:41 -0700 (PDT)
+From: Steve Mehlberg <sgmeh...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Cc: r...@open-mpi.org
+Message-Id: <07c79dac-4245-4e22-815d-ec8a4574934b@lbl.gov>
+In-Reply-To: <CAN7etTx53h8AfggsTN3Hqma1TK6h2Bnsvc2wbpNqVbA+tSGvDw@mail.gmail.com>
+References: <04cccf38-72fb-49ef-b010-15fb80e71e8e@lbl.gov> <CAN7etTyY_+ytGXpY4Te-=xED4zHNzz4Pg7xkB4ULj2sZ=gk2WA@mail.gmail.com>
+ <6e2a6338-f64e-4f2a-894b-d40f1f646113@lbl.gov> <CAN7etTzk47mf9bCo2S6Wp-9sYpS6u3JfwVgN2koRpKcamDtRWw@mail.gmail.com>
+ <8689886f-9da7-4f40-8769-06dbfc0a547f@lbl.gov> <CAN7etTz0wBEjGweZXC_pcOzEULW7hmeBr7zY5ndtsXOL88jSdA@mail.gmail.com>
+ <5cd8d8d2-44f5-47ab-8e02-838942890090@lbl.gov> <CAN7etTyWS+UGZa_EHc-J5at6ULUtFe=Jh3qPXksJNs4-dS5dVg@mail.gmail.com>
+ <CAN7etTwDa1oYx6K7sRxhATxT-4w+Z5A5rmpZrO7MPSFmdv2GPA@mail.gmail.com>
+ <dc6c4870-0f65-4f97-b38c-180052ea1020@lbl.gov> <CAN7etTyR-NKepOEGf3YAASPTZERTLNC-RP4vpHO+QZxpsT7HGQ@mail.gmail.com>
+ <17D943D8-2CF1-4B6D-A0A3-AA9479256ED0@open-mpi.org> <4e7e818e-e472-4acd-a2de-c5274ea89241@lbl.gov>
+ <CAN7etTx53h8AfggsTN3Hqma1TK6h2Bnsvc2wbpNqVbA+tSGvDw@mail.gmail.com>
+Subject: Re: [Singularity] Using singularity with MPI jobs
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_449_2099365439.1477001321516"
+
+------=_Part_449_2099365439.1477001321516
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_450_2140408805.1477001321518"
+
+------=_Part_450_2140408805.1477001321518
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Gregory,
+
+I will look into the slurm PMI enabled libraries and their availability in=
+=20
+the container.
+
+As I said before, our group (Atos/Bull) is doing development on the slurm=
+=20
+product - so that is why we are interested in sbatch/srun.  We are=20
+validating the usage of Singularity for our customers and are looking at=20
+ways of improving the usage of Singularity with slurm.
+
+Regards,
+
+Steve
+
+On Thursday, October 20, 2016 at 8:49:55 AM UTC-6, Gregory M. Kurtzer wrote=
+:
+>
+> Hi Steve,
+>
+> While this is outside my personal area of expertise, I believe Ralph was=
+=20
+> mentioning that the Slurm PMI enabled libraries needs to also be installe=
+d=20
+> inside the container along with a properly built MPI to link against=20
+> those libraries with PMI enabled to implement the type of job you are=20
+> running.=20
+>
+> With that said, why not just call mpirun/mpiexec instead of using srun=20
+> over PMI?
+>
+> Greg
+>
+>
+> On Thursday, October 20, 2016, Steve Mehlberg <sg...@gmail.com=20
+> <javascript:>> wrote:
+>
+>> Thanks for all the suggestions.  Here is an update of where I'm at:
+>>
+>> 1) First I tried running the newest version of singularity (2.2) and I=
+=20
+>> still experienced the problem.
+>> 2) I finally was able to compile the NEMO application without using the=
+=20
+>> Intel compilers and MPI.  I am now able to get singularity to run with=
+=20
+>> slurm srun if I use --mpi=3Dpmix.  So I can do my comparisons.
+>> 3) Using --mpi=3Dpmi2 still gets the exit error 6.  I'm going to rebuild=
+=20
+>> the container with the newest version of singularity and try again.
+>> 4) I'm using slurm 16.05.4 which has the mpi plugins and support.
+>>
+>> On Friday, October 14, 2016 at 5:14:45 PM UTC-6, r...@open-mpi.org wrote=
+:
+>>>
+>>>
+>>> On Oct 13, 2016, at 3:48 PM, Gregory M. Kurtzer <gm...@lbl.gov> wrote:
+>>>
+>>>
+>>>
+>>> On Thu, Oct 13, 2016 at 8:56 AM, Steve Mehlberg <sg...@gmail.com>=20
+>>> wrote:
+>>>
+>>>> Gregory,
+>>>>
+>>>> I didn't set anything concerning /dev/shm, so I'm not sure why the=20
+>>>> openmpi stuff gets there.
+>>>>
+>>>
+>>> I did a bit of checking, and I think openmpi conditionally uses=20
+>>> /dev/shm/ based on local configuration of /tmp.=20
+>>>
+>>>
+>>> This is correct - if /tmp is a shared file system, for example, or too=
+=20
+>>> small to hold the backing file
+>>>
+>>> =20
+>>>
+>>>>
+>>>> Our group (Atos/Bull) is doing development on the slurm product so tha=
+t=20
+>>>> is why we are interested in sbatch/srun vs mpirun.  We haven't found=
+=20
+>>>> anything amiss with the invocation using slurm - but something is diff=
+erent=20
+>>>> from mpirun that is causing this issue.
+>>>>
+>>>
+>>> I am not an expert on PMIx, but as I understand it, if you are invoking=
+=20
+>>> using PMIx via `srun`, you need to have the SLURM PMIx implementation a=
+lso=20
+>>> installed within the container, or that the OMPI build itself has to=20
+>>> include the PMIx support.
+>>>
+>>> Just to reiterate, does it work as expected when executing via mpirun?
+>>>
+>>>
+>>> Are you using the latest version of SLURM that has PMIx in it? If not,=
+=20
+>>> then did you build OMPI --with-pmi so the PMI support was built, and di=
+d=20
+>>> you include Slurm=E2=80=99s PMI libraries in your container? Otherwise,=
+ your MPI=20
+>>> application won=E2=80=99t find the PMI support, and there is no way it =
+can run=20
+>>> using srun as the launcher.
+>>>
+>>> =20
+>>>
+>>>>
+>>>> I'm interested in your comment about singularity support for openmpi. =
+=20
+>>>> Are you saying there are changes in openmpi for singularity that are n=
+ot in=20
+>>>> the stable released versions but are in the master branch?  Are any of=
+=20
+>>>> these changes specific to pmi2 or pmix?
+>>>>
+>>>
+>>> Yes, there are but I'm not sure if those changes are critical to the=20
+>>> failure you are seeing now.
+>>>
+>>>
+>>> Correct, on both counts - the changes make things easier/more=20
+>>> transparent for a user to run a Singularity job, but don=E2=80=99t affe=
+ct the basic=20
+>>> functionality.
+>>>
+>>> =20
+>>>
+>>>>
+>>>> How can I make sure I'm running with an openmpi that has the "required=
+"=20
+>>>> singularity changes?
+>>>>
+>>>
+>>> I believe currently, my schizo/personality fixes are only in the master=
+=20
+>>> branch of OMPI on GitHub at present, and it will be included in the nex=
+t=20
+>>> release... But, again, I don't think this is the cause of what you are=
+=20
+>>> seeing. I think it is a PMIx issue in that the PMI support is lacking=
+=20
+>>> inside the container. I am CC'ing Ralph with the hope that he can chime=
+ in.
+>>>
+>>>
+>>> There is nothing =E2=80=9Crequired=E2=80=9D in those changes - as I sai=
+d above, they=20
+>>> only make things more convenient. For example, we automatically detect =
+that=20
+>>> an application is actually a Singularity container, and invoke=20
+>>> =E2=80=9Csingularity=E2=80=9D to execute it (with the appropriate envar=
+s set).
+>>>
+>>> So Singularity will work with OMPI as-is - you just have to manually do=
+=20
+>>> the cmd line.
+>>>
+>>>
+>>> Greg
+>>>
+>>>
+>>> =20
+>>>
+>>>>
+>>>> -Steve
+>>>>
+>>>> On Wednesday, October 12, 2016 at 8:46:29 PM UTC-6, Gregory M. Kurtzer=
+=20
+>>>> wrote:
+>>>>>
+>>>>> Hi Steve,
+>>>>>
+>>>>> Did you mention that it works if you call it via mpirun? If so, why=
+=20
+>>>>> don't you just launch with mpirun/mpiexec? I'm not sure the startup=
+=20
+>>>>> invocation is the same for srun even via pmi.
+>>>>>
+>>>>> Additionally, you may need to use OMPI from the master branch from=20
+>>>>> GitHub. I just heard from Ralph that proper Singularity support has n=
+ot=20
+>>>>> been part of an OMPI release yet.
+>>>>>
+>>>>> Thanks and hope that helps!
+>>>>>
+>>>>> On Wed, Oct 12, 2016 at 2:37 PM, Gregory M. Kurtzer <gm...@lbl.gov>=
+=20
+>>>>> wrote:
+>>>>>
+>>>>>> Weird how openmpi is actually throwing the session directory in=20
+>>>>>> /dev/shm. I thought it usually uses /tmp.=20
+>>>>>>
+>>>>>> Did you set that somewhere or am I confused?
+>>>>>>
+>>>>>>
+>>>>>>
+>>>>>>
+>>>>>> On Wednesday, October 12, 2016, Steve Mehlberg <sg...@gmail.com>=20
+>>>>>> wrote:
+>>>>>>
+>>>>>>> Gregory,
+>>>>>>>
+>>>>>>> Yes, I was able to create a file on the host (non-root uid) in=20
+>>>>>>> /dev/shm/test.it and then view it in the singularity shell.
+>>>>>>>
+>>>>>>> And, there is some stuff there too, is that normal?
+>>>>>>>
+>>>>>>> bash-4.2$ ls /dev/shm -la
+>>>>>>> total 4
+>>>>>>> drwxrwxrwt   4 root      root   100 Oct 12 17:34 .
+>>>>>>> drwxr-xr-x  20 root      root  3580 Oct  7 22:04 ..
+>>>>>>> -rwxr-xr-x   1 mehlberg  user   880 Oct 12 17:34 test.it
+>>>>>>> drwx------  47 root      root   940 Sep 30 17:19=20
+>>>>>>> openmpi-sessions-0@node9_0
+>>>>>>> drwx------ 561 mehlberg  user 11220 Oct 12 15:39=20
+>>>>>>> openmpi-sessions-50342@node9_0
+>>>>>>>
+>>>>>>>
+>>>>>>> Steve
+>>>>>>>
+>>>>>>> On Wednesday, October 12, 2016 at 11:18:20 AM UTC-6, Gregory M.=20
+>>>>>>> Kurtzer wrote:
+>>>>>>>>
+>>>>>>>> Can you create a file in /dev/shm/... on the host, and then start =
+a=20
+>>>>>>>> Singularity container and confirm that you can see that file from =
+within=20
+>>>>>>>> the container please?
+>>>>>>>>
+>>>>>>>> Thanks!
+>>>>>>>>
+>>>>>>>> On Wed, Oct 12, 2016 at 9:45 AM, Steve Mehlberg <sg...@gmail.com
+>>>>>>>> > wrote:
+>>>>>>>>
+>>>>>>>>> Wow, that was very interesting.  I indeed get the same problem=20
+>>>>>>>>> with the singularity -n1 (srun - one task).  I created the strace=
+, then=20
+>>>>>>>>> wanted to compare the output to a non-singularity run.  But when =
+I change=20
+>>>>>>>>> the non-singularity run to use anything other than the required n=
+umber of=20
+>>>>>>>>> tasks I get the same error!  That seems to indicate that in the s=
+ingularity=20
+>>>>>>>>> run (srun with the correct number of tasks) for some reason the M=
+PI=20
+>>>>>>>>> processes can't communicate with one another.=20
+>>>>>>>>>
+>>>>>>>>> The strace doesn't show much - or at least not much that means=20
+>>>>>>>>> something to me.  The program seems to be going along outputting =
+data then=20
+>>>>>>>>> aborts with exit 6:
+>>>>>>>>>
+>>>>>>>>> [pid 13573] write(27, "                    suppress iso"..., 56) =
+=3D=20
+>>>>>>>>> 56
+>>>>>>>>> [pid 13573] write(27, "                    ------------"..., 56) =
+=3D=20
+>>>>>>>>> 56
+>>>>>>>>> [pid 13573] write(27, "      no isolated ocean grid poi"..., 36) =
+=3D=20
+>>>>>>>>> 36
+>>>>>>>>> [pid 13573]=20
+>>>>>>>>> open("/opt/mpi/openmpi-icc/2.0.0/share/openmpi/help-mpi-errors.tx=
+t",=20
+>>>>>>>>> O_RDONLY) =3D 28
+>>>>>>>>> [pid 13573] ioctl(28, SNDCTL_TMR_TIMEBASE or=20
+>>>>>>>>> SNDRV_TIMER_IOCTL_NEXT_DEVICE or TCGETS, 0x7ffec31d4d80) =3D -1 E=
+NOTTY=20
+>>>>>>>>> (Inappropriate ioctl for device)
+>>>>>>>>> [pid 13573] fstat(28, {st_mode=3DS_IFREG|0644, st_size=3D1506, ..=
+.}) =3D=20
+>>>>>>>>> 0
+>>>>>>>>> [pid 13573] mmap(NULL, 4096, PROT_READ|PROT_WRITE,=20
+>>>>>>>>> MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) =3D 0x7f4b65f45000
+>>>>>>>>> [pid 13573] read(28, "# -*- text -*-\n#\n# Copyright (c)"...,=20
+>>>>>>>>> 8192) =3D 1506
+>>>>>>>>> [pid 13573] read(28, "", 4096)          =3D 0
+>>>>>>>>> [pid 13573] close(28)                   =3D 0
+>>>>>>>>> [pid 13573] munmap(0x7f4b65f45000, 4096) =3D 0
+>>>>>>>>> [pid 13573] write(1, "[node9:13573] *** An error occ"..., 361) =
+=3D=20
+>>>>>>>>> 361
+>>>>>>>>> [pid 13573]=20
+>>>>>>>>> stat("/dev/shm/openmpi-sessions-50342@node9_0/37255/1/0",=20
+>>>>>>>>> {st_mode=3DS_IFDIR|0700, st_size=3D40, ...}) =3D 0
+>>>>>>>>> [pid 13573] openat(AT_FDCWD,=20
+>>>>>>>>> "/dev/shm/openmpi-sessions-50342@node9_0/37255/1/0",=20
+>>>>>>>>> O_RDONLY|O_NONBLOCK|O_DIRECTORY|O_CLOEXEC) =3D 28
+>>>>>>>>> [pid 13573] getdents(28, /* 2 entries */, 32768) =3D 48
+>>>>>>>>> [pid 13573] getdents(28, /* 0 entries */, 32768) =3D 0
+>>>>>>>>> [pid 13573] close(28)                   =3D 0
+>>>>>>>>> [pid 13573] openat(AT_FDCWD,=20
+>>>>>>>>> "/dev/shm/openmpi-sessions-50342@node9_0/37255/1/0",=20
+>>>>>>>>> O_RDONLY|O_NONBLOCK|O_DIRECTORY|O_CLOEXEC) =3D 28
+>>>>>>>>> [pid 13573] getdents(28, /* 2 entries */, 32768) =3D 48
+>>>>>>>>> [pid 13573] getdents(28, /* 0 entries */, 32768) =3D 0
+>>>>>>>>> [pid 13573] close(28)                   =3D 0
+>>>>>>>>> [pid 13573]=20
+>>>>>>>>> rmdir("/dev/shm/openmpi-sessions-50342@node9_0/37255/1/0") =3D 0
+>>>>>>>>> [pid 13573]=20
+>>>>>>>>> stat("/dev/shm/openmpi-sessions-50342@node9_0/37255/1",=20
+>>>>>>>>> {st_mode=3DS_IFDIR|0700, st_size=3D40, ...}) =3D 0
+>>>>>>>>> [pid 13573] openat(AT_FDCWD,=20
+>>>>>>>>> "/dev/shm/openmpi-sessions-50342@node9_0/37255/1",=20
+>>>>>>>>> O_RDONLY|O_NONBLOCK|O_DIRECTORY|O_CLOEXEC) =3D 28
+>>>>>>>>> [pid 13573] getdents(28, /* 2 entries */, 32768) =3D 48
+>>>>>>>>> [pid 13573] getdents(28, /* 0 entries */, 32768) =3D 0
+>>>>>>>>> [pid 13573] close(28)                   =3D 0
+>>>>>>>>> [pid 13573] openat(AT_FDCWD,=20
+>>>>>>>>> "/dev/shm/openmpi-sessions-50342@node9_0/37255/1",=20
+>>>>>>>>> O_RDONLY|O_NONBLOCK|O_DIRECTORY|O_CLOEXEC) =3D 28
+>>>>>>>>> [pid 13573] getdents(28, /* 2 entries */, 32768) =3D 48
+>>>>>>>>> [pid 13573] getdents(28, /* 0 entries */, 32768) =3D 0
+>>>>>>>>> [pid 13573] close(28)                   =3D 0
+>>>>>>>>> [pid 13573]=20
+>>>>>>>>> rmdir("/dev/shm/openmpi-sessions-50342@node9_0/37255/1") =3D 0
+>>>>>>>>> [pid 13573] stat("/dev/shm/openmpi-sessions-50342@node9_0",=20
+>>>>>>>>> {st_mode=3DS_IFDIR|0700, st_size=3D11080, ...}) =3D 0
+>>>>>>>>> [pid 13573] openat(AT_FDCWD,=20
+>>>>>>>>> "/dev/shm/openmpi-sessions-50342@node9_0",=20
+>>>>>>>>> O_RDONLY|O_NONBLOCK|O_DIRECTORY|O_CLOEXEC) =3D 28
+>>>>>>>>> [pid 13573] getdents(28, /* 554 entries */, 32768) =3D 17424
+>>>>>>>>> [pid 13573] getdents(28, /* 0 entries */, 32768) =3D 0
+>>>>>>>>> [pid 13573] close(28)                   =3D 0
+>>>>>>>>> [pid 13573] openat(AT_FDCWD,=20
+>>>>>>>>> "/dev/shm/openmpi-sessions-50342@node9_0",=20
+>>>>>>>>> O_RDONLY|O_NONBLOCK|O_DIRECTORY|O_CLOEXEC) =3D 28
+>>>>>>>>> [pid 13573] getdents(28, /* 554 entries */, 32768) =3D 17424
+>>>>>>>>> [pid 13573] close(28)                   =3D 0
+>>>>>>>>> [pid 13573] openat(AT_FDCWD,=20
+>>>>>>>>> "/dev/shm/openmpi-sessions-50342@node9_0/37255/1/0",=20
+>>>>>>>>> O_RDONLY|O_NONBLOCK|O_DIRECTORY|O_CLOEXEC) =3D -1 ENOENT (No such=
+ file or=20
+>>>>>>>>> directory)
+>>>>>>>>> [pid 13573] exit_group(6)               =3D ?
+>>>>>>>>> [pid 13574] +++ exited with 6 +++
+>>>>>>>>> +++ exited with 6 +++
+>>>>>>>>> srun: error: node9: task 0: Exited with exit code 6
+>>>>>>>>>
+>>>>>>>>>
+>>>>>>>>>
+>>>>>>>>> On Wednesday, October 12, 2016 at 8:53:12 AM UTC-6, Gregory M.=20
+>>>>>>>>> Kurtzer wrote:
+>>>>>>>>>>
+>>>>>>>>>> Can you replicate the problem with a -np 1? If so can you strace=
+=20
+>>>>>>>>>> it from within the container:
+>>>>>>>>>>
+>>>>>>>>>> mpirun -np 1 singularity exec container.img strace -ff=20
+>>>>>>>>>> /path/to/mpi.exe (opts)
+>>>>>>>>>>
+>>>>>>>>>> Yes you can try Singularity 2.2. Please install it to a differen=
+t=20
+>>>>>>>>>> path so we can test side by side if you don't mind (if really li=
+ke to debug=20
+>>>>>>>>>> this).=20
+>>>>>>>>>>
+>>>>>>>>>> Thanks!
+>>>>>>>>>>
+>>>>>>>>>>
+>>>>>>>>>>
+>>>>>>>>>> On Wednesday, October 12, 2016, Steve Mehlberg <
+>>>>>>>>>> sg...@gmail.com> wrote:
+>>>>>>>>>>
+>>>>>>>>>>> Greg,
+>>>>>>>>>>>
+>>>>>>>>>>> I put a bind to /opt in the singularity.conf file so that=20
+>>>>>>>>>>> /opt/intel is available in the container.
+>>>>>>>>>>>
+>>>>>>>>>>> All the tasks (16) immediately exit code 6.  The job exits afte=
+r=20
+>>>>>>>>>>> about 4 seconds.  It normally takes about 16 minutes to run wit=
+h the=20
+>>>>>>>>>>> configuration I'm using and I do see the start of some output.
+>>>>>>>>>>>
+>>>>>>>>>>> I am using openmpi 2.0.0.
+>>>>>>>>>>>
+>>>>>>>>>>> I tried an "export SINGULARITY_NO_NAMESPACE_PID=3D1" in the bas=
+h=20
+>>>>>>>>>>> script that runs all of this for each process and I still get t=
+he problem.
+>>>>>>>>>>>
+>>>>>>>>>>> [node12:9779] *** An error occurred in MPI_Isend
+>>>>>>>>>>> [node12:9779] *** reported by process [3025076225,0]
+>>>>>>>>>>> [node12:9779] *** on communicator MPI COMMUNICATOR 3 DUP FROM 0
+>>>>>>>>>>> [node12:9779] *** MPI_ERR_RANK: invalid rank
+>>>>>>>>>>> [node12:9779] *** MPI_ERRORS_ARE_FATAL (processes in this=20
+>>>>>>>>>>> communicator will now abort,
+>>>>>>>>>>> [node12:9779] ***    and potentially your MPI job)
+>>>>>>>>>>>
+>>>>>>>>>>> I can try 2.2 - do you think it might behave differently?
+>>>>>>>>>>>
+>>>>>>>>>>> Thanks for the ideas and help.
+>>>>>>>>>>>
+>>>>>>>>>>> Regards,
+>>>>>>>>>>>
+>>>>>>>>>>> Steve
+>>>>>>>>>>>
+>>>>>>>>>>> On Tuesday, October 11, 2016 at 8:19:47 PM UTC-6, Gregory M.=20
+>>>>>>>>>>> Kurtzer wrote:
+>>>>>>>>>>>>
+>>>>>>>>>>>> Hi Steve,
+>>>>>>>>>>>>
+>>>>>>>>>>>> I'm not sure at first glance, but just to touch on the=20
+>>>>>>>>>>>> basics... Is /opt/intel available from within the container? D=
+o all tasks=20
+>>>>>>>>>>>> exit code 6, or just some of them?
+>>>>>>>>>>>>
+>>>>>>>>>>>> What version of OMPI are you using?
+>>>>>>>>>>>>
+>>>>>>>>>>>> I wonder if the PID namespace is causing a problem here... I'm=
+=20
+>>>>>>>>>>>> not sure it gets effectively disabled when running via srun an=
+d pmi. Can=20
+>>>>>>>>>>>> you export the environment variable "SINGULARITY_NO_NAMESPACE_=
+PID=3D1"=20
+>>>>>>>>>>>> in a place where Singularity will pick it up definitively by a=
+ll ranks?=20
+>>>>>>>>>>>> That will ensure that the PID namespace is not being exported.
+>>>>>>>>>>>>
+>>>>>>>>>>>> Additionally, you could try version 2.2. I just released it,=
+=20
+>>>>>>>>>>>> and by default it does not unshare() out the PID namespace. Bu=
+t... It is=20
+>>>>>>>>>>>> the first release in the 2.2 series so it may bring with it ot=
+her issues=20
+>>>>>>>>>>>> that still need resolving.... But we should debug those too! :=
+)
+>>>>>>>>>>>>
+>>>>>>>>>>>> Greg
+>>>>>>>>>>>>
+>>>>>>>>>>>>
+>>>>>>>>>>>>
+>>>>>>>>>>>> On Tue, Oct 11, 2016 at 2:40 PM, Steve Mehlberg <
+>>>>>>>>>>>> sg...@gmail.com> wrote:
+>>>>>>>>>>>>
+>>>>>>>>>>>>> Does singularity support MPI PMI-2 jobs?  I've had mixed=20
+>>>>>>>>>>>>> success testing benchmark applications using a singularity co=
+ntainer.=20
+>>>>>>>>>>>>> =20
+>>>>>>>>>>>>>
+>>>>>>>>>>>>> Currently I'm struggling to get the NEMO benchmark to run=20
+>>>>>>>>>>>>> using slurm 16.05 and pmi2.  I can run the exact same executa=
+ble on bare=20
+>>>>>>>>>>>>> metal with the same slurm, but I get Rank errors when I run u=
+sing "srun=20
+>>>>>>>>>>>>> --mpi=3Dpmi2 singularity...".  The application aborts with an=
+ exit code 6.
+>>>>>>>>>>>>>
+>>>>>>>>>>>>> I tried pmix too, but that gets mpi aborts for both bare meta=
+l=20
+>>>>>>>>>>>>> and singularity.
+>>>>>>>>>>>>>
+>>>>>>>>>>>>> The only way I could get the NEMO application to compile was=
+=20
+>>>>>>>>>>>>> to use the intel compilers and mpi:
+>>>>>>>>>>>>>
+>>>>>>>>>>>>> source=20
+>>>>>>>>>>>>> /opt/intel/compilers_and_libraries_2016.3.210/linux/bin/compi=
+lervars.sh=20
+>>>>>>>>>>>>> intel64
+>>>>>>>>>>>>> source=20
+>>>>>>>>>>>>> /opt/intel/compilers_and_libraries_2016.3.210/linux/bin/ifort=
+vars.sh intel64
+>>>>>>>>>>>>> source=20
+>>>>>>>>>>>>> /opt/intel/compilers_and_libraries_2016.3.210/linux/bin/iccva=
+rs.sh intel64
+>>>>>>>>>>>>> source /opt/mpi/openmpi-icc/2.0.0/bin/mpivars.sh
+>>>>>>>>>>>>>
+>>>>>>>>>>>>> It runs fine when I use mpirun with or without singularity.
+>>>>>>>>>>>>>
+>>>>>>>>>>>>> Example run/error:
+>>>>>>>>>>>>>
+>>>>>>>>>>>>> sbatch ...
+>>>>>>>>>>>>> srun --mpi=3Dpmi2 -n16 singularity exec c7.img run.it > out_n=
+ow
+>>>>>>>>>>>>>
+>>>>>>>>>>>>> .......
+>>>>>>>>>>>>> srun: error: node11: tasks 0-7: Exited with exit code 6
+>>>>>>>>>>>>> srun: error: node12: tasks 8-15: Exited with exit code 6
+>>>>>>>>>>>>>
+>>>>>>>>>>>>> $ cat run.it
+>>>>>>>>>>>>> #!/bin/sh
+>>>>>>>>>>>>> source=20
+>>>>>>>>>>>>> /opt/intel/compilers_and_libraries_2016.3.210/linux/bin/compi=
+lervars.sh=20
+>>>>>>>>>>>>> intel64
+>>>>>>>>>>>>> source=20
+>>>>>>>>>>>>> /opt/intel/compilers_and_libraries_2016.3.210/linux/bin/ifort=
+vars.sh intel64
+>>>>>>>>>>>>> source=20
+>>>>>>>>>>>>> /opt/intel/compilers_and_libraries_2016.3.210/linux/bin/iccva=
+rs.sh intel64
+>>>>>>>>>>>>> source /opt/mpi/openmpi-icc/2.0.0/bin/mpivars.sh
+>>>>>>>>>>>>> source env_bench
+>>>>>>>>>>>>> export=20
+>>>>>>>>>>>>> PATH=3D/opt/mpi/openmpi-icc/2.0.0/bin:/opt/pmix/1.1.5/bin:$PA=
+TH
+>>>>>>>>>>>>> export=20
+>>>>>>>>>>>>> LD_LIBRARY_PATH=3D/opt/openmpi-icc/2.0.0/lib:/opt/pmix/1.1.5/=
+lib:$LD_LIBRARY_PATH
+>>>>>>>>>>>>> export OMPI_MCA_btl=3Dself,sm,openib
+>>>>>>>>>>>>>
+>>>>>>>>>>>>> ./opa_8_2 namelist >out_now
+>>>>>>>>>>>>>
+>>>>>>>>>>>>> $ cat out_now
+>>>>>>>>>>>>> [node12:29725] *** An error occurred in MPI_Isend
+>>>>>>>>>>>>> [node12:29725] *** reported by process [3865116673,0]
+>>>>>>>>>>>>> [node12:29725] *** on communicator MPI COMMUNICATOR 3 DUP FRO=
+M=20
+>>>>>>>>>>>>> 0
+>>>>>>>>>>>>> [node12:29725] *** MPI_ERR_RANK: invalid rank
+>>>>>>>>>>>>> [node12:29725] *** MPI_ERRORS_ARE_FATAL (processes in this=20
+>>>>>>>>>>>>> communicator will now abort,
+>>>>>>>>>>>>> [node12:29725] ***    and potentially your MPI job)
+>>>>>>>>>>>>>
+>>>>>>>>>>>>> I am running singularity 2.1 - any ideas?
+>>>>>>>>>>>>>
+>>>>>>>>>>>>> -Steve
+>>>>>>>>>>>>>
+>>>>>>>>>>>>>
+>>>>>>>>>>>>> --=20
+>>>>>>>>>>>>> You received this message because you are subscribed to the=
+=20
+>>>>>>>>>>>>> Google Groups "singularity" group.
+>>>>>>>>>>>>> To unsubscribe from this group and stop receiving emails from=
+=20
+>>>>>>>>>>>>> it, send an email to singu...@lbl.gov.
+>>>>>>>>>>>>>
+>>>>>>>>>>>>
+>>>>>>>>>>>>
+>>>>>>>>>>>>
+>>>>>>>>>>>> --=20
+>>>>>>>>>>>> Gregory M. Kurtzer
+>>>>>>>>>>>> HPC Systems Architect and Technology Developer
+>>>>>>>>>>>> Lawrence Berkeley National Laboratory HPCS
+>>>>>>>>>>>> University of California Berkeley Research IT
+>>>>>>>>>>>> Singularity Linux Containers (http://singularity.lbl.gov/)
+>>>>>>>>>>>> Warewulf Cluster Management (http://warewulf.lbl.gov/)
+>>>>>>>>>>>> GitHub: https://github.com/gmkurtzer, Twitter:=20
+>>>>>>>>>>>> https://twitter.com/gmkurtzer
+>>>>>>>>>>>>
+>>>>>>>>>>>
+>>>>>>>>>>> --=20
+>>>>>>>>>>> You received this message because you are subscribed to the=20
+>>>>>>>>>>> Google Groups "singularity" group.
+>>>>>>>>>>> To unsubscribe from this group and stop receiving emails from=
+=20
+>>>>>>>>>>> it, send an email to singu...@lbl.gov.
+>>>>>>>>>>>
+>>>>>>>>>>
+>>>>>>>>>>
+>>>>>>>>>> --=20
+>>>>>>>>>> Gregory M. Kurtzer
+>>>>>>>>>> HPC Systems Architect and Technology Developer
+>>>>>>>>>> Lawrence Berkeley National Laboratory HPCS
+>>>>>>>>>> University of California Berkeley Research IT
+>>>>>>>>>> Singularity Linux Containers (http://singularity.lbl.gov/)
+>>>>>>>>>> Warewulf Cluster Management (http://warewulf.lbl.gov/)
+>>>>>>>>>> GitHub: https://github.com/gmkurtzer, Twitter:=20
+>>>>>>>>>> https://twitter.com/gmkurtzer
+>>>>>>>>>>
+>>>>>>>>>>
+>>>>>>>>> --=20
+>>>>>>>>> You received this message because you are subscribed to the Googl=
+e=20
+>>>>>>>>> Groups "singularity" group.
+>>>>>>>>> To unsubscribe from this group and stop receiving emails from it,=
+=20
+>>>>>>>>> send an email to singu...@lbl.gov.
+>>>>>>>>>
+>>>>>>>>
+>>>>>>>>
+>>>>>>>>
+>>>>>>>> --=20
+>>>>>>>> Gregory M. Kurtzer
+>>>>>>>> HPC Systems Architect and Technology Developer
+>>>>>>>> Lawrence Berkeley National Laboratory HPCS
+>>>>>>>> University of California Berkeley Research IT
+>>>>>>>> Singularity Linux Containers (http://singularity.lbl.gov/)
+>>>>>>>> Warewulf Cluster Management (http://warewulf.lbl.gov/)
+>>>>>>>> GitHub: https://github.com/gmkurtzer, Twitter:=20
+>>>>>>>> https://twitter.com/gmkurtzer
+>>>>>>>>
+>>>>>>>
+>>>>>>> --=20
+>>>>>>> You received this message because you are subscribed to the Google=
+=20
+>>>>>>> Groups "singularity" group.
+>>>>>>> To unsubscribe from this group and stop receiving emails from it,=
+=20
+>>>>>>> send an email to singu...@lbl.gov.
+>>>>>>>
+>>>>>>
+>>>>>
+>>>>>
+>>>>> --=20
+>>>>> Gregory M. Kurtzer
+>>>>> HPC Systems Architect and Technology Developer
+>>>>> Lawrence Berkeley National Laboratory HPCS
+>>>>> University of California Berkeley Research IT
+>>>>> Singularity Linux Containers (http://singularity.lbl.gov/)
+>>>>> Warewulf Cluster Management (http://warewulf.lbl.gov/)
+>>>>> GitHub: https://github.com/gmkurtzer, Twitter:=20
+>>>>> https://twitter.com/gmkurtzer
+>>>>>
+>>>>
+>>>> --=20
+>>>> You received this message because you are subscribed to the Google=20
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send=
+=20
+>>>> an email to singu...@lbl.gov.
+>>>>
+>>>
+>>>
+>>>
+>>> --=20
+>>> Gregory M. Kurtzer
+>>> HPC Systems Architect and Technology Developer
+>>> Lawrence Berkeley National Laboratory HPCS
+>>> University of California Berkeley Research IT
+>>> Singularity Linux Containers (http://singularity.lbl.gov/)
+>>> Warewulf Cluster Management (http://warewulf.lbl.gov/)
+>>> GitHub: https://github.com/gmkurtzer, Twitter:=20
+>>> https://twitter.com/gmkurtzer
+>>>
+>>>
+>>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s=20
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n=20
+>> email to singu...@lbl.gov.
+>>
+>
+>
+> --=20
+> Gregory M. Kurtzer
+> HPC Systems Architect and Technology Developer
+> Lawrence Berkeley National Laboratory HPCS
+> University of California Berkeley Research IT
+> Singularity Linux Containers (http://singularity.lbl.gov/)
+> Warewulf Cluster Management (http://warewulf.lbl.gov/)
+> GitHub: https://github.com/gmkurtzer, Twitter:=20
+> https://twitter.com/gmkurtzer
+>
+>
+------=_Part_450_2140408805.1477001321518
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Gregory,<br><br>I will look into the slurm PMI enabled lib=
+raries and their availability in the container.<br><br>As I said before, ou=
+r group (Atos/Bull) is doing development on the slurm product - so that is =
+why we are interested in sbatch/srun.=C2=A0 We are validating the usage of =
+Singularity for our customers and are looking at ways of improving the usag=
+e of Singularity with slurm.<br><br>Regards,<br><br>Steve<br><br>On Thursda=
+y, October 20, 2016 at 8:49:55 AM UTC-6, Gregory M. Kurtzer wrote:<blockquo=
+te class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left:=
+ 1px #ccc solid;padding-left: 1ex;">Hi Steve,<div><br></div><div>While this=
+ is outside my personal area of expertise, I believe Ralph was mentioning t=
+hat the Slurm PMI enabled=C2=A0libraries needs to also be installed inside =
+the container along with a properly built<span></span> MPI to link against =
+those libraries with PMI enabled to implement the type of job you are runni=
+ng.=C2=A0</div><div><br></div><div>With that said, why not just call mpirun=
+/mpiexec instead of using srun over PMI?</div><div><br></div><div>Greg</div=
+><div><br><br>On Thursday, October 20, 2016, Steve Mehlberg &lt;<a href=3D"=
+javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"JU0Q2e9gBQAJ" rel=
+=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;=
+" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">sg...@gmail.co=
+m</a>&gt; wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0=
+ .8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Thanks =
+for all the suggestions.=C2=A0 Here is an update of where I&#39;m at:<br><b=
+r>1) First I tried running the newest version of singularity (2.2) and I st=
+ill experienced the problem.<br>2) I finally was able to compile the NEMO a=
+pplication without using the Intel compilers and MPI.=C2=A0 I am now able t=
+o get singularity to run with slurm srun if I use --mpi=3Dpmix.=C2=A0 So I =
+can do my comparisons.<br>3) Using --mpi=3Dpmi2 still gets the exit error 6=
+.=C2=A0 I&#39;m going to rebuild the container with the newest version of s=
+ingularity and try again.<br>4) I&#39;m using slurm 16.05.4 which has the m=
+pi plugins and support.<br><br>On Friday, October 14, 2016 at 5:14:45 PM UT=
+C-6, <a>r...@open-mpi.org</a> wrote:<blockquote class=3D"gmail_quote" style=
+=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-left:1ex"=
+><div style=3D"word-wrap:break-word"><br><div><blockquote type=3D"cite"><di=
+v>On Oct 13, 2016, at 3:48 PM, Gregory M. Kurtzer &lt;<a rel=3D"nofollow">g=
+m...@lbl.gov</a>&gt; wrote:</div><br><div><br><br style=3D"font-family:Helv=
+etica;font-size:12px;font-style:normal;font-weight:normal;letter-spacing:no=
+rmal;text-align:start;text-indent:0px;text-transform:none;white-space:norma=
+l;word-spacing:0px"><div class=3D"gmail_quote" style=3D"font-family:Helveti=
+ca;font-size:12px;font-style:normal;font-weight:normal;letter-spacing:norma=
+l;text-align:start;text-indent:0px;text-transform:none;white-space:normal;w=
+ord-spacing:0px">On Thu, Oct 13, 2016 at 8:56 AM, Steve Mehlberg<span>=C2=
+=A0</span><span dir=3D"ltr">&lt;<a rel=3D"nofollow">sg...@gmail.com</a>&gt;=
+</span><span>=C2=A0</span><wbr>wrote:<br><blockquote class=3D"gmail_quote" =
+style=3D"margin:0px 0px 0px 0.8ex;border-left-width:1px;border-left-color:r=
+gb(204,204,204);border-left-style:solid;padding-left:1ex"><div dir=3D"ltr">=
+Gregory,<br><br>I didn&#39;t set anything concerning /dev/shm, so I&#39;m n=
+ot sure why the openmpi stuff gets there.<br></div></blockquote><div><br></=
+div><div>I did a bit of checking, and I think openmpi conditionally uses /d=
+ev/shm/ based on local configuration of /tmp.=C2=A0</div></div></div></bloc=
+kquote><div><br></div>This is correct - if /tmp is a shared file system, fo=
+r example, or too small to hold the backing file</div><div><br><blockquote =
+type=3D"cite"><div><div class=3D"gmail_quote" style=3D"font-family:Helvetic=
+a;font-size:12px;font-style:normal;font-weight:normal;letter-spacing:normal=
+;text-align:start;text-indent:0px;text-transform:none;white-space:normal;wo=
+rd-spacing:0px"><div>=C2=A0</div><blockquote class=3D"gmail_quote" style=3D=
+"margin:0px 0px 0px 0.8ex;border-left-width:1px;border-left-color:rgb(204,2=
+04,204);border-left-style:solid;padding-left:1ex"><div dir=3D"ltr"><br>Our =
+group (Atos/Bull) is doing development on the slurm product so that is why =
+we are interested in sbatch/srun vs mpirun.=C2=A0 We haven&#39;t found anyt=
+hing amiss with the invocation using slurm - but something is different fro=
+m mpirun that is causing this issue.<br></div></blockquote><div><br></div><=
+div>I am not an expert on PMIx, but as I understand it, if you are invoking=
+ using PMIx via `srun`, you need to have the SLURM PMIx implementation also=
+ installed within the container, or that the OMPI build itself has to inclu=
+de the PMIx support.</div><div><br></div><div>Just to reiterate, does it wo=
+rk as expected when executing via mpirun?</div></div></div></blockquote><di=
+v><br></div>Are you using the latest version of SLURM that has PMIx in it? =
+If not, then did you build OMPI --with-pmi so the PMI support was built, an=
+d did you include Slurm=E2=80=99s PMI libraries in your container? Otherwis=
+e, your MPI application won=E2=80=99t find the PMI support, and there is no=
+ way it can run using srun as the launcher.</div><div><br><blockquote type=
+=3D"cite"><div><div class=3D"gmail_quote" style=3D"font-family:Helvetica;fo=
+nt-size:12px;font-style:normal;font-weight:normal;letter-spacing:normal;tex=
+t-align:start;text-indent:0px;text-transform:none;white-space:normal;word-s=
+pacing:0px"><div>=C2=A0</div><blockquote class=3D"gmail_quote" style=3D"mar=
+gin:0px 0px 0px 0.8ex;border-left-width:1px;border-left-color:rgb(204,204,2=
+04);border-left-style:solid;padding-left:1ex"><div dir=3D"ltr"><br>I&#39;m =
+interested in your comment about singularity support for openmpi.=C2=A0 Are=
+ you saying there are changes in openmpi for singularity that are not in th=
+e stable released versions but are in the master branch?=C2=A0 Are any of t=
+hese changes specific to pmi2 or pmix?<br></div></blockquote><div><br></div=
+><div>Yes, there are but I&#39;m not sure if those changes are critical to =
+the failure you are seeing now.</div></div></div></blockquote><div><br></di=
+v>Correct, on both counts - the changes make things easier/more transparent=
+ for a user to run a Singularity job, but don=E2=80=99t affect the basic fu=
+nctionality.</div><div><br><blockquote type=3D"cite"><div><div class=3D"gma=
+il_quote" style=3D"font-family:Helvetica;font-size:12px;font-style:normal;f=
+ont-weight:normal;letter-spacing:normal;text-align:start;text-indent:0px;te=
+xt-transform:none;white-space:normal;word-spacing:0px"><div>=C2=A0</div><bl=
+ockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-lef=
+t-width:1px;border-left-color:rgb(204,204,204);border-left-style:solid;padd=
+ing-left:1ex"><div dir=3D"ltr"><br>How can I make sure I&#39;m running with=
+ an openmpi that has the &quot;required&quot; singularity changes?<br></div=
+></blockquote><div><br></div><div>I believe currently, my schizo/personalit=
+y fixes are only in the master branch of OMPI on GitHub at present, and it =
+will be included in the next release... But, again, I don&#39;t think this =
+is the cause of what you are seeing. I think it is a PMIx issue in that the=
+ PMI support is lacking inside the container. I am CC&#39;ing Ralph with th=
+e hope that he can chime in.</div></div></div></blockquote><div><br></div>T=
+here is nothing =E2=80=9Crequired=E2=80=9D in those changes - as I said abo=
+ve, they only make things more convenient. For example, we automatically de=
+tect that an application is actually a Singularity container, and invoke =
+=E2=80=9Csingularity=E2=80=9D to execute it (with the appropriate envars se=
+t).</div><div><br></div><div>So Singularity will work with OMPI as-is - you=
+ just have to manually do the cmd line.</div><div><br><blockquote type=3D"c=
+ite"><div><div class=3D"gmail_quote" style=3D"font-family:Helvetica;font-si=
+ze:12px;font-style:normal;font-weight:normal;letter-spacing:normal;text-ali=
+gn:start;text-indent:0px;text-transform:none;white-space:normal;word-spacin=
+g:0px"><div><br></div><div>Greg</div><div><br></div><div><br></div><div>=C2=
+=A0</div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8e=
+x;border-left-width:1px;border-left-color:rgb(204,204,204);border-left-styl=
+e:solid;padding-left:1ex"><div dir=3D"ltr"><br>-Steve<span><br><br>On Wedne=
+sday, October 12, 2016 at 8:46:29 PM UTC-6, Gregory M. Kurtzer wrote:</span=
+><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border=
+-left-width:1px;border-left-color:rgb(204,204,204);border-left-style:solid;=
+padding-left:1ex"><div dir=3D"ltr">Hi Steve,<div><br></div><span><div>Did y=
+ou mention that it works if you call it via mpirun? If so, why don&#39;t yo=
+u just launch with mpirun/mpiexec? I&#39;m not sure the startup invocation =
+is the same for srun even via pmi.</div><div><br></div><div>Additionally, y=
+ou may need to use OMPI from the master branch from GitHub. I just heard fr=
+om Ralph that proper Singularity support has not been part of an OMPI relea=
+se yet.</div><div><br></div><div>Thanks and hope that helps!</div></span></=
+div><div><br><div class=3D"gmail_quote"><span>On Wed, Oct 12, 2016 at 2:37 =
+PM, Gregory M. Kurtzer<span>=C2=A0</span><span dir=3D"ltr">&lt;<a rel=3D"no=
+follow">gmku...@</a><a href=3D"http://lbl.gov/" rel=3D"nofollow" target=3D"=
+_blank" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp=
+%3A%2F%2Flbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHL-KZEv3o0yE1wl=
+BJyjjaCCLY0Jw&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.goo=
+gle.com/url?q\x3dhttp%3A%2F%2Flbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3d=
+AFQjCNHL-KZEv3o0yE1wlBJyjjaCCLY0Jw&#39;;return true;">lbl.gov</a>&gt;</span=
+><span>=C2=A0</span>wrot<wbr>e:<br></span><blockquote class=3D"gmail_quote"=
+ style=3D"margin:0px 0px 0px 0.8ex;border-left-width:1px;border-left-color:=
+rgb(204,204,204);border-left-style:solid;padding-left:1ex"><div dir=3D"ltr"=
+><span>Weird how openmpi is actually throwing the session directory in /dev=
+/shm. I thought it usually uses /tmp.=C2=A0<div><br></div>Did you set that =
+somewhere or am I confused?</span><div><div><div><div><br><div><br></div><d=
+iv><br><br>On Wednesday, October 12, 2016, Steve Mehlberg &lt;<a rel=3D"nof=
+ollow">sgmeh...@</a><a href=3D"http://gmail.com/" rel=3D"nofollow" target=
+=3D"_blank" onmousedown=3D"this.href=3D&#39;http://gmail.com/&#39;;return t=
+rue;" onclick=3D"this.href=3D&#39;http://gmail.com/&#39;;return true;">gmai=
+l.com</a>&gt; wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0=
+px 0px 0px 0.8ex;border-left-width:1px;border-left-color:rgb(204,204,204);b=
+order-left-style:solid;padding-left:1ex"><div dir=3D"ltr">Gregory,<br><br>Y=
+es, I was able to create a file on the host (non-root uid) in /dev/shm/<a h=
+ref=3D"http://test.it/" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"t=
+his.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Ftest.it%2F\x26s=
+a\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNF1e58whtfM4_dEgqpCUwNKc-a9Mw&#39;;retur=
+n true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A=
+%2F%2Ftest.it%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNF1e58whtfM4_dEgqpC=
+UwNKc-a9Mw&#39;;return true;">test.it</a><span>=C2=A0</span>and then view i=
+t in the singularity shell.<br><br>And, there is some stuff there too, is t=
+hat normal?<br><br><span style=3D"font-family:&#39;courier new&#39;,monospa=
+ce">bash-4.2$ ls /dev/shm -la<br>total 4<br>drwxrwxrwt=C2=A0=C2=A0 4 root=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 root=C2=A0=C2=A0 100 Oct 12 17:34 .<br>drwxr=
+-xr-x=C2=A0 20 root=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 root=C2=A0 3580 Oct=C2=A0=
+ 7 22:04 ..<br>-rwxr-xr-x=C2=A0=C2=A0 1 mehlberg=C2=A0 user =C2=A0 880 Oct =
+12 17:34<span>=C2=A0</span><a href=3D"http://test.it/" rel=3D"nofollow" tar=
+get=3D"_blank" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\=
+x3dhttp%3A%2F%2Ftest.it%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNF1e58wht=
+fM4_dEgqpCUwNKc-a9Mw&#39;;return true;" onclick=3D"this.href=3D&#39;http://=
+www.google.com/url?q\x3dhttp%3A%2F%2Ftest.it%2F\x26sa\x3dD\x26sntz\x3d1\x26=
+usg\x3dAFQjCNF1e58whtfM4_dEgqpCUwNKc-a9Mw&#39;;return true;">test.it</a><br=
+>drwx------=C2=A0 47 root=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 root=C2=A0=C2=A0 94=
+0 Sep 30 17:19 openmpi-sessions-0@node9_0<br>drwx------ 561 mehlberg=C2=A0 =
+user 11220 Oct 12 15:39 openmpi-sessions-50342@node9_0</span><br><br><br>St=
+eve<br><br>On Wednesday, October 12, 2016 at 11:18:20 AM UTC-6, Gregory M. =
+Kurtzer wrote:<blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px=
+ 0.8ex;border-left-width:1px;border-left-color:rgb(204,204,204);border-left=
+-style:solid;padding-left:1ex"><div dir=3D"ltr">Can you create a file in /d=
+ev/shm/... on the host, and then start a Singularity container and confirm =
+that you can see that file from within the container please?<div><br></div>=
+<div>Thanks!</div></div><div><br><div class=3D"gmail_quote">On Wed, Oct 12,=
+ 2016 at 9:45 AM, Steve Mehlberg<span>=C2=A0</span><span dir=3D"ltr">&lt;<a=
+ rel=3D"nofollow">sg...@gmail.com</a>&gt;</span><span>=C2=A0</span><wbr>wro=
+te:<br><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;=
+border-left-width:1px;border-left-color:rgb(204,204,204);border-left-style:=
+solid;padding-left:1ex"><div dir=3D"ltr">Wow, that was very interesting.=C2=
+=A0 I indeed get the same problem with the singularity -n1 (srun - one task=
+).=C2=A0 I created the strace, then wanted to compare the output to a non-s=
+ingularity run.=C2=A0 But when I change the non-singularity run to use anyt=
+hing other than the required number of tasks I get the same error!=C2=A0 Th=
+at seems to indicate that in the singularity run (srun with the correct num=
+ber of tasks) for some reason the MPI processes can&#39;t communicate with =
+one another.<span>=C2=A0</span><br><br>The strace doesn&#39;t show much - o=
+r at least not much that means something to me.=C2=A0 The program seems to =
+be going along outputting data then aborts with exit 6:<br><br><span style=
+=3D"font-family:&#39;courier new&#39;,monospace">[pid 13573] write(27, &quo=
+t;=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 suppress iso&quot;..., 56) =3D 5=
+6<br>[pid 13573] write(27, &quot;=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 --=
+----------&quot;..., 56) =3D 56<br>[pid 13573] write(27, &quot;=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0 no isolated ocean grid poi&quot;..., 36) =3D 36<br>[pid =
+13573] open(&quot;/opt/mpi/openmpi-icc/2.<wbr>0.0/share/openmpi/help-mpi-<w=
+br>errors.txt&quot;, O_RDONLY) =3D 28<br>[pid 13573] ioctl(28, SNDCTL_TMR_T=
+IMEBASE or SNDRV_TIMER_IOCTL_NEXT_DEVICE or TCGETS, 0x7ffec31d4d80) =3D -1 =
+ENOTTY (Inappropriate ioctl for device)<br>[pid 13573] fstat(28, {st_mode=
+=3DS_IFREG|0644, st_size=3D1506, ...}) =3D 0<br>[pid 13573] mmap(NULL, 4096=
+, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) =3D 0x7f4b65f4500=
+0<br>[pid 13573] read(28, &quot;# -*- text -*-\n#\n# Copyright (c)&quot;...=
+, 8192) =3D 1506<br>[pid 13573] read(28, &quot;&quot;, 4096)=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D 0<br>[pid 13573] close(28)=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D 0<br>[pid 13573] munmap(0x7f4b65f45000, =
+4096) =3D 0<br>[pid 13573] write(1, &quot;[node9:13573] *** An error occ&qu=
+ot;..., 361) =3D 361<br>[pid 13573] stat(&quot;/dev/shm/openmpi-<wbr>sessio=
+ns-50342@node9_0/37255/<wbr>1/0&quot;, {st_mode=3DS_IFDIR|0700, st_size=3D4=
+0, ...}) =3D 0<br>[pid 13573] openat(AT_FDCWD, &quot;/dev/shm/openmpi-sessi=
+ons-<wbr>50342@node9_0/37255/1/0&quot;, O_RDONLY|O_NONBLOCK|O_<wbr>DIRECTOR=
+Y|O_CLOEXEC) =3D 28<br>[pid 13573] getdents(28, /* 2 entries */, 32768) =3D=
+ 48<br>[pid 13573] getdents(28, /* 0 entries */, 32768) =3D 0<br>[pid 13573=
+] close(28)=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D 0<br>[pid 13573] openat(A=
+T_FDCWD, &quot;/dev/shm/openmpi-sessions-<wbr>50342@node9_0/37255/1/0&quot;=
+, O_RDONLY|O_NONBLOCK|O_<wbr>DIRECTORY|O_CLOEXEC) =3D 28<br>[pid 13573] get=
+dents(28, /* 2 entries */, 32768) =3D 48<br>[pid 13573] getdents(28, /* 0 e=
+ntries */, 32768) =3D 0<br>[pid 13573] close(28)=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0 =3D 0<br>[pid 13573] rmdir(&quot;/dev/shm/openmpi-<wbr>sessions-5034=
+2@node9_0/37255/<wbr>1/0&quot;) =3D 0<br>[pid 13573] stat(&quot;/dev/shm/op=
+enmpi-<wbr>sessions-50342@node9_0/37255/<wbr>1&quot;, {st_mode=3DS_IFDIR|07=
+00, st_size=3D40, ...}) =3D 0<br>[pid 13573] openat(AT_FDCWD, &quot;/dev/sh=
+m/openmpi-sessions-<wbr>50342@node9_0/37255/1&quot;, O_RDONLY|O_NONBLOCK|O_=
+<wbr>DIRECTORY|O_CLOEXEC) =3D 28<br>[pid 13573] getdents(28, /* 2 entries *=
+/, 32768) =3D 48<br>[pid 13573] getdents(28, /* 0 entries */, 32768) =3D 0<=
+br>[pid 13573] close(28)=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D 0<br>[pid 135=
+73] openat(AT_FDCWD, &quot;/dev/shm/openmpi-sessions-<wbr>50342@node9_0/372=
+55/1&quot;, O_RDONLY|O_NONBLOCK|O_<wbr>DIRECTORY|O_CLOEXEC) =3D 28<br>[pid =
+13573] getdents(28, /* 2 entries */, 32768) =3D 48<br>[pid 13573] getdents(=
+28, /* 0 entries */, 32768) =3D 0<br>[pid 13573] close(28)=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0 =3D 0<br>[pid 13573] rmdir(&quot;/dev/shm/openmpi-<wbr>s=
+essions-50342@node9_0/37255/<wbr>1&quot;) =3D 0<br>[pid 13573] stat(&quot;/=
+dev/shm/openmpi-<wbr>sessions-50342@node9_0&quot;, {st_mode=3DS_IFDIR|0700,=
+ st_size=3D11080, ...}) =3D 0<br>[pid 13573] openat(AT_FDCWD, &quot;/dev/sh=
+m/openmpi-sessions-<wbr>50342@node9_0&quot;, O_RDONLY|O_NONBLOCK|O_<wbr>DIR=
+ECTORY|O_CLOEXEC) =3D 28<br>[pid 13573] getdents(28, /* 554 entries */, 327=
+68) =3D 17424<br>[pid 13573] getdents(28, /* 0 entries */, 32768) =3D 0<br>=
+[pid 13573] close(28)=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D 0<br>[pid 13573]=
+ openat(AT_FDCWD, &quot;/dev/shm/openmpi-sessions-<wbr>50342@node9_0&quot;,=
+ O_RDONLY|O_NONBLOCK|O_<wbr>DIRECTORY|O_CLOEXEC) =3D 28<br>[pid 13573] getd=
+ents(28, /* 554 entries */, 32768) =3D 17424<br>[pid 13573] close(28)=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D 0<br>[pid 13573] openat(AT_FDCWD, &quot;/de=
+v/shm/openmpi-sessions-<wbr>50342@node9_0/37255/1/0&quot;, O_RDONLY|O_NONBL=
+OCK|O_<wbr>DIRECTORY|O_CLOEXEC) =3D -1 ENOENT (No such file or directory)<b=
+r>[pid 13573] exit_group(6)=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D ?<br>[pid 13574] +++ exited with 6=
+ +++<br>+++ exited with 6 +++<br>srun: error: node9: task 0: Exited with ex=
+it code 6</span><span><br><br><br><br>On Wednesday, October 12, 2016 at 8:5=
+3:12 AM UTC-6, Gregory M. Kurtzer wrote:</span><blockquote class=3D"gmail_q=
+uote" style=3D"margin:0px 0px 0px 0.8ex;border-left-width:1px;border-left-c=
+olor:rgb(204,204,204);border-left-style:solid;padding-left:1ex"><span>Can y=
+ou replicate the problem with a -np 1? If so can you strace it from within =
+the container:<div><br></div><div>mpirun -np 1 singularity exec container.i=
+mg strace -ff /path/to/mpi.exe (opts)<span></span></div><div><br></div><div=
+>Yes you can try Singularity 2.2. Please install it to a different path so =
+we can test side by side if you don&#39;t mind (if really like to debug thi=
+s).=C2=A0</div><div><br></div><div>Thanks!</div><div><br></div></span><div>=
+<div><div><br><br>On Wednesday, October 12, 2016, Steve Mehlberg &lt;<a rel=
+=3D"nofollow">sg...@gmail.com</a>&gt; wrote:<br><blockquote class=3D"gmail_=
+quote" style=3D"margin:0px 0px 0px 0.8ex;border-left-width:1px;border-left-=
+color:rgb(204,204,204);border-left-style:solid;padding-left:1ex"><div dir=
+=3D"ltr">Greg,<br><br>I put a bind to /opt in the singularity.conf file so =
+that /opt/intel is available in the container.<br><br>All the tasks (16) im=
+mediately exit code 6.=C2=A0 The job exits after about 4 seconds.=C2=A0 It =
+normally takes about 16 minutes to run with the configuration I&#39;m using=
+ and I do see the start of some output.<br><br>I am using openmpi 2.0.0.<br=
+><br>I tried an &quot;export<span>=C2=A0</span><span>SINGULARITY_NO_<wbr>NA=
+MESPACE_</span><span>PID=3D1&quot; in the bash script that runs all of this=
+ for each process and I still get the problem.</span><br><br>[node12:9779] =
+*** An error occurred in MPI_Isend<br>[node12:9779] *** reported by process=
+<span>=C2=A0</span><a value=3D"+13025076225">[3025076225</a>,0]<br>[node12:=
+9779] *** on communicator MPI COMMUNICATOR 3 DUP FROM 0<br>[node12:9779] **=
+* MPI_ERR_RANK: invalid rank<br>[node12:9779] *** MPI_ERRORS_ARE_FATAL (pro=
+cesses in this communicator will now abort,<br>[node12:9779] ***=C2=A0=C2=
+=A0=C2=A0 and potentially your MPI job)<br><br>I can try 2.2 - do you think=
+ it might behave differently?<br><br>Thanks for the ideas and help.<br><br>=
+Regards,<br><br>Steve<br><br>On Tuesday, October 11, 2016 at 8:19:47 PM UTC=
+-6, Gregory M. Kurtzer wrote:<blockquote class=3D"gmail_quote" style=3D"mar=
+gin:0px 0px 0px 0.8ex;border-left-width:1px;border-left-color:rgb(204,204,2=
+04);border-left-style:solid;padding-left:1ex"><div dir=3D"ltr">Hi Steve,<di=
+v><br></div><div>I&#39;m not sure at first glance, but just to touch on the=
+ basics... Is /opt/intel available from within the container? Do all tasks =
+exit code 6, or just some of them?</div><div><br></div><div>What version of=
+ OMPI are you using?</div><div><br></div><div>I wonder if the PID namespace=
+ is causing a problem here... I&#39;m not sure it gets effectively disabled=
+ when running via srun and pmi. Can you export the environment variable &qu=
+ot;<span>SINGULARITY_NO_NAMESPACE_</span><span>PID=3D<wbr>1&quot; in a plac=
+e where Singularity will pick it up definitively by all ranks? That will en=
+sure that the PID namespace is not being exported.</span></div><div><span><=
+br></span></div><div><span>Additionally, you could try version 2.2. I just =
+released it, and by default it does not unshare() out the PID namespace. Bu=
+t... It is the first release in the 2.2 series so it may bring with it othe=
+r issues that still need resolving.... But we should debug those too! :)</s=
+pan></div><div><span><br></span></div><div>Greg</div><div><br></div><div><b=
+r></div></div><div><br><div class=3D"gmail_quote">On Tue, Oct 11, 2016 at 2=
+:40 PM, Steve Mehlberg<span>=C2=A0</span><span dir=3D"ltr">&lt;<a rel=3D"no=
+follow">sg...@gmail.com</a>&gt;</span><span>=C2=A0</span><wbr>wrote:<br><bl=
+ockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-lef=
+t-width:1px;border-left-color:rgb(204,204,204);border-left-style:solid;padd=
+ing-left:1ex"><div dir=3D"ltr">Does singularity support MPI PMI-2 jobs?=C2=
+=A0 I&#39;ve had mixed success testing benchmark applications using a singu=
+larity container.=C2=A0<span>=C2=A0</span><br><br>Currently I&#39;m struggl=
+ing to get the NEMO benchmark to run using slurm 16.05 and pmi2.=C2=A0 I ca=
+n run the exact same executable on bare metal with the same slurm, but I ge=
+t Rank errors when I run using &quot;srun --mpi=3Dpmi2 singularity...&quot;=
+.=C2=A0 The application aborts with an exit code 6.<br><br>I tried pmix too=
+, but that gets mpi aborts for both bare metal and singularity.<br><br>The =
+only way I could get the NEMO application to compile was to use the intel c=
+ompilers and mpi:<br><br><span style=3D"font-size:12pt;font-family:&#39;Tim=
+es New Roman&#39;,serif">source /opt/intel/compilers_and_<wbr>libraries_201=
+6.3.210/linux/<wbr>bin/compilervars.sh intel64<br>source /opt/intel/compile=
+rs_and_<wbr>libraries_2016.3.210/linux/<wbr>bin/ifortvars.sh intel64<br>sou=
+rce /opt/intel/compilers_and_<wbr>libraries_2016.3.210/linux/<wbr>bin/iccva=
+rs.sh intel64<br>source /opt/mpi/openmpi-icc/2.0.0/<wbr>bin/mpivars.sh<br><=
+br></span>It runs fine when I use mpirun with or without singularity.<br><b=
+r>Example run/error:<br><br>sbatch ...<br>srun --mpi=3Dpmi2 -n16 singularit=
+y exec c7.img<span>=C2=A0</span><a href=3D"http://run.it/" rel=3D"nofollow"=
+ target=3D"_blank" onmousedown=3D"this.href=3D&#39;http://www.google.com/ur=
+l?q\x3dhttp%3A%2F%2Frun.it%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHh-Js=
+HgXA-Hn3-aiIDsJsRzBW9vg&#39;;return true;" onclick=3D"this.href=3D&#39;http=
+://www.google.com/url?q\x3dhttp%3A%2F%2Frun.it%2F\x26sa\x3dD\x26sntz\x3d1\x=
+26usg\x3dAFQjCNHh-JsHgXA-Hn3-aiIDsJsRzBW9vg&#39;;return true;">run.it</a><s=
+pan>=C2=A0</span>&gt; out_now<br><br>.......<br>srun: error: node11: tasks =
+0-7: Exited with exit code 6<br>srun: error: node12: tasks 8-15: Exited wit=
+h exit code 6<br><br>$ cat<span>=C2=A0</span><a href=3D"http://run.it/" rel=
+=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;http://www.=
+google.com/url?q\x3dhttp%3A%2F%2Frun.it%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x=
+3dAFQjCNHh-JsHgXA-Hn3-aiIDsJsRzBW9vg&#39;;return true;" onclick=3D"this.hre=
+f=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Frun.it%2F\x26sa\x3dD\x=
+26sntz\x3d1\x26usg\x3dAFQjCNHh-JsHgXA-Hn3-aiIDsJsRzBW9vg&#39;;return true;"=
+>run.it</a><br>#!/bin/sh<br>source /opt/intel/compilers_and_<wbr>libraries_=
+2016.3.210/linux/<wbr>bin/compilervars.sh intel64<br>source /opt/intel/comp=
+ilers_and_<wbr>libraries_2016.3.210/linux/<wbr>bin/ifortvars.sh intel64<br>=
+source /opt/intel/compilers_and_<wbr>libraries_2016.3.210/linux/<wbr>bin/ic=
+cvars.sh intel64<br>source /opt/mpi/openmpi-icc/2.0.0/<wbr>bin/mpivars.sh<b=
+r>source env_bench<br>export PATH=3D/opt/mpi/openmpi-icc/2.0.<wbr>0/bin:/op=
+t/pmix/1.1.5/bin:$<wbr>PATH<br>export LD_LIBRARY_PATH=3D/opt/openmpi-<wbr>i=
+cc/2.0.0/lib:/opt/pmix/1.1.5/<wbr>lib:$LD_LIBRARY_PATH<br>export OMPI_MCA_b=
+tl=3Dself,sm,openib<br><br>./opa_8_2 namelist &gt;out_now<br><br>$ cat out_=
+now<br>[node12:29725] *** An error occurred in MPI_Isend<br>[node12:29725] =
+*** reported by process<span>=C2=A0</span><a value=3D"+13865116673">[386511=
+6673</a>,0]<br>[node12:29725] *** on communicator MPI COMMUNICATOR 3 DUP FR=
+OM 0<br>[node12:29725] *** MPI_ERR_RANK: invalid rank<br>[node12:29725] ***=
+ MPI_ERRORS_ARE_FATAL (processes in this communicator will now abort,<br>[n=
+ode12:29725] ***=C2=A0=C2=A0=C2=A0 and potentially your MPI job)<br><br>I a=
+m running singularity 2.1 - any ideas?<span><font color=3D"#888888"><br><br=
+>-Steve<br><br></font></span></div><span><font color=3D"#888888"><div><br><=
+/div>--<span>=C2=A0</span><br>You received this message because you are sub=
+scribed to the Google Groups &quot;singularity&quot; group.<br>To unsubscri=
+be from this group and stop receiving emails from it, send an email to<span=
+>=C2=A0</span><a rel=3D"nofollow">singu...@lbl.gov</a>.<br></font></span></=
+blockquote></div><br><br clear=3D"all"><div><br></div>--<span>=C2=A0</span>=
+<br><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div>=
+<div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div>Gregory M. Kurtzer<=
+/div><div>HPC Systems Architect and Technology Developer</div><div>Lawrence=
+ Berkeley National Laboratory HPCS<br>University of California Berkeley Res=
+earch IT<br>Singularity Linux Containers=C2=A0(<a href=3D"http://singularit=
+y.lbl.gov/" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&=
+#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.gov%2F\x26s=
+a\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHITKHVjde-iKsg1vSOOrRt58XtEQ&#39;;retur=
+n true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A=
+%2F%2Fsingularity.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHITKHV=
+jde-iKsg1vSOOrRt58XtEQ&#39;;return true;">http://<wbr>singularity.lbl.gov/<=
+/a>)</div><div>Warewulf Cluster Management=C2=A0(<a href=3D"http://warewulf=
+.lbl.gov/" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#=
+39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwarewulf.lbl.gov%2F\x26sa\x3=
+dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPtSL1wiDx3C_BKcVgBhWc77Jxww&#39;;return tr=
+ue;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%=
+2Fwarewulf.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPtSL1wiDx3C_=
+BKcVgBhWc77Jxww&#39;;return true;">http://warewulf.<wbr>lbl.gov/</a>)</div>=
+<div>GitHub:=C2=A0<a href=3D"https://github.com/gmkurtzer" rel=3D"nofollow"=
+ target=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/u=
+rl?q\x3dhttps%3A%2F%2Fgithub.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg=
+\x3dAFQjCNHgwLrV-1wbChhxINJY_U3Xyjg2uw&#39;;return true;" onclick=3D"this.h=
+ref=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fgmkur=
+tzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHgwLrV-1wbChhxINJY_U3Xyjg2uw&#=
+39;;return true;">https://github.com/<wbr>gmkurtzer</a>,=C2=A0<span style=
+=3D"font-size:12.8px">Twitter:=C2=A0</span><a href=3D"https://twitter.com/g=
+mkurtzer" rel=3D"nofollow" style=3D"font-size:12.8px" target=3D"_blank" onm=
+ousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2F=
+twitter.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGiphjH-YHVV=
+hLsKsNsH_Zw5B_gRA&#39;;return true;" onclick=3D"this.href=3D&#39;https://ww=
+w.google.com/url?q\x3dhttps%3A%2F%2Ftwitter.com%2Fgmkurtzer\x26sa\x3dD\x26s=
+ntz\x3d1\x26usg\x3dAFQjCNGiphjH-YHVVhLsKsNsH_Zw5B_gRA&#39;;return true;">ht=
+tps://<wbr>twitter.com/gmkurtzer</a></div></div></div></div></div></div></d=
+iv></div></div></div></div></div></blockquote></div><div><br></div>--<span>=
+=C2=A0</span><br>You received this message because you are subscribed to th=
+e Google Groups &quot;singularity&quot; group.<br>To unsubscribe from this =
+group and stop receiving emails from it, send an email to<span>=C2=A0</span=
+><a>singularity+unsubscribe@<wbr>lbl.gov</a>.<br></blockquote></div><br><br=
+>--<span>=C2=A0</span><br><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div =
+dir=3D"ltr"><div><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div>Gr=
+egory M. Kurtzer</div><div>HPC Systems Architect and Technology Developer</=
+div><div>Lawrence Berkeley National Laboratory HPCS<br>University of Califo=
+rnia Berkeley Research IT<br>Singularity Linux Containers=C2=A0(<a href=3D"=
+http://singularity.lbl.gov/" rel=3D"nofollow" target=3D"_blank" onmousedown=
+=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fsingularit=
+y.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHITKHVjde-iKsg1vSOOrRt=
+58XtEQ&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.google.com=
+/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26us=
+g\x3dAFQjCNHITKHVjde-iKsg1vSOOrRt58XtEQ&#39;;return true;">http://<wbr>sing=
+ularity.lbl.gov/</a>)</div><div>Warewulf Cluster Management=C2=A0(<a href=
+=3D"http://warewulf.lbl.gov/" rel=3D"nofollow" target=3D"_blank" onmousedow=
+n=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwarewulf.=
+lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPtSL1wiDx3C_BKcVgBhWc77=
+Jxww&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.google.com/u=
+rl?q\x3dhttp%3A%2F%2Fwarewulf.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3d=
+AFQjCNFPtSL1wiDx3C_BKcVgBhWc77Jxww&#39;;return true;">http://warewulf.<wbr>=
+lbl.gov/</a>)</div><div>GitHub:=C2=A0<a href=3D"https://github.com/gmkurtze=
+r" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;https=
+://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fgmkurtzer\x26sa\x3dD\=
+x26sntz\x3d1\x26usg\x3dAFQjCNHgwLrV-1wbChhxINJY_U3Xyjg2uw&#39;;return true;=
+" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2=
+Fgithub.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHgwLrV-1wbC=
+hhxINJY_U3Xyjg2uw&#39;;return true;">https://github.com/<wbr>gmkurtzer</a>,=
+=C2=A0<span style=3D"font-size:12.8px">Twitter:=C2=A0</span><a href=3D"http=
+s://twitter.com/gmkurtzer" rel=3D"nofollow" style=3D"font-size:12.8px" targ=
+et=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\=
+x3dhttps%3A%2F%2Ftwitter.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3d=
+AFQjCNGiphjH-YHVVhLsKsNsH_Zw5B_gRA&#39;;return true;" onclick=3D"this.href=
+=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Ftwitter.com%2Fgmkurtz=
+er\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGiphjH-YHVVhLsKsNsH_Zw5B_gRA&#39=
+;;return true;">https://<wbr>twitter.com/gmkurtzer</a></div></div></div></d=
+iv></div></div></div></div></div></div><br></div></div></blockquote></div><=
+div><div><div><br></div>--<span>=C2=A0</span><br>You received this message =
+because you are subscribed to the Google Groups &quot;singularity&quot; gro=
+up.<br>To unsubscribe from this group and stop receiving emails from it, se=
+nd an email to<span>=C2=A0</span><a rel=3D"nofollow">singu...@lbl.gov</a>.<=
+br></div></div></blockquote></div><br><br clear=3D"all"><div><br></div>--<s=
+pan>=C2=A0</span><br><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div =
+dir=3D"ltr"><div><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div>Gr=
+egory M. Kurtzer</div><div>HPC Systems Architect and Technology Developer</=
+div><div>Lawrence Berkeley National Laboratory HPCS<br>University of Califo=
+rnia Berkeley Research IT<br>Singularity Linux Containers=C2=A0(<a href=3D"=
+http://singularity.lbl.gov/" rel=3D"nofollow" target=3D"_blank" onmousedown=
+=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fsingularit=
+y.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHITKHVjde-iKsg1vSOOrRt=
+58XtEQ&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.google.com=
+/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26us=
+g\x3dAFQjCNHITKHVjde-iKsg1vSOOrRt58XtEQ&#39;;return true;">http://<wbr>sing=
+ularity.lbl.gov/</a>)</div><div>Warewulf Cluster Management=C2=A0(<a href=
+=3D"http://warewulf.lbl.gov/" rel=3D"nofollow" target=3D"_blank" onmousedow=
+n=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwarewulf.=
+lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPtSL1wiDx3C_BKcVgBhWc77=
+Jxww&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.google.com/u=
+rl?q\x3dhttp%3A%2F%2Fwarewulf.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3d=
+AFQjCNFPtSL1wiDx3C_BKcVgBhWc77Jxww&#39;;return true;">http://warewulf.<wbr>=
+lbl.gov/</a>)</div><div>GitHub:=C2=A0<a href=3D"https://github.com/gmkurtze=
+r" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;https=
+://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fgmkurtzer\x26sa\x3dD\=
+x26sntz\x3d1\x26usg\x3dAFQjCNHgwLrV-1wbChhxINJY_U3Xyjg2uw&#39;;return true;=
+" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2=
+Fgithub.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHgwLrV-1wbC=
+hhxINJY_U3Xyjg2uw&#39;;return true;">https://github.com/<wbr>gmkurtzer</a>,=
+=C2=A0<span style=3D"font-size:12.8px">Twitter:=C2=A0</span><a href=3D"http=
+s://twitter.com/gmkurtzer" rel=3D"nofollow" style=3D"font-size:12.8px" targ=
+et=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\=
+x3dhttps%3A%2F%2Ftwitter.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3d=
+AFQjCNGiphjH-YHVVhLsKsNsH_Zw5B_gRA&#39;;return true;" onclick=3D"this.href=
+=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Ftwitter.com%2Fgmkurtz=
+er\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGiphjH-YHVVhLsKsNsH_Zw5B_gRA&#39=
+;;return true;">https://<wbr>twitter.com/gmkurtzer</a></div></div></div></d=
+iv></div></div></div></div></div></div></div></div></blockquote></div><div>=
+<br></div>--<span>=C2=A0</span><br>You received this message because you ar=
+e subscribed to the Google Groups &quot;singularity&quot; group.<br>To unsu=
+bscribe from this group and stop receiving emails from it, send an email to=
+<span>=C2=A0</span><a>singularity+unsubscribe@<wbr>lbl.gov</a>.<br></blockq=
+uote></div></div></div></div></div></div></blockquote></div><div><div><br><=
+br clear=3D"all"><div><br></div>--<span>=C2=A0</span><br><div><div dir=3D"l=
+tr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div =
+dir=3D"ltr"><div dir=3D"ltr"><div>Gregory M. Kurtzer</div><div>HPC Systems =
+Architect and Technology Developer</div><div>Lawrence Berkeley National Lab=
+oratory HPCS<br>University of California Berkeley Research IT<br>Singularit=
+y Linux Containers=C2=A0(<a href=3D"http://singularity.lbl.gov/" rel=3D"nof=
+ollow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;http://www.google.=
+com/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x2=
+6usg\x3dAFQjCNHITKHVjde-iKsg1vSOOrRt58XtEQ&#39;;return true;" onclick=3D"th=
+is.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.=
+gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHITKHVjde-iKsg1vSOOrRt58XtEQ=
+&#39;;return true;">http://<wbr>singularity.lbl.gov/</a>)</div><div>Warewul=
+f Cluster Management=C2=A0(<a href=3D"http://warewulf.lbl.gov/" rel=3D"nofo=
+llow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;http://www.google.c=
+om/url?q\x3dhttp%3A%2F%2Fwarewulf.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg=
+\x3dAFQjCNFPtSL1wiDx3C_BKcVgBhWc77Jxww&#39;;return true;" onclick=3D"this.h=
+ref=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwarewulf.lbl.gov%2F\=
+x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPtSL1wiDx3C_BKcVgBhWc77Jxww&#39;;r=
+eturn true;">http://warewulf.<wbr>lbl.gov/</a>)</div><div>GitHub:=C2=A0<a h=
+ref=3D"https://github.com/gmkurtzer" rel=3D"nofollow" target=3D"_blank" onm=
+ousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2F=
+github.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHgwLrV-1wbCh=
+hxINJY_U3Xyjg2uw&#39;;return true;" onclick=3D"this.href=3D&#39;https://www=
+.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fgmkurtzer\x26sa\x3dD\x26snt=
+z\x3d1\x26usg\x3dAFQjCNHgwLrV-1wbChhxINJY_U3Xyjg2uw&#39;;return true;">http=
+s://github.com/<wbr>gmkurtzer</a>,=C2=A0<span style=3D"font-size:12.8px">Tw=
+itter:=C2=A0</span><a href=3D"https://twitter.com/gmkurtzer" rel=3D"nofollo=
+w" style=3D"font-size:12.8px" target=3D"_blank" onmousedown=3D"this.href=3D=
+&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Ftwitter.com%2Fgmkurtzer\=
+x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGiphjH-YHVVhLsKsNsH_Zw5B_gRA&#39;;r=
+eturn true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dht=
+tps%3A%2F%2Ftwitter.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjC=
+NGiphjH-YHVVhLsKsNsH_Zw5B_gRA&#39;;return true;">https://<wbr>twitter.com/g=
+mkurtzer</a></div></div></div></div></div></div></div></div></div></div></d=
+iv></div></div></div></blockquote></div><div><div><div><br></div>--<span>=
+=C2=A0</span><br>You received this message because you are subscribed to th=
+e Google Groups &quot;singularity&quot; group.<br>To unsubscribe from this =
+group and stop receiving emails from it, send an email to<span>=C2=A0</span=
+><a rel=3D"nofollow">singu...@lbl.gov</a>.<br></div></div></blockquote></di=
+v><br style=3D"font-family:Helvetica;font-size:12px;font-style:normal;font-=
+weight:normal;letter-spacing:normal;text-align:start;text-indent:0px;text-t=
+ransform:none;white-space:normal;word-spacing:0px"><br style=3D"font-family=
+:Helvetica;font-size:12px;font-style:normal;font-weight:normal;letter-spaci=
+ng:normal;text-align:start;text-indent:0px;text-transform:none;white-space:=
+normal;word-spacing:0px" clear=3D"all"><div style=3D"font-family:Helvetica;=
+font-size:12px;font-style:normal;font-weight:normal;letter-spacing:normal;t=
+ext-align:start;text-indent:0px;text-transform:none;white-space:normal;word=
+-spacing:0px"><br></div><span style=3D"font-family:Helvetica;font-size:12px=
+;font-style:normal;font-weight:normal;letter-spacing:normal;text-align:star=
+t;text-indent:0px;text-transform:none;white-space:normal;word-spacing:0px;f=
+loat:none;display:inline!important">--<span>=C2=A0</span></span><br style=
+=3D"font-family:Helvetica;font-size:12px;font-style:normal;font-weight:norm=
+al;letter-spacing:normal;text-align:start;text-indent:0px;text-transform:no=
+ne;white-space:normal;word-spacing:0px"><div style=3D"font-family:Helvetica=
+;font-size:12px;font-style:normal;font-weight:normal;letter-spacing:normal;=
+text-align:start;text-indent:0px;text-transform:none;white-space:normal;wor=
+d-spacing:0px"><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"=
+><div><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div>Gregory M. Ku=
+rtzer</div><div>HPC Systems Architect and Technology Developer</div><div>La=
+wrence Berkeley National Laboratory HPCS<br>University of California Berkel=
+ey Research IT<br>Singularity Linux Containers=C2=A0(<a href=3D"http://sing=
+ularity.lbl.gov/" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.hr=
+ef=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.gov%2=
+F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHITKHVjde-iKsg1vSOOrRt58XtEQ&#39;=
+;return true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dh=
+ttp%3A%2F%2Fsingularity.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCN=
+HITKHVjde-iKsg1vSOOrRt58XtEQ&#39;;return true;">http://<wbr>singularity.lbl=
+.gov/</a>)</div><div>Warewulf Cluster Management=C2=A0(<a href=3D"http://wa=
+rewulf.lbl.gov/" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.hre=
+f=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwarewulf.lbl.gov%2F\x2=
+6sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPtSL1wiDx3C_BKcVgBhWc77Jxww&#39;;ret=
+urn true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%=
+3A%2F%2Fwarewulf.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPtSL1w=
+iDx3C_BKcVgBhWc77Jxww&#39;;return true;">http://warewulf.<wbr>lbl.gov/</a>)=
+</div><div>GitHub:=C2=A0<a href=3D"https://github.com/gmkurtzer" rel=3D"nof=
+ollow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.google=
+.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\=
+x26usg\x3dAFQjCNHgwLrV-1wbChhxINJY_U3Xyjg2uw&#39;;return true;" onclick=3D"=
+this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2=
+Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHgwLrV-1wbChhxINJY_U3Xyj=
+g2uw&#39;;return true;">https://github.com/<wbr>gmkurtzer</a>,=C2=A0<span s=
+tyle=3D"font-size:12.8px">Twitter:=C2=A0</span><a href=3D"https://twitter.c=
+om/gmkurtzer" style=3D"font-size:12.8px" rel=3D"nofollow" target=3D"_blank"=
+ onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2=
+F%2Ftwitter.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGiphjH-=
+YHVVhLsKsNsH_Zw5B_gRA&#39;;return true;" onclick=3D"this.href=3D&#39;https:=
+//www.google.com/url?q\x3dhttps%3A%2F%2Ftwitter.com%2Fgmkurtzer\x26sa\x3dD\=
+x26sntz\x3d1\x26usg\x3dAFQjCNGiphjH-YHVVhLsKsNsH_Zw5B_gRA&#39;;return true;=
+">https://<wbr>twitter.com/gmkurtzer</a></div></div></div></div></div></div=
+></div></div></div></div></div></div></blockquote></div><br></div></blockqu=
+ote></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a>singularity+unsubscribe@lbl.<wbr>gov</a>.<br>
+</blockquote></div><br><br>-- <br><div dir=3D"ltr"><div><div dir=3D"ltr"><d=
+iv><div dir=3D"ltr"><div><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"=
+><div>Gregory M. Kurtzer</div><div>HPC Systems Architect and Technology Dev=
+eloper</div><div>Lawrence Berkeley National Laboratory HPCS<br>University o=
+f California Berkeley Research IT<br>Singularity Linux Containers=C2=A0(<a =
+href=3D"http://singularity.lbl.gov/" target=3D"_blank" rel=3D"nofollow" onm=
+ousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fsi=
+ngularity.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHITKHVjde-iKsg=
+1vSOOrRt58XtEQ&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.go=
+ogle.com/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.gov%2F\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNHITKHVjde-iKsg1vSOOrRt58XtEQ&#39;;return true;">http://<=
+wbr>singularity.lbl.gov/</a>)</div><div>Warewulf Cluster Management=C2=A0(<=
+a href=3D"http://warewulf.lbl.gov/" target=3D"_blank" rel=3D"nofollow" onmo=
+usedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwar=
+ewulf.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPtSL1wiDx3C_BKcVg=
+BhWc77Jxww&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.google=
+.com/url?q\x3dhttp%3A%2F%2Fwarewulf.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26u=
+sg\x3dAFQjCNFPtSL1wiDx3C_BKcVgBhWc77Jxww&#39;;return true;">http://warewulf=
+.<wbr>lbl.gov/</a>)</div><div>GitHub:=C2=A0<a href=3D"https://github.com/gm=
+kurtzer" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39=
+;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fgmkurtzer\x26sa=
+\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHgwLrV-1wbChhxINJY_U3Xyjg2uw&#39;;return=
+ true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3=
+A%2F%2Fgithub.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHgwLr=
+V-1wbChhxINJY_U3Xyjg2uw&#39;;return true;">https://github.com/<wbr>gmkurtze=
+r</a>,=C2=A0<span style=3D"font-size:12.8px">Twitter:=C2=A0</span><a href=
+=3D"https://twitter.com/gmkurtzer" style=3D"font-size:12.8px" target=3D"_bl=
+ank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.google.co=
+m/url?q\x3dhttps%3A%2F%2Ftwitter.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x2=
+6usg\x3dAFQjCNGiphjH-YHVVhLsKsNsH_Zw5B_gRA&#39;;return true;" onclick=3D"th=
+is.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Ftwitter.com%2F=
+gmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGiphjH-YHVVhLsKsNsH_Zw5B_=
+gRA&#39;;return true;">https://<wbr>twitter.com/gmkurtzer</a></div></div></=
+div></div></div></div></div></div></div></div><br>
+</blockquote></div>
+------=_Part_450_2140408805.1477001321518--
+
+------=_Part_449_2099365439.1477001321516--

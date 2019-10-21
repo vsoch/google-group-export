@@ -1,0 +1,218 @@
+Date: Thu, 11 Apr 2019 12:31:46 -0700 (PDT)
+From: Samy <smahan...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <d37fe555-a8f8-45b5-ada4-b071821b5f13@lbl.gov>
+In-Reply-To: <CAM=pu+JE-B5GLtwiXgHwmfm0ZKuH2=n2PtJ95cnXs4CC+1J38w@mail.gmail.com>
+References: <c7efaf23-fb01-4cbd-b43e-56270380b487@lbl.gov>
+ <CAM=pu+JE-B5GLtwiXgHwmfm0ZKuH2=n2PtJ95cnXs4CC+1J38w@mail.gmail.com>
+Subject: Re: [Singularity] Help linking files in the exec command
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_507_1341885345.1555011106456"
+
+------=_Part_507_1341885345.1555011106456
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_508_1122288239.1555011106457"
+
+------=_Part_508_1122288239.1555011106457
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hello Vanessa,
+
+Binding the <local>bench_2.5 to the /benchmark inside the container was the 
+only way that worked . I've tried the way you recommended but for some 
+reason, the container can't see the file from the outside the directory:
+
+$ singularity exec -B 
+$storage/bench_2.5km/namelist.input:/wrf/WRFV3/run/namelist.input 
+wrf.avx512.simg ls /wrf/WRFV3/run
+ERROR  : Failed to get real path of 
+/usr/local/var/singularity/mnt/final/wrf/WRFV3/run/namelist.input: No such 
+file or directory
+ABORT  : Retval = 255
+
+On Thursday, April 11, 2019 at 11:41:09 AM UTC-7, vanessa wrote:
+>
+> Why are you having the exec create the links instead of doing direct 
+> binds? Since you are creating links on the host, especially with something 
+> like MPI you are going to hit the error that the links already exist.
+> Why not do a bind of each file instead? E.g., here is the start of a 
+> command:
+>
+> *singularity exec -B $storage/bench_2.5km/namelist.input:*
+> */wrf/WRFV3/run/namelist.input** \*
+> *                 -B **$storage/bench_2.5km/**wrfbdy_d01**:*
+> */wrf/WRFV3/run/wrfbdy_d01** \*
+> *                 -B **$storage/bench_2.5km/**wrfbdy_d01**:*
+> */wrf/WRFV3/run/wrfbdy_d01** \*
+> *                   image.simg **ls /wrf/WRFV3/run*
+>
+> Why do you have the internal /benchmark directory serving as a middle man 
+> when you ultimately are just linking to elsewhere? It doesn't make sense to 
+> make symbolic links because you would need write (for inside the container) 
+> but then obviously this means needing to bind to the host, and binding to 
+> the host (with multiple instances of it going) is going to try to create 
+> the same link more than once. TLDR: Try an approach that can handle 
+> concurrency - one with binds. I'm not sure if this helps, but it's 
+> something to try! Does anyone else have a suggestion?
+>
+>
+> On Thu, Apr 11, 2019 at 1:24 PM Samy <sma...@gmail.com <javascript:>> 
+> wrote:
+>
+>> Hello everyone,
+>>
+>> I have a container with a binary that relays on input files on the host. 
+>> I need to link the input files from the local host to the container. when i 
+>> do:
+>>
+>>
+>> *     singularity exec -B $storage/bench_2.5km:/benchmark  image.simg ln 
+>> -s /benchmark/namelist.input /wrf/WRFV3/run/namelist.input ln -s 
+>> /benchmark/wrfbdy_d01 /wrf/WRFV3/run/wrfbdy_d01 ln -s /benchmark/wrfrst* 
+>> /wrf/WRFV3/run/wrfrst_d01_2005-06-04_09:00:00 ls /wrf/WRFV3/run*
+>>
+>> *I get the error of:*
+>> *ln: failed to create symbolic link ?/wrf/WRFV3/run/namelist.input?: File 
+>> exists*
+>> *ln: failed to create symbolic link ?/wrf/WRFV3/run/wrfbdy_d01?: File 
+>> exists*
+>> *ln: failed to create symbolic link ?/wrf/WRFV3/run/ln?: File exists*
+>>
+>> But the files are not linked and are not there. I verified with:
+>> *        singularity exec -B $storage/wrf/bench_2.5km:/benchmark 
+>> wrf.avx512.simg ls -l /wrf/WRFV3/run*
+>>
+>>
+>> I will be running this on multinode with mpi. Any idea how to link files 
+>> and run the binaries correctly  with the exec command?
+>>
+>> I also tried to link these files in the %environment section but that 
+>> doesn't look like it runs when i use the exec command. 
+>>
+>> Thank you,
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to si...@lbl.gov <javascript:>.
+>>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_508_1122288239.1555011106457
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hello Vanessa,<div><br></div><div>Binding the &lt;local&gt=
+;bench_2.5 to the /benchmark inside the container was the only way that wor=
+ked . I&#39;ve tried the way you recommended but for some reason, the conta=
+iner can&#39;t see the file from the outside the directory:</div><div><br><=
+/div><div><div><font face=3D"courier new, monospace">$ singularity exec -B =
+$storage/bench_2.5km/namelist.input:/wrf/WRFV3/run/namelist.input wrf.avx51=
+2.simg ls /wrf/WRFV3/run</font></div><div><font face=3D"courier new, monosp=
+ace">ERROR=C2=A0 : Failed to get real path of /usr/local/var/singularity/mn=
+t/final/wrf/WRFV3/run/namelist.input: No such file or directory</font></div=
+><div><font face=3D"courier new, monospace">ABORT=C2=A0 : Retval =3D 255</f=
+ont></div><br>On Thursday, April 11, 2019 at 11:41:09 AM UTC-7, vanessa wro=
+te:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;=
+border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr"><div><div>=
+Why are you having the exec create the links instead of doing direct binds?=
+ Since you are creating links on the host, especially with something like M=
+PI you are going to hit the error that the links already exist.</div><div>W=
+hy not do a bind of each file instead? E.g., here is the start of a command=
+:</div><div><div><br></div><div><div><font face=3D"courier new, monospace">=
+<b>singularity exec -B $storage/bench_2.5km/namelist.<wbr>input:</b></font>=
+<b style=3D"font-family:&quot;courier new&quot;,monospace">/wrf/WRFV3/run/n=
+amelist.<wbr>input</b><font face=3D"courier new, monospace"><b>=C2=A0\</b><=
+/font></div><div><font face=3D"courier new, monospace"><b>=C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0-B=C2=A0</b></font><b style=3D=
+"font-family:&quot;courier new&quot;,monospace">$storage/bench_2.5km/</b><b=
+ style=3D"font-family:&quot;courier new&quot;,monospace">wrfbd<wbr>y_d01</b=
+><b style=3D"font-family:&quot;courier new&quot;,monospace">:</b><b style=
+=3D"font-family:&quot;courier new&quot;,monospace">/wrf/WRFV3/run/wrfbdy_<w=
+br>d01</b><b style=3D"font-family:&quot;courier new&quot;,monospace">=C2=A0=
+\</b></div><div><font face=3D"courier new, monospace"><b>=C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0-B=C2=A0</b></font><b style=3D=
+"font-family:&quot;courier new&quot;,monospace">$storage/bench_2.5km/</b><b=
+ style=3D"font-family:&quot;courier new&quot;,monospace">wrfbd<wbr>y_d01</b=
+><b style=3D"font-family:&quot;courier new&quot;,monospace">:</b><b style=
+=3D"font-family:&quot;courier new&quot;,monospace">/wrf/WRFV3/run/wrfbdy_<w=
+br>d01</b><b style=3D"font-family:&quot;courier new&quot;,monospace">=C2=A0=
+\</b><b style=3D"font-family:&quot;courier new&quot;,monospace"><br></b></d=
+iv><div><b style=3D"font-family:&quot;courier new&quot;,monospace">=C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0image.simg=C2=
+=A0</b><b style=3D"font-family:&quot;courier new&quot;,monospace">ls /wrf/W=
+RFV3/run</b></div><br>Why do you have the internal /benchmark directory ser=
+ving as a middle man when you ultimately are just linking to elsewhere? It =
+doesn&#39;t make sense to make symbolic links because you would need write =
+(for inside the container) but then obviously this means needing to bind to=
+ the host, and binding to the host (with multiple instances of it going) is=
+ going to try to create the same link more than once. TLDR: Try an approach=
+ that can handle concurrency - one with binds. I&#39;m not sure if this hel=
+ps, but it&#39;s something to try! Does anyone else have a suggestion?</div=
+><div><br></div></div></div></div><br><div class=3D"gmail_quote"><div dir=
+=3D"ltr">On Thu, Apr 11, 2019 at 1:24 PM Samy &lt;<a href=3D"javascript:" t=
+arget=3D"_blank" gdf-obfuscated-mailto=3D"AOPeHEHlBgAJ" rel=3D"nofollow" on=
+mousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"thi=
+s.href=3D&#39;javascript:&#39;;return true;">sma...@gmail.com</a>&gt; wrote=
+:<br></div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.=
+8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"lt=
+r">Hello everyone,<div><br></div><div>I have a container with a binary that=
+ relays on input files on the host. I need to link the input files from the=
+ local host to the container. when i do:</div><div><br></div><div><br></div=
+><div><font face=3D"courier new, monospace"><b>=C2=A0 =C2=A0 =C2=A0singular=
+ity exec -B $storage/bench_2.5km:/<wbr>benchmark=C2=A0 image.simg ln -s /be=
+nchmark/namelist.input /wrf/WRFV3/run/namelist.input ln -s /benchmark/wrfbd=
+y_d01 /wrf/WRFV3/run/wrfbdy_d01 ln -s /benchmark/wrfrst* /wrf/WRFV3/run/wrf=
+rst_d01_<wbr>2005-06-04_09:00:00 ls /wrf/WRFV3/run</b></font><br></div><div=
+><font face=3D"courier new, monospace"><b><br></b></font></div><div><font f=
+ace=3D"courier new, monospace"><b>I get the error of:</b></font></div><div>=
+<font face=3D"courier new, monospace"><div><b>ln: failed to create symbolic=
+ link ?/wrf/WRFV3/run/namelist.<wbr>input?: File exists</b></div><div><b>ln=
+: failed to create symbolic link ?/wrf/WRFV3/run/wrfbdy_d01?: File exists</=
+b></div><div><b>ln: failed to create symbolic link ?/wrf/WRFV3/run/ln?: Fil=
+e exists</b></div><div style=3D"font-weight:bold"><br></div><div style=3D"f=
+ont-weight:bold">But the files are not linked and are not there. I verified=
+ with:</div><div><b>=C2=A0 =C2=A0 =C2=A0 =C2=A0 singularity exec -B $storag=
+e/wrf/bench_2.5km:/<wbr>benchmark wrf.avx512.simg ls -l /wrf/WRFV3/run</b><=
+br></div></font></div><div><br></div><div><br></div><div>I will be running =
+this on multinode with mpi. Any idea how to link files and run the binaries=
+ correctly=C2=A0 with the exec command?</div><div><br></div><div>I also tri=
+ed to link these files in the %<span style=3D"color:rgb(36,41,46);font-fami=
+ly:SFMono-Regular,Consolas,&quot;Liberation Mono&quot;,Menlo,Courier,monosp=
+ace;font-size:12px;white-space:pre-wrap">environment section but that doesn=
+&#39;t look like it runs when i use the exec command. </span></div><div><sp=
+an style=3D"color:rgb(36,41,46);font-family:SFMono-Regular,Consolas,&quot;L=
+iberation Mono&quot;,Menlo,Courier,monospace;font-size:12px;white-space:pre=
+-wrap"><br></span></div><div><span style=3D"color:rgb(36,41,46);font-family=
+:SFMono-Regular,Consolas,&quot;Liberation Mono&quot;,Menlo,Courier,monospac=
+e;font-size:12px;white-space:pre-wrap">Thank you,</span></div><div><span st=
+yle=3D"color:rgb(36,41,46);font-family:SFMono-Regular,Consolas,&quot;Libera=
+tion Mono&quot;,Menlo,Courier,monospace;font-size:12px;white-space:pre-wrap=
+"><br></span></div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+AOPeHEHlBgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singu...@lbl.<wbr>gov</a>.<br>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><div>(=
+603) 321-0676</div></div></div></div>
+</blockquote></div></div>
+------=_Part_508_1122288239.1555011106457--
+
+------=_Part_507_1341885345.1555011106456--

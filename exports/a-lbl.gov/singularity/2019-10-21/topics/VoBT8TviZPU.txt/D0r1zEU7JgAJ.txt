@@ -1,0 +1,157 @@
+X-Received: by 10.107.23.132 with SMTP id 126mr5080685iox.21.1461966857147;
+        Fri, 29 Apr 2016 14:54:17 -0700 (PDT)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.50.57.8 with SMTP id e8ls321758igq.23.canary; Fri, 29 Apr 2016
+ 14:54:16 -0700 (PDT)
+X-Received: by 10.98.90.7 with SMTP id o7mr15022403pfb.110.1461966856784;
+        Fri, 29 Apr 2016 14:54:16 -0700 (PDT)
+Return-Path: <gmku...@lbl.gov>
+Received: from fe3.lbl.gov (fe3.lbl.gov. [128.3.41.68])
+        by mx.google.com with ESMTPS id 70si17081810pfk.202.2016.04.29.14.54.16
+        for <singu...@lbl.gov>
+        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Fri, 29 Apr 2016 14:54:16 -0700 (PDT)
+Received-SPF: pass (google.com: domain of gmku...@lbl.gov designates 209.85.215.71 as permitted sender) client-ip=209.85.215.71;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of gmku...@lbl.gov designates 209.85.215.71 as permitted sender) smtp.mailfrom=gmku...@lbl.gov
+X-Ironport-SBRS: 1.1
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2EQAgDc1iNXb0fXVdFdhHkPBoMzqlmGbYRzAQ2BdhcBhXgCgScHOBQBAQEBAQEBAw8BCgsUHzGEQgEBAwESESswCwsEBzcCAiEBDwMBBQEcBggHBAEcBAGHcwMKCAWlGoExPjGLO4w/DYROAQEIAQEBARwKimOCQYFOEQGDHIJWBY5KhFiEQDEBjCCBdo8Rh1GGIRIegQ4eAQGETRwwB4dFgTUBAQE
+X-IronPort-AV: E=Sophos;i="5.24,553,1455004800"; 
+   d="scan'208,217";a="22486297"
+Received: from mail-lf0-f71.google.com ([209.85.215.71])
+  by fe3.lbl.gov with ESMTP; 29 Apr 2016 14:54:12 -0700
+Received: by mail-lf0-f71.google.com with SMTP id y84so101598371lfc.3
+        for <singu...@lbl.gov>; Fri, 29 Apr 2016 14:54:11 -0700 (PDT)
+X-Gm-Message-State: AOPr4FUg/uKcti+JlzPm4c7jA30HrmGkES69K7NlB8D7mlZjDiim3tMgut2ybGWiZ7Q3usUGTp+UZroVJ5uFfL4e2n+QEvIdF1dqsReBZH8swDPBXEHS1Fb20QBnKChtrzAjiIJHshFQIyWFGpIjA8B951I=
+X-Received: by 10.28.105.200 with SMTP id z69mr6472710wmh.78.1461966851204;
+        Fri, 29 Apr 2016 14:54:11 -0700 (PDT)
+MIME-Version: 1.0
+X-Received: by 10.28.105.200 with SMTP id z69mr6472702wmh.78.1461966851081;
+ Fri, 29 Apr 2016 14:54:11 -0700 (PDT)
+Received: by 10.28.144.200 with HTTP; Fri, 29 Apr 2016 14:54:10 -0700 (PDT)
+In-Reply-To: <4266bd96-a508-471a-9e2e-35165b110f25@lbl.gov>
+References: <170441c6-e26e-46f5-89cc-bb7c9f9b2894@lbl.gov>
+	<4266bd96-a508-471a-9e2e-35165b110f25@lbl.gov>
+Date: Fri, 29 Apr 2016 14:54:10 -0700
+Message-ID: <CAN7etTwe0v0LgD0U_A0nbgDMN1=kvSry82zGhz1-kqQrY96pTg@mail.gmail.com>
+Subject: Re: [Singularity] Re: HPC usage: centralized cache location
+From: "Gregory M. Kurtzer" <gmku...@lbl.gov>
+To: singularity <singu...@lbl.gov>
+Content-Type: multipart/alternative; boundary=001a11467c0ed51f4d0531a6aea3
+
+--001a11467c0ed51f4d0531a6aea3
+Content-Type: text/plain; charset=UTF-8
+
+Hiya!
+
+Locking is only necessary for container caching (not running). For example,
+when you run ./container.sapp for the first time (or "singularity
+run/install container.sapp), it must cache the contents of the container to
+disk. If you do something like "./container.sapp &; ./container.sapp &;
+wait;" (or launch via an mpirun that is not Singularity aware*), you will
+run into a condition where multiple processes are trying to cache the
+container contents and thus a race condition. The locking ensures whichever
+Singularity process obtains an install lock, will do the caching and any
+other containers that do not achieve the lock will be blocked until the
+lock is freed.
+
+*note: Open MPI pre-release 2.1 *is* Singularity aware, and does the
+installation in a scalable manner for large scale parallel execution.
+
+Hopefully that helps to clear things up.
+
+Greg
+
+On Fri, Apr 29, 2016 at 1:07 PM, Oleksandr Moskalenko <moska...@gmail.com>
+wrote:
+
+> Thanks for the replies.
+>
+> We'd prefer to 'singularity install app .sapp' into the centralized cache
+> for serial and omp apps as well as ompi apps and just keep it there,
+> especially for diskless nodes. The extra few seconds of startup time
+> because of reading from a networked filesystem are not an issue since apps
+> are started and run for hours to weeks at a time anyway.
+>
+> Thanks for the 'SINGULARITY_CACHEDIR' hint!
+>
+> I'm looking forward to gmk* responding to the locking question.
+>
+> Best wishes,
+>
+> Alex
+>
+> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+>
+
+
+
+-- 
+Gregory M. Kurtzer
+Technical Lead and HPC Systems Architect
+High Performance Computing Services (HPCS)
+University of California
+Lawrence Berkeley National Laboratory
+One Cyclotron Road, Berkeley, CA 94720
+
+--001a11467c0ed51f4d0531a6aea3
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hiya!<div><br></div><div>Locking is only necessary for con=
+tainer caching (not running). For example, when you run ./container.sapp fo=
+r the first time (or &quot;singularity run/install container.sapp), it must=
+ cache the contents of the container to disk. If you do something like &quo=
+t;./container.sapp &amp;; ./container.sapp &amp;; wait;&quot; (or launch vi=
+a an mpirun that is not Singularity aware*), you will run into a condition =
+where multiple processes are trying to cache the container contents and thu=
+s a race condition. The locking ensures whichever Singularity process obtai=
+ns an install lock, will do the caching and any other containers that do no=
+t achieve the lock will be blocked until the lock is freed.</div><div><br><=
+/div><div>*note: Open MPI pre-release 2.1 *is* Singularity aware, and does =
+the installation in a scalable manner for large scale parallel execution.</=
+div>
+
+
+
+
+
+
+
+<div><br></div><div>Hopefully that helps to clear things up.</div><div><br>=
+</div><div>Greg</div></div><div class=3D"gmail_extra"><br><div class=3D"gma=
+il_quote">On Fri, Apr 29, 2016 at 1:07 PM, Oleksandr Moskalenko <span dir=
+=3D"ltr">&lt;<a href=3D"mailto:moska...@gmail.com" target=3D"_blank">moska.=
+..@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" sty=
+le=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div d=
+ir=3D"ltr">Thanks for the replies.<br><br>We&#39;d prefer to &#39;singulari=
+ty install app .sapp&#39; into the centralized cache for serial and omp app=
+s as well as ompi apps and just keep it there, especially for diskless node=
+s. The  extra few seconds of startup time because of reading from a network=
+ed filesystem are not an issue since apps are started and run for hours to =
+weeks at a time anyway.<br><br>Thanks for the &#39;SINGULARITY_CACHEDIR&#39=
+; hint!<br><br>I&#39;m looking forward to gmk* responding to the locking qu=
+estion.<br><br>Best wishes,<br><br>Alex<br></div><div class=3D"HOEnZb"><div=
+ class=3D"h5">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singu...@lbl.=
+gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div class=3D"gmail_signature">Gregory M. Kurtzer<br>Technical Lead and HPC=
+ Systems Architect<br>High Performance Computing Services (HPCS)<br>Univers=
+ity of California<br>Lawrence Berkeley National Laboratory<br>One Cyclotron=
+ Road, Berkeley, CA 94720</div>
+</div>
+
+--001a11467c0ed51f4d0531a6aea3--

@@ -1,0 +1,171 @@
+X-Received: by 10.36.192.134 with SMTP id u128mr3443900itf.12.1466520663828;
+        Tue, 21 Jun 2016 07:51:03 -0700 (PDT)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.107.17.196 with SMTP id 65ls2186862ior.8.gmail; Tue, 21 Jun
+ 2016 07:51:03 -0700 (PDT)
+X-Received: by 10.66.246.198 with SMTP id xy6mr28693867pac.58.1466520663292;
+        Tue, 21 Jun 2016 07:51:03 -0700 (PDT)
+Return-Path: <gmku...@lbl.gov>
+Received: from fe3.lbl.gov (fe3.lbl.gov. [128.3.41.68])
+        by mx.google.com with ESMTPS id pq5si26566924pac.15.2016.06.21.07.51.03
+        for <singu...@lbl.gov>
+        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Tue, 21 Jun 2016 07:51:03 -0700 (PDT)
+Received-SPF: pass (google.com: domain of gmku...@lbl.gov designates 209.85.215.71 as permitted sender) client-ip=209.85.215.71;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of gmku...@lbl.gov designates 209.85.215.71 as permitted sender) smtp.mailfrom=gmku...@lbl.gov
+X-Ironport-SBRS: 3.4
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2ApAgAQVGlXhkfXVdFdg1w4fQaDNqZJhHCHAYZ7FwEGhXkCgS8HOxEBAQEBAQEBEgEBAQgLCwkhL4RMAQEDARIRKxkiCws3AgIhAQ8DAQUBHAYIBwQBHAQBh3QDDwgFozOBMT4xizuMVA2DeAEKAQEBASIQimSCQ4FPEQEGgxeCWgWOaYRfhH00AYYHhiqBeoFpToQFiGeIC4YuEh6BDw8lgjmBdxwyB4kMgTUBAQE
+X-IronPort-AV: E=Sophos;i="5.26,504,1459839600"; 
+   d="scan'208,217";a="27635982"
+Received: from mail-lf0-f71.google.com ([209.85.215.71])
+  by fe3.lbl.gov with ESMTP; 21 Jun 2016 07:50:36 -0700
+Received: by mail-lf0-f71.google.com with SMTP id g18so14279855lfg.2
+        for <singu...@lbl.gov>; Tue, 21 Jun 2016 07:50:36 -0700 (PDT)
+X-Gm-Message-State: ALyK8tKk11RRXGS9A/KcOOLaydnt+P5i487iIxyGkU3AwxOvLuiNp0jAGxR1U7Zx39Th0E3GgVLWJhdqzPaiAQzMZQPP5vzj3PcluS3pol8/OZb063KCMuN9F2yLS8ORYUhIVY3SxKuXq/K2jg/VeqZWuZU=
+X-Received: by 10.25.87.130 with SMTP id l124mr7128707lfb.170.1466520635796;
+        Tue, 21 Jun 2016 07:50:35 -0700 (PDT)
+X-Received: by 10.25.87.130 with SMTP id l124mr7128694lfb.170.1466520635592;
+ Tue, 21 Jun 2016 07:50:35 -0700 (PDT)
+MIME-Version: 1.0
+Received: by 10.25.214.158 with HTTP; Tue, 21 Jun 2016 07:50:35 -0700 (PDT)
+In-Reply-To: <6247ec64-6881-4978-82a0-f7d6e24039e9@lbl.gov>
+References: <6247ec64-6881-4978-82a0-f7d6e24039e9@lbl.gov>
+From: "Gregory M. Kurtzer" <gmku...@lbl.gov>
+Date: Tue, 21 Jun 2016 07:50:35 -0700
+Message-ID: <CAN7etTx+2ETq_aarfJfez_p4YzoNJ49zwO2CQe=KRwSSZkuR5Q@mail.gmail.com>
+Subject: Re: [Singularity] Communication between singularity containers
+To: singularity <singu...@lbl.gov>
+Content-Type: multipart/alternative; boundary=001a1141f9ee8a676b0535caf1a7
+
+--001a1141f9ee8a676b0535caf1a7
+Content-Type: text/plain; charset=UTF-8
+
+Hi Raimon,
+
+The communication model of a Singularity container is very different from
+that of a Docker implementation. This is because Docker for all practical
+purposes emulates a virtual machine as each container has it's own IP
+address and thus it's own ssh server. It also carries its own set of
+complexities, for example networks need to be segregated/VLan'ed, DNS/host
+resolution needs to be dynamic and passed down to the containers (so they
+can reach each other), ssh daemons and other process running inside the
+containers, management via an existing scheduling system, and the list goes
+on and on.
+
+Think of it this way, Singularity does not do any of that... It runs a
+program within the container as if it were running on the host itself, so
+to communicate between containers is as easy as communicating between
+programs. So for MPI, it would happen with the MPI on the physical host
+(outside the container) invoking the container subsystem which then invokes
+the MPI programs within the container and the MPI programs within the
+container communicate back to the MPI (orted) outside the container on the
+host to get access to the host resources. In this model all available
+resources and infrastructure can be leveraged at full bandwidth by the
+contained processes and all of the aforementioned complexities akin to
+running on a virtualized mini-cluster are circumvented.
+
+There is additional information I have written at:
+
+http://singularity.lbl.gov/#hpc
+
+That page is still coming along, and needs more information still but if
+you have any questions, comments or change proposals please let us know!
+
+Thanks and hope that helps!
+
+
+
+On Tue, Jun 21, 2016 at 7:37 AM, Raimon Bosch <raimo...@gmail.com>
+wrote:
+
+>
+>
+> Hi,
+>
+> We are trying to run experiments using singularity containers. The idea is
+> to run OpenMPI among several containers and check performance results.
+>
+> How can I communicate with another container? In docker this is clear
+> because every container gets an assigned IP and you can ping there, but
+> what is the situation in the case of singularity? Is it possible to assign
+> an IP to each container? Can I connect via ssh to them?
+>
+> Thanks in advance,
+>
+> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+>
+
+
+
+-- 
+Gregory M. Kurtzer
+High Performance Computing Services (HPCS)
+University of California
+Lawrence Berkeley National Laboratory
+One Cyclotron Road, Berkeley, CA 94720
+
+--001a1141f9ee8a676b0535caf1a7
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Raimon,<div><br></div><div>The communication model of a=
+ Singularity container is very different from that of a Docker implementati=
+on. This is because Docker for all practical purposes emulates a virtual ma=
+chine as each container has it&#39;s own IP address and thus it&#39;s own s=
+sh server. It also carries its own set of complexities, for example network=
+s need to be segregated/VLan&#39;ed, DNS/host resolution needs to be dynami=
+c and passed down to the containers (so they can reach each other), ssh dae=
+mons and other process running inside the containers, management via an exi=
+sting scheduling system, and the list goes on and on.</div><div><br></div><=
+div>Think of it this way, Singularity does not do any of that... It runs a =
+program within the container as if it were running on the host itself, so t=
+o communicate between containers is as easy as communicating between progra=
+ms. So for MPI, it would happen with the MPI on the physical host (outside =
+the container) invoking the container subsystem which then invokes the MPI =
+programs within the container and the MPI programs within the container com=
+municate back to the MPI (orted) outside the container on the host to get a=
+ccess to the host resources. In this model all available resources and infr=
+astructure can be leveraged at full bandwidth by the contained processes an=
+d all of the aforementioned complexities akin to running on a virtualized m=
+ini-cluster are circumvented.</div><div><br></div><div>There is additional =
+information I have written at:</div><div><br></div><div><a href=3D"http://s=
+ingularity.lbl.gov/#hpc">http://singularity.lbl.gov/#hpc</a><br></div><div>=
+<br></div><div>That page is still coming along, and needs more information =
+still but if you have any questions, comments or change proposals please le=
+t us know!</div><div><br></div><div>Thanks and hope that helps!</div><div><=
+br></div><div><br></div></div><div class=3D"gmail_extra"><br><div class=3D"=
+gmail_quote">On Tue, Jun 21, 2016 at 7:37 AM, Raimon Bosch <span dir=3D"ltr=
+">&lt;<a href=3D"mailto:raimo...@gmail.com" target=3D"_blank">raimo...@gmai=
+l.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"m=
+argin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"l=
+tr"><br><br>Hi,<br><br>We are trying to run experiments using singularity c=
+ontainers. The idea is to run OpenMPI among several containers and check pe=
+rformance results. <br><br>How can I communicate with another container? In=
+ docker this is clear because every container gets an assigned IP and you c=
+an ping there, but what is the situation in the case of singularity? Is it =
+possible to assign an IP to each container? Can I connect via ssh to them?<=
+br><br>Thanks in advance,<span class=3D"HOEnZb"><font color=3D"#888888"><br=
+></font></span></div><span class=3D"HOEnZb"><font color=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singu...@lbl.=
+gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div class=3D"gmail_signature" data-smartmail=3D"gmail_signature"><div di=
+r=3D"ltr"><div>Gregory M. Kurtzer<br>High Performance Computing Services (H=
+PCS)<br>University of California<br>Lawrence Berkeley National Laboratory<b=
+r>One Cyclotron Road, Berkeley, CA 94720</div></div></div>
+</div>
+
+--001a1141f9ee8a676b0535caf1a7--

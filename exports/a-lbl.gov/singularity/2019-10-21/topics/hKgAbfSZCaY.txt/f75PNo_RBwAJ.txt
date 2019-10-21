@@ -1,0 +1,770 @@
+Date: Mon, 4 Mar 2019 01:50:18 -0800 (PST)
+From: ccvera <mc...@unileon.es>
+To: singularity <singu...@lbl.gov>
+Message-Id: <042011a5-2246-4da6-a47c-3473fdae0dbe@lbl.gov>
+In-Reply-To: <5ca92c63-5ef0-4074-b14c-7dba51726cce@lbl.gov>
+References: <71fec772-2642-4b6e-98a3-8801b2ae0cf7@lbl.gov> <59709108-447E-491F-BB5A-C04D3F5AB654@gmail.com>
+ <7A55B410-CD7D-4360-A1F3-44E1EF1ECA1B@gmail.com> <cbd878fc-f1a6-4548-8dd2-3ac380da2ecd@lbl.gov>
+ <CAJk3+YVedLNPT6=hxrQtAR6xJG3NtERLRFRBCO3M4JL6YXS9Yg@mail.gmail.com>
+ <2d3a29da-6518-4643-aef6-6664a21b2dc3@lbl.gov> <8a6e555b-8763-469f-aa4d-6f1b07521f93@lbl.gov>
+ <CAJk3+YV6_KmOJoo+7gJ50izAxe_zAYQWhvrWxR8+5GfhGskcNw@mail.gmail.com>
+ <bb9e3d9f-c17b-4a07-8733-3b5dc4a5ecd3@lbl.gov>
+ <5ca92c63-5ef0-4074-b14c-7dba51726cce@lbl.gov>
+Subject: Re: [Singularity] Error when running OpenFoam over Singularity
+ using Slurm
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_340_303084627.1551693018639"
+
+------=_Part_340_303084627.1551693018639
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_341_588367271.1551693018640"
+
+------=_Part_341_588367271.1551693018640
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Hello again,
+
+After a long time, I think one of the possible causes is that OpenFOAM=20
+works by default with SGE and not with Slurm. Today, in the cluster, they=
+=20
+have installed OF and I don't need to use a container anymore.=20
+
+Anyway, I will continue testing to see if that is the real reason for the=
+=20
+failure with Slurm or not.
+
+Thank you very much for your help!! :)
+
+Carmen
+
+El lunes, 18 de febrero de 2019, 17:33:03 (UTC+1), Justin Cook escribi=C3=
+=B3:
+>
+> Carmen,
+>
+> It looks like this has a history going now. Can we move this to a github=
+=20
+> issue?
+>
+> Can you show us the definition of your hello world container that is not=
+=20
+> working? Let's start there and see where we get.
+>
+> Thanks,
+>
+> Justin
+>
+> On Wednesday, February 13, 2019 at 2:16:36 AM UTC-6, ccvera wrote:
+>>
+>> I was doing more tests and nothings works, I'm a little desperate with=
+=20
+>> this problem... :(
+>>
+>> Thanks Samy for your answer but my problem exists with on single node as=
+=20
+>> well as 4 nodes (64 cores). Running:
+>>
+>> singularity exec -B /home ../../of6/openfoam6.MPIx.img mpiexec -n 16=20
+>> simpleFoam -case /home/carmen/test_singularity/OpenFOAM/pruebaOF5_16core=
+s
+>>
+>>
+>> I can work on 16 cores correctly, but I understand that I am running the=
+=20
+>> container's OMPI, likewise, I want to launch it on 64 cores for performa=
+nce=20
+>> and for that (I understand) that I should launch it like this (as I have=
+=20
+>> done with SGE):
+>>
+>> mpirun -n $SLURM_NTASKS singularity exec ../../of6/openfoam6.x.img=20
+>> simpleFoam -parallel -case=20
+>> /home/carmen/test_singularity/OpenFOAM/pruebaOF5_16cores
+>>
+>>
+>> And it doesn't work.
+>>
+>> Fatih :)
+>>
+>> xx True
+>> xx Not at all. I can run basic programs in parallel using slurm without=
+=20
+>> singularity
+>> xx True. Only fails with Slurm and Singularity
+>>
+>> I've tried so many combinations and cases, so I'm sure I'm forgetting=20
+>> some of them.
+>>
+>> Background:
+>> - I was working with SGE and everything worked perfectly (recently the=
+=20
+>> cluster in which I work has migrated to Slurm, -is a supercomputing cent=
+er,=20
+>> not a particular mini-cluster-)
+>> - This same container worked with up to 64 cores without problems.
+>>
+>> Some tests:
+>> - Connecting directly to a node by ssh, OF works correctly with 16 cores=
+=20
+>> (w/ 32 too, but having only 16 cores creates oversubscription)
+>> - Doing salloc -N1 -n16 (or salloc -N2 -n32), and then run the program,=
+=20
+>> fails.
+>> - Both with 16 cores and with 32, executing my script (sbatch=20
+>> myscript.sh), fails.
+>> - A simple "hello world" with Slurm doesn't work either, e.g. running:
+>> mpirun -n $SLURM_NTASKS singularity exec -B /home container.img=20
+>> /home/carmen/test_singularity/mpi_slurm/hello_world
+>>
+>> I attach the recipe of the last container that I created.
+>>
+>> Thanx,
+>>
+>> Carmen
+>> ----
+>> El s=C3=A1bado, 9 de febrero de 2019, 5:19:16 (UTC+1), Fatih Ertinaz esc=
+ribi=C3=B3:
+>>>
+>>> Ok, this is really interesting to me. So as a summary -- if I'm not=20
+>>> mistaken:
+>>>
+>>> xx You can run parallel OF on a single node using OMPI through=20
+>>> Singularity without Slurm=20
+>>> xx You can run basic parallel MPI tasks using Slurm with and without=20
+>>> Singularity
+>>> xx You cannot run multi-node basic parallel jobs using Singularity -- I=
+=20
+>>> don't know if you used Slurm, so maybe fails with both
+>>>
+>>> Should Slurm have a special configuration to run mpi programs in=20
+>>>> parallel with singularity, apart from OpenMPI and PMIx?
+>>>
+>>>
+>>> I don't think Slurm is the problematic part because of the item 2 above=
+.=20
+>>> For sure Slurm needs information about compute nodes and user account, =
+but=20
+>>> if that was the issue you wouldn't be able to run any tasks even on a=
+=20
+>>> single node. With that being said, I never configured Slurm from scratc=
+h,=20
+>>> so I am not a Slurm expert.
+>>>
+>>> Also, I don't think this is an OF issue because of the item 1. However=
+=20
+>>> you might want to make sure if OF is built with "SYSTEMOPENMPI" option.=
+ But=20
+>>> again, even though restricted to 1 node, you managed to run it without=
+=20
+>>> Slurm so OF should be fine imho.=20
+>>>
+>>> If you cannot run multi-node jobs, I guess that's a clear indication of=
+=20
+>>> a potential OMPI problem. Check how OMPI is installed, which fabrics ar=
+e=20
+>>> being used etc. Additionally, you can also check if Slurm flag is=20
+>>> explicitly defined, sth. like "--with-slurm=3D/opt/slurm".=20
+>>>
+>>> Moreover can you give some information about the cluster you're working=
+=20
+>>> on? I mean, is this a typical cluster with many users running their=20
+>>> simulations? If that's the case, then I think Slurm or OMPI should be q=
+uite=20
+>>> reliable. If this is a cloud cluster that you're experimenting, I bet i=
+t is=20
+>>> OMPI :)
+>>>
+>>> Hope this helps=20
+>>>
+>>> On Fri, Feb 8, 2019 at 2:51 PM Samy <sma...@gmail.com> wrote:
+>>>
+>>>> Can you try to run the same command on single node and see? like:=20
+>>>> mpirun -n *1* singularity exec .....
+>>>> Also, if you have access to interactive mode nodes, it would be a good=
+=20
+>>>> test to run OF with mpirun interactively on 2 or more nodes. It sounds=
+ to=20
+>>>> me that it's an issue running your OF on multinode not a slurm problem=
+.
+>>>>
+>>>> Good luck,
+>>>>
+>>>>
+>>>> On Friday, February 8, 2019 at 12:09:26 AM UTC-8, ccvera wrote:
+>>>>>
+>>>>> Hi!
+>>>>>
+>>>>> I didn't say it in my first post (sorry) but, in case it serves as=20
+>>>>> information, the problem appears only when I execute OF in parallel (=
+using=20
+>>>>> the -parallel option, that is what I need).
+>>>>>
+>>>>> Regarding the options you mention to me, Fatih:
+>>>>> xx I don`t have problems executing simple works (and even some more=
+=20
+>>>>> complicated) e.g. variable printing and information (all without=20
+>>>>> singularity). Also, I run singularity basic programs and, normally, I=
+ use=20
+>>>>> then to train CNN (no need MPI) and all work fine.
+>>>>> xx I have replicated the OpenMPI and PMIx host installation in the=20
+>>>>> container, so they have the same versions and libraries were copied.=
+=20
+>>>>>
+>>>>> In the logs, both slurmd and slurmctl or the nodes logs I'm not seein=
+g=20
+>>>>> nothing that gives me light.=20
+>>>>> I think you're right when you tell me that it can be an openmpi=20
+>>>>> problem. I'm trying again to execute a "hello world" on singularity a=
+nd=20
+>>>>> when requesting several nodes I have the same problems :(
+>>>>>
+>>>>> Should Slurm have a special configuration to run mpi programs in=20
+>>>>> parallel with singularity, apart from OpenMPI and PMIx? Also, should =
+I=20
+>>>>> include other configuration in my container?=20
+>>>>>
+>>>>> Thax for your help.
+>>>>>
+>>>>> Carmen.
+>>>>>
+>>>>> El mi=C3=A9rcoles, 6 de febrero de 2019, 15:33:36 (UTC+1), Fatih Erti=
+naz=20
+>>>>> escribi=C3=B3:
+>>>>>>
+>>>>>> Hello Carmen
+>>>>>>
+>>>>>> To me this looks like an OpenMPI & Slurm issue rather than an OF &=
+=20
+>>>>>> Slurm problem.=20
+>>>>>>
+>>>>>> Few things you can check;
+>>>>>> xx Try to execute simple jobs using Slurm, e.g. printing hostnames o=
+r=20
+>>>>>> mpi ping-pong stuff.=20
+>>>>>> xx Do you know how OpenMPI is installed in the host? Maybe it is=20
+>>>>>> built with some other underlying libraries regarding IB that you don=
+'t have=20
+>>>>>> in your container.
+>>>>>>
+>>>>>> I'd say if the first one works with hostnames then I'd say focus on=
+=20
+>>>>>> the OpenMPI installation.
+>>>>>>
+>>>>>> On Wed, Feb 6, 2019 at 4:44 AM 'ccvera' via singularity <
+>>>>>> si...@lbl.gov> wrote:
+>>>>>>
+>>>>>>> Thanks a lot for your quickly reply :)
+>>>>>>>
+>>>>>>> This solution doesn't work for me. I tried to unset all SLURM=20
+>>>>>>> environment variables (first SLURM_JOBID, then SLURM_NODELIST and f=
+inally=20
+>>>>>>> all as you told me) and i obtain the same MPI error.=20
+>>>>>>>
+>>>>>>> Carmen
+>>>>>>>
+>>>>>>> El martes, 5 de febrero de 2019, 17:56:27 (UTC+1), Shenglong Wang=
+=20
+>>>>>>> escribi=C3=B3:
+>>>>>>>>
+>>>>>>>> It seems=20
+>>>>>>>>
+>>>>>>>> unset SLURM_JOBID
+>>>>>>>>
+>>>>>>>> is enough to cheat mpiexec
+>>>>>>>>
+>>>>>>>> Shenglong
+>>>>>>>>
+>>>>>>>> On Feb 5, 2019, at 11:37 AM, Shenglong Wang <wa...@gmail.com>=20
+>>>>>>>> wrote:
+>>>>>>>>
+>>>>>>>> Can you try to unset all SLURM environment variables?
+>>>>>>>>
+>>>>>>>> for e in $(env | egrep ^SLURM_ | cut -d=3D -f1); do unset $e; done
+>>>>>>>>
+>>>>>>>> or
+>>>>>>>>
+>>>>>>>> unset SLURM_NODELIST
+>>>>>>>>
+>>>>>>>> But you=E2=80=99ll have to manually generate host file.
+>>>>>>>>
+>>>>>>>> Best,
+>>>>>>>> Shenglong
+>>>>>>>>
+>>>>>>>>
+>>>>>>>> On Feb 5, 2019, at 11:30 AM, 'ccvera' via singularity <
+>>>>>>>> si...@lbl.gov> wrote:
+>>>>>>>>
+>>>>>>>> Dear all,
+>>>>>>>>
+>>>>>>>> I'm experiencing some issues running OpenFOAM over singularity wit=
+h=20
+>>>>>>>> slurm.=20
+>>>>>>>>
+>>>>>>>> I've several images based on Ubuntu and within several versions of=
+=20
+>>>>>>>> OpenMPI and PMIx and i'm able to run OpenFOAM correctly without us=
+e slurm=20
+>>>>>>>> (directly on the node) using next command:
+>>>>>>>>
+>>>>>>>> $ mpirun -n 16 singularity exec -B /home ../../of6/openfoam6.x.img=
+=20
+>>>>>>>> simpleFoam -parallel -case=20
+>>>>>>>> /home/carmen/test_singularity/OpenFOAM/pruebaOF6_16cores_SLURM/pru=
+ebaOF6_16cores
+>>>>>>>>
+>>>>>>>> My problem comes when I run my program with slurm. Whether I make=
+=20
+>>>>>>>> salloc or execute a script with sbatch, it shows me the following =
+error:
+>>>>>>>>
+>>>>>>>> It looks like MPI_INIT failed for some reason; your parallel=20
+>>>>>>>> process is
+>>>>>>>>
+>>>>>>>> likely to abort.  There are many reasons that a parallel process c=
+an
+>>>>>>>>
+>>>>>>>> fail during MPI_INIT; some of which are due to configuration or=20
+>>>>>>>> environment
+>>>>>>>>
+>>>>>>>> problems.  This failure appears to be an internal failure; here's=
+=20
+>>>>>>>> some
+>>>>>>>>
+>>>>>>>> additional information (which may only be relevant to an Open MPI
+>>>>>>>>
+>>>>>>>> developer):
+>>>>>>>>
+>>>>>>>>
+>>>>>>>>   ompi_mpi_init: ompi_rte_init failed
+>>>>>>>>
+>>>>>>>>   --> Returned "(null)" (-43) instead of "Success" (0)
+>>>>>>>>
+>>>>>>>>
+>>>>>>>> and
+>>>>>>>>
+>>>>>>>> *** An error occurred in MPI_Init_thread
+>>>>>>>>
+>>>>>>>> *** on a NULL communicator
+>>>>>>>>
+>>>>>>>> *** MPI_ERRORS_ARE_FATAL (processes in this communicator will now=
+=20
+>>>>>>>> abort,
+>>>>>>>>
+>>>>>>>> ***    and potentially your MPI job)
+>>>>>>>>
+>>>>>>>> [cn3045:369] Local abort before MPI_INIT completed completed=20
+>>>>>>>> successfully, but am not able to aggregate error messages, and not=
+ able to=20
+>>>>>>>> guarantee that all other processes were killed!
+>>>>>>>>
+>>>>>>>>
+>>>>>>>> I know I must have the same openMPI versions on both (host and=20
+>>>>>>>> container) and I have also tried other versions of OpenMPI (2.X.X)=
+ and in=20
+>>>>>>>> all cases OpenFOAM works correctly, but at the moment I want to ru=
+n it with=20
+>>>>>>>> slurm it show me the errors.
+>>>>>>>>
+>>>>>>>> I have also tried other ways to run the program with srun using th=
+e=20
+>>>>>>>> option --mpi=3Dpmi2 (among others) but I always find the same prob=
+lem.
+>>>>>>>>
+>>>>>>>> I use the following script to run OpenFoam:
+>>>>>>>>
+>>>>>>>> ----------------------------
+>>>>>>>>
+>>>>>>>> #!/bin/bash
+>>>>>>>>
+>>>>>>>>
+>>>>>>>> #SBATCH -N 1
+>>>>>>>>
+>>>>>>>> #SBATCH -p haswell=20
+>>>>>>>>
+>>>>>>>> #SBATCH -J test_OpenFOAM
+>>>>>>>>
+>>>>>>>> #SBATCH --output=3D"singularity.%j.o"=20
+>>>>>>>>
+>>>>>>>> #SBATCH --error=3D"singularity.%j.e"
+>>>>>>>>
+>>>>>>>>
+>>>>>>>> module load haswell/singularity_2.6.0
+>>>>>>>>
+>>>>>>>> module load haswell/openmpi_3.1.2_gcc8.2.0_pmix
+>>>>>>>>
+>>>>>>>>
+>>>>>>>> ulimit -s unlimited
+>>>>>>>>
+>>>>>>>>
+>>>>>>>> mpirun -n 16 singularity exec ../../of6/openfoam6.x.img simpleFoam=
+=20
+>>>>>>>> -parallel -case=20
+>>>>>>>> /home/software/test_singularity/OpenFOAM/pruebaOF6_16cores_SLURM/p=
+ruebaOF6_16cores
+>>>>>>>>
+>>>>>>>> ----------------------------
+>>>>>>>>
+>>>>>>>>
+>>>>>>>> The versions that I'm using are:
+>>>>>>>>
+>>>>>>>> *Host: *
+>>>>>>>>
+>>>>>>>> OS: CentOS7.5
+>>>>>>>>
+>>>>>>>> OpenMPI: 3.1.2
+>>>>>>>>
+>>>>>>>> PMIx: 2.1.4
+>>>>>>>>
+>>>>>>>>
+>>>>>>>> *Container:*
+>>>>>>>>
+>>>>>>>> OS: Ubuntu16.04
+>>>>>>>>
+>>>>>>>> OpenMPI: 3.1.2
+>>>>>>>>
+>>>>>>>> PMIx: 2.1.4
+>>>>>>>>
+>>>>>>>>
+>>>>>>>> Can it be a configuration problem of SLURM? Is there any limitatio=
+n=20
+>>>>>>>> of SLURM that is affecting OpenFOAM?
+>>>>>>>>
+>>>>>>>> Some info about slurm:
+>>>>>>>>
+>>>>>>>> # srun --version
+>>>>>>>> slurm 18.08.3
+>>>>>>>> # srun --mpi=3Dlist
+>>>>>>>> srun: MPI types are...
+>>>>>>>> srun: pmi2
+>>>>>>>> srun: openmpi
+>>>>>>>> srun: none
+>>>>>>>>
+>>>>>>>>
+>>>>>>>> I'm a little bit lost with this issue :(
+>>>>>>>> Can someone give me some lights?
+>>>>>>>>
+>>>>>>>> Thanks a lot in advance,
+>>>>>>>> Carmen
+>>>>>>>>
+>>>>>>>>
+>>>>>>>> --=20
+>>>>>>>> You received this message because you are subscribed to the Google=
+=20
+>>>>>>>> Groups "singularity" group.
+>>>>>>>> To unsubscribe from this group and stop receiving emails from it,=
+=20
+>>>>>>>> send an email to singu...@lbl.gov.
+>>>>>>>>
+>>>>>>>>
+>>>>>>>>
+>>>>>>>> --=20
+>>>>>>> You received this message because you are subscribed to the Google=
+=20
+>>>>>>> Groups "singularity" group.
+>>>>>>> To unsubscribe from this group and stop receiving emails from it,=
+=20
+>>>>>>> send an email to singu...@lbl.gov.
+>>>>>>>
+>>>>>> --=20
+>>>> You received this message because you are subscribed to the Google=20
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send=
+=20
+>>>> an email to singu...@lbl.gov.
+>>>>
+>>>
+------=_Part_341_588367271.1551693018640
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Hello again,</div><div><br></div><div>After a long ti=
+me, I think one of the possible causes is that OpenFOAM works by default wi=
+th SGE and not with Slurm. Today, in the cluster, they have installed OF an=
+d I don&#39;t need to use a container anymore.=C2=A0</div><div><br></div><d=
+iv>Anyway, I will continue testing to see if that is the real reason for th=
+e failure with Slurm or not.</div><div><br></div><div>Thank you very much f=
+or your help!! :)</div><div><br></div><div>Carmen</div><br>El lunes, 18 de =
+febrero de 2019, 17:33:03 (UTC+1), Justin Cook  escribi=C3=B3:<blockquote c=
+lass=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px=
+ #ccc solid;padding-left: 1ex;"><div dir=3D"ltr"><div>Carmen,</div><div><br=
+></div><div>It looks like this has a history going now. Can we move this to=
+ a github issue?</div><div><br></div><div>Can you show us the definition of=
+ your hello world container that is not working? Let&#39;s start there and =
+see where we get.<br></div><div><br></div><div>Thanks,</div><div><br></div>=
+<div>Justin<br></div><br>On Wednesday, February 13, 2019 at 2:16:36 AM UTC-=
+6, ccvera wrote:<blockquote class=3D"gmail_quote" style=3D"margin:0;margin-=
+left:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr"><d=
+iv>I was doing more tests and nothings works, I&#39;m a little desperate wi=
+th this problem... :(</div><div><br></div><div>Thanks Samy for your answer =
+but my problem exists with on single node as well as 4 nodes (64 cores). Ru=
+nning:</div><div><br></div><blockquote style=3D"margin:0 0 0 40px;border:no=
+ne;padding:0px"><div>singularity exec -B /home ../../of6/openfoam6.MPIx.img=
+ mpiexec -n 16 simpleFoam -case /home/carmen/test_singularity/<wbr>OpenFOAM=
+/pruebaOF5_16cores</div></blockquote><div><br></div><div>I can work on 16 c=
+ores correctly, but I understand that I am running the container&#39;s OMPI=
+, likewise, I want to launch it on 64 cores for performance and for that (I=
+ understand) that I should launch it like this (as I have done with SGE):</=
+div><div><br></div><blockquote style=3D"margin:0 0 0 40px;border:none;paddi=
+ng:0px"><div>mpirun -n $SLURM_NTASKS singularity exec ../../of6/openfoam6.x=
+.img simpleFoam -parallel -case /home/carmen/test_singularity/<wbr>OpenFOAM=
+/pruebaOF5_16cores</div></blockquote><div><br></div><div>And it doesn&#39;t=
+ work.</div><div><br></div><div>Fatih :)</div><div><br></div><div>xx True</=
+div><div>xx Not at all. I can run basic programs in parallel using slurm wi=
+thout singularity</div><div>xx True. Only fails with Slurm and Singularity<=
+/div><div><br></div><div>I&#39;ve tried so many combinations and cases, so =
+I&#39;m sure I&#39;m forgetting some of them.</div><div><br></div><div>Back=
+ground:</div><div>- I was working with SGE and everything worked perfectly =
+(recently the cluster in which I work has migrated to Slurm, -is a supercom=
+puting center, not a particular mini-cluster-)</div><div>- This same contai=
+ner worked with up to 64 cores without problems.</div><div><br></div><div>S=
+ome tests:</div><div>- Connecting directly to a node by ssh, OF works corre=
+ctly with 16 cores (w/ 32 too, but having only 16 cores creates oversubscri=
+ption)</div><div>- Doing salloc -N1 -n16 (or salloc -N2 -n32), and then run=
+ the program, fails.</div><div>- Both with 16 cores and with 32, executing =
+my script (sbatch myscript.sh), fails.</div><div>- A simple &quot;hello wor=
+ld&quot; with Slurm doesn&#39;t work either, e.g. running:</div><div>mpirun=
+ -n $SLURM_NTASKS singularity exec -B /home container.img /home/carmen/test=
+_singularity/<wbr>mpi_slurm/hello_world</div><div><br></div><div>I attach t=
+he recipe of the last container that I created.</div><div><br></div><div>Th=
+anx,</div><div><br></div><div>Carmen</div>----<br>El s=C3=A1bado, 9 de febr=
+ero de 2019, 5:19:16 (UTC+1), Fatih Ertinaz  escribi=C3=B3:<blockquote clas=
+s=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc =
+solid;padding-left:1ex"><div dir=3D"ltr"><div dir=3D"ltr">Ok, this is reall=
+y interesting to me. So as a summary -- if I&#39;m not mistaken:<div><br><d=
+iv>xx You can run parallel OF on a single node using OMPI through Singulari=
+ty without Slurm=C2=A0</div><div>xx You can run basic parallel MPI tasks us=
+ing Slurm with and without Singularity</div><div>xx You cannot run multi-no=
+de basic parallel jobs using Singularity -- I don&#39;t know if you used Sl=
+urm, so maybe fails with both</div><div><div><br></div></div><blockquote cl=
+ass=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid=
+ rgb(204,204,204);padding-left:1ex">Should Slurm have a special configurati=
+on to run mpi programs in parallel with singularity, apart from OpenMPI and=
+ PMIx?</blockquote><div><br></div><div>I don&#39;t think Slurm is the probl=
+ematic part because of the item 2 above. For sure Slurm needs information a=
+bout compute nodes and user account, but if that was the issue you wouldn&#=
+39;t be able to run any tasks even on a single node. With that being said, =
+I never configured Slurm from scratch, so I am not a Slurm expert.</div><di=
+v><br></div><div>Also, I don&#39;t think this is an OF issue because of the=
+ item 1. However you might want to make sure if OF is built with &quot;SYST=
+EMOPENMPI&quot; option. But again, even though restricted to 1 node, you ma=
+naged to run it without Slurm so OF should be fine imho.=C2=A0</div><div><b=
+r></div><div>If you cannot run multi-node jobs, I guess that&#39;s a clear =
+indication of a potential OMPI problem. Check how OMPI is installed, which =
+fabrics are being used etc. Additionally, you can also check if Slurm flag =
+is explicitly defined, sth. like &quot;--with-slurm=3D/opt/slurm&quot;.=C2=
+=A0</div><div><br></div><div>Moreover can you give some information about t=
+he cluster you&#39;re working on? I mean, is this a typical cluster with ma=
+ny users running their simulations? If that&#39;s the case, then I think Sl=
+urm or OMPI should be quite reliable. If this is a cloud cluster that you&#=
+39;re experimenting, I bet it is OMPI :)</div><div><br></div><div>Hope this=
+ helps=C2=A0</div></div></div></div><br><div class=3D"gmail_quote"><div dir=
+=3D"ltr">On Fri, Feb 8, 2019 at 2:51 PM Samy &lt;<a rel=3D"nofollow">sma...=
+@gmail.com</a>&gt; wrote:<br></div><blockquote class=3D"gmail_quote" style=
+=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding=
+-left:1ex"><div dir=3D"ltr">Can you try to run the same command on single n=
+ode and see? like: mpirun -n <b>1</b> singularity exec .....<div>Also, if y=
+ou have access to interactive mode nodes, it would be a good test to run OF=
+ with mpirun interactively on 2 or more nodes. It sounds to me that it&#39;=
+s an issue running your OF on multinode not a slurm problem.</div><div><br>=
+</div><div>Good luck,</div><div><br></div><div><br>On Friday, February 8, 2=
+019 at 12:09:26 AM UTC-8, ccvera wrote:<blockquote class=3D"gmail_quote" st=
+yle=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padd=
+ing-left:1ex"><div dir=3D"ltr"><div>Hi!</div><div><br></div><div>I didn&#39=
+;t say it in my first post (sorry) but, in case it serves as information, t=
+he problem appears only when I execute OF in parallel (using the -parallel =
+option, that is what I need).</div><div><br></div><div>Regarding the option=
+s you mention to me, Fatih:</div><div>xx I don`t have problems executing si=
+mple works (and even some more complicated) e.g. variable printing and info=
+rmation (all without singularity). Also, I run singularity basic programs a=
+nd, normally, I use then to train CNN (no need MPI) and all work fine.</div=
+><div>xx I have replicated the OpenMPI and PMIx host installation in the co=
+ntainer, so they have the same versions and libraries were copied.=C2=A0</d=
+iv><div><br></div><div>In the logs, both slurmd and slurmctl or the nodes l=
+ogs I&#39;m not seeing nothing that gives me light.=C2=A0</div><div>I think=
+ you&#39;re right when you tell me that it can be an openmpi problem. I&#39=
+;m trying again to execute a &quot;hello world&quot; on singularity and whe=
+n requesting several nodes I have the same problems :(</div><div><br></div>=
+<div>Should Slurm have a special configuration to run mpi programs in paral=
+lel with singularity, apart from OpenMPI and PMIx? Also, should I include o=
+ther configuration in my container?=C2=A0</div><div><br></div><div>Thax for=
+ your help.</div><div><br></div><div>Carmen.</div><br>El mi=C3=A9rcoles, 6 =
+de febrero de 2019, 15:33:36 (UTC+1), Fatih Ertinaz  escribi=C3=B3:<blockqu=
+ote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px=
+ solid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr">Hello Carmen<div=
+><br></div><div>To me this looks like an OpenMPI &amp; Slurm issue rather t=
+han an OF &amp; Slurm problem.=C2=A0</div><div><br></div><div>Few things yo=
+u can check;</div><div>xx Try to execute simple jobs using Slurm, e.g. prin=
+ting hostnames or mpi ping-pong stuff.=C2=A0</div><div>xx Do you know how O=
+penMPI is installed in the host? Maybe it is built with some other underlyi=
+ng libraries regarding IB that you don&#39;t have in your container.</div><=
+div><br></div><div>I&#39;d say if the first one works with hostnames then I=
+&#39;d say focus on the OpenMPI installation.</div></div><br><div class=3D"=
+gmail_quote"><div dir=3D"ltr">On Wed, Feb 6, 2019 at 4:44 AM &#39;ccvera&#3=
+9; via singularity &lt;<a rel=3D"nofollow">si...@lbl.gov</a>&gt; wrote:<br>=
+</div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;b=
+order-left:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr"><d=
+iv>Thanks a lot for your quickly reply :)</div><div><br></div><div>This sol=
+ution doesn&#39;t work for me. I tried to unset all SLURM environment varia=
+bles (first SLURM_JOBID, then SLURM_NODELIST and finally all as you told me=
+) and i obtain the same MPI error.=C2=A0</div><div><br></div><div>Carmen</d=
+iv><br>El martes, 5 de febrero de 2019, 17:56:27 (UTC+1), Shenglong Wang  e=
+scribi=C3=B3:<blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px =
+0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"><div>It seem=
+s=C2=A0<div><br></div><div>unset SLURM_JOBID</div><div><br></div><div>is en=
+ough to cheat mpiexec</div><div><br></div><div>Shenglong<br><div><br><block=
+quote type=3D"cite"><div>On Feb 5, 2019, at 11:37 AM, Shenglong Wang &lt;<a=
+ rel=3D"nofollow">wa...@gmail.com</a>&gt; wrote:</div><br><div><div>Can you=
+ try to unset all SLURM environment variables?<div><br></div><div><div>for =
+e in $(env | egrep ^SLURM_ | cut -d=3D -f1); do unset $e; done</div><div><b=
+r></div><div>or</div><div><br></div><div>unset SLURM_NODELIST</div><div><br=
+></div><div>But you=E2=80=99ll have to manually generate host file.</div><d=
+iv><br></div><div>Best,</div><div>Shenglong</div><div><br><div><br><blockqu=
+ote type=3D"cite"><div>On Feb 5, 2019, at 11:30 AM, &#39;ccvera&#39; via si=
+ngularity &lt;<a rel=3D"nofollow">si...@lbl.gov</a>&gt; wrote:</div><br><di=
+v><div dir=3D"ltr"><div><div>Dear all,</div><div><br></div><div>I&#39;m exp=
+eriencing some issues running OpenFOAM over singularity with slurm.=C2=A0</=
+div><div><br></div><div>I&#39;ve several images based on Ubuntu and within =
+several versions of OpenMPI and PMIx and i&#39;m able to run OpenFOAM corre=
+ctly without use slurm (directly on the node) using next command:</div><div=
+><br></div><div>$ mpirun -n 16 singularity exec -B /home ../../of6/openfoam=
+6.x.img simpleFoam -parallel -case /home/carmen/test_singularity/<wbr>OpenF=
+OAM/pruebaOF6_16cores_<wbr>SLURM/pruebaOF6_16cores</div><div><br></div><div=
+>My problem comes when I run my program with slurm. Whether I make salloc o=
+r execute a script with sbatch, it shows me the following error:</div><div>=
+<br></div></div><blockquote style=3D"margin:0px 0px 0px 40px;border:none;pa=
+dding:0px"><blockquote style=3D"margin:0px 0px 0px 40px;border:none;padding=
+:0px"><div><div><font color=3D"#666666">It looks like MPI_INIT failed for s=
+ome reason; your parallel process is</font></div></div></blockquote><blockq=
+uote style=3D"margin:0px 0px 0px 40px;border:none;padding:0px"><div><div><f=
+ont color=3D"#666666">likely to abort.=C2=A0 There are many reasons that a =
+parallel process can</font></div></div></blockquote><blockquote style=3D"ma=
+rgin:0px 0px 0px 40px;border:none;padding:0px"><div><div><font color=3D"#66=
+6666">fail during MPI_INIT; some of which are due to configuration or envir=
+onment</font></div></div></blockquote><blockquote style=3D"margin:0px 0px 0=
+px 40px;border:none;padding:0px"><div><div><font color=3D"#666666">problems=
+.=C2=A0 This failure appears to be an internal failure; here&#39;s some</fo=
+nt></div></div></blockquote><blockquote style=3D"margin:0px 0px 0px 40px;bo=
+rder:none;padding:0px"><div><div><font color=3D"#666666">additional informa=
+tion (which may only be relevant to an Open MPI</font></div></div></blockqu=
+ote><blockquote style=3D"margin:0px 0px 0px 40px;border:none;padding:0px"><=
+div><div><font color=3D"#666666">developer):</font></div></div></blockquote=
+><blockquote style=3D"margin:0px 0px 0px 40px;border:none;padding:0px"><div=
+><div><font color=3D"#666666"><br></font></div></div></blockquote><blockquo=
+te style=3D"margin:0px 0px 0px 40px;border:none;padding:0px"><div><div><fon=
+t color=3D"#666666">=C2=A0 ompi_mpi_init: ompi_rte_init failed</font></div>=
+</div></blockquote><blockquote style=3D"margin:0px 0px 0px 40px;border:none=
+;padding:0px"><div><div><font color=3D"#666666">=C2=A0 --&gt; Returned &quo=
+t;(null)&quot; (-43) instead of &quot;Success&quot; (0)</font></div></div><=
+/blockquote></blockquote><div><div><br></div><div>and</div><div><br></div><=
+/div><blockquote style=3D"margin:0px 0px 0px 40px;border:none;padding:0px">=
+<blockquote style=3D"margin:0px 0px 0px 40px;border:none;padding:0px"><div>=
+<div><font color=3D"#666666">*** An error occurred in MPI_Init_thread</font=
+></div></div></blockquote><blockquote style=3D"margin:0px 0px 0px 40px;bord=
+er:none;padding:0px"><div><div><font color=3D"#666666">*** on a NULL commun=
+icator</font></div></div></blockquote><blockquote style=3D"margin:0px 0px 0=
+px 40px;border:none;padding:0px"><div><div><font color=3D"#666666">*** MPI_=
+ERRORS_ARE_FATAL (processes in this communicator will now abort,</font></di=
+v></div></blockquote><blockquote style=3D"margin:0px 0px 0px 40px;border:no=
+ne;padding:0px"><div><div><font color=3D"#666666">***=C2=A0 =C2=A0 and pote=
+ntially your MPI job)</font></div></div></blockquote><blockquote style=3D"m=
+argin:0px 0px 0px 40px;border:none;padding:0px"><div><div><font color=3D"#6=
+66666">[cn3045:369] Local abort before MPI_INIT completed completed success=
+fully, but am not able to aggregate error messages, and not able to guarant=
+ee that all other processes were killed!</font></div></div></blockquote></b=
+lockquote><div><div><br></div><div>I know I must have the same openMPI vers=
+ions on both (host and container) and I have also tried other versions of O=
+penMPI (2.X.X) and in all cases OpenFOAM works correctly, but at the moment=
+ I want to run it with slurm it show me the errors.</div><div><br></div><di=
+v>I have also tried other ways to run the program with srun using the optio=
+n --mpi=3Dpmi2 (among others) but I always find the same problem.</div><div=
+><br></div><div>I use the following script to run OpenFoam:</div></div><blo=
+ckquote style=3D"margin:0px 0px 0px 40px;border:none;padding:0px"><div><div=
+>----------------------------</div></div></blockquote><blockquote style=3D"=
+margin:0px 0px 0px 40px;border:none;padding:0px"><blockquote style=3D"margi=
+n:0px 0px 0px 40px;border:none;padding:0px"><div><div>#!/bin/bash</div></di=
+v></blockquote><blockquote style=3D"margin:0px 0px 0px 40px;border:none;pad=
+ding:0px"><div><div><br></div></div></blockquote><blockquote style=3D"margi=
+n:0px 0px 0px 40px;border:none;padding:0px"><div><div>#SBATCH -N 1</div></d=
+iv></blockquote><blockquote style=3D"margin:0px 0px 0px 40px;border:none;pa=
+dding:0px"><div><div>#SBATCH -p haswell=C2=A0</div></div></blockquote><bloc=
+kquote style=3D"margin:0px 0px 0px 40px;border:none;padding:0px"><div><div>=
+#SBATCH -J test_OpenFOAM</div></div></blockquote><blockquote style=3D"margi=
+n:0px 0px 0px 40px;border:none;padding:0px"><div><div>#SBATCH --output=3D&q=
+uot;singularity.%j.o&quot;=C2=A0</div></div></blockquote><blockquote style=
+=3D"margin:0px 0px 0px 40px;border:none;padding:0px"><div><div>#SBATCH --er=
+ror=3D&quot;singularity.%j.e&quot;</div></div></blockquote><blockquote styl=
+e=3D"margin:0px 0px 0px 40px;border:none;padding:0px"><div><div><br></div><=
+/div></blockquote><blockquote style=3D"margin:0px 0px 0px 40px;border:none;=
+padding:0px"><div><div>module load haswell/singularity_2.6.0</div></div></b=
+lockquote><blockquote style=3D"margin:0px 0px 0px 40px;border:none;padding:=
+0px"><div><div>module load haswell/openmpi_3.1.2_gcc8.2.<wbr>0_pmix</div></=
+div></blockquote><blockquote style=3D"margin:0px 0px 0px 40px;border:none;p=
+adding:0px"><div><div><br></div></div></blockquote><blockquote style=3D"mar=
+gin:0px 0px 0px 40px;border:none;padding:0px"><div><div>ulimit -s unlimited=
+</div></div></blockquote><blockquote style=3D"margin:0px 0px 0px 40px;borde=
+r:none;padding:0px"><div><div><br></div></div></blockquote><blockquote styl=
+e=3D"margin:0px 0px 0px 40px;border:none;padding:0px"><div><div>mpirun -n 1=
+6=C2=A0singularity exec ../../of6/openfoam6.x.img simpleFoam -parallel -cas=
+e /home/software/test_<wbr>singularity/OpenFOAM/<wbr>pruebaOF6_16cores_SLUR=
+M/<wbr>pruebaOF6_16cores</div></div></blockquote></blockquote><blockquote s=
+tyle=3D"margin:0px 0px 0px 40px;border:none;padding:0px"><div><div>--------=
+--------------------</div></div></blockquote><div><div><br></div><div>The v=
+ersions that I&#39;m using are:</div></div><blockquote style=3D"margin:0px =
+0px 0px 40px;border:none;padding:0px"><div><div><b>Host:=C2=A0</b></div></d=
+iv></blockquote><blockquote style=3D"margin:0px 0px 0px 40px;border:none;pa=
+dding:0px"><blockquote style=3D"margin:0px 0px 0px 40px;border:none;padding=
+:0px"><div><div>OS: CentOS7.5</div></div></blockquote><blockquote style=3D"=
+margin:0px 0px 0px 40px;border:none;padding:0px"><div><div>OpenMPI: 3.1.2</=
+div></div></blockquote><blockquote style=3D"margin:0px 0px 0px 40px;border:=
+none;padding:0px"><div><div>PMIx: 2.1.4</div></div></blockquote></blockquot=
+e><blockquote style=3D"margin:0px 0px 0px 40px;border:none;padding:0px"><di=
+v><div><br></div></div><div><div><b>Container:</b></div></div></blockquote>=
+<blockquote style=3D"margin:0px 0px 0px 40px;border:none;padding:0px"><bloc=
+kquote style=3D"margin:0px 0px 0px 40px;border:none;padding:0px"><div><div>=
+OS: Ubuntu16.04</div></div></blockquote><blockquote style=3D"margin:0px 0px=
+ 0px 40px;border:none;padding:0px"><div><div>OpenMPI: 3.1.2</div></div></bl=
+ockquote><blockquote style=3D"margin:0px 0px 0px 40px;border:none;padding:0=
+px"><div><div>PMIx: 2.1.4</div></div></blockquote></blockquote><div><div><b=
+r></div><div>Can it be a configuration problem of SLURM? Is there any limit=
+ation of SLURM that is affecting OpenFOAM?</div><div><br></div><div>Some in=
+fo about slurm:</div></div><blockquote style=3D"margin:0px 0px 0px 40px;bor=
+der:none;padding:0px"><div><div># srun --version</div></div><div><div>slurm=
+ 18.08.3</div></div><div><div># srun --mpi=3Dlist</div></div><div><div>srun=
+: MPI types are...</div></div><div><div>srun: pmi2</div></div><div><div>sru=
+n: openmpi</div></div><div><div>srun: none</div></div></blockquote><div><di=
+v><br></div><div>I&#39;m a little bit lost with this issue :(</div><div>Can=
+ someone give me some lights?</div><div><br></div><div>Thanks a lot in adva=
+nce,</div><div>Carmen</div></div><div><br></div></div><div><br></div>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</div></blockquote></div><br></div></div></div></div></blockquote></div><br=
+></div></div></blockquote></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</blockquote></div>
+</blockquote></div></blockquote></div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</blockquote></div>
+</blockquote></div></blockquote></div></blockquote></div>
+------=_Part_341_588367271.1551693018640--
+
+------=_Part_340_303084627.1551693018639--

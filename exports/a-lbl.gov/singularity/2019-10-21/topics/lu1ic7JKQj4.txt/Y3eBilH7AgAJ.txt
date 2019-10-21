@@ -1,0 +1,485 @@
+Date: Thu, 21 Jun 2018 11:47:04 -0700 (PDT)
+From: Brandon Barker <be...@cornell.edu>
+To: singularity <singu...@lbl.gov>
+Message-Id: <888fc1d4-1a6e-4669-b230-6107433bef50@lbl.gov>
+In-Reply-To: <CAJZ53C=x6V0FBrWPgjDiCEfn6dZ03BZmi+f2O=89ioXCUwV9WQ@mail.gmail.com>
+References: <6fcf97c6-68ee-4381-ad55-a65e8f65e33e@lbl.gov> <CAM=pu+L6cDjLqD53Kqbq7kKywCoBO+Bu+Hso01izLdvR5H4_WQ@mail.gmail.com>
+ <10a6d629-41aa-46a0-bc4d-b7ffccd753e9@lbl.gov> <CAM=pu+KDiOvUrwkbNgzcMyGMAc8rr_G-1-ia8ty+C5+bBcqHGg@mail.gmail.com>
+ <CAJZ53CnXe6_o1xwGzzbgHGbxnzao+Hmmz==yZ87ZnUr1+UNuPg@mail.gmail.com> <CAM=pu+JYBWoZy0bYU7dbLUskCFdvN3VRpSgnP3cQQ0O-QGgKmg@mail.gmail.com>
+ <CAJZ53C=x6V0FBrWPgjDiCEfn6dZ03BZmi+f2O=89ioXCUwV9WQ@mail.gmail.com>
+Subject: Re: [Singularity] authentication error while trying to singularity
+ build
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_5018_902556211.1529606824205"
+
+------=_Part_5018_902556211.1529606824205
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_5019_495210757.1529606824206"
+
+------=_Part_5019_495210757.1529606824206
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+
+OK, the following form works:
+
+%environment
+export BASEIMG=${BASEIMG}
+
+
+Unfortunately, I have From: ${BASEIMG}, and it appears in the current 
+specification, %environment cannot come before 'From'. Is it possible we 
+could change this to enable better scripting of singularity builds? That 
+would avoid the need for templating systems (largely) like jinja2.
+
+
+
+On Thursday, 21 June 2018 14:15:03 UTC-4, Brandon Barker wrote:
+>
+> Ah, very good to know about --debug, lots of great info, like:
+>
+> VERBOSE Obtaining tags: 
+> https://index.docker.io/v2/library/${BASEIMG}/tags/list
+> DEBUG GET https://index.docker.io/v2/library/${BASEIMG}/tags/list
+> DEBUG Http Error with code 404
+> ERROR Authentication error, exiting.
+>
+> So BASEIMG is an environment variable the environment that I'm executing 
+> singularity build in. Is the appropriate way to read in environment 
+> variables to recipes just like:
+>
+> %environment
+>     BASEIMG=BASEIMG
+>     export BASEIMG
+>
+> Will BASEIMG actually be retrieved from the source environment and expanded appropriately?
+>
+>
+>
+> On Thu, Jun 21, 2018 at 12:43 PM, v <vso...@gmail.com> wrote:
+>
+>> Hey Brandon,
+>>
+>> Yes, please run the command with --debug and share the output with the 
+>> list, we can get a better look at what is going on.
+>>
+>> Best,
+>>
+>> Vanessa
+>>
+>> On Wed, Jun 20, 2018 at 7:00 PM Brandon Barker <
+>> brando...@cornell.edu> wrote:
+>>
+>>> Hey Vanessa -
+>>>
+>>> I prefer STINKY_SOCKS on pedagogical grounds as well. Perhaps I 
+>>> shouldn't say that on the internet.
+>>>
+>>> Sorry if the rest of my message wasn't too clear. But I believe I 
+>>> demonstrated the problem must lie elsewhere. Perhaps I will try to build 
+>>> Singularity and do some print debugging to see what is going on with the 
+>>> variables in singularity. Which makes me wonder, is there a good 
+>>> singularity image for building singularity?
+>>>
+>>>
+>>> On Wed, Jun 20, 2018 at 5:58 PM, v <vso...@gmail.com> wrote:
+>>>
+>>>> Hey Brandon,
+>>>>
+>>>> Oh yes, it should be SINGULARITY_DOCKER_USERNAME - I actually didn't 
+>>>> intend to use the "actual" variables (to make it a general example) but 
+>>>> then I wound up typing that instead of something like export 
+>>>> STINKY_SOCKS=... I probably should have gone with the stinky socks :)
+>>>>
+>>>> Fingers crossed this resolves the issue for you! Report back when you 
+>>>> get a chance to give it a whirl.
+>>>>
+>>>> Best,
+>>>>
+>>>> Vanessa
+>>>>
+>>>> On Wed, Jun 20, 2018 at 2:41 PM Brandon Barker <be...@cornell.edu> 
+>>>> wrote:
+>>>>
+>>>>> Hi Vanessa - in your example, is it supposed to be e.g. SINGULARITY_USERNAME 
+>>>>> or SINGULARITY_DOCKER_USERNAME?
+>>>>>
+>>>>> Anyway, I confirmed the script does see SINGULARITY_DOCKER_USERNAME 
+>>>>> etc. fine just as you did since I'm sourcing my creds inside of my sh 
+>>>>> script, but good to know about sudo -E, which should be the way to go.
+>>>>>
+>>>>> Have to run, will be back tomorrow to try again.
+>>>>>
+>>>>> On Wednesday, 20 June 2018 17:35:40 UTC-4, vanessa wrote:
+>>>>>>
+>>>>>> Hey Brandon!
+>>>>>>
+>>>>>> What Dave said is spot on! You need to add `-E`. Here is a full 
+>>>>>> example to show what I mean:
+>>>>>>
+>>>>>> https://asciinema.org/a/188045?speed=2
+>>>>>>
+>>>>>> Best,
+>>>>>>
+>>>>>> Vanessa
+>>>>>>
+>>>>>> On Wed, Jun 20, 2018 at 2:23 PM Brandon Barker <b...@cornell.edu> 
+>>>>>> wrote:
+>>>>>>
+>>>>>>> Hi,
+>>>>>>>
+>>>>>>> This issue is preventing me from attempting to build a singularity 
+>>>>>>> image:
+>>>>>>>
+>>>>>>>
+>>>>>>> $ sudo ./build-singularity.sh
+>>>>>>> Using container recipe deffile: Singularity
+>>>>>>> Sanitizing environment
+>>>>>>> Adding base Singularity environment to container  
+>>>>>>> ERROR Authentication error, exiting.     
+>>>>>>>
+>>>>>>>
+>>>>>>>
+>>>>>>> From what I can tell, this is for docker:
+>>>>>>>
+>>>>>>> https://github.com/singularityware/singularity/blob/master/libexec/python/docker/api.py#L199
+>>>>>>>
+>>>>>>> I have sourced my credentials in the form specified at 
+>>>>>>> https://singularity.lbl.gov/docs-docker#authentication-in-the-environment
+>>>>>>> :
+>>>>>>>
+>>>>>>> export SINGULARITY_DOCKER_USERNAME=vanessasaur 
+>>>>>>> export SINGULARITY_DOCKER_PASSWORD=rawwwwwr 
+>>>>>>>
+>>>>>>> I confirmed my credentials work with docker login.
+>>>>>>>
+>>>>>>> Any suggestions or ideas on what might be going wrong? This is 
+>>>>>>> Singularity 2.5.1.
+>>>>>>>
+>>>>>>> -- 
+>>>>>>> You received this message because you are subscribed to the Google 
+>>>>>>> Groups "singularity" group.
+>>>>>>> To unsubscribe from this group and stop receiving emails from it, 
+>>>>>>> send an email to singu...@lbl.gov.
+>>>>>>>
+>>>>>>
+>>>>>>
+>>>>>> -- 
+>>>>>> Vanessa Villamia Sochat
+>>>>>> Stanford University '16
+>>>>>> (603) 321-0676
+>>>>>>
+>>>>> -- 
+>>>>> You received this message because you are subscribed to the Google 
+>>>>> Groups "singularity" group.
+>>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>>> an email to singu...@lbl.gov.
+>>>>>
+>>>>
+>>>>
+>>>> -- 
+>>>> Vanessa Villamia Sochat
+>>>> Stanford University '16
+>>>> (603) 321-0676
+>>>>
+>>>> -- 
+>>>> You received this message because you are subscribed to the Google 
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>> an email to singu...@lbl.gov.
+>>>>
+>>>
+>>>
+>>>
+>>> -- 
+>>> Brandon E. Barker
+>>> http://www.cac.cornell.edu/barker/
+>>>
+>>> -- 
+>>> You received this message because you are subscribed to the Google 
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>> an email to singu...@lbl.gov.
+>>>
+>>
+>>
+>> -- 
+>> Vanessa Villamia Sochat
+>> Stanford University
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov.
+>>
+>
+>
+>
+> -- 
+> Brandon E. Barker
+> http://www.cac.cornell.edu/barker/
+>
+
+------=_Part_5019_495210757.1529606824206
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><br><div>OK, the following form works:</div><div><br></div=
+><div style=3D"background-color: rgb(250, 250, 250); border-color: rgb(187,=
+ 187, 187); border-style: solid; border-width: 1px; overflow-wrap: break-wo=
+rd;" class=3D"prettyprint"><code class=3D"prettyprint"><div class=3D"subpre=
+ttyprint"><span style=3D"color: #660;" class=3D"styled-by-prettify">%</span=
+><span style=3D"color: #000;" class=3D"styled-by-prettify">environment<br><=
+/span><span style=3D"color: #008;" class=3D"styled-by-prettify">export</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify"> BASEIMG</span>=
+<span style=3D"color: #660;" class=3D"styled-by-prettify">=3D</span><span s=
+tyle=3D"color: #000;" class=3D"styled-by-prettify">$</span><span style=3D"c=
+olor: #660;" class=3D"styled-by-prettify">{</span><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify">BASEIMG</span><span style=3D"color: #660;"=
+ class=3D"styled-by-prettify">}</span><span style=3D"color: #000;" class=3D=
+"styled-by-prettify"><br><br></span></div></code></div><div><br></div><div>=
+Unfortunately, I have From: ${BASEIMG}, and it appears in the current speci=
+fication, %environment cannot come before &#39;From&#39;. Is it possible we=
+ could change this to enable better scripting of singularity builds? That w=
+ould avoid the need for templating systems (largely) like jinja2.</div><div=
+><br></div><div><br></div><div><br></div>On Thursday, 21 June 2018 14:15:03=
+ UTC-4, Brandon Barker  wrote:<blockquote class=3D"gmail_quote" style=3D"ma=
+rgin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;">=
+<div dir=3D"ltr"><div>Ah, very good to know about --debug, lots of great in=
+fo, like:</div><div><br></div><div>VERBOSE Obtaining tags: <a href=3D"https=
+://index.docker.io/v2/library/$%7BBASEIMG%7D/tags/list" target=3D"_blank" r=
+el=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?=
+q\x3dhttps%3A%2F%2Findex.docker.io%2Fv2%2Flibrary%2F%24%257BBASEIMG%257D%2F=
+tags%2Flist\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHf6K-Xd2gIFv0DrXG_zWyn0=
+FKOlA&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.com=
+/url?q\x3dhttps%3A%2F%2Findex.docker.io%2Fv2%2Flibrary%2F%24%257BBASEIMG%25=
+7D%2Ftags%2Flist\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHf6K-Xd2gIFv0DrXG_=
+zWyn0FKOlA&#39;;return true;">https://index.docker.io/v2/<wbr>library/${BAS=
+EIMG}/tags/list</a><br>DEBUG GET <a href=3D"https://index.docker.io/v2/libr=
+ary/$%7BBASEIMG%7D/tags/list" target=3D"_blank" rel=3D"nofollow" onmousedow=
+n=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Findex.d=
+ocker.io%2Fv2%2Flibrary%2F%24%257BBASEIMG%257D%2Ftags%2Flist\x26sa\x3dD\x26=
+sntz\x3d1\x26usg\x3dAFQjCNHf6K-Xd2gIFv0DrXG_zWyn0FKOlA&#39;;return true;" o=
+nclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fin=
+dex.docker.io%2Fv2%2Flibrary%2F%24%257BBASEIMG%257D%2Ftags%2Flist\x26sa\x3d=
+D\x26sntz\x3d1\x26usg\x3dAFQjCNHf6K-Xd2gIFv0DrXG_zWyn0FKOlA&#39;;return tru=
+e;">https://index.docker.io/v2/<wbr>library/${BASEIMG}/tags/list</a><br>DEB=
+UG Http Error with code 404<br>ERROR Authentication error, exiting.</div><d=
+iv><br></div><div>So BASEIMG is an environment variable the environment tha=
+t I&#39;m executing singularity build in. Is the appropriate way to read in=
+ environment variables to recipes just like:</div><div><br></div><div><pre>=
+<code>%environment
+    BASEIMG=3DBASEIMG
+    export BASEIMG<br><br></code></pre><pre><code>Will BASEIMG actually be =
+retrieved from the source environment and expanded appropriately?<br></code=
+></pre><br></div></div><div><br><div class=3D"gmail_quote">On Thu, Jun 21, =
+2018 at 12:43 PM, v <span dir=3D"ltr">&lt;<a href=3D"mailto:vso...@gmail.co=
+m" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;mailt=
+o:vso...@gmail.com&#39;;return true;" onclick=3D"this.href=3D&#39;mailto:vs=
+o...@gmail.com&#39;;return true;">vso...@gmail.com</a>&gt;</span> wrote:<br=
+><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1=
+px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Hey Brandon,<div><br></div=
+><div>Yes, please run the command with --debug and share the output with th=
+e list, we can get a better look at what is going on.</div><div><br></div><=
+div>Best,</div><div><br></div><div>Vanessa</div></div><div><div><br><div cl=
+ass=3D"gmail_quote"><div dir=3D"ltr">On Wed, Jun 20, 2018 at 7:00 PM Brando=
+n Barker &lt;<a href=3D"mailto:brando...@cornell.edu" target=3D"_blank" rel=
+=3D"nofollow" onmousedown=3D"this.href=3D&#39;mailto:brando...@cornell.edu&=
+#39;;return true;" onclick=3D"this.href=3D&#39;mailto:brando...@cornell.edu=
+&#39;;return true;">brando...@cornell.edu</a>&gt; wrote:<br></div><blockquo=
+te class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px =
+solid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr"><div>Hey Vanessa =
+-</div><div><br></div><div> I prefer STINKY_SOCKS on pedagogical grounds as=
+ well. Perhaps I shouldn&#39;t say that on the internet.<br></div><div><br>=
+</div><div>Sorry if the rest of my message wasn&#39;t too clear. But I beli=
+eve I demonstrated the problem must lie elsewhere. Perhaps I will try to bu=
+ild Singularity and do some print debugging to see what is going on with th=
+e variables in singularity. Which makes me wonder, is there a good singular=
+ity image for building singularity?<br></div><div><br></div></div><div><br>=
+<div class=3D"gmail_quote">On Wed, Jun 20, 2018 at 5:58 PM, v <span dir=3D"=
+ltr">&lt;<a href=3D"mailto:vso...@gmail.com" target=3D"_blank" rel=3D"nofol=
+low" onmousedown=3D"this.href=3D&#39;mailto:vso...@gmail.com&#39;;return tr=
+ue;" onclick=3D"this.href=3D&#39;mailto:vso...@gmail.com&#39;;return true;"=
+>vso...@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote=
+" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);=
+padding-left:1ex"><div dir=3D"ltr"><div>Hey Brandon,</div><div><br></div>Oh=
+ yes, it should be SINGULARITY_DOCKER_USERNAME - I actually didn&#39;t inte=
+nd to use the &quot;actual&quot; variables (to make it a general example) b=
+ut then I wound up typing that instead of something like export STINKY_SOCK=
+S=3D... I probably should have gone with the stinky socks :)<div><br></div>=
+<div>Fingers crossed this resolves the issue for you! Report back when you =
+get a chance to give it a whirl.</div><div><br></div><div>Best,</div><div><=
+br></div><div>Vanessa</div></div><div><div><br><div class=3D"gmail_quote"><=
+div dir=3D"ltr">On Wed, Jun 20, 2018 at 2:41 PM Brandon Barker &lt;<a href=
+=3D"mailto:be...@cornell.edu" target=3D"_blank" rel=3D"nofollow" onmousedow=
+n=3D"this.href=3D&#39;mailto:be...@cornell.edu&#39;;return true;" onclick=
+=3D"this.href=3D&#39;mailto:be...@cornell.edu&#39;;return true;">be...@corn=
+ell.edu</a>&gt; wrote:<br></div><blockquote class=3D"gmail_quote" style=3D"=
+margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-lef=
+t:1ex"><div dir=3D"ltr"><div>Hi Vanessa - in your example, is it supposed t=
+o be e.g. <code>SINGULARITY_USERNAME
+or </code> <code>SINGULARITY_DOCKER_USERNAME?</code></div><div><code><br></=
+code></div><div><code>Anyway, I confirmed the script does see SINGULARITY_D=
+OCKER_USERNAME etc. fine just as you did since I&#39;m sourcing my creds in=
+side of my sh script, but good to know about sudo -E, which should be the w=
+ay to go.</code></div><div><code><br></code></div><div><code>Have to run, w=
+ill be back tomorrow to try again.<br></code></div><div><code><br></code></=
+div>On Wednesday, 20 June 2018 17:35:40 UTC-4, vanessa  wrote:<blockquote c=
+lass=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px soli=
+d rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr">Hey Brandon!<div><br>=
+</div><div>What Dave said is spot on! You need to add `-E`. Here is a full =
+example to show what I mean:</div><div><br></div><div><a href=3D"https://as=
+ciinema.org/a/188045?speed=3D2" rel=3D"nofollow" target=3D"_blank" onmoused=
+own=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fascii=
+nema.org%2Fa%2F188045%3Fspeed%3D2\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNG=
+OL_2RYc0_cI7kmnC0i6H3o1U5YQ&#39;;return true;" onclick=3D"this.href=3D&#39;=
+https://www.google.com/url?q\x3dhttps%3A%2F%2Fasciinema.org%2Fa%2F188045%3F=
+speed%3D2\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGOL_2RYc0_cI7kmnC0i6H3o1U=
+5YQ&#39;;return true;">https://asciinema.org/a/<wbr>188045?speed=3D2</a><br=
+></div><div><br></div><div>Best,</div><div><br></div><div>Vanessa</div></di=
+v><br><div class=3D"gmail_quote"><div dir=3D"ltr">On Wed, Jun 20, 2018 at 2=
+:23 PM Brandon Barker &lt;<a rel=3D"nofollow">b...@cornell.edu</a>&gt; wrot=
+e:<br></div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0=
+.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"l=
+tr"><div>Hi,</div><div><br></div><div>This issue is preventing me from atte=
+mpting to build a singularity image:<br></div><div><br></div><div style=3D"=
+background-color:rgb(250,250,250);border-color:rgb(187,187,187);border-styl=
+e:solid;border-width:1px"><code><div><span style=3D"color:rgb(0,0,0)"><br>$=
+ sudo </span><span style=3D"color:rgb(102,102,0)">./</span><span style=3D"c=
+olor:rgb(0,0,0)">build</span><span style=3D"color:rgb(102,102,0)">-</span><=
+span style=3D"color:rgb(0,0,0)">singularity</span><span style=3D"color:rgb(=
+102,102,0)">.</span><span style=3D"color:rgb(0,0,0)">sh<br></span><span sty=
+le=3D"color:rgb(102,0,102)">Using</span><span style=3D"color:rgb(0,0,0)"> c=
+ontainer recipe deffile</span><span style=3D"color:rgb(102,102,0)">:</span>=
+<span style=3D"color:rgb(0,0,0)"> </span><span style=3D"color:rgb(102,0,102=
+)">Singularity</span><span style=3D"color:rgb(0,0,0)"><br></span><span styl=
+e=3D"color:rgb(102,0,102)">Sanitizing</span><span style=3D"color:rgb(0,0,0)=
+"> environment<br></span><span style=3D"color:rgb(102,0,102)">Adding</span>=
+<span style=3D"color:rgb(0,0,0)"> </span><span style=3D"color:rgb(0,0,136)"=
+>base</span><span style=3D"color:rgb(0,0,0)"> </span><span style=3D"color:r=
+gb(102,0,102)">Singularity</span><span style=3D"color:rgb(0,0,0)"> environm=
+ent to container =C2=A0<br>ERROR </span><span style=3D"color:rgb(102,0,102)=
+">Authentication</span><span style=3D"color:rgb(0,0,0)"> error</span><span =
+style=3D"color:rgb(102,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> ex=
+iting</span><span style=3D"color:rgb(102,102,0)">.</span><span style=3D"col=
+or:rgb(0,0,0)"> =C2=A0 =C2=A0 <br><br></span></div></code></div><div><br></=
+div><div><br></div><div>From what I can tell, this is for docker:</div><div=
+><a href=3D"https://github.com/singularityware/singularity/blob/master/libe=
+xec/python/docker/api.py#L199" rel=3D"nofollow" target=3D"_blank" onmousedo=
+wn=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub=
+.com%2Fsingularityware%2Fsingularity%2Fblob%2Fmaster%2Flibexec%2Fpython%2Fd=
+ocker%2Fapi.py%23L199\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEwxuvKv0I60Ym=
+VQUTgm_AF7Z-8og&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.=
+google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsingularityware%2Fsingularit=
+y%2Fblob%2Fmaster%2Flibexec%2Fpython%2Fdocker%2Fapi.py%23L199\x26sa\x3dD\x2=
+6sntz\x3d1\x26usg\x3dAFQjCNEwxuvKv0I60YmVQUTgm_AF7Z-8og&#39;;return true;">=
+https://github.com/<wbr>singularityware/singularity/<wbr>blob/master/libexe=
+c/python/<wbr>docker/api.py#L199</a><br></div><div><br></div><div>I have so=
+urced my credentials in the form specified at <a href=3D"https://singularit=
+y.lbl.gov/docs-docker#authentication-in-the-environment" rel=3D"nofollow" t=
+arget=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/url=
+?q\x3dhttps%3A%2F%2Fsingularity.lbl.gov%2Fdocs-docker%23authentication-in-t=
+he-environment\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEPC3yexBD7LnrJOJetSM=
+xc7UlvjA&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.=
+com/url?q\x3dhttps%3A%2F%2Fsingularity.lbl.gov%2Fdocs-docker%23authenticati=
+on-in-the-environment\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEPC3yexBD7Lnr=
+JOJetSMxc7UlvjA&#39;;return true;">https://singularity.lbl.gov/<wbr>docs-do=
+cker#authentication-in-<wbr>the-environment</a>:</div><div><br></div><div><=
+div style=3D"background-color:rgb(250,250,250);border-color:rgb(187,187,187=
+);border-style:solid;border-width:1px"><code><div><span style=3D"color:rgb(=
+0,0,136)">export</span><span style=3D"color:rgb(0,0,0)"> SINGULARITY_DOCKER=
+_USERNAME</span><span style=3D"color:rgb(102,102,0)">=3D</span><span style=
+=3D"color:rgb(0,0,0)">va<wbr>nessasaur <br></span><span style=3D"color:rgb(=
+0,0,136)">export</span><span style=3D"color:rgb(0,0,0)"> SINGULARITY_DOCKER=
+_PASSWORD</span><span style=3D"color:rgb(102,102,0)">=3D</span><span style=
+=3D"color:rgb(0,0,0)">ra<wbr>wwwwwr <br></span></div></code></div><h3><br>I=
+ confirmed my credentials work with docker login.</h3><div><br></div><div>A=
+ny suggestions or ideas on what might be going wrong? This is Singularity 2=
+.5.1.<br></div></div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+><div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><=
+div>(603) 321-0676</div></div></div></div></div>
+</blockquote></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank" rel=3D"nofoll=
+ow" onmousedown=3D"this.href=3D&#39;mailto:singu...@lbl.gov&#39;;return tru=
+e;" onclick=3D"this.href=3D&#39;mailto:singu...@lbl.gov&#39;;return true;">=
+singularity+unsubscribe@lbl.<wbr>gov</a>.<br>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+><div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><=
+div>(603) 321-0676</div></div></div></div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank" rel=3D"nofoll=
+ow" onmousedown=3D"this.href=3D&#39;mailto:singu...@lbl.gov&#39;;return tru=
+e;" onclick=3D"this.href=3D&#39;mailto:singu...@lbl.gov&#39;;return true;">=
+singularity+unsubscribe@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><br>-- <br><div><div d=
+ir=3D"ltr">Brandon E. Barker<br><a href=3D"http://www.cac.cornell.edu/barke=
+r/" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http=
+://www.google.com/url?q\x3dhttp%3A%2F%2Fwww.cac.cornell.edu%2Fbarker%2F\x26=
+sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGX9MUB7XTYlKs2_fS5isc_Haenmw&#39;;retu=
+rn true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3=
+A%2F%2Fwww.cac.cornell.edu%2Fbarker%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAF=
+QjCNGX9MUB7XTYlKs2_fS5isc_Haenmw&#39;;return true;">http://www.cac.cornell.=
+edu/<wbr>barker/</a><br></div></div>
+</div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank" rel=3D"nofoll=
+ow" onmousedown=3D"this.href=3D&#39;mailto:singu...@lbl.gov&#39;;return tru=
+e;" onclick=3D"this.href=3D&#39;mailto:singu...@lbl.gov&#39;;return true;">=
+singularity+unsubscribe@lbl.<wbr>gov</a>.<br>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+>Vanessa Villamia Sochat<br>Stanford University</div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank" rel=3D"nofoll=
+ow" onmousedown=3D"this.href=3D&#39;mailto:singu...@lbl.gov&#39;;return tru=
+e;" onclick=3D"this.href=3D&#39;mailto:singu...@lbl.gov&#39;;return true;">=
+singularity+unsubscribe@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><br>-- <br><div><div d=
+ir=3D"ltr">Brandon E. Barker<br><a href=3D"http://www.cac.cornell.edu/barke=
+r/" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http=
+://www.google.com/url?q\x3dhttp%3A%2F%2Fwww.cac.cornell.edu%2Fbarker%2F\x26=
+sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGX9MUB7XTYlKs2_fS5isc_Haenmw&#39;;retu=
+rn true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3=
+A%2F%2Fwww.cac.cornell.edu%2Fbarker%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAF=
+QjCNGX9MUB7XTYlKs2_fS5isc_Haenmw&#39;;return true;">http://www.cac.cornell.=
+edu/<wbr>barker/</a><br></div></div>
+</div>
+</blockquote></div>
+------=_Part_5019_495210757.1529606824206--
+
+------=_Part_5018_902556211.1529606824205--

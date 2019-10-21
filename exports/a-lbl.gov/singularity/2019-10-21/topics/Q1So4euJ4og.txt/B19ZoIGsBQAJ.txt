@@ -1,0 +1,87 @@
+Date: Mon, 20 Mar 2017 11:27:25 -0700 (PDT)
+From: Martin Cuma <mart...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <e78d8091-ae21-41b8-b889-ac1e788a19b4@lbl.gov>
+Subject: Binding system files from the host OS
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_4887_379671436.1490034445637"
+
+------=_Part_4887_379671436.1490034445637
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_4888_737667716.1490034445637"
+
+------=_Part_4888_737667716.1490034445637
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hello,
+
+I am wondering if it's possible, or if anyone has done this. I.e. not bind 
+mount points, but rather just separate files (libraries in this case).
+
+The case is getting GPUs supported in a container. There has been a 
+discussion that I found useful on this mail list earlier on NVidia GPU 
+support that essentially boils down to unpacking certain libraries (e.g. 
+libcuda.so) from the NVidia driver package and then adjusting 
+LD_LIBRARY_PATH in the container so it can see it. And making sure that the 
+dropped in libraries are the same version as the driver package on the host.
+
+This has made it a bit more complicated on our CentOS7 host with the NVidia 
+driver being pulled from NVidia provided RPMs, which have driver version 
+that is not being supplied in the distro-agnostic binary form (367.48). We 
+ended up pulling the CentOS 7 rpm and unpacking it in the container (Ubuntu 
+14.04), which is binary compatible with the CentOS7, like:
+apt-get -y --force-yes install rpm2cpio
+mkdir /usr/local/NVidia-$driver_version
+cd /usr/local/NVidia-$driver_version
+rpm2cpio /mnt/xorg-x11-drv-nvidia-libs-$driver_version-1.el7.x86_64.rpm  | 
+cpio -idmv
+
+So, that is all good, until we run updates on the host which updates the 
+NVidia driver. With the current setup we'll need to also update the 
+container (or just build it again with the new driver RPM).
+
+It would be easier if we could bring those few libraries from the host OS 
+at the launch of the container - so, binding them comes to mind. If I could 
+bring /usr/lib64/libcuda.so and its one dependency, we could have a NVidia 
+driver version agnostic container.
+
+I'd appreciate any thoughts on this.
+
+Thanks,
+MC
+
+
+
+------=_Part_4888_737667716.1490034445637
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hello,<br><br>I am wondering if it&#39;s possible, or if a=
+nyone has done this. I.e. not bind mount points, but rather just separate f=
+iles (libraries in this case).<br><br>The case is getting GPUs supported in=
+ a container. There has been a discussion that I found useful on this mail =
+list earlier on NVidia GPU support that essentially boils down to unpacking=
+ certain libraries (e.g. libcuda.so) from the NVidia driver package and the=
+n adjusting LD_LIBRARY_PATH in the container so it can see it. And making s=
+ure that the dropped in libraries are the same version as the driver packag=
+e on the host.<br><br>This has made it a bit more complicated on our CentOS=
+7 host with the NVidia driver being pulled from NVidia provided RPMs, which=
+ have driver version that is not being supplied in the distro-agnostic bina=
+ry form (367.48). We ended up pulling the CentOS 7 rpm and unpacking it in =
+the container (Ubuntu 14.04), which is binary compatible with the CentOS7, =
+like:<br>apt-get -y --force-yes install rpm2cpio<br>mkdir /usr/local/NVidia=
+-$driver_version<br>cd /usr/local/NVidia-$driver_version<br>rpm2cpio /mnt/x=
+org-x11-drv-nvidia-libs-$driver_version-1.el7.x86_64.rpm=C2=A0 | cpio -idmv=
+<br><br>So, that is all good, until we run updates on the host which update=
+s the NVidia driver. With the current setup we&#39;ll need to also update t=
+he container (or just build it again with the new driver RPM).<br><br>It wo=
+uld be easier if we could bring those few libraries from the host OS at the=
+ launch of the container - so, binding them comes to mind. If I could bring=
+ /usr/lib64/libcuda.so and its one dependency, we could have a NVidia drive=
+r version agnostic container.<br><br>I&#39;d appreciate any thoughts on thi=
+s.<br><br>Thanks,<br>MC<br><br><br></div>
+------=_Part_4888_737667716.1490034445637--
+
+------=_Part_4887_379671436.1490034445637--

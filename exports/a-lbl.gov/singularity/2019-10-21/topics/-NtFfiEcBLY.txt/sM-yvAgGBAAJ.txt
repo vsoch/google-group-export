@@ -1,0 +1,202 @@
+X-Received: by 10.157.32.73 with SMTP id n67mr11281765ota.65.1491405641430;
+        Wed, 05 Apr 2017 08:20:41 -0700 (PDT)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.107.19.131 with SMTP id 3ls9854967iot.36.gmail; Wed, 05 Apr
+ 2017 08:20:40 -0700 (PDT)
+X-Received: by 10.99.37.1 with SMTP id l1mr824708pgl.86.1491405640589;
+        Wed, 05 Apr 2017 08:20:40 -0700 (PDT)
+Return-Path: <gmku...@lbl.gov>
+Received: from fe4.lbl.gov (fe4.lbl.gov. [128.3.41.71])
+        by mx.google.com with ESMTP id 70si20929047pla.146.2017.04.05.08.20.40
+        for <singu...@lbl.gov>;
+        Wed, 05 Apr 2017 08:20:40 -0700 (PDT)
+Received-SPF: pass (google.com: domain of gmku...@lbl.gov designates 209.85.161.200 as permitted sender) client-ip=209.85.161.200;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of gmku...@lbl.gov designates 209.85.161.200 as permitted sender) smtp.mailfrom=gmku...@lbl.gov
+X-Ironport-SBRS: 2.7
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: =?us-ascii?q?A2FqAQCICuVYf8ihVdFdHAEBBAEBCgEBF?=
+ =?us-ascii?q?QEBAQECAQEBAQgBAQEBgkM7Aks/eRIHg1QIihKRPIJkhTaIB4U0gUsbKB8BBoV?=
+ =?us-ascii?q?8AoNKBz8YAQEBAQEBAQEBAQECEAEBCQsLCCYxgjMEAgECGQUEBEYmAy8BAQEBA?=
+ =?us-ascii?q?QEBAQEBAQEBAQEaAg0xAyoBAgIBIyswCwsLNwICIQEPAwEFARwGCAcEAQcVBId?=
+ =?us-ascii?q?kRIEtAw0IBZ8bP4wDgiaHLw2DMQEBAQEBBQEBAQEBASISiyyCUYFXEQGDIoJfB?=
+ =?us-ascii?q?ZBpi0w7AYZ9hxuEOYJSjmqKeYc1FB+BFQ8QgQQyCBwLOlAYBoZbIDUHhxRHMYE?=
+ =?us-ascii?q?2AQEB?=
+X-IronPort-AV: E=Sophos;i="5.36,279,1486454400"; 
+   d="scan'208,217";a="69904874"
+Received: from mail-yw0-f200.google.com ([209.85.161.200])
+  by fe4.lbl.gov with ESMTP; 05 Apr 2017 08:20:39 -0700
+Received: by mail-yw0-f200.google.com with SMTP id a13so6198503ywh.14
+        for <singu...@lbl.gov>; Wed, 05 Apr 2017 08:20:39 -0700 (PDT)
+X-Gm-Message-State: AFeK/H2txwmSmMnM83Mj7Bfb1Ivf9a0FlfQ6qkUlU6C1/gGBzgobxs0W5hUThdA1uQZXUhUTvnKPdu37RV/73fjozj7xDhffvvhArYgrVeA1DZ0niyWKK3qsE+GVcnZeL7jU8M1nTY3op+5AQZkA88kadps=
+X-Received: by 10.37.172.208 with SMTP id x16mr18102782ybd.59.1491405638832;
+        Wed, 05 Apr 2017 08:20:38 -0700 (PDT)
+X-Received: by 10.37.172.208 with SMTP id x16mr18102756ybd.59.1491405638531;
+ Wed, 05 Apr 2017 08:20:38 -0700 (PDT)
+MIME-Version: 1.0
+Received: by 10.129.110.69 with HTTP; Wed, 5 Apr 2017 08:20:38 -0700 (PDT)
+In-Reply-To: <2eba34a0-cd03-41dc-aff7-d47586ee6e79@lbl.gov>
+References: <2eba34a0-cd03-41dc-aff7-d47586ee6e79@lbl.gov>
+From: "Gregory M. Kurtzer" <gmku...@lbl.gov>
+Date: Wed, 5 Apr 2017 08:20:38 -0700
+Message-ID: <CAN7etTw3tOrDaM_H6MUxzx4Wm1iHM8ny_vpbdDGoBDkkQgQNag@mail.gmail.com>
+Subject: Re: [Singularity] Container-to-container invocation with Singularity
+To: singularity <singu...@lbl.gov>
+Content-Type: multipart/alternative; boundary=f403045ec7104d3266054c6cef22
+
+--f403045ec7104d3266054c6cef22
+Content-Type: text/plain; charset=UTF-8
+
+Hi Vijay,
+
+Thank you for your note, and I'm glad Singularity is working well for you.
+
+Am I understand correctly that you are having containers invoking other
+containers by means of the container submitting jobs to the resource
+manager (e.g. the PsN job that runs first has within it the means to
+communicate with the LSF daemon, and the LSF daemon then spawns the jobs on
+the compute resources)?
+
+I am not generally familiar with these apps (maybe others on the list are),
+but what you describe sounds reasonable. I do have a comment about the
+process flow... Why don't you request an allocation of multiple nodes, and
+use the rank 0 process to spin up the PsN container process, and the rest
+of the ranks to spin up workers that can communicate back to the PsN job at
+job completion? Is that possible with this compute model?
+
+Last comment I have is that the current development branch for Singularity
+has the ability to sanitize or clean the container's environment so you
+don't need to use `env -i ...`. Will that help you?
+
+Greg
+
+On Wed, Apr 5, 2017 at 7:38 AM, Sundar Vijayakumar <vijay...@gmail.com>
+wrote:
+
+> Hi Greg,
+>
+> First, we would like to thank you for leading this effort and making this
+> a reality for scientific computing ! We think Singularity will give us what
+> we have long desired (an immutable installation and reproducible runtime
+> environment) for our scientific tool collection no matter which host our
+> job lands for execution or infrastructural updates applied to the
+> underlying host, barring any major kernel updates.
+>
+> We, at Pfizer, are piloting a use case wherein container-to-container
+> invocation is desired in an HPC environment.  To give you some background
+> on our setup, we installed a set of our tools comprising R, Nonmem and PsN
+> into a single container. Our cluster manager is IBM/LSF (previously from
+> Platform computing).   We use "R" for plots and reporting via R markdown
+> and Latex.  We use Nonmem (NONlinear Mixed Effect Modeling) for modeling
+> and simulation and PsN (a collection of perl modules) that spin up a number
+> of NONMEM jobs in parallel.  In this use case, a user submits a PsN LSF job
+> on the first node, which then submits several child LSF jobs, each running
+> a Nonmem instance.  At the completion of all the Nonmem jobs, PsN collects
+> and summarizes the results via "R" plots and graphs.
+>
+> At the moment, we are able to execute such a job by re-initializing (env
+> -i) the child job submission environment.  But before we finalize an
+> approach, we want to understand if there is a different mechanism to
+> achieve the same within Singularity.  Also, we want to ensure any future
+> plans that may be on the table will NOT impede our implementation model.
+> Would very much appreciate your thoughts and comments on our approach.
+>
+> Many thanks,
+>
+> -Vijay
+>
+> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+>
+
+
+
+-- 
+Gregory M. Kurtzer
+HPC Systems Architect and Technology Developer
+Lawrence Berkeley National Laboratory HPCS
+University of California Berkeley Research IT
+Singularity Linux Containers (http://singularity.lbl.gov/)
+Warewulf Cluster Management (http://warewulf.lbl.gov/)
+GitHub: https://github.com/gmkurtzer, Twitter: https://twitter.com/gmkurtzer
+
+--f403045ec7104d3266054c6cef22
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Vijay,<div><br></div><div>Thank you for your note, and =
+I&#39;m glad Singularity is working well for you.</div><div><br></div><div>=
+Am I understand correctly that you are having containers invoking other con=
+tainers by means of the container submitting jobs to the resource manager (=
+e.g. the PsN job that runs first has within it the means to communicate wit=
+h the LSF daemon, and the LSF daemon then spawns the jobs on the compute re=
+sources)?</div><div><br></div><div>I am not generally familiar with these a=
+pps (maybe others on the list are), but what you describe sounds reasonable=
+. I do have a comment about the process flow... Why don&#39;t you request a=
+n allocation of multiple nodes, and use the rank 0 process to spin up the P=
+sN container process, and the rest of the ranks to spin up workers that can=
+ communicate back to the PsN job at job completion? Is that possible with t=
+his compute model?</div><div><br></div><div>Last comment I have is that the=
+ current development branch for Singularity has the ability to sanitize or =
+clean the container&#39;s environment so you don&#39;t need to use `env -i =
+...`. Will that help you?</div><div><br></div><div>Greg</div></div><div cla=
+ss=3D"gmail_extra"><br><div class=3D"gmail_quote">On Wed, Apr 5, 2017 at 7:=
+38 AM, Sundar Vijayakumar <span dir=3D"ltr">&lt;<a href=3D"mailto:vijay...@=
+gmail.com" target=3D"_blank">vijay...@gmail.com</a>&gt;</span> wrote:<br><b=
+lockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px =
+#ccc solid;padding-left:1ex"><div dir=3D"ltr">Hi Greg,<br><br>First, we wou=
+ld like to thank you for leading this effort and making this a reality for =
+scientific computing ! We think Singularity will give us what we have long =
+desired (an immutable installation and reproducible runtime environment) fo=
+r our scientific tool collection no matter which host our job lands for exe=
+cution or infrastructural updates applied to the underlying host, barring a=
+ny major kernel updates.<br><br>We, at Pfizer, are piloting a use case wher=
+ein container-to-container invocation is desired in an HPC environment.=C2=
+=A0 To give you some background on our setup, we installed a set of our too=
+ls comprising R, Nonmem and PsN into a single container. Our cluster manage=
+r is IBM/LSF (previously from Platform computing). =C2=A0 We use &quot;R&qu=
+ot; for plots and reporting via R markdown and Latex.=C2=A0 We use Nonmem (=
+NONlinear Mixed Effect Modeling) for modeling and simulation and PsN (a col=
+lection of perl modules) that spin up a number of NONMEM jobs in parallel.=
+=C2=A0 In this use case, a user submits a PsN LSF job on the first node, wh=
+ich then submits several child LSF jobs, each running a Nonmem instance.=C2=
+=A0 At the completion of all the Nonmem jobs, PsN collects and summarizes t=
+he results via &quot;R&quot; plots and graphs.<br><br>At the moment, we are=
+ able to execute such a job by re-initializing (env -i) the child job submi=
+ssion environment.=C2=A0 But before we finalize an approach, we want to und=
+erstand if there is a different mechanism to achieve the same within Singul=
+arity.=C2=A0 Also, we want to ensure any future plans that may be on the ta=
+ble will NOT impede our implementation model.=C2=A0 Would very much appreci=
+ate your thoughts and comments on our approach.<br><br>Many thanks,<br><br>=
+-Vijay<span class=3D"HOEnZb"><font color=3D"#888888"><br></font></span></di=
+v><span class=3D"HOEnZb"><font color=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singularity+u=
+nsubscribe@lbl.<wbr>gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div class=3D"gmail_signature" data-smartmail=3D"gmail_signature"><div di=
+r=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"=
+><div dir=3D"ltr"><div dir=3D"ltr"><div>Gregory M. Kurtzer</div><div>HPC Sy=
+stems Architect and Technology Developer</div><div>Lawrence Berkeley Nation=
+al Laboratory HPCS<br>University of California Berkeley Research IT<br>Sing=
+ularity Linux Containers=C2=A0(<a href=3D"http://singularity.lbl.gov/" targ=
+et=3D"_blank">http://singularity.lbl.gov/</a>)</div><div>Warewulf Cluster M=
+anagement=C2=A0(<a href=3D"http://warewulf.lbl.gov/" target=3D"_blank">http=
+://warewulf.lbl.gov/</a>)</div><div>GitHub:=C2=A0<a href=3D"https://github.=
+com/gmkurtzer" target=3D"_blank">https://github.com/gmkurtzer</a>,=C2=A0<sp=
+an style=3D"font-size:12.8px">Twitter:=C2=A0</span><a href=3D"https://twitt=
+er.com/gmkurtzer" style=3D"font-size:12.8px" target=3D"_blank">https://twit=
+ter.com/gmkurtzer</a></div></div></div></div></div></div></div></div></div>=
+</div></div>
+</div>
+
+--f403045ec7104d3266054c6cef22--

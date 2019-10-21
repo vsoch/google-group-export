@@ -1,0 +1,132 @@
+Date: Wed, 8 May 2019 11:05:06 -0700 (PDT)
+From: Ivo Jimenez <i...@cs.ucsc.edu>
+To: singularity <singu...@lbl.gov>
+Message-Id: <a5fc6c74-375c-456c-8b4c-da2a89a52a0b@lbl.gov>
+In-Reply-To: <CAM=pu+K3y77PgaFz=Zz8MYoZPAaN2sumnZRQois5sXzjVosyfA@mail.gmail.com>
+References: <00724cc4-9bf5-4ec1-af0d-a61cd376b9de@lbl.gov> <CAM=pu+JJZ73Hh8zHGKVt4cVYV65piT7tU4RmDiY+mSD4NLLN3w@mail.gmail.com>
+ <23462aee-1cc3-4cd8-b340-e7987a1f6ee5@lbl.gov>
+ <CAM=pu+K3y77PgaFz=Zz8MYoZPAaN2sumnZRQois5sXzjVosyfA@mail.gmail.com>
+Subject: Re: [Singularity] A Github Actions extension to support for
+ singularity
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_451_132168643.1557338706647"
+
+------=_Part_451_132168643.1557338706647
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_452_822435922.1557338706647"
+
+------=_Part_452_822435922.1557338706647
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Thanks for giving this a try Vanessa!
+
+In Popper, singularity is supported natively, so you can define an action 
+like the following:
+
+actions "a singularity-based action" {
+  uses = "./actions/example"
+}
+
+and if a *singularity.def* file is found in the *actions/example* folder of 
+the repo storing the above workflow, then Popper builds a singularity 
+image, and subsequently runs it by invoking the default runscript. We just 
+merged a commit that changes the logic of this, so that we look for a 
+*Singularity* file instead of a *singularity.def* one, but that is not part 
+of 2.1.0; it will be part of the next release, so we currently look for a 
+*singularity.def* file.
+
+As you can see, we are mimicking the way Github Actions works (which 
+assumes that actions are defined by creating Dockerfiles), but we're 
+extending the semantics of the *uses* attribute so that it also supports 
+Singularity containers. The downside of this is that this will not work on 
+the official GHA platform, but this can be solved by running on other CI 
+services as explained in the blog post 
+<https://medium.com/getpopper/waiting-for-your-github-actions-invite-wait-no-longer-cf310b8c630c> I 
+shared previously (e.g. we run singularity-based workflows on Travis 
+without problems).
+
+Having said that, the issue you see in your example is due to the way paths 
+are treated in workflows. Per the GHA spec, when an action runs, the 
+working directory is the root of the repo, so paths used in a workflow file 
+need to be relative to this folder. In your case, the action would need to 
+be specified as:
+
+action "Build" {
+  uses = "docker://singularityware/singularity:3.1.1-slim"
+  args = "build container.sif *./popper/Singularity"*
+}
+
+
+In addition, in order to run a singularity container via Docker (as in the 
+"Run" action of the your example workflow) I believe we will need to modify 
+the way we configure the permissions of the Docker containers that we 
+create (this is what we currently do 
+<https://github.com/systemslab/popper/blob/3c67f7a/cli/popper/gha.py#L369-L378>), 
+as I think this is a requirement, am I right?
+
+ihth
+
+
+
+------=_Part_452_822435922.1557338706647
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div dir=3D"ltr" gmail_original=3D"1" style=3D"font-size: =
+14px;">Thanks for giving this a try Vanessa!<div><br></div><div>In Popper, =
+singularity is supported natively, so you can define an action like the fol=
+lowing:<div><br></div><div><font face=3D"monospace, monospace">actions &quo=
+t;a singularity-based action&quot; {</font></div><div><font face=3D"monospa=
+ce, monospace">=C2=A0 uses =3D &quot;./actions/example&quot;</font></div><d=
+iv><font face=3D"monospace, monospace">}</font></div><div><br></div><div>an=
+d=C2=A0if a=C2=A0<font face=3D"monospace, monospace"><b>singularity.def</b>=
+</font>=C2=A0file is found in=C2=A0<span style=3D"font-size: 0.875rem;">the=
+</span><span style=3D"font-size: 0.875rem;">=C2=A0</span><font face=3D"mono=
+space, monospace" style=3D"font-size: 0.875rem;"><b>actions/example</b></fo=
+nt><span style=3D"font-size: 0.875rem;">=C2=A0folder of the repo storing th=
+e above workflow</span><span style=3D"font-size: 0.875rem;">, then Popper b=
+uilds a singularity image, and subsequently runs it by invoking the default=
+ runscript</span><span style=3D"font-size: 0.875rem;">. W</span><span style=
+=3D"font-size: 0.875rem;">e just merged a commit that changes the logic of =
+this, so that we look for a=C2=A0</span><span style=3D"font-size: 0.875rem;=
+ font-family: monospace, monospace;"><b>Singularity</b></span><span style=
+=3D"font-size: 0.875rem;">=C2=A0file instead of a=C2=A0</span><span style=
+=3D"font-family: monospace, monospace; font-size: 0.875rem;"><b>singularity=
+.def</b></span><span style=3D"font-size: 0.875rem;">=C2=A0one, but that is =
+not part of 2.1.0; it will be part of the next release, so we currently loo=
+k for a=C2=A0</span><span style=3D"font-family: monospace, monospace; font-=
+size: 0.875rem;"><b>singularity.def</b></span><span style=3D"font-size: 0.8=
+75rem;">=C2=A0file.</span></div><div><span style=3D"font-size: 0.875rem;"><=
+br></span></div><div><span style=3D"font-size: 0.875rem;">As you can see, w=
+e are mimicking the way Github Actions works (which assumes that actions ar=
+e defined by creating Dockerfiles), but we&#39;re extending the semantics o=
+f the=C2=A0<font face=3D"monospace, monospace"><b>uses</b></font>=C2=A0attr=
+ibute so that it also supports Singularity containers. The downside of this=
+ is that this will not work on the official GHA platform, but this can be s=
+olved by running on other CI services as explained in=C2=A0<a href=3D"https=
+://medium.com/getpopper/waiting-for-your-github-actions-invite-wait-no-long=
+er-cf310b8c630c" style=3D"color: rgb(17, 85, 204);">the blog post</a>=C2=A0=
+I shared previously (e.g. we run singularity-based workflows on Travis with=
+out problems).</span></div><div><br></div><div>Having=C2=A0said that, the i=
+ssue you see in your example is due to the way paths are treated in workflo=
+ws. Per the GHA spec, when an action runs, t<span style=3D"font-size: 0.875=
+rem;">he working directory is the root of the repo, so=C2=A0</span><span st=
+yle=3D"font-size: 0.875rem;">paths used in a workflow file need to be relat=
+ive to this folder. In your case, the action would need to be specified as:=
+</span></div><div><br></div><div><pre style=3D"color: rgb(0, 0, 0); overflo=
+w-wrap: break-word; white-space: pre-wrap;">action &quot;Build&quot; {
+  uses =3D &quot;docker://singularityware/singularity:3.1.1-slim&quot;
+  args =3D &quot;build container.sif <b>./popper/Singularity&quot;</b>
+}</pre></div><div><br></div><div>In addition, in order to run a singularity=
+ container via Docker (as in the &quot;Run&quot; action of the your example=
+ workflow) I believe we will need to modify the way we configure the permis=
+sions of the Docker containers that we create (this is what=C2=A0<a href=3D=
+"https://github.com/systemslab/popper/blob/3c67f7a/cli/popper/gha.py#L369-L=
+378" style=3D"color: rgb(17, 85, 204);">we currently do</a>), as I think th=
+is is a requirement, am I right?</div><div><br></div><div>ihth</div></div><=
+div><br></div><div><br></div></div></div>
+------=_Part_452_822435922.1557338706647--
+
+------=_Part_451_132168643.1557338706647--

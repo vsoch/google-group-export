@@ -1,0 +1,349 @@
+Date: Sun, 4 Mar 2018 10:08:50 -0800 (PST)
+From: toufique <tech...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <85b07e22-6525-4b73-828e-1b22efe35df8@lbl.gov>
+In-Reply-To: <CAM=pu++23coK=vDfT=ud9bAsyPiTM+ui5NazGs9n2swBwL9S4w@mail.gmail.com>
+References: <3af015d4-8cd4-49d0-aa67-da7edfc56f39@lbl.gov>
+ <CAM=pu++23coK=vDfT=ud9bAsyPiTM+ui5NazGs9n2swBwL9S4w@mail.gmail.com>
+Subject: Re: [Singularity] question on building software without building
+ the whole container
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_13925_1903394088.1520186930223"
+
+------=_Part_13925_1903394088.1520186930223
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_13926_1130334515.1520186930223"
+
+------=_Part_13926_1130334515.1520186930223
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi Vanessa, 
+
+Thanks, I will give that a try.  the program aladin-gem5 is being modified 
+by one of our local researchers and he wants to do a rebuild on his updated 
+codebase everytime he makes changes.  I do not customize anything in aladin 
+source tree.
+
+thanks 
+
+On Sunday, March 4, 2018 at 6:34:02 AM UTC-8, vanessa wrote:
+>
+> Hey Tofique,
+>
+> I think it would make sense to use a "base" image in this case. How does 
+> that work? You'd build an image with everything up to the yellow (or up to 
+> what you don't  want the developer to do), let's call it aladdin-base.simg, 
+> and then bootstrap from a local image with the yellow section. So your 
+> second build recipe would look like:
+>
+> bootstrap: localimage
+> from: aladdin-base.simg
+>
+> cd /workspace/
+> export FORCE_CXX11_ABI=1
+>     #scons gem5.opt
+>     mkdir -p build/X86
+>     scons build/X86/gem5.opt
+>
+>
+> Cloning the Github repo makes sense if you anticipate it might change (and 
+> want to maintain a consistent version). You always may want to also put the 
+> envrionment variables that you export in an %environment section if you 
+> need to use them after build time. Just curious - why does the build need 
+> to happen after the fact? If you are cloning a particular version to a 
+> particular place, what is there left for the (next developer builder) to 
+> customize?
+>
+> Best,
+> Vanessa
+>
+> On Sun, Mar 4, 2018 at 3:35 AM, toufique <te...@gmail.com <javascript:>> 
+> wrote:
+>
+>> Hi everyone, 
+>>
+>> I need some help with this.  I have a tool that my I want to build over 
+>> and over after changing its source code.  But I don't want to build the 
+>> whole container just for that tool.  How would I do that?
+>>
+>> Here is my %post section:
+>>
+>> %post
+>>    sed -i '/xenial.*universe/s/^#//g' /etc/apt/sources.list
+>>    #apt-get -y install gcc
+>>    apt-get -y update
+>>    apt-get update && apt-get install -y \
+>>     python \
+>>     python-pip \
+>>     git \
+>>     tmux \
+>>     vim \
+>>     cmake \
+>>     wget
+>>
+>>    apt-get -y install gcc
+>>    pip install --upgrade pip
+>>
+>>    apt-get update -qq
+>>
+>>    apt-get install -y m4 \
+>>     libz-dev \
+>>     libprotobuf-dev \
+>>     protobuf-compiler \
+>>     libsqlite3-dev \
+>>     libtcmalloc-minimal4
+>>
+>> apt-get install -y \
+>>       libboost-graph-dev \
+>>       libboost-regex-dev \
+>>       libpthread-stubs0-dev \
+>>       libreadline-dev \
+>>       libncurses5-dev
+>>
+>>
+>>    mkdir -p /workspace
+>>    ALADDIN_HOME=/workspace/gem5-aladdin/src/aladdin
+>>    TRACER_HOME=/workspace/LLVM-Tracer
+>>    LLVM_HOME=/usr/local
+>>    BOOST_ROOT=/usr/include
+>>
+>>    mkdir -p /tmp/
+>>
+>>    wget http://releases.llvm.org/3.4.2/llvm-3.4.2.src.tar.gz && \
+>>     tar -xvf llvm-3.4.2.src.tar.gz
+>>
+>>
+>>    wget http://releases.llvm.org/3.4.2/cfe-3.4.2.src.tar.gz && \
+>>     tar -xvf cfe-3.4.2.src.tar.gz && \
+>>     mkdir -p llvm-3.4.2.src/tools/clang && \
+>>     mv -f cfe-3.4.2.src/* llvm-3.4.2.src/tools/clang/ && \
+>>     cd llvm-3.4.2.src && \
+>>     mkdir build && \
+>>     cd build && \
+>>     cmake -DCMAKE_INSTALL_PREFIX=/usr/local .. && \
+>>     make -j8 && \
+>>     make install
+>>
+>>     wget -q 
+>> https://github.com/martinh/libconfuse/releases/download/v3.2.1/confuse-3.2.1.tar.gz 
+>> && \
+>>     tar -xf confuse-3.2.1.tar.gz && \
+>>     cd confuse-3.2.1 && \
+>>     ./configure && \
+>>     make install
+>>
+>>    cd /workspace
+>>
+>>    git clone https://github.com/ysshao/LLVM-Tracer && \
+>>     cd LLVM-Tracer && \
+>>     mkdir bin && \
+>>     mkdir lib && \
+>>     mkdir build && cd build && \
+>>     cmake .. && make && make install
+>>
+>>
+>> cd /workspace/
+>> export FORCE_CXX11_ABI=1
+>>
+>>
+>> # Clone gem5-aladdin, but don't build. We'll assume the developer will 
+>> build.
+>>   apt-get install -y scons
+>>   git clone https://github.com/harvard-acc/gem5-aladdin && \
+>>     cd gem5-aladdin && \
+>>     git submodule init && \
+>>     git submodule update
+>>
+>>     #scons gem5.opt
+>>     mkdir -p build/X86
+>>     scons build/X86/gem5.opt
+>>
+>>
+>> The last section, as highlighted, I would like to build this section only 
+>> without building the container and all the dependencies needed for this 
+>> tool.  
+>>
+>> Any help would be very much appreciated!
+>>
+>> thank you!
+>>
+>>
+>>
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_13926_1130334515.1520186930223
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Vanessa,=C2=A0<div><br></div><div>Thanks, I will give t=
+hat a try.=C2=A0 the program aladin-gem5 is being modified by one of our lo=
+cal researchers and he=C2=A0wants to do a rebuild on his updated codebase e=
+verytime he makes changes.=C2=A0 I do not customize anything in aladin sour=
+ce tree.</div><div><br></div><div>thanks=C2=A0<br><br>On Sunday, March 4, 2=
+018 at 6:34:02 AM UTC-8, vanessa wrote:<blockquote class=3D"gmail_quote" st=
+yle=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-lef=
+t: 1ex;"><div dir=3D"ltr">Hey Tofique,<br><br>I think it would make sense t=
+o use a &quot;base&quot; image in this case. How does that work? You&#39;d =
+build an image with everything up to the yellow (or up to what you don&#39;=
+t=C2=A0 want the developer to do), let&#39;s call it aladdin-base.simg, and=
+ then bootstrap from a local image with the yellow section. So your second =
+build recipe would look like:<br><br><blockquote style=3D"margin:0 0 0 40px=
+;border:none;padding:0px">bootstrap: localimage<br>from: aladdin-base.simg<=
+br><br>cd /workspace/<br>export FORCE_CXX11_ABI=3D1<br>=C2=A0 =C2=A0 #scons=
+ gem5.opt<br>=C2=A0 =C2=A0 mkdir -p build/X86<br>=C2=A0 =C2=A0 scons build/=
+X86/gem5.opt<br><br><br></blockquote>Cloning the Github repo makes sense if=
+ you anticipate it might change (and want to maintain a consistent version)=
+. You always may want to also put the envrionment variables that you export=
+ in an %environment section if you need to use them after build time. Just =
+curious - why does the build need to happen after the fact? If you are clon=
+ing a particular version to a particular place, what is there left for the =
+(next developer builder) to customize?<div><br></div><div>Best,</div><div>V=
+anessa</div></div><div><br><div class=3D"gmail_quote">On Sun, Mar 4, 2018 a=
+t 3:35 AM, toufique <span dir=3D"ltr">&lt;<a href=3D"javascript:" target=3D=
+"_blank" gdf-obfuscated-mailto=3D"zUDKtLQJBQAJ" rel=3D"nofollow" onmousedow=
+n=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=
+=3D&#39;javascript:&#39;;return true;">te...@gmail.com</a>&gt;</span> wrote=
+:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-le=
+ft:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Hi everyone,=C2=A0<div=
+><br></div><div>I need some help with this.=C2=A0 I have a tool that my I w=
+ant to build over and over after changing its source code.=C2=A0 But I don&=
+#39;t want to build the whole container just for that tool.=C2=A0 How would=
+ I do that?</div><div><br></div><div>Here is my %post section:</div><div><b=
+r></div><div><div>%post</div><div>=C2=A0 =C2=A0sed -i &#39;/xenial.*univers=
+e/s/^#//g&#39; /etc/apt/sources.list</div><div>=C2=A0 =C2=A0#apt-get -y ins=
+tall gcc</div><div>=C2=A0 =C2=A0apt-get -y update</div><div>=C2=A0 =C2=A0ap=
+t-get update &amp;&amp; apt-get install -y \</div><div>=C2=A0 =C2=A0 python=
+ \</div><div>=C2=A0 =C2=A0 python-pip \</div><div>=C2=A0 =C2=A0 git \</div>=
+<div>=C2=A0 =C2=A0 tmux \</div><div>=C2=A0 =C2=A0 vim \</div><div>=C2=A0 =
+=C2=A0 cmake \</div><div>=C2=A0 =C2=A0 wget</div><div><br></div><div>=C2=A0=
+ =C2=A0apt-get -y install gcc</div><div>=C2=A0 =C2=A0pip install --upgrade =
+pip</div><div><br></div><div>=C2=A0 =C2=A0apt-get update -qq</div><div><br>=
+</div><div>=C2=A0 =C2=A0apt-get install -y m4 \</div><div>=C2=A0 =C2=A0 lib=
+z-dev \</div><div>=C2=A0 =C2=A0 libprotobuf-dev \</div><div>=C2=A0 =C2=A0 p=
+rotobuf-compiler \</div><div>=C2=A0 =C2=A0 libsqlite3-dev \</div><div>=C2=
+=A0 =C2=A0 libtcmalloc-minimal4</div></div><div><br></div><div><div>apt-get=
+ install -y \</div><div>=C2=A0 =C2=A0 =C2=A0 libboost-graph-dev \</div><div=
+>=C2=A0 =C2=A0 =C2=A0 libboost-regex-dev \</div><div>=C2=A0 =C2=A0 =C2=A0 l=
+ibpthread-stubs0-dev \</div><div>=C2=A0 =C2=A0 =C2=A0 libreadline-dev \</di=
+v><div>=C2=A0 =C2=A0 =C2=A0 libncurses5-dev</div><div><br></div><div><br></=
+div><div>=C2=A0 =C2=A0mkdir -p /workspace</div><div>=C2=A0 =C2=A0ALADDIN_HO=
+ME=3D/workspace/gem5-<wbr>aladdin/src/aladdin</div><div>=C2=A0 =C2=A0TRACER=
+_HOME=3D/workspace/LLVM-<wbr>Tracer</div><div>=C2=A0 =C2=A0LLVM_HOME=3D/usr=
+/local</div><div>=C2=A0 =C2=A0BOOST_ROOT=3D/usr/include</div><div><br></div=
+><div>=C2=A0 =C2=A0mkdir -p /tmp/</div><div><br></div><div>=C2=A0 =C2=A0wge=
+t <a href=3D"http://releases.llvm.org/3.4.2/llvm-3.4.2.src.tar.gz" target=
+=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://www.goo=
+gle.com/url?q\x3dhttp%3A%2F%2Freleases.llvm.org%2F3.4.2%2Fllvm-3.4.2.src.ta=
+r.gz\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHGpmUwq6skUN3ZtTqfb2wUKgpwnQ&#=
+39;;return true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x=
+3dhttp%3A%2F%2Freleases.llvm.org%2F3.4.2%2Fllvm-3.4.2.src.tar.gz\x26sa\x3dD=
+\x26sntz\x3d1\x26usg\x3dAFQjCNHGpmUwq6skUN3ZtTqfb2wUKgpwnQ&#39;;return true=
+;">http://releases.llvm.org/3.4.<wbr>2/llvm-3.4.2.src.tar.gz</a> &amp;&amp;=
+ \</div><div>=C2=A0 =C2=A0 tar -xvf llvm-3.4.2.src.tar.gz</div><div><br></d=
+iv><div><br></div><div>=C2=A0 =C2=A0wget <a href=3D"http://releases.llvm.or=
+g/3.4.2/cfe-3.4.2.src.tar.gz" target=3D"_blank" rel=3D"nofollow" onmousedow=
+n=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Freleases.=
+llvm.org%2F3.4.2%2Fcfe-3.4.2.src.tar.gz\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dA=
+FQjCNExqz0n-AxMwKAfBTHJgtzOWYazRQ&#39;;return true;" onclick=3D"this.href=
+=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Freleases.llvm.org%2F3.4=
+.2%2Fcfe-3.4.2.src.tar.gz\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNExqz0n-Ax=
+MwKAfBTHJgtzOWYazRQ&#39;;return true;">http://releases.llvm.org/3.4.<wbr>2/=
+cfe-3.4.2.src.tar.gz</a> &amp;&amp; \</div><div>=C2=A0 =C2=A0 tar -xvf cfe-=
+3.4.2.src.tar.gz &amp;&amp; \</div><div>=C2=A0 =C2=A0 mkdir -p llvm-3.4.2.s=
+rc/tools/clang &amp;&amp; \</div><div>=C2=A0 =C2=A0 mv -f cfe-3.4.2.src/* l=
+lvm-3.4.2.src/tools/clang/ &amp;&amp; \</div><div>=C2=A0 =C2=A0 cd llvm-3.4=
+.2.src &amp;&amp; \</div><div>=C2=A0 =C2=A0 mkdir build &amp;&amp; \</div><=
+div>=C2=A0 =C2=A0 cd build &amp;&amp; \</div><div>=C2=A0 =C2=A0 cmake -DCMA=
+KE_INSTALL_PREFIX=3D/usr/<wbr>local .. &amp;&amp; \</div><div>=C2=A0 =C2=A0=
+ make -j8 &amp;&amp; \</div><div>=C2=A0 =C2=A0 make install</div></div><div=
+><br></div><div><div>=C2=A0 =C2=A0 wget -q <a href=3D"https://github.com/ma=
+rtinh/libconfuse/releases/download/v3.2.1/confuse-3.2.1.tar.gz" target=3D"_=
+blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.google.=
+com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fmartinh%2Flibconfuse%2Freleases%2Fd=
+ownload%2Fv3.2.1%2Fconfuse-3.2.1.tar.gz\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dA=
+FQjCNEnT9E8ysORVCtab9KofkhA2lykjQ&#39;;return true;" onclick=3D"this.href=
+=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fmartinh%=
+2Flibconfuse%2Freleases%2Fdownload%2Fv3.2.1%2Fconfuse-3.2.1.tar.gz\x26sa\x3=
+dD\x26sntz\x3d1\x26usg\x3dAFQjCNEnT9E8ysORVCtab9KofkhA2lykjQ&#39;;return tr=
+ue;">https://github.com/martinh/<wbr>libconfuse/releases/download/<wbr>v3.2=
+.1/confuse-3.2.1.tar.gz</a> &amp;&amp; \</div><div>=C2=A0 =C2=A0 tar -xf co=
+nfuse-3.2.1.tar.gz &amp;&amp; \</div><div>=C2=A0 =C2=A0 cd confuse-3.2.1 &a=
+mp;&amp; \</div><div>=C2=A0 =C2=A0 ./configure &amp;&amp; \</div><div>=C2=
+=A0 =C2=A0 make install</div><div><br></div><div>=C2=A0 =C2=A0cd /workspace=
+</div><div><br></div><div>=C2=A0 =C2=A0git clone <a href=3D"https://github.=
+com/ysshao/LLVM-Tracer" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"t=
+his.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2F=
+ysshao%2FLLVM-Tracer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEPmP3iQHdEA6nm=
+0iPcojvg7CDTDQ&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.g=
+oogle.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fysshao%2FLLVM-Tracer\x26sa\x3=
+dD\x26sntz\x3d1\x26usg\x3dAFQjCNEPmP3iQHdEA6nm0iPcojvg7CDTDQ&#39;;return tr=
+ue;">https://github.com/ysshao/<wbr>LLVM-Tracer</a> &amp;&amp; \</div><div>=
+=C2=A0 =C2=A0 cd LLVM-Tracer &amp;&amp; \</div><div>=C2=A0 =C2=A0 mkdir bin=
+ &amp;&amp; \</div><div>=C2=A0 =C2=A0 mkdir lib &amp;&amp; \</div><div>=C2=
+=A0 =C2=A0 mkdir build &amp;&amp; cd build &amp;&amp; \</div><div>=C2=A0 =
+=C2=A0 cmake .. &amp;&amp; make &amp;&amp; make install</div></div><div><br=
+></div><div><br></div><div><div>cd /workspace/</div><div>export FORCE_CXX11=
+_ABI=3D1</div><div><br></div><div><span style=3D"background-color:rgb(255,2=
+55,0)"><br></span></div><div><span style=3D"background-color:rgb(255,255,0)=
+"># Clone gem5-aladdin, but don&#39;t build. We&#39;ll assume the developer=
+ will build.</span></div><div><span style=3D"background-color:rgb(255,255,0=
+)">=C2=A0 apt-get install -y scons</span></div><div><span style=3D"backgrou=
+nd-color:rgb(255,255,0)">=C2=A0 git clone <a href=3D"https://github.com/har=
+vard-acc/gem5-aladdin" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"th=
+is.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fh=
+arvard-acc%2Fgem5-aladdin\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFvObeNXnb=
+IZ8LmM55pKm38FiUSrg&#39;;return true;" onclick=3D"this.href=3D&#39;https://=
+www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fharvard-acc%2Fgem5-aladd=
+in\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFvObeNXnbIZ8LmM55pKm38FiUSrg&#39=
+;;return true;">https://github.com/harvard-<wbr>acc/gem5-aladdin</a> &amp;&=
+amp; \</span></div><div><span style=3D"background-color:rgb(255,255,0)">=C2=
+=A0 =C2=A0 cd gem5-aladdin &amp;&amp; \</span></div><div><span style=3D"bac=
+kground-color:rgb(255,255,0)">=C2=A0 =C2=A0 git submodule init &amp;&amp; \=
+</span></div><div><span style=3D"background-color:rgb(255,255,0)">=C2=A0 =
+=C2=A0 git submodule update</span></div><div><span style=3D"background-colo=
+r:rgb(255,255,0)"><br></span></div><div><span style=3D"background-color:rgb=
+(255,255,0)">=C2=A0 =C2=A0 #scons gem5.opt</span></div><div><span style=3D"=
+background-color:rgb(255,255,0)">=C2=A0 =C2=A0 mkdir -p build/X86</span></d=
+iv><div><span style=3D"background-color:rgb(255,255,0)">=C2=A0 =C2=A0 scons=
+ build/X86/gem5.opt</span></div></div><div><br></div><div><br></div><div>Th=
+e last section, as highlighted, I would like to build this section only wit=
+hout building the container and all the dependencies needed for this tool.=
+=C2=A0=C2=A0</div><div><br></div><div>Any help would be very much appreciat=
+ed!</div><div><br></div><div>thank you!</div><span><font color=3D"#888888">=
+<div><br></div><div><br></div><div><br></div><div><br></div></font></span><=
+/div><span><font color=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+zUDKtLQJBQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div>=
+<div>(603) 321-0676</div></div></div></div>
+</div>
+</blockquote></div></div>
+------=_Part_13926_1130334515.1520186930223--
+
+------=_Part_13925_1903394088.1520186930223--

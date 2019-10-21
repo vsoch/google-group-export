@@ -1,0 +1,310 @@
+Date: Sat, 10 Aug 2019 01:21:55 -0700 (PDT)
+From: aashish agarwal <agarwala...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <d3e4d098-969b-4777-b0f8-4de9b25c9fcf@lbl.gov>
+In-Reply-To: <CAM=pu+JfKm4gUwrdoQPuZN9yTxeVhueeu_612GQKaT0HAfmkLA@mail.gmail.com>
+References: <c8c09559-590d-4695-831f-8fc51c162998@lbl.gov>
+ <CAM=pu+JfKm4gUwrdoQPuZN9yTxeVhueeu_612GQKaT0HAfmkLA@mail.gmail.com>
+Subject: Re: [Singularity] Stop Old Recipe from Building in Hub
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1178_1139429659.1565425315275"
+
+------=_Part_1178_1139429659.1565425315275
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1179_432633651.1565425315275"
+
+------=_Part_1179_432633651.1565425315275
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Thanks, Vanessa. I tested it minutes back. It worked as expected. Thank you!
+
+Regards,
+Aashish
+
+On Friday, 9 August 2019 18:28:30 UTC+2, vanessa wrote:
+>
+> Hey Aashish,
+>
+> I got the bug! I can't explain why I'm seeing this behavior (it could be 
+> that you have the webhook with permissions for deployment but aren't using 
+> it) but for some reason the commits endpoint was returning a list of 
+> unsorted commits. This meant that if we parsed through the history and 
+> added recipes to build that 1) were present in the repo and 2) were 
+> modified or added and 3) were not removed and not re-added via a historical 
+> commit, the "delete" commit was being seen *before* the added.  Here is a 
+> silly little print I did to show parsing over the commits, and the records 
+> and status associated with each:
+>
+> Singularity.Test.Kaldi modified
+> Singularity.Test.Kaldi modified
+> Singularity.Test.Kaldi modified
+> Singularity.Kaldi modified
+> Singularity.Test.Kaldi added
+> Singularity.Kaldi modified
+> Singularity.Kaldi modified
+> Singularity.Kaldi modified
+> Singularity.Kaldi modified
+>
+>
+> *Singularity.Test removedSingularity.Test added*Singularity.Kaldi added
+> recipe_v2/run.sh modified
+>
+> That order is off, and I'm not sure why the API isn't returning them 
+> ordered from earliest to latest. Anyway, when this was parsed, it resulted 
+> in these three recipes being detected as existing, and needing a build. 
+> This is the data structure that is passed forward to prepare builds:
+>
+> {'Singularity.Kaldi': {'commit': 
+>> '31d684825a7fca0dfd708c0e08e16dbaa60fe8e7',
+>>   'date': '2019-08-07T21:14:27Z',
+>>   'name': 'AASHISHAG/asr-german',
+>>   'url': '
+>> https://github.com/AASHISHAG/asr-german/raw/31d684825a7fca0dfd708c0e08e16dbaa60fe8e7/Singularity.Kaldi'
+>> },
+>>  'Singularity.Test': {'commit': 
+>> '529935cc106850f9589e40d5aafab9e101baa2b2',
+>>   'date': '2019-08-06T21:24:34Z',
+>>   'name': 'AASHISHAG/asr-german',
+>>   'url': '
+>> https://github.com/AASHISHAG/asr-german/raw/529935cc106850f9589e40d5aafab9e101baa2b2/Singularity.Test'
+>> },
+>>  'Singularity.Test.Kaldi': {'commit': 
+>> '2a686dda03747468f2540248e94016b900e35cbb',
+>>   'date': '2019-08-09T13:07:25Z',
+>>   'name': 'AASHISHAG/asr-german',
+>>   'url': '
+>> https://github.com/AASHISHAG/asr-german/raw/2a686dda03747468f2540248e94016b900e35cbb/Singularity.Test.Kaldi'
+>> }}
+>
+>
+> The fix is clear - we just need to not trust the API to provide correctly 
+> ordered commits, and order them on our own! This is after adding the 
+> function, and re-testing with the ordered list:
+>
+> {'Singularity.Kaldi': {'commit': 
+>> '31d684825a7fca0dfd708c0e08e16dbaa60fe8e7',
+>>   'date': '2019-08-07T21:14:27Z',
+>>   'name': 'AASHISHAG/asr-german',
+>>   'url': '
+>> https://github.com/AASHISHAG/asr-german/raw/31d684825a7fca0dfd708c0e08e16dbaa60fe8e7/Singularity.Kaldi'
+>> },
+>>  'Singularity.Test.Kaldi': {'commit': 
+>> '2a686dda03747468f2540248e94016b900e35cbb',
+>>   'date': '2019-08-09T13:07:25Z',
+>>   'name': 'AASHISHAG/asr-german',
+>>   'url': '
+>> https://github.com/AASHISHAG/asr-german/raw/2a686dda03747468f2540248e94016b900e35cbb/Singularity.Test.Kaldi'
+>> }}
+>
+>  
+> So I've just finished the fix, and restarted the server, when you try 
+> building again (tomorrow?) it should be fixed it. Thank you kindly for 
+> sending along the payload - it was exactly spot on to reproduce your issue.
+>
+> Best,
+>
+> Vanessa
+>
+>
+>
+>
+> On Thu, Aug 8, 2019 at 3:33 AM aashish agarwal <agar...@gmail.com 
+> <javascript:>> wrote:
+>
+>> Hello Team,
+>>
+>> Please advise.
+>>
+>> Initially I had two Singularity Recipe in my GiHub project. So, everytime 
+>> I used to update the recipe, I can see two new builds started at the 
+>> Singularity Hub. Now, I have deleted one of the recipe from my GitHub and 
+>> thus just using one. But everytime when I push code, along with one recipe 
+>> existing in GitHub, the old recipe (that doesn't exist anyone on GitHub) 
+>> also starts to build on Hub. I don't want this recipe anymore and it's 
+>> consuming my daily limit of 10.
+>>
+>> Could you please advise how can I stop old/non existing recipe from 
+>> building.
+>>
+>> Regards,
+>> Aashish Agarwal
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to si...@lbl.gov <javascript:>.
+>> To view this discussion on the web visit 
+>> https://groups.google.com/a/lbl.gov/d/msgid/singularity/c8c09559-590d-4695-831f-8fc51c162998%40lbl.gov 
+>> <https://groups.google.com/a/lbl.gov/d/msgid/singularity/c8c09559-590d-4695-831f-8fc51c162998%40lbl.gov?utm_medium=email&utm_source=footer>
+>> .
+>>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_1179_432633651.1565425315275
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Thanks, Vanessa. I tested it minutes back. It worked as ex=
+pected. Thank you!<div><br></div><div>Regards,</div><div>Aashish<br><br>On =
+Friday, 9 August 2019 18:28:30 UTC+2, vanessa  wrote:<blockquote class=3D"g=
+mail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc sol=
+id;padding-left: 1ex;"><div dir=3D"ltr">Hey Aashish,<div><br></div><div>I g=
+ot the bug! I can&#39;t explain why I&#39;m seeing this behavior (it could =
+be that you have the webhook with permissions for deployment but aren&#39;t=
+ using it) but for some reason the commits endpoint was returning a list of=
+ unsorted commits. This meant that if we parsed through the history and add=
+ed recipes to build that 1) were present in the repo and 2) were modified o=
+r added and 3) were not removed and not re-added via a historical commit, t=
+he &quot;delete&quot; commit was being seen <i>before</i>=C2=A0the added.=
+=C2=A0 Here is a silly little print I did to show parsing over the commits,=
+ and the records and status associated with each:</div><div><br></div><div>=
+Singularity.Test.Kaldi modified<br>Singularity.Test.Kaldi modified<br>Singu=
+larity.Test.Kaldi modified<br>Singularity.Kaldi modified<br>Singularity.Tes=
+t.Kaldi added<br>Singularity.Kaldi modified<br>Singularity.Kaldi modified<b=
+r>Singularity.Kaldi modified<br>Singularity.Kaldi modified<br><b>Singularit=
+y.Test removed<br>Singularity.Test added<br></b>Singularity.Kaldi added<br>=
+recipe_v2/run.sh modified<br></div><div><br></div><div>That order is off, a=
+nd I&#39;m not sure why the API isn&#39;t returning them ordered from earli=
+est to latest. Anyway, when this was parsed, it resulted in these three rec=
+ipes being detected as existing, and needing a build. This is the data stru=
+cture that is passed forward to prepare builds:</div><div><br></div><blockq=
+uote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1p=
+x solid rgb(204,204,204);padding-left:1ex">{&#39;Singularity.Kaldi&#39;: {&=
+#39;commit&#39;: &#39;<wbr>31d684825a7fca0dfd708c0e08e16d<wbr>baa60fe8e7&#3=
+9;,<br>=C2=A0 &#39;date&#39;: &#39;2019-08-07T21:14:27Z&#39;,<br>=C2=A0 &#3=
+9;name&#39;: &#39;AASHISHAG/asr-german&#39;,<br>=C2=A0 &#39;url&#39;: &#39;=
+<a href=3D"https://github.com/AASHISHAG/asr-german/raw/31d684825a7fca0dfd70=
+8c0e08e16dbaa60fe8e7/Singularity.Kaldi&#39;" target=3D"_blank" rel=3D"nofol=
+low" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%=
+3A%2F%2Fgithub.com%2FAASHISHAG%2Fasr-german%2Fraw%2F31d684825a7fca0dfd708c0=
+e08e16dbaa60fe8e7%2FSingularity.Kaldi\x27\x26sa\x3dD\x26sntz\x3d1\x26usg\x3=
+dAFQjCNHgtelkrkRnpf7_mWnOA7U0R-z8mg&#39;;return true;" onclick=3D"this.href=
+=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2FAASHISHA=
+G%2Fasr-german%2Fraw%2F31d684825a7fca0dfd708c0e08e16dbaa60fe8e7%2FSingulari=
+ty.Kaldi\x27\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHgtelkrkRnpf7_mWnOA7U0=
+R-z8mg&#39;;return true;">https://github.com/AASHISHAG/<wbr>asr-german/raw/=
+<wbr>31d684825a7fca0dfd708c0e08e16d<wbr>baa60fe8e7/Singularity.Kaldi&#39;</=
+a>}<wbr>,<br>=C2=A0&#39;Singularity.Test&#39;: {&#39;commit&#39;: &#39;<wbr=
+>529935cc106850f9589e40d5aafab9<wbr>e101baa2b2&#39;,<br>=C2=A0 &#39;date&#3=
+9;: &#39;2019-08-06T21:24:34Z&#39;,<br>=C2=A0 &#39;name&#39;: &#39;AASHISHA=
+G/asr-german&#39;,<br>=C2=A0 &#39;url&#39;: &#39;<a href=3D"https://github.=
+com/AASHISHAG/asr-german/raw/529935cc106850f9589e40d5aafab9e101baa2b2/Singu=
+larity.Test&#39;" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.hr=
+ef=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2FAASHIS=
+HAG%2Fasr-german%2Fraw%2F529935cc106850f9589e40d5aafab9e101baa2b2%2FSingula=
+rity.Test\x27\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEqS_fKCf8idSLkoKD2cmp=
+N4dBHmQ&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.c=
+om/url?q\x3dhttps%3A%2F%2Fgithub.com%2FAASHISHAG%2Fasr-german%2Fraw%2F52993=
+5cc106850f9589e40d5aafab9e101baa2b2%2FSingularity.Test\x27\x26sa\x3dD\x26sn=
+tz\x3d1\x26usg\x3dAFQjCNEqS_fKCf8idSLkoKD2cmpN4dBHmQ&#39;;return true;">htt=
+ps://github.com/AASHISHAG/<wbr>asr-german/raw/<wbr>529935cc106850f9589e40d5=
+aafab9<wbr>e101baa2b2/Singularity.Test&#39;</a>},<br>=C2=A0&#39;Singularity=
+.Test.Kaldi&#39;: {&#39;commit&#39;: &#39;<wbr>2a686dda03747468f2540248e940=
+16<wbr>b900e35cbb&#39;,<br>=C2=A0 &#39;date&#39;: &#39;2019-08-09T13:07:25Z=
+&#39;,<br>=C2=A0 &#39;name&#39;: &#39;AASHISHAG/asr-german&#39;,<br>=C2=A0 =
+&#39;url&#39;: &#39;<a href=3D"https://github.com/AASHISHAG/asr-german/raw/=
+2a686dda03747468f2540248e94016b900e35cbb/Singularity.Test.Kaldi&#39;" targe=
+t=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.g=
+oogle.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2FAASHISHAG%2Fasr-german%2Fraw%=
+2F2a686dda03747468f2540248e94016b900e35cbb%2FSingularity.Test.Kaldi\x27\x26=
+sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGnYowUdXD6eozoZ3otrnn98LZA4Q&#39;;retu=
+rn true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps=
+%3A%2F%2Fgithub.com%2FAASHISHAG%2Fasr-german%2Fraw%2F2a686dda03747468f25402=
+48e94016b900e35cbb%2FSingularity.Test.Kaldi\x27\x26sa\x3dD\x26sntz\x3d1\x26=
+usg\x3dAFQjCNGnYowUdXD6eozoZ3otrnn98LZA4Q&#39;;return true;">https://github=
+.com/AASHISHAG/<wbr>asr-german/raw/<wbr>2a686dda03747468f2540248e94016<wbr>=
+b900e35cbb/Singularity.Test.<wbr>Kaldi&#39;</a>}}</blockquote><div><br></di=
+v><div>The fix is clear - we just need to not trust the API to provide corr=
+ectly ordered commits, and order them on our own! This is after adding the =
+function, and re-testing with the ordered list:</div><div><br></div><blockq=
+uote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1p=
+x solid rgb(204,204,204);padding-left:1ex">{&#39;Singularity.Kaldi&#39;: {&=
+#39;commit&#39;: &#39;<wbr>31d684825a7fca0dfd708c0e08e16d<wbr>baa60fe8e7&#3=
+9;,<br>=C2=A0 &#39;date&#39;: &#39;2019-08-07T21:14:27Z&#39;,<br>=C2=A0 &#3=
+9;name&#39;: &#39;AASHISHAG/asr-german&#39;,<br>=C2=A0 &#39;url&#39;: &#39;=
+<a href=3D"https://github.com/AASHISHAG/asr-german/raw/31d684825a7fca0dfd70=
+8c0e08e16dbaa60fe8e7/Singularity.Kaldi&#39;" target=3D"_blank" rel=3D"nofol=
+low" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%=
+3A%2F%2Fgithub.com%2FAASHISHAG%2Fasr-german%2Fraw%2F31d684825a7fca0dfd708c0=
+e08e16dbaa60fe8e7%2FSingularity.Kaldi\x27\x26sa\x3dD\x26sntz\x3d1\x26usg\x3=
+dAFQjCNHgtelkrkRnpf7_mWnOA7U0R-z8mg&#39;;return true;" onclick=3D"this.href=
+=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2FAASHISHA=
+G%2Fasr-german%2Fraw%2F31d684825a7fca0dfd708c0e08e16dbaa60fe8e7%2FSingulari=
+ty.Kaldi\x27\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHgtelkrkRnpf7_mWnOA7U0=
+R-z8mg&#39;;return true;">https://github.com/AASHISHAG/<wbr>asr-german/raw/=
+<wbr>31d684825a7fca0dfd708c0e08e16d<wbr>baa60fe8e7/Singularity.Kaldi&#39;</=
+a>}<wbr>,<br>=C2=A0&#39;Singularity.Test.Kaldi&#39;: {&#39;commit&#39;: &#3=
+9;<wbr>2a686dda03747468f2540248e94016<wbr>b900e35cbb&#39;,<br>=C2=A0 &#39;d=
+ate&#39;: &#39;2019-08-09T13:07:25Z&#39;,<br>=C2=A0 &#39;name&#39;: &#39;AA=
+SHISHAG/asr-german&#39;,<br>=C2=A0 &#39;url&#39;: &#39;<a href=3D"https://g=
+ithub.com/AASHISHAG/asr-german/raw/2a686dda03747468f2540248e94016b900e35cbb=
+/Singularity.Test.Kaldi&#39;" target=3D"_blank" rel=3D"nofollow" onmousedow=
+n=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.=
+com%2FAASHISHAG%2Fasr-german%2Fraw%2F2a686dda03747468f2540248e94016b900e35c=
+bb%2FSingularity.Test.Kaldi\x27\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGnY=
+owUdXD6eozoZ3otrnn98LZA4Q&#39;;return true;" onclick=3D"this.href=3D&#39;ht=
+tps://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2FAASHISHAG%2Fasr-ge=
+rman%2Fraw%2F2a686dda03747468f2540248e94016b900e35cbb%2FSingularity.Test.Ka=
+ldi\x27\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGnYowUdXD6eozoZ3otrnn98LZA4=
+Q&#39;;return true;">https://github.com/AASHISHAG/<wbr>asr-german/raw/<wbr>=
+2a686dda03747468f2540248e94016<wbr>b900e35cbb/Singularity.Test.<wbr>Kaldi&#=
+39;</a>}}</blockquote><div>=C2=A0</div><div>So I&#39;ve just finished the f=
+ix, and restarted the server, when you try building again (tomorrow?) it sh=
+ould be fixed it. Thank you kindly for sending along the payload - it was e=
+xactly spot on to reproduce your issue.</div><div><br></div><div>Best,</div=
+><div><br></div><div>Vanessa</div><div><br></div><div><br></div><div><br></=
+div></div><br><div class=3D"gmail_quote"><div dir=3D"ltr">On Thu, Aug 8, 20=
+19 at 3:33 AM aashish agarwal &lt;<a href=3D"javascript:" target=3D"_blank"=
+ gdf-obfuscated-mailto=3D"j_6w__IJFQAJ" rel=3D"nofollow" onmousedown=3D"thi=
+s.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;ja=
+vascript:&#39;;return true;">agar...@gmail.com</a>&gt; wrote:<br></div><blo=
+ckquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left=
+:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr">Hello Team,<=
+div><br></div><div>Please advise.</div><div><br></div><div>Initially I had =
+two Singularity Recipe in my GiHub project. So, everytime I used to update =
+the recipe, I can see two new builds started at the Singularity Hub. Now, I=
+ have deleted one of the recipe from my GitHub and thus just using one. But=
+ everytime when I push code, along with one recipe existing in GitHub, the =
+old recipe (that doesn&#39;t exist anyone on GitHub) also starts to build o=
+n Hub. I don&#39;t want this recipe anymore and it&#39;s consuming my daily=
+ limit of 10.</div><div><br></div><div>Could you please advise how can I st=
+op old/non existing recipe from building.</div><div><br></div><div>Regards,=
+</div><div>Aashish Agarwal</div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+j_6w__IJFQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singu...@lbl.<wbr>gov</a>.<br>
+To view this discussion on the web visit <a href=3D"https://groups.google.c=
+om/a/lbl.gov/d/msgid/singularity/c8c09559-590d-4695-831f-8fc51c162998%40lbl=
+.gov?utm_medium=3Demail&amp;utm_source=3Dfooter" target=3D"_blank" rel=3D"n=
+ofollow" onmousedown=3D"this.href=3D&#39;https://groups.google.com/a/lbl.go=
+v/d/msgid/singularity/c8c09559-590d-4695-831f-8fc51c162998%40lbl.gov?utm_me=
+dium\x3demail\x26utm_source\x3dfooter&#39;;return true;" onclick=3D"this.hr=
+ef=3D&#39;https://groups.google.com/a/lbl.gov/d/msgid/singularity/c8c09559-=
+590d-4695-831f-8fc51c162998%40lbl.gov?utm_medium\x3demail\x26utm_source\x3d=
+footer&#39;;return true;">https://groups.google.com/a/<wbr>lbl.gov/d/msgid/=
+singularity/<wbr>c8c09559-590d-4695-831f-<wbr>8fc51c162998%40lbl.gov</a>.<b=
+r>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><div>(=
+603) 321-0676</div></div></div></div>
+</blockquote></div></div>
+------=_Part_1179_432633651.1565425315275--
+
+------=_Part_1178_1139429659.1565425315275--

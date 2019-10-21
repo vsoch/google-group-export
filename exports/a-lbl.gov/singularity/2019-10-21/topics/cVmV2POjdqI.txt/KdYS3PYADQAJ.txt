@@ -1,0 +1,275 @@
+Date: Tue, 25 Dec 2018 21:56:43 -0800 (PST)
+From: Dean Kayton <deank...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <d16d7130-b43b-466a-a9e5-4fea74adeb50@lbl.gov>
+In-Reply-To: <CAGfAqt85==5cj6tCxir=zHXKuhP-AxjK9Edpg8RZGVrWPXnTpg@mail.gmail.com>
+References: <b7199040-6f66-443f-8389-f060a5ddb51c@lbl.gov> <b46169c4-760e-4b90-9056-dc1712114e36@lbl.gov>
+ <CAGfAqt85==5cj6tCxir=zHXKuhP-AxjK9Edpg8RZGVrWPXnTpg@mail.gmail.com>
+Subject: Re: [Singularity] Re: Building from source on one machine and
+ copying the artifices to identical clones of the build machine
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1409_476792004.1545803803971"
+
+------=_Part_1409_476792004.1545803803971
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1410_1916536128.1545803803971"
+
+------=_Part_1410_1916536128.1545803803971
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Got it working with the DESTDIR method. And I noticed many more files as 
+part of the archive!
+
+This is definitely the most complete method.
+
+To unpack the tar, the following works (only tested within the Docker 
+container because I am cautious of interfering with other files in similar 
+locations on my host):
+
+`tar -xzvf ${SING_BUILD_HOME}/singularity-v3.0.2-rc2.tar.gz -C /`
+
+Is there a safer way to place all the files within the archive in their 
+correct locations?
+
+For the record, this is what the unpack tar command contains. It seems to 
+interact with many of the system directories. I just don't know if it is 
+changing things that other software might depend on.
+
+./
+./usr/
+./usr/local/
+./usr/local/bin/
+./usr/local/bin/singularity
+./usr/local/bin/run-singularity
+./usr/local/libexec/
+./usr/local/libexec/singularity/
+./usr/local/libexec/singularity/bin/
+./usr/local/libexec/singularity/bin/starter
+./usr/local/libexec/singularity/bin/starter-suid
+./usr/local/libexec/singularity/cni/
+./usr/local/libexec/singularity/cni/bandwidth
+./usr/local/libexec/singularity/cni/bridge
+./usr/local/libexec/singularity/cni/dhcp
+./usr/local/libexec/singularity/cni/flannel
+./usr/local/libexec/singularity/cni/host-device
+./usr/local/libexec/singularity/cni/host-local
+./usr/local/libexec/singularity/cni/ipvlan
+./usr/local/libexec/singularity/cni/macvlan
+./usr/local/libexec/singularity/cni/portmap
+./usr/local/libexec/singularity/cni/ptp
+./usr/local/libexec/singularity/cni/static
+./usr/local/libexec/singularity/cni/tuning
+./usr/local/libexec/singularity/cni/vlan
+./usr/local/etc/
+./usr/local/etc/singularity/
+./usr/local/etc/singularity/singularity.conf
+./usr/local/etc/singularity/capability.json
+./usr/local/etc/singularity/ecl.toml
+./usr/local/etc/singularity/actions/
+./usr/local/etc/singularity/actions/exec
+./usr/local/etc/singularity/actions/run
+./usr/local/etc/singularity/actions/shell
+./usr/local/etc/singularity/actions/start
+./usr/local/etc/singularity/actions/test
+./usr/local/etc/singularity/network/
+./usr/local/etc/singularity/network/00_bridge.conflist
+./usr/local/etc/singularity/network/10_ptp.conflist
+./usr/local/etc/singularity/network/20_ipvlan.conflist
+./usr/local/etc/singularity/network/30_macvlan.conflist
+./usr/local/etc/singularity/seccomp-profiles/
+./usr/local/etc/singularity/seccomp-profiles/default.json
+./usr/local/etc/singularity/nvliblist.conf
+./usr/local/etc/singularity/cgroups/
+./usr/local/etc/singularity/cgroups/cgroups.toml
+./usr/local/etc/bash_completion.d/
+./usr/local/etc/bash_completion.d/singularity
+./var/
+./var/singularity/
+./var/singularity/mnt/
+./var/singularity/mnt/session/
+
+Are the tar command line interface flags, --no-overwrite-dir and 
+--keep-old-files enough to ensure safety?
+
+
+On Tuesday, December 25, 2018 at 10:32:49 AM UTC+2, Jason Stover wrote:
+>
+> Hi Dean, 
+>
+>   Yeah, `cp -r` ... just does a recursive copy. You need to use the 
+> `-p` option to keep permissions. 
+>
+>   One thing you can do is use the DESTDIR option ... So something like: 
+>
+>     mkdir -p /tmp/sing-inst 
+>     sudo  make DESTDIR=/tmp/sing-inst -C builddir/ install 
+>
+>      cd /tmp/sing-inst 
+>      sudo tar -czvf /tmp/singularity-binary.tar.gz . 
+>
+>   The the .tar.gz file would contain everything needed for a install. 
+> You'd just need to extract it on the host you're running on. 
+>
+> -J 
+>
+> On Tue, Dec 25, 2018 at 1:05 AM Dean Kayton <de...@gmail.com 
+> <javascript:>> wrote: 
+> > 
+> > I found the solution. Didn't realise that cp -r would not honour all 
+> chmod bits (what is the technical term for this again?) 
+> > 
+> > So to solve this, I did the following: 
+> > 
+> > cd /usr/local/libexec/singularity/bin 
+> > chmod u+s starter-suid 
+> > 
+> > And it works! 
+> > 
+> > I will amend the write-up and use something like rsync to more 
+> accurately copy the artefacts to the host. 
+> > 
+> > -- 
+> > You received this message because you are subscribed to the Google 
+> Groups "singularity" group. 
+> > To unsubscribe from this group and stop receiving emails from it, send 
+> an email to singu...@lbl.gov <javascript:>. 
+>
+
+------=_Part_1410_1916536128.1545803803971
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Got it working with the DESTDIR method. And I noticed many=
+ more files as part of the archive!<br><br>This is definitely the most comp=
+lete method.<br><br>To unpack the tar, the following works (only tested wit=
+hin the Docker container because I am cautious of interfering with other fi=
+les in similar locations on my host):<br><br>`tar -xzvf ${SING_BUILD_HOME}/=
+singularity-v3.0.2-rc2.tar.gz -C /`<br><br>Is there a safer way to place al=
+l the files within the archive in their correct locations?<br><br>For the r=
+ecord, this is what the unpack tar command contains. It seems to interact w=
+ith many of the system directories. I just don&#39;t know if it is changing=
+ things that other software might depend on.<br><br><div class=3D"prettypri=
+nt" style=3D"background-color: rgb(250, 250, 250); border-color: rgb(187, 1=
+87, 187); border-style: solid; border-width: 1px; overflow-wrap: break-word=
+;"><code class=3D"prettyprint"><div class=3D"subprettyprint"><div class=3D"=
+subprettyprint">./</div><div class=3D"subprettyprint">./usr/</div><div clas=
+s=3D"subprettyprint">./usr/local/</div><div class=3D"subprettyprint">./usr/=
+local/bin/</div><div class=3D"subprettyprint">./usr/local/bin/singularity</=
+div><div class=3D"subprettyprint">./usr/local/bin/run-singularity</div><div=
+ class=3D"subprettyprint">./usr/local/libexec/</div><div class=3D"subpretty=
+print">./usr/local/libexec/singularity/</div><div class=3D"subprettyprint">=
+./usr/local/libexec/singularity/bin/</div><div class=3D"subprettyprint">./u=
+sr/local/libexec/singularity/bin/starter</div><div class=3D"subprettyprint"=
+>./usr/local/libexec/singularity/bin/starter-suid</div><div class=3D"subpre=
+ttyprint">./usr/local/libexec/singularity/cni/</div><div class=3D"subpretty=
+print">./usr/local/libexec/singularity/cni/bandwidth</div><div class=3D"sub=
+prettyprint">./usr/local/libexec/singularity/cni/bridge</div><div class=3D"=
+subprettyprint">./usr/local/libexec/singularity/cni/dhcp</div><div class=3D=
+"subprettyprint">./usr/local/libexec/singularity/cni/flannel</div><div clas=
+s=3D"subprettyprint">./usr/local/libexec/singularity/cni/host-device</div><=
+div class=3D"subprettyprint">./usr/local/libexec/singularity/cni/host-local=
+</div><div class=3D"subprettyprint">./usr/local/libexec/singularity/cni/ipv=
+lan</div><div class=3D"subprettyprint">./usr/local/libexec/singularity/cni/=
+macvlan</div><div class=3D"subprettyprint">./usr/local/libexec/singularity/=
+cni/portmap</div><div class=3D"subprettyprint">./usr/local/libexec/singular=
+ity/cni/ptp</div><div class=3D"subprettyprint">./usr/local/libexec/singular=
+ity/cni/static</div><div class=3D"subprettyprint">./usr/local/libexec/singu=
+larity/cni/tuning</div><div class=3D"subprettyprint">./usr/local/libexec/si=
+ngularity/cni/vlan</div><div class=3D"subprettyprint">./usr/local/etc/</div=
+><div class=3D"subprettyprint">./usr/local/etc/singularity/</div><div class=
+=3D"subprettyprint">./usr/local/etc/singularity/singularity.conf</div><div =
+class=3D"subprettyprint">./usr/local/etc/singularity/capability.json</div><=
+div class=3D"subprettyprint">./usr/local/etc/singularity/ecl.toml</div><div=
+ class=3D"subprettyprint">./usr/local/etc/singularity/actions/</div><div cl=
+ass=3D"subprettyprint">./usr/local/etc/singularity/actions/exec</div><div c=
+lass=3D"subprettyprint">./usr/local/etc/singularity/actions/run</div><div c=
+lass=3D"subprettyprint">./usr/local/etc/singularity/actions/shell</div><div=
+ class=3D"subprettyprint">./usr/local/etc/singularity/actions/start</div><d=
+iv class=3D"subprettyprint">./usr/local/etc/singularity/actions/test</div><=
+div class=3D"subprettyprint">./usr/local/etc/singularity/network/</div><div=
+ class=3D"subprettyprint">./usr/local/etc/singularity/network/00_bridge.con=
+flist</div><div class=3D"subprettyprint">./usr/local/etc/singularity/networ=
+k/10_ptp.conflist</div><div class=3D"subprettyprint">./usr/local/etc/singul=
+arity/network/20_ipvlan.conflist</div><div class=3D"subprettyprint">./usr/l=
+ocal/etc/singularity/network/30_macvlan.conflist</div><div class=3D"subpret=
+typrint">./usr/local/etc/singularity/seccomp-profiles/</div><div class=3D"s=
+ubprettyprint">./usr/local/etc/singularity/seccomp-profiles/default.json</d=
+iv><div class=3D"subprettyprint">./usr/local/etc/singularity/nvliblist.conf=
+</div><div class=3D"subprettyprint">./usr/local/etc/singularity/cgroups/</d=
+iv><div class=3D"subprettyprint">./usr/local/etc/singularity/cgroups/cgroup=
+s.toml</div><div class=3D"subprettyprint">./usr/local/etc/bash_completion.d=
+/</div><div class=3D"subprettyprint">./usr/local/etc/bash_completion.d/sing=
+ularity</div><div class=3D"subprettyprint">./var/</div><div class=3D"subpre=
+ttyprint">./var/singularity/</div><div class=3D"subprettyprint">./var/singu=
+larity/mnt/</div><div class=3D"subprettyprint">./var/singularity/mnt/sessio=
+n/</div></div></code></div><br>Are the tar command line interface flags, <s=
+pan style=3D"font-family: Consolas, Menlo, Monaco, &quot;Lucida Console&quo=
+t;, &quot;Liberation Mono&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Bitstr=
+eam Vera Sans Mono&quot;, &quot;Courier New&quot;, monospace, sans-serif; f=
+ont-style: inherit; font-variant-ligatures: inherit; font-variant-caps: inh=
+erit; font-weight: inherit; white-space: inherit; background-color: rgb(239=
+, 240, 241); color: rgb(36, 39, 41);">--no-overwrite-dir</span>=C2=A0and=C2=
+=A0<span style=3D"font-family: Consolas, Menlo, Monaco, &quot;Lucida Consol=
+e&quot;, &quot;Liberation Mono&quot;, &quot;DejaVu Sans Mono&quot;, &quot;B=
+itstream Vera Sans Mono&quot;, &quot;Courier New&quot;, monospace, sans-ser=
+if; font-style: inherit; font-variant-ligatures: inherit; font-variant-caps=
+: inherit; font-weight: inherit; white-space: inherit; background-color: rg=
+b(239, 240, 241); color: rgb(36, 39, 41);">--keep-old-files</span>=C2=A0eno=
+ugh to ensure safety?<br><br><br>On Tuesday, December 25, 2018 at 10:32:49 =
+AM UTC+2, Jason Stover wrote:<blockquote class=3D"gmail_quote" style=3D"mar=
+gin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;">H=
+i Dean,
+<br>
+<br>=C2=A0 Yeah, `cp -r` ... just does a recursive copy. You need to use th=
+e
+<br>`-p` option to keep permissions.
+<br>
+<br>=C2=A0 One thing you can do is use the DESTDIR option ... So something =
+like:
+<br>
+<br>=C2=A0 =C2=A0 mkdir -p /tmp/sing-inst
+<br>=C2=A0 =C2=A0 sudo =C2=A0make DESTDIR=3D/tmp/sing-inst -C builddir/ ins=
+tall
+<br>
+<br>=C2=A0 =C2=A0 =C2=A0cd /tmp/sing-inst
+<br>=C2=A0 =C2=A0 =C2=A0sudo tar -czvf /tmp/singularity-binary.tar.gz .
+<br>
+<br>=C2=A0 The the .tar.gz file would contain everything needed for a insta=
+ll.
+<br>You&#39;d just need to extract it on the host you&#39;re running on.
+<br>
+<br>-J
+<br>
+<br>On Tue, Dec 25, 2018 at 1:05 AM Dean Kayton &lt;<a href=3D"javascript:"=
+ target=3D"_blank" gdf-obfuscated-mailto=3D"7j-0HIm9BwAJ" rel=3D"nofollow" =
+onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"t=
+his.href=3D&#39;javascript:&#39;;return true;">de...@gmail.com</a>&gt; wrot=
+e:
+<br>&gt;
+<br>&gt; I found the solution. Didn&#39;t realise that cp -r would not hono=
+ur all chmod bits (what is the technical term for this again?)
+<br>&gt;
+<br>&gt; So to solve this, I did the following:
+<br>&gt;
+<br>&gt; cd /usr/local/libexec/<wbr>singularity/bin
+<br>&gt; chmod u+s starter-suid
+<br>&gt;
+<br>&gt; And it works!
+<br>&gt;
+<br>&gt; I will amend the write-up and use something like rsync to more acc=
+urately copy the artefacts to the host.
+<br>&gt;
+<br>&gt; --
+<br>&gt; You received this message because you are subscribed to the Google=
+ Groups &quot;singularity&quot; group.
+<br>&gt; To unsubscribe from this group and stop receiving emails from it, =
+send an email to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-m=
+ailto=3D"7j-0HIm9BwAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;jav=
+ascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;re=
+turn true;">singularity...@lbl.<wbr>gov</a>.
+<br></blockquote></div>
+------=_Part_1410_1916536128.1545803803971--
+
+------=_Part_1409_476792004.1545803803971--

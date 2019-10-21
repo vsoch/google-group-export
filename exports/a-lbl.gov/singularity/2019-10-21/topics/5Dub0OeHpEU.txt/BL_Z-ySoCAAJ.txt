@@ -1,0 +1,312 @@
+Date: Fri, 2 Aug 2019 16:31:13 -0700 (PDT)
+From: Samy <smahan...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <337afce7-3dbf-4ce9-b7dc-7f2e31ad72cb@lbl.gov>
+In-Reply-To: <CAM=pu+LeBfUsae4bjTx0TxYC0iVQbzdOutcWGo6q8hYYgvvKuw@mail.gmail.com>
+References: <4fb70481-5024-4ae2-b8b8-da7da2528390@lbl.gov> <b60bfb12-4790-4272-8089-74c63691151a@lbl.gov>
+ <CAM=pu+LeBfUsae4bjTx0TxYC0iVQbzdOutcWGo6q8hYYgvvKuw@mail.gmail.com>
+Subject: Re: [Singularity] Re: How to update the versioning in
+ "org.label-schema.schema-version": "1.0" ans add
+ "org.label-schema.vcs-ref"?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1049_1328570490.1564788673119"
+
+------=_Part_1049_1328570490.1564788673119
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1050_1017399672.1564788673120"
+
+------=_Part_1050_1017399672.1564788673120
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hello Vanessa,
+
+This is a cleaver way of doing it but i couldn't get it to work. Maybe 
+Singularity version? Im using 2.6:
+
+I tried to do the bellow in the %setup section but it doesn't work since  
+/.singularity.d/labels.json is not created yet.
+
+Bootstrap: docker
+From:busybox
+
+%post
+
+# This would need to be in the root of your repo: *I can't access the 
+host/repo from the %post section!*
+commit=$(git rev-parse --verify HEAD | echo "master")
+
+echo "{\"org.label-schema.vcs-ref\": \"${commit}\"}" > 
+/.singularity.d/labels.json :* I can't write to this file (permission 
+denied or not available). Is it already created in the container by this 
+phase?*
+
+
+On Thursday, August 1, 2019 at 6:14:00 AM UTC-7, vanessa wrote:
+>
+> Hey Samy,
+>
+> the "org.label.schema <http://label-schema.org/rc1/>" is a standard that I 
+> added <https://github.com/sylabs/singularity/pull/843> (created by Liz 
+> Rice) to help with container metadata. You inspect like:
+>
+> $ singularity inspect busybox_latest.sif
+>> ==labels==
+>> org.label-schema.usage.singularity.version: 
+>> 2.4-feature-squashbuild-secbuild.g217367c
+>> org.label-schema.build-size: 180MB
+>> org.label-schema.usage.singularity.deffile.bootstrap: docker
+>> org.label-schema.usage.singularity.deffile: Singularity
+>> org.label-schema.schema-version: 1.0
+>> org.label-schema.usage.singularity.deffile.from: busybox
+>> org.label-schema.build-date: 2017-10-18T16:52:17+00:00
+>
+>
+> You are correct to point out that is has a vcs-ref attribute, defined as:
+>
+>>
+>> Identifier for the version of the source code from which this image was 
+>> built. For example if the version control system is git this is the SHA.
+>
+>
+> that isn't used by Singularity, but you would (intuitively) manually add 
+> like this:
+>
+> Bootstrap: docker
+> From:busybox
+> %labels
+> org.label-schema.vcs-ref 123456
+>
+> And that container builds to:
+>
+> $ singularity inspect test.sif 
+> ==labels==
+> org.label-schema.schema-version: 1.0
+> org.label-schema.usage.singularity.deffile.bootstrap: docker
+> org.label-schema.usage.singularity.deffile.from: busybox
+> org.label-schema.usage.singularity.version: 3.3.0-rc.1.366.g226a92538
+> org.label-schema.vcs-ref: 123456
+> org.label-schema.build-date: Thursday_1_August_2019_8:52:30_EDT
+>
+> Of course that doesn't help if you don't know the sha from git in advance 
+> - you would need to manually inspect it.
+>
+> $ git rev-parse --verify HEAD
+>> 558f7c8c8e332c9e9e157736c76b0a366a720488
+>
+>
+> So - what if we did that?
+>
+> Bootstrap: docker
+> From:busybox
+>
+> %post
+>
+> # This would need to be in the root of your repo
+> commit=$(git rev-parse --verify HEAD | echo "master")
+>
+> echo "{\"org.label-schema.vcs-ref\": \"${commit}\"}" > 
+> /.singularity.d/labels.json
+>
+> Notice that I'm just adding that one commit (and the repo doesn't exist so 
+> it will be master). Then we can inspect.
+>
+> ==labels==
+>> org.label-schema.build-date: Thursday_1_August_2019_9:10:56_EDT
+>> org.label-schema.schema-version: 1.0
+>> org.label-schema.usage.singularity.deffile.bootstrap: docker
+>> org.label-schema.usage.singularity.deffile.from: busybox
+>> org.label-schema.usage.singularity.version: 3.3.0-rc.1.366.g226a92538
+>> org.label-schema.vcs-ref: master
+>
+>
+> Looks like we found an unnanounced feature! But actually it makes sense, 
+> if you are building from a container that already has labels, we would want 
+> to keep them. You can echo more variables into the labels.json if you need 
+> too.
+>
+> Best,
+>
+> Vanessa
+>
+>
+> On Wed, Jul 31, 2019 at 8:32 PM Samy <sma...@gmail.com <javascript:>> 
+> wrote:
+>
+>> Also, in the %labels section, can i pass a variable as a value? if so, 
+>> where to setup the variable inside the container to be accessible in the 
+>> %labels section?
+>>
+>> %labels
+>> name $variable
+>>
+>> Thank you,
+>>
+>> On Wednesday, July 31, 2019 at 3:47:40 PM UTC-7, Samy wrote:
+>>>
+>>> Hello everyone,
+>>>
+>>> I'm trying to figure out a way to version my containers. I found out 
+>>> that the "inspect" and %labels can allow you to read/store metadata of the 
+>>> container.
+>>>
+>>> I'm wondering what is the best way to access/update the 
+>>> *"org.label-schema.schema-version"*?
+>>> How to add* "org.label-schema.vcs-ref"* ?
+>>>
+>>> Thank you for any tips
+>>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to si...@lbl.gov <javascript:>.
+>> To view this discussion on the web visit 
+>> https://groups.google.com/a/lbl.gov/d/msgid/singularity/b60bfb12-4790-4272-8089-74c63691151a%40lbl.gov 
+>> <https://groups.google.com/a/lbl.gov/d/msgid/singularity/b60bfb12-4790-4272-8089-74c63691151a%40lbl.gov?utm_medium=email&utm_source=footer>
+>> .
+>>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_1050_1017399672.1564788673120
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hello Vanessa,<div><br></div><div>This is a cleaver way of=
+ doing it but i couldn&#39;t get it to work. Maybe Singularity version? Im =
+using 2.6:</div><div><br></div><div>I tried to do the bellow in the %setup =
+section but it doesn&#39;t work since=C2=A0 /.singularity.d/labels.json is =
+not created yet.</div><div><br></div><div>Bootstrap: docker<br>From:busybox=
+<br><br>%post<br><br># This would need to be in the root of your repo: <b s=
+tyle=3D"background-color: rgb(0, 255, 0);">I can&#39;t access the host/repo=
+ from the %post section!</b><br>commit=3D$(git rev-parse --verify HEAD | ec=
+ho &quot;master&quot;)<br><br>echo &quot;{\&quot;org.label-schema.vcs-ref\&=
+quot;<wbr>: \&quot;${commit}\&quot;}&quot; &gt; /.singularity.d/labels.json=
+ :<span style=3D"background-color: rgb(0, 255, 0);"><b> I can&#39;t write t=
+o this file (permission denied or not available). Is it already created in =
+the container by this phase?</b></span><br><br><br>On Thursday, August 1, 2=
+019 at 6:14:00 AM UTC-7, vanessa wrote:<blockquote class=3D"gmail_quote" st=
+yle=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-lef=
+t: 1ex;"><div dir=3D"ltr"><div dir=3D"ltr">Hey Samy,<div><br></div><div>the=
+ &quot;<a href=3D"http://label-schema.org/rc1/" target=3D"_blank" rel=3D"no=
+follow" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp=
+%3A%2F%2Flabel-schema.org%2Frc1%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCN=
+GRM3HDwVknKMESpWqTPRFl7QcBVQ&#39;;return true;" onclick=3D"this.href=3D&#39=
+;http://www.google.com/url?q\x3dhttp%3A%2F%2Flabel-schema.org%2Frc1%2F\x26s=
+a\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGRM3HDwVknKMESpWqTPRFl7QcBVQ&#39;;retur=
+n true;">org.label.schema</a>&quot; is a standard that <a href=3D"https://g=
+ithub.com/sylabs/singularity/pull/843" target=3D"_blank" rel=3D"nofollow" o=
+nmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%=
+2Fgithub.com%2Fsylabs%2Fsingularity%2Fpull%2F843\x26sa\x3dD\x26sntz\x3d1\x2=
+6usg\x3dAFQjCNHdefTCVqyjvYv7RcVd2ncYm1DWYg&#39;;return true;" onclick=3D"th=
+is.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fs=
+ylabs%2Fsingularity%2Fpull%2F843\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHd=
+efTCVqyjvYv7RcVd2ncYm1DWYg&#39;;return true;">I added</a> (created by Liz R=
+ice) to help with container metadata. You inspect like:</div><div><br></div=
+><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border=
+-left:1px solid rgb(204,204,204);padding-left:1ex">$ singularity inspect bu=
+sybox_latest.sif<br> =3D=3Dlabels=3D=3D<br>org.label-schema.usage.<wbr>sing=
+ularity.version: 2.4-feature-squashbuild-<wbr>secbuild.g217367c<br>org.labe=
+l-schema.build-size: 180MB<br>org.label-schema.usage.<wbr>singularity.deffi=
+le.bootstrap: docker<br>org.label-schema.usage.<wbr>singularity.deffile: Si=
+ngularity<br>org.label-schema.schema-<wbr>version: 1.0<br>org.label-schema.=
+usage.<wbr>singularity.deffile.from: busybox<br>org.label-schema.build-date=
+: 2017-10-18T16:52:17+00:00</blockquote><div><br></div><div>You are correct=
+ to point out that is has a vcs-ref attribute, defined as:</div><blockquote=
+ class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px so=
+lid rgb(204,204,204);padding-left:1ex"><br><span style=3D"color:rgb(63,63,6=
+3);font-family:-apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,Roboto=
+,Helvetica,Arial,sans-serif,&quot;Apple Color Emoji&quot;,&quot;Segoe UI Em=
+oji&quot;,&quot;Segoe UI Symbol&quot;;font-size:16px;background-color:rgb(2=
+53,253,253)">Identifier for the version of the source code from which this =
+image was built. For example if the version control system is git this is t=
+he SHA.</span></blockquote><div><br></div><div>that isn&#39;t used by Singu=
+larity, but you would (intuitively) manually add like this:</div><div><br><=
+/div><div>Bootstrap: docker<br>From:busybox<br>%labels<br>org.label-schema.=
+vcs-ref 123456<br></div><div><br></div><div>And that container builds to:</=
+div><div><br></div><div>$ singularity inspect test.sif <br>=3D=3Dlabels=3D=
+=3D<br>org.label-schema.schema-<wbr>version: 1.0<br>org.label-schema.usage.=
+<wbr>singularity.deffile.bootstrap: docker<br>org.label-schema.usage.<wbr>s=
+ingularity.deffile.from: busybox<br>org.label-schema.usage.<wbr>singularity=
+.version: 3.3.0-rc.1.366.g226a92538<br>org.label-schema.vcs-ref: 123456<br>=
+org.label-schema.build-date: Thursday_1_August_2019_8:52:<wbr>30_EDT<br></d=
+iv><div><br></div><div>Of course that doesn&#39;t help if you don&#39;t kno=
+w the sha from git in advance - you would need to manually inspect it.</div=
+><div><br></div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0=
+px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex">$ git rev=
+-parse --verify HEAD<br>558f7c8c8e332c9e9e157736c76b0a<wbr>366a720488</bloc=
+kquote><div><br></div><div>So - what if we did that?</div><div><br></div><d=
+iv>Bootstrap: docker<br>From:busybox<br><br>%post<br><br># This would need =
+to be in the root of your repo<br>commit=3D$(git rev-parse --verify HEAD | =
+echo &quot;master&quot;)<br><br>echo &quot;{\&quot;org.label-schema.vcs-ref=
+\&quot;<wbr>: \&quot;${commit}\&quot;}&quot; &gt; /.singularity.d/labels.js=
+on<br></div><div><br></div><div>Notice that I&#39;m just adding that one co=
+mmit (and the repo doesn&#39;t exist so it will be master). Then we can ins=
+pect.</div><div><br></div><blockquote class=3D"gmail_quote" style=3D"margin=
+:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"=
+>=3D=3Dlabels=3D=3D<br>org.label-schema.build-date: Thursday_1_August_2019_=
+9:10:<wbr>56_EDT<br>org.label-schema.schema-<wbr>version: 1.0<br>org.label-=
+schema.usage.<wbr>singularity.deffile.bootstrap: docker<br>org.label-schema=
+.usage.<wbr>singularity.deffile.from: busybox<br>org.label-schema.usage.<wb=
+r>singularity.version: 3.3.0-rc.1.366.g226a92538<br>org.label-schema.vcs-re=
+f: master</blockquote><div><br></div><div>Looks like we found an unnanounce=
+d feature! But actually it makes sense, if you are building from a containe=
+r that already has labels, we would want to keep them. You can echo more va=
+riables into the labels.json if you need too.</div><div><br></div><div>Best=
+,</div><div><br></div><div>Vanessa</div><div><br></div></div><br><div class=
+=3D"gmail_quote"><div dir=3D"ltr">On Wed, Jul 31, 2019 at 8:32 PM Samy &lt;=
+<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"WjOrAEm7=
+EwAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;ret=
+urn true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">sma..=
+.@gmail.com</a>&gt; wrote:<br></div><blockquote class=3D"gmail_quote" style=
+=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding=
+-left:1ex"><div dir=3D"ltr">Also, in the %labels section, can i pass a vari=
+able as a value? if so, where to setup the variable inside the container to=
+ be accessible in the %labels section?<div><br></div><div>%labels</div><div=
+>name $variable</div><div><br></div><div>Thank you,<br><br>On Wednesday, Ju=
+ly 31, 2019 at 3:47:40 PM UTC-7, Samy wrote:<blockquote class=3D"gmail_quot=
+e" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204)=
+;padding-left:1ex"><div dir=3D"ltr">Hello everyone,<div><br></div><div>I&#3=
+9;m trying to figure out a way to version my containers. I found out that t=
+he &quot;inspect&quot; and %labels can allow you to read/store metadata of =
+the container.</div><div><br></div><div>I&#39;m wondering what is the best =
+way to access/update the=C2=A0<b>&quot;org.label-schema.schema-<wbr>version=
+&quot;</b>?</div><div>How to add<b> &quot;org.label-schema.vcs-ref&quot;</b=
+> ?</div><div><br></div><div>Thank you for any tips</div></div></blockquote=
+></div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+WjOrAEm7EwAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singu...@lbl.<wbr>gov</a>.<br>
+To view this discussion on the web visit <a href=3D"https://groups.google.c=
+om/a/lbl.gov/d/msgid/singularity/b60bfb12-4790-4272-8089-74c63691151a%40lbl=
+.gov?utm_medium=3Demail&amp;utm_source=3Dfooter" target=3D"_blank" rel=3D"n=
+ofollow" onmousedown=3D"this.href=3D&#39;https://groups.google.com/a/lbl.go=
+v/d/msgid/singularity/b60bfb12-4790-4272-8089-74c63691151a%40lbl.gov?utm_me=
+dium\x3demail\x26utm_source\x3dfooter&#39;;return true;" onclick=3D"this.hr=
+ef=3D&#39;https://groups.google.com/a/lbl.gov/d/msgid/singularity/b60bfb12-=
+4790-4272-8089-74c63691151a%40lbl.gov?utm_medium\x3demail\x26utm_source\x3d=
+footer&#39;;return true;">https://groups.google.com/a/<wbr>lbl.gov/d/msgid/=
+singularity/<wbr>b60bfb12-4790-4272-8089-<wbr>74c63691151a%40lbl.gov</a>.<b=
+r>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><div>(=
+603) 321-0676</div></div></div></div></div>
+</blockquote></div></div>
+------=_Part_1050_1017399672.1564788673120--
+
+------=_Part_1049_1328570490.1564788673119--

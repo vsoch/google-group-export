@@ -1,0 +1,222 @@
+Date: Tue, 19 Mar 2019 10:04:08 -0700 (PDT)
+From: =?UTF-8?Q?Sara_Monz=C3=B3n?= <sara.m...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <59b2113e-57dd-43dc-bdf7-04e54a3862f3@lbl.gov>
+Subject: Error when building recipe with Singularity > v3.0.  container.
+ FATAL: creation failed: unable to copy files to container fs
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1057_677784786.1553015048683"
+
+------=_Part_1057_677784786.1553015048683
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1058_1076039810.1553015048684"
+
+------=_Part_1058_1076039810.1553015048684
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi there!
+
+I am having some trouble and I can't find why this is not working. I am 
+trying to build a recipe which works perfectly using singularity 2.6 but it 
+fails in singularity 3.0 and 3.1.
+
+This is the error I am getting
+
+WARNING: Authentication token file not found : Only pulls of public images 
+will succeed 
+INFO:    Starting build... 
+Getting image source signatures 
+Skipping fetch of repeat blob sha256:
+8ba884070f611d31cb2c42eddb691319dc9facf5e0ec67672fcfa135181ab3df 
+Copying config sha256:b9a1b1f0b2baaec83946a26d7045e4028f11eccc8b0e5b3514568e56a391beb2 
+
+ 1.05 KiB / 1.05 KiB 
+[======================================================] 0s 
+Writing manifest to image destination 
+Storing signatures 
+INFO:    Copying ./scif_app_recipes/* to /tmp/sbuild-006893969/fs/opt 
+FATAL:   container creation failed: unable to copy files to container fs: 
+While copying ./scif_app_recipes/* to /tmp/sbuild-006893969/fs/opt: exit 
+status 1 
+FATAL:   While performing build: while running engine: exit status 255
+
+
+
+and this is the recipe:
+
+
+Bootstrap: docker 
+From: centos:latest 
+ 
+%files 
+        ./scif_app_recipes/* /opt/ 
+%post 
+        echo "Install basic development tools" 
+        yum -y groupinstall "Development Tools" 
+        yum -y update && yum -y install wget curl 
+ 
+        echo "Install python2.7 setuptools and pip" 
+        yum -y install python-setuptools 
+        easy_install pip 
+ 
+        echo "Installing SCI-F" 
+    pip install scif 
+ 
+    echo "Installing plasmidID app" 
+    scif install /opt/plasmidid_v1.4.2_centos7.scif 
+ 
+    # Executables must be exported for nextflow, if you use their 
+singularity native integration. 
+    # It would be cool to use $SCIF_APPBIN_bwa variable, but it must be set 
+after PATH variable, because I tried to use it here and in %environment 
+without success. 
+    echo "PlasmidID Done" 
+    echo "export LC_ALL=en_US.UTF-8" >> $SINGULARITY_ENVIRONMENT 
+    find /scif/apps -maxdepth 2 -name "bin" | while read in; do echo 
+"export PATH=\${PATH}:$in" >> $SINGULARITY_ENVIRONMENT;done 
+ 
+ 
+%runscript 
+    exec scif "$@"
+
+I have checked so far:
+- scif_app_recipes exists and have scif recipes in it. If they don't exist 
+a file not found exception raises.
+- /tmp folder exists and has free disk space available.
+- I have also tried setting SINGULARITY_TMPDIR and 
+SINGULARITY_LOCALCACHEDIR environment variables.
+
+I will use some help regarding changes between version 2.6 and 3.0!!
+
+Thanks in advance
+Sara
+
+------=_Part_1058_1076039810.1553015048684
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi there!<div><br>I am having some trouble and I can&#39;t=
+ find why this is not working. I am trying to build a recipe which works pe=
+rfectly using singularity 2.6 but it fails in singularity 3.0 and 3.1.</div=
+><div><br></div><div>This is the error I am getting</div><div><span style=
+=3D"font-family:monospace"><span style=3D"color: rgb(178, 104, 24);"><br></=
+span></span></div><div><span style=3D"font-family:monospace"><div class=3D"=
+prettyprint" style=3D"background-color: rgb(250, 250, 250); border-color: r=
+gb(187, 187, 187); border-style: solid; border-width: 1px; overflow-wrap: b=
+reak-word;"><code class=3D"prettyprint"><div class=3D"subprettyprint"><span=
+ style=3D"color: #000;" class=3D"styled-by-prettify">WARNING</span><span st=
+yle=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D"co=
+lor: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #606=
+;" class=3D"styled-by-prettify">Authentication</span><span style=3D"color: =
+#000;" class=3D"styled-by-prettify"> token file </span><span style=3D"color=
+: #008;" class=3D"styled-by-prettify">not</span><span style=3D"color: #000;=
+" class=3D"styled-by-prettify"> found </span><span style=3D"color: #660;" c=
+lass=3D"styled-by-prettify">:</span><span style=3D"color: #000;" class=3D"s=
+tyled-by-prettify"> </span><span style=3D"color: #606;" class=3D"styled-by-=
+prettify">Only</span><span style=3D"color: #000;" class=3D"styled-by-pretti=
+fy"> pulls of </span><span style=3D"color: #008;" class=3D"styled-by-pretti=
+fy">public</span><span style=3D"color: #000;" class=3D"styled-by-prettify">=
+ images will succeed <br>INFO</span><span style=3D"color: #660;" class=3D"s=
+tyled-by-prettify">:</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify"> =C2=A0 =C2=A0</span><span style=3D"color: #606;" class=3D"styled=
+-by-prettify">Starting</span><span style=3D"color: #000;" class=3D"styled-b=
+y-prettify"> build</span><span style=3D"color: #660;" class=3D"styled-by-pr=
+ettify">...</span><span style=3D"color: #000;" class=3D"styled-by-prettify"=
+> <br></span><span style=3D"color: #606;" class=3D"styled-by-prettify">Gett=
+ing</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> image =
+source signatures <br></span><span style=3D"color: #606;" class=3D"styled-b=
+y-prettify">Skipping</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify"> fetch of repeat blob sha256</span><span style=3D"color: #660;" c=
+lass=3D"styled-by-prettify">:</span><span style=3D"color: #066;" class=3D"s=
+tyled-by-prettify">8ba884070f611d31cb2c42eddb691319dc9facf5e0ec67672fcfa135=
+181ab3df</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> <=
+br></span><span style=3D"color: #606;" class=3D"styled-by-prettify">Copying=
+</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> config sh=
+a256</span><span style=3D"color: #660;" class=3D"styled-by-prettify">:</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify">b9a1b1f0b2baaec=
+83946a26d7045e4028f11eccc8b0e5b3514568e56a391beb2 <br>=C2=A0</span><span st=
+yle=3D"color: #066;" class=3D"styled-by-prettify">1.05</span><span style=3D=
+"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #=
+606;" class=3D"styled-by-prettify">KiB</span><span style=3D"color: #000;" c=
+lass=3D"styled-by-prettify"> </span><span style=3D"color: #660;" class=3D"s=
+tyled-by-prettify">/</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify"> </span><span style=3D"color: #066;" class=3D"styled-by-prettify"=
+>1.05</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> </sp=
+an><span style=3D"color: #606;" class=3D"styled-by-prettify">KiB</span><spa=
+n style=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">[=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D]</span><span s=
+tyle=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"c=
+olor: #066;" class=3D"styled-by-prettify">0s</span><span style=3D"color: #0=
+00;" class=3D"styled-by-prettify"> <br></span><span style=3D"color: #606;" =
+class=3D"styled-by-prettify">Writing</span><span style=3D"color: #000;" cla=
+ss=3D"styled-by-prettify"> manifest to image destination <br></span><span s=
+tyle=3D"color: #606;" class=3D"styled-by-prettify">Storing</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify"> signatures <br>INFO</span>=
+<span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span sty=
+le=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0</span><span=
+ style=3D"color: #606;" class=3D"styled-by-prettify">Copying</span><span st=
+yle=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"co=
+lor: #660;" class=3D"styled-by-prettify">./</span><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify">scif_app_recipes</span><span style=3D"colo=
+r: #800;" class=3D"styled-by-prettify">/* to /tmp/sbuild-006893969/fs/opt <=
+br>FATAL: =C2=A0 container creation failed: unable to copy files to contain=
+er fs: While copying ./scif_app_recipes/* to /tmp/sbuild-006893969/fs/opt: =
+exit status 1 <br>FATAL: =C2=A0 While performing build: while running engin=
+e: exit status 255</span></div></code></div><span style=3D"color: rgb(0, 0,=
+ 0);"><br></span><br>
+<br></span></div><div><span style=3D"font-family:monospace">and this is the=
+ recipe:</span></div><div><span style=3D"font-family:monospace"><br></span>=
+</div><div><span style=3D"font-family:monospace"><br></span></div><div><spa=
+n style=3D"font-family:monospace"><div class=3D"prettyprint" style=3D"backg=
+round-color: rgb(250, 250, 250); border-color: rgb(187, 187, 187); border-s=
+tyle: solid; border-width: 1px; overflow-wrap: break-word;"><code class=3D"=
+prettyprint"><div class=3D"subprettyprint"><span style=3D"color: #606;" cla=
+ss=3D"styled-by-prettify">Bootstrap</span><span style=3D"color: #660;" clas=
+s=3D"styled-by-prettify">:</span><span style=3D"color: #000;" class=3D"styl=
+ed-by-prettify"> docker <br></span><span style=3D"color: #606;" class=3D"st=
+yled-by-prettify">From</span><span style=3D"color: #660;" class=3D"styled-b=
+y-prettify">:</span><span style=3D"color: #000;" class=3D"styled-by-prettif=
+y"> centos</span><span style=3D"color: #660;" class=3D"styled-by-prettify">=
+:</span><span style=3D"color: #000;" class=3D"styled-by-prettify">latest <b=
+r>=C2=A0<br></span><span style=3D"color: #660;" class=3D"styled-by-prettify=
+">%</span><span style=3D"color: #000;" class=3D"styled-by-prettify">files <=
+br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 </span><span style=3D"color: #660;" class=3D=
+"styled-by-prettify">./</span><span style=3D"color: #000;" class=3D"styled-=
+by-prettify">scif_app_recipes</span><span style=3D"color: #800;" class=3D"s=
+tyled-by-prettify">/* /opt/ <br>%post <br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 echo =
+&quot;Install basic development tools&quot; <br>=C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ yum -y groupinstall &quot;Development Tools&quot; <br>=C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 yum -y update &amp;&amp; yum -y install wget curl <br>=C2=A0<br>=C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 echo &quot;Install python2.7 setuptools and pip&qu=
+ot; <br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 yum -y install python-setuptools <br>=
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 easy_install pip <br>=C2=A0<br>=C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 echo &quot;Installing SCI-F&quot; <br>=C2=A0 =C2=A0 pip insta=
+ll scif <br>=C2=A0<br>=C2=A0 =C2=A0 echo &quot;Installing plasmidID app&quo=
+t; <br>=C2=A0 =C2=A0 scif install /opt/plasmidid_v1.4.2_centos7.scif <br>=
+=C2=A0<br>=C2=A0 =C2=A0 # Executables must be exported for nextflow, if you=
+ use their singularity native integration. <br>=C2=A0 =C2=A0 # It would be =
+cool to use $SCIF_APPBIN_bwa variable, but it must be set after PATH variab=
+le, because I tried to use it here and in %environment without success. <br=
+>=C2=A0 =C2=A0 echo &quot;PlasmidID Done&quot; <br>=C2=A0 =C2=A0 echo &quot=
+;export LC_ALL=3Den_US.UTF-8&quot; &gt;&gt; $SINGULARITY_ENVIRONMENT <br>=
+=C2=A0 =C2=A0 find /scif/apps -maxdepth 2 -name &quot;bin&quot; | while rea=
+d in; do echo &quot;export PATH=3D\${PATH}:$in&quot; &gt;&gt; $SINGULARITY_=
+ENVIRONMENT;done <br>=C2=A0<br>=C2=A0<br>%runscript <br>=C2=A0 =C2=A0 exec =
+scif &quot;$@&quot;</span></div></code></div><br>I have checked so far:</sp=
+an></div><div><span style=3D"font-family:monospace">- scif_app_recipes exis=
+ts and have scif recipes in it. If they don&#39;t exist a file not found ex=
+ception raises.</span></div><div><span style=3D"font-family:monospace">- /t=
+mp folder exists and has free disk space available.</span></div><div><span =
+style=3D"font-family:monospace">- I have also tried setting SINGULARITY_TMP=
+DIR and SINGULARITY_LOCALCACHEDIR environment variables.<br>
+<br></span></div><div><span style=3D"font-family:monospace">I will use some=
+ help regarding changes between version 2.6 and 3.0!!</span></div><div><spa=
+n style=3D"font-family:monospace"><br>Thanks in advance</span></div><div><s=
+pan style=3D"font-family:monospace">Sara</span></div></div>
+------=_Part_1058_1076039810.1553015048684--
+
+------=_Part_1057_677784786.1553015048683--

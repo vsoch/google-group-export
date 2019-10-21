@@ -1,0 +1,386 @@
+Date: Mon, 8 May 2017 17:05:07 -0700 (PDT)
+From: M Noon <saad...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <9c275bb2-1dd9-49ee-b7b3-25d6ff146607@lbl.gov>
+Subject: Cant find or run installed APP from within the container
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1665_731211197.1494288307078"
+
+------=_Part_1665_731211197.1494288307078
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1666_992645029.1494288307078"
+
+------=_Part_1666_992645029.1494288307078
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi team, 
+
+I am in the stage of getting familiarized with Singularity and don't know 
+many details about it. I am trying to build a container with MPI libraries 
+and genome aligner (STAR) that could be tested on HPC.
+After facing many errors, I succeeded to install both MPI libraries and 
+STAR. I am using Centos7. I am git-cloning both tools within %POST. 
+Logically, both programs/executables should be at "/usr/local/bin". Well, I 
+do see mpi and it can be invoked when I am in shell mode. Despite great 
+deal of efforts I couldn't find STAR executable or any folder that 
+was/should have been cloned within the container. I may be missing 
+something very trivial but I can't seem to work it out yet.
+Here is my Definition file:
+
+
+BootStrap: yum
+
+OSVersion: 7
+
+MirrorURL: 
+http://mirror.centos.org/centos-%{OSVERSION}/%{OSVERSION}/os/$basearch/
+
+Include: yum wget
+
+# best to build up container using kickstart mentality.  
+
+# ie, to add more packages to image, 
+
+# re-run bootstrap command again.  
+
+# bootstrap on existing image will build on top of it, not overwriting 
+it/restarting from scratch
+
+# singularity .def file is like kickstart file
+
+# unix commands can be run, but if there is any error, the bootstrap 
+process ends
+
+
+
+%setup
+
+   # commands to be executed on host outside container during bootstrap
+
+
+
+%post
+
+    # commands to be executed inside container during bootstrap
+
+    yum -y groupinstall "Development Tools"
+
+
+
+#    # Clone the OpenMPI GitHub master branch in current directory (on host)
+
+    git clone https://github.com/open-mpi/ompi.git
+
+    cd ompi
+
+
+    # Build OpenMPI in the working directory
+
+    ./autogen.pl
+
+    ./configure --prefix=/usr/local
+
+    make
+
+    make install
+
+#    
+
+     
+
+    # Instal "zlib1g" to aviod installation error
+
+    yum -y install zlib-devel
+
+     
+
+    # Install STAR -  get STAR source using git
+
+    git clone https://github.com/alexdobin/STAR.git
+
+    cd STAR/source
+
+
+    echo "Within STAR"
+
+    echo "pwd" 
+
+
+    # Build STAR
+
+    make STAR
+
+
+    echo $PATH
+
+    STAR --version
+
+
+    echo "OUT of Star Dir" 
+
+    STAR --version
+
+
+    /usr/bin/STAR --help    
+
+ 
+
+    # create bind points for storage.  Replace netid as appropriate
+
+    mkdir /extra/mnoon /rsgrps/zarnescu/
+
+    exit 0
+
+
+
+
+ %runscript
+
+   # commands to be executed when the container runs
+
+   echo "Arguments received: $*"
+
+   exec /usr/bin/python "$@"
+
+
+
+
+ %test
+
+   # commands to be executed within container at close of bootstrap process
+
+   python --version
+
+   STAR --version
+
+
+
+
+I also tried to install (git clone) STAR using this alternative method, 
+below:
+
+sudo singularity exec -w centosMPI_star.img
+
+git clone https://github.com/alexdobin/STAR.git
+
+cd STAR/source/
+
+singularity exec ../../centosMPI_star.img make STAR
+
+
+When I do 
+
+singularity shell centosMPI_star.img
+
+
+I can't find STAR in any possible directory other than the clonned version 
+on /home/mnoon
+
+
+Can you please tell me what am I doing wrong? Also, Where should the 
+installed tool/executable be located with the container?
+
+
+Regards,
+
+M
+
+
+
+------=_Part_1666_992645029.1494288307078
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi team,=C2=A0<div><br></div><div>I am in the stage of get=
+ting familiarized with Singularity and don&#39;t know many details about it=
+. I am trying to build a container with MPI libraries and genome aligner (S=
+TAR) that could be tested on HPC.</div><div>After facing many errors, I suc=
+ceeded to install both MPI libraries and STAR. I am using Centos7. I am git=
+-cloning both tools within %POST.=C2=A0</div><div>Logically, both programs/=
+executables should be at &quot;/usr/local/bin&quot;. Well, I do see mpi and=
+ it can be invoked when I am in shell mode. Despite great deal of efforts I=
+ couldn&#39;t find STAR executable or any folder that was/should have been =
+cloned within the container. I may be missing something very trivial but I =
+can&#39;t seem to work it out yet.</div><div>Here is my Definition file:</d=
+iv><div><br></div><div><br></div><div>
+
+
+
+
+<style type=3D"text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo}
+p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo; min-height: 13.0=
+px}
+span.s1 {font-variant-ligatures: no-common-ligatures}
+</style>
+
+
+<p class=3D"p1"><span class=3D"s1">BootStrap: yum</span></p>
+<p class=3D"p1"><span class=3D"s1">OSVersion: 7</span></p>
+<p class=3D"p1"><span class=3D"s1">MirrorURL: http://mirror.centos.org/cent=
+os-%{OSVERSION}/%{OSVERSION}/os/$basearch/</span></p>
+<p class=3D"p1"><span class=3D"s1">Include: yum wget</span></p>
+<p class=3D"p1"><span class=3D"s1"># best to build up container using kicks=
+tart mentality. =C2=A0</span></p>
+<p class=3D"p1"><span class=3D"s1"># ie, to add more packages to image,=C2=
+=A0</span></p>
+<p class=3D"p1"><span class=3D"s1"># re-run bootstrap command again. =C2=A0=
+</span></p>
+<p class=3D"p1"><span class=3D"s1"># bootstrap on existing image will build=
+ on top of it, not overwriting it/restarting from scratch</span></p>
+<p class=3D"p1"><span class=3D"s1"># singularity .def file is like kickstar=
+t file</span></p>
+<p class=3D"p1"><span class=3D"s1"># unix commands can be run, but if there=
+ is any error, the bootstrap process ends</span></p>
+<p class=3D"p2"><span class=3D"s1"></span><br></p>
+<p class=3D"p2"><span class=3D"s1"></span><br></p>
+<p class=3D"p1"><span class=3D"s1">%setup</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0=C2=A0 # commands to be executed o=
+n host outside container during bootstrap</span></p>
+<p class=3D"p2"><span class=3D"s1"></span><br></p>
+<p class=3D"p2"><span class=3D"s1"></span><br></p>
+<p class=3D"p1"><span class=3D"s1">%post</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 # commands to be executed =
+inside container during bootstrap</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 yum -y groupinstall &quot;=
+Development Tools&quot;</span></p>
+<p class=3D"p2"><span class=3D"s1"></span><br></p>
+<p class=3D"p2"><span class=3D"s1"></span><br></p>
+<p class=3D"p1"><span class=3D"s1">#=C2=A0 =C2=A0 # Clone the OpenMPI GitHu=
+b master branch in current directory (on host)</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 git clone https://github.c=
+om/open-mpi/ompi.git</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 cd ompi</span></p>
+<p class=3D"p2"><span class=3D"s1"></span><br></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 # Build OpenMPI in the wor=
+king directory</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 ./autogen.pl</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 ./configure --prefix=3D/us=
+r/local</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 make</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 make install</span></p>
+<p class=3D"p1"><span class=3D"s1"># =C2=A0 =C2=A0</span></p>
+<p class=3D"p2"><span class=3D"s1">=C2=A0 =C2=A0 =C2=A0</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 # Instal &quot;zlib1g&quot=
+; to aviod installation error</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 yum -y install zlib-devel<=
+/span></p>
+<p class=3D"p2"><span class=3D"s1">=C2=A0 =C2=A0 =C2=A0</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 # Install STAR -=C2=A0 get=
+ STAR source using git</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 git clone https://github.c=
+om/alexdobin/STAR.git</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 cd STAR/source</span></p>
+<p class=3D"p2"><span class=3D"s1"></span><br></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 echo &quot;Within STAR&quo=
+t;</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 echo &quot;pwd&quot;=C2=A0=
+</span></p>
+<p class=3D"p2"><span class=3D"s1"></span><br></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 # Build STAR</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 make STAR</span></p>
+<p class=3D"p2"><span class=3D"s1"></span><br></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 echo $PATH</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 STAR --version</span></p>
+<p class=3D"p2"><span class=3D"s1"></span><br></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 echo &quot;OUT of Star Dir=
+&quot;=C2=A0</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 STAR --version</span></p>
+<p class=3D"p2"><span class=3D"s1"></span><br></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 /usr/bin/STAR --help =C2=
+=A0 =C2=A0</span></p>
+<p class=3D"p2"><span class=3D"s1">=C2=A0</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 # create bind points for s=
+torage.=C2=A0 Replace netid as appropriate</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 mkdir /extra/mnoon /rsgrps=
+/zarnescu/</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 exit 0</span></p>
+<p class=3D"p2"><span class=3D"s1"></span><br></p>
+<p class=3D"p2"><span class=3D"s1"></span><br></p>
+<p class=3D"p2"><span class=3D"s1"></span><br></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0%runscript</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0=C2=A0 # commands to be executed w=
+hen the container runs</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0=C2=A0 echo &quot;Arguments receiv=
+ed: $*&quot;</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0=C2=A0 exec /usr/bin/python &quot;=
+$@&quot;</span></p>
+<p class=3D"p2"><span class=3D"s1"></span><br></p>
+<p class=3D"p2"><span class=3D"s1"></span><br></p>
+<p class=3D"p2"><span class=3D"s1"></span><br></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0%test</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0=C2=A0 # commands to be executed w=
+ithin container at close of bootstrap process</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0=C2=A0 python --version</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0=C2=A0 STAR --version</span></p></=
+div><div><br></div><div><br></div><div><br></div><div><br></div><div>I also=
+ tried to install (git clone) STAR using this alternative method, below:</d=
+iv><div><br></div><div>
+
+
+
+
+<style type=3D"text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo}
+span.s1 {font-variant-ligatures: no-common-ligatures}
+</style>
+
+
+<p class=3D"p1"><span class=3D"s1">sudo singularity exec -w centosMPI_star.=
+img</span></p><p class=3D"p1"><span class=3D"s1">
+
+
+
+
+<style type=3D"text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo}
+span.s1 {font-variant-ligatures: no-common-ligatures}
+</style>
+
+
+</span></p><p class=3D"p1"><span class=3D"s1">git clone https://github.com/=
+alexdobin/STAR.git</span></p><p class=3D"p1"><span class=3D"s1">
+
+
+
+
+<style type=3D"text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo}
+span.s1 {font-variant-ligatures: no-common-ligatures}
+</style>
+
+
+</span></p><p class=3D"p1"><span class=3D"s1">cd STAR/source/</span></p><p =
+class=3D"p1"><span class=3D"s1">
+
+
+
+
+<style type=3D"text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo}
+span.s1 {font-variant-ligatures: no-common-ligatures}
+</style>
+
+
+</span></p><p class=3D"p1"><span class=3D"s1">singularity exec ../../centos=
+MPI_star.img make STAR</span></p><p class=3D"p1"><br></p><p class=3D"p1">Wh=
+en I do=C2=A0</p><p class=3D"p1"><span style=3D"font-variant-ligatures: no-=
+common-ligatures;">singularity shell centosMPI_star.img</span><br></p><p cl=
+ass=3D"p1"><span style=3D"font-variant-ligatures: no-common-ligatures;"><br=
+></span></p><p class=3D"p1"><span style=3D"font-variant-ligatures: no-commo=
+n-ligatures;">I can&#39;t find STAR in any possible directory other than th=
+e clonned version on /home/mnoon</span></p><p class=3D"p1"><span style=3D"f=
+ont-variant-ligatures: no-common-ligatures;"><br></span></p><p class=3D"p1"=
+><span style=3D"font-variant-ligatures: no-common-ligatures;">Can you pleas=
+e tell me what am I doing wrong? Also, Where should the installed tool/exec=
+utable be located with the container?</span></p><p class=3D"p1"><span style=
+=3D"font-variant-ligatures: no-common-ligatures;"><br></span></p><p class=
+=3D"p1"><span style=3D"font-variant-ligatures: no-common-ligatures;">Regard=
+s,</span></p><p class=3D"p1"><span style=3D"font-variant-ligatures: no-comm=
+on-ligatures;">M</span></p><p class=3D"p1"><span style=3D"font-variant-liga=
+tures: no-common-ligatures;"><br></span></p></div></div>
+------=_Part_1666_992645029.1494288307078--
+
+------=_Part_1665_731211197.1494288307078--

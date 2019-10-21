@@ -1,0 +1,397 @@
+Date: Thu, 19 Jan 2017 11:37:51 -0800 (PST)
+From: Sadanand Warrier <sadanan...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <bc8313b1-5369-4580-9a89-46add81e8cd9@lbl.gov>
+In-Reply-To: <CAM=pu++Jhx-8+EkJPgq1uheDV4zY0jw1=MQZRdraL_vzxGUwag@mail.gmail.com>
+References: <9e693239-3155-4ad8-a94c-342e44e0bc0f@lbl.gov> <CAHOJALVsJwF-yETykMQFn8HCo7DB49JOO7+1X4rw9VZiGA501g@mail.gmail.com>
+ <cef0a48f-f7f0-439d-a95d-3ce8741e3765@lbl.gov> <CAN7etTxbBVFg8d3ZiUJpH7gNXdBHEAn71XW5FxyZ0xkRUoLSKw@mail.gmail.com>
+ <CAM=pu++Jhx-8+EkJPgq1uheDV4zY0jw1=MQZRdraL_vzxGUwag@mail.gmail.com>
+Subject: Re: [Singularity] Unable to import a docker container image tar
+ file to a singularity container
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1219_1269025588.1484854671693"
+
+------=_Part_1219_1269025588.1484854671693
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1220_1596992892.1484854671693"
+
+------=_Part_1220_1596992892.1484854671693
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Thanks Greg 
+Vanessa , I had seen the link you put up but by then I had already created 
+a Singularity image container from the docker image using the docker export 
+command.
+I cannot provide the docker image that I built it has some stuff that is 
+not public domain.
+
+The failure took place when I was doing this...
+
+First create a tar file.
+
+"docker save -o <tarfilename> <docker image file>  
+
+
+ and then  try to convert it by using
+
+sudo singularity import <singualrityshell.img> <tarfilename>.
+
+It failed saying there was no /bin/sh , which wasn't true but I guess that 
+is just a stock error.
+
+I will run this with the debug commands that Greg suggested and will get 
+back.
+
+S
+
+
+
+On Thursday, January 19, 2017 at 1:11:50 PM UTC-5, vanessa wrote:
+>
+> Using the local method requires running a local registry, which (imho) is 
+> more annoying than just creating a bootstrap file, but it does work! I 
+> wrote up instructions here:
+>
+>
+> https://github.com/singularityware/singularity/issues/429#issuecomment-269085751
+>
+> Can you provide the specific commands, and perhaps some way of sharing 
+> your Docker image, so we can better help debug?
+>
+> On Thu, Jan 19, 2017 at 10:00 AM, Gregory M. Kurtzer <gm...@lbl.gov 
+> <javascript:>> wrote:
+>
+>> Hi Sananad,
+>>
+>> I'm not sure why the docker save method didn't work, but the docker 
+>> export | singularity import method is what I typically use for this. Can 
+>> someone else more familiar with Docker then I replicate this error? It 
+>> sounds like it also may need a bug report submitted.
+>>
+>> Vanessa's also been working on the Docker API interaction, and I think 
+>> pulling from the local Docker daemon's API was something she was playing 
+>> with which I think would render the save model obsolete (but I'll let her 
+>> confirm or deny that).
+>>
+>> You can also try with debugging enabled (-d -x) and see if that points at 
+>> the cause.
+>>
+>> Greg
+>>
+>>
+>> On Thu, Jan 19, 2017 at 9:51 AM Sadanand Warrier <sad...@gmail.com 
+>> <javascript:>> wrote:
+>>
+>>> Hi Lito
+>>>    Thanks for the reply. The reason I did not dabble with the bootstrap 
+>>> method was because I had a docker container on which some specific software 
+>>> had been installed.and I did that by creating a basic container and then 
+>>> installing this software on it and then creating a new image which had the 
+>>> installed software.  I didn't want to go through that process, initially, 
+>>> with Singularity. I needed to quickly demo some stuff to show SIngularity's 
+>>> strengths. Hence the question.
+>>>
+>>> S
+>>>
+>>>
+>>> On Thursday, January 19, 2017 at 11:19:31 AM UTC-5, Lito Bejarano wrote:
+>>>
+>>>> Hi Sananad,
+>>>>
+>>>> as of 2.2 version, it will be easier trying to create a Singularity 
+>>>> definition file with the docker bootstrap method. 
+>>>>
+>>>> As you can see in 
+>>>> https://github.com/singularityware/singularity/blob/master/examples/docker.def 
+>>>> you can select the docker image to pull from the registry and build your 
+>>>> Singularity container based on that docker image.
+>>>>
+>>>> Regards,
+>>>>
+>>> On Thu, Jan 19, 2017 at 5:14 PM, Sadanand Warrier <sad...@gmail.com> 
+>>>> wrote:
+>>>>
+>>> Hello, I had asked this question on a previous thread a couple of days 
+>>>>> ago and got no response, so I thought I would create a new post. Here is 
+>>>>> what the issue is
+>>>>>
+>>>>> Hello
+>>>>>
+>>>>> So I went through the answers but there is something that is a little 
+>>>>> puzzling. I'm trying to convert a docker image to a Singularity container 
+>>>>> image. So I followed the process that the "singularity --help import" 
+>>>>> suggests by creating a tar file from the image using 
+>>>>> "docker save -o <tarfilename> <image file>
+>>>>>
+>>>>>  and then  trying to convert it by using
+>>>>>
+>>>>> sudo singularity import <singularityshell.img> <tarfilename>.
+>>>>>
+>>>>> Tried various things including increasing the singularityshell.img 
+>>>>> size from default 768M to 2048M (the docker container is 732M in size)  but 
+>>>>> always got this error
+>>>>>
+>>>>> Bootstrap initialization
+>>>>> No bootstrap definition passed, updating container
+>>>>> Executing Prebootstrap module
+>>>>> Executing Postbootstrap module
+>>>>> ERROR: Container does not contain the valid minimum requirement of 
+>>>>> /bin/sh
+>>>>>
+>>>>> There was actually a /bin/sh in the docker container so I think this 
+>>>>> is some generic error.
+>>>>>
+>>>>> I finally managed to do the conversion by running the image 
+>>>>> interactively and then doing this
+>>>>>
+>>>>> docker export <containername> | sudo singularity import 
+>>>>> <singularityshell.img>
+>>>>>
+>>>>> Am I doing something wrong while importing the tar file?
+>>>>>
+>>>>> I did not try creating a local registry and pushing the image to it 
+>>>>> etc.
+>>>>>
+>>>>> My question is why doesn't the tar method work??
+>>>>>
+>>>>> Thanks
+>>>>>
+>>>>> S
+>>>>>
+>>>>
+>>>>>
+>>>>>
+>>>>>
+>>>>>
+>>>>>
+>>>>>
+>>>>>
+>>>>> -- 
+>>>>>
+>>>>>
+>>>>> You received this message because you are subscribed to the Google 
+>>>>> Groups "singularity" group.
+>>>>>
+>>>>
+>>>>>
+>>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>>> an email to singu...@lbl.gov.
+>>>>>
+>>>>>
+>>>>>
+>>>>
+>>>>
+>>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>> -- 
+>>>
+>>>
+>>> You received this message because you are subscribed to the Google 
+>>> Groups "singularity" group.
+>>>
+>>>
+>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>> an email to singu...@lbl.gov <javascript:>.
+>>>
+>>>
+>>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_1220_1596992892.1484854671693
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Thanks Greg=C2=A0<div>Vanessa , I had seen the link you pu=
+t up but by then I had already created a Singularity image container from t=
+he docker image using the docker export command.</div><div>I cannot provide=
+ the docker image that I built it has some stuff that is not public domain.=
+</div><div><br></div><div>The failure took place when I was doing this...</=
+div><div><br></div><div>First create a tar file.</div><div><div style=3D"fo=
+nt-family: arial, sans-serif; font-size: 12.8px;"><br></div><div style=3D"f=
+ont-family: arial, sans-serif; font-size: 12.8px;">&quot;docker save -o &lt=
+;tarfilename&gt; &lt;docker image file&gt; =C2=A0</div><div style=3D"font-f=
+amily: arial, sans-serif; font-size: 12.8px;"><br></div><div style=3D"font-=
+family: arial, sans-serif; font-size: 12.8px;"><br></div><div style=3D"font=
+-family: arial, sans-serif; font-size: 12.8px;">=C2=A0and then =C2=A0try to=
+ convert it by using</div><div style=3D"font-family: arial, sans-serif; fon=
+t-size: 12.8px;"><br></div><div style=3D"font-family: arial, sans-serif; fo=
+nt-size: 12.8px;">sudo singularity import &lt;singualrityshell.img&gt; &lt;=
+tarfilename&gt;.</div><div style=3D"font-family: arial, sans-serif; font-si=
+ze: 12.8px;"><br></div><div style=3D"font-family: arial, sans-serif; font-s=
+ize: 12.8px;">It failed saying there was no /bin/sh , which wasn&#39;t true=
+ but I guess that is just a stock error.</div><div style=3D"font-family: ar=
+ial, sans-serif; font-size: 12.8px;"><br></div><div style=3D"font-family: a=
+rial, sans-serif; font-size: 12.8px;">I will run this with the debug comman=
+ds that Greg suggested and will get back.</div><div style=3D"font-family: a=
+rial, sans-serif; font-size: 12.8px;"><br></div><div style=3D"font-family: =
+arial, sans-serif; font-size: 12.8px;">S</div><div style=3D"font-family: ar=
+ial, sans-serif; font-size: 12.8px;"><div><br></div><div><br></div></div><b=
+r>On Thursday, January 19, 2017 at 1:11:50 PM UTC-5, vanessa wrote:<blockqu=
+ote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left=
+: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">Using the local metho=
+d requires running a local registry, which (imho) is more annoying than jus=
+t creating a bootstrap file, but it does work! I wrote up instructions here=
+:<div><br></div><div><a href=3D"https://github.com/singularityware/singular=
+ity/issues/429#issuecomment-269085751" target=3D"_blank" rel=3D"nofollow" o=
+nmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%=
+2Fgithub.com%2Fsingularityware%2Fsingularity%2Fissues%2F429%23issuecomment-=
+269085751\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHp1HlmcyZFWiP1Re3AevtY81w=
+pcA&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.com/u=
+rl?q\x3dhttps%3A%2F%2Fgithub.com%2Fsingularityware%2Fsingularity%2Fissues%2=
+F429%23issuecomment-269085751\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHp1Hl=
+mcyZFWiP1Re3AevtY81wpcA&#39;;return true;">https://github.com/<wbr>singular=
+ityware/singularity/<wbr>issues/429#issuecomment-<wbr>269085751</a><br></di=
+v><div><br></div><div>Can you provide the specific commands, and perhaps so=
+me way of sharing your Docker image, so we can better help debug?</div></di=
+v><div><br><div class=3D"gmail_quote">On Thu, Jan 19, 2017 at 10:00 AM, Gre=
+gory M. Kurtzer <span dir=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_bl=
+ank" gdf-obfuscated-mailto=3D"ApJ4sO0WCQAJ" rel=3D"nofollow" onmousedown=3D=
+"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#3=
+9;javascript:&#39;;return true;">gm...@lbl.gov</a>&gt;</span> wrote:<br><bl=
+ockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #=
+ccc solid;padding-left:1ex"><div dir=3D"ltr"><div>Hi Sananad,</div><div><br=
+></div><div>I&#39;m not sure why the docker save method didn&#39;t work, bu=
+t the docker export | singularity import method is what I typically use for=
+ this. Can someone else more familiar with Docker then I replicate this err=
+or? It sounds like it also may need a bug report submitted.</div><div><br><=
+/div><div>Vanessa&#39;s also been working on the Docker API interaction, an=
+d I think pulling from the local Docker daemon&#39;s API was something she =
+was playing with which I think would render the save model obsolete (but I&=
+#39;ll let her confirm or deny that).</div><div><br></div><div>You can also=
+ try with debugging enabled (-d -x) and see if that points at the cause.</d=
+iv><div><br></div><div>Greg</div><div><div><div><br></div><div><br><div cla=
+ss=3D"gmail_quote"><div>On Thu, Jan 19, 2017 at 9:51 AM Sadanand Warrier &l=
+t;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"ApJ4sO=
+0WCQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;r=
+eturn true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">sad=
+...@gmail.com</a>&gt; wrote:<br></div><blockquote class=3D"gmail_quote" sty=
+le=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div>H=
+i Lito<div>=C2=A0 =C2=A0Thanks for the reply. The reason I did not dabble w=
+ith the bootstrap method was because I had a docker container on which some=
+ specific software had been installed.and I did that by creating a basic co=
+ntainer and then installing this software on it and then creating a new ima=
+ge which had the installed software.=C2=A0 I didn&#39;t want to go through =
+that process, initially, with Singularity. I needed to quickly demo some st=
+uff to show SIngularity&#39;s strengths. Hence the question.</div><div><br>=
+</div><div>S</div></div><div><div><br><br>On Thursday, January 19, 2017 at =
+11:19:31 AM UTC-5, Lito Bejarano wrote:</div></div><div><div><blockquote cl=
+ass=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-left:1px #cc=
+c solid;padding-left:1ex"><div><div><div><div>Hi Sananad,<br><br></div>as o=
+f 2.2 version, it will be easier trying to create a Singularity definition =
+file with the docker bootstrap method. <br><br></div>As you can see in <a h=
+ref=3D"https://github.com/singularityware/singularity/blob/master/examples/=
+docker.def" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&=
+#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsingularityw=
+are%2Fsingularity%2Fblob%2Fmaster%2Fexamples%2Fdocker.def\x26sa\x3dD\x26snt=
+z\x3d1\x26usg\x3dAFQjCNH5pK3ZKmwBPNORQR57aZxGAGMqrw&#39;;return true;" oncl=
+ick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithu=
+b.com%2Fsingularityware%2Fsingularity%2Fblob%2Fmaster%2Fexamples%2Fdocker.d=
+ef\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNH5pK3ZKmwBPNORQR57aZxGAGMqrw&#39=
+;;return true;">https://github.com/<wbr>singularityware/singularity/<wbr>bl=
+ob/master/examples/docker.<wbr>def</a> you can select the docker image to p=
+ull from the registry and build your Singularity container based on that do=
+cker image.<br><br></div>Regards,<br></div></blockquote></div></div><div><d=
+iv><blockquote class=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;bo=
+rder-left:1px #ccc solid;padding-left:1ex"><div><div class=3D"gmail_quote">=
+On Thu, Jan 19, 2017 at 5:14 PM, Sadanand Warrier <span>&lt;<a rel=3D"nofol=
+low">sad...@gmail.com</a>&gt;</span> wrote:<br></div></div></blockquote></d=
+iv></div><div><div><blockquote class=3D"gmail_quote" style=3D"margin:0;marg=
+in-left:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><div><div class=
+=3D"gmail_quote"><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8=
+ex;border-left:1px #ccc solid;padding-left:1ex"><div>Hello, I had asked thi=
+s question on a previous thread a couple of days ago and got no response, s=
+o I thought I would create a new post. Here is what the issue is<div><br></=
+div><div><div style=3D"font-family:arial,sans-serif;font-size:12.8px">Hello=
+</div><div style=3D"font-family:arial,sans-serif;font-size:12.8px"><br></di=
+v><span style=3D"font-family:arial,sans-serif;font-size:12.8px">So I went t=
+hrough the answers but there is something that is a little puzzling. I&#39;=
+m trying to convert a docker image to a Singularity container image. So I f=
+ollowed the process that the &quot;singularity --help import&quot; suggests=
+ by creating a tar file from the image using=C2=A0</span><div style=3D"font=
+-family:arial,sans-serif;font-size:12.8px">&quot;docker save -o &lt;tarfile=
+name&gt; &lt;image file&gt;</div><div style=3D"font-family:arial,sans-serif=
+;font-size:12.8px"><br></div><div style=3D"font-family:arial,sans-serif;fon=
+t-size:12.8px">=C2=A0and then =C2=A0trying to convert it by using</div><div=
+ style=3D"font-family:arial,sans-serif;font-size:12.8px"><br></div><div sty=
+le=3D"font-family:arial,sans-serif;font-size:12.8px">sudo singularity impor=
+t &lt;singularityshell.img&gt; &lt;tarfilename&gt;.</div><div style=3D"font=
+-family:arial,sans-serif;font-size:12.8px"><br></div><div style=3D"font-fam=
+ily:arial,sans-serif;font-size:12.8px">Tried various things including incre=
+asing the singularityshell.img size from default 768M to 2048M (the docker =
+container is 732M in size) =C2=A0but always got this error</div><div style=
+=3D"font-family:arial,sans-serif;font-size:12.8px"><br></div><div style=3D"=
+font-family:arial,sans-serif;font-size:12.8px"><div>Bootstrap initializatio=
+n</div><div>No bootstrap definition passed, updating container</div><div>Ex=
+ecuting Prebootstrap module</div><div>Executing Postbootstrap module</div><=
+div>ERROR: Container does not contain the valid minimum requirement of /bin=
+/sh</div><div><br></div><div>There was actually a /bin/sh in the docker con=
+tainer so I think this is some generic error.</div><div><br></div><div>I fi=
+nally managed to do the conversion by running the image interactively and t=
+hen doing this</div><div><br></div><div>docker export &lt;containername&gt;=
+ | sudo singularity import &lt;singularityshell.img&gt;</div><div><br></div=
+><div>Am I doing something wrong while importing the tar file?</div><div><b=
+r></div><div>I did not try creating a local registry and pushing the image =
+to it etc.</div><div><br></div><div>My question is why doesn&#39;t the tar =
+method work??</div><div><br></div><div>Thanks</div><span><font color=3D"#88=
+8888"><div><br></div><div>S</div></font></span></div></div></div></blockquo=
+te></div></div></blockquote></div></div><div><div><blockquote class=3D"gmai=
+l_quote" style=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc solid;pad=
+ding-left:1ex"><div><div class=3D"gmail_quote"><blockquote class=3D"gmail_q=
+uote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1e=
+x"><span><font color=3D"#888888"><br><br><br><br><p></p><br><br><br><br>-- =
+<br><br><br>You received this message because you are subscribed to the Goo=
+gle Groups &quot;singularity&quot; group.<br></font></span></blockquote></d=
+iv></div></blockquote></div></div><div><div><blockquote class=3D"gmail_quot=
+e" style=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-l=
+eft:1ex"><div><div class=3D"gmail_quote"><blockquote class=3D"gmail_quote" =
+style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><sp=
+an><font color=3D"#888888"><br><br>To unsubscribe from this group and stop =
+receiving emails from it, send an email to <a rel=3D"nofollow">singu...@lbl=
+.gov</a>.<br><br><br></font></span></blockquote></div><br></div><br><br></b=
+lockquote></div></div><br><br><br><br><p></p><br><br><br><br>-- <br><br><br=
+>You received this message because you are subscribed to the Google Groups =
+&quot;singularity&quot; group.<br><br><br>To unsubscribe from this group an=
+d stop receiving emails from it, send an email to <a href=3D"javascript:" t=
+arget=3D"_blank" gdf-obfuscated-mailto=3D"ApJ4sO0WCQAJ" rel=3D"nofollow" on=
+mousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"thi=
+s.href=3D&#39;javascript:&#39;;return true;">singularity...@lbl.<wbr>gov</a=
+>.<br><br><br></blockquote></div></div></div></div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+ApJ4sO0WCQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><d=
+iv>(603) 321-0676</div></div></div></div>
+</div>
+</blockquote></div></div>
+------=_Part_1220_1596992892.1484854671693--
+
+------=_Part_1219_1269025588.1484854671693--

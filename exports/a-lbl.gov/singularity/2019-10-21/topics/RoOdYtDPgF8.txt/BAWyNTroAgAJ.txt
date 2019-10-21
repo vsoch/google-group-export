@@ -1,0 +1,449 @@
+Date: Fri, 17 May 2019 10:32:30 -0700 (PDT)
+From: Alan Sill <alan...@nsfcac.org>
+To: singularity <singu...@lbl.gov>
+Cc: d...@fnal.gov
+Message-Id: <9bfa044d-5399-4acc-80e2-9d3fda601269@lbl.gov>
+In-Reply-To: <1efa07da-49a0-419a-83cb-e7c3df372c2b@lbl.gov>
+References: <c30cc58c-7f0b-46c1-9efe-448e4d5a50a8@lbl.gov>
+ <CAGfAqt9TkLV3Q=4D6uhrJQ4CKPQfiz23apbrMrKOE0ORG0Dm5w@mail.gmail.com>
+ <20180822223830.GA871@fnal.gov>
+ <6c30220a-0010-4a42-8a1d-3082b9953d30@lbl.gov>
+ <20190415212341.GA49040@fnal.gov>
+ <7a09d381-55a4-4215-ba1a-09b638dea0b2@lbl.gov>
+ <20190417185925.GA9384@fnal.gov>
+ <ecb1a11e-fd85-4ad4-8684-c6d2fa3dae3e@lbl.gov>
+ <20190420031404.GA63709@fnal.gov>
+ <6fd5abb1-f88d-48a4-9264-63cbb62a8ed1@lbl.gov>
+ <20190517165904.GA69461@fnal.gov>
+ <1efa07da-49a0-419a-83cb-e7c3df372c2b@lbl.gov>
+Subject: Re: [Singularity] Re: Mount volumes without root permissions using
+ fuse
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1017_1477648688.1558114350725"
+
+------=_Part_1017_1477648688.1558114350725
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1018_1932984364.1558114350726"
+
+------=_Part_1018_1932984364.1558114350726
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Divyam,
+
+We have successfully used Parrot mounts here for a similar purpose=20
+(mounting the CERN VM file system, cernvmfs) in our Singularity images. See=
+=20
+below for a message on this from Eric Rees at TTU.
+
+I=E2=80=99d appreciate any feedback from anyone who tries this.
+
+Alan
+
+On Feb 27, 2019, at 2:10 PM, Rees, Eric <eric...@ttu.edu> wrote:
+
+Hi all,
+=20
+Correct, we use a singularity container that essentially installs Parrot=20
+from =E2=80=98cctools=E2=80=99 (http://ccl.cse.nd.edu/software/parrot/) and=
+ then in the=20
+%environment just sets up HTTP_PROXY and these two variables:
+=20
+export PARROT_CVMFS_REPO=3D"<default-repositories>"
+export PARROT_ALLOW_SWITCHING_CVMFS_REPOSITORIES=3Dyes
+=20
+Then the %runscript intervenes and pushes whatever commands they run=20
+through parrot_run or launches parrot_run interactively if the container is=
+=20
+run that way:
+=20
+%runscript
+        #Run the commands passed by the user outside the container.
+        if [ $# -eq 0 ]; then
+                parrot_run bash --noprofile --norc
+        else
+                parrot_run "$@"
+        fi
+        exit
+=20
+The final exit is there to help users not have to =E2=80=9Cexit=E2=80=9D tw=
+ice once they=20
+finish running their code.
+=20
+This solution let us mount CVMFS via a container without having to rely on=
+=20
+FUSE.
+=20
+Hope this helps!
+=20
+Sincerely,
+-Eric R.
+=20
+Eric Rees Ph.D.
+Assistant Managing Director
+=20
+Texas Tech University =E2=80=93 High Performance Computing Center
+Drane Hall 158
+Lubbock, TX 79409
+
+
+On Friday, May 17, 2019 at 12:24:36 PM UTC-5, divyam jaiswal wrote:
+>
+> Hello Dave,
+>
+> Thanks for your reply.
+> I wanted to use your code to create a mount point before calling fuse=20
+> file-system daemon.
+> But I am not interested in changing the privilege levels.
+>
+> What I am trying to do is implement this paper=20
+> https://dl.acm.org/citation.cfm?id=3D3217195
+> Since FUSE kernel module and the user daemon both read and write from=20
+> /dev/fuse.=20
+> I am looking for a way to write a request to it.
+> Linux version is 4.26.
+>
+> I found that the error occurs when a mount point is created without=20
+> correct arguments.
+> In my case, the command was missing filesystem type.
+>
+> - Divyam
+>
+> On Friday, May 17, 2019 at 12:59:17 PM UTC-4, Dave Dykstra wrote:
+>>
+>> Hi Divyam,=20
+>>
+>> I'm sorry for the delay (sometimes I don't read the singularity mailing=
+=20
+>> list folder every day, include my email address if you want faster=20
+>> response).=20
+>>
+>> I'm not sure what you're trying to achieve.  Are you running on a linux=
+=20
+>> kernel 4.18 or later and trying to use the unprivileged fuse mounts?=20
+>> I don't know what you mean about using /dev/fuse directly without=20
+>> the kernel; that device file is a connection to fuse in the kernel.=20
+>>
+>> I have sometimes seen that umount warning, I didn't look into it, but I=
+=20
+>> think it is only a warning.=20
+>>
+>> Dave=20
+>>
+>> On Sun, May 12, 2019 at 01:55:30PM -0700, divyam jaiswal wrote:=20
+>> > Hi Dave,=20
+>> >=20
+>> > My usecase is a little different here.=20
+>> > I want to create a mount point and fd for /dev/fuse/ before calling=20
+>> fuse=20
+>> > filesystem.=20
+>> > The idea is to get the ability to read/write to /dev/fuse directly=20
+>> without=20
+>> > going through the kernel.=20
+>> >=20
+>> > To achieve this I am using a modification of your program where I=20
+>> simply=20
+>> > omit getuid and setuid part.=20
+>> > But I get following error on unomunting the filesystem:=20
+>> > "umount: /proc/self/mountinfo: parse error: ignore entry at line 24."=
+=20
+>> >=20
+>> > Regards,=20
+>> > Divyam=20
+>> >=20
+>> >=20
+>> > On Friday, April 19, 2019 at 11:14:12 PM UTC-4, Dave Dykstra wrote:=20
+>> > >=20
+>> > > On Thu, Apr 18, 2019 at 09:21:52AM -0700, Jason Boles wrote:=20
+>> > > > > Oh, if you're willing to user linux kernel 4.18+ then you don't=
+=20
+>> even=20
+>> > > > > need libfuse3.=20
+>> > > > >=20
+>> > > > > Just run "unshare -Ufirmp".  That gets you a fake root=20
+>> unprivileged=20
+>> > > user=20
+>> > > > > namespace.  Then just run sshfs giving it a mount point of some=
+=20
+>> empty=20
+>> > > > > directory that you have write access to.  I haven't tried it in=
+=20
+>> > > > > unprivileged docker yet, but it should work.=20
+>> > > > >=20
+>> > > >=20
+>> > > > Hi Dave,  I tried the "unshare -Ufirmp" but still get "Operation=
+=20
+>> not=20
+>> > > > permitted" errors.=20
+>> > > > (tried both outside and inside the container)=20
+>> > >=20
+>> > > Oh, unprivileged user namespaces are disabled by default on Debian,=
+=20
+>> > > maybe they are also on Ubuntu:=20
+>> > >    =20
+>> > >=20
+>> https://unix.stackexchange.com/questions/303213/how-to-enable-user-names=
+paces-in-the-kernel-for-unprivileged-unshare=20
+>>  =20
+>> > >=20
+>> > > The 4.19 ELRepo kernel I tried with CentOS 7.6 had it enabled by=20
+>> > > default.=20
+>> > >=20
+>> > > > Maybe it's the same problem of container processes launching as=20
+>> children=20
+>> > > of=20
+>> > > > containerd ?=20
+>> > >=20
+>> > > No, unshare is very simple and just invokes a few namespace-related=
+=20
+>> > > system calls.=20
+>> > >=20
+>> > > > Could a possible solution involve setns() within fuse-premount or=
+=20
+>> using=20
+>> > > > `nsenter` with /proc/<pid>/ns/* (where PID is that of the=20
+>> containerized=20
+>> > > > process)?=20
+>> > >=20
+>> > > I don't know if the process started by nsenter is allowed to do=20
+>> mounts.=20
+>> > > You'd have to try it.  It should be easier to pass a file descriptor=
+=20
+>> to=20
+>> > > nsenter, you're right about that.=20
+>> > >=20
+>> > > I don't recognize the usage of nsenter you're suggesting.  When I us=
+e=20
+>> it=20
+>> > > I pass it a pid (along with a bunch of options).=20
+>> > >=20
+>> > > > Lastly, is it possible to pass a FD through docker run -v=20
+>> > > > /some/fd:/tmp/fd:shared ?=20
+>> > >=20
+>> > > No I don't think it is possible.  -v just does a bind mount which=20
+>> acts=20
+>> > > on files, not file descriptors.  It would have to be a special optio=
+n=20
+>> > > that does something like my fuserpremount program to pass a file=20
+>> > > descriptor from one process to another via a unix domain socket and=
+=20
+>> > > SCM_RIGHTS (as described in man unix).=20
+>> > >=20
+>> > > Dave=20
+>> > >=20
+>> >=20
+>> > --=20
+>> > You received this message because you are subscribed to the Google=20
+>> Groups "singularity" group.=20
+>> > To unsubscribe from this group and stop receiving emails from it, send=
+=20
+>> an email to si...@lbl.gov.=20
+>> > To view this discussion on the web visit=20
+>> https://groups.google.com/a/lbl.gov/d/msgid/singularity/6fd5abb1-f88d-48=
+a4-9264-63cbb62a8ed1%40lbl.gov=20
+>> .=20
+>>
+>>
+------=_Part_1018_1932984364.1558114350726
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Divyam,</div><div><br></div><div>We have successfully=
+ used Parrot mounts here for a similar purpose (mounting the CERN VM file s=
+ystem, cernvmfs) in our Singularity images. See below for a message on this=
+ from Eric Rees at TTU.</div><div><br></div><div>I=E2=80=99d appreciate any=
+ feedback from anyone who tries this.</div><div><br></div><div>Alan</div><d=
+iv><br></div><div>On Feb 27, 2019, at 2:10 PM, Rees, Eric &lt;er...@ttu.edu=
+&gt; wrote:</div><div><br></div><blockquote style=3D"margin: 0 0 0 40px; bo=
+rder: none; padding: 0px;"><div>Hi all,</div><div>=C2=A0</div><div>Correct,=
+ we use a singularity container that essentially installs Parrot from =E2=
+=80=98cctools=E2=80=99 (http://ccl.cse.nd.edu/software/parrot/) and then in=
+ the %environment just sets up HTTP_PROXY and these two variables:</div><di=
+v>=C2=A0</div><div>export PARROT_CVMFS_REPO=3D&quot;&lt;default-repositorie=
+s&gt;&quot;</div><div>export PARROT_ALLOW_SWITCHING_CVMFS_REPOSITORIES=3Dye=
+s</div><div>=C2=A0</div><div>Then the %runscript intervenes and pushes what=
+ever commands they run through parrot_run or launches parrot_run interactiv=
+ely if the container is run that way:</div><div>=C2=A0</div><div>%runscript=
+</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 #Run the commands passed by the user=
+ outside the container.</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 if [ $# -eq 0=
+ ]; then</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+parrot_run bash --noprofile --norc</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 el=
+se</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 parrot=
+_run &quot;$@&quot;</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 fi</div><div>=C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 exit</div><div>=C2=A0</div><div>The final exit is =
+there to help users not have to =E2=80=9Cexit=E2=80=9D twice once they fini=
+sh running their code.</div><div>=C2=A0</div><div>This solution let us moun=
+t CVMFS via a container without having to rely on FUSE.</div><div>=C2=A0</d=
+iv><div>Hope this helps!</div><div>=C2=A0</div><div>Sincerely,</div><div>-E=
+ric R.</div><div>=C2=A0</div><div>Eric Rees Ph.D.</div><div>Assistant Manag=
+ing Director</div><div>=C2=A0</div><div>Texas Tech University =E2=80=93 Hig=
+h Performance Computing Center</div><div>Drane Hall 158</div><div>Lubbock, =
+TX 79409</div></blockquote><br>On Friday, May 17, 2019 at 12:24:36 PM UTC-5=
+, divyam jaiswal wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0=
+;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div di=
+r=3D"ltr">Hello Dave,<br><br>Thanks for your reply.<br>I wanted to use your=
+ code to create a mount point before calling fuse file-system daemon.<br>Bu=
+t I am not interested in changing the privilege levels.<br><div><br></div><=
+div>What I am trying to do is implement this paper=C2=A0<a href=3D"https://=
+dl.acm.org/citation.cfm?id=3D3217195" target=3D"_blank" rel=3D"nofollow" on=
+mousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2=
+Fdl.acm.org%2Fcitation.cfm%3Fid%3D3217195\x26sa\x3dD\x26sntz\x3d1\x26usg\x3=
+dAFQjCNGWj2L72wWN4C_D4WqMyO1LrR8-cQ&#39;;return true;" onclick=3D"this.href=
+=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fdl.acm.org%2Fcitation=
+.cfm%3Fid%3D3217195\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGWj2L72wWN4C_D4=
+WqMyO1LrR8-cQ&#39;;return true;">https://dl.acm.org/<wbr>citation.cfm?id=3D=
+3217195</a><br>Since FUSE kernel module and the user daemon both read and w=
+rite from /dev/fuse. <br>I am looking for a way to write a request to it.<b=
+r>Linux version is 4.26.<br><br>I found that the error occurs when a mount =
+point is created without correct arguments.<br>In my case, the command was =
+missing filesystem type.<br><br>- Divyam<br><br>On Friday, May 17, 2019 at =
+12:59:17 PM UTC-4, Dave Dykstra wrote:<blockquote class=3D"gmail_quote" sty=
+le=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-left:1e=
+x">Hi Divyam,
+<br>
+<br>I&#39;m sorry for the delay (sometimes I don&#39;t read the singularity=
+ mailing
+<br>list folder every day, include my email address if you want faster
+<br>response).
+<br>
+<br>I&#39;m not sure what you&#39;re trying to achieve. =C2=A0Are you runni=
+ng on a linux
+<br>kernel 4.18 or later and trying to use the unprivileged fuse mounts?
+<br>I don&#39;t know what you mean about using /dev/fuse directly without
+<br>the kernel; that device file is a connection to fuse in the kernel.
+<br>
+<br>I have sometimes seen that umount warning, I didn&#39;t look into it, b=
+ut I
+<br>think it is only a warning.
+<br>
+<br>Dave
+<br>
+<br>On Sun, May 12, 2019 at 01:55:30PM -0700, divyam jaiswal wrote:
+<br>&gt; Hi Dave,
+<br>&gt;=20
+<br>&gt; My usecase is a little different here.
+<br>&gt; I want to create a mount point and fd for /dev/fuse/ before callin=
+g fuse=20
+<br>&gt; filesystem.
+<br>&gt; The idea is to get the ability to read/write to /dev/fuse directly=
+ without=20
+<br>&gt; going through the kernel.
+<br>&gt;=20
+<br>&gt; To achieve this I am using a modification of your program where I =
+simply=20
+<br>&gt; omit getuid and setuid part.
+<br>&gt; But I get following error on unomunting the filesystem:
+<br>&gt; &quot;umount: /proc/self/mountinfo: parse error: ignore entry at l=
+ine 24.&quot;
+<br>&gt;=20
+<br>&gt; Regards,
+<br>&gt; Divyam
+<br>&gt;=20
+<br>&gt;=20
+<br>&gt; On Friday, April 19, 2019 at 11:14:12 PM UTC-4, Dave Dykstra wrote=
+:
+<br>&gt; &gt;
+<br>&gt; &gt; On Thu, Apr 18, 2019 at 09:21:52AM -0700, Jason Boles wrote:=
+=20
+<br>&gt; &gt; &gt; &gt; Oh, if you&#39;re willing to user linux kernel 4.18=
++ then you don&#39;t even=20
+<br>&gt; &gt; &gt; &gt; need libfuse3.=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; Just run &quot;unshare -Ufirmp&quot;. =C2=A0That ge=
+ts you a fake root unprivileged=20
+<br>&gt; &gt; user=20
+<br>&gt; &gt; &gt; &gt; namespace. =C2=A0Then just run sshfs giving it a mo=
+unt point of some empty=20
+<br>&gt; &gt; &gt; &gt; directory that you have write access to. =C2=A0I ha=
+ven&#39;t tried it in=20
+<br>&gt; &gt; &gt; &gt; unprivileged docker yet, but it should work.=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; Hi Dave, =C2=A0I tried the &quot;unshare -Ufirmp&quot; b=
+ut still get &quot;Operation not=20
+<br>&gt; &gt; &gt; permitted&quot; errors.=20
+<br>&gt; &gt; &gt; (tried both outside and inside the container)=20
+<br>&gt; &gt;
+<br>&gt; &gt; Oh, unprivileged user namespaces are disabled by default on D=
+ebian,=20
+<br>&gt; &gt; maybe they are also on Ubuntu:=20
+<br>&gt; &gt; =C2=A0 =C2=A0=20
+<br>&gt; &gt; <a href=3D"https://unix.stackexchange.com/questions/303213/ho=
+w-to-enable-user-namespaces-in-the-kernel-for-unprivileged-unshare" rel=3D"=
+nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.goo=
+gle.com/url?q\x3dhttps%3A%2F%2Funix.stackexchange.com%2Fquestions%2F303213%=
+2Fhow-to-enable-user-namespaces-in-the-kernel-for-unprivileged-unshare\x26s=
+a\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEREJOuzZ-N0XLMPuRFtvs1NxHIYA&#39;;retur=
+n true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%=
+3A%2F%2Funix.stackexchange.com%2Fquestions%2F303213%2Fhow-to-enable-user-na=
+mespaces-in-the-kernel-for-unprivileged-unshare\x26sa\x3dD\x26sntz\x3d1\x26=
+usg\x3dAFQjCNEREJOuzZ-N0XLMPuRFtvs1NxHIYA&#39;;return true;">https://unix.s=
+tackexchange.<wbr>com/questions/303213/how-to-<wbr>enable-user-namespaces-i=
+n-the-<wbr>kernel-for-unprivileged-<wbr>unshare</a> =C2=A0
+<br>&gt; &gt;
+<br>&gt; &gt; The 4.19 ELRepo kernel I tried with CentOS 7.6 had it enabled=
+ by=20
+<br>&gt; &gt; default.=20
+<br>&gt; &gt;
+<br>&gt; &gt; &gt; Maybe it&#39;s the same problem of container processes l=
+aunching as children=20
+<br>&gt; &gt; of=20
+<br>&gt; &gt; &gt; containerd ?=20
+<br>&gt; &gt;
+<br>&gt; &gt; No, unshare is very simple and just invokes a few namespace-r=
+elated=20
+<br>&gt; &gt; system calls.=20
+<br>&gt; &gt;
+<br>&gt; &gt; &gt; Could a possible solution involve setns() within fuse-pr=
+emount or using=20
+<br>&gt; &gt; &gt; `nsenter` with /proc/&lt;pid&gt;/ns/* (where PID is that=
+ of the containerized=20
+<br>&gt; &gt; &gt; process)?=20
+<br>&gt; &gt;
+<br>&gt; &gt; I don&#39;t know if the process started by nsenter is allowed=
+ to do mounts.=20
+<br>&gt; &gt; You&#39;d have to try it. =C2=A0It should be easier to pass a=
+ file descriptor to=20
+<br>&gt; &gt; nsenter, you&#39;re right about that.=20
+<br>&gt; &gt;
+<br>&gt; &gt; I don&#39;t recognize the usage of nsenter you&#39;re suggest=
+ing. =C2=A0When I use it=20
+<br>&gt; &gt; I pass it a pid (along with a bunch of options).=20
+<br>&gt; &gt;
+<br>&gt; &gt; &gt; Lastly, is it possible to pass a FD through docker run -=
+v=20
+<br>&gt; &gt; &gt; /some/fd:/tmp/fd:shared ?=20
+<br>&gt; &gt;
+<br>&gt; &gt; No I don&#39;t think it is possible. =C2=A0-v just does a bin=
+d mount which acts=20
+<br>&gt; &gt; on files, not file descriptors. =C2=A0It would have to be a s=
+pecial option=20
+<br>&gt; &gt; that does something like my fuserpremount program to pass a f=
+ile=20
+<br>&gt; &gt; descriptor from one process to another via a unix domain sock=
+et and=20
+<br>&gt; &gt; SCM_RIGHTS (as described in man unix).=20
+<br>&gt; &gt;
+<br>&gt; &gt; Dave=20
+<br>&gt; &gt;
+<br>&gt;=20
+<br>&gt; --=20
+<br>&gt; You received this message because you are subscribed to the Google=
+ Groups &quot;singularity&quot; group.
+<br>&gt; To unsubscribe from this group and stop receiving emails from it, =
+send an email to <a rel=3D"nofollow">si...@lbl.gov</a>.
+<br>&gt; To view this discussion on the web visit <a href=3D"https://groups=
+.google.com/a/lbl.gov/d/msgid/singularity/6fd5abb1-f88d-48a4-9264-63cbb62a8=
+ed1%40lbl.gov" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=
+=3D&#39;https://groups.google.com/a/lbl.gov/d/msgid/singularity/6fd5abb1-f8=
+8d-48a4-9264-63cbb62a8ed1%40lbl.gov&#39;;return true;" onclick=3D"this.href=
+=3D&#39;https://groups.google.com/a/lbl.gov/d/msgid/singularity/6fd5abb1-f8=
+8d-48a4-9264-63cbb62a8ed1%40lbl.gov&#39;;return true;">https://groups.googl=
+e.com/a/<wbr>lbl.gov/d/msgid/singularity/<wbr>6fd5abb1-f88d-48a4-9264-<wbr>=
+63cbb62a8ed1%40lbl.gov</a> .
+<br>
+<br></blockquote></div></div></blockquote></div>
+------=_Part_1018_1932984364.1558114350726--
+
+------=_Part_1017_1477648688.1558114350725--

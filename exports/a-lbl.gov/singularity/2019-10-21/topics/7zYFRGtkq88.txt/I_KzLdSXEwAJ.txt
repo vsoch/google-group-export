@@ -1,0 +1,217 @@
+Date: Wed, 22 Feb 2017 15:26:27 -0800 (PST)
+From: Chih-Song Kuo <chihs...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Cc: t...@pasteur.fr
+Message-Id: <35bb3e0d-0e51-4b57-b83f-85d9282c769b@lbl.gov>
+In-Reply-To: <20170222185752.GD1083@sillage.bis.pasteur.fr>
+References: <ca68d91c-e003-4596-a9d5-2f5a71f3c3f8@lbl.gov>
+ <d29f347c-9984-4e47-869e-9d719378a639@lbl.gov>
+ <20170222162727.GB1083@sillage.bis.pasteur.fr>
+ <CABWwhHqjm14gP1u9tFLG8qxHxg0xQiO2RFh_A24-Op_RteQ6ew@mail.gmail.com>
+ <20170222185752.GD1083@sillage.bis.pasteur.fr>
+Subject: Re: [Singularity] Re: Unable to run Centos-7 container as
+ unprivileged user on RHEL-6 host
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2037_1223303342.1487805987608"
+
+------=_Part_2037_1223303342.1487805987608
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2038_117771331.1487805987609"
+
+------=_Part_2038_117771331.1487805987609
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi Tru,
+
+After careful investigation I concluded that this problem existed only in 
+ver. 2.2. With ver. 2.2.1 everything went smoothly!
+
+But, now I got another problem: The host crashed and rebooted after 
+completing bootstraping. This situation has been reproduced twice on two 
+different hosts (both run RHEL6.7). The image file that was bootstraped was 
+then still perfectly usable after reboot.
+
+##As unprivileged user
+$ cat /etc/redhat-release
+Red Hat Enterprise Linux Server release 6.7 (Santiago)
+$ cd /home/chih/src
+$ wget 
+https://github.com/singularityware/singularity/releases/download/2.2.1/singularity-2.2.1.tar.gz
+$ tar xfz singularity-2.2.1.tar.gz
+$ cd singularity-2.2.1
+$ ./configure --prefix=/usr/local --sysconfdir=/etc
+$ make
+$ su
+##As privileged user
+# make install
+# grep secure_path /etc/sudoers
+Defaults    secure_path = /sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin
+# grep chih /etc/sudoers
+chih    ALL=NOPASSWD:/usr/local/bin/singularity
+exit
+
+$ cd ~/containers
+$ cp /home/chih/src/singularity-2.2.1/examples/centos.def ./
+$ cat centos.def
+# Copyright (c) 2015-2016, Gregory M. Kurtzer. All rights reserved.
+#
+# "Singularity" Copyright (c) 2016, The Regents of the University of 
+California,
+# through Lawrence Berkeley National Laboratory (subject to receipt of any
+# required approvals from the U.S. Dept. of Energy).  All rights reserved.
+
+
+BootStrap: yum
+OSVersion: 7
+MirrorURL: 
+http://mirror.centos.org/centos-%{OSVERSION}/%{OSVERSION}/os/$basearch/
+Include: yum
+
+# If you want the updates (available at the bootstrap date) to be installed
+# inside the container during the bootstrap instead of the General 
+Availability
+# point release (7.x) then uncomment the following line
+#UpdateURL: 
+http://mirror.centos.org/centos-%{OSVERSION}/%{OSVERSION}/updates/$basearch/
+
+
+%runscript
+    echo "This is what happens when you run the container..."
+
+
+%post
+    echo "Hello from inside the container"
+    yum -y install vim-minimal
+
+$ sudo singularity create container-centos7-test.img
+Creating a new image with a maximum size of 768MiB...
+Executing image create helper
+Formatting image with ext3 file system
+Done.
+$ sudo singularity bootstrap container-centos7-test.img  centos.def
+$ singularity shell /home/chih/containers/container-centos6-demo.img
+....
+Installed:
+  vim-minimal.x86_64 2:7.4.160-1.el7_3.1
+
+Complete!
+Done.
+## SSH session to the host froze and then the host was rebooted. I was not 
+able to see what went wrong on the host.
+
+On Wednesday, February 22, 2017 at 7:57:53 PM UTC+1, Tru Huynh wrote:
+>
+> Hi 
+>
+> Chihsong: I can't reproduce your claims. 
+>
+> 1) host: centos6 x86_64 
+> 2) yum bootstrapping centos7 or centos6 containers ( just modify OSVersion 
+> in 
+>
+> https://github.com/singularityware/singularity/blob/master/examples/centos.def) 
+>
+> 3) yields perfectly working setup for root and regular user with 
+> singularity 2.2.1. 
+>
+> Share a complete reproductible step by step procedure if you still 
+> want help on the matter. 
+>
+> Tru 
+>
+> -- 
+> Dr Tru Huynh          | http://www.pasteur.fr/research/bis           
+> mailto:t...@pasteur.fr <javascript:> | tel/fax +33 1 45 68 87 37/19 
+> Institut Pasteur, 25-28 rue du Docteur Roux, 75724 Paris CEDEX 15 France   
+>
+
+------=_Part_2038_117771331.1487805987609
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Tru,<br><br>After careful investigation I concluded tha=
+t this problem existed only in ver. 2.2. With ver. 2.2.1 everything went sm=
+oothly!<br><br>But, now I got another problem: The host crashed and reboote=
+d after completing bootstraping. This situation has been reproduced twice o=
+n two different hosts (both run RHEL6.7). The image file that was bootstrap=
+ed was then still perfectly usable after reboot.<br><br>##As unprivileged u=
+ser<br>$ cat /etc/redhat-release<br>Red Hat Enterprise Linux Server release=
+ 6.7 (Santiago)<br>$ cd /home/chih/src<br>$ wget https://github.com/singula=
+rityware/singularity/releases/download/2.2.1/singularity-2.2.1.tar.gz<br>$ =
+tar xfz singularity-2.2.1.tar.gz<br>$ cd singularity-2.2.1<br>$ ./configure=
+ --prefix=3D/usr/local --sysconfdir=3D/etc<br>$ make<br>$ su<br>##As privil=
+eged user<br># make install<br># grep secure_path /etc/sudoers<br>Defaults=
+=C2=A0=C2=A0=C2=A0 secure_path =3D /sbin:/bin:/usr/sbin:/usr/bin:/usr/local=
+/bin<br># grep chih /etc/sudoers<br>chih=C2=A0=C2=A0=C2=A0 ALL=3DNOPASSWD:/=
+usr/local/bin/singularity<br>exit<br><br>$ cd ~/containers<br>$ cp /home/ch=
+ih/src/singularity-2.2.1/examples/centos.def ./<br>$ cat centos.def<br># Co=
+pyright (c) 2015-2016, Gregory M. Kurtzer. All rights reserved.<br>#<br># &=
+quot;Singularity&quot; Copyright (c) 2016, The Regents of the University of=
+ California,<br># through Lawrence Berkeley National Laboratory (subject to=
+ receipt of any<br># required approvals from the U.S. Dept. of Energy).=C2=
+=A0 All rights reserved.<br><br><br>BootStrap: yum<br>OSVersion: 7<br>Mirro=
+rURL: http://mirror.centos.org/centos-%{OSVERSION}/%{OSVERSION}/os/$basearc=
+h/<br>Include: yum<br><br># If you want the updates (available at the boots=
+trap date) to be installed<br># inside the container during the bootstrap i=
+nstead of the General Availability<br># point release (7.x) then uncomment =
+the following line<br>#UpdateURL: http://mirror.centos.org/centos-%{OSVERSI=
+ON}/%{OSVERSION}/updates/$basearch/<br><br><br>%runscript<br>=C2=A0=C2=A0=
+=C2=A0 echo &quot;This is what happens when you run the container...&quot;<=
+br><br><br>%post<br>=C2=A0=C2=A0=C2=A0 echo &quot;Hello from inside the con=
+tainer&quot;<br>=C2=A0=C2=A0=C2=A0 yum -y install vim-minimal<br><br>$ sudo=
+ singularity create container-centos7-test.img<br>Creating a new image with=
+ a maximum size of 768MiB...<br>Executing image create helper<br>Formatting=
+ image with ext3 file system<br>Done.<br>$ sudo singularity bootstrap conta=
+iner-centos7-test.img=C2=A0 centos.def<br>$ singularity shell /home/chih/co=
+ntainers/container-centos6-demo.img<br>....<br>Installed:<br>=C2=A0 vim-min=
+imal.x86_64 2:7.4.160-1.el7_3.1<br><br>Complete!<br>Done.<br>## SSH session=
+ to the host froze and then the host was rebooted. I was not able to see wh=
+at went wrong on the host.<br><br>On Wednesday, February 22, 2017 at 7:57:5=
+3 PM UTC+1, Tru Huynh wrote:<blockquote class=3D"gmail_quote" style=3D"marg=
+in: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;">Hi
+<br>
+<br>Chihsong: I can&#39;t reproduce your claims.
+<br>
+<br>1) host: centos6 x86_64
+<br>2) yum bootstrapping centos7 or centos6 containers ( just modify OSVers=
+ion in
+<br><a href=3D"https://github.com/singularityware/singularity/blob/master/e=
+xamples/centos.def" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.=
+href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsing=
+ularityware%2Fsingularity%2Fblob%2Fmaster%2Fexamples%2Fcentos.def\x26sa\x3d=
+D\x26sntz\x3d1\x26usg\x3dAFQjCNHoQf7KCCTWtMEcDUOErtsCDpY2LQ&#39;;return tru=
+e;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F=
+%2Fgithub.com%2Fsingularityware%2Fsingularity%2Fblob%2Fmaster%2Fexamples%2F=
+centos.def\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHoQf7KCCTWtMEcDUOErtsCDp=
+Y2LQ&#39;;return true;">https://github.com/<wbr>singularityware/singularity=
+/<wbr>blob/master/examples/centos.<wbr>def</a>)
+<br>3) yields perfectly working setup for root and regular user with singul=
+arity 2.2.1.
+<br>
+<br>Share a complete reproductible step by step procedure if you still
+<br>want help on the matter.
+<br>
+<br>Tru
+<br>
+<br>--=20
+<br>Dr Tru Huynh =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0| <a href=3D"http://www.=
+pasteur.fr/research/bis" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"=
+this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwww.pasteur.fr=
+%2Fresearch%2Fbis\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHF2zhfvbshKVasCAh=
+a0LACsdD7Kg&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.googl=
+e.com/url?q\x3dhttp%3A%2F%2Fwww.pasteur.fr%2Fresearch%2Fbis\x26sa\x3dD\x26s=
+ntz\x3d1\x26usg\x3dAFQjCNHF2zhfvbshKVasCAha0LACsdD7Kg&#39;;return true;">ht=
+tp://www.pasteur.fr/<wbr>research/bis</a> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0=20
+<br>mailto:<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=
+=3D"n6sjLiyJEwAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascri=
+pt:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return =
+true;">t...@pasteur.fr</a> | tel/fax +33 1 45 68 87 37/19
+<br>Institut Pasteur, 25-28 rue du Docteur Roux, 75724 Paris CEDEX 15 Franc=
+e =C2=A0
+<br></blockquote></div>
+------=_Part_2038_117771331.1487805987609--
+
+------=_Part_2037_1223303342.1487805987608--

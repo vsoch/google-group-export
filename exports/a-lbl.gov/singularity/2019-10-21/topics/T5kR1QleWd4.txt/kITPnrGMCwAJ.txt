@@ -1,0 +1,280 @@
+Date: Wed, 14 Dec 2016 10:52:19 -0800 (PST)
+From: Henrik Bengtsson <henrik....@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <b04ac6db-1bbe-4d54-a8b8-77c38788c6f7@lbl.gov>
+In-Reply-To: <CAM=pu+LdM-MEbdTO7Ypdim1REsCn-WMs-3QksZSVfC9FMiyJhQ@mail.gmail.com>
+References: <aa3596d5-d5c2-4c8f-b8ac-5f0cdd9b91d3@lbl.gov>
+ <CAM=pu+LdM-MEbdTO7Ypdim1REsCn-WMs-3QksZSVfC9FMiyJhQ@mail.gmail.com>
+Subject: Re: [Singularity] singularity shell busybox.img gives ERROR:
+ Singularity must be executed in privileged mode to use images
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_4911_133734984.1481741539224"
+
+------=_Part_4911_133734984.1481741539224
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_4912_1125407529.1481741539224"
+
+------=_Part_4912_1125407529.1481741539224
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Thank you Vanessa.  Given what I found about "Singularity must be installed 
+as root" under http://singularity.lbl.gov/docs-troubleshooting (see also my 
+other reply a few minutes ago), does your suggestion still apply?
+
+/Henrik
+
+On Wednesday, December 14, 2016 at 3:44:28 AM UTC-8, vanessa wrote:
+>
+> Have you tried this same thing using master install? We had a bug (at 
+> least with docker extraction) that was fixed recently with regard to 
+> permissions of files.
+>
+> On Wed, Dec 14, 2016 at 12:02 AM, Henrik Bengtsson <hen...@gmail.com 
+> <javascript:>> wrote:
+>
+>> Fresh user here.  My problem is that I get:
+>>
+>> $ singularity shell busybox.img 
+>> ERROR  : Singularity must be executed in privileged mode to use images
+>> ABORT  : Retval = 255
+>>
+>>
+>> I created the minimal busybox image using Singularity 2.2 on an (A) 
+>> Ubuntu 16.04 machine:
+>>
+>> $ sudo singularity create --size 4 busybox.img
+>> $ sudo singularity import busybox.img docker://busybox:latest
+>>
+>> I can launch the image as a regular user on this same machine:
+>>
+>> $ singularity shell busybox.img 
+>> Singularity: Invoking an interactive shell within container...
+>>
+>> Singularity.busybox.img> /tmp $ busybox | head -1
+>> BusyBox v1.25.1 (2016-10-07 18:17:00 UTC) multi-call binary.
+>> Singularity.busybox-a.img> /tmp $
+>>
+>> I've also verified that the same works on (B) Centos 6 and (C) Centos 7 
+>> hosts (running on Google Cloud Compute).  In all three machines (A), (B) 
+>> and (C), I installed singularity as:
+>>
+>> $ VERSION=2.2
+>> $ wget 
+>> https://github.com/singularityware/singularity/releases/download/$VERSION/singularity-$VERSION.tar.gz
+>> $ tar xvf singularity-$VERSION.tar.gz
+>> $ cd singularity-$VERSION
+>> $ ./configure --prefix=/usr/local
+>> $ make
+>> $ sudo make install
+>>
+>> I've also verified that I can create the same *.img on the Centos 6 
+>> machine (B) and then run it as a regular user on my local Ubuntu 16.04 
+>> machine (A).
+>>
+>>
+>> However, on a RHEL 6.6 system where I install Singularity 2.2 as a 
+>> regular user using:
+>>
+>> $ ...
+>> $ make
+>> $ make install
+>>
+>> I get:
+>>
+>> $ singularity shell busybox.img 
+>> ERROR  : Singularity must be executed in privileged mode to use images
+>> ABORT  : Retval = 255
+>>
+>> when I try to launch the image (it is the exact same *.img in all cases) 
+>> as a regular user.  However, if I run as sudo, it works:
+>>
+>> sudo singularity shell busybox.img
+>> Singularity: Invoking an interactive shell within container...
+>>
+>> Singularity.busybox.img> /tmp #
+>>
+>>
+>> The full debug output gives:
+>>
+>> singularity -x shell busybox.img 
+>> + '[' -f 
+>> /home/shared/cbc/software_cbc/singularity-2.2/etc/singularity/init ']'
+>> + . /home/shared/cbc/software_cbc/singularity-2.2/etc/singularity/init
+>> ++ unset module
+>> ++ unset BASH_ENV
+>> ++ 
+>> PATH=/cbc/GitHub/sysadm-cluster/cbc/shared/apps/spack/opt/spack/linux-rhel6-x86_64/gcc-4.9.2/binutils-2.27-2ejota3fjaeh6m26td4kf4imopzhddqn/bin:/home/shared/cbc/software/singularity-2.2/bin:/home/shared/cbc/apps/gcc/4.9.2/bin:/bin:/sbin:/usr/bin:/usr/sbin:/bin:/sbin:/usr/bin:/usr/sbin
+>> ++ HISTFILE=/dev/null
+>> ++ '[' -z '' ']'
+>> +++ date +%Z
+>> ++ TZ=PST
+>> ++ export PATH HISTFILE TZ
+>> + '[' -f /home/henrik/.singularity-init ']'
+>> + '[' -n '' ']'
+>> + SHELL=/bin/sh
+>> + true
+>> + case ${1:-} in
+>> + break
+>> + '[' -z '' ']'
+>> + SINGULARITY_IMAGE=busybox.img
+>> + export SINGULARITY_IMAGE
+>> + shift
+>> + '[' -z busybox.img ']'
+>> + '[' -x 
+>> /home/shared/cbc/software_cbc/singularity-2.2/libexec/singularity/image-handler.sh 
+>> ']'
+>> + . 
+>> /home/shared/cbc/software_cbc/singularity-2.2/libexec/singularity/image-handler.sh
+>> ++ '[' -z busybox.img ']'
+>> ++ '[' -z shell ']'
+>> ++ case "$SINGULARITY_IMAGE" in
+>> ++ case "$SINGULARITY_IMAGE" in
+>> + '[' -x 
+>> /home/shared/cbc/software_cbc/singularity-2.2/libexec/singularity/sexec ']'
+>> + exec 
+>> /home/shared/cbc/software_cbc/singularity-2.2/libexec/singularity/sexec
+>> ERROR  : Singularity must be executed in privileged mode to use images
+>> ABORT  : Retval = 255
+>>
+>>
+>> What does this mean?  Any pointers to documentation / help / online 
+>> discussions explaining what's going on?
+>>
+>> Thanks,
+>>
+>> Henrik
+>>
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_4912_1125407529.1481741539224
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Thank you Vanessa. =C2=A0Given what I found about &quot;Si=
+ngularity must be installed as root&quot; under=C2=A0http://singularity.lbl=
+.gov/docs-troubleshooting (see also my other reply a few minutes ago), does=
+ your suggestion still apply?<div><br></div><div>/Henrik</div><div><br>On W=
+ednesday, December 14, 2016 at 3:44:28 AM UTC-8, vanessa wrote:<blockquote =
+class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1p=
+x #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">Have you tried this same =
+thing using master install? We had a bug (at least with docker extraction) =
+that was fixed recently with regard to permissions of files.</div><div><br>=
+<div class=3D"gmail_quote">On Wed, Dec 14, 2016 at 12:02 AM, Henrik Bengtss=
+on <span dir=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfu=
+scated-mailto=3D"3cD5lFh1CwAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D=
+&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:=
+&#39;;return true;">hen...@gmail.com</a>&gt;</span> wrote:<br><blockquote c=
+lass=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;=
+padding-left:1ex"><div dir=3D"ltr"><div>Fresh user here.=C2=A0 My problem i=
+s that I get:</div><div><div><br></div><div><div>$ singularity shell=C2=A0b=
+usybox.img=C2=A0</div><div>ERROR =C2=A0: Singularity must be executed in pr=
+ivileged mode to use images</div><div>ABORT =C2=A0:=C2=A0Retval=C2=A0=3D 25=
+5</div></div></div><div><br></div><div><br></div><div>I created the minimal=
+ busybox=C2=A0image using Singularity 2.2 on an (A) Ubuntu 16.04 machine:<b=
+r></div><div><br></div><div><div>$ sudo singularity create --size 4 busybox=
+.img</div><div>$ sudo singularity import busybox.img docker://busybox:lates=
+t</div></div><div><br></div><div>I can launch the image as a regular user o=
+n this same machine:</div><div><br></div><div><div>$ singularity shell busy=
+box.img=C2=A0</div><div>Singularity: Invoking an interactive shell within c=
+ontainer...</div><div><br></div><div>Singularity.busybox.img&gt; /tmp $ bus=
+ybox | head -1<br></div><div>BusyBox v1.25.1 (2016-10-07 18:17:00 UTC) mult=
+i-call binary.</div><div>Singularity.busybox-a.img&gt; /tmp $</div></div><d=
+iv><br></div><div>I&#39;ve also verified that the same works on (B) Centos =
+6 and (C) Centos 7 hosts (running on Google Cloud Compute).=C2=A0 In all th=
+ree machines (A), (B) and (C), I installed singularity as:</div><div><br></=
+div><div><div>$ VERSION=3D2.2</div><div>$=C2=A0wget <a href=3D"https://gith=
+ub.com/singularityware/singularity/releases/download/$VERSION/singularity-$=
+VERSION.tar.gz" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=
+=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsingular=
+ityware%2Fsingularity%2Freleases%2Fdownload%2F%24VERSION%2Fsingularity-%24V=
+ERSION.tar.gz\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHEoDRwLubtpcAYs0-wAbJ=
+HgPeEpw&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.c=
+om/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsingularityware%2Fsingularity%2Frele=
+ases%2Fdownload%2F%24VERSION%2Fsingularity-%24VERSION.tar.gz\x26sa\x3dD\x26=
+sntz\x3d1\x26usg\x3dAFQjCNHEoDRwLubtpcAYs0-wAbJHgPeEpw&#39;;return true;">h=
+ttps://github.com/<wbr>singularityware/singularity/<wbr>releases/download/$=
+VERSION/<wbr>singularity-$VERSION.tar.gz</a></div><div>$ tar xvf singularit=
+y-$VERSION.tar.gz</div><div>$ cd singularity-$VERSION</div><div>$ ./configu=
+re --prefix=3D/usr/local</div><div>$ make</div><div>$=C2=A0sudo make instal=
+l</div></div><div><br></div><div>I&#39;ve also verified that I can create t=
+he same *.img=C2=A0on the Centos 6 machine (B) and then run it as a regular=
+ user on my local Ubuntu 16.04 machine (A).</div><div><br></div><div><br></=
+div><div>However, on a RHEL 6.6 system where I install Singularity 2.2 as a=
+ regular user using:<br></div><div><br></div><div>$ ...</div><div></div><di=
+v>$ make</div><div>$ make install</div><div><br></div><div>I get:</div><div=
+><br></div><div><div>$ singularity shell busybox.img=C2=A0</div><div>ERROR =
+=C2=A0: Singularity must be executed in privileged mode to use images</div>=
+<div>ABORT =C2=A0: Retval =3D 255</div></div><div><br></div><div>when I try=
+ to launch the image (it is the exact same *.img=C2=A0in all cases) as a re=
+gular user.=C2=A0 However, if I run as sudo, it works:</div><div><br></div>=
+<div>sudo singularity shell busybox.img</div><div>Singularity: Invoking an =
+interactive shell within container...</div><div><br></div><div>Singularity.=
+busybox.img&gt; /tmp #</div><div><br></div><div><br></div><div>The full deb=
+ug output gives:<br></div><div><br></div><div><div>singularity -x shell bus=
+ybox.img=C2=A0</div><div>+ &#39;[&#39; -f /home/shared/cbc/software_cbc/<wb=
+r>singularity-2.2/etc/<wbr>singularity/init &#39;]&#39;</div><div>+ . /home=
+/shared/cbc/software_cbc/<wbr>singularity-2.2/etc/<wbr>singularity/init</di=
+v><div>++ unset module</div><div>++ unset BASH_ENV</div><div>++ PATH=3D/cbc=
+/GitHub/sysadm-<wbr>cluster/cbc/shared/apps/spack/<wbr>opt/spack/linux-rhel=
+6-x86_64/<wbr>gcc-4.9.2/binutils-2.27-<wbr>2ejota3fjaeh6m26td4kf4imopzhdd<w=
+br>qn/bin:/home/shared/cbc/<wbr>software/singularity-2.2/bin:/<wbr>home/sha=
+red/cbc/apps/gcc/4.9.<wbr>2/bin:/bin:/sbin:/usr/bin:/<wbr>usr/sbin:/bin:/sb=
+in:/usr/bin:/<wbr>usr/sbin</div><div>++ HISTFILE=3D/dev/null</div><div>++ &=
+#39;[&#39; -z &#39;&#39; &#39;]&#39;</div><div>+++ date +%Z</div><div>++ TZ=
+=3DPST</div><div>++ export PATH HISTFILE TZ</div><div>+ &#39;[&#39; -f /hom=
+e/henrik/.singularity-init &#39;]&#39;</div><div>+ &#39;[&#39; -n &#39;&#39=
+; &#39;]&#39;</div><div>+ SHELL=3D/bin/sh</div><div>+ true</div><div>+ case=
+ ${1:-} in</div><div>+ break</div><div>+ &#39;[&#39; -z &#39;&#39; &#39;]&#=
+39;</div><div>+ SINGULARITY_IMAGE=3Dbusybox.img</div><div>+ export SINGULAR=
+ITY_IMAGE</div><div>+ shift</div><div>+ &#39;[&#39; -z busybox.img &#39;]&#=
+39;</div><div>+ &#39;[&#39; -x /home/shared/cbc/software_cbc/<wbr>singulari=
+ty-2.2/libexec/<wbr>singularity/image-handler.sh &#39;]&#39;</div><div>+ . =
+/home/shared/cbc/software_cbc/<wbr>singularity-2.2/libexec/<wbr>singularity=
+/image-handler.sh</div><div>++ &#39;[&#39; -z busybox.img &#39;]&#39;</div>=
+<div>++ &#39;[&#39; -z shell &#39;]&#39;</div><div>++ case &quot;$SINGULARI=
+TY_IMAGE&quot; in</div><div>++ case &quot;$SINGULARITY_IMAGE&quot; in</div>=
+<div>+ &#39;[&#39; -x /home/shared/cbc/software_cbc/<wbr>singularity-2.2/li=
+bexec/<wbr>singularity/sexec &#39;]&#39;</div><div>+ exec /home/shared/cbc/=
+software_cbc/<wbr>singularity-2.2/libexec/<wbr>singularity/sexec</div><div>=
+ERROR =C2=A0: Singularity must be executed in privileged mode to use images=
+</div><div>ABORT =C2=A0: Retval =3D 255</div></div><div><br></div><div><br>=
+What does this mean?=C2=A0 Any pointers to documentation / help / online di=
+scussions explaining what&#39;s going on?</div><div><br></div><div>Thanks,<=
+/div><div><br></div><div>Henrik</div><span><font color=3D"#888888"><div><br=
+></div><div><br></div></font></span></div><span><font color=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+3cD5lFh1CwAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div>=
+<div><span id=3D"gc-number-2" class=3D"gc-cs-link" title=3D"Call with Googl=
+e Voice">(603) 321-0676</span></div></div></div></div>
+</div>
+</blockquote></div></div>
+------=_Part_4912_1125407529.1481741539224--
+
+------=_Part_4911_133734984.1481741539224--

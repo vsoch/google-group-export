@@ -1,0 +1,400 @@
+Date: Sun, 27 Jan 2019 12:55:09 -0800 (PST)
+From: Bhavesh Shrimali <bhavesh...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <890e6c33-069e-48ae-a4a3-2c530e9a2aea@lbl.gov>
+In-Reply-To: <CAM=pu+KeHALCgx6k1jK=ZA0JUOZe4pgFtDRcQmdQhGrtp4X2Ng@mail.gmail.com>
+References: <84caf4db-ea5b-4067-b049-83c7a960f6e1@lbl.gov>
+ <CAM=pu+KeHALCgx6k1jK=ZA0JUOZe4pgFtDRcQmdQhGrtp4X2Ng@mail.gmail.com>
+Subject: Re: [Singularity] Firedrake installation on Cluster through a
+ Singularity Container
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1327_466797225.1548622509461"
+
+------=_Part_1327_466797225.1548622509461
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1328_919398350.1548622509462"
+
+------=_Part_1328_919398350.1548622509462
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi Vanessa, 
+
+Thanks for your reply. I am in-lining my response below
+
+On Friday, 25 January 2019 13:53:14 UTC-6, vanessa wrote:
+>
+> Hey Bhavesh! 
+>
+
+> I'll try to help if I can. First, I pulled the image (without sudo) both 
+> on my cluster and local machine. You shouldn't need to worry about the 
+> warning too much - if there is an issue down the line you'd want to build 
+> it locally and use scp <https://kb.iu.edu/d/agye> to get onto your 
+> cluster resource. So here we pull without sudo:
+>
+
+Thanks. I did infact build it locally and used vagrant scp to get form the 
+vm to my local machine and then copy-pasted the image to the cluster. I am 
+using singularity-2.4 on my local machine but the cluster (CentOS) is 
+running on singularity-2.5.2 if I remember correctly.  
+
+>
+> $ singularity pull docker://bhaveshshrimali/firedrakestable2:try2Jan23
+>
+> I found your container on Docker Hub here 
+> <https://hub.docker.com/r/bhaveshshrimali/firedrakestable2>, but I don't 
+> see any associated build recipe (so you must have pushed). It's important 
+> that the container you built is transparent / shared so others can help 
+> you, and reproduce if they need to! Could you please share the Dockerfile / 
+> repository with it?
+>
+
+Yes so I basically did not create the container from scratch using a 
+Dockerfile (although now I think I should have), but due the hesitation of 
+being a newbie I just pulled a container from docker://icepack/firedrake 
+and made some changes, and used docker commit to eventually push it to 
+dockerHub.  
+
+>
+> An interesting observation - shelling into the container failed on my 
+> cluster (but worked on my local machine that has an older version of 
+> singularity, 2.6). Here is the cluster error:
+>
+> [vsochat@sh-107-31 ~]$ singularity run firedrakestable2_try2Jan23.sif 
+> FATAL:   container creation failed: mount error: can't mount image 
+> /proc/self/fd/8: failed to mount squashfs filesystem: invalid argument
+>
+>
+> It could be configuration, but we allow overlayfs and what not, so I 
+> wonder if it's a bug?
+>
+> Anyway, my local machine (singularity 2.6) worked! There is something to 
+> say if it aint broken, don't fix it :P
+>
+> I don't know much about this tool (looks pretty neat!) so I followed one 
+> of the basic examples for the burgers equation 
+> <https://firedrakeproject.org/demos/burgers.py.html>, because, well 
+> burgers! I can see right away this is a python module, so I'm going to shell
+> in and start python.
+>
+> $ singularity shell firedrakestable2-try2Jan23.simg 
+> Singularity: Invoking an interactive shell within container...
+>
+> Singularity firedrakestable2-try2Jan23.simg:/tmp> which python
+> /firedrake/bin/python
+> Singularity firedrakestable2-try2Jan23.simg:/tmp> which ipython
+> /firedrake/bin/ipython
+> Singularity firedrakestable2-try2Jan23.simg:/tmp> 
+>
+>
+> I'm showing above that we have python AND ipython (I like the latter for 
+> interactive stuff) Let's next get the burgers.py example script.
+>
+> $ wget https://firedrakeproject.org/demos/burgers.py
+>> $ python burgers.py
+>
+> vanessa-ThinkPad-T460s.20481hfi_wait_for_device: The /dev/hfi1_0 device 
+>> failed to appear after 15.0 seconds: Connection timed out
+>
+>
+Yes this happened for me too. I was not able to figure out the exact 
+issue.  
+
+>
+> I'm guessing that this library has some kind of special need for something 
+> in /dev?It looks like it's called an hifi1 device -> 
+> https://github.com/intel/opa-psm2/issues/33
+> Does anyone on the list have experience with these? It could be that you 
+> can either disable the library from using it, or find a cluster with that 
+> support. Actually, it looks like it miht be part of openmpi? -> 
+> https://bugzilla.redhat.com/show_bug.cgi?id=1408316 in which case you 
+> need to have this installed on the host / container (and same version) for 
+> it to work. 
+>
+
+Ok, I am going to try that. Fortunately enough, the cluster admins were 
+able to create a recipe with firedrake installed and I pushed it to 
+SingularityHub here: shub://bhaveshshrimali/singularityFiredrake. I will 
+check if this runs for me. Thanks for your help and time. I will post here 
+if anything goes wrong and am not able to figure out by simple googling. 
+
+>
+> Others on the list - thoughts?
+>
+> Best,
+>
+> Vanessa
+>
+> On Thu, Jan 24, 2019 at 1:07 PM Bhavesh Shrimali <bha...@gmail.com 
+> <javascript:>> wrote:
+>
+>> Hello I have been trying to install firedrake (
+>> https://firedrakeproject.org/index.html) on a Cluster but have been 
+>> having some problems, primarily due to being from a non-CS background. Any 
+>> help is appreciated. 
+>>
+>> 1. I built a Docker image with firedrake installed 
+>> (docker://bhaveshshrimali/firedrakestable2:try2Jan23) and am trying 
+>> singularity pull <docker_image:image_tag> in order to build a singularity 
+>> image on my computer. Firstly, when I construct the image I always see the 
+>> installed folder (or any other folders that I created in the Docker image) 
+>> in my root directory. 
+>>
+>> Is there a way to avoid that ? Also, when I do singularity build 
+>> <image_name.simg> docker://<image_name:image_tag> on my local machine, I 
+>> get the following warning: 
+>>
+>>        Building container as an unprivileged user. If you run this 
+>> container as root
+>>
+>> WARNING: it may be missing some functionality.
+>>
+>> I used "sudo singularity build ..." to circumvent this issue. 
+>>  
+>> 2. Secondly, I tried testing the installation and it does warn me about 
+>> folder permissions but runs fine when I am running the container on my 
+>> local machine (Windows 10). I am using vagrant and virtual box following 
+>> the instructions from installation guide pretty much verbatim. 
+>>
+>> 3. But when I transfer the image (.simg file) to Cluster, and do 
+>> singularity shell <imega_name.simg> and try to run my package, it throws 
+>> multiple exceptions for file/folder permissions, and all the tests fail. 
+>>
+>> While I can try to resolve the issues with my package (firedrake) at my 
+>> end, any help on constructing a singularity image with python3 and 
+>> firedrake installed will be appreciated. 
+>>
+>> Thank you
+>> Bhavesh
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_1328_919398350.1548622509462
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Vanessa,=C2=A0<div><br></div><div>Thanks for your reply=
+. I am in-lining my response below<br><br>On Friday, 25 January 2019 13:53:=
+14 UTC-6, vanessa  wrote:<blockquote class=3D"gmail_quote" style=3D"margin:=
+ 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div =
+dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"=
+ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr">Hey Bhavesh!=C2=A0<=
+/div></div></div></div></div></div></div></div></blockquote><blockquote cla=
+ss=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #=
+ccc solid;padding-left: 1ex;"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D=
+"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><=
+div dir=3D"ltr"><div><br></div><div>I&#39;ll try to help if I can. First, I=
+ pulled the image (without sudo) both on my cluster and local machine. You =
+shouldn&#39;t need to worry about the warning too much - if there is an iss=
+ue down the line you&#39;d want to build it locally and use <a href=3D"http=
+s://kb.iu.edu/d/agye" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"thi=
+s.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fkb.iu.edu%2Fd%2=
+Fagye\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGX8DnEw4JZimQkDJwZTzFQt2RVTw&=
+#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q=
+\x3dhttps%3A%2F%2Fkb.iu.edu%2Fd%2Fagye\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAF=
+QjCNGX8DnEw4JZimQkDJwZTzFQt2RVTw&#39;;return true;">scp</a> to get onto you=
+r cluster resource. So here we pull without sudo:</div></div></div></div></=
+div></div></div></div></div></blockquote><div><br></div><div>Thanks. I did =
+infact build it locally and used vagrant scp to get form the vm to my local=
+ machine and then copy-pasted the image to the cluster. I am using singular=
+ity-2.4 on my local machine but the cluster (CentOS) is running on singular=
+ity-2.5.2 if I remember correctly.=C2=A0=C2=A0</div><blockquote class=3D"gm=
+ail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc soli=
+d;padding-left: 1ex;"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><d=
+iv dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=
+=3D"ltr"><div><br></div><div>$ singularity pull docker://bhaveshshrimali/<w=
+br>firedrakestable2:try2Jan23<br></div><div><br></div><div>I found your con=
+tainer on Docker Hub <a href=3D"https://hub.docker.com/r/bhaveshshrimali/fi=
+redrakestable2" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=
+=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fhub.docker.com%2Fr%2F=
+bhaveshshrimali%2Ffiredrakestable2\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCN=
+F79xPfY870e-aw-zaO0MNQZj8xFA&#39;;return true;" onclick=3D"this.href=3D&#39=
+;https://www.google.com/url?q\x3dhttps%3A%2F%2Fhub.docker.com%2Fr%2Fbhavesh=
+shrimali%2Ffiredrakestable2\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNF79xPfY=
+870e-aw-zaO0MNQZj8xFA&#39;;return true;">here</a>, but I don&#39;t see any =
+associated build recipe (so you must have pushed). It&#39;s important that =
+the container you built is transparent / shared so others can help you, and=
+ reproduce if they need to! Could you please share the Dockerfile / reposit=
+ory with it?<br></div></div></div></div></div></div></div></div></div></blo=
+ckquote><div><br></div><div>Yes so I basically did not create the container=
+ from scratch using a Dockerfile (although now I think I should have), but =
+due the hesitation of being a newbie I just pulled a container from docker:=
+//icepack/firedrake and made some changes, and used docker commit to eventu=
+ally push it to dockerHub.=C2=A0=C2=A0</div><blockquote class=3D"gmail_quot=
+e" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;paddin=
+g-left: 1ex;"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=
+=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr=
+"><div></div><div><br></div><div><div>An interesting observation - shelling=
+ into the container failed on my cluster (but worked on my local machine th=
+at has an older version of singularity, 2.6). Here is the cluster error:</d=
+iv><div><br></div></div></div></div></div><blockquote style=3D"margin:0px 0=
+px 0px 40px;border:none;padding:0px"><div><div><div><div><div><div>[vsochat=
+@sh-107-31 ~]$ singularity run firedrakestable2_try2Jan23.<wbr>sif=C2=A0</d=
+iv></div></div></div></div></div><div><div><div><div><div><div>FATAL:=C2=A0=
+ =C2=A0container creation failed: mount error: can&#39;t mount image /proc/=
+self/fd/8: failed to mount squashfs filesystem: invalid argument</div></div=
+></div></div></div></div></blockquote><div dir=3D"ltr"><div dir=3D"ltr"><di=
+v dir=3D"ltr"><div><div><br></div><div>It could be configuration, but we al=
+low overlayfs and what not, so I wonder if it&#39;s a bug?</div><div><br></=
+div><div>Anyway, my local machine (singularity 2.6) worked! There is someth=
+ing to say if it aint broken, don&#39;t fix it :P</div></div><div><br></div=
+><div>I don&#39;t know much about this tool (looks pretty neat!) so I follo=
+wed one of the basic examples for the <a href=3D"https://firedrakeproject.o=
+rg/demos/burgers.py.html" target=3D"_blank" rel=3D"nofollow" onmousedown=3D=
+"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Ffiredrakepr=
+oject.org%2Fdemos%2Fburgers.py.html\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjC=
+NGScq4XXA3Ut3SK1YZrMNJdjtXpVg&#39;;return true;" onclick=3D"this.href=3D&#3=
+9;https://www.google.com/url?q\x3dhttps%3A%2F%2Ffiredrakeproject.org%2Fdemo=
+s%2Fburgers.py.html\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGScq4XXA3Ut3SK1=
+YZrMNJdjtXpVg&#39;;return true;">burgers equation</a>, because, well burger=
+s! I can see right away this is a python module, so I&#39;m going to shell<=
+/div><div>in and start python.</div><div><br></div><div><div>$ singularity =
+shell firedrakestable2-try2Jan23.<wbr>simg=C2=A0</div><div>Singularity: Inv=
+oking an interactive shell within container...</div><div><br></div></div></=
+div></div></div></div><blockquote style=3D"margin:0px 0px 0px 40px;border:n=
+one;padding:0px"><div><div><div><div><div><div>Singularity firedrakestable2=
+-try2Jan23.<wbr>simg:/tmp&gt; which python</div></div></div></div></div></d=
+iv><div><div><div><div><div><div>/firedrake/bin/python</div></div></div></d=
+iv></div></div><div><div><div><div><div><div>Singularity firedrakestable2-t=
+ry2Jan23.<wbr>simg:/tmp&gt; which ipython</div></div></div></div></div></di=
+v><div><div><div><div><div><div>/firedrake/bin/ipython</div></div></div></d=
+iv></div></div><div><div><div><div><div><div>Singularity firedrakestable2-t=
+ry2Jan23.<wbr>simg:/tmp&gt;=C2=A0</div></div></div></div></div></div></bloc=
+kquote><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr">=
+<div><br></div><div>I&#39;m showing above that we have python AND ipython (=
+I like the latter for interactive stuff) Let&#39;s next get the burgers.py =
+example script.</div><div><br></div><blockquote class=3D"gmail_quote" style=
+=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding=
+-left:1ex">$ wget=C2=A0<a href=3D"https://firedrakeproject.org/demos/burger=
+s.py" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;ht=
+tps://www.google.com/url?q\x3dhttps%3A%2F%2Ffiredrakeproject.org%2Fdemos%2F=
+burgers.py\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFMB0Ip3_uvQBrGUMVf9v8aAP=
+qPMg&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.com/=
+url?q\x3dhttps%3A%2F%2Ffiredrakeproject.org%2Fdemos%2Fburgers.py\x26sa\x3dD=
+\x26sntz\x3d1\x26usg\x3dAFQjCNFMB0Ip3_uvQBrGUMVf9v8aAPqPMg&#39;;return true=
+;">https://firedrakeproject.<wbr>org/demos/burgers.py</a><br>$ python burge=
+rs.py</blockquote><div><blockquote class=3D"gmail_quote" style=3D"margin:0p=
+x 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex">va=
+nessa-ThinkPad-T460s.<wbr>20481hfi_wait_for_device: The /dev/hfi1_0 device =
+failed to appear after 15.0 seconds: Connection timed out</blockquote></div=
+></div></div></div></div></div></div></div></div></blockquote><div><br></di=
+v><div>Yes this happened for me too. I was not able to figure out the exact=
+ issue.=C2=A0=C2=A0</div><blockquote class=3D"gmail_quote" style=3D"margin:=
+ 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div =
+dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"=
+ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div><br></div><div=
+>I&#39;m guessing that this library has some kind of special need for somet=
+hing in /dev?It looks like it&#39;s called an hifi1 device -&gt;=C2=A0<a hr=
+ef=3D"https://github.com/intel/opa-psm2/issues/33" target=3D"_blank" rel=3D=
+"nofollow" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3d=
+https%3A%2F%2Fgithub.com%2Fintel%2Fopa-psm2%2Fissues%2F33\x26sa\x3dD\x26snt=
+z\x3d1\x26usg\x3dAFQjCNE5dA9MePhBm6tYrLjgIz9yRfbsgw&#39;;return true;" oncl=
+ick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithu=
+b.com%2Fintel%2Fopa-psm2%2Fissues%2F33\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAF=
+QjCNE5dA9MePhBm6tYrLjgIz9yRfbsgw&#39;;return true;">https://github.com/inte=
+l/<wbr>opa-psm2/issues/33</a></div><div>Does anyone on the list have experi=
+ence with these? It could be that you can either disable the library from u=
+sing it, or find a cluster with that support. Actually, it looks like it mi=
+ht be part of openmpi? -&gt;=C2=A0<a href=3D"https://bugzilla.redhat.com/sh=
+ow_bug.cgi?id=3D1408316" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"=
+this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fbugzilla.red=
+hat.com%2Fshow_bug.cgi%3Fid%3D1408316\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQ=
+jCNHsD_pP640HEmG_9rQ81PjFOIHUhA&#39;;return true;" onclick=3D"this.href=3D&=
+#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fbugzilla.redhat.com%2Fsho=
+w_bug.cgi%3Fid%3D1408316\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHsD_pP640H=
+EmG_9rQ81PjFOIHUhA&#39;;return true;">https://bugzilla.redhat.<wbr>com/show=
+_bug.cgi?id=3D1408316</a> in which case you need to have this installed on =
+the host / container (and same version) for it to work.=C2=A0</div></div></=
+div></div></div></div></div></div></div></blockquote><div><br></div><div>Ok=
+, I am going to try that. Fortunately enough, the cluster admins were able =
+to create a recipe with firedrake installed and I pushed it to SingularityH=
+ub here: shub://bhaveshshrimali/singularityFiredrake. I will check if this =
+runs for me. Thanks for your help and time. I will post here if anything go=
+es wrong and am not able to figure out by simple googling.=C2=A0</div><bloc=
+kquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-l=
+eft: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr"><div dir=3D"ltr"><=
+div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=
+=3D"ltr"><div dir=3D"ltr"><div><br></div><div>Others on the list - thoughts=
+?</div><div><br></div><div>Best,</div><div><br></div><div>Vanessa</div></di=
+v></div></div></div></div></div></div></div><br><div class=3D"gmail_quote">=
+<div dir=3D"ltr">On Thu, Jan 24, 2019 at 1:07 PM Bhavesh Shrimali &lt;<a hr=
+ef=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"KhDHPoGdFgAJ"=
+ rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return t=
+rue;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">bha...@gma=
+il.com</a>&gt; wrote:<br></div><blockquote class=3D"gmail_quote" style=3D"m=
+argin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left=
+:1ex"><div dir=3D"ltr">Hello I have been trying to install firedrake (<a hr=
+ef=3D"https://firedrakeproject.org/index.html" target=3D"_blank" rel=3D"nof=
+ollow" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttp=
+s%3A%2F%2Ffiredrakeproject.org%2Findex.html\x26sa\x3dD\x26sntz\x3d1\x26usg\=
+x3dAFQjCNEtp5XVkRTjaNdSogfovLe4Usrafw&#39;;return true;" onclick=3D"this.hr=
+ef=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Ffiredrakeproject.or=
+g%2Findex.html\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEtp5XVkRTjaNdSogfovL=
+e4Usrafw&#39;;return true;">https://firedrakeproject.org/<wbr>index.html</a=
+>) on a Cluster but have been having some problems, primarily due to being =
+from a non-CS background. Any help is appreciated.=C2=A0<div><br></div><div=
+>1. I built a Docker image with firedrake installed (docker://bhaveshshrima=
+li/<wbr>firedrakestable2:try2Jan23) and am trying singularity pull &lt;dock=
+er_image:image_tag&gt; in order to build a singularity image on my computer=
+. Firstly, when I construct the image I always see the installed folder (or=
+ any other folders that I created in the Docker image) in my root directory=
+.=C2=A0</div><div><br></div><div>Is there a way to avoid that ? Also, when =
+I do singularity build &lt;image_name.simg&gt; docker://&lt;image_name:imag=
+e_<wbr>tag&gt; on my local machine, I get the following warning:=C2=A0</div=
+><div><br></div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0<span style=3D"background-c=
+olor:transparent;color:rgb(68,68,68);font-family:Monaco,Menlo,Consolas,&quo=
+t;Courier New&quot;,monospace;font-size:inherit;white-space:pre-wrap">Build=
+ing container as an unprivileged user. If you run this container as root</s=
+pan></div><pre style=3D"margin-top:25px;margin-bottom:25px;padding:9.5px;fo=
+nt-family:Monaco,Menlo,Consolas,&quot;Courier New&quot;,monospace;white-spa=
+ce:pre-wrap;line-height:1.42857;word-break:break-all;color:rgb(51,51,51);ba=
+ckground-image:initial;background-position:initial;background-repeat:initia=
+l;border-width:1px;border-style:solid;border-color:rgb(204,204,204);border-=
+radius:4px"><code style=3D"font-family:Monaco,Menlo,Consolas,&quot;Courier =
+New&quot;,monospace;font-size:inherit;color:rgb(68,68,68);background-color:=
+transparent;border-radius:4px">WARNING: it may be missing some functionalit=
+y.<br></code></pre><div>I used &quot;sudo singularity build ...&quot; to ci=
+rcumvent this issue.=C2=A0</div><div>=C2=A0</div><div>2. Secondly, I tried =
+testing the installation and it does warn me about folder permissions but r=
+uns fine when I am running the container on my local machine (Windows 10). =
+I am using vagrant and virtual box following the instructions from installa=
+tion guide pretty much verbatim.=C2=A0</div><div><br></div><div>3. But when=
+ I transfer the image (.simg file) to Cluster, and do singularity shell &lt=
+;imega_name.simg&gt; and try to run my package, it throws multiple exceptio=
+ns for file/folder permissions, and all the tests fail.=C2=A0</div><div><br=
+></div><div>While I can try to resolve the issues with my package (firedrak=
+e) at my end, any help on constructing a singularity image with python3 and=
+ firedrake installed will be appreciated.=C2=A0</div><div><br></div><div>Th=
+ank you</div><div>Bhavesh</div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+KhDHPoGdFgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><div>(=
+603) 321-0676</div></div></div></div>
+</blockquote></div></div>
+------=_Part_1328_919398350.1548622509462--
+
+------=_Part_1327_466797225.1548622509461--

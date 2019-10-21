@@ -1,0 +1,844 @@
+X-Received: by 2002:a63:90c7:: with SMTP id a190mr8230132pge.23.1556528591777;
+        Mon, 29 Apr 2019 02:03:11 -0700 (PDT)
+X-BeenThere: singularity@lbl.gov
+Received: by 2002:a62:471c:: with SMTP id u28ls333380pfa.0.gmail; Mon, 29 Apr
+ 2019 02:03:10 -0700 (PDT)
+X-Received: by 2002:a63:4a45:: with SMTP id j5mr58777870pgl.426.1556528590134;
+        Mon, 29 Apr 2019 02:03:10 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1556528590; cv=none;
+        d=google.com; s=arc-20160816;
+        b=WOd7z8PKabo3zFoT3VfvX1Gdde/ucwkgZSuyxMYTOqxzojTw1z4c28U3/idZsOfFna
+         zqlwh/Z9mX81eTJz+8lD/e0PpF5EojZN4bpxi/YGsqzaXPh+bCfnuVjMfWkXpaGm+RV8
+         LvBlhhda6fv0AizKFh0kQWG1Dcovf+640NEVtayxjj4/zXZaPfITL/opPA+PX+j44A2O
+         oySNZ8vSBtTJlqH6L5i38rvtKcyPdwh2JEVouhJvQ26nD6QxqxcwM5JExCD+GM5IrXR/
+         DrD8d5WRg5+0/q86AQlQjpfyqGntV9kOKqZoxFt4/kVg1F/bDCldFo/g+PaqjFip6/W3
+         r2nw==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816;
+        h=content-language:in-reply-to:mime-version:user-agent:date
+         :message-id:subject:autocrypt:openpgp:from:references:to
+         :dkim-signature;
+        bh=OkmpC7NQRHqqPzLhEyjl86OS/4CyXU2Gk5wlI5Ne+Uc=;
+        b=J86Mi8bJVr23KG7L1SfverC2zwDED+KPqrJ1Dci+cSKkm32wOaWjrcVg00mblWfoh8
+         SHSvnyd7LxF37IpYkOoMA8pjSg+qaS1GvYCLJF1flSTWL0gwQMNIZ/0s3fbs6fGJ+dT3
+         whHxkuAtzDOdiFtyAohA1g6KDq3khZ0gXxfc/XIG5uCyPp3p0gpLHPQLSTWjyEoWk0am
+         Rqs2mwb3y2NzyrOZw3CpbYSQ73YEHM3FjRaftHFaa4uCRfi5kUsK1bNUgykqyTVoRjkX
+         Siwk583HwVI8gcEStEh8sfZe2lD8UIADunSr8nr5Yb8k6/6FD1OriFNhZMOtWKk8y9gL
+         UQIw==
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=pass head...@sylabs.io header.s=google header.b=kACJ+EHO;
+       spf=pass (google.com: domain of ced...@sylabs.io designates 209.85.221.48 as permitted sender) smtp.mailfrom=ced...@sylabs.io
+Return-Path: <ced...@sylabs.io>
+Received: from fe3.lbl.gov (fe3.lbl.gov. [131.243.228.52])
+        by mx.google.com with ESMTP id p2si32150485plr.69.2019.04.29.02.03.09
+        for <singu...@lbl.gov>;
+        Mon, 29 Apr 2019 02:03:10 -0700 (PDT)
+Received-SPF: pass (google.com: domain of ced...@sylabs.io designates 209.85.221.48 as permitted sender) client-ip=209.85.221.48;
+Authentication-Results: mx.google.com;
+       dkim=pass head...@sylabs.io header.s=google header.b=kACJ+EHO;
+       spf=pass (google.com: domain of ced...@sylabs.io designates 209.85.221.48 as permitted sender) smtp.mailfrom=ced...@sylabs.io
+X-Ironport-SBRS: 3.5
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: =?us-ascii?q?A2EYAABDvcZchzDdVdFmHAEBAQQBAQcEA?=
+ =?us-ascii?q?QGBUQcBAQsBgWaBEgNPWoQJB4NKhFKLBYFgLYNelHIUgWMEDgEBGAECgV2CdQI?=
+ =?us-ascii?q?XhhwjNAkOAQMBAQUBAQEBAgEBAhABAQEIDQkIKSMMgjoFAgMfB4FFLAhOAQEZA?=
+ =?us-ascii?q?QIDGgEIHQEBDCwPCQIYIAEGAwICAi8DAQUBCxEOBQIEAQEBARkEgwEBJgGBYQQ?=
+ =?us-ascii?q?BkRKQDDyKLHGBLx+CWgEBBXWEb4E8AwYJAQiBIAGLSReBQD+BESeCaz6EEQELB?=
+ =?us-ascii?q?wE2FoJdgliCK4hFC4kRhWuNBAmCC1WRWAYbboEfiWQSJoh+oFoCBAIEBQIGDyG?=
+ =?us-ascii?q?BLm4wcTMaCCQMGoMNgg8MDgkUhhyHcT0zEJFXDxcxgXsBAQ?=
+X-IronPort-AV: E=Sophos;i="5.60,409,1549958400"; 
+   d="scan'208,217";a="152682549"
+Received: from mail-wr1-f48.google.com ([209.85.221.48])
+  by fe3.lbl.gov with ESMTP; 29 Apr 2019 02:03:06 -0700
+Received: by mail-wr1-f48.google.com with SMTP id a12so14813255wrq.10
+        for <singu...@lbl.gov>; Mon, 29 Apr 2019 02:03:06 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=sylabs.io; s=google;
+        h=to:references:from:openpgp:autocrypt:subject:message-id:date
+         :user-agent:mime-version:in-reply-to:content-language;
+        bh=OkmpC7NQRHqqPzLhEyjl86OS/4CyXU2Gk5wlI5Ne+Uc=;
+        b=kACJ+EHOZU4P9IXuu7YsDlVWeTzRr6HrWYU6uoU88/dwhuVuDpyuQihux5lT3mxYH2
+         e5Ft851K4zi177V9ZbuN/KNlKdQdbdQUOxN9R4OD9ICd9smwW20aMmhHxuB1ABQw0wCX
+         bVW8DpEnScgs6Z5eHymQHecD/VqYyIzpM9+6BF192YFtCAY+thTfwhdbzhrIC4PF0WNC
+         2ZdxGvbeC2Uo5g/ZsaB+PEex5vPIs4aWPVZB4b5oApI8pOQp/LcfqU8ZX3vzsHWiq4oB
+         l6Nro9ThmM9HwJ7xX2YW0+84OfPPIOJ8w4HaN9AcGk33AehNIH5CenQ71YOotlBLisge
+         F75A==
+X-Gm-Message-State: APjAAAXt2HKQ2Qw9oLE6xSTc7XrWWYj7F31vcEE686K4HI5pFC059viY
+	iYnBj50PjjoMLmZJvknu8hYrOd9/dlI=
+X-Received: by 2002:adf:9f14:: with SMTP id l20mr40167760wrf.240.1556528584833;
+        Mon, 29 Apr 2019 02:03:04 -0700 (PDT)
+Return-Path: <ced...@sylabs.io>
+Received: from [192.168.1.14] (lfbn-1-18299-147.w90-100.abo.wanadoo.fr. [90.100.94.147])
+        by smtp.gmail.com with ESMTPSA id v5sm1543944wra.83.2019.04.29.02.03.03
+        for <singu...@lbl.gov>
+        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Mon, 29 Apr 2019 02:03:04 -0700 (PDT)
+To: singularity@lbl.gov
+References: <b28008a9-f44e-42c5-9c58-b0a8b8aca657@lbl.gov>
+ <a3fefe29-f095-45f3-8c66-2c036cb98af3@lbl.gov>
+From: Cedric Clerget <ced...@sylabs.io>
+Openpgp: preference=signencrypt
+Autocrypt: addr=ced...@sylabs.io; keydata=
+ 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
+ 243wU6lHg6Si9bKDpPogxIEP7q/WMeSDdQ==
+Subject: Re: [Singularity] Re: ERROR : Could not make mountspaces slave:
+ Permission denied
+Message-ID: <a41c9e85-416c-3a53-dd2a-d1ba2dc11861@sylabs.io>
+Date: Mon, 29 Apr 2019 11:03:02 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101
+ Thunderbird/60.6.1
+MIME-Version: 1.0
+In-Reply-To: <a3fefe29-f095-45f3-8c66-2c036cb98af3@lbl.gov>
+Content-Type: multipart/alternative;
+ boundary="------------E6D929860D850CCAC2ABFA3E"
+Content-Language: fr-classic
+
+--------------E6D929860D850CCAC2ABFA3E
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: base64
+
+TG9va3MgbGlrZSB5b3UgYXJlIGluc2lkZSBhIGRvY2tlciBjb250YWluZXIgYmVjYXVzZSBmaXJz
+dCBtb3VudCBzeXNjYWxsCmZhaWxlZCB3aXRoIGEgcGVybWlzc2lvbiBkZW5pZWQgZXZlbiBhcyBy
+b290LgpJZiB5b3UgY2FuJ3QgY29udHJvbCBob3cgbmltYml4IHN0YXJ0IGRvY2tlciBjb250YWlu
+ZXIgKGVnOiBieSBwYXNzaW5nCmAtLXByaXZpbGVnZWRgIG9wdGlvbiksIHlvdSBkb24ndCBoYXZl
+IG90aGVyIGNob2ljZSB0aGFuCnVzaW5nIHVzZXIgbmFtZXNwYWNlIHdpdGggc2luZ3VsYXJpdHkg
+d2l0aCBgLXVgIGxpa2UgOiBgc2luZ3VsYXJpdHkKc2hlbGwgLXUgLS1udiAuLi5gCgpDw6lkcmlj
+CgpMZSAyNi8wNC8yMDE5IMOgIDE4OjQ0LCBNaXJvIEhvZGFrIGEgw6ljcml0wqA6Cj4gQ29weS1h
+bmQtcGFzdGUgb2Ygc2luZ3VsYXJpdHkgLWQgb3V0cHV0LCBJIGhhdmUgYXR0YWNoZWQgdGhlIGZp
+bGUsIGJ1dAo+IENocm9tZSBibG9ja3MgaXQKPgo+IEVuYWJsaW5nIGRlYnVnZ2luZwo+IEVuZGlu
+ZyBhcmd1bWVudCBsb29wCj4gU2luZ3VsYXJpdHkgdmVyc2lvbjogMi41LjItZGlzdAo+IEV4ZWMn
+aW5nOiAvdXNyL2xvY2FsL2xpYmV4ZWMvc2luZ3VsYXJpdHkvY2xpL3NoZWxsLmV4ZWMKPiBFdmFs
+dWF0aW5nIGFyZ3M6ICd0Zl8xLjEzLjEtZ3B1Jwo+IFZFUkJPU0UgW1U9MCxQPTE4NjYwXcKgIMKg
+IMKgIG1lc3NhZ2VfaW5pdCgpwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
+wqAKPiBTZXQgbWVzc2FnZWxldmVsIHRvOiA1Cj4gVkVSQk9TRSBbVT0wLFA9MTg2NjBdwqAgwqAg
+wqAgc2luZ3VsYXJpdHlfY29uZmlnX3BhcnNlKCnCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoAo+IElu
+aXRpYWxpemUgY29uZmlndXJhdGlvbiBmaWxlOiAvdXNyL2xvY2FsL2V0Yy9zaW5ndWxhcml0eS9z
+aW5ndWxhcml0eS5jb25mCj4gREVCVUfCoCDCoFtVPTAsUD0xODY2MF3CoCDCoCDCoCBzaW5ndWxh
+cml0eV9jb25maWdfcGFyc2UoKcKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgCj4gU3RhcnRpbmcgcGFy
+c2Ugb2YgY29uZmlndXJhdGlvbiBmaWxlCj4gL3Vzci9sb2NhbC9ldGMvc2luZ3VsYXJpdHkvc2lu
+Z3VsYXJpdHkuY29uZgo+IFZFUkJPU0UgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNpbmd1bGFyaXR5
+X2NvbmZpZ19wYXJzZSgpwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAKPiBHb3QgY29uZmlnIGtleSBh
+bGxvdyBzZXR1aWQgPSAneWVzJwo+IFZFUkJPU0UgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNpbmd1
+bGFyaXR5X2NvbmZpZ19wYXJzZSgpwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAKPiBHb3QgY29uZmln
+IGtleSBtYXggbG9vcCBkZXZpY2VzID0gJzI1NicKPiBWRVJCT1NFIFtVPTAsUD0xODY2MF3CoCDC
+oCDCoCBzaW5ndWxhcml0eV9jb25maWdfcGFyc2UoKcKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgCj4g
+R290IGNvbmZpZyBrZXkgYWxsb3cgcGlkIG5zID0gJ3llcycKPiBWRVJCT1NFIFtVPTAsUD0xODY2
+MF3CoCDCoCDCoCBzaW5ndWxhcml0eV9jb25maWdfcGFyc2UoKcKgIMKgIMKgIMKgIMKgIMKgIMKg
+IMKgCj4gR290IGNvbmZpZyBrZXkgY29uZmlnIHBhc3N3ZCA9ICd5ZXMnCj4gVkVSQk9TRSBbVT0w
+LFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfY29uZmlnX3BhcnNlKCnCoCDCoCDCoCDCoCDC
+oCDCoCDCoCDCoAo+IEdvdCBjb25maWcga2V5IGNvbmZpZyBncm91cCA9ICd5ZXMnCj4gVkVSQk9T
+RSBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfY29uZmlnX3BhcnNlKCnCoCDCoCDC
+oCDCoCDCoCDCoCDCoCDCoAo+IEdvdCBjb25maWcga2V5IGNvbmZpZyByZXNvbHZfY29uZiA9ICd5
+ZXMnCj4gVkVSQk9TRSBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfY29uZmlnX3Bh
+cnNlKCnCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoAo+IEdvdCBjb25maWcga2V5IG1vdW50IHByb2Mg
+PSAneWVzJwo+IFZFUkJPU0UgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNpbmd1bGFyaXR5X2NvbmZp
+Z19wYXJzZSgpwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAKPiBHb3QgY29uZmlnIGtleSBtb3VudCBz
+eXMgPSAneWVzJwo+IFZFUkJPU0UgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNpbmd1bGFyaXR5X2Nv
+bmZpZ19wYXJzZSgpwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAKPiBHb3QgY29uZmlnIGtleSBtb3Vu
+dCBkZXYgPSAneWVzJwo+IFZFUkJPU0UgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNpbmd1bGFyaXR5
+X2NvbmZpZ19wYXJzZSgpwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAKPiBHb3QgY29uZmlnIGtleSBt
+b3VudCBkZXZwdHMgPSAneWVzJwo+IFZFUkJPU0UgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNpbmd1
+bGFyaXR5X2NvbmZpZ19wYXJzZSgpwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAKPiBHb3QgY29uZmln
+IGtleSBtb3VudCBob21lID0gJ3llcycKPiBWRVJCT1NFIFtVPTAsUD0xODY2MF3CoCDCoCDCoCBz
+aW5ndWxhcml0eV9jb25maWdfcGFyc2UoKcKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgCj4gR290IGNv
+bmZpZyBrZXkgbW91bnQgdG1wID0gJ3llcycKPiBWRVJCT1NFIFtVPTAsUD0xODY2MF3CoCDCoCDC
+oCBzaW5ndWxhcml0eV9jb25maWdfcGFyc2UoKcKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgCj4gR290
+IGNvbmZpZyBrZXkgbW91bnQgaG9zdGZzID0gJ25vJwo+IFZFUkJPU0UgW1U9MCxQPTE4NjYwXcKg
+IMKgIMKgIHNpbmd1bGFyaXR5X2NvbmZpZ19wYXJzZSgpwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAK
+PiBHb3QgY29uZmlnIGtleSBiaW5kIHBhdGggPSAnL2V0Yy9sb2NhbHRpbWUnCj4gVkVSQk9TRSBb
+VT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfY29uZmlnX3BhcnNlKCnCoCDCoCDCoCDC
+oCDCoCDCoCDCoCDCoAo+IEdvdCBjb25maWcga2V5IGJpbmQgcGF0aCA9ICcvZXRjL2hvc3RzJwo+
+IFZFUkJPU0UgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNpbmd1bGFyaXR5X2NvbmZpZ19wYXJzZSgp
+wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAKPiBHb3QgY29uZmlnIGtleSB1c2VyIGJpbmQgY29udHJv
+bCA9ICd5ZXMnCj4gVkVSQk9TRSBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfY29u
+ZmlnX3BhcnNlKCnCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoAo+IEdvdCBjb25maWcga2V5IGVuYWJs
+ZSBvdmVybGF5ID0gJ3RyeScKPiBWRVJCT1NFIFtVPTAsUD0xODY2MF3CoCDCoCDCoCBzaW5ndWxh
+cml0eV9jb25maWdfcGFyc2UoKcKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgCj4gR290IGNvbmZpZyBr
+ZXkgbW91bnQgc2xhdmUgPSAneWVzJwo+IFZFUkJPU0UgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNp
+bmd1bGFyaXR5X2NvbmZpZ19wYXJzZSgpwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAKPiBHb3QgY29u
+ZmlnIGtleSBzZXNzaW9uZGlyIG1heCBzaXplID0gJzE2Jwo+IFZFUkJPU0UgW1U9MCxQPTE4NjYw
+XcKgIMKgIMKgIHNpbmd1bGFyaXR5X2NvbmZpZ19wYXJzZSgpwqAgwqAgwqAgwqAgwqAgwqAgwqAg
+wqAKPiBHb3QgY29uZmlnIGtleSBhbGxvdyBjb250YWluZXIgc3F1YXNoZnMgPSAneWVzJwo+IFZF
+UkJPU0UgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNpbmd1bGFyaXR5X2NvbmZpZ19wYXJzZSgpwqAg
+wqAgwqAgwqAgwqAgwqAgwqAgwqAKPiBHb3QgY29uZmlnIGtleSBhbGxvdyBjb250YWluZXIgZXh0
+ZnMgPSAneWVzJwo+IFZFUkJPU0UgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNpbmd1bGFyaXR5X2Nv
+bmZpZ19wYXJzZSgpwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAKPiBHb3QgY29uZmlnIGtleSBhbGxv
+dyBjb250YWluZXIgZGlyID0gJ3llcycKPiBERUJVR8KgIMKgW1U9MCxQPTE4NjYwXcKgIMKgIMKg
+IHNpbmd1bGFyaXR5X2NvbmZpZ19wYXJzZSgpwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAKPiBGaW5p
+c2hlZCBwYXJzaW5nIGNvbmZpZ3VyYXRpb24gZmlsZQo+ICcvdXNyL2xvY2FsL2V0Yy9zaW5ndWxh
+cml0eS9zaW5ndWxhcml0eS5jb25mJwo+IFZFUkJPU0UgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNp
+bmd1bGFyaXR5X3JlZ2lzdHJ5X2luaXQoKcKgIMKgIMKgIMKgIMKgIMKgIMKgCj4gwqBJbml0aWFs
+aXppbmcgU2luZ3VsYXJpdHkgUmVnaXN0cnkKPiBWRVJCT1NFIFtVPTAsUD0xODY2MF3CoCDCoCDC
+oCBzaW5ndWxhcml0eV9yZWdpc3RyeV9zZXQoKcKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgCj4gQWRk
+aW5nIHZhbHVlIHRvIHJlZ2lzdHJ5OiAnTElCRVhFQ0RJUicgPSAnL3Vzci9sb2NhbC9saWJleGVj
+Jwo+IERFQlVHwqAgwqBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfcmVnaXN0cnlf
+c2V0KCnCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoAo+IFJldHVybmluZyBzaW5ndWxhcml0eV9yZWdp
+c3RyeV9zZXQobGliZXhlY2RpciwgL3Vzci9sb2NhbC9saWJleGVjKSA9IDAKPiBWRVJCT1NFIFtV
+PTAsUD0xODY2MF3CoCDCoCDCoCBzaW5ndWxhcml0eV9yZWdpc3RyeV9zZXQoKcKgIMKgIMKgIMKg
+IMKgIMKgIMKgIMKgCj4gQWRkaW5nIHZhbHVlIHRvIHJlZ2lzdHJ5OiAnQ09NTUFORCcgPSAnc2hl
+bGwnCj4gREVCVUfCoCDCoFtVPTAsUD0xODY2MF3CoCDCoCDCoCBzaW5ndWxhcml0eV9yZWdpc3Ry
+eV9zZXQoKcKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgCj4gUmV0dXJuaW5nIHNpbmd1bGFyaXR5X3Jl
+Z2lzdHJ5X3NldChDT01NQU5ELCBzaGVsbCkgPSAwCj4gVkVSQk9TRSBbVT0wLFA9MTg2NjBdwqAg
+wqAgwqAgc2luZ3VsYXJpdHlfcmVnaXN0cnlfc2V0KCnCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoAo+
+IEFkZGluZyB2YWx1ZSB0byByZWdpc3RyeTogJ01FU1NBR0VMRVZFTCcgPSAnNScKPiBERUJVR8Kg
+IMKgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNpbmd1bGFyaXR5X3JlZ2lzdHJ5X3NldCgpwqAgwqAg
+wqAgwqAgwqAgwqAgwqAgwqAKPiBSZXR1cm5pbmcgc2luZ3VsYXJpdHlfcmVnaXN0cnlfc2V0KE1F
+U1NBR0VMRVZFTCwgNSkgPSAwCj4gVkVSQk9TRSBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3Vs
+YXJpdHlfcmVnaXN0cnlfc2V0KCnCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoAo+IEFkZGluZyB2YWx1
+ZSB0byByZWdpc3RyeTogJ1ZFUlNJT04nID0gJzIuNS4yLWRpc3QnCj4gREVCVUfCoCDCoFtVPTAs
+UD0xODY2MF3CoCDCoCDCoCBzaW5ndWxhcml0eV9yZWdpc3RyeV9zZXQoKcKgIMKgIMKgIMKgIMKg
+IMKgIMKgIMKgCj4gUmV0dXJuaW5nIHNpbmd1bGFyaXR5X3JlZ2lzdHJ5X3NldCh2ZXJzaW9uLCAy
+LjUuMi1kaXN0KSA9IDAKPiBWRVJCT1NFIFtVPTAsUD0xODY2MF3CoCDCoCDCoCBzaW5ndWxhcml0
+eV9yZWdpc3RyeV9zZXQoKcKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgCj4gQWRkaW5nIHZhbHVlIHRv
+IHJlZ2lzdHJ5OiAnTE9DQUxTVEFURURJUicgPSAnL3Vzci9sb2NhbC92YXInCj4gREVCVUfCoCDC
+oFtVPTAsUD0xODY2MF3CoCDCoCDCoCBzaW5ndWxhcml0eV9yZWdpc3RyeV9zZXQoKcKgIMKgIMKg
+IMKgIMKgIMKgIMKgIMKgCj4gUmV0dXJuaW5nIHNpbmd1bGFyaXR5X3JlZ2lzdHJ5X3NldChsb2Nh
+bHN0YXRlZGlyLCAvdXNyL2xvY2FsL3ZhcikgPSAwCj4gVkVSQk9TRSBbVT0wLFA9MTg2NjBdwqAg
+wqAgwqAgc2luZ3VsYXJpdHlfcmVnaXN0cnlfc2V0KCnCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoAo+
+IEFkZGluZyB2YWx1ZSB0byByZWdpc3RyeTogJ1NZU0NPTkZESVInID0gJy91c3IvbG9jYWwvZXRj
+Jwo+IERFQlVHwqAgwqBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfcmVnaXN0cnlf
+c2V0KCnCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoAo+IFJldHVybmluZyBzaW5ndWxhcml0eV9yZWdp
+c3RyeV9zZXQoc3lzY29uZmRpciwgL3Vzci9sb2NhbC9ldGMpID0gMAo+IFZFUkJPU0UgW1U9MCxQ
+PTE4NjYwXcKgIMKgIMKgIHNpbmd1bGFyaXR5X3JlZ2lzdHJ5X3NldCgpwqAgwqAgwqAgwqAgwqAg
+wqAgwqAgwqAKPiBBZGRpbmcgdmFsdWUgdG8gcmVnaXN0cnk6ICdCSU5ESVInID0gJy91c3IvbG9j
+YWwvYmluJwo+IERFQlVHwqAgwqBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfcmVn
+aXN0cnlfc2V0KCnCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoAo+IFJldHVybmluZyBzaW5ndWxhcml0
+eV9yZWdpc3RyeV9zZXQoYmluZGlyLCAvdXNyL2xvY2FsL2JpbikgPSAwCj4gVkVSQk9TRSBbVT0w
+LFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfcmVnaXN0cnlfc2V0KCnCoCDCoCDCoCDCoCDC
+oCDCoCDCoCDCoAo+IEFkZGluZyB2YWx1ZSB0byByZWdpc3RyeTogJ0lNQUdFJyA9ICd0Zl8xLjEz
+LjEtZ3B1Jwo+IERFQlVHwqAgwqBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfcmVn
+aXN0cnlfc2V0KCnCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoAo+IFJldHVybmluZyBzaW5ndWxhcml0
+eV9yZWdpc3RyeV9zZXQoSU1BR0UsIHRmXzEuMTMuMS1ncHUpID0gMAo+IERFQlVHwqAgwqBbVT0w
+LFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfcmVnaXN0cnlfZ2V0KCnCoCDCoCDCoCDCoCDC
+oCDCoCDCoCDCoAo+IFJldHVybmluZyBOVUxMIG9uICdIT01FJwo+IERFQlVHwqAgwqBbVT0wLFA9
+MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfcmVnaXN0cnlfZ2V0KCnCoCDCoCDCoCDCoCDCoCDC
+oCDCoCDCoAo+IFJldHVybmluZyBOVUxMIG9uICdUQVJHRVRfVUlEJwo+IERFQlVHwqAgwqBbVT0w
+LFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfcmVnaXN0cnlfZ2V0KCnCoCDCoCDCoCDCoCDC
+oCDCoCDCoCDCoAo+IFJldHVybmluZyBOVUxMIG9uICdUQVJHRVRfR0lEJwo+IERFQlVHwqAgwqBb
+VT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfcHJpdl9pbml0KCnCoCDCoCDCoCDCoCDC
+oCDCoCDCoCDCoCDCoAo+IMKgSW5pdGlhbGl6aW5nIHVzZXIgaW5mbwo+IERFQlVHwqAgwqBbVT0w
+LFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfcHJpdl9pbml0KCnCoCDCoCDCoCDCoCDCoCDC
+oCDCoCDCoCDCoAo+IMKgU2V0IHRoZSBjYWxsaW5nIHVzZXIncyB1c2VybmFtZSB0bzogcm9vdAo+
+IERFQlVHwqAgwqBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfcHJpdl9pbml0KCnC
+oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoAo+IMKgTWFya2luZyB1aW5mbyBzdHJ1Y3R1cmUgYXMg
+cmVhZHkKPiBERUJVR8KgIMKgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNpbmd1bGFyaXR5X3ByaXZf
+aW5pdCgpwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAKPiDCoE9idGFpbmluZyBob21lIGRpcmVj
+dG9yeQo+IFZFUkJPU0UgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNpbmd1bGFyaXR5X3ByaXZfaW5p
+dCgpwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAKPiDCoFNldCBob21lICh2aWEgZ2V0cHd1aWQo
+KSkgdG86IC9yb290Cj4gVkVSQk9TRSBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlf
+c3VpZF9pbml0KCnCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoAo+IMKgUnVubmluZyBTVUlEIHBy
+b2dyYW0gd29ya2Zsb3cKPiBWRVJCT1NFIFtVPTAsUD0xODY2MF3CoCDCoCDCoCBzaW5ndWxhcml0
+eV9zdWlkX2luaXQoKcKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgCj4gwqBDaGVja2luZyBwcm9n
+cmFtIGhhcyBhcHByb3ByaWF0ZSBwZXJtaXNzaW9ucwo+IFZFUkJPU0UgW1U9MCxQPTE4NjYwXcKg
+IMKgIMKgIHNpbmd1bGFyaXR5X3N1aWRfaW5pdCgpwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAK
+PiDCoENoZWNraW5nIGNvbmZpZ3VyYXRpb24gZmlsZSBpcyBwcm9wZXJseSBvd25lZCBieSByb290
+Cj4gVkVSQk9TRSBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfc3VpZF9pbml0KCnC
+oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoAo+IMKgQ2hlY2tpbmcgaWYgc2luZ3VsYXJpdHkuY29u
+ZiBhbGxvd3MgdXMgdG8gcnVuIGFzIHN1aWQKPiBERUJVR8KgIMKgW1U9MCxQPTE4NjYwXcKgIMKg
+IMKgIHNpbmd1bGFyaXR5X2NvbmZpZ19nZXRfYm9vbF9jaGFyX2ltcGwoKcKgCj4gwqBDYWxsZWQg
+c2luZ3VsYXJpdHlfY29uZmlnX2dldF9ib29sKGFsbG93IHNldHVpZCwgeWVzKQo+IERFQlVHwqAg
+wqBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfY29uZmlnX2dldF92YWx1ZV9pbXBs
+KCnCoCDCoCDCoAo+IMKgUmV0dXJuaW5nIGNvbmZpZ3VyYXRpb24gdmFsdWUgYWxsb3cgc2V0dWlk
+PSd5ZXMnCj4gREVCVUfCoCDCoFtVPTAsUD0xODY2MF3CoCDCoCDCoCBzaW5ndWxhcml0eV9jb25m
+aWdfZ2V0X2Jvb2xfY2hhcl9pbXBsKCnCoAo+IMKgUmV0dXJuIHNpbmd1bGFyaXR5X2NvbmZpZ19n
+ZXRfYm9vbChhbGxvdyBzZXR1aWQsIHllcykgPSAxCj4gREVCVUfCoCDCoFtVPTAsUD0xODY2MF3C
+oCDCoCDCoCBzaW5ndWxhcml0eV9yZWdpc3RyeV9nZXQoKcKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
+Cj4gUmV0dXJuaW5nIE5VTEwgb24gJ05PU1VJRCcKPiBWRVJCT1NFIFtVPTAsUD0xODY2MF3CoCDC
+oCDCoCBzaW5ndWxhcml0eV9wcml2X3VzZXJucygpwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAKPiDC
+oEludm9raW5nIHRoZSB1c2VyIG5hbWVzcGFjZQo+IERFQlVHwqAgwqBbVT0wLFA9MTg2NjBdwqAg
+wqAgwqAgc2luZ3VsYXJpdHlfY29uZmlnX2dldF9ib29sX2NoYXJfaW1wbCgpwqAKPiDCoENhbGxl
+ZCBzaW5ndWxhcml0eV9jb25maWdfZ2V0X2Jvb2woYWxsb3cgdXNlciBucywgeWVzKQo+IERFQlVH
+wqAgwqBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfY29uZmlnX2dldF92YWx1ZV9p
+bXBsKCnCoCDCoCDCoAo+IMKgTm8gY29uZmlndXJhdGlvbiBlbnRyeSBmb3VuZCBmb3IgJ2FsbG93
+IHVzZXIgbnMnOyByZXR1cm5pbmcgZGVmYXVsdAo+IHZhbHVlICd5ZXMnCj4gREVCVUfCoCDCoFtV
+PTAsUD0xODY2MF3CoCDCoCDCoCBzaW5ndWxhcml0eV9jb25maWdfZ2V0X2Jvb2xfY2hhcl9pbXBs
+KCnCoAo+IMKgUmV0dXJuIHNpbmd1bGFyaXR5X2NvbmZpZ19nZXRfYm9vbChhbGxvdyB1c2VyIG5z
+LCB5ZXMpID0gMQo+IFZFUkJPU0UgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNpbmd1bGFyaXR5X3By
+aXZfdXNlcm5zKCnCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoAo+IMKgTm90IHZpcnR1YWxpemluZyBV
+U0VSIG5hbWVzcGFjZTogcnVubmluZyBhcyByb290Cj4gREVCVUfCoCDCoFtVPTAsUD0xODY2MF3C
+oCDCoCDCoCBzaW5ndWxhcml0eV9wcml2X3VzZXJucygpwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAK
+PiDCoFJldHVybmluZyBzaW5ndWxhcml0eV9wcml2X2luaXQodm9pZCkKPiBERUJVR8KgIMKgW1U9
+MCxQPTE4NjYwXcKgIMKgIMKgIHNpbmd1bGFyaXR5X3ByaXZfZHJvcCgpwqAgwqAgwqAgwqAgwqAg
+wqAgwqAgwqAgwqAKPiDCoFJ1bm5pbmcgYXMgcm9vdCwgbm90IGNoYW5naW5nIHByaXZpbGVnZXMK
+PiBERUJVR8KgIMKgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNpbmd1bGFyaXR5X2NvbmZpZ19nZXRf
+dmFsdWVfbXVsdGlfaW1wbCgpCj4gTm8gY29uZmlndXJhdGlvbiBlbnRyeSBmb3VuZCBmb3IgJ2F1
+dG9mcyBidWcgcGF0aCc7IHJldHVybmluZyBkZWZhdWx0Cj4gdmFsdWUgJycKPiBWRVJCT1NFIFtV
+PTAsUD0xODY2MF3CoCDCoCDCoCBzaW5ndWxhcml0eV9ydW50aW1lX2F1dG9mcygpwqAgwqAgwqAg
+wqAgwqAgwqAgwqAKPiBObyBhdXRvZnMgYnVnIHBhdGggaW4gY29uZmlndXJhdGlvbiwgc2tpcHBp
+bmcKPiBERUJVR8KgIMKgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNpbmd1bGFyaXR5X3JlZ2lzdHJ5
+X2dldCgpwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAKPiBSZXR1cm5pbmcgTlVMTCBvbiAnREFFTU9O
+X1NUQVJUJwo+IERFQlVHwqAgwqBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfcmVn
+aXN0cnlfZ2V0KCnCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoAo+IFJldHVybmluZyBOVUxMIG9uICdE
+QUVNT05fSk9JTicKPiBERUJVR8KgIMKgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNpbmd1bGFyaXR5
+X2RhZW1vbl9pbml0KCnCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoAo+IMKgTm90IGpvaW5pbmcgYSBk
+YWVtb24sIGRhZW1vbiBqb2luIG5vdCBzZXQKPiBERUJVR8KgIMKgW1U9MCxQPTE4NjYwXcKgIMKg
+IMKgIHNpbmd1bGFyaXR5X3JlZ2lzdHJ5X2dldCgpwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAKPiBS
+ZXR1cm5pbmcgTlVMTCBvbiAnV1JJVEFCTEUnCj4gVkVSQk9TRSBbVT0wLFA9MTg2NjBdwqAgwqAg
+wqAgbWFpbigpwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
+wqAgwqAKPiBJbnN0YW50aWF0aW5nIHJlYWQgb25seSBjb250YWluZXIgaW1hZ2Ugb2JqZWN0Cj4g
+REVCVUfCoCDCoFtVPTAsUD0xODY2MF3CoCDCoCDCoCBzaW5ndWxhcml0eV9yZWdpc3RyeV9nZXQo
+KcKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgCj4gUmV0dXJuaW5nIHZhbHVlIGZyb20gcmVnaXN0cnk6
+ICdJTUFHRScgPSAndGZfMS4xMy4xLWdwdScKPiBERUJVR8KgIMKgW1U9MCxQPTE4NjYwXcKgIMKg
+IMKgIHNpbmd1bGFyaXR5X2ltYWdlX2luaXQoKcKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgCj4g
+Q2FsbGluZyBpbWFnZV9pbml0IGZvciBlYWNoIGZpbGUgc3lzdGVtIG1vZHVsZQo+IERFQlVHwqAg
+wqBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfaW1hZ2VfZGlyX2luaXQoKcKgIMKg
+IMKgIMKgIMKgIMKgIMKgCj4gT3BlbmluZyBmaWxlIGRlc2NyaXB0b3IgdG8gZGlyZWN0b3J5Ogo+
+IC9ob21lL25pbWJpeC9zaW5ndWxhcml0eS0yLjUuMi90Zl8xLjEzLjEtZ3B1Cj4gREVCVUfCoCDC
+oFtVPTAsUD0xODY2MF3CoCDCoCDCoCBzaW5ndWxhcml0eV9pbWFnZV9kaXJfaW5pdCgpwqAgwqAg
+wqAgwqAgwqAgwqAgwqAKPiBUaGlzIGlzIG5vdCBhIGRpcmVjdG9yeSBiYXNlZCBpbWFnZQo+IERF
+QlVHwqAgwqBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfaW1hZ2Vfc3F1YXNoZnNf
+aW5pdCgpwqAgwqAgwqAgwqAKPiDCoENoZWNraW5nIGlmIHdyaXRhYmxlIGltYWdlIHJlcXVlc3Rl
+ZAo+IERFQlVHwqAgwqBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfaW1hZ2Vfc3F1
+YXNoZnNfaW5pdCgpwqAgwqAgwqAgwqAKPiDCoE9wZW5pbmcgZmlsZSBkZXNjcmlwdG9yIHRvIGlt
+YWdlOgo+IC9ob21lL25pbWJpeC9zaW5ndWxhcml0eS0yLjUuMi90Zl8xLjEzLjEtZ3B1Cj4gVkVS
+Qk9TRSBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfaW1hZ2Vfc3F1YXNoZnNfaW5p
+dCgpwqAgwqAgwqAgwqAKPiDCoENoZWNraW5nIHRoYXQgZmlsZSBwb2ludGVyIGlzIGEgU2luZ3Vs
+YXJpdHkgaW1hZ2UKPiBERUJVR8KgIMKgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNpbmd1bGFyaXR5
+X2ltYWdlX3NxdWFzaGZzX2luaXQoKcKgIMKgIMKgIMKgCj4gwqBDaGVja2luZyBmb3IgbWFnaWMg
+aW4gdGhlIHRvcCBvZiB0aGUgZmlsZQo+IFZFUkJPU0UgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNp
+bmd1bGFyaXR5X2ltYWdlX3NxdWFzaGZzX2luaXQoKcKgIMKgIMKgIMKgCj4gwqBGaWxlIGlzIGEg
+dmFsaWQgU3F1YXNoRlMgaW1hZ2UKPiBERUJVR8KgIMKgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNp
+bmd1bGFyaXR5X2ltYWdlX2luaXQoKcKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgCj4gZ290IGlt
+YWdlX2luaXQgdHlwZSBmb3Igc3F1YXNoZnMKPiBERUJVR8KgIMKgW1U9MCxQPTE4NjYwXcKgIMKg
+IMKgIHNpbmd1bGFyaXR5X2NvbmZpZ19nZXRfYm9vbF9jaGFyX2ltcGwoKcKgCj4gwqBDYWxsZWQg
+c2luZ3VsYXJpdHlfY29uZmlnX2dldF9ib29sKGFsbG93IGNvbnRhaW5lciBzcXVhc2hmcywgeWVz
+KQo+IERFQlVHwqAgwqBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfY29uZmlnX2dl
+dF92YWx1ZV9pbXBsKCnCoCDCoCDCoAo+IMKgUmV0dXJuaW5nIGNvbmZpZ3VyYXRpb24gdmFsdWUg
+YWxsb3cgY29udGFpbmVyIHNxdWFzaGZzPSd5ZXMnCj4gREVCVUfCoCDCoFtVPTAsUD0xODY2MF3C
+oCDCoCDCoCBzaW5ndWxhcml0eV9jb25maWdfZ2V0X2Jvb2xfY2hhcl9pbXBsKCnCoAo+IMKgUmV0
+dXJuIHNpbmd1bGFyaXR5X2NvbmZpZ19nZXRfYm9vbChhbGxvdyBjb250YWluZXIgc3F1YXNoZnMs
+IHllcykgPSAxCj4gREVCVUfCoCDCoFtVPTAsUD0xODY2MF3CoCDCoCDCoCBzaW5ndWxhcml0eV9y
+ZWdpc3RyeV9nZXQoKcKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgCj4gUmV0dXJuaW5nIE5VTEwgb24g
+J0RBRU1PTl9KT0lOJwo+IERFQlVHwqAgwqBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJp
+dHlfcmVnaXN0cnlfZ2V0KCnCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoAo+IFJldHVybmluZyBOVUxM
+IG9uICdDTEVBTlVQRElSJwo+IFZFUkJPU0UgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNpbmd1bGFy
+aXR5X3JlZ2lzdHJ5X3NldCgpwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAKPiBBZGRpbmcgdmFsdWUg
+dG8gcmVnaXN0cnk6ICdDTEVBTlVQRF9GRCcgPSAnLTEnCj4gREVCVUfCoCDCoFtVPTAsUD0xODY2
+MF3CoCDCoCDCoCBzaW5ndWxhcml0eV9yZWdpc3RyeV9zZXQoKcKgIMKgIMKgIMKgIMKgIMKgIMKg
+IMKgCj4gUmV0dXJuaW5nIHNpbmd1bGFyaXR5X3JlZ2lzdHJ5X3NldChDTEVBTlVQRF9GRCwgLTEp
+ID0gMAo+IERFQlVHwqAgwqBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfcmVnaXN0
+cnlfZ2V0KCnCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoAo+IFJldHVybmluZyBOVUxMIG9uICdEQUVN
+T05fSk9JTicKPiBERUJVR8KgIMKgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNpbmd1bGFyaXR5X3Jl
+Z2lzdHJ5X2dldCgpwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAKPiBSZXR1cm5pbmcgTlVMTCBvbiAn
+Tk9TRVNTSU9OQ0xFQU5VUCcKPiBERUJVR8KgIMKgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNpbmd1
+bGFyaXR5X3JlZ2lzdHJ5X2dldCgpwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAKPiBSZXR1cm5pbmcg
+TlVMTCBvbiAnTk9DTEVBTlVQJwo+IERFQlVHwqAgwqBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2lu
+Z3VsYXJpdHlfY2xlYW51cGQoKcKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgCj4gTm90IHJ1
+bm5pbmcgYSBjbGVhbnVwIHRocmVhZCwgbm8gJ1NJTkdVTEFSSVRZX0NMRUFOVVBESVInIGRlZmlu
+ZWQKPiBERUJVR8KgIMKgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNpbmd1bGFyaXR5X3JlZ2lzdHJ5
+X2dldCgpwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAKPiBSZXR1cm5pbmcgTlVMTCBvbiAnREFFTU9O
+X0pPSU4nCj4gREVCVUfCoCDCoFtVPTAsUD0xODY2MF3CoCDCoCDCoCBzaW5ndWxhcml0eV9ydW50
+aW1lX25zKCnCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoAo+IENhbGxpbmc6IF9zaW5ndWxhcml0
+eV9ydW50aW1lX25zX2lwYygpCj4gREVCVUfCoCDCoFtVPTAsUD0xODY2MF3CoCDCoCDCoCBzaW5n
+dWxhcml0eV9jb25maWdfZ2V0X2Jvb2xfY2hhcl9pbXBsKCnCoAo+IMKgQ2FsbGVkIHNpbmd1bGFy
+aXR5X2NvbmZpZ19nZXRfYm9vbChhbGxvdyBpcGMgbnMsIHllcykKPiBERUJVR8KgIMKgW1U9MCxQ
+PTE4NjYwXcKgIMKgIMKgIHNpbmd1bGFyaXR5X2NvbmZpZ19nZXRfdmFsdWVfaW1wbCgpwqAgwqAg
+wqAKPiDCoE5vIGNvbmZpZ3VyYXRpb24gZW50cnkgZm91bmQgZm9yICdhbGxvdyBpcGMgbnMnOyBy
+ZXR1cm5pbmcgZGVmYXVsdAo+IHZhbHVlICd5ZXMnCj4gREVCVUfCoCDCoFtVPTAsUD0xODY2MF3C
+oCDCoCDCoCBzaW5ndWxhcml0eV9jb25maWdfZ2V0X2Jvb2xfY2hhcl9pbXBsKCnCoAo+IMKgUmV0
+dXJuIHNpbmd1bGFyaXR5X2NvbmZpZ19nZXRfYm9vbChhbGxvdyBpcGMgbnMsIHllcykgPSAxCj4g
+REVCVUfCoCDCoFtVPTAsUD0xODY2MF3CoCDCoCDCoCBzaW5ndWxhcml0eV9yZWdpc3RyeV9nZXQo
+KcKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgCj4gUmV0dXJuaW5nIE5VTEwgb24gJ1VOU0hBUkVfSVBD
+Jwo+IFZFUkJPU0UgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNpbmd1bGFyaXR5X3J1bnRpbWVfbnNf
+aXBjKCnCoCDCoCDCoCDCoCDCoCDCoCDCoAo+IE5vdCB2aXJ0dWFsaXppbmcgSVBDIG5hbWVzcGFj
+ZSBvbiB1c2VyIHJlcXVlc3QKPiBERUJVR8KgIMKgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNpbmd1
+bGFyaXR5X3J1bnRpbWVfbnMoKcKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgCj4gQ2FsbGluZzog
+X3Npbmd1bGFyaXR5X3J1bnRpbWVfbnNfcGlkKCkKPiBERUJVR8KgIMKgW1U9MCxQPTE4NjYwXcKg
+IMKgIMKgIHNpbmd1bGFyaXR5X2NvbmZpZ19nZXRfYm9vbF9jaGFyX2ltcGwoKcKgCj4gwqBDYWxs
+ZWQgc2luZ3VsYXJpdHlfY29uZmlnX2dldF9ib29sKGFsbG93IHBpZCBucywgeWVzKQo+IERFQlVH
+wqAgwqBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfY29uZmlnX2dldF92YWx1ZV9p
+bXBsKCnCoCDCoCDCoAo+IMKgUmV0dXJuaW5nIGNvbmZpZ3VyYXRpb24gdmFsdWUgYWxsb3cgcGlk
+IG5zPSd5ZXMnCj4gREVCVUfCoCDCoFtVPTAsUD0xODY2MF3CoCDCoCDCoCBzaW5ndWxhcml0eV9j
+b25maWdfZ2V0X2Jvb2xfY2hhcl9pbXBsKCnCoAo+IMKgUmV0dXJuIHNpbmd1bGFyaXR5X2NvbmZp
+Z19nZXRfYm9vbChhbGxvdyBwaWQgbnMsIHllcykgPSAxCj4gREVCVUfCoCDCoFtVPTAsUD0xODY2
+MF3CoCDCoCDCoCBzaW5ndWxhcml0eV9yZWdpc3RyeV9nZXQoKcKgIMKgIMKgIMKgIMKgIMKgIMKg
+IMKgCj4gUmV0dXJuaW5nIE5VTEwgb24gJ1VOU0hBUkVfUElEJwo+IFZFUkJPU0UgW1U9MCxQPTE4
+NjYwXcKgIMKgIMKgIHNpbmd1bGFyaXR5X3J1bnRpbWVfbnNfcGlkKCnCoCDCoCDCoCDCoCDCoCDC
+oCDCoAo+IE5vdCB2aXJ0dWFsaXppbmcgUElEIG5hbWVzcGFjZSBvbiB1c2VyIHJlcXVlc3QKPiBE
+RUJVR8KgIMKgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNpbmd1bGFyaXR5X3J1bnRpbWVfbnMoKcKg
+IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgCj4gQ2FsbGluZzogX3Npbmd1bGFyaXR5X3J1bnRpbWVf
+bnNfbmV0KCkKPiBERUJVR8KgIMKgW1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNpbmd1bGFyaXR5X3Jl
+Z2lzdHJ5X2dldCgpwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAKPiBSZXR1cm5pbmcgTlVMTCBvbiAn
+VU5TSEFSRV9ORVQnCj4gVkVSQk9TRSBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlf
+cnVudGltZV9uc19uZXQoKcKgIMKgIMKgIMKgIMKgIMKgIMKgCj4gTm90IHZpcnR1YWxpemluZyBu
+ZXR3b3JrIG5hbWVzcGFjZSBvbiB1c2VyIHJlcXVlc3QKPiBERUJVR8KgIMKgW1U9MCxQPTE4NjYw
+XcKgIMKgIMKgIHNpbmd1bGFyaXR5X3J1bnRpbWVfbnMoKcKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
+IMKgCj4gQ2FsbGluZzogX3Npbmd1bGFyaXR5X3J1bnRpbWVfbnNfbW50KCkKPiBERUJVR8KgIMKg
+W1U9MCxQPTE4NjYwXcKgIMKgIMKgIHNpbmd1bGFyaXR5X2NvbmZpZ19nZXRfYm9vbF9jaGFyX2lt
+cGwoKcKgCj4gwqBDYWxsZWQgc2luZ3VsYXJpdHlfY29uZmlnX2dldF9ib29sKG1vdW50IHNsYXZl
+LCB5ZXMpCj4gREVCVUfCoCDCoFtVPTAsUD0xODY2MF3CoCDCoCDCoCBzaW5ndWxhcml0eV9jb25m
+aWdfZ2V0X3ZhbHVlX2ltcGwoKcKgIMKgIMKgCj4gwqBSZXR1cm5pbmcgY29uZmlndXJhdGlvbiB2
+YWx1ZSBtb3VudCBzbGF2ZT0neWVzJwo+IERFQlVHwqAgwqBbVT0wLFA9MTg2NjBdwqAgwqAgwqAg
+c2luZ3VsYXJpdHlfY29uZmlnX2dldF9ib29sX2NoYXJfaW1wbCgpwqAKPiDCoFJldHVybiBzaW5n
+dWxhcml0eV9jb25maWdfZ2V0X2Jvb2wobW91bnQgc2xhdmUsIHllcykgPSAxCj4gREVCVUfCoCDC
+oFtVPTAsUD0xODY2MF3CoCDCoCDCoCBzaW5ndWxhcml0eV9wcml2X2VzY2FsYXRlKCnCoCDCoCDC
+oCDCoCDCoCDCoCDCoAo+IMKgUnVubmluZyBhcyByb290LCBub3QgY2hhbmdpbmcgcHJpdmlsZWdl
+cwo+IERFQlVHwqAgwqBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfcnVudGltZV9u
+c19tbnQoKcKgIMKgIMKgIMKgIMKgIMKgIMKgCj4gVmlydHVhbGl6aW5nIEZTIG5hbWVzcGFjZQo+
+IERFQlVHwqAgwqBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfcnVudGltZV9uc19t
+bnQoKcKgIMKgIMKgIMKgIMKgIMKgIMKgCj4gVmlydHVhbGl6aW5nIG1vdW50IG5hbWVzcGFjZQo+
+IERFQlVHwqAgwqBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfcHJpdl9kcm9wKCnC
+oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoAo+IMKgUnVubmluZyBhcyByb290LCBub3QgY2hhbmdp
+bmcgcHJpdmlsZWdlcwo+IERFQlVHwqAgwqBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJp
+dHlfcnVudGltZV9uc19tbnQoKcKgIMKgIMKgIMKgIMKgIMKgIMKgCj4gTWFraW5nIG1vdW50cyBz
+bGF2ZQo+IEVSUk9SwqAgwqBbVT0wLFA9MTg2NjBdwqAgwqAgwqAgc2luZ3VsYXJpdHlfcnVudGlt
+ZV9uc19tbnQoKcKgIMKgIMKgIMKgIMKgIMKgIMKgCj4gQ291bGQgbm90IG1ha2UgbW91bnRzcGFj
+ZXMgc2xhdmU6IFBlcm1pc3Npb24gZGVuaWVkCj4gQUJPUlTCoCDCoFtVPTAsUD0xODY2MF3CoCDC
+oCDCoCBzaW5ndWxhcml0eV9ydW50aW1lX25zX21udCgpwqAgwqAgwqAgwqAgwqAgwqAgwqAKPiBS
+ZXR2YWwgPSAyNTUKPgo+Cj4gT24gRnJpZGF5LCBBcHJpbCAyNiwgMjAxOSBhdCAxOjU2OjA5IEFN
+IFVUQy00LCBNaXJvIEhvZGFrIHdyb3RlOgo+Cj4gICAgIFRyeWluZyB0byB1c2Ugc2luZ3VsYXJp
+dHkgb24gTmltYml4LCBhbiBIUEMgY2xvdWQgcHJvdmlkZXIsIEkgZ2V0Cj4gICAgIHRoZSBlcnJv
+ciBtZW50aW9uZWQgaW4gdGhlIHRpdGxlLsKgCj4KPiAgICAgVGhlIHdheSBJIGhhdmUgYmVlbiB0
+cnlpbmcgdG8gdXNlIHNpbmd1bGFyaXR5IGlzIHRoYXQgYWZ0ZXIKPiAgICAgc3RhcnRpbmcgYSBq
+b2IgaW4gdGhlIGNsb3VkIEkgY2FuIGxvZyBpbiB1c2luZyBzc2guIFRoZSBPUwo+ICAgICBpc8Kg
+wqBVYnVudHUgMTYuMDQuMyBMVFMgLSBvbGQsIEkga25vdy4gSW4gdGhlIHNzaCBlbnZpcm9ubWVu
+dCBJIGNhbgo+ICAgICB1c2Ugc3Vkbywgc28gSSBjYW4gY29tcGlsZSBzaW5ndWxhcml0eSAtIEkg
+YW0gdXNpbmcgMi41LjIgKEkgYW0KPiAgICAgbW9yZSBmYW1pbGlhciB3aXRoIHYyIGFuZCBhbHNv
+IGl0IGlzIGVhc2llciB0byBpbnN0YWxsKS4gVGhlCj4gICAgIGluc3RhbGwgZ29lcyBPSywgYnV0
+IHdoZW4gdHJ5aW5nIHRvIHJ1biBhIGNvbnRhaW5lciBzZXNzaW9uIEkgZ2V0wqAKPgo+ICAgICBz
+aW5ndWxhcml0eSBzaGVsbCAtLW52IHRmXzEuMTMuMS1ncHUKPiAgICAgRVJST1LCoCA6IENvdWxk
+IG5vdCBtYWtlIG1vdW50c3BhY2VzIHNsYXZlOiBQZXJtaXNzaW9uIGRlbmllZAo+ICAgICBBQk9S
+VMKgIDogUmV0dmFsID0gMjU1Cj4KPiAgICAgV2hhdCBleGFjdGx5IGlzIHRoZSBwcm9ibGVtPyBU
+aGlzIGlzIGEgcGVybWlzc2lvbiBpc3N1ZSAtIHNvIGlzCj4gICAgIHRoaXMgc29tZXRoaW5nIEkg
+Y2FuIGZpeCB1c2luZyBzdWRvPyBPciBpcyB0aGUgT1MgdG9vIG9sZCB0bwo+ICAgICBzdXBwb3J0
+IHNpbmd1bGFyaXR5PyBPciBpcyB0aGUgY2xvdWQgZW52aXJvbm1lbnQgdG9vIGxpbWl0ZWQgdG8K
+PiAgICAgYWxsb3cgc2luZ3VsYXJpdHkgZXhlY3V0aW9uPwo+Cj4gICAgIFRoYW5rcyBmb3IgaGVs
+cC4KPgo+IC0tIAo+IFlvdSByZWNlaXZlZCB0aGlzIG1lc3NhZ2UgYmVjYXVzZSB5b3UgYXJlIHN1
+YnNjcmliZWQgdG8gdGhlIEdvb2dsZQo+IEdyb3VwcyAic2luZ3VsYXJpdHkiIGdyb3VwLgo+IFRv
+IHVuc3Vic2NyaWJlIGZyb20gdGhpcyBncm91cCBhbmQgc3RvcCByZWNlaXZpbmcgZW1haWxzIGZy
+b20gaXQsIHNlbmQKPiBhbiBlbWFpbCB0byBzaW5ndS4uLkBsYmwuZ292Cj4gPG1haWx0bzpzaW5n
+dS4uLkBsYmwuZ292Pi4KCgotLSAKCkPDqWRyaWMgQ2xlcmdldApTb2Z0d2FyZSBFbmdpbmVlciwg
+U3lsYWJzLCBJbmMKaHR0cHM6Ly93d3cuc3lsYWJzLmlvCgo=
+--------------E6D929860D850CCAC2ABFA3E
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: 8bit
+
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  </head>
+  <body text="#000000" bgcolor="#FFFFFF">
+    <div class="moz-cite-prefix">Looks like you are inside a docker
+      container because first mount syscall failed with a permission
+      denied even as root.<br>
+      If you can't control how nimbix start docker container (eg: by
+      passing `--privileged` option), you don't have other choice than<br>
+      using user namespace with singularity with `-u` like :
+      `singularity shell -u --nv ...`<br>
+      <br>
+      Cédric<br>
+      <br>
+      Le 26/04/2019 à 18:44, Miro Hodak a écrit :<br>
+    </div>
+    <blockquote type="cite"
+      cite="mid:a3fefe29-f095-45...@lbl.gov">
+      <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+      <div dir="ltr">Copy-and-paste of singularity -d output, I have
+        attached the file, but Chrome blocks it
+        <div><br>
+        </div>
+        <div>
+          <div>Enabling debugging</div>
+          <div>Ending argument loop</div>
+          <div>Singularity version: 2.5.2-dist</div>
+          <div>Exec'ing: /usr/local/libexec/singularity/cli/shell.exec</div>
+          <div>Evaluating args: 'tf_1.13.1-gpu'</div>
+          <div>VERBOSE [U=0,P=18660]      message_init()               
+                        Set messagelevel to: 5</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_config_parse()   
+                        Initialize configuration file:
+            /usr/local/etc/singularity/singularity.conf</div>
+          <div>DEBUG   [U=0,P=18660]      singularity_config_parse()   
+                        Starting parse of configuration file
+            /usr/local/etc/singularity/singularity.conf</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_config_parse()   
+                        Got config key allow setuid = 'yes'</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_config_parse()   
+                        Got config key max loop devices = '256'</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_config_parse()   
+                        Got config key allow pid ns = 'yes'</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_config_parse()   
+                        Got config key config passwd = 'yes'</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_config_parse()   
+                        Got config key config group = 'yes'</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_config_parse()   
+                        Got config key config resolv_conf = 'yes'</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_config_parse()   
+                        Got config key mount proc = 'yes'</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_config_parse()   
+                        Got config key mount sys = 'yes'</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_config_parse()   
+                        Got config key mount dev = 'yes'</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_config_parse()   
+                        Got config key mount devpts = 'yes'</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_config_parse()   
+                        Got config key mount home = 'yes'</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_config_parse()   
+                        Got config key mount tmp = 'yes'</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_config_parse()   
+                        Got config key mount hostfs = 'no'</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_config_parse()   
+                        Got config key bind path = '/etc/localtime'</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_config_parse()   
+                        Got config key bind path = '/etc/hosts'</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_config_parse()   
+                        Got config key user bind control = 'yes'</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_config_parse()   
+                        Got config key enable overlay = 'try'</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_config_parse()   
+                        Got config key mount slave = 'yes'</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_config_parse()   
+                        Got config key sessiondir max size = '16'</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_config_parse()   
+                        Got config key allow container squashfs = 'yes'</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_config_parse()   
+                        Got config key allow container extfs = 'yes'</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_config_parse()   
+                        Got config key allow container dir = 'yes'</div>
+          <div>DEBUG   [U=0,P=18660]      singularity_config_parse()   
+                        Finished parsing configuration file
+            '/usr/local/etc/singularity/singularity.conf'</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_registry_init()   
+                       Initializing Singularity Registry</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_registry_set()   
+                        Adding value to registry: 'LIBEXECDIR' =
+            '/usr/local/libexec'</div>
+          <div>DEBUG   [U=0,P=18660]      singularity_registry_set()   
+                        Returning singularity_registry_set(libexecdir,
+            /usr/local/libexec) = 0</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_registry_set()   
+                        Adding value to registry: 'COMMAND' = 'shell'</div>
+          <div>DEBUG   [U=0,P=18660]      singularity_registry_set()   
+                        Returning singularity_registry_set(COMMAND,
+            shell) = 0</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_registry_set()   
+                        Adding value to registry: 'MESSAGELEVEL' = '5'</div>
+          <div>DEBUG   [U=0,P=18660]      singularity_registry_set()   
+                        Returning singularity_registry_set(MESSAGELEVEL,
+            5) = 0</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_registry_set()   
+                        Adding value to registry: 'VERSION' =
+            '2.5.2-dist'</div>
+          <div>DEBUG   [U=0,P=18660]      singularity_registry_set()   
+                        Returning singularity_registry_set(version,
+            2.5.2-dist) = 0</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_registry_set()   
+                        Adding value to registry: 'LOCALSTATEDIR' =
+            '/usr/local/var'</div>
+          <div>DEBUG   [U=0,P=18660]      singularity_registry_set()   
+                        Returning
+            singularity_registry_set(localstatedir, /usr/local/var) = 0</div>
+          <div>VERBOSE [U=0,P=18660]      singularity_registry_set()   
+                        Adding value to registry: 'SYSCONFDIR' =
+            '/usr/local/etc'</div>
+          <div>
+            <div>DEBUG   [U=0,P=18660]      singularity_registry_set() 
+                            Returning
+              singularity_registry_set(sysconfdir, /usr/local/etc) = 0</div>
+            <div>VERBOSE [U=0,P=18660]      singularity_registry_set() 
+                            Adding value to registry: 'BINDIR' =
+              '/usr/local/bin'</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_registry_set() 
+                            Returning singularity_registry_set(bindir,
+              /usr/local/bin) = 0</div>
+            <div>VERBOSE [U=0,P=18660]      singularity_registry_set() 
+                            Adding value to registry: 'IMAGE' =
+              'tf_1.13.1-gpu'</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_registry_set() 
+                            Returning singularity_registry_set(IMAGE,
+              tf_1.13.1-gpu) = 0</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_registry_get() 
+                            Returning NULL on 'HOME'</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_registry_get() 
+                            Returning NULL on 'TARGET_UID'</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_registry_get() 
+                            Returning NULL on 'TARGET_GID'</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_priv_init()     
+                           Initializing user info</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_priv_init()     
+                           Set the calling user's username to: root</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_priv_init()     
+                           Marking uinfo structure as ready</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_priv_init()     
+                           Obtaining home directory</div>
+            <div>VERBOSE [U=0,P=18660]      singularity_priv_init()     
+                           Set home (via getpwuid()) to: /root</div>
+            <div>VERBOSE [U=0,P=18660]      singularity_suid_init()     
+                           Running SUID program workflow</div>
+            <div>VERBOSE [U=0,P=18660]      singularity_suid_init()     
+                           Checking program has appropriate permissions</div>
+            <div>VERBOSE [U=0,P=18660]      singularity_suid_init()     
+                           Checking configuration file is properly owned
+              by root</div>
+            <div>VERBOSE [U=0,P=18660]      singularity_suid_init()     
+                           Checking if singularity.conf allows us to run
+              as suid</div>
+            <div>DEBUG   [U=0,P=18660]     
+              singularity_config_get_bool_char_impl()   Called
+              singularity_config_get_bool(allow setuid, yes)</div>
+            <div>DEBUG   [U=0,P=18660]     
+              singularity_config_get_value_impl()       Returning
+              configuration value allow setuid='yes'</div>
+            <div>DEBUG   [U=0,P=18660]     
+              singularity_config_get_bool_char_impl()   Return
+              singularity_config_get_bool(allow setuid, yes) = 1</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_registry_get() 
+                            Returning NULL on 'NOSUID'</div>
+            <div>VERBOSE [U=0,P=18660]      singularity_priv_userns()   
+                           Invoking the user namespace</div>
+            <div>DEBUG   [U=0,P=18660]     
+              singularity_config_get_bool_char_impl()   Called
+              singularity_config_get_bool(allow user ns, yes)</div>
+            <div>DEBUG   [U=0,P=18660]     
+              singularity_config_get_value_impl()       No configuration
+              entry found for 'allow user ns'; returning default value
+              'yes'</div>
+            <div>DEBUG   [U=0,P=18660]     
+              singularity_config_get_bool_char_impl()   Return
+              singularity_config_get_bool(allow user ns, yes) = 1</div>
+            <div>VERBOSE [U=0,P=18660]      singularity_priv_userns()   
+                           Not virtualizing USER namespace: running as
+              root</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_priv_userns()   
+                           Returning singularity_priv_init(void)</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_priv_drop()     
+                           Running as root, not changing privileges</div>
+            <div>DEBUG   [U=0,P=18660]     
+              singularity_config_get_value_multi_impl() No configuration
+              entry found for 'autofs bug path'; returning default value
+              ''</div>
+            <div>VERBOSE [U=0,P=18660]     
+              singularity_runtime_autofs()              No autofs bug
+              path in configuration, skipping</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_registry_get() 
+                            Returning NULL on 'DAEMON_START'</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_registry_get() 
+                            Returning NULL on 'DAEMON_JOIN'</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_daemon_init()   
+                           Not joining a daemon, daemon join not set</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_registry_get() 
+                            Returning NULL on 'WRITABLE'</div>
+            <div>VERBOSE [U=0,P=18660]      main()                     
+                            Instantiating read only container image
+              object</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_registry_get() 
+                            Returning value from registry: 'IMAGE' =
+              'tf_1.13.1-gpu'</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_image_init()   
+                            Calling image_init for each file system
+              module</div>
+            <div>DEBUG   [U=0,P=18660]     
+              singularity_image_dir_init()              Opening file
+              descriptor to directory:
+              /home/nimbix/singularity-2.5.2/tf_1.13.1-gpu</div>
+            <div>DEBUG   [U=0,P=18660]     
+              singularity_image_dir_init()              This is not a
+              directory based image</div>
+            <div>DEBUG   [U=0,P=18660]     
+              singularity_image_squashfs_init()         Checking if
+              writable image requested</div>
+            <div>DEBUG   [U=0,P=18660]     
+              singularity_image_squashfs_init()         Opening file
+              descriptor to image:
+              /home/nimbix/singularity-2.5.2/tf_1.13.1-gpu</div>
+            <div>VERBOSE [U=0,P=18660]     
+              singularity_image_squashfs_init()         Checking that
+              file pointer is a Singularity image</div>
+            <div>DEBUG   [U=0,P=18660]     
+              singularity_image_squashfs_init()         Checking for
+              magic in the top of the file</div>
+          </div>
+          <div>
+            <div>VERBOSE [U=0,P=18660]     
+              singularity_image_squashfs_init()         File is a valid
+              SquashFS image</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_image_init()   
+                            got image_init type for squashfs</div>
+            <div>DEBUG   [U=0,P=18660]     
+              singularity_config_get_bool_char_impl()   Called
+              singularity_config_get_bool(allow container squashfs, yes)</div>
+            <div>DEBUG   [U=0,P=18660]     
+              singularity_config_get_value_impl()       Returning
+              configuration value allow container squashfs='yes'</div>
+            <div>DEBUG   [U=0,P=18660]     
+              singularity_config_get_bool_char_impl()   Return
+              singularity_config_get_bool(allow container squashfs, yes)
+              = 1</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_registry_get() 
+                            Returning NULL on 'DAEMON_JOIN'</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_registry_get() 
+                            Returning NULL on 'CLEANUPDIR'</div>
+            <div>VERBOSE [U=0,P=18660]      singularity_registry_set() 
+                            Adding value to registry: 'CLEANUPD_FD' =
+              '-1'</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_registry_set() 
+                            Returning
+              singularity_registry_set(CLEANUPD_FD, -1) = 0</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_registry_get() 
+                            Returning NULL on 'DAEMON_JOIN'</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_registry_get() 
+                            Returning NULL on 'NOSESSIONCLEANUP'</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_registry_get() 
+                            Returning NULL on 'NOCLEANUP'</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_cleanupd()     
+                            Not running a cleanup thread, no
+              'SINGULARITY_CLEANUPDIR' defined</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_registry_get() 
+                            Returning NULL on 'DAEMON_JOIN'</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_runtime_ns()   
+                            Calling: _singularity_runtime_ns_ipc()</div>
+            <div>DEBUG   [U=0,P=18660]     
+              singularity_config_get_bool_char_impl()   Called
+              singularity_config_get_bool(allow ipc ns, yes)</div>
+            <div>DEBUG   [U=0,P=18660]     
+              singularity_config_get_value_impl()       No configuration
+              entry found for 'allow ipc ns'; returning default value
+              'yes'</div>
+            <div>DEBUG   [U=0,P=18660]     
+              singularity_config_get_bool_char_impl()   Return
+              singularity_config_get_bool(allow ipc ns, yes) = 1</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_registry_get() 
+                            Returning NULL on 'UNSHARE_IPC'</div>
+            <div>VERBOSE [U=0,P=18660]     
+              singularity_runtime_ns_ipc()              Not virtualizing
+              IPC namespace on user request</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_runtime_ns()   
+                            Calling: _singularity_runtime_ns_pid()</div>
+            <div>DEBUG   [U=0,P=18660]     
+              singularity_config_get_bool_char_impl()   Called
+              singularity_config_get_bool(allow pid ns, yes)</div>
+            <div>DEBUG   [U=0,P=18660]     
+              singularity_config_get_value_impl()       Returning
+              configuration value allow pid ns='yes'</div>
+            <div>DEBUG   [U=0,P=18660]     
+              singularity_config_get_bool_char_impl()   Return
+              singularity_config_get_bool(allow pid ns, yes) = 1</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_registry_get() 
+                            Returning NULL on 'UNSHARE_PID'</div>
+            <div>VERBOSE [U=0,P=18660]     
+              singularity_runtime_ns_pid()              Not virtualizing
+              PID namespace on user request</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_runtime_ns()   
+                            Calling: _singularity_runtime_ns_net()</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_registry_get() 
+                            Returning NULL on 'UNSHARE_NET'</div>
+            <div>VERBOSE [U=0,P=18660]     
+              singularity_runtime_ns_net()              Not virtualizing
+              network namespace on user request</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_runtime_ns()   
+                            Calling: _singularity_runtime_ns_mnt()</div>
+            <div>DEBUG   [U=0,P=18660]     
+              singularity_config_get_bool_char_impl()   Called
+              singularity_config_get_bool(mount slave, yes)</div>
+            <div>DEBUG   [U=0,P=18660]     
+              singularity_config_get_value_impl()       Returning
+              configuration value mount slave='yes'</div>
+            <div>DEBUG   [U=0,P=18660]     
+              singularity_config_get_bool_char_impl()   Return
+              singularity_config_get_bool(mount slave, yes) = 1</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_priv_escalate() 
+                           Running as root, not changing privileges</div>
+            <div>DEBUG   [U=0,P=18660]     
+              singularity_runtime_ns_mnt()              Virtualizing FS
+              namespace</div>
+            <div>DEBUG   [U=0,P=18660]     
+              singularity_runtime_ns_mnt()              Virtualizing
+              mount namespace</div>
+            <div>DEBUG   [U=0,P=18660]      singularity_priv_drop()     
+                           Running as root, not changing privileges</div>
+            <div>DEBUG   [U=0,P=18660]     
+              singularity_runtime_ns_mnt()              Making mounts
+              slave</div>
+            <div>ERROR   [U=0,P=18660]     
+              singularity_runtime_ns_mnt()              Could not make
+              mountspaces slave: Permission denied</div>
+            <div>ABORT   [U=0,P=18660]     
+              singularity_runtime_ns_mnt()              Retval = 255</div>
+          </div>
+          <div><br>
+          </div>
+          <br>
+          On Friday, April 26, 2019 at 1:56:09 AM UTC-4, Miro Hodak
+          wrote:
+          <blockquote class="gmail_quote" style="margin: 0;margin-left:
+            0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;">
+            <div dir="ltr">Trying to use singularity on Nimbix, an HPC
+              cloud provider, I get the error mentioned in the title. 
+              <div><br>
+              </div>
+              <div>The way I have been trying to use singularity is that
+                after starting a job in the cloud I can log in using
+                ssh. The OS is  Ubuntu 16.04.3 LTS - old, I know. In the
+                ssh environment I can use sudo, so I can compile
+                singularity - I am using 2.5.2 (I am more familiar with
+                v2 and also it is easier to install). The install goes
+                OK, but when trying to run a container session I get </div>
+              <div><br>
+              </div>
+              <div>
+                <div>singularity shell --nv tf_1.13.1-gpu</div>
+                <div>ERROR  : Could not make mountspaces slave:
+                  Permission denied</div>
+                <div>ABORT  : Retval = 255</div>
+              </div>
+              <div><br>
+              </div>
+              <div>What exactly is the problem? This is a permission
+                issue - so is this something I can fix using sudo? Or is
+                the OS too old to support singularity? Or is the cloud
+                environment too limited to allow singularity execution?</div>
+              <div><br>
+              </div>
+              <div>Thanks for help.</div>
+            </div>
+          </blockquote>
+        </div>
+      </div>
+      -- <br>
+      You received this message because you are subscribed to the Google
+      Groups "singularity" group.<br>
+      To unsubscribe from this group and stop receiving emails from it,
+      send an email to <a href="mailto:singu...@lbl.gov"
+        moz-do-not-send="true">singu...@lbl.gov</a>.<br>
+    </blockquote>
+    <br>
+    <br>
+    <div class="moz-signature">-- <br>
+      <pre>Cédric Clerget
+Software Engineer, Sylabs, Inc
+<a href="https://www.sylabs.io">https://www.sylabs.io</a></pre>
+    </div>
+  </body>
+</html>
+
+--------------E6D929860D850CCAC2ABFA3E--

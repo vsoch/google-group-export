@@ -1,0 +1,759 @@
+Date: Tue, 24 Jan 2017 11:39:44 -0800 (PST)
+From: Sadanand Warrier <sadanan...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <3b4480bb-30e7-4894-94e6-4ddb3baa13a9@lbl.gov>
+In-Reply-To: <bc8313b1-5369-4580-9a89-46add81e8cd9@lbl.gov>
+References: <9e693239-3155-4ad8-a94c-342e44e0bc0f@lbl.gov> <CAHOJALVsJwF-yETykMQFn8HCo7DB49JOO7+1X4rw9VZiGA501g@mail.gmail.com>
+ <cef0a48f-f7f0-439d-a95d-3ce8741e3765@lbl.gov> <CAN7etTxbBVFg8d3ZiUJpH7gNXdBHEAn71XW5FxyZ0xkRUoLSKw@mail.gmail.com>
+ <CAM=pu++Jhx-8+EkJPgq1uheDV4zY0jw1=MQZRdraL_vzxGUwag@mail.gmail.com>
+ <bc8313b1-5369-4580-9a89-46add81e8cd9@lbl.gov>
+Subject: Re: [Singularity] Unable to import a docker container image tar
+ file to a singularity container
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2758_1842185121.1485286784571"
+
+------=_Part_2758_1842185121.1485286784571
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2759_513826899.1485286784572"
+
+------=_Part_2759_513826899.1485286784572
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hello Vanessa, Greg
+    I got back to running the import command that fails reading from a tar 
+file as Greg had suggested and will upload the output as a text file. The 
+only salient thing I saw were these lines in the debug output. 
+
++ printf 'Executing Postbootstrap module\n'
+Executing Postbootstrap module
++ return 0
++ eval /usr/local/libexec/singularity/bootstrap/modules-v2/postbootstrap.sh
+++ /usr/local/libexec/singularity/bootstrap/modules-v2/postbootstrap.sh
++ '[' -z /var/lib/singularity/mnt/final ']'
++ '[' '!' -L /var/lib/singularity/mnt/final/bin/sh -a '!' -x 
+/var/lib/singularity/mnt/final/bin/sh ']'
++ message ERROR 'Container does not contain the valid minimum requirement 
+of /bin/sh\n'
++ LEVEL=ERROR
++ MESSAGE='Container does not contain the valid minimum requirement of 
+/bin/sh\n'
++ '[' -z 'Container does not contain the valid minimum requirement of 
+/bin/sh\n' ']'
++ shift
++ shift
++ case "$LEVEL" in
++ tput -Txterm setaf 1
++ printf 'ERROR: Container does not contain the valid minimum requirement 
+of /bin/sh\n'
+ERROR: Container does not contain the valid minimum requirement of /bin/sh
+
+I must add that I can import this same docker container by starting it and 
+then exporting the running container to a singularity import command. There 
+is no problem doing that and the new singularity container created 
+functions very well.
+
+On Thursday, January 19, 2017 at 2:37:51 PM UTC-5, Sadanand Warrier wrote:
+>
+> Thanks Greg 
+> Vanessa , I had seen the link you put up but by then I had already created 
+> a Singularity image container from the docker image using the docker export 
+> command.
+> I cannot provide the docker image that I built it has some stuff that is 
+> not public domain.
+>
+> The failure took place when I was doing this...
+>
+> First create a tar file.
+>
+> "docker save -o <tarfilename> <docker image file>  
+>
+>
+>  and then  try to convert it by using
+>
+> sudo singularity import <singualrityshell.img> <tarfilename>.
+>
+> It failed saying there was no /bin/sh , which wasn't true but I guess that 
+> is just a stock error.
+>
+> I will run this with the debug commands that Greg suggested and will get 
+> back.
+>
+> S
+>
+>
+>
+> On Thursday, January 19, 2017 at 1:11:50 PM UTC-5, vanessa wrote:
+>>
+>> Using the local method requires running a local registry, which (imho) is 
+>> more annoying than just creating a bootstrap file, but it does work! I 
+>> wrote up instructions here:
+>>
+>>
+>> https://github.com/singularityware/singularity/issues/429#issuecomment-269085751
+>>
+>> Can you provide the specific commands, and perhaps some way of sharing 
+>> your Docker image, so we can better help debug?
+>>
+>> On Thu, Jan 19, 2017 at 10:00 AM, Gregory M. Kurtzer <gm...@lbl.gov> 
+>> wrote:
+>>
+>>> Hi Sananad,
+>>>
+>>> I'm not sure why the docker save method didn't work, but the docker 
+>>> export | singularity import method is what I typically use for this. Can 
+>>> someone else more familiar with Docker then I replicate this error? It 
+>>> sounds like it also may need a bug report submitted.
+>>>
+>>> Vanessa's also been working on the Docker API interaction, and I think 
+>>> pulling from the local Docker daemon's API was something she was playing 
+>>> with which I think would render the save model obsolete (but I'll let her 
+>>> confirm or deny that).
+>>>
+>>> You can also try with debugging enabled (-d -x) and see if that points 
+>>> at the cause.
+>>>
+>>> Greg
+>>>
+>>>
+>>> On Thu, Jan 19, 2017 at 9:51 AM Sadanand Warrier <sad...@gmail.com> 
+>>> wrote:
+>>>
+>>>> Hi Lito
+>>>>    Thanks for the reply. The reason I did not dabble with the bootstrap 
+>>>> method was because I had a docker container on which some specific software 
+>>>> had been installed.and I did that by creating a basic container and then 
+>>>> installing this software on it and then creating a new image which had the 
+>>>> installed software.  I didn't want to go through that process, initially, 
+>>>> with Singularity. I needed to quickly demo some stuff to show SIngularity's 
+>>>> strengths. Hence the question.
+>>>>
+>>>> S
+>>>>
+>>>>
+>>>> On Thursday, January 19, 2017 at 11:19:31 AM UTC-5, Lito Bejarano wrote:
+>>>>
+>>>>> Hi Sananad,
+>>>>>
+>>>>> as of 2.2 version, it will be easier trying to create a Singularity 
+>>>>> definition file with the docker bootstrap method. 
+>>>>>
+>>>>> As you can see in 
+>>>>> https://github.com/singularityware/singularity/blob/master/examples/docker.def 
+>>>>> you can select the docker image to pull from the registry and build your 
+>>>>> Singularity container based on that docker image.
+>>>>>
+>>>>> Regards,
+>>>>>
+>>>> On Thu, Jan 19, 2017 at 5:14 PM, Sadanand Warrier <sad...@gmail.com
+>>>>> > wrote:
+>>>>>
+>>>> Hello, I had asked this question on a previous thread a couple of days 
+>>>>>> ago and got no response, so I thought I would create a new post. Here is 
+>>>>>> what the issue is
+>>>>>>
+>>>>>> Hello
+>>>>>>
+>>>>>> So I went through the answers but there is something that is a little 
+>>>>>> puzzling. I'm trying to convert a docker image to a Singularity container 
+>>>>>> image. So I followed the process that the "singularity --help import" 
+>>>>>> suggests by creating a tar file from the image using 
+>>>>>> "docker save -o <tarfilename> <image file>
+>>>>>>
+>>>>>>  and then  trying to convert it by using
+>>>>>>
+>>>>>> sudo singularity import <singularityshell.img> <tarfilename>.
+>>>>>>
+>>>>>> Tried various things including increasing the singularityshell.img 
+>>>>>> size from default 768M to 2048M (the docker container is 732M in size)  but 
+>>>>>> always got this error
+>>>>>>
+>>>>>> Bootstrap initialization
+>>>>>> No bootstrap definition passed, updating container
+>>>>>> Executing Prebootstrap module
+>>>>>> Executing Postbootstrap module
+>>>>>> ERROR: Container does not contain the valid minimum requirement of 
+>>>>>> /bin/sh
+>>>>>>
+>>>>>> There was actually a /bin/sh in the docker container so I think this 
+>>>>>> is some generic error.
+>>>>>>
+>>>>>> I finally managed to do the conversion by running the image 
+>>>>>> interactively and then doing this
+>>>>>>
+>>>>>> docker export <containername> | sudo singularity import 
+>>>>>> <singularityshell.img>
+>>>>>>
+>>>>>> Am I doing something wrong while importing the tar file?
+>>>>>>
+>>>>>> I did not try creating a local registry and pushing the image to it 
+>>>>>> etc.
+>>>>>>
+>>>>>> My question is why doesn't the tar method work??
+>>>>>>
+>>>>>> Thanks
+>>>>>>
+>>>>>> S
+>>>>>>
+>>>>>
+>>>>>>
+>>>>>>
+>>>>>>
+>>>>>>
+>>>>>>
+>>>>>>
+>>>>>>
+>>>>>> -- 
+>>>>>>
+>>>>>>
+>>>>>> You received this message because you are subscribed to the Google 
+>>>>>> Groups "singularity" group.
+>>>>>>
+>>>>>
+>>>>>>
+>>>>>> To unsubscribe from this group and stop receiving emails from it, 
+>>>>>> send an email to singu...@lbl.gov.
+>>>>>>
+>>>>>>
+>>>>>>
+>>>>>
+>>>>>
+>>>>>
+>>>>
+>>>>
+>>>>
+>>>>
+>>>>
+>>>>
+>>>>
+>>>> -- 
+>>>>
+>>>>
+>>>> You received this message because you are subscribed to the Google 
+>>>> Groups "singularity" group.
+>>>>
+>>>>
+>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>> an email to singu...@lbl.gov.
+>>>>
+>>>>
+>>>> -- 
+>>> You received this message because you are subscribed to the Google 
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>> an email to singu...@lbl.gov.
+>>>
+>>
+>>
+>>
+>> -- 
+>> Vanessa Villamia Sochat
+>> Stanford University '16
+>> (603) 321-0676
+>>
+>
+------=_Part_2759_513826899.1485286784572
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hello Vanessa, Greg<div>=C2=A0 =C2=A0 I got back to runnin=
+g the import command that fails reading from a tar file as Greg had suggest=
+ed and will upload the output as a text file. The only salient thing I saw =
+were these lines in the debug output.=C2=A0</div><div><br></div><div><div>+=
+ printf &#39;Executing Postbootstrap module\n&#39;</div><div>Executing Post=
+bootstrap module</div><div>+ return 0</div><div>+ eval /usr/local/libexec/s=
+ingularity/bootstrap/modules-v2/postbootstrap.sh</div><div>++ /usr/local/li=
+bexec/singularity/bootstrap/modules-v2/postbootstrap.sh</div><div>+ &#39;[&=
+#39; -z /var/lib/singularity/mnt/final &#39;]&#39;</div><div>+ &#39;[&#39; =
+&#39;!&#39; -L /var/lib/singularity/mnt/final/bin/sh -a &#39;!&#39; -x /var=
+/lib/singularity/mnt/final/bin/sh &#39;]&#39;</div><div>+ message ERROR &#3=
+9;Container does not contain the valid minimum requirement of /bin/sh\n&#39=
+;</div><div>+ LEVEL=3DERROR</div><div>+ MESSAGE=3D&#39;Container does not c=
+ontain the valid minimum requirement of /bin/sh\n&#39;</div><div>+ &#39;[&#=
+39; -z &#39;Container does not contain the valid minimum requirement of /bi=
+n/sh\n&#39; &#39;]&#39;</div><div>+ shift</div><div>+ shift</div><div>+ cas=
+e &quot;$LEVEL&quot; in</div><div>+ tput -Txterm setaf 1</div><div>+ printf=
+ &#39;ERROR: Container does not contain the valid minimum requirement of /b=
+in/sh\n&#39;</div><div>ERROR: Container does not contain the valid minimum =
+requirement of /bin/sh</div></div><div><br></div><div>I must add that I can=
+ import this same docker container by starting it and then exporting the ru=
+nning container to a singularity import command. There is no problem doing =
+that and the new singularity container created functions very well.<br><br>=
+On Thursday, January 19, 2017 at 2:37:51 PM UTC-5, Sadanand Warrier wrote:<=
+blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;bord=
+er-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">Thanks Greg=C2=
+=A0<div>Vanessa , I had seen the link you put up but by then I had already =
+created a Singularity image container from the docker image using the docke=
+r export command.</div><div>I cannot provide the docker image that I built =
+it has some stuff that is not public domain.</div><div><br></div><div>The f=
+ailure took place when I was doing this...</div><div><br></div><div>First c=
+reate a tar file.</div><div><div style=3D"font-family:arial,sans-serif;font=
+-size:12.8px"><br></div><div style=3D"font-family:arial,sans-serif;font-siz=
+e:12.8px">&quot;docker save -o &lt;tarfilename&gt; &lt;docker image file&gt=
+; =C2=A0</div><div style=3D"font-family:arial,sans-serif;font-size:12.8px">=
+<br></div><div style=3D"font-family:arial,sans-serif;font-size:12.8px"><br>=
+</div><div style=3D"font-family:arial,sans-serif;font-size:12.8px">=C2=A0an=
+d then =C2=A0try to convert it by using</div><div style=3D"font-family:aria=
+l,sans-serif;font-size:12.8px"><br></div><div style=3D"font-family:arial,sa=
+ns-serif;font-size:12.8px">sudo singularity import &lt;singualrityshell.img=
+&gt; &lt;tarfilename&gt;.</div><div style=3D"font-family:arial,sans-serif;f=
+ont-size:12.8px"><br></div><div style=3D"font-family:arial,sans-serif;font-=
+size:12.8px">It failed saying there was no /bin/sh , which wasn&#39;t true =
+but I guess that is just a stock error.</div><div style=3D"font-family:aria=
+l,sans-serif;font-size:12.8px"><br></div><div style=3D"font-family:arial,sa=
+ns-serif;font-size:12.8px">I will run this with the debug commands that Gre=
+g suggested and will get back.</div><div style=3D"font-family:arial,sans-se=
+rif;font-size:12.8px"><br></div><div style=3D"font-family:arial,sans-serif;=
+font-size:12.8px">S</div><div style=3D"font-family:arial,sans-serif;font-si=
+ze:12.8px"><div><br></div><div><br></div></div><br>On Thursday, January 19,=
+ 2017 at 1:11:50 PM UTC-5, vanessa wrote:<blockquote class=3D"gmail_quote" =
+style=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-left=
+:1ex"><div dir=3D"ltr">Using the local method requires running a local regi=
+stry, which (imho) is more annoying than just creating a bootstrap file, bu=
+t it does work! I wrote up instructions here:<div><br></div><div><a href=3D=
+"https://github.com/singularityware/singularity/issues/429#issuecomment-269=
+085751" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;=
+https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsingularityware%=
+2Fsingularity%2Fissues%2F429%23issuecomment-269085751\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNHp1HlmcyZFWiP1Re3AevtY81wpcA&#39;;return true;" onclick=
+=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.c=
+om%2Fsingularityware%2Fsingularity%2Fissues%2F429%23issuecomment-269085751\=
+x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHp1HlmcyZFWiP1Re3AevtY81wpcA&#39;;r=
+eturn true;">https://github.com/<wbr>singularityware/singularity/<wbr>issue=
+s/429#issuecomment-<wbr>269085751</a><br></div><div><br></div><div>Can you =
+provide the specific commands, and perhaps some way of sharing your Docker =
+image, so we can better help debug?</div></div><div><br><div class=3D"gmail=
+_quote">On Thu, Jan 19, 2017 at 10:00 AM, Gregory M. Kurtzer <span dir=3D"l=
+tr">&lt;<a rel=3D"nofollow">gm...@lbl.gov</a>&gt;</span> wrote:<br><blockqu=
+ote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc s=
+olid;padding-left:1ex"><div dir=3D"ltr"><div>Hi Sananad,</div><div><br></di=
+v><div>I&#39;m not sure why the docker save method didn&#39;t work, but the=
+ docker export | singularity import method is what I typically use for this=
+. Can someone else more familiar with Docker then I replicate this error? I=
+t sounds like it also may need a bug report submitted.</div><div><br></div>=
+<div>Vanessa&#39;s also been working on the Docker API interaction, and I t=
+hink pulling from the local Docker daemon&#39;s API was something she was p=
+laying with which I think would render the save model obsolete (but I&#39;l=
+l let her confirm or deny that).</div><div><br></div><div>You can also try =
+with debugging enabled (-d -x) and see if that points at the cause.</div><d=
+iv><br></div><div>Greg</div><div><div><div><br></div><div><br><div class=3D=
+"gmail_quote"><div>On Thu, Jan 19, 2017 at 9:51 AM Sadanand Warrier &lt;<a =
+rel=3D"nofollow">sad...@gmail.com</a>&gt; wrote:<br></div><blockquote class=
+=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padd=
+ing-left:1ex"><div>Hi Lito<div>=C2=A0 =C2=A0Thanks for the reply. The reaso=
+n I did not dabble with the bootstrap method was because I had a docker con=
+tainer on which some specific software had been installed.and I did that by=
+ creating a basic container and then installing this software on it and the=
+n creating a new image which had the installed software.=C2=A0 I didn&#39;t=
+ want to go through that process, initially, with Singularity. I needed to =
+quickly demo some stuff to show SIngularity&#39;s strengths. Hence the ques=
+tion.</div><div><br></div><div>S</div></div><div><div><br><br>On Thursday, =
+January 19, 2017 at 11:19:31 AM UTC-5, Lito Bejarano wrote:</div></div><div=
+><div><blockquote class=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex=
+;border-left:1px #ccc solid;padding-left:1ex"><div><div><div><div>Hi Sanana=
+d,<br><br></div>as of 2.2 version, it will be easier trying to create a Sin=
+gularity definition file with the docker bootstrap method. <br><br></div>As=
+ you can see in <a href=3D"https://github.com/singularityware/singularity/b=
+lob/master/examples/docker.def" rel=3D"nofollow" target=3D"_blank" onmoused=
+own=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithu=
+b.com%2Fsingularityware%2Fsingularity%2Fblob%2Fmaster%2Fexamples%2Fdocker.d=
+ef\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNH5pK3ZKmwBPNORQR57aZxGAGMqrw&#39=
+;;return true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3=
+dhttps%3A%2F%2Fgithub.com%2Fsingularityware%2Fsingularity%2Fblob%2Fmaster%2=
+Fexamples%2Fdocker.def\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNH5pK3ZKmwBPN=
+ORQR57aZxGAGMqrw&#39;;return true;">https://github.com/<wbr>singularityware=
+/singularity/<wbr>blob/master/examples/docker.<wbr>def</a> you can select t=
+he docker image to pull from the registry and build your Singularity contai=
+ner based on that docker image.<br><br></div>Regards,<br></div></blockquote=
+></div></div><div><div><blockquote class=3D"gmail_quote" style=3D"margin:0;=
+margin-left:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><div><div cl=
+ass=3D"gmail_quote">On Thu, Jan 19, 2017 at 5:14 PM, Sadanand Warrier <span=
+>&lt;<a rel=3D"nofollow">sad...@gmail.com</a>&gt;</span> wrote:<br></div></=
+div></blockquote></div></div><div><div><blockquote class=3D"gmail_quote" st=
+yle=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-left:1=
+ex"><div><div class=3D"gmail_quote"><blockquote class=3D"gmail_quote" style=
+=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div>Hel=
+lo, I had asked this question on a previous thread a couple of days ago and=
+ got no response, so I thought I would create a new post. Here is what the =
+issue is<div><br></div><div><div style=3D"font-family:arial,sans-serif;font=
+-size:12.8px">Hello</div><div style=3D"font-family:arial,sans-serif;font-si=
+ze:12.8px"><br></div><span style=3D"font-family:arial,sans-serif;font-size:=
+12.8px">So I went through the answers but there is something that is a litt=
+le puzzling. I&#39;m trying to convert a docker image to a Singularity cont=
+ainer image. So I followed the process that the &quot;singularity --help im=
+port&quot; suggests by creating a tar file from the image using=C2=A0</span=
+><div style=3D"font-family:arial,sans-serif;font-size:12.8px">&quot;docker =
+save -o &lt;tarfilename&gt; &lt;image file&gt;</div><div style=3D"font-fami=
+ly:arial,sans-serif;font-size:12.8px"><br></div><div style=3D"font-family:a=
+rial,sans-serif;font-size:12.8px">=C2=A0and then =C2=A0trying to convert it=
+ by using</div><div style=3D"font-family:arial,sans-serif;font-size:12.8px"=
+><br></div><div style=3D"font-family:arial,sans-serif;font-size:12.8px">sud=
+o singularity import &lt;singularityshell.img&gt; &lt;tarfilename&gt;.</div=
+><div style=3D"font-family:arial,sans-serif;font-size:12.8px"><br></div><di=
+v style=3D"font-family:arial,sans-serif;font-size:12.8px">Tried various thi=
+ngs including increasing the singularityshell.img size from default 768M to=
+ 2048M (the docker container is 732M in size) =C2=A0but always got this err=
+or</div><div style=3D"font-family:arial,sans-serif;font-size:12.8px"><br></=
+div><div style=3D"font-family:arial,sans-serif;font-size:12.8px"><div>Boots=
+trap initialization</div><div>No bootstrap definition passed, updating cont=
+ainer</div><div>Executing Prebootstrap module</div><div>Executing Postboots=
+trap module</div><div>ERROR: Container does not contain the valid minimum r=
+equirement of /bin/sh</div><div><br></div><div>There was actually a /bin/sh=
+ in the docker container so I think this is some generic error.</div><div><=
+br></div><div>I finally managed to do the conversion by running the image i=
+nteractively and then doing this</div><div><br></div><div>docker export &lt=
+;containername&gt; | sudo singularity import &lt;singularityshell.img&gt;</=
+div><div><br></div><div>Am I doing something wrong while importing the tar =
+file?</div><div><br></div><div>I did not try creating a local registry and =
+pushing the image to it etc.</div><div><br></div><div>My question is why do=
+esn&#39;t the tar method work??</div><div><br></div><div>Thanks</div><span>=
+<font color=3D"#888888"><div><br></div><div>S</div></font></span></div></di=
+v></div></blockquote></div></div></blockquote></div></div><div><div><blockq=
+uote class=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-left:=
+1px #ccc solid;padding-left:1ex"><div><div class=3D"gmail_quote"><blockquot=
+e class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc sol=
+id;padding-left:1ex"><span><font color=3D"#888888"><br><br><br><br><p></p><=
+br><br><br><br>-- <br><br><br>You received this message because you are sub=
+scribed to the Google Groups &quot;singularity&quot; group.<br></font></spa=
+n></blockquote></div></div></blockquote></div></div><div><div><blockquote c=
+lass=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-left:1px #c=
+cc solid;padding-left:1ex"><div><div class=3D"gmail_quote"><blockquote clas=
+s=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;pad=
+ding-left:1ex"><span><font color=3D"#888888"><br><br>To unsubscribe from th=
+is group and stop receiving emails from it, send an email to <a rel=3D"nofo=
+llow">singu...@lbl.gov</a>.<br><br><br></font></span></blockquote></div><br=
+></div><br><br></blockquote></div></div><br><br><br><br><p></p><br><br><br>=
+<br>-- <br><br><br>You received this message because you are subscribed to =
+the Google Groups &quot;singularity&quot; group.<br><br><br>To unsubscribe =
+from this group and stop receiving emails from it, send an email to <a rel=
+=3D"nofollow">singu...@lbl.gov</a>.<br><br><br></blockquote></div></div></d=
+iv></div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><d=
+iv>(603) 321-0676</div></div></div></div>
+</div>
+</blockquote></div></div></blockquote></div></div>
+------=_Part_2759_513826899.1485286784572--
+
+------=_Part_2758_1842185121.1485286784571
+Content-Type: text/plain; charset=US-ASCII; name=singularitymessages.txt
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename=singularitymessages.txt
+X-Attachment-Id: ab1f28d0-fe07-43e5-a98e-eb37b2d3a421
+Content-ID: <ab1f28d0-fe07-43e5-a98e-eb37b2d3a421>
+
+[swarrier@phsmpriv04 ~]$ sudo $(which singularity) -d -x import debug.img centos73ifs.tar
+enabling debugging
+enabling shell debugging
+ending argument loop
+Exec'ing: /usr/local/libexec/singularity/cli/import.exec debug.img+ true
++ case ${1:-} in
++ break
++ '[' -z debug.img ']'
++ SINGULARITY_IMAGE=debug.img
++ SINGULARITY_WRITABLE=1
++ SINGULARITY_NOIMAGELOCK=1
++ export SINGULARITY_IMAGE SINGULARITY_WRITABLE SINGULARITY_NOIMAGELOCK
++ shift
++ exec /usr/local/libexec/singularity/simage mount /usr/local/libexec/singularity/helpers/image-import.sh centos73ifs.tar
+VERBOSE [U=0,P=22182]      message.c:52:message_init()                : Set messagelevel to: 5
+VERBOSE [U=0,P=22182]      config_parser.c:112:singularity_config_parse(): Initialize configuration file: /usr/local/etc/singularity/singularity.conf
+DEBUG   [U=0,P=22182]      config_parser.c:124:singularity_config_parse(): Starting parse of configuration file /usr/local/etc/singularity/singularity.conf
+VERBOSE [U=0,P=22182]      config_parser.c:175:singularity_config_parse(): Got config key allow setuid = 'yes'
+VERBOSE [U=0,P=22182]      config_parser.c:175:singularity_config_parse(): Got config key allow pid ns = 'yes'
+VERBOSE [U=0,P=22182]      config_parser.c:175:singularity_config_parse(): Got config key allow user image = 'yes'
+VERBOSE [U=0,P=22182]      config_parser.c:175:singularity_config_parse(): Got config key protected image mode = 'none'
+VERBOSE [U=0,P=22182]      config_parser.c:175:singularity_config_parse(): Got config key enable overlay = 'no'
+VERBOSE [U=0,P=22182]      config_parser.c:175:singularity_config_parse(): Got config key config passwd = 'yes'
+VERBOSE [U=0,P=22182]      config_parser.c:175:singularity_config_parse(): Got config key config group = 'yes'
+VERBOSE [U=0,P=22182]      config_parser.c:175:singularity_config_parse(): Got config key config resolv_conf = 'yes'
+VERBOSE [U=0,P=22182]      config_parser.c:175:singularity_config_parse(): Got config key mount proc = 'yes'
+VERBOSE [U=0,P=22182]      config_parser.c:175:singularity_config_parse(): Got config key mount sys = 'yes'
+VERBOSE [U=0,P=22182]      config_parser.c:175:singularity_config_parse(): Got config key mount dev = 'yes'
+VERBOSE [U=0,P=22182]      config_parser.c:175:singularity_config_parse(): Got config key mount home = 'yes'
+VERBOSE [U=0,P=22182]      config_parser.c:175:singularity_config_parse(): Got config key mount tmp = 'yes'
+VERBOSE [U=0,P=22182]      config_parser.c:175:singularity_config_parse(): Got config key mount hostfs = 'no'
+VERBOSE [U=0,P=22182]      config_parser.c:175:singularity_config_parse(): Got config key bind path = '/etc/hosts'
+VERBOSE [U=0,P=22182]      config_parser.c:175:singularity_config_parse(): Got config key user bind control = 'yes'
+VERBOSE [U=0,P=22182]      config_parser.c:175:singularity_config_parse(): Got config key mount slave = 'yes'
+VERBOSE [U=0,P=22182]      config_parser.c:175:singularity_config_parse(): Got config key container dir = '/var/lib/singularity/mnt'
+VERBOSE [U=0,P=22182]      config_parser.c:175:singularity_config_parse(): Got config key singularity user = 'singularity'
+DEBUG   [U=0,P=22182]      config_parser.c:183:singularity_config_parse(): Finished parsing configuration file '/usr/local/etc/singularity/singularity.conf'
+DEBUG   [U=0,P=22182]      privilege.c:73:singularity_priv_init()     : Called singularity_priv_init(void)
+VERBOSE [U=0,P=22182]      util/util.c:52:envar()                     : Checking input from environment: 'SINGULARITY_TARGET_UID'
+DEBUG   [U=0,P=22182]      util/util.c:54:envar()                     : Checking environment variable is defined: SINGULARITY_TARGET_UID
+VERBOSE [U=0,P=22182]      util/util.c:56:envar()                     : Environment variable is NULL: SINGULARITY_TARGET_UID
+VERBOSE [U=0,P=22182]      util/util.c:52:envar()                     : Checking input from environment: 'SINGULARITY_TARGET_GID'
+DEBUG   [U=0,P=22182]      util/util.c:54:envar()                     : Checking environment variable is defined: SINGULARITY_TARGET_GID
+VERBOSE [U=0,P=22182]      util/util.c:56:envar()                     : Environment variable is NULL: SINGULARITY_TARGET_GID
+DEBUG   [U=0,P=22182]      privilege.c:138:singularity_priv_init()    : Returning singularity_priv_init(void)
+DEBUG   [U=0,P=22182]      simage.c:77:main()                         : Running /usr/local/libexec/singularity/simage mount workflow
+DEBUG   [U=0,P=22182]      privilege.c:154:singularity_priv_escalate(): Running as root, not changing privileges
+DEBUG   [U=0,P=22182]      config_parser.c:293:_singularity_config_get_bool_char_impl(: Called singularity_config_get_bool(mount slave, yes)
+DEBUG   [U=0,P=22182]      config_parser.c:238:_singularity_config_get_value_impl(): Returning configuration value mount slave='yes'
+DEBUG   [U=0,P=22182]      config_parser.c:299:_singularity_config_get_bool_char_impl(: Return singularity_config_get_bool(mount slave, yes) = 1
+DEBUG   [U=0,P=22182]      privilege.c:154:singularity_priv_escalate(): Running as root, not changing privileges
+DEBUG   [U=0,P=22182]      mnt.c:53:singularity_ns_mnt_unshare()      : Virtualizing FS namespace
+DEBUG   [U=0,P=22182]      mnt.c:60:singularity_ns_mnt_unshare()      : Virtualizing mount namespace
+DEBUG   [U=0,P=22182]      mnt.c:69:singularity_ns_mnt_unshare()      : Making mounts slave
+DEBUG   [U=0,P=22182]      privilege.c:257:singularity_priv_drop()    : Running as root, not changing privileges
+VERBOSE [U=0,P=22182]      mount.c:53:singularity_image_mount()       : Obtaining container name from environment variable
+DEBUG   [U=0,P=22182]      util/util.c:104:envar_path()               : Checking environment variable is valid path: 'SINGULARITY_IMAGE'
+VERBOSE [U=0,P=22182]      util/util.c:52:envar()                     : Checking input from environment: 'SINGULARITY_IMAGE'
+DEBUG   [U=0,P=22182]      util/util.c:54:envar()                     : Checking environment variable is defined: SINGULARITY_IMAGE
+DEBUG   [U=0,P=22182]      util/util.c:60:envar()                     : Checking environment variable length (<= 4096): SINGULARITY_IMAGE
+DEBUG   [U=0,P=22182]      util/util.c:66:envar()                     : Checking environment variable has allowed characters: SINGULARITY_IMAGE
+VERBOSE [U=0,P=22182]      util/util.c:89:envar()                     : Obtained input from environment 'SINGULARITY_IMAGE' = 'debug.img'
+DEBUG   [U=0,P=22182]      privilege.c:73:singularity_priv_init()     : Called singularity_priv_init(void)
+VERBOSE [U=0,P=22182]      util/util.c:52:envar()                     : Checking input from environment: 'SINGULARITY_TARGET_UID'
+DEBUG   [U=0,P=22182]      util/util.c:54:envar()                     : Checking environment variable is defined: SINGULARITY_TARGET_UID
+VERBOSE [U=0,P=22182]      util/util.c:56:envar()                     : Environment variable is NULL: SINGULARITY_TARGET_UID
+VERBOSE [U=0,P=22182]      util/util.c:52:envar()                     : Checking input from environment: 'SINGULARITY_TARGET_GID'
+DEBUG   [U=0,P=22182]      util/util.c:54:envar()                     : Checking environment variable is defined: SINGULARITY_TARGET_GID
+VERBOSE [U=0,P=22182]      util/util.c:56:envar()                     : Environment variable is NULL: SINGULARITY_TARGET_GID
+DEBUG   [U=0,P=22182]      privilege.c:138:singularity_priv_init()    : Returning singularity_priv_init(void)
+DEBUG   [U=0,P=22182]      sessiondir.c:60:singularity_sessiondir_init(): Checking Singularity configuration for 'sessiondir prefix'
+DEBUG   [U=0,P=22182]      util/util.c:104:envar_path()               : Checking environment variable is valid path: 'SINGULARITY_SESSIONDIR'
+VERBOSE [U=0,P=22182]      util/util.c:52:envar()                     : Checking input from environment: 'SINGULARITY_SESSIONDIR'
+DEBUG   [U=0,P=22182]      util/util.c:54:envar()                     : Checking environment variable is defined: SINGULARITY_SESSIONDIR
+VERBOSE [U=0,P=22182]      util/util.c:56:envar()                     : Environment variable is NULL: SINGULARITY_SESSIONDIR
+DEBUG   [U=0,P=22182]      config_parser.c:226:_singularity_config_get_value_impl(): No configuration entry found for 'sessiondir prefix'; returning default value '/tmp/.singularity-session-'
+DEBUG   [U=0,P=22182]      sessiondir.c:81:singularity_sessiondir_init(): Set sessiondir to: /tmp/.singularity-session-0.2051.1966100
+DEBUG   [U=0,P=22182]      util/file.c:263:s_mkpath()                 : Creating directory: /tmp/.singularity-session-0.2051.1966100
+DEBUG   [U=0,P=22182]      sessiondir.c:97:singularity_sessiondir_init(): Opening sessiondir file descriptor
+DEBUG   [U=0,P=22182]      sessiondir.c:103:singularity_sessiondir_init(): Setting shared flock() on session directory
+DEBUG   [U=0,P=22182]      util/util.c:94:envar_defined()             : Checking if environment variable is defined: SINGULARITY_NOSESSIONCLEANUP
+VERBOSE [U=0,P=22182]      util/util.c:96:envar_defined()             : Environment variable is undefined: SINGULARITY_NOSESSIONCLEANUP
+DEBUG   [U=0,P=22182]      util/util.c:94:envar_defined()             : Checking if environment variable is defined: SINGULARITY_NOCLEANUP
+VERBOSE [U=0,P=22182]      util/util.c:96:envar_defined()             : Environment variable is undefined: SINGULARITY_NOCLEANUP
+DEBUG   [U=0,P=22182]      fork.c:77:prepare_fork()                   : Creating parent/child coordination pipes.
+VERBOSE [U=0,P=22182]      fork.c:153:singularity_fork()              : Forking child process
+VERBOSE [U=0,P=22182]      fork.c:171:singularity_fork()              : Hello from parent process
+DEBUG   [U=0,P=22182]      fork.c:190:singularity_fork()              : Assigning sigaction()s
+VERBOSE [U=0,P=22183]      fork.c:157:singularity_fork()              : Hello from child process
+DEBUG   [U=0,P=22182]      fork.c:221:singularity_fork()              : Creating generic signal pipes
+DEBUG   [U=0,P=22183]      fork.c:160:singularity_fork()              : Closing watchdog write pipe
+DEBUG   [U=0,P=22182]      fork.c:229:singularity_fork()              : Creating sigchld signal pipes
+DEBUG   [U=0,P=22182]      fork.c:260:singularity_fork()              : Waiting on signal from watchdog
+DEBUG   [U=0,P=22183]      fork.c:167:singularity_fork()              : Child process is returning control to process thread
+DEBUG   [U=0,P=22183]      user.c:47:singularity_ns_user_configured() : Checking if user namespaces are configured.
+VERBOSE [U=0,P=22183]      user.c:55:singularity_ns_user_configured() : Not virtualizing USER namespace: running as root
+VERBOSE [U=0,P=22183]      user.c:87:singularity_ns_user_unshare()    : Skipping USER namespace creation...
+DEBUG   [U=0,P=22183]      config_parser.c:293:_singularity_config_get_bool_char_impl(: Called singularity_config_get_bool(mount slave, yes)
+DEBUG   [U=0,P=22183]      config_parser.c:238:_singularity_config_get_value_impl(): Returning configuration value mount slave='yes'
+DEBUG   [U=0,P=22183]      config_parser.c:299:_singularity_config_get_bool_char_impl(: Return singularity_config_get_bool(mount slave, yes) = 1
+DEBUG   [U=0,P=22183]      privilege.c:154:singularity_priv_escalate(): Running as root, not changing privileges
+DEBUG   [U=0,P=22183]      mnt.c:53:singularity_ns_mnt_unshare()      : Virtualizing FS namespace
+DEBUG   [U=0,P=22183]      mnt.c:60:singularity_ns_mnt_unshare()      : Virtualizing mount namespace
+DEBUG   [U=0,P=22183]      mnt.c:69:singularity_ns_mnt_unshare()      : Making mounts slave
+DEBUG   [U=0,P=22183]      privilege.c:257:singularity_priv_drop()    : Running as root, not changing privileges
+DEBUG   [U=0,P=22183]      rootfs.c:71:singularity_rootfs_init()      : Checking on container source type
+DEBUG   [U=0,P=22183]      rootfs.c:79:singularity_rootfs_init()      : Figuring out where to mount Singularity container
+DEBUG   [U=0,P=22183]      config_parser.c:238:_singularity_config_get_value_impl(): Returning configuration value container dir='/var/lib/singularity/mnt'
+VERBOSE [U=0,P=22183]      rootfs.c:82:singularity_rootfs_init()      : Set image mount path to: /var/lib/singularity/mnt
+DEBUG   [U=0,P=22183]      image.c:77:rootfs_image_init()             : Inializing container rootfs image subsystem
+DEBUG   [U=0,P=22183]      config_parser.c:293:_singularity_config_get_bool_char_impl(: Called singularity_config_get_bool(allow user image, yes)
+DEBUG   [U=0,P=22183]      config_parser.c:238:_singularity_config_get_value_impl(): Returning configuration value allow user image='yes'
+DEBUG   [U=0,P=22183]      config_parser.c:299:_singularity_config_get_bool_char_impl(: Return singularity_config_get_bool(allow user image, yes) = 1
+DEBUG   [U=0,P=22183]      config_parser.c:238:_singularity_config_get_value_impl(): Returning configuration value protected image mode='none'
+DEBUG   [U=0,P=22183]      image.c:92:rootfs_image_init()             : Protected image mode set to none.
+DEBUG   [U=0,P=22183]      util/util.c:94:envar_defined()             : Checking if environment variable is defined: SINGULARITY_WRITABLE
+VERBOSE [U=0,P=22183]      util/util.c:99:envar_defined()             : Environment variable is defined: SINGULARITY_WRITABLE
+DEBUG   [U=0,P=22183]      util/util.c:94:envar_defined()             : Checking if environment variable is defined: SINGULARITY_NOIMAGELOCK
+VERBOSE [U=0,P=22183]      util/util.c:99:envar_defined()             : Environment variable is defined: SINGULARITY_NOIMAGELOCK
+DEBUG   [U=0,P=22183]      image.c:114:rootfs_image_init()            : Obtaining exclusive write lock on image
+VERBOSE [U=0,P=22183]      image.c:48:singularity_image_check()       : Checking file is a Singularity image
+DEBUG   [U=0,P=22183]      image.c:59:singularity_image_check()       : Checking if first line matches key
+VERBOSE [U=0,P=22183]      image.c:62:singularity_image_check()       : File is a valid Singularity image
+DEBUG   [U=0,P=22183]      rootfs.c:110:singularity_rootfs_mount()    : Checking 'container dir' mount location: /var/lib/singularity/mnt
+DEBUG   [U=0,P=22183]      rootfs.c:121:singularity_rootfs_mount()    : Checking for rootfs_source directory: /var/lib/singularity/mnt/source
+DEBUG   [U=0,P=22183]      rootfs.c:132:singularity_rootfs_mount()    : Checking for overlay_mount directory: /var/lib/singularity/mnt/overlay
+DEBUG   [U=0,P=22183]      rootfs.c:143:singularity_rootfs_mount()    : Checking for overlay_final directory: /var/lib/singularity/mnt/final
+DEBUG   [U=0,P=22183]      image.c:173:rootfs_image_mount()           : Binding image to loop device
+DEBUG   [U=0,P=22183]      sessiondir.c:172:singularity_sessiondir_get(): Returning: /tmp/.singularity-session-0.2051.1966100
+DEBUG   [U=0,P=22183]      loop-control.c:65:singularity_loop_bind()  : Opening image loop device file: /tmp/.singularity-session-0.2051.1966100/image_loop_dev
+DEBUG   [U=0,P=22183]      loop-control.c:71:singularity_loop_bind()  : Requesting exclusive flock() on loop_dev lockfile
+DEBUG   [U=0,P=22183]      loop-control.c:94:singularity_loop_bind()  : Calculating image offset
+VERBOSE [U=0,P=22183]      image.c:77:singularity_image_offset()      : Calculating image offset
+VERBOSE [U=0,P=22183]      image.c:86:singularity_image_offset()      : Found image at an offset of 31 bytes
+DEBUG   [U=0,P=22183]      image.c:91:singularity_image_offset()      : Returning image_offset(image_fp) = 31
+DEBUG   [U=0,P=22183]      privilege.c:154:singularity_priv_escalate(): Running as root, not changing privileges
+DEBUG   [U=0,P=22183]      loop-control.c:101:singularity_loop_bind() : Finding next available loop device...
+VERBOSE [U=0,P=22183]      loop-control.c:133:singularity_loop_bind() : Found available loop device: /dev/loop2
+DEBUG   [U=0,P=22183]      loop-control.c:135:singularity_loop_bind() : Setting loop device flags
+DEBUG   [U=0,P=22183]      privilege.c:257:singularity_priv_drop()    : Running as root, not changing privileges
+VERBOSE [U=0,P=22183]      loop-control.c:145:singularity_loop_bind() : Using loop device: /dev/loop2
+DEBUG   [U=0,P=22183]      loop-control.c:147:singularity_loop_bind() : Writing active loop device name (/dev/loop2) to loop file cache: /tmp/.singularity-session-0.2051.1966100/image_loop_dev
+DEBUG   [U=0,P=22183]      util/file.c:349:fileput()                  : Called fileput(/tmp/.singularity-session-0.2051.1966100/image_loop_dev, /dev/loop2)
+DEBUG   [U=0,P=22183]      loop-control.c:153:singularity_loop_bind() : Resetting exclusive flock() to shared on image_loop_file
+DEBUG   [U=0,P=22183]      loop-control.c:156:singularity_loop_bind() : Returning singularity_loop_bind(image_fp) = loop_fp
+VERBOSE [U=0,P=22183]      image.c:181:rootfs_image_mount()           : Mounting image in read/write
+DEBUG   [U=0,P=22183]      privilege.c:154:singularity_priv_escalate(): Running as root, not changing privileges
+DEBUG   [U=0,P=22183]      privilege.c:257:singularity_priv_drop()    : Running as root, not changing privileges
+DEBUG   [U=0,P=22183]      rootfs.c:174:singularity_rootfs_mount()    : OverlayFS enabled by host build
+DEBUG   [U=0,P=22183]      config_parser.c:293:_singularity_config_get_bool_char_impl(: Called singularity_config_get_bool(enable overlay, no)
+DEBUG   [U=0,P=22183]      config_parser.c:238:_singularity_config_get_value_impl(): Returning configuration value enable overlay='no'
+DEBUG   [U=0,P=22183]      config_parser.c:304:_singularity_config_get_bool_char_impl(: Return singularity_config_get_bool(enable overlay, no) = 0
+VERBOSE [U=0,P=22183]      rootfs.c:176:singularity_rootfs_mount()    : Not enabling overlayFS via configuration
+DEBUG   [U=0,P=22183]      privilege.c:154:singularity_priv_escalate(): Running as root, not changing privileges
+VERBOSE [U=0,P=22183]      rootfs.c:225:singularity_rootfs_mount()    : Binding the ROOTFS_SOURCE to OVERLAY_FINAL (/var/lib/singularity/mnt/source->/var/lib/singularity/mnt/final)
+DEBUG   [U=0,P=22183]      privilege.c:257:singularity_priv_drop()    : Running as root, not changing privileges
+DEBUG   [U=0,P=22183]      rootfs.c:64:singularity_rootfs_dir()       : Returning singularity_rootfs_dir: /var/lib/singularity/mnt/final
+VERBOSE [U=0,P=22183]      mount.c:70:singularity_image_mount()       : Setting SINGULARITY_ROOTFS to '/var/lib/singularity/mnt/final'
+DEBUG   [U=0,P=22183]      rootfs.c:64:singularity_rootfs_dir()       : Returning singularity_rootfs_dir: /var/lib/singularity/mnt/final
+DEBUG   [U=0,P=22183]      privilege.c:257:singularity_priv_drop()    : Running as root, not changing privileges
+DEBUG   [U=0,P=22183]      simage.c:77:main()                         : Running mount /usr/local/libexec/singularity/helpers/image-import.sh workflow
+DEBUG   [U=0,P=22183]      privilege.c:154:singularity_priv_escalate(): Running as root, not changing privileges
+DEBUG   [U=0,P=22183]      privilege.c:311:singularity_priv_drop_perm(): Called singularity_priv_drop_perm(void)
+VERBOSE [U=0,P=22183]      privilege.c:324:singularity_priv_drop_perm(): Calling user is root, no privileges to drop
+DEBUG   [U=0,P=22183]      fork.c:77:prepare_fork()                   : Creating parent/child coordination pipes.
+VERBOSE [U=0,P=22183]      fork.c:153:singularity_fork()              : Forking child process
+VERBOSE [U=0,P=22183]      fork.c:171:singularity_fork()              : Hello from parent process
+DEBUG   [U=0,P=22183]      fork.c:190:singularity_fork()              : Assigning sigaction()s
+DEBUG   [U=0,P=22183]      fork.c:221:singularity_fork()              : Creating generic signal pipes
+DEBUG   [U=0,P=22183]      fork.c:229:singularity_fork()              : Creating sigchld signal pipes
+DEBUG   [U=0,P=22183]      fork.c:260:singularity_fork()              : Waiting on signal from watchdog
+VERBOSE [U=0,P=22191]      fork.c:157:singularity_fork()              : Hello from child process
+DEBUG   [U=0,P=22191]      fork.c:160:singularity_fork()              : Closing watchdog write pipe
+DEBUG   [U=0,P=22191]      fork.c:167:singularity_fork()              : Child process is returning control to process thread
++ '[' -z /var/lib/singularity/mnt/final ']'
++ '[' '!' -d /var/lib/singularity/mnt/final ']'
++ IMPORT_URI=centos73ifs.tar
++ '[' -z centos73ifs.tar ']'
++ case "$IMPORT_URI" in
++ '[' '!' -f centos73ifs.tar ']'
++ SINGULARITY_IMPORT_GET='cat centos73ifs.tar'
++ case "$IMPORT_URI" in
++ SINGULARITY_IMPORT_SPLAT='| ( cd '\''/var/lib/singularity/mnt/final'\'' ; tar -xf - )'
++ eval 'cat centos73ifs.tar | ( cd '\''/var/lib/singularity/mnt/final'\'' ; tar -xf - )'
+++ cat centos73ifs.tar
+++ cd /var/lib/singularity/mnt/final
+++ tar -xf -
+tar: manifest.json: implausibly old time stamp 1969-12-31 19:00:00
+tar: repositories: implausibly old time stamp 1969-12-31 19:00:00
++ ret_val=0
++ '[' 0 '!=' 0 ']'
++ eval /usr/local/libexec/singularity/bootstrap/main.sh
+++ /usr/local/libexec/singularity/bootstrap/main.sh
++ SINGULARITY_BUILDDEF=
++ shift
+++ mktemp -d /tmp/singularity-bootstrap.XXXXXXX
++ SINGULARITY_TMPDIR=/tmp/singularity-bootstrap.Qu1pbjA
++ PATH=/bin:/sbin:/sbin:/bin:/usr/sbin:/usr/bin
++ HOME=/root
++ RETVAL=0
++ export SINGULARITY_TMPDIR SINGULARITY_BUILDDEF
++ '[' -z '' ']'
++ BOOTSTRAP_VERSION=2
++ '[' -n 2 ']'
++ '[' -x /usr/local/libexec/singularity/bootstrap/driver-v2.sh ']'
++ eval /usr/local/libexec/singularity/bootstrap/driver-v2.sh
+++ /usr/local/libexec/singularity/bootstrap/driver-v2.sh
++ '[' -z /var/lib/singularity/mnt/final ']'
++ message 1 'Bootstrap initialization\n'
++ LEVEL=1
++ MESSAGE='Bootstrap initialization\n'
++ '[' -z 'Bootstrap initialization\n' ']'
++ shift
++ shift
++ case "$LEVEL" in
++ '[' 1 -le 5 ']'
++ printf 'Bootstrap initialization\n'
+Bootstrap initialization
++ return 0
++ '[' -z '' ']'
++ LC_ALL=C
++ '[' -z en_US.UTF-8 ']'
++ '[' -z xterm ']'
++ DEBIAN_FRONTEND=noninteractive
++ export LC_ALL LANG TERM DEBIAN_FRONTEND
++ '[' -n '' ']'
++ message 1 'No bootstrap definition passed, updating container\n'
++ LEVEL=1
++ MESSAGE='No bootstrap definition passed, updating container\n'
++ '[' -z 'No bootstrap definition passed, updating container\n' ']'
++ shift
++ shift
++ case "$LEVEL" in
++ '[' 1 -le 5 ']'
++ printf 'No bootstrap definition passed, updating container\n'
+No bootstrap definition passed, updating container
++ return 0
++ '[' -f /usr/local/libexec/singularity/bootstrap/modules-v2/prebootstrap.sh ']'
++ message 1 'Executing Prebootstrap module\n'
++ LEVEL=1
++ MESSAGE='Executing Prebootstrap module\n'
++ '[' -z 'Executing Prebootstrap module\n' ']'
++ shift
++ shift
++ case "$LEVEL" in
++ '[' 1 -le 5 ']'
++ printf 'Executing Prebootstrap module\n'
+Executing Prebootstrap module
++ return 0
++ eval /usr/local/libexec/singularity/bootstrap/modules-v2/prebootstrap.sh
+++ /usr/local/libexec/singularity/bootstrap/modules-v2/prebootstrap.sh
++ '[' -z /var/lib/singularity/mnt/final ']'
++ install -d -m 0755 /var/lib/singularity/mnt/final
++ '[' -f '' ']'
++ exit 0
++ '[' -n '' ']'
++ '[' -f /usr/local/libexec/singularity/bootstrap/modules-v2/postbootstrap.sh ']'
++ message 1 'Executing Postbootstrap module\n'
++ LEVEL=1
++ MESSAGE='Executing Postbootstrap module\n'
++ '[' -z 'Executing Postbootstrap module\n' ']'
++ shift
++ shift
++ case "$LEVEL" in
++ '[' 1 -le 5 ']'
++ printf 'Executing Postbootstrap module\n'
+Executing Postbootstrap module
++ return 0
++ eval /usr/local/libexec/singularity/bootstrap/modules-v2/postbootstrap.sh
+++ /usr/local/libexec/singularity/bootstrap/modules-v2/postbootstrap.sh
++ '[' -z /var/lib/singularity/mnt/final ']'
++ '[' '!' -L /var/lib/singularity/mnt/final/bin/sh -a '!' -x /var/lib/singularity/mnt/final/bin/sh ']'
++ message ERROR 'Container does not contain the valid minimum requirement of /bin/sh\n'
++ LEVEL=ERROR
++ MESSAGE='Container does not contain the valid minimum requirement of /bin/sh\n'
++ '[' -z 'Container does not contain the valid minimum requirement of /bin/sh\n' ']'
++ shift
++ shift
++ case "$LEVEL" in
++ tput -Txterm setaf 1
++ printf 'ERROR: Container does not contain the valid minimum requirement of /bin/sh\n'
+ERROR: Container does not contain the valid minimum requirement of /bin/sh
++ tput -Txterm sgr0
++ return 0
++ exit 1
++ exit 255
++ RETVAL=255
++ rm -rf /tmp/singularity-bootstrap.Qu1pbjA
++ exit 255
++ exit 255
+DEBUG   [U=0,P=22183]      fork.c:287:singularity_fork()              : Parent process is exiting
+DEBUG   [U=0,P=22183]      fork.c:328:singularity_fork_exec()         : Waiting on child process
+DEBUG   [U=0,P=22182]      fork.c:287:singularity_fork()              : Parent process is exiting
+DEBUG   [U=0,P=22182]      util/util.c:104:envar_path()               : Checking environment variable is valid path: 'SINGULARITY_RUNDIR'
+VERBOSE [U=0,P=22182]      util/util.c:52:envar()                     : Checking input from environment: 'SINGULARITY_RUNDIR'
+DEBUG   [U=0,P=22182]      util/util.c:54:envar()                     : Checking environment variable is defined: SINGULARITY_RUNDIR
+VERBOSE [U=0,P=22182]      util/util.c:56:envar()                     : Environment variable is NULL: SINGULARITY_RUNDIR
+DEBUG   [U=0,P=22182]      sessiondir.c:117:singularity_sessiondir_init(): Cleanup thread waiting on child...
+DEBUG   [U=0,P=22182]      sessiondir.c:122:singularity_sessiondir_init(): Child exited with status 255.
+DEBUG   [U=0,P=22182]      sessiondir.c:128:singularity_sessiondir_init(): Checking to see if we are the last process running in this sessiondir
+VERBOSE [U=0,P=22182]      sessiondir.c:130:singularity_sessiondir_init(): Cleaning sessiondir: /tmp/.singularity-session-0.2051.1966100
+DEBUG   [U=0,P=22182]      util/file.c:285:s_rmdir()                  : Removing directory: /tmp/.singularity-session-0.2051.1966100
+[swarrier@phsmpriv04 ~]$
+
+
+------=_Part_2758_1842185121.1485286784571--

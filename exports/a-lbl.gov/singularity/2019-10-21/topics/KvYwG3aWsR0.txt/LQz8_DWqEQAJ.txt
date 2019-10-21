@@ -1,0 +1,122 @@
+Date: Thu, 15 Aug 2019 22:43:02 -0700 (PDT)
+From: cavit altindag <cavita...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <53e1c792-4636-456c-b3b1-dc9dd727cc07@lbl.gov>
+Subject: the user in the host couldn't start mysql installed under the same
+ user in the container.
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1969_1098231134.1565934182594"
+
+------=_Part_1969_1098231134.1565934182594
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1970_1281946573.1565934182594"
+
+------=_Part_1970_1281946573.1565934182594
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi All. In order to eliminate user problem I created a user in the host and 
+I added the same user in to the container while I am building it. 
+I installed and configured mysql for a specific user and everything works 
+when i am using it within sandbox. All files are under /app/mysql . When i 
+start the container (singularity instance.start ./myimage.sif mysql)
+the same user which exist in the host machine is not able to start/stop 
+mysql server. May be the way I am doing logically is wrong ? 
+Thanks in advance for your help.
+
+-- definition file ------
+
+Bootstrap: docker
+From: ubuntu:18.04
+
+%setup
+    # creates the file in the host touch /file1
+    # creates the files in the guest touch ${SINGULARITY_ROOTFS}/file2
+    mkdir ${SINGULARITY_ROOTFS}/app/
+
+%files
+    /home/cavit/sing/mysqlfiles /app/mysql
+
+%environment
+
+    export PATH=$PATH:/app/mysql/mysql-5.7.13-linux-glibc2.5-x86_64/bin
+
+%post
+    apt-get install libaio1
+    useradd -m epad -p epad
+    chown -R epad:epad    /app
+    chmod -R 775    /app
+    cd /app/mysql/mysql-5.7.13-linux-glibc2.5-x86_64/bin
+    su epad -c './mysqld --defaults-file=/app/mysql/my.cnf  
+--initialize-insecure '
+    
+
+%runscript
+
+
+%startscript
+    su epad -c '/app/mysql/mysql-5.7.13-linux-glibc2.5-x86_64/bin/mysqld 
+--defaults-file=/app/mysql/my.cnf &'
+    
+
+%test
+
+
+%labels
+
+
+
+--------------- my.cnf -----------------
+
+[server]
+user=epad
+basedir=/app/mysql/mysql-5.7.13-linux-glibc2.5-x86_64
+datadir=/app/mysql/sql_data
+socket=/app/mysql/epad.socket
+pid-file=/app/mysql/epad.pid
+log-error=/app/mysql/epaderr.log
+port=3306
+bind-address = 127.0.0.1
+
+[client]
+socket=/app/mysql/epad.socket
+
+------=_Part_1970_1281946573.1565934182594
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Hi All. In order to eliminate user problem I created =
+a user in the host and I added the same user in to the container while I am=
+ building it. <br></div><div> I installed and configured mysql for a specif=
+ic user and everything works when i am using it within sandbox. All files a=
+re under /app/mysql . When i start the container (singularity instance.star=
+t ./myimage.sif mysql)</div><div> the same user which exist in the host mac=
+hine is not able to start/stop mysql server. May be the way I am doing logi=
+cally is wrong ? <br></div><div>Thanks in advance for your help.<br></div><=
+div><br></div><div>-- definition file ------<br></div><div><br></div><div>B=
+ootstrap: docker<br>From: ubuntu:18.04<br><br>%setup<br>=C2=A0=C2=A0=C2=A0 =
+# creates the file in the host touch /file1<br>=C2=A0=C2=A0=C2=A0 # creates=
+ the files in the guest touch ${SINGULARITY_ROOTFS}/file2<br>=C2=A0=C2=A0=
+=C2=A0 mkdir ${SINGULARITY_ROOTFS}/app/<br><br>%files<br>=C2=A0=C2=A0=C2=A0=
+ /home/cavit/sing/mysqlfiles /app/mysql<br><br>%environment<br><br>=C2=A0=
+=C2=A0=C2=A0 export PATH=3D$PATH:/app/mysql/mysql-5.7.13-linux-glibc2.5-x86=
+_64/bin<br><br>%post<br>=C2=A0=C2=A0=C2=A0 apt-get install libaio1<br>=C2=
+=A0=C2=A0=C2=A0 useradd -m epad -p epad<br>=C2=A0=C2=A0=C2=A0 chown -R epad=
+:epad =C2=A0=C2=A0 /app<br>=C2=A0=C2=A0=C2=A0 chmod -R 775 =C2=A0=C2=A0 /ap=
+p<br>=C2=A0=C2=A0=C2=A0 cd /app/mysql/mysql-5.7.13-linux-glibc2.5-x86_64/bi=
+n<br>=C2=A0=C2=A0=C2=A0 su epad -c &#39;./mysqld --defaults-file=3D/app/mys=
+ql/my.cnf=C2=A0 --initialize-insecure &#39;<br>=C2=A0=C2=A0=C2=A0 <br><br>%=
+runscript<br><br><br>%startscript<br>=C2=A0=C2=A0=C2=A0 su epad -c &#39;/ap=
+p/mysql/mysql-5.7.13-linux-glibc2.5-x86_64/bin/mysqld --defaults-file=3D/ap=
+p/mysql/my.cnf &amp;&#39;<br>=C2=A0=C2=A0=C2=A0 <br><br>%test<br><br><br>%l=
+abels</div><div><br></div><div><br></div><div><br></div><div>--------------=
+- my.cnf -----------------</div><div><br></div><div>[server]<br>user=3Depad=
+<br>basedir=3D/app/mysql/mysql-5.7.13-linux-glibc2.5-x86_64<br>datadir=3D/a=
+pp/mysql/sql_data<br>socket=3D/app/mysql/epad.socket<br>pid-file=3D/app/mys=
+ql/epad.pid<br>log-error=3D/app/mysql/epaderr.log<br>port=3D3306<br>bind-ad=
+dress =3D 127.0.0.1<br><br>[client]<br></div>socket=3D/app/mysql/epad.socke=
+t<br></div>
+------=_Part_1970_1281946573.1565934182594--
+
+------=_Part_1969_1098231134.1565934182594--

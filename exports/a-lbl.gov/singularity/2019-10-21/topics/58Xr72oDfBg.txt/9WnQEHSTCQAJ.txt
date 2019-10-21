@@ -1,0 +1,743 @@
+Date: Wed, 31 May 2017 13:59:11 -0700 (PDT)
+From: upendra kumar Devisetty <upendrakum...@googlemail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <b75de5fe-b8dd-4ef5-a615-f514dd31ad24@lbl.gov>
+In-Reply-To: <CAM=pu++cYjCuRFLXbVR2nCuHhJruMpOj6zPfRfCh4OZGCBOLdw@mail.gmail.com>
+References: <92dc44dd-b8df-4f29-90f9-478ad1fa6334@lbl.gov> <CAMuRc6DJ03wdk_od3WbhpWrJVUC=y4LNs2-nd2Y8-UiPgUCWzg@mail.gmail.com>
+ <CAM=pu++cYjCuRFLXbVR2nCuHhJruMpOj6zPfRfCh4OZGCBOLdw@mail.gmail.com>
+Subject: Re: [Singularity] Singularity exec error when running the container
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_4794_1026007850.1496264352017"
+
+------=_Part_4794_1026007850.1496264352017
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_4795_1075119099.1496264352019"
+
+------=_Part_4795_1075119099.1496264352019
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Hi Venessa,
+
+I used the development branch and used the *method 2* for making creating=
+=20
+singularity image but I got the error. This is what I did..
+
+vagrant up --provider virtualbox
+
+vagrant ssh -c /bin/sh <<EOF
+    sudo apt-get update
+    sudo apt-get -y install build-essential curl git sudo man vim autoconf=
+=20
+libtool
+    git clone -b development https:
+//github.com/singularityware/singularity.git
+    cd singularity
+    ./autogen.sh
+    ./configure --prefix=3D/usr/local
+    make
+    sudo make install
+EOF
+
+vagrant ssh
+
+vagrant@vagrant-ubuntu-trusty-64:~$ singularity pull docker:
+//evolinc/evolinc-ii:1.2
+
+
+image=3D"evolinc-ii-1.2.img"
+gtf=3D"sample_data_evolinc-I/Sample_cuffcompare_out.gtf"=20
+genome=3D"sample_data_evolinc-I/TAIR10_chr1.fasta"=20
+annot=3D"sample_data_evolinc-I/TAIR10_chr1_genes.gff"=20
+threads=3D12=20
+output=3D"test_out_2"
+singularity run ${image} -c ${gtf} -g ${genome} -r ${annot} -n ${threads} -=
+o=20
+${output}
+
+WARNING: Container bind point does not exist: '/home1' (homedir_base)
+WARNING: Non existant 'bind point' in container: '/work'
+WARNING: Non existant 'bind point' in container: '/scratch'
+/bin/bash: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)
+Invalid option: -c
+
+Thanks,
+Upendra
+
+On Wednesday, May 31, 2017 at 1:13:42 PM UTC-7, vanessa wrote:
+>
+> Hi Upendra,
+>
+> The docker2singularity is a bit different than the singularity software=
+=20
+> proper, and I would suggest you create your image using singularity and t=
+ry=20
+> again:
+>
+> git clone -b development=20
+> https://www.github.com/singularityware/singularity.git
+> cd singularity
+> ./autogen.sh
+> ./configure --prefix=3D/usr/local
+> make
+> sudo make install
+>
+> Then for your docker image, you could do any of the following
+>
+> *1. Create and import*
+> singularity create --size 6000 evolinc.img
+> singularity import docker://ubuntu:latest   # (replace your Docker image=
+=20
+> uri here)
+>
+> *2. Pull*
+> singularity pull docker://ubuntu:latest
+>
+> *3. Bootstrap*
+> bootstrap is the full, proper container creation, and using the=20
+> development branch you can use different sections to add files, labels,=
+=20
+> etc. You would make a file called Singularity that has something like:
+>
+>>
+>> Bootstrap: docker
+>> From: ubuntu:latest
+>> %post
+>> apt-get update && apt-get install -y git
+>> # put other setup and install here
+>> %files
+>> /path/on/host /path/in/container
+>> %runscript
+>> # This is what your container does when you execute it
+>> =20
+>> exec echo Hello "$@"
+>
+>
+>
+> Check out the docs to see all the options=20
+> <https://github.com/singularityware/singularityware.github.io/blob/docs/2=
+.3/pages/docs/user-docs/docs-bootstrap.md>!=20
+> Please give those a try then we can look more closely at the bug.
+>
+> Best,
+>
+> Vanessa
+>
+> On Wed, May 31, 2017 at 3:39 PM, CARLOS EDUARDO ARANGO GUTIERREZ <
+> carlo...@correounivalle.edu.co <javascript:>> wrote:
+>
+>> Hi upendra kumar Devisetty , are you using the development branch?
+>>
+>> On development branch this are my outputs
+>>
+>> $ singularity run issue.img -c Sample_cuffcompare_out.gtf -g=20
+>> TAIR10_chr1.fasta -r TAIR10_chr1_genes.gff -o test_out -n 4
+>> BEGIN!
+>> Wed May 31 19:37:36 UTC 2017
+>> grep: TAIR10_chr1.fasta: No such file or directory=20
+>> grep: TAIR10_chr1_genes.gff: No such file or directory
+>>
+>> Remember that if you want to use the singularity file you must call it=
+=20
+>> with run, or as an executable ./evolinc_evolinc-i_1.2-2017-05-03-
+>> 44de0c39396b.img
+>>
+>> hope it helps!
+>>
+>> On 31 May 2017 at 14:15, 'upendra kumar Devisetty' via singularity <
+>> si...@lbl.gov <javascript:>> wrote:
+>>
+>>> Hi,
+>>>
+>>> This is my first post to Singularity forum. I have recently started=20
+>>> woking with Singularity and I find it awesome way of running Docker=20
+>>> containers on HPC. As part of that i have today converted Docker contai=
+ner=20
+>>> to Singularity container using `singularityware/docker2singularity` Doc=
+ker=20
+>>> image. Then I copied that image to HPC (XSEDE's stampede) and when I tr=
+ied=20
+>>> to execute it I am getting this error
+>>>
+>>> singularity exec evolinc_evolinc-i_1.2-2017-05-03-44de0c39396b.img -c=
+=20
+>>> sample_data_evolinc-I/Sample_cuffcompare_out.gtf -g sample_data_evolinc=
+-
+>>> I/TAIR10_chr1.fasta -r sample_data_evolinc-I/TAIR10_chr1_genes.gff -n 4=
+=20
+>>> -o test_out
+>>> /.exec: 3: exec: -c: not found
+>>>
+>>>
+>>> This is how I run the Docker container and i was just trying to=20
+>>> replicate the same with Singularity containers. The docker container=20
+>>> absolutely works great but for some reason not the Singularity containe=
+r.
+>>>
+>>>
+>>> docker run --rm -v $(pwd):/working-dir -w /working-dir evolinc/evolinc-=
+i
+>>> :1.2 -c Sample_cuffcompare_out.gtf -g TAIR10_chr1.fasta -r=20
+>>> TAIR10_chr1_genes.gff -o test_out -n 4
+>>>
+>>>
+>>> This is what the Singularity file inside the container looks like. Do I=
+=20
+>>> need to change anything in this file to make the container work.=20
+>>>
+>>>
+>>> Singularity.evolinc_evolinc-i_1.2-2017-05-03-44de0c39396b.img> $ cat=20
+>>> singularity
+>>> #!/bin/sh
+>>> evolinc-part-I.sh $@
+>>>
+>>>
+>>> Thanks,
+>>>
+>>> Upendra
+>>>
+>>> --=20
+>>> You received this message because you are subscribed to the Google=20
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send=
+=20
+>>> an email to singu...@lbl.gov <javascript:>.
+>>>
+>>
+>>
+>>
+>> --=20
+>>
+>>
+>> ------------------------------------------------------------------------=
+------------------------------------------------
+>> CARLOS EDUARDO ARANGO GUTIERREZ. =20
+>> Cel : +57 3182545671
+>> Computer Science PhD Student
+>> UNIVERSIDAD DEL VALLE <http://www.univalle.edu.co/>
+>> Laboratorio de redes y sistemas distribuidos - LASCILAB=20
+>> <http://lascilab.univalle.edu.co/>
+>> Tecnolog=C3=ADa, Informaci=C3=B3n y Complejidad Cu=C3=A1ntica - QuanTIC =
+(GrupLAC=20
+>> <http://201.234.78.173:8080/gruplac/jsp/visualiza/visualizagr.jsp?nro=3D=
+00000000010436>
+>> )=20
+>> Centro de Investigaci=C3=B3n e Innovaci=C3=B3n en Bioinform=C3=A1tica y =
+Fot=C3=B3nica=20
+>> (CIBioFi) <http://cibiofi.univalle.edu.co/>
+>>
+>>                                                              =20
+>>
+>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s=20
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n=20
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> --=20
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_4795_1075119099.1496264352019
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Venessa,<div><br></div><div>I used the development bran=
+ch and used the <b>method 2</b> for making creating singularity image but I=
+ got the error. This is what I did..</div><div><br></div><div><div class=3D=
+"prettyprint" style=3D"background-color: rgb(250, 250, 250); border-color: =
+rgb(187, 187, 187); border-style: solid; border-width: 1px; word-wrap: brea=
+k-word;"><code class=3D"prettyprint"><div class=3D"subprettyprint"><span st=
+yle=3D"color: #000;" class=3D"styled-by-prettify">vagrant up </span><span s=
+tyle=3D"color: #660;" class=3D"styled-by-prettify">--</span><span style=3D"=
+color: #000;" class=3D"styled-by-prettify">provider virtualbox<br><br>vagra=
+nt ssh </span><span style=3D"color: #660;" class=3D"styled-by-prettify">-</=
+span><span style=3D"color: #000;" class=3D"styled-by-prettify">c </span><sp=
+an style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify">bin</span><span style=3D"col=
+or: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #000;=
+" class=3D"styled-by-prettify">sh </span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">&lt;&lt;</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">EOF<br>=C2=A0 =C2=A0 sudo apt</span><span style=3D"=
+color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #0=
+08;" class=3D"styled-by-prettify">get</span><span style=3D"color: #000;" cl=
+ass=3D"styled-by-prettify"> update<br>=C2=A0 =C2=A0 sudo apt</span><span st=
+yle=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"co=
+lor: #008;" class=3D"styled-by-prettify">get</span><span style=3D"color: #0=
+00;" class=3D"styled-by-prettify"> </span><span style=3D"color: #660;" clas=
+s=3D"styled-by-prettify">-</span><span style=3D"color: #000;" class=3D"styl=
+ed-by-prettify">y install build</span><span style=3D"color: #660;" class=3D=
+"styled-by-prettify">-</span><span style=3D"color: #000;" class=3D"styled-b=
+y-prettify">essential curl git sudo man vim autoconf libtool<br>=C2=A0 =C2=
+=A0 git clone </span><span style=3D"color: #660;" class=3D"styled-by-pretti=
+fy">-</span><span style=3D"color: #000;" class=3D"styled-by-prettify">b dev=
+elopment https</span><span style=3D"color: #660;" class=3D"styled-by-pretti=
+fy">:</span><span style=3D"color: #800;" class=3D"styled-by-prettify">//git=
+hub.com/singularityware/singularity.git</span><span style=3D"color: #000;" =
+class=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 cd singularity<br>=C2=A0 =C2=
+=A0 </span><span style=3D"color: #660;" class=3D"styled-by-prettify">./</sp=
+an><span style=3D"color: #000;" class=3D"styled-by-prettify">autogen</span>=
+<span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><span sty=
+le=3D"color: #000;" class=3D"styled-by-prettify">sh<br>=C2=A0 =C2=A0 </span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">./</span><span s=
+tyle=3D"color: #000;" class=3D"styled-by-prettify">configure </span><span s=
+tyle=3D"color: #660;" class=3D"styled-by-prettify">--</span><span style=3D"=
+color: #000;" class=3D"styled-by-prettify">prefix</span><span style=3D"colo=
+r: #660;" class=3D"styled-by-prettify">=3D</span><span style=3D"color: #080=
+;" class=3D"styled-by-prettify">/usr/</span><span style=3D"color: #008;" cl=
+ass=3D"styled-by-prettify">local</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 make<br>=C2=A0 =C2=A0 sudo make i=
+nstall<br>EOF<br><br>vagrant ssh<br><br>vagrant@vagrant</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify">ubuntu</span><span style=3D"color: #6=
+60;" class=3D"styled-by-prettify">-</span><span style=3D"color: #000;" clas=
+s=3D"styled-by-prettify">trusty</span><span style=3D"color: #660;" class=3D=
+"styled-by-prettify">-</span><span style=3D"color: #066;" class=3D"styled-b=
+y-prettify">64</span><span style=3D"color: #660;" class=3D"styled-by-pretti=
+fy">:~</span><span style=3D"color: #000;" class=3D"styled-by-prettify">$ si=
+ngularity pull docker</span><span style=3D"color: #660;" class=3D"styled-by=
+-prettify">:</span><span style=3D"color: #800;" class=3D"styled-by-prettify=
+">//evolinc/evolinc-ii:1.2</span><span style=3D"color: #000;" class=3D"styl=
+ed-by-prettify"><br></span></div></code></div><div><br><br></div></div><div=
+>
+
+
+
+
+<style type=3D"text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 15.0px Menlo}
+span.s1 {font-variant-ligatures: no-common-ligatures}
+</style>
+
+
+<p class=3D"p1"><span class=3D"s1"><font size=3D"2"></font></span></p></div=
+><div class=3D"prettyprint" style=3D"background-color: rgb(250, 250, 250); =
+border-color: rgb(187, 187, 187); border-style: solid; border-width: 1px; w=
+ord-wrap: break-word;"><code class=3D"prettyprint"><div class=3D"subprettyp=
+rint"><span style=3D"color: #000;" class=3D"styled-by-prettify">image</span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">=3D</span><span =
+style=3D"color: #080;" class=3D"styled-by-prettify">&quot;evolinc-ii-1.2.im=
+g&quot;</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br=
+>gtf</span><span style=3D"color: #660;" class=3D"styled-by-prettify">=3D</s=
+pan><span style=3D"color: #080;" class=3D"styled-by-prettify">&quot;sample_=
+data_evolinc-I/Sample_cuffcompare_out.gtf&quot;</span><span style=3D"color:=
+ #000;" class=3D"styled-by-prettify"> <br>genome</span><span style=3D"color=
+: #660;" class=3D"styled-by-prettify">=3D</span><span style=3D"color: #080;=
+" class=3D"styled-by-prettify">&quot;sample_data_evolinc-I/TAIR10_chr1.fast=
+a&quot;</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> <b=
+r>annot</span><span style=3D"color: #660;" class=3D"styled-by-prettify">=3D=
+</span><span style=3D"color: #080;" class=3D"styled-by-prettify">&quot;samp=
+le_data_evolinc-I/TAIR10_chr1_genes.gff&quot;</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify"> <br>threads</span><span style=3D"color:=
+ #660;" class=3D"styled-by-prettify">=3D</span><span style=3D"color: #066;"=
+ class=3D"styled-by-prettify">12</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> <br>output</span><span style=3D"color: #660;" clas=
+s=3D"styled-by-prettify">=3D</span><span style=3D"color: #080;" class=3D"st=
+yled-by-prettify">&quot;test_out_2&quot;</span><span style=3D"color: #000;"=
+ class=3D"styled-by-prettify"><br>singularity run $</span><span style=3D"co=
+lor: #660;" class=3D"styled-by-prettify">{</span><span style=3D"color: #000=
+;" class=3D"styled-by-prettify">image</span><span style=3D"color: #660;" cl=
+ass=3D"styled-by-prettify">}</span><span style=3D"color: #000;" class=3D"st=
+yled-by-prettify"> </span><span style=3D"color: #660;" class=3D"styled-by-p=
+rettify">-</span><span style=3D"color: #000;" class=3D"styled-by-prettify">=
+c $</span><span style=3D"color: #660;" class=3D"styled-by-prettify">{</span=
+><span style=3D"color: #000;" class=3D"styled-by-prettify">gtf</span><span =
+style=3D"color: #660;" class=3D"styled-by-prettify">}</span><span style=3D"=
+color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #6=
+60;" class=3D"styled-by-prettify">-</span><span style=3D"color: #000;" clas=
+s=3D"styled-by-prettify">g $</span><span style=3D"color: #660;" class=3D"st=
+yled-by-prettify">{</span><span style=3D"color: #000;" class=3D"styled-by-p=
+rettify">genome</span><span style=3D"color: #660;" class=3D"styled-by-prett=
+ify">}</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> </s=
+pan><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span=
+ style=3D"color: #000;" class=3D"styled-by-prettify">r $</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">{</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify">annot</span><span style=3D"color: #66=
+0;" class=3D"styled-by-prettify">}</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> </span><span style=3D"color: #660;" class=3D"style=
+d-by-prettify">-</span><span style=3D"color: #000;" class=3D"styled-by-pret=
+tify">n $</span><span style=3D"color: #660;" class=3D"styled-by-prettify">{=
+</span><span style=3D"color: #000;" class=3D"styled-by-prettify">threads</s=
+pan><span style=3D"color: #660;" class=3D"styled-by-prettify">}</span><span=
+ style=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D=
+"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify">o $</span><span style=3D"color: #660;" c=
+lass=3D"styled-by-prettify">{</span><span style=3D"color: #000;" class=3D"s=
+tyled-by-prettify">output</span><span style=3D"color: #660;" class=3D"style=
+d-by-prettify">}</span><span style=3D"color: #000;" class=3D"styled-by-pret=
+tify"><br></span></div></code></div><div><div><br></div><div class=3D"prett=
+yprint" style=3D"background-color: rgb(250, 250, 250); border-color: rgb(18=
+7, 187, 187); border-style: solid; border-width: 1px; word-wrap: break-word=
+;"><code class=3D"prettyprint"><div class=3D"subprettyprint"><span style=3D=
+"color: #000;" class=3D"styled-by-prettify">WARNING</span><span style=3D"co=
+lor: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color: #000=
+;" class=3D"styled-by-prettify"> </span><span style=3D"color: #606;" class=
+=3D"styled-by-prettify">Container</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> bind point does </span><span style=3D"color: #008;=
+" class=3D"styled-by-prettify">not</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> exist</span><span style=3D"color: #660;" class=3D"=
+styled-by-prettify">:</span><span style=3D"color: #000;" class=3D"styled-by=
+-prettify"> </span><span style=3D"color: #080;" class=3D"styled-by-prettify=
+">&#39;/home1&#39;</span><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify"> </span><span style=3D"color: #660;" class=3D"styled-by-prettify">(=
+</span><span style=3D"color: #000;" class=3D"styled-by-prettify">homedir_ba=
+se</span><span style=3D"color: #660;" class=3D"styled-by-prettify">)</span>=
+<span style=3D"color: #000;" class=3D"styled-by-prettify"><br>WARNING</span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span st=
+yle=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"co=
+lor: #606;" class=3D"styled-by-prettify">Non</span><span style=3D"color: #0=
+00;" class=3D"styled-by-prettify"> existant </span><span style=3D"color: #0=
+80;" class=3D"styled-by-prettify">&#39;bind point&#39;</span><span style=3D=
+"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #=
+008;" class=3D"styled-by-prettify">in</span><span style=3D"color: #000;" cl=
+ass=3D"styled-by-prettify"> container</span><span style=3D"color: #660;" cl=
+ass=3D"styled-by-prettify">:</span><span style=3D"color: #000;" class=3D"st=
+yled-by-prettify"> </span><span style=3D"color: #080;" class=3D"styled-by-p=
+rettify">&#39;/work&#39;</span><span style=3D"color: #000;" class=3D"styled=
+-by-prettify"><br>WARNING</span><span style=3D"color: #660;" class=3D"style=
+d-by-prettify">:</span><span style=3D"color: #000;" class=3D"styled-by-pret=
+tify"> </span><span style=3D"color: #606;" class=3D"styled-by-prettify">Non=
+</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> existant =
+</span><span style=3D"color: #080;" class=3D"styled-by-prettify">&#39;bind =
+point&#39;</span><span style=3D"color: #000;" class=3D"styled-by-prettify">=
+ </span><span style=3D"color: #008;" class=3D"styled-by-prettify">in</span>=
+<span style=3D"color: #000;" class=3D"styled-by-prettify"> container</span>=
+<span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span sty=
+le=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"col=
+or: #080;" class=3D"styled-by-prettify">&#39;/scratch&#39;</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span style=3D"c=
+olor: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify">bin</span><span style=3D"color: #660;" cla=
+ss=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"sty=
+led-by-prettify">bash</span><span style=3D"color: #660;" class=3D"styled-by=
+-prettify">:</span><span style=3D"color: #000;" class=3D"styled-by-prettify=
+"> warning</span><span style=3D"color: #660;" class=3D"styled-by-prettify">=
+:</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> setlocal=
+e</span><span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify"> LC_ALL</span><spa=
+n style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"> cannot change locale </span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">(</span><span st=
+yle=3D"color: #000;" class=3D"styled-by-prettify">en_US</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">.</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify">UTF</span><span style=3D"color: #660;=
+" class=3D"styled-by-prettify">-</span><span style=3D"color: #066;" class=
+=3D"styled-by-prettify">8</span><span style=3D"color: #660;" class=3D"style=
+d-by-prettify">)</span><span style=3D"color: #000;" class=3D"styled-by-pret=
+tify"><br></span><span style=3D"color: #606;" class=3D"styled-by-prettify">=
+Invalid</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> op=
+tion</span><span style=3D"color: #660;" class=3D"styled-by-prettify">:</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify"> </span><span s=
+tyle=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"c=
+olor: #000;" class=3D"styled-by-prettify">c</span></div></code></div><div><=
+br></div></div><div>Thanks,</div><div>Upendra</div><div><br>On Wednesday, M=
+ay 31, 2017 at 1:13:42 PM UTC-7, vanessa wrote:<blockquote class=3D"gmail_q=
+uote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;pad=
+ding-left: 1ex;"><div dir=3D"ltr"><span style=3D"font-size:12.8px">Hi Upend=
+ra,</span><div style=3D"font-size:12.8px"><br></div><div style=3D"font-size=
+:12.8px">The docker2singularity is a bit different than the singularity sof=
+tware proper, and I would suggest you create your image using singularity a=
+nd try again:</div><div style=3D"font-size:12.8px"><br></div><div style=3D"=
+font-size:12.8px">git clone -b development=C2=A0<a href=3D"https://www.gith=
+ub.com/singularityware/singularity.git" target=3D"_blank" rel=3D"nofollow" =
+onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F=
+%2Fwww.github.com%2Fsingularityware%2Fsingularity.git\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNHrvgu5_gxSwFFWNmqR7jQ_fNkOSg&#39;;return true;" onclick=
+=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fwww.gith=
+ub.com%2Fsingularityware%2Fsingularity.git\x26sa\x3dD\x26sntz\x3d1\x26usg\x=
+3dAFQjCNHrvgu5_gxSwFFWNmqR7jQ_fNkOSg&#39;;return true;">https://www.<wbr>gi=
+thub.com/singularityware/<wbr>singularity.git</a></div><div style=3D"font-s=
+ize:12.8px">cd singularity</div><div style=3D"font-size:12.8px">./autogen.s=
+h</div><div style=3D"font-size:12.8px">./configure --prefix=3D/usr/local</d=
+iv><div style=3D"font-size:12.8px">make</div><div style=3D"font-size:12.8px=
+">sudo make install</div><div style=3D"font-size:12.8px"><br></div><div sty=
+le=3D"font-size:12.8px">Then for your docker image, you could do any of the=
+ following<br><b><br></b></div><div style=3D"font-size:12.8px"><b>1. Create=
+ and import</b></div><div style=3D"font-size:12.8px">singularity create --s=
+ize 6000 evolinc.img</div><div style=3D"font-size:12.8px">singularity impor=
+t docker://ubuntu:latest =C2=A0 # (replace your Docker image uri here)</div=
+><div style=3D"font-size:12.8px"><br></div><div style=3D"font-size:12.8px">=
+<b>2. Pull</b></div><div style=3D"font-size:12.8px">singularity pull docker=
+://ubuntu:latest</div><div style=3D"font-size:12.8px"><br></div><div style=
+=3D"font-size:12.8px"><b>3. Bootstrap</b></div><div style=3D"font-size:12.8=
+px">bootstrap is the full, proper container creation, and using the develop=
+ment branch you can use different sections to add files, labels, etc. You w=
+ould make a file called Singularity that has something like:</div><blockquo=
+te class=3D"gmail_quote" style=3D"font-size:12.8px;margin:0px 0px 0px 0.8ex=
+;border-left:1px solid rgb(204,204,204);padding-left:1ex"><br>Bootstrap: do=
+cker<br>From: ubuntu:latest<br>%post<br>apt-get update &amp;&amp; apt-get i=
+nstall -y git<br># put other setup and install here<br>%files<br>/path/on/h=
+ost /path/in/container<br>%runscript<br># This is what your container does =
+when you execute it<br>=C2=A0<br>exec echo Hello &quot;$@&quot;</blockquote=
+><div style=3D"font-size:12.8px"><br></div><div style=3D"font-size:12.8px">=
+<br></div><div style=3D"font-size:12.8px">Check out the=C2=A0<a href=3D"htt=
+ps://github.com/singularityware/singularityware.github.io/blob/docs/2.3/pag=
+es/docs/user-docs/docs-bootstrap.md" target=3D"_blank" rel=3D"nofollow" onm=
+ousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2F=
+github.com%2Fsingularityware%2Fsingularityware.github.io%2Fblob%2Fdocs%2F2.=
+3%2Fpages%2Fdocs%2Fuser-docs%2Fdocs-bootstrap.md\x26sa\x3dD\x26sntz\x3d1\x2=
+6usg\x3dAFQjCNHaVnNy3w-tMAyIY2Hyj-IWYx4E_w&#39;;return true;" onclick=3D"th=
+is.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fs=
+ingularityware%2Fsingularityware.github.io%2Fblob%2Fdocs%2F2.3%2Fpages%2Fdo=
+cs%2Fuser-docs%2Fdocs-bootstrap.md\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCN=
+HaVnNy3w-tMAyIY2Hyj-IWYx4E_w&#39;;return true;">docs to see all the options=
+</a>! Please give those a try then we can look more closely at the bug.</di=
+v><div style=3D"font-size:12.8px"><br></div><div style=3D"font-size:12.8px"=
+>Best,</div><div style=3D"font-size:12.8px"><br></div><div style=3D"font-si=
+ze:12.8px">Vanessa</div></div><div><br><div class=3D"gmail_quote">On Wed, M=
+ay 31, 2017 at 3:39 PM, CARLOS EDUARDO ARANGO GUTIERREZ <span dir=3D"ltr">&=
+lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"N2VKe=
+Gm-BAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;=
+return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">ca=
+rlos.aran...@<wbr>correounivalle.edu.co</a>&gt;</span> wrote:<br><blockquot=
+e class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc sol=
+id;padding-left:1ex"><div dir=3D"ltr">Hi=C2=A0<span style=3D"font-size:12.8=
+px;font-weight:bold;white-space:nowrap"><span>upendra</span> <span>kumar</s=
+pan> <span>Devisetty</span> ,=C2=A0</span>are you using the development bra=
+nch?<div><br></div><div>On development branch this are my outputs</div><div=
+><br></div><div><div>$ singularity run issue.img -c Sample_cuffcompare_out.=
+gtf -g TAIR10_chr1.fasta -r TAIR10_chr1_genes.gff -o test_out -n 4</div><di=
+v>BEGIN!</div><div>Wed May 31 19:37:36 UTC 2017</div></div><div><div>grep: =
+TAIR10_chr1.fasta: No such file or directory=C2=A0</div><div>grep: TAIR10_c=
+hr1_genes.gff: No such file or directory</div></div><div><br></div><div>Rem=
+ember that if you want to use the singularity file you must call it with ru=
+n, or as an executable ./<span style=3D"font-family:monospace;font-size:10.=
+4px;background-color:rgb(250,250,250);color:rgb(0,0,0)">evolinc_evolinc</sp=
+an><span style=3D"font-family:monospace;font-size:10.4px;background-color:r=
+gb(250,250,250);color:rgb(102,102,0)">-</span><span style=3D"font-family:mo=
+nospace;font-size:10.4px;background-color:rgb(250,250,250);color:rgb(0,0,0)=
+">i_1</span><span style=3D"font-family:monospace;font-size:10.4px;backgroun=
+d-color:rgb(250,250,250);color:rgb(102,102,0)">.</span><span style=3D"font-=
+family:monospace;font-size:10.4px;background-color:rgb(250,250,250);color:r=
+gb(0,102,102)">2</span><span style=3D"font-family:monospace;font-size:10.4p=
+x;background-color:rgb(250,250,250);color:rgb(102,102,0)">-</span><span sty=
+le=3D"font-family:monospace;font-size:10.4px;background-color:rgb(250,250,2=
+50);color:rgb(0,102,102)">2017</span><span style=3D"font-family:monospace;f=
+ont-size:10.4px;background-color:rgb(250,250,250);color:rgb(102,102,0)">-</=
+span><span style=3D"font-family:monospace;font-size:10.4px;background-color=
+:rgb(250,250,250);color:rgb(0,102,102)">0<wbr>5</span><span style=3D"font-f=
+amily:monospace;font-size:10.4px;background-color:rgb(250,250,250);color:rg=
+b(102,102,0)">-</span><span style=3D"font-family:monospace;font-size:10.4px=
+;background-color:rgb(250,250,250);color:rgb(0,102,102)">03</span><span sty=
+le=3D"font-family:monospace;font-size:10.4px;background-color:rgb(250,250,2=
+50);color:rgb(102,102,0)">-</span><span style=3D"font-family:monospace;font=
+-size:10.4px;background-color:rgb(250,250,250);color:rgb(0,102,102)">44de0c=
+39396b</span><span style=3D"font-family:monospace;font-size:10.4px;backgrou=
+nd-color:rgb(250,250,250);color:rgb(102,102,0)">.</span><span style=3D"font=
+-family:monospace;font-size:10.4px;background-color:rgb(250,250,250);color:=
+rgb(0,0,0)">img</span></div><div><span style=3D"font-family:monospace;font-=
+size:10.4px;background-color:rgb(250,250,250);color:rgb(0,0,0)"><br></span>=
+</div>hope it helps!</div><div><div><div><br><div class=3D"gmail_quote">On =
+31 May 2017 at 14:15, &#39;upendra kumar Devisetty&#39; via singularity <sp=
+an dir=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated=
+-mailto=3D"N2VKeGm-BAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;j=
+avascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;=
+return true;">si...@lbl.gov</a>&gt;</span> wrote:<br><blockquote class=3D"g=
+mail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-l=
+eft:1ex"><div dir=3D"ltr">Hi,<div><br></div><div>This is my first post to S=
+ingularity forum. I have recently started woking with Singularity and I fin=
+d it awesome way of running Docker containers on HPC. As part of that i hav=
+e today converted Docker container to Singularity container using `<span st=
+yle=3D"background-color:transparent;font-family:SFMono-Regular,Consolas,&qu=
+ot;Liberation Mono&quot;,Menlo,Courier,monospace;font-size:13.6px;color:rgb=
+(36,41,46)">singularityware/<wbr>docker2singularity`</span>=C2=A0Docker ima=
+ge. Then I copied that image to HPC (XSEDE&#39;s stampede) and when I tried=
+ to execute it I am getting this error</div><div><br></div><div>
+
+
+
+
+
+
+
+<div style=3D"background-color:rgb(250,250,250);border-color:rgb(187,187,18=
+7);border-style:solid;border-width:1px;word-wrap:break-word"><code><div><sp=
+an style=3D"color:#000">singularity </span><span style=3D"color:#008">exec<=
+/span><span style=3D"color:#000"> evolinc_evolinc</span><span style=3D"colo=
+r:#660">-</span><span style=3D"color:#000">i_1</span><span style=3D"color:#=
+660">.</span><span style=3D"color:#066">2</span><span style=3D"color:#660">=
+-</span><span style=3D"color:#066">2017</span><span style=3D"color:#660">-<=
+/span><span style=3D"color:#066">05</span><span style=3D"color:#660">-</spa=
+n><span style=3D"color:#066"><wbr>03</span><span style=3D"color:#660">-</sp=
+an><span style=3D"color:#066">44de0c39396b</span><span style=3D"color:#660"=
+>.</span><span style=3D"color:#000">img </span><span style=3D"color:#660">-=
+</span><span style=3D"color:#000">c sample_data_evolinc</span><span style=
+=3D"color:#660">-</span><span style=3D"color:#000">I</span><span style=3D"c=
+olor:#660">/</span><span style=3D"color:#606">Sample_<wbr>cuffcompare_out</=
+span><span style=3D"color:#660">.</span><span style=3D"color:#000">gtf </sp=
+an><span style=3D"color:#660">-</span><span style=3D"color:#000">g sample_d=
+ata_evolinc</span><span style=3D"color:#660">-</span><span style=3D"color:#=
+000">I</span><span style=3D"color:#660">/</span><span style=3D"color:#000">=
+TAIR10_<wbr>chr1</span><span style=3D"color:#660">.</span><span style=3D"co=
+lor:#000">fasta </span><span style=3D"color:#660">-</span><span style=3D"co=
+lor:#000">r sample_data_evolinc</span><span style=3D"color:#660">-</span><s=
+pan style=3D"color:#000">I</span><span style=3D"color:#660">/</span><span s=
+tyle=3D"color:#000">TAIR10_<wbr>chr1_genes</span><span style=3D"color:#660"=
+>.</span><span style=3D"color:#000">gff </span><span style=3D"color:#660">-=
+</span><span style=3D"color:#000">n </span><span style=3D"color:#066">4</sp=
+an><span style=3D"color:#000"> </span><span style=3D"color:#660">-</span><s=
+pan style=3D"color:#000">o test_out</span><span style=3D"color:#000"><br></=
+span><span style=3D"color:#660">/.</span><span style=3D"color:#008">exec</s=
+pan><span style=3D"color:#660">:</span><span style=3D"color:#000"> </span><=
+span style=3D"color:#066">3</span><span style=3D"color:#660">:</span><span =
+style=3D"color:#000"> </span><span style=3D"color:#008">exec</span><span st=
+yle=3D"color:#660">:</span><span style=3D"color:#000"> </span><span style=
+=3D"color:#660">-</span><span style=3D"color:#000">c</span><span style=3D"c=
+olor:#660">:</span><span style=3D"color:#000"> </span><span style=3D"color:=
+#008">not</span><span style=3D"color:#000"> found</span></div></code></div>=
+<p><span><br></span></p><p><span style=3D"font-family:Arial,Helvetica,sans-=
+serif;font-size:13px">This is how I run the Docker container and i was just=
+ trying to replicate the same with Singularity containers. The docker conta=
+iner absolutely works great but for some reason not the Singularity contain=
+er.</span><br></p><p>
+
+
+
+
+
+
+
+</p><p><span><br></span></p><div style=3D"background-color:rgb(250,250,250)=
+;border-color:rgb(187,187,187);border-style:solid;border-width:1px;word-wra=
+p:break-word"><code><div><span style=3D"color:#000">docker run </span><span=
+ style=3D"color:#660">--</span><span style=3D"color:#000">rm </span><span s=
+tyle=3D"color:#660">-</span><span style=3D"color:#000">v $</span><span styl=
+e=3D"color:#660">(</span><span style=3D"color:#000">pwd</span><span style=
+=3D"color:#660">):/</span><span style=3D"color:#000">working</span><span st=
+yle=3D"color:#660">-</span><span style=3D"color:#000">dir </span><span styl=
+e=3D"color:#660">-</span><span style=3D"color:#000">w </span><span style=3D=
+"color:#660">/</span><span style=3D"color:#000">working</span><span style=
+=3D"color:#660">-</span><span style=3D"color:#000">dir evolinc</span><span =
+style=3D"color:#660">/</span><span style=3D"color:#000">evolinc</span><span=
+ style=3D"color:#660">-</span><span style=3D"color:#000">i</span><span styl=
+e=3D"color:#660">:</span><span style=3D"color:#066">1.2</span><span style=
+=3D"color:#000"> </span><span style=3D"color:#660">-</span><span style=3D"c=
+olor:#000">c </span><span style=3D"color:#606">Sample_cuffcompare_out</span=
+><span style=3D"color:#660">.</span><span style=3D"color:#000">gtf </span><=
+span style=3D"color:#660">-</span><span style=3D"color:#000">g TAIR10_chr1<=
+/span><span style=3D"color:#660">.</span><span style=3D"color:#000">fasta <=
+/span><span style=3D"color:#660">-</span><span style=3D"color:#000">r TAIR1=
+0_chr1_genes</span><span style=3D"color:#660">.</span><span style=3D"color:=
+#000">gff </span><span style=3D"color:#660">-</span><span style=3D"color:#0=
+00">o test_out </span><span style=3D"color:#660">-</span><span style=3D"col=
+or:#000">n </span><span style=3D"color:#066">4</span><span style=3D"color:#=
+000"><br></span></div></code></div><p><br><font face=3D"Arial, Helvetica, s=
+ans-serif"><span style=3D"font-size:13px">This is what the Singularity file=
+ inside the container looks like. Do I need to change anything in this file=
+ to make the container work.=C2=A0</span></font></p><p><font face=3D"Arial,=
+ Helvetica, sans-serif"><span style=3D"font-size:13px"><br></span></font></=
+p><div style=3D"background-color:rgb(250,250,250);border-color:rgb(187,187,=
+187);border-style:solid;border-width:1px;word-wrap:break-word"><code><div><=
+span style=3D"color:#606">Singularity</span><span style=3D"color:#660">.</s=
+pan><span style=3D"color:#000">evolinc_evolinc</span><span style=3D"color:#=
+660">-</span><span style=3D"color:#000">i_<wbr>1</span><span style=3D"color=
+:#660">.</span><span style=3D"color:#066">2</span><span style=3D"color:#660=
+">-</span><span style=3D"color:#066">2017</span><span style=3D"color:#660">=
+-</span><span style=3D"color:#066">05</span><span style=3D"color:#660">-</s=
+pan><span style=3D"color:#066">03</span><span style=3D"color:#660">-</span>=
+<span style=3D"color:#066">44de0c39396b</span><span style=3D"color:#660">.<=
+/span><span style=3D"color:#000">im<wbr>g</span><span style=3D"color:#660">=
+&gt;</span><span style=3D"color:#000"> $ cat singularity<br></span><span st=
+yle=3D"color:#800">#!/bin/sh</span><span style=3D"color:#000"><br>evolinc</=
+span><span style=3D"color:#660">-</span><span style=3D"color:#000">part</sp=
+an><span style=3D"color:#660">-</span><span style=3D"color:#000">I</span><s=
+pan style=3D"color:#660">.</span><span style=3D"color:#000">sh $@</span></d=
+iv></code></div><p><font face=3D"Arial, Helvetica, sans-serif"><span style=
+=3D"font-size:13px"><br></span></font></p><p><font face=3D"Arial, Helvetica=
+, sans-serif"><span style=3D"font-size:13px">Thanks,</span></font></p><p><f=
+ont face=3D"Arial, Helvetica, sans-serif"><span style=3D"font-size:13px">Up=
+endra</span></font></p></div></div><span><font color=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+N2VKeGm-BAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div></div=
+></div><span><font color=3D"#888888">-- <br><div><div dir=3D"ltr"><div><div=
+ dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div dir=3D"ltr"><=
+div dir=3D"ltr"><div dir=3D"ltr"><div style=3D"font-size:small"><br>-------=
+-----------------------<wbr>------------------------------<wbr>------------=
+------------------<wbr>------------------------------</div><div><font face=
+=3D"monospace, monospace" size=3D"1" color=3D"#000000">CARLOS EDUARDO ARANG=
+O GUTIERREZ. =C2=A0</font></div><div><font face=3D"monospace, monospace" si=
+ze=3D"1" color=3D"#000000">Cel : <a value=3D"+573182545671">+57 3182545671<=
+/a></font></div><font face=3D"monospace, monospace" size=3D"1" color=3D"#00=
+0000">Computer Science PhD Student</font></div><div dir=3D"ltr"><span style=
+=3D"font-family:monospace,monospace;font-size:x-small"><font color=3D"#0000=
+00"><a href=3D"http://www.univalle.edu.co/" target=3D"_blank" rel=3D"nofoll=
+ow" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%=
+2F%2Fwww.univalle.edu.co%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFOqCB9A=
+EJRizFmrJK9SsjtmsfUJA&#39;;return true;" onclick=3D"this.href=3D&#39;http:/=
+/www.google.com/url?q\x3dhttp%3A%2F%2Fwww.univalle.edu.co%2F\x26sa\x3dD\x26=
+sntz\x3d1\x26usg\x3dAFQjCNFOqCB9AEJRizFmrJK9SsjtmsfUJA&#39;;return true;">U=
+NIVERSIDAD DEL VALLE</a></font></span></div><div><font face=3D"monospace, m=
+onospace" size=3D"1" color=3D"#000000">Laboratorio de redes y sistemas dist=
+ribuidos - <a href=3D"http://lascilab.univalle.edu.co/" target=3D"_blank" r=
+el=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q=
+\x3dhttp%3A%2F%2Flascilab.univalle.edu.co%2F\x26sa\x3dD\x26sntz\x3d1\x26usg=
+\x3dAFQjCNFNMFlM_kTHWuEdJrQVC5wmU1a5sg&#39;;return true;" onclick=3D"this.h=
+ref=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Flascilab.univalle.ed=
+u.co%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFNMFlM_kTHWuEdJrQVC5wmU1a5s=
+g&#39;;return true;">LASCILAB</a></font></div><div><font face=3D"monospace,=
+ monospace" size=3D"1" color=3D"#000000"><span style=3D"background-color:tr=
+ansparent">Tecnolog=C3=ADa, Informaci=C3=B3n y Complejidad Cu=C3=A1ntica - =
+QuanTIC (</span><a href=3D"http://201.234.78.173:8080/gruplac/jsp/visualiza=
+/visualizagr.jsp?nro=3D00000000010436" rel=3D"nofollow" style=3D"text-decor=
+ation:none;background-color:transparent" target=3D"_blank" onmousedown=3D"t=
+his.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2F201.234.78.173%=
+3A8080%2Fgruplac%2Fjsp%2Fvisualiza%2Fvisualizagr.jsp%3Fnro%3D00000000010436=
+\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNG-u14pQSsANPy4K8Rktlxi61sR6A&#39;;=
+return true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dht=
+tp%3A%2F%2F201.234.78.173%3A8080%2Fgruplac%2Fjsp%2Fvisualiza%2Fvisualizagr.=
+jsp%3Fnro%3D00000000010436\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNG-u14pQS=
+sANPy4K8Rktlxi61sR6A&#39;;return true;">GrupLAC</a><span style=3D"backgroun=
+d-color:transparent">)</span><span style=3D"font-weight:bold">=C2=A0</span>=
+<br></font></div><div dir=3D"ltr"><a href=3D"http://cibiofi.univalle.edu.co=
+/" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http:=
+//www.google.com/url?q\x3dhttp%3A%2F%2Fcibiofi.univalle.edu.co%2F\x26sa\x3d=
+D\x26sntz\x3d1\x26usg\x3dAFQjCNFSkU1rIacjqN3oE9dmA9Qwp5SOmw&#39;;return tru=
+e;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2=
+Fcibiofi.univalle.edu.co%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFSkU1rI=
+acjqN3oE9dmA9Qwp5SOmw&#39;;return true;"><font face=3D"monospace, monospace=
+" size=3D"1" color=3D"#000000">Centro de Investigaci=C3=B3n e Innovaci=C3=
+=B3n en Bioinform=C3=A1tica y Fot=C3=B3nica (CIBioFi)</font></a><br></div><=
+div dir=3D"ltr" style=3D"font-size:small"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=C2=A0<img width=3D"69" height=3D"=
+96" style=3D"font-size:12.8px;text-align:center"><br></div></div></div></di=
+v></div></div></div></div></div></div></div>
+</font></span></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+N2VKeGm-BAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><d=
+iv>(603) 321-0676</div></div></div></div>
+</div>
+</blockquote></div></div>
+------=_Part_4795_1075119099.1496264352019--
+
+------=_Part_4794_1026007850.1496264352017--

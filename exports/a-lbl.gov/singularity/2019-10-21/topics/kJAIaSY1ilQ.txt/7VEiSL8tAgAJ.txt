@@ -1,0 +1,530 @@
+Date: Sun, 22 Oct 2017 19:50:02 -0700 (PDT)
+From: Jai Dayal <daya...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <772925e2-2a3e-4a4b-95b7-f25371240333@lbl.gov>
+In-Reply-To: <CAM=pu+LTHpbtg8Sh1WRy=J0ifDH9M6K0jMNgGPqVYTs1nGriHQ@mail.gmail.com>
+References: <85a36ba6-d037-46fc-bdfa-2c92ac4a0e67@lbl.gov> <CAM=pu+K0cYNNfibM58WZG5yXvYOCy8D6Ou44eKjTfGe--vy6VA@mail.gmail.com>
+ <CAPnqDFUKnYFGaMkL8ao+R4COGyR+_aLs-fpJex2H0AbO=O0oqQ@mail.gmail.com>
+ <CAJm6r9_UJ3t2TbTZC+oYz2MV6k9vWGY0X2E56s0qodsrPq+PVw@mail.gmail.com>
+ <CAM=pu++cuZZ9yUOJ8U4AYEoF+L0p9bMQUgcgn-Em_gqqqY42Ng@mail.gmail.com> <CAB2ovouXD+AKCwJcag=seitV_PmmvCOcpY8n-ge9Ay8K3xqjAw@mail.gmail.com>
+ <CAM=pu+LTHpbtg8Sh1WRy=J0ifDH9M6K0jMNgGPqVYTs1nGriHQ@mail.gmail.com>
+Subject: Re: [Singularity] Following Singularity "Quick Start" -- ERROR : No
+ valid /bin/sh in container
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_9455_497083073.1508727002879"
+
+------=_Part_9455_497083073.1508727002879
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_9456_263787217.1508727002880"
+
+------=_Part_9456_263787217.1508727002880
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Are either ext3 or ext4 required? I am getting similar errors to the OP 
+actually (it seems like doing similar things: install singularity in a 
+shared directory which compute nodes then mount). Our compute nodes however 
+are very minimal, which is what can be expected in many HPC environments. 
+Is there a detailed list of requirements anywhere that would specify 
+exactly what is needed? Previously with Singularity 2.3.1, I tried to 
+change the mount command in the code base to use something other than 
+ext3/4 (e.g., tmpfs) but still got errors. 
+
+Regards,
+Jai
+
+On Sunday, October 22, 2017 at 6:49:49 PM UTC-7, vanessa wrote:
+>
+> Yeah, that's the one I expected :)
+>
+> Singularity pre-2.4 had images with ext3, and they were really big. As a 
+> workaround, after build I gzip -9 them for cloud storage, and then 
+> extracted when they hit the file system. The change to squashfs was great 
+> because it meant smaller images without needing to compress and decompress, 
+> but it also meant that the old way of pulling would break. So what you are 
+> doing is pulling a squash image, it's trying to extract it, and failing. 
+> You likely would be fine to run the image (if it's ok with the extension) 
+> despite the message. The updates to 2.4 made it so that we can support 
+> pulling either squash or guzzied up ext3 - it checks the type and then 
+> decides to extract or not based on what it finds.
+>
+> On Sun, Oct 22, 2017 at 6:43 PM, Bennet Fauber <b...@umich.edu 
+> <javascript:>> wrote:
+>
+>> I have a slightly older, pre-2.4 release, 2.3.9-development.g9fabbd8, and 
+>> I get
+>>
+>> $ sudo singularity pull --name hello-world.img shub://vsoch/hello-world
+>> [sudo] password for bennet: 
+>> Progress |===================================| 100.0% 
+>>
+>> gzip: /home/bennet/tmp/hello-world.img.gz: not in gzip format
+>> ERROR Error extracting image, cleaning up.
+>> ERROR: pulling container failed!
+>>
+>> I will upgrade and try again another day.
+>>
+>>
+>> On Sun, Oct 22, 2017 at 9:33 PM, vanessa s <v...@gmail.com 
+>> <javascript:>> wrote:
+>>
+>>> I think the easiest fix is to just upgrade. The pull with --name did 
+>>> work for 2.3 and up, and 2.4 had to be modified to handle the change from 
+>>> using commits as "version" to an actual hash as a version. If you want to 
+>>> dive into debugging likely you will hit an error that we worked on and 
+>>> fixed, and I'd be happy to give insight to any cryptic error messages. 
+>>> Sorry about the trouble!
+>>>
+>>> On Sun, Oct 22, 2017 at 6:31 PM, Krishna Muriki <k...@lbl.gov 
+>>> <javascript:>> wrote:
+>>>
+>>>> It might be an unrelated question but should I expect this (singularity 
+>>>> pull --name hello-world.img shub://vsoch/hello-world) to work only if 
+>>>> I upgrade my installed Singularity to the latest 2.4 release ? I have an 
+>>>> older version still installed and the pull command is not working so before 
+>>>> I go on debugging my issues (which might be different from Joshua's) should 
+>>>> the pull from shub expected to work with older version (2.3.2 and above) or 
+>>>> should I update it to 2.4 first ?
+>>>>
+>>>> Thanks,
+>>>> Krishna.
+>>>>
+>>>> On Sun, Oct 22, 2017 at 6:19 PM, Michael Galloway <
+>>>> mich...@gmail.com <javascript:>> wrote:
+>>>>
+>>>>> works for me as well:
+>>>>>
+>>>>> [mgx@or-condo-login02 shub]$ singularity --version
+>>>>> 2.4-dist
+>>>>> [mgx@or-condo-login02 shub]$
+>>>>> [mgx@or-condo-login02 shub]$ singularity pull --name hello-world.img 
+>>>>> shub://vsoch/hello-world
+>>>>> Progress |===================================| 100.0%
+>>>>> Done. Container is at: 
+>>>>> /software/user_tools/centos-7.2.1511/cades-ops/mgx/shub/hello-world.simg
+>>>>>
+>>>>> [mgx@or-condo-login02 shub]$ singularity shell hello-world.simg
+>>>>> Singularity: Invoking an interactive shell within container...
+>>>>> Singularity 
+>>>>> hello-world.simg:/software/user_tools/current/cades-ops/mgx/shub> exit
+>>>>> exit
+>>>>>
+>>>>> [mgx@or-condo-login02 shub]$ ./hello-world.simg
+>>>>> RaawwWWWWWRRRR!!
+>>>>> [mgx@or-condo-login02 shub]$ singularity shell hello-world.simg
+>>>>> Singularity: Invoking an interactive shell within container...
+>>>>>
+>>>>>
+>>>>>
+>>>>> On Sun, Oct 22, 2017 at 8:35 PM vanessa s <v...@gmail.com 
+>>>>> <javascript:>> wrote:
+>>>>>
+>>>>>> Can anyone reproduce this? I just tried and it is working for me. 
+>>>>>> Here is the version:
+>>>>>>
+>>>>>> $ singularity --version
+>>>>>> 2.4-master.g3e338d7
+>>>>>>
+>>>>>>
+>>>>>> Here is the pull:
+>>>>>>
+>>>>>> singularity pull --name hello-world.img shub://vsoch/hello-world
+>>>>>>
+>>>>>> Progress |===================================| 100.0% 
+>>>>>> Done. Container is at: /home/vanessa/Downloads/hello-world.simg
+>>>>>>
+>>>>>>
+>>>>>> Run
+>>>>>>
+>>>>>> $ ./hello-world.simg 
+>>>>>> RaawwWWWWWRRRR!!
+>>>>>>
+>>>>>>
+>>>>>> Shell
+>>>>>>
+>>>>>>
+>>>>>> $ singularity shell hello-world.simg 
+>>>>>> Singularity: Invoking an interactive shell within container...
+>>>>>>
+>>>>>> It could be there was some recent change that influenced the 
+>>>>>> extraction / sniffing the image needs decompression (or not). I don't have 
+>>>>>> the "bleeding edge" version of 2.4, that's for sure! If others can test 
+>>>>>> might be a good start, and then we can ask some particulars about your 
+>>>>>> specific run. Could you share the same command with --debug?
+>>>>>>
+>>>>>> Best,
+>>>>>>
+>>>>>> Vanessa
+>>>>>>
+>>>>>>
+>>>>>> On Sun, Oct 22, 2017 at 5:26 PM, Joshua Studen <jos...@gmail.com 
+>>>>>> <javascript:>> wrote:
+>>>>>>
+>>>>>>> Hi All,
+>>>>>>>
+>>>>>>> I am trying out the new Singularity 2.4. I am following the 
+>>>>>>> directions here: 
+>>>>>>> http://singularity.lbl.gov/quickstart#executing-commands
+>>>>>>>
+>>>>>>> I am using the pre-made "hello world" container. 
+>>>>>>>
+>>>>>>> singularity pull --name hello-world.img shub://vsoch/hello-world
+>>>>>>>
+>>>>>>>
+>>>>>>> then I try 
+>>>>>>>
+>>>>>>> singularity shell hello-world.img
+>>>>>>>
+>>>>>>>
+>>>>>>> but I get the following error;
+>>>>>>>
+>>>>>>> ERROR  : No valid /bin/sh in container
+>>>>>>> ABORT  : Retval = 255
+>>>>>>>
+>>>>>>>
+>>>>>>> -- 
+>>>>>>> You received this message because you are subscribed to the Google 
+>>>>>>> Groups "singularity" group.
+>>>>>>> To unsubscribe from this group and stop receiving emails from it, 
+>>>>>>> send an email to singu...@lbl.gov <javascript:>.
+>>>>>>>
+>>>>>>
+>>>>>>
+>>>>>>
+>>>>>> -- 
+>>>>>> Vanessa Villamia Sochat
+>>>>>> Stanford University '16
+>>>>>> (603) 321-0676
+>>>>>>
+>>>>>> -- 
+>>>>>> You received this message because you are subscribed to the Google 
+>>>>>> Groups "singularity" group.
+>>>>>> To unsubscribe from this group and stop receiving emails from it, 
+>>>>>> send an email to singu...@lbl.gov <javascript:>.
+>>>>>>
+>>>>> -- 
+>>>>> You received this message because you are subscribed to the Google 
+>>>>> Groups "singularity" group.
+>>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>>> an email to singu...@lbl.gov <javascript:>.
+>>>>>
+>>>>
+>>>> -- 
+>>>> You received this message because you are subscribed to the Google 
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>> an email to singu...@lbl.gov <javascript:>.
+>>>>
+>>>
+>>>
+>>>
+>>> -- 
+>>> Vanessa Villamia Sochat
+>>> Stanford University '16
+>>> (603) 321-0676
+>>>
+>>> -- 
+>>> You received this message because you are subscribed to the Google 
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>> an email to singu...@lbl.gov <javascript:>.
+>>>
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_9456_263787217.1508727002880
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Are either ext3 or ext4 required? I am getting similar err=
+ors to the OP actually (it seems like doing similar things: install singula=
+rity in a shared directory which compute nodes then mount). Our compute nod=
+es however are very minimal, which is what can be expected in many HPC envi=
+ronments. Is there a detailed list of requirements anywhere that would spec=
+ify exactly what is needed? Previously with Singularity 2.3.1, I tried to c=
+hange the mount command in the code base to use something other than ext3/4=
+ (e.g., tmpfs) but still got errors.=C2=A0<div><br></div><div>Regards,</div=
+><div>Jai<br><br>On Sunday, October 22, 2017 at 6:49:49 PM UTC-7, vanessa w=
+rote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8e=
+x;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">Yeah, th=
+at&#39;s the one I expected :)<div><br></div><div>Singularity pre-2.4 had i=
+mages with ext3, and they were really big. As a workaround, after build I g=
+zip -9 them for cloud storage, and then extracted when they hit the file sy=
+stem. The change to squashfs was great because it meant smaller images with=
+out needing to compress and decompress, but it also meant that the old way =
+of pulling would break. So what you are doing is pulling a squash image, it=
+&#39;s trying to extract it, and failing. You likely would be fine to run t=
+he image (if it&#39;s ok with the extension) despite the message. The updat=
+es to 2.4 made it so that we can support pulling either squash or guzzied u=
+p ext3 - it checks the type and then decides to extract or not based on wha=
+t it finds.</div></div><div><br><div class=3D"gmail_quote">On Sun, Oct 22, =
+2017 at 6:43 PM, Bennet Fauber <span dir=3D"ltr">&lt;<a href=3D"javascript:=
+" target=3D"_blank" gdf-obfuscated-mailto=3D"XHho0U33BgAJ" rel=3D"nofollow"=
+ onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"=
+this.href=3D&#39;javascript:&#39;;return true;">b...@umich.edu</a>&gt;</spa=
+n> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;b=
+order-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr"><div>I have a =
+slightly older, pre-2.4 release, 2.3.9-development.g9fabbd8, and I get<br><=
+br>$ sudo singularity pull --name hello-world.img shub://vsoch/hello-world<=
+br>[sudo] password for bennet: <br>Progress |=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=
+=3D=3D| 100.0% <br><br>gzip: /home/bennet/tmp/hello-world.<wbr>img.gz: not =
+in gzip format<br>ERROR Error extracting image, cleaning up.<br>ERROR: pull=
+ing container failed!<br><br></div>I will upgrade and try again another day=
+.<br><div><br></div></div><div><div><div><br><div class=3D"gmail_quote">On =
+Sun, Oct 22, 2017 at 9:33 PM, vanessa s <span dir=3D"ltr">&lt;<a href=3D"ja=
+vascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"XHho0U33BgAJ" rel=3D"=
+nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" on=
+click=3D"this.href=3D&#39;javascript:&#39;;return true;">v...@gmail.com</a>=
+&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0=
+ 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">I thi=
+nk the easiest fix is to just upgrade. The pull with --name did work for 2.=
+3 and up, and 2.4 had to be modified to handle the change from using commit=
+s as &quot;version&quot; to an actual hash as a version. If you want to div=
+e into debugging likely you will hit an error that we worked on and fixed, =
+and I&#39;d be happy to give insight to any cryptic error messages. Sorry a=
+bout the trouble!</div><div><br><div class=3D"gmail_quote">On Sun, Oct 22, =
+2017 at 6:31 PM, Krishna Muriki <span dir=3D"ltr">&lt;<a href=3D"javascript=
+:" target=3D"_blank" gdf-obfuscated-mailto=3D"XHho0U33BgAJ" rel=3D"nofollow=
+" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D=
+"this.href=3D&#39;javascript:&#39;;return true;">k...@lbl.gov</a>&gt;</span=
+> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;bo=
+rder-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">It might be an =
+unrelated question but should I expect this (<span style=3D"font-size:12.8p=
+x">singularity pull --name hello-world.img shub://vsoch/hello-world)=C2=A0<=
+/span>to work only if I upgrade my installed Singularity to the latest 2.4 =
+release ? I have an older version still installed and the pull command is n=
+ot working so before I go on debugging my issues (which might be different =
+from Joshua&#39;s) should the pull from shub expected to work with older ve=
+rsion (2.3.2 and above) or should I update it to 2.4 first ?<div><br></div>=
+<div>Thanks,</div><div>Krishna.</div></div><div><div><div><br><div class=3D=
+"gmail_quote">On Sun, Oct 22, 2017 at 6:19 PM, Michael Galloway <span dir=
+=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailt=
+o=3D"XHho0U33BgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascr=
+ipt:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return=
+ true;">mich...@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gma=
+il_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-lef=
+t:1ex"><div dir=3D"ltr">works for me as well:<div><br></div><div><div>[mgx@=
+or-condo-login02 shub]$ singularity --version</div><div>2.4-dist</div><div>=
+[mgx@or-condo-login02 shub]$</div><div><div>[mgx@or-condo-login02 shub]$ si=
+ngularity pull --name hello-world.img shub://vsoch/hello-world</div><div>Pr=
+ogress |=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D| 100.0%</div><div>Done. Contai=
+ner is at: /software/user_tools/centos-7.<wbr>2.1511/cades-ops/mgx/shub/<wb=
+r>hello-world.simg</div></div><div><br></div><div>[mgx@or-condo-login02 shu=
+b]$ singularity shell hello-world.simg</div><span><div>Singularity: Invokin=
+g an interactive shell within container...</div></span><div>Singularity hel=
+lo-world.simg:/software/<wbr>user_tools/current/cades-ops/<wbr>mgx/shub&gt;=
+ exit</div><div>exit</div><div><br></div><div>[mgx@or-condo-login02 shub]$ =
+./hello-world.simg</div><div>RaawwWWWWWRRRR!!</div><div>[mgx@or-condo-login=
+02 shub]$ singularity shell hello-world.simg</div><span><div>Singularity: I=
+nvoking an interactive shell within container...</div><div><br></div><div><=
+br></div><br></span><div><div><div class=3D"gmail_quote"><div dir=3D"ltr">O=
+n Sun, Oct 22, 2017 at 8:35 PM vanessa s &lt;<a href=3D"javascript:" target=
+=3D"_blank" gdf-obfuscated-mailto=3D"XHho0U33BgAJ" rel=3D"nofollow" onmouse=
+down=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.hre=
+f=3D&#39;javascript:&#39;;return true;">v...@gmail.com</a>&gt; wrote:<br></=
+div><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-lef=
+t:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Can anyone reproduce th=
+is? I just tried and it is working for me. Here is the version:<div><br></d=
+iv><blockquote style=3D"margin:0 0 0 40px;border:none;padding:0px"><div><di=
+v>$ singularity --version</div></div><div><div>2.4-master.g3e338d7</div></d=
+iv></blockquote><div><div><br></div><div>Here is the pull:</div><div><br></=
+div><blockquote style=3D"margin:0px 0px 0px 40px;border:none;padding:0px"><=
+/blockquote></div></div><div dir=3D"ltr"><div><blockquote style=3D"margin:0=
+px 0px 0px 40px;border:none;padding:0px"><div><div>singularity pull --name =
+hello-world.img shub://vsoch/hello-world</div></div></blockquote></div></di=
+v><div dir=3D"ltr"><div><blockquote style=3D"margin:0px 0px 0px 40px;border=
+:none;padding:0px"><div><div>Progress |=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D|=
+ 100.0%=C2=A0</div></div><div><div>Done. Container is at: /home/vanessa/Dow=
+nloads/hello-<wbr>world.simg</div></div></blockquote><div><div><br></div></=
+div><div>Run</div><div><br></div><blockquote style=3D"margin:0px 0px 0px 40=
+px;border:none;padding:0px"><div><div>$ ./hello-world.simg=C2=A0</div></div=
+><div><div>RaawwWWWWWRRRR!!</div></div></blockquote><blockquote style=3D"ma=
+rgin:0px 0px 0px 40px;border:none;padding:0px"><div><div><br></div></div></=
+blockquote>Shell<br><blockquote style=3D"margin:0px 0px 0px 40px;border:non=
+e;padding:0px"><div><br></div><div><div>$ singularity shell hello-world.sim=
+g=C2=A0</div></div><div><div>Singularity: Invoking an interactive shell wit=
+hin container...</div></div><div><br></div></blockquote>It could be there w=
+as some recent change that influenced the extraction / sniffing the image n=
+eeds decompression (or not). I don&#39;t have the &quot;bleeding edge&quot;=
+ version of 2.4, that&#39;s for sure! If others can test might be a good st=
+art, and then we can ask some particulars about your specific run. Could yo=
+u share the same command with --debug?</div><div><br></div><div>Best,</div>=
+<div><br></div><div>Vanessa<br><div><div><br></div></div></div></div><div><=
+/div><div><br><div class=3D"gmail_quote">On Sun, Oct 22, 2017 at 5:26 PM, J=
+oshua Studen <span dir=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_blank=
+" gdf-obfuscated-mailto=3D"XHho0U33BgAJ" rel=3D"nofollow" onmousedown=3D"th=
+is.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;j=
+avascript:&#39;;return true;">jos...@gmail.com</a>&gt;</span> wrote:<br><bl=
+ockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #=
+ccc solid;padding-left:1ex"><div dir=3D"ltr">Hi All,<div><br></div><div>I a=
+m trying out the new Singularity 2.4. I am following the directions here:=
+=C2=A0<a href=3D"http://singularity.lbl.gov/quickstart#executing-commands" =
+target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://w=
+ww.google.com/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.gov%2Fquickstart%23exec=
+uting-commands\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGKPugzwxgvmDnEelhqjO=
+kv5zj7jA&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.google.c=
+om/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.gov%2Fquickstart%23executing-comma=
+nds\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGKPugzwxgvmDnEelhqjOkv5zj7jA&#3=
+9;;return true;">http://singularity.lbl.<wbr>gov/quickstart#executing-<wbr>=
+commands</a></div><div><br></div><div>I am using the pre-made &quot;hello w=
+orld&quot; container.=C2=A0</div><div><br></div><div><pre style=3D"font-fam=
+ily:Monaco,Menlo,Consolas,&quot;Courier New&quot;,monospace;white-space:pre=
+-wrap;padding:9.5px;line-height:1.42857;word-break:break-all;word-wrap:brea=
+k-word;color:rgb(51,51,51);background-image:initial;background-position:ini=
+tial;background-repeat:initial;border-width:1px;border-style:solid;border-c=
+olor:rgb(204,204,204);border-radius:4px"><code style=3D"font-family:Monaco,=
+Menlo,Consolas,&quot;Courier New&quot;,monospace;font-size:inherit;color:rg=
+b(68,68,68);background-color:transparent;border-radius:4px">singularity pul=
+l --name hello-world.img shub://vsoch/hello-world</code></pre><pre style=3D=
+"font-family:Monaco,Menlo,Consolas,&quot;Courier New&quot;,monospace;white-=
+space:pre-wrap;padding:9.5px;line-height:1.42857;word-break:break-all;word-=
+wrap:break-word;color:rgb(51,51,51);background-image:initial;background-pos=
+ition:initial;background-repeat:initial;border-width:1px;border-style:solid=
+;border-color:rgb(204,204,204);border-radius:4px"><code style=3D"font-famil=
+y:Monaco,Menlo,Consolas,&quot;Courier New&quot;,monospace;font-size:inherit=
+;color:rgb(68,68,68);background-color:transparent;border-radius:4px"><br></=
+code></pre><pre style=3D"font-family:Monaco,Menlo,Consolas,&quot;Courier Ne=
+w&quot;,monospace;white-space:pre-wrap;padding:9.5px;line-height:1.42857;wo=
+rd-break:break-all;word-wrap:break-word;color:rgb(51,51,51);background-imag=
+e:initial;background-position:initial;background-repeat:initial;border-widt=
+h:1px;border-style:solid;border-color:rgb(204,204,204);border-radius:4px"><=
+code style=3D"font-family:Monaco,Menlo,Consolas,&quot;Courier New&quot;,mon=
+ospace;font-size:inherit;color:rgb(68,68,68);background-color:transparent;b=
+order-radius:4px">then I try </code></pre><pre style=3D"font-family:Monaco,=
+Menlo,Consolas,&quot;Courier New&quot;,monospace;white-space:pre-wrap;paddi=
+ng:9.5px;line-height:1.42857;word-break:break-all;word-wrap:break-word;colo=
+r:rgb(51,51,51);background-image:initial;background-position:initial;backgr=
+ound-repeat:initial;border-width:1px;border-style:solid;border-color:rgb(20=
+4,204,204);border-radius:4px"><code style=3D"font-family:Monaco,Menlo,Conso=
+las,&quot;Courier New&quot;,monospace;font-size:inherit;color:rgb(68,68,68)=
+;background-color:transparent;border-radius:4px">singularity shell hello-wo=
+rld.img</code></pre><pre style=3D"font-family:Monaco,Menlo,Consolas,&quot;C=
+ourier New&quot;,monospace;white-space:pre-wrap;padding:9.5px;line-height:1=
+.42857;word-break:break-all;word-wrap:break-word;color:rgb(51,51,51);backgr=
+ound-image:initial;background-position:initial;background-repeat:initial;bo=
+rder-width:1px;border-style:solid;border-color:rgb(204,204,204);border-radi=
+us:4px"><code style=3D"font-family:Monaco,Menlo,Consolas,&quot;Courier New&=
+quot;,monospace;font-size:inherit;color:rgb(68,68,68);background-color:tran=
+sparent;border-radius:4px"><br></code></pre><pre style=3D"font-family:Monac=
+o,Menlo,Consolas,&quot;Courier New&quot;,monospace;white-space:pre-wrap;pad=
+ding:9.5px;line-height:1.42857;word-break:break-all;word-wrap:break-word;co=
+lor:rgb(51,51,51);background-image:initial;background-position:initial;back=
+ground-repeat:initial;border-width:1px;border-style:solid;border-color:rgb(=
+204,204,204);border-radius:4px"><code style=3D"font-family:Monaco,Menlo,Con=
+solas,&quot;Courier New&quot;,monospace;font-size:inherit;color:rgb(68,68,6=
+8);background-color:transparent;border-radius:4px">but I get the following =
+error;</code></pre><pre style=3D"padding:9.5px;line-height:1.42857;word-bre=
+ak:break-all;word-wrap:break-word;background-image:initial;background-posit=
+ion:initial;background-repeat:initial;border-width:1px;border-style:solid;b=
+order-color:rgb(204,204,204);border-radius:4px"><font face=3D"Monaco, Menlo=
+, Consolas, Courier New, monospace" color=3D"#333333"><span style=3D"white-=
+space:pre-wrap">ERROR  : No valid /bin/sh in container
+ABORT  : Retval =3D 255</span></font><span><font color=3D"#888888"><span st=
+yle=3D"color:rgb(51,51,51);font-family:Monaco,Menlo,Consolas,&quot;Courier =
+New&quot;,monospace;white-space:pre-wrap">
+</span></font></span></pre></div><span><font color=3D"#888888"><div><br></d=
+iv></font></span></div><span><font color=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+XHho0U33BgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div></div=
+><div>-- <br><div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br=
+><div><div><div><a value=3D"+16033210676">(603) 321-0676</a></div></div></d=
+iv></div>
+</div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+XHho0U33BgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</blockquote></div></div></div></div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+XHho0U33BgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+XHho0U33BgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<span><font color=3D"#888888"><br>
+</font></span></div></div></blockquote></div><span><font color=3D"#888888">=
+<br><br clear=3D"all"><div><br></div>-- <br><div>Vanessa Villamia Sochat<br=
+>Stanford University &#39;16<br><div><div><div><a value=3D"+16033210676">(6=
+03) 321-0676</a></div></div></div></div>
+</font></span></div><span><font color=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+XHho0U33BgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</font></span></blockquote></div><br></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+XHho0U33BgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><d=
+iv>(603) 321-0676</div></div></div></div>
+</div>
+</blockquote></div></div>
+------=_Part_9456_263787217.1508727002880--
+
+------=_Part_9455_497083073.1508727002879--

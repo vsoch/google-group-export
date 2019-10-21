@@ -1,0 +1,283 @@
+Date: Thu, 16 Nov 2017 18:16:33 -0800 (PST)
+From: Jeff Kriske <jekr...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <cca4725f-2e05-4c10-b13c-5e353efac93d@lbl.gov>
+In-Reply-To: <6dd08649-f250-40fd-a24a-4f0410212d81@lbl.gov>
+References: <6dd08649-f250-40fd-a24a-4f0410212d81@lbl.gov>
+Subject: Re: why do I need to be root user to shell into a container (or
+ exec)??
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_4374_2113850046.1510884993388"
+
+------=_Part_4374_2113850046.1510884993388
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_4375_139453824.1510884993389"
+
+------=_Part_4375_139453824.1510884993389
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+The squashfs image should be read-only so that makes sense.
+
+When you are going to use the container as a user, since /nfshome doesn't 
+exist it's trying to use overlay... check your configuration in 
+/etc/singularity/singularity.conf or in 
+/usr/local/etc/singularity/singularity.conf  depending on how you 
+configured it. Check if you have overlay disabled. You may simply be using 
+a kernel that's too old. It's more than likely too, that your root home 
+/root is not on NFS.
+
+You need that directory to exist so one way to do this is:
+sudo singularity build -s hello-world shub://vsoch/hello-world
+
+then go into that hello-world folder and create the directory /nfshome. You 
+can then run it with 
+singularity run hello-world
+
+If you want, once you've made the change you can turn it back into a 
+squashfs image with 
+sudo singularity build hello-world.simg hello-world
+
+if you were to delete /root then you'll get the same behavior when trying 
+to shell in as root. You can avoid it by specifying an alternate home 
+directory such as:
+singularity shell --home / hello-world.simg
+this doesn't work with exec or run though as one might assume.
+
+to troubleshoot you can always try:
+singularity -vvv --debug shell hello-world.simg
+that will provide more info.
+
+
+
+
+On Thursday, November 16, 2017 at 6:16:13 PM UTC-5, Joshua Studen wrote:
+>
+> I am following the instructions here:
+>
+> http://singularity.lbl.gov/quickstart
+>
+> I do this:
+>
+> $ singularity pull --name hello-world.simg shub://vsoch/hello-world
+>
+>
+> No issues. Then I do this:
+>
+> singularity shell hello-world.simg
+>
+>
+> ERROR  : Base home directory does not exist within the container: /nfshome                                                                                                                                  
+> ABORT  : Retval = 255
+>
+>
+>
+> Do I need sudo access to *use* containers or something? Also, why don't 
+> the quickstart instructions clearly indicate which operations you need sudo 
+> and which you don't?
+>
+> also, if I do this:
+>
+> sudo singularity shell hello-world.simg
+>
+>
+> it "works." However, if I do this: 
+>
+> sudo singularity shell -w hello-world.simg
+>
+>
+> I get: 
+>
+>
+> ERROR  : Unable to open squashfs image in read-write mode: Read-only file system
+>
+>
+>
+>
+------=_Part_4375_139453824.1510884993389
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">The squashfs image should be read-only so that makes sense=
+.<br><br>When you are going to use the container as a user, since /nfshome =
+doesn&#39;t exist it&#39;s trying to use overlay... check your configuratio=
+n in /etc/singularity/singularity.conf or in /usr/local/etc/singularity/sin=
+gularity.conf=C2=A0 depending on how you configured it. Check if you have o=
+verlay disabled. You may simply be using a kernel that&#39;s too old. It&#3=
+9;s more than likely too, that your root home /root is not on NFS.<br><br>Y=
+ou need that directory to exist so one way to do this is:<br><div style=3D"=
+background-color: rgb(250, 250, 250); border-color: rgb(187, 187, 187); bor=
+der-style: solid; border-width: 1px; overflow-wrap: break-word;" class=3D"p=
+rettyprint"><code class=3D"prettyprint"><div class=3D"subprettyprint"><span=
+ style=3D"color: #000;" class=3D"styled-by-prettify">sudo singularity build=
+ </span><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify">s hello</span><spa=
+n style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify">world shub</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color=
+: #800;" class=3D"styled-by-prettify">//vsoch/hello-world</span></div></cod=
+e></div><br>then go into that hello-world folder and create the directory /=
+nfshome. You can then run it with <div style=3D"background-color: rgb(250, =
+250, 250); border-color: rgb(187, 187, 187); border-style: solid; border-wi=
+dth: 1px; overflow-wrap: break-word;" class=3D"prettyprint"><code class=3D"=
+prettyprint"><div class=3D"subprettyprint"><span style=3D"color: #000;" cla=
+ss=3D"styled-by-prettify">singularity run hello</span><span style=3D"color:=
+ #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #000;" c=
+lass=3D"styled-by-prettify">world</span></div></code></div><br>If you want,=
+ once you&#39;ve made the change you can turn it back into a squashfs image=
+ with <br><div style=3D"background-color: rgb(250, 250, 250); border-color:=
+ rgb(187, 187, 187); border-style: solid; border-width: 1px; overflow-wrap:=
+ break-word;" class=3D"prettyprint"><code class=3D"prettyprint"><div class=
+=3D"subprettyprint"><span style=3D"color: #000;" class=3D"styled-by-prettif=
+y">sudo singularity build hello</span><span style=3D"color: #660;" class=3D=
+"styled-by-prettify">-</span><span style=3D"color: #000;" class=3D"styled-b=
+y-prettify">world</span><span style=3D"color: #660;" class=3D"styled-by-pre=
+ttify">.</span><span style=3D"color: #000;" class=3D"styled-by-prettify">si=
+mg hello</span><span style=3D"color: #660;" class=3D"styled-by-prettify">-<=
+/span><span style=3D"color: #000;" class=3D"styled-by-prettify">world</span=
+></div></code></div><br>if you were to delete /root then you&#39;ll get the=
+ same behavior when trying to shell in as root. You can avoid it by specify=
+ing an alternate home directory such as:<br><div style=3D"background-color:=
+ rgb(250, 250, 250); border-color: rgb(187, 187, 187); border-style: solid;=
+ border-width: 1px; overflow-wrap: break-word;" class=3D"prettyprint"><code=
+ class=3D"prettyprint"><div class=3D"subprettyprint"><span style=3D"color: =
+#000;" class=3D"styled-by-prettify">singularity shell </span><span style=3D=
+"color: #660;" class=3D"styled-by-prettify">--</span><span style=3D"color: =
+#000;" class=3D"styled-by-prettify">home </span><span style=3D"color: #660;=
+" class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> hello</span><span style=3D"color: #660;" class=3D"=
+styled-by-prettify">-</span><span style=3D"color: #000;" class=3D"styled-by=
+-prettify">world</span><span style=3D"color: #660;" class=3D"styled-by-pret=
+tify">.</span><span style=3D"color: #000;" class=3D"styled-by-prettify">sim=
+g</span></div></code></div>this doesn&#39;t work with exec or run though as=
+ one might assume.<br><br>to troubleshoot you can always try:<br><div style=
+=3D"background-color: rgb(250, 250, 250); border-color: rgb(187, 187, 187);=
+ border-style: solid; border-width: 1px; overflow-wrap: break-word;" class=
+=3D"prettyprint"><code class=3D"prettyprint"><div class=3D"subprettyprint">=
+<span style=3D"color: #000;" class=3D"styled-by-prettify">singularity </spa=
+n><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span s=
+tyle=3D"color: #000;" class=3D"styled-by-prettify">vvv </span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">--</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify">debug shell hello</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify">world</span><span style=3D"color: #66=
+0;" class=3D"styled-by-prettify">.</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">simg</span></div></code></div>that will provide mor=
+e info.<br><br><br><br><br>On Thursday, November 16, 2017 at 6:16:13 PM UTC=
+-5, Joshua Studen wrote:<blockquote class=3D"gmail_quote" style=3D"margin: =
+0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div d=
+ir=3D"ltr">I am following the instructions here:<div><br></div><div><a href=
+=3D"http://singularity.lbl.gov/quickstart" target=3D"_blank" rel=3D"nofollo=
+w" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2=
+F%2Fsingularity.lbl.gov%2Fquickstart\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQj=
+CNHCJY7YjXOzOkYBtFzc4H3P2BHKAQ&#39;;return true;" onclick=3D"this.href=3D&#=
+39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.gov%2Fquicks=
+tart\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHCJY7YjXOzOkYBtFzc4H3P2BHKAQ&#=
+39;;return true;">http://singularity.lbl.gov/<wbr>quickstart</a><br></div><=
+div><br></div><div>I do this:</div><div><br></div><div><pre style=3D"font-f=
+amily:Monaco,Menlo,Consolas,&quot;Courier New&quot;,monospace;white-space:p=
+re-wrap;padding:9.5px;line-height:1.42857;word-break:break-all;word-wrap:br=
+eak-word;color:rgb(51,51,51);background-image:initial;background-position:i=
+nitial;background-repeat:initial;border-width:1px;border-style:solid;border=
+-color:rgb(204,204,204);border-radius:4px"><code style=3D"font-family:Monac=
+o,Menlo,Consolas,&quot;Courier New&quot;,monospace;font-size:inherit;color:=
+rgb(68,68,68);background-color:transparent;border-radius:4px">$ singularity=
+ pull --name hello-world.simg shub://vsoch/hello-world
+</code></pre></div><div><code style=3D"font-family:Monaco,Menlo,Consolas,&q=
+uot;Courier New&quot;,monospace;font-size:inherit;color:rgb(68,68,68);backg=
+round-color:transparent;border-radius:4px"><br></code></div><div><code styl=
+e=3D"font-family:Monaco,Menlo,Consolas,&quot;Courier New&quot;,monospace;fo=
+nt-size:inherit;color:rgb(68,68,68);background-color:transparent;border-rad=
+ius:4px">No issues. Then I do this:</code></div><div><code style=3D"font-fa=
+mily:Monaco,Menlo,Consolas,&quot;Courier New&quot;,monospace;font-size:inhe=
+rit;color:rgb(68,68,68);background-color:transparent;border-radius:4px"><br=
+></code></div><div><code style=3D"background-color:transparent;border-radiu=
+s:4px"><pre style=3D"color:rgb(51,51,51);font-family:Monaco,Menlo,Consolas,=
+&quot;Courier New&quot;,monospace;font-size:inherit;white-space:pre-wrap;pa=
+dding:9.5px;line-height:1.42857;word-break:break-all;word-wrap:break-word;b=
+ackground-image:initial;background-position:initial;background-repeat:initi=
+al;border-width:1px;border-style:solid;border-color:rgb(204,204,204);border=
+-radius:4px"><code style=3D"font-family:Monaco,Menlo,Consolas,&quot;Courier=
+ New&quot;,monospace;font-size:inherit;color:rgb(68,68,68);background-color=
+:transparent;border-radius:4px">singularity shell hello-world.simg</code></=
+pre><pre style=3D"color:rgb(51,51,51);font-family:Monaco,Menlo,Consolas,&qu=
+ot;Courier New&quot;,monospace;font-size:inherit;white-space:pre-wrap;paddi=
+ng:9.5px;line-height:1.42857;word-break:break-all;word-wrap:break-word;back=
+ground-image:initial;background-position:initial;background-repeat:initial;=
+border-width:1px;border-style:solid;border-color:rgb(204,204,204);border-ra=
+dius:4px"><code style=3D"font-family:Monaco,Menlo,Consolas,&quot;Courier Ne=
+w&quot;,monospace;font-size:inherit;color:rgb(68,68,68);background-color:tr=
+ansparent;border-radius:4px"><br></code></pre><pre style=3D"padding:9.5px;l=
+ine-height:1.42857;word-break:break-all;word-wrap:break-word;background-ima=
+ge:initial;background-position:initial;background-repeat:initial;border-wid=
+th:1px;border-style:solid;border-color:rgb(204,204,204);border-radius:4px">=
+<code style=3D"background-color:transparent;border-radius:4px"><font color=
+=3D"#444444" face=3D"Monaco, Menlo, Consolas, Courier New, monospace"><span=
+ style=3D"white-space:pre-wrap">ERROR  : Base home directory does not exist=
+ within the container: /nfshome                                            =
+                                                                           =
+          =20
+ABORT  : Retval =3D 255<br></span></font></code></pre></code></div><div><co=
+de style=3D"font-family:Monaco,Menlo,Consolas,&quot;Courier New&quot;,monos=
+pace;font-size:inherit;color:rgb(68,68,68);background-color:transparent;bor=
+der-radius:4px"><br></code></div><div><code style=3D"font-family:Monaco,Men=
+lo,Consolas,&quot;Courier New&quot;,monospace;font-size:inherit;color:rgb(6=
+8,68,68);background-color:transparent;border-radius:4px"><br></code></div><=
+div><code style=3D"font-family:Monaco,Menlo,Consolas,&quot;Courier New&quot=
+;,monospace;font-size:inherit;color:rgb(68,68,68);background-color:transpar=
+ent;border-radius:4px">Do I need sudo access to *use* containers or somethi=
+ng? Also, why don&#39;t the quickstart instructions clearly indicate which =
+operations you need sudo and which you don&#39;t?</code></div><div><code st=
+yle=3D"font-family:Monaco,Menlo,Consolas,&quot;Courier New&quot;,monospace;=
+font-size:inherit;color:rgb(68,68,68);background-color:transparent;border-r=
+adius:4px"><br></code></div><div><code style=3D"font-family:Monaco,Menlo,Co=
+nsolas,&quot;Courier New&quot;,monospace;font-size:inherit;color:rgb(68,68,=
+68);background-color:transparent;border-radius:4px">also, if I do this:</co=
+de></div><div><code style=3D"font-family:Monaco,Menlo,Consolas,&quot;Courie=
+r New&quot;,monospace;font-size:inherit;color:rgb(68,68,68);background-colo=
+r:transparent;border-radius:4px"><br></code></div><div><pre style=3D"paddin=
+g:9.5px;border-width:1px;border-style:solid;border-color:rgb(204,204,204);f=
+ont-size:inherit;background-image:initial;background-position:initial;backg=
+round-repeat:initial;color:rgb(51,51,51);font-family:Monaco,Menlo,Consolas,=
+&quot;Courier New&quot;,monospace;white-space:pre-wrap;line-height:1.42857;=
+word-break:break-all;word-wrap:break-word;border-radius:4px"><code style=3D=
+"font-family:Monaco,Menlo,Consolas,&quot;Courier New&quot;,monospace;font-s=
+ize:inherit;color:rgb(68,68,68);background-color:transparent;border-radius:=
+4px">sudo singularity shell hello-world.simg</code></pre></div><div><br></d=
+iv><div>it &quot;works.&quot; However, if I do this:=C2=A0</div><div><br></=
+div><div><pre style=3D"padding:9.5px;border-width:1px;border-style:solid;bo=
+rder-color:rgb(204,204,204);font-size:inherit;background-image:initial;back=
+ground-position:initial;background-repeat:initial;color:rgb(51,51,51);font-=
+family:Monaco,Menlo,Consolas,&quot;Courier New&quot;,monospace;white-space:=
+pre-wrap;line-height:1.42857;word-break:break-all;word-wrap:break-word;bord=
+er-radius:4px"><code style=3D"font-family:Monaco,Menlo,Consolas,&quot;Couri=
+er New&quot;,monospace;font-size:inherit;color:rgb(68,68,68);background-col=
+or:transparent;border-radius:4px">sudo singularity shell -w hello-world.sim=
+g</code></pre><pre style=3D"padding:9.5px;border-width:1px;border-style:sol=
+id;border-color:rgb(204,204,204);font-size:inherit;background-image:initial=
+;background-position:initial;background-repeat:initial;color:rgb(51,51,51);=
+font-family:Monaco,Menlo,Consolas,&quot;Courier New&quot;,monospace;white-s=
+pace:pre-wrap;line-height:1.42857;word-break:break-all;word-wrap:break-word=
+;border-radius:4px"><br></pre><pre style=3D"padding:9.5px;border-width:1px;=
+border-style:solid;border-color:rgb(204,204,204);font-size:inherit;backgrou=
+nd-image:initial;background-position:initial;background-repeat:initial;colo=
+r:rgb(51,51,51);font-family:Monaco,Menlo,Consolas,&quot;Courier New&quot;,m=
+onospace;white-space:pre-wrap;line-height:1.42857;word-break:break-all;word=
+-wrap:break-word;border-radius:4px">I get: </pre><pre style=3D"padding:9.5p=
+x;border-width:1px;border-style:solid;border-color:rgb(204,204,204);font-si=
+ze:inherit;background-image:initial;background-position:initial;background-=
+repeat:initial;color:rgb(51,51,51);font-family:Monaco,Menlo,Consolas,&quot;=
+Courier New&quot;,monospace;white-space:pre-wrap;line-height:1.42857;word-b=
+reak:break-all;word-wrap:break-word;border-radius:4px"><br></pre><pre style=
+=3D"padding:9.5px;border-width:1px;border-style:solid;border-color:rgb(204,=
+204,204);background-image:initial;background-position:initial;background-re=
+peat:initial;line-height:1.42857;word-break:break-all;word-wrap:break-word;=
+border-radius:4px"><font color=3D"#333333" face=3D"Monaco, Menlo, Consolas,=
+ Courier New, monospace"><span style=3D"white-space:pre-wrap">ERROR  : Unab=
+le to open squashfs image in read-write mode: Read-only file system<br></sp=
+an></font></pre></div><div><br></div><div><br></div></div></blockquote></di=
+v>
+------=_Part_4375_139453824.1510884993389--
+
+------=_Part_4374_2113850046.1510884993388--

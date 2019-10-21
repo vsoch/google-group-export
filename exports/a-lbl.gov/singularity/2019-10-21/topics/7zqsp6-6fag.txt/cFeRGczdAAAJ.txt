@@ -1,0 +1,57 @@
+Date: Fri, 8 Sep 2017 10:17:27 -0700 (PDT)
+From: Martin Cuma <mart...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <da7eb7ec-f059-4b3f-952f-4621388b8591@lbl.gov>
+Subject: Docker environment variables in Singularity bootstrap
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_5414_93203978.1504891047235"
+
+------=_Part_5414_93203978.1504891047235
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_5415_473004233.1504891047235"
+
+------=_Part_5415_473004233.1504891047235
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+It seems to me that environment variables defined by Docker's spec file 
+don't get passed to the bootstrap when bootstrapping from the Docker image.
+
+For example, if I bootstrap from one of Nvidia's Docker images from 
+https://hub.docker.com/r/nvidia/cuda/:
+
+Bootstrap: docker
+From: nvidia/cuda:8.0-cudnn7-devel-ubuntu14.04
+
+and I want to use CUDA_PKG_VERSION environment variable, which is set in 
+the Docker spec file, 
+https://gitlab.com/nvidia/cuda/blob/ubuntu14.04/8.0/runtime/Dockerfile:
+
+ENV CUDA_VERSION 8.0.61ENV CUDA_PKG_VERSION 8-0=$CUDA_VERSION-1
+
+It is not defined in the %post section. E.g. if I do in the %post:
+  echo CUDA_PKG_VERSION $CUDA_PKG_VERSION
+  echo PATH $PATH
+
+then the output during bootstrap is:
++ echo CUDA_PKG_VERSION
+CUDA_PKG_VERSION
++ echo PATH /bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+PATH /bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+
+Is this a feature or a bug?
+
+Thanks,
+MC
+
+
+------=_Part_5415_473004233.1504891047235
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: 7bit
+
+<div dir="ltr">It seems to me that environment variables defined by Docker&#39;s spec file don&#39;t get passed to the bootstrap when bootstrapping from the Docker image.<br><br>For example, if I bootstrap from one of Nvidia&#39;s Docker images from https://hub.docker.com/r/nvidia/cuda/:<br><br>Bootstrap: docker<br>From: nvidia/cuda:8.0-cudnn7-devel-ubuntu14.04<br><br>and I want to use CUDA_PKG_VERSION environment variable, which is set in the Docker spec file, https://gitlab.com/nvidia/cuda/blob/ubuntu14.04/8.0/runtime/Dockerfile:<br><pre class="code highlight"><code><span id="LC11" class="line" lang="docker"><span class="k">ENV</span><span class="s"> CUDA_VERSION 8.0.61</span></span>
+<span id="LC15" class="line" lang="docker"><span class="k">ENV</span><span class="s"> CUDA_PKG_VERSION 8-0=$CUDA_VERSION-1<br><br><font face="arial,sans-serif">It is not defined in the %post section. E.g. if I do in the %post:<br>  echo CUDA_PKG_VERSION $CUDA_PKG_VERSION<br>  echo PATH $PATH<br><br>then the output during bootstrap is:<br>+ echo CUDA_PKG_VERSION<br>CUDA_PKG_VERSION<br>+ echo PATH /bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin<br>PATH /bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin<br><br>Is this a feature or a bug?<br><br>Thanks,<br>MC<br></font></span></span></code></pre></div>
+------=_Part_5415_473004233.1504891047235--
+
+------=_Part_5414_93203978.1504891047235--

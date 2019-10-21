@@ -1,0 +1,271 @@
+Date: Mon, 30 Oct 2017 19:42:51 -0700 (PDT)
+From: Dave Trudgian <dtr...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <f33e2672-70bb-48b0-92b8-338d5bb3e53a@lbl.gov>
+In-Reply-To: <CAApQTThbYRvc1mKfwFFJHV8L6ugXK6B8=T=e2Ae0xW16Mx53+Q@mail.gmail.com>
+References: <b30f2eb1-eaef-4a35-b652-f20c241ebd86@lbl.gov> <CALQ0CdVRw1x-U9eeA=p=TiPe_aPNo63qJCWXR2zVea=qScUYfg@mail.gmail.com>
+ <CAN9aCecNrD-ktOp_s+Q48rGqUovN_vgB5Ccm9+PzA6SyPvo2Nw@mail.gmail.com>
+ <CALQ0CdUCaur4Xd81YLPOap9OwHo5h-AoJpEhU+ieE3MT7LXJfw@mail.gmail.com>
+ <CAN9aCef+sH5SR3tZf6hrdng=R2epKhhDfQviccphJJTTFBjjdQ@mail.gmail.com>
+ <CALQ0CdWvqDptVxy2W1=9AHkPkqru24jFuKvTkLLpO8_7R9UeQg@mail.gmail.com>
+ <CAN9aCefh_d0GVjChucDNsOF7Yw=rdu-RioxJtzw3_2V+L_=0WQ@mail.gmail.com>
+ <CALQ0CdWJcqd4sEe62KPKYS_bM_PEwYkTxj2u5Ku9j6872STOew@mail.gmail.com>
+ <CAN9aCefywgp4r5T7jXbp_ssz9kWCf2bA5_zEXN_JtSDH39vZzA@mail.gmail.com>
+ <CALQ0CdUFo2=PR-Rj6mzRcutdEda02G+ZuR9whmPf+sp2LEJgHw@mail.gmail.com> <CAN9aCedL4KYmPf6Eos7Q=SGOLk2dzN35GVbrO0XFBPPqfAAk9Q@mail.gmail.com>
+ <CAApQTThbYRvc1mKfwFFJHV8L6ugXK6B8=T=e2Ae0xW16Mx53+Q@mail.gmail.com>
+Subject: Re: [Singularity] kernel panic after editing in sandbox
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_9234_1315320008.1509417771852"
+
+------=_Part_9234_1315320008.1509417771852
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_9235_23927857.1509417771852"
+
+------=_Part_9235_23927857.1509417771852
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi Igor, et al.,
+
+I just noticed that this crash is at the same point in fs/dcache.c:946 that 
+was noted by DrDaveD in this GitHub issue, against Red Hat EL 7.2
+
+https://github.com/singularityware/singularity/issues/228
+
+Was noted in the issue that the panic did not happen on RHEL 7.3.
+
+From the Red Hat release notes on overlayfs tech preview, and the issue 
+above, it seems likely that overlayfs problems on RHEL 7.x might be most 
+common when the underlying FS is not something standard. What is it in this 
+case? In the issue, CVMFS was involved.
+
+I've personally not seen a crash with images on various RHEL 7.x versions 
+where XFS, Lustre, GPFS have been the underlying filesystems holding images.
+
+DT
+
+
+
+On Monday, October 30, 2017 at 9:15:46 PM UTC-5, Gregory Kurtzer wrote:
+>
+> Hi Igor,
+>
+> I want to expand on what David mentioned. It is very high priority for us 
+> to make sure all features work with any pair of Linux host/container so it 
+> does not crash the host. One of the tricks is that Singularity is doing a 
+> few things that were not considered as commonplace just a few years ago and 
+> as a result, some of these things end up tickling kernel bugs which are 
+> within the distribution's kernel. We have introduced several workarounds 
+> for various distribution's kernel bugs already but we can't always 
+> replicate, identify or debug the root cause.
+>
+> As David mentioned, this is when we create system administrator 
+> configurables to enable or disable certain features that are known to be 
+> problematic.
+>
+> Will you be at SC? There will be several meet ups where we can discuss and 
+> hopefully debug some of these problems.
+>
+> Warmest regards,
+>
+> Greg
+>
+>
+>
+>
+> On Mon, Oct 30, 2017 at 7:49 AM, David Godlove <dav...@gmail.com 
+> <javascript:>> wrote:
+>
+>> Hi Igor, 
+>>
+>> I understand your frustration.  Unfortunately, overlayfs is a kernel 
+>> level feature that we do not control.  Your kernel is either recent enough 
+>> to support it or it is not.  But the majority of Singularity features work 
+>> just fine without overlayfs.  You need only disable that option in the 
+>> singularity.conf file.  Just change:
+>>
+>> enable overlay = yes
+>>
+>> to 
+>>
+>> enable overlay = no
+>>
+>> If you need a writable image you can still easily produce one with the 
+>> --writable option, or you can create and use a --sandbox.  If you shell 
+>> into these containers with the --writable option you will be able to 
+>> make changes without the need of an overlayfs.  
+>>
+>> On Mon, Oct 30, 2017 at 10:20 AM, Igor Yakushin <i...@uchicago.edu 
+>> <javascript:>> wrote:
+>>
+>>> Hi David,
+>>>
+>>> How high priority is for Singularity team to make sure that overlays 
+>>> work with any pair of Linux host/container or at least do not crash the 
+>>> host? After all, working with any combination of Linuxes without 
+>>> introducing any security or stability problems were the main selling points 
+>>> of Singularity. It was hard enough to convince sysadmins to allow it on the 
+>>> cluster. I think, keeping Singularity safe, stable, portable is much more 
+>>> important than introducing new features.
+>>>
+>>> The system that it crashed is actually reasonably up to date: Scientific 
+>>> Linux 7.2. Most of HPC centers are still running RH6 derivatives as far as 
+>>> I know. Our other cluster is still SL 6.7 with the kernel 2.6.32. The 
+>>> whole point of using Singularity for us was an ability to run much newer 
+>>> Linux on an ancient host. Without that, 99% of use cases are eliminated.
+>>>
+>>> Thank you,
+>>> Igor
+>>>
+>>> -- 
+>>> Igor Yakushin, Ph.D.
+>>> Computational Scientist
+>>> Kavli Institute for Cosmological Physics, ERC #413
+>>> Research Computing Center, room #2
+>>> The University of Chicago
+>>> 773-834-5313
+>>> https://rcc.uchicago.edu
+>>>
+>>> -- 
+>>> You received this message because you are subscribed to the Google 
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>> an email to singu...@lbl.gov <javascript:>.
+>>>
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> -- 
+> Gregory M. Kurtzer
+> CEO, SingularityWare, LLC.
+> Senior Architect, RStor
+>
+
+------=_Part_9235_23927857.1509417771852
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Igor, et al.,<br><br>I just noticed that this crash is =
+at the same point in  fs/dcache.c:946 that was noted by DrDaveD in this Git=
+Hub issue, against Red Hat EL 7.2<br><br>https://github.com/singularityware=
+/singularity/issues/228<br><br>Was noted in the issue that the panic did no=
+t happen on RHEL 7.3.<br><br>From the Red Hat release notes on overlayfs te=
+ch preview, and the issue above, it seems likely that overlayfs problems on=
+ RHEL 7.x might be most common when the underlying FS is not something stan=
+dard. What is it in this case? In the issue, CVMFS was involved.<br><br>I&#=
+39;ve personally not seen a crash with images on various RHEL 7.x versions =
+where XFS, Lustre, GPFS have been the underlying filesystems holding images=
+.<br><br>DT<br><br><br><br>On Monday, October 30, 2017 at 9:15:46 PM UTC-5,=
+ Gregory Kurtzer wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0=
+;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div di=
+r=3D"ltr">Hi Igor,<div><br></div><div>I want to expand on what David mentio=
+ned. It is very high priority for us to make sure all features work with an=
+y pair of Linux host/container so it does not crash the host. One of the tr=
+icks is that Singularity is doing a few things that were not considered as =
+commonplace just a few years ago and as a result, some of these things end =
+up tickling kernel bugs which are within the distribution&#39;s kernel. We =
+have introduced several workarounds for various distribution&#39;s kernel b=
+ugs already but we can&#39;t always replicate, identify or debug the root c=
+ause.</div><div><br></div><div>As David mentioned, this is when we create s=
+ystem administrator configurables to enable or disable certain features tha=
+t are known to be problematic.</div><div><br></div><div>Will you be at SC? =
+There will be several meet ups where we can discuss and hopefully debug som=
+e of these problems.</div><div><br></div><div>Warmest regards,</div><div><b=
+r></div><div>Greg</div><div><br></div><div><br></div><div><br></div><div><b=
+r><div class=3D"gmail_quote">On Mon, Oct 30, 2017 at 7:49 AM, David Godlove=
+ <span dir=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfusc=
+ated-mailto=3D"Y3RgmCAFBgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#=
+39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#=
+39;;return true;">dav...@gmail.com</a>&gt;</span> wrote:<br><blockquote cla=
+ss=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;pa=
+dding-left:1ex"><div dir=3D"ltr">Hi Igor,=C2=A0<div><br></div><div>I unders=
+tand your frustration.=C2=A0 Unfortunately, overlayfs is a kernel level fea=
+ture that we do not control.=C2=A0 Your kernel is either recent enough to s=
+upport it or it is not.=C2=A0 But the majority of Singularity features work=
+ just fine without overlayfs.=C2=A0 You need only disable that option in th=
+e singularity.conf file.=C2=A0 Just change:</div><div><br></div><div><font =
+face=3D"monospace, monospace">enable overlay =3D yes<br></font></div><div><=
+br></div><div>to=C2=A0</div><div><br></div><div><font face=3D"monospace, mo=
+nospace">enable overlay =3D no<br></font></div><div><br></div><div>If you n=
+eed a writable image you can still easily produce one with the <font face=
+=3D"monospace, monospace">--writable</font> option, or you can create and u=
+se a <font face=3D"monospace, monospace">--sandbox</font>.=C2=A0 If you she=
+ll into these containers with the <font face=3D"monospace, monospace">--wri=
+table</font> option you will be able to make changes without the need of an=
+ overlayfs.=C2=A0=C2=A0</div></div><div><div><div><br><div class=3D"gmail_q=
+uote">On Mon, Oct 30, 2017 at 10:20 AM, Igor Yakushin <span dir=3D"ltr">&lt=
+;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"Y3RgmCA=
+FBgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;re=
+turn true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">i...=
+@uchicago.edu</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" st=
+yle=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div =
+dir=3D"ltr">Hi David,<div><br><div>How high priority is for Singularity tea=
+m to make sure that overlays work with any pair of Linux host/container or =
+at least do not crash the host? After all, working with any combination of =
+Linuxes without introducing any security or stability problems were the mai=
+n selling points of Singularity. It was hard enough to convince sysadmins t=
+o allow it on the cluster. I think, keeping Singularity safe, stable, porta=
+ble is much more important than introducing new features.</div><div><br></d=
+iv><div>The system that it crashed is actually reasonably up to date: Scien=
+tific Linux 7.2. Most of HPC centers are still running RH6 derivatives as f=
+ar as I know. Our other cluster is still SL 6.7 with the kernel=C2=A0<span =
+style=3D"color:rgb(0,0,0);font-family:monospace">2.6.32. The whole point of=
+ using Singularity for us was an ability to run much newer Linux on an anci=
+ent host. Without that, 99% of use cases are eliminated.</span></div><div><=
+span style=3D"color:rgb(0,0,0);font-family:monospace"><br></span></div><div=
+><span style=3D"color:rgb(0,0,0);font-family:monospace">Thank you,</span></=
+div><div><span style=3D"color:rgb(0,0,0);font-family:monospace">Igor</span>=
+</div><span><div><div><br></div><div>-- <br><div><div dir=3D"ltr"><div>Igor=
+ Yakushin, Ph.D.</div><div>Computational Scientist</div><div>Kavli Institut=
+e for Cosmological Physics, ERC #413</div><div>Research Computing Center, r=
+oom #2</div><div>The University of Chicago</div><div><a value=3D"+177383453=
+13">773-834-5313</a></div><div><a href=3D"https://rcc.uchicago.edu" target=
+=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.go=
+ogle.com/url?q\x3dhttps%3A%2F%2Frcc.uchicago.edu\x26sa\x3dD\x26sntz\x3d1\x2=
+6usg\x3dAFQjCNEfBeGgXP_XeIaQPauHLjfDz_bfRA&#39;;return true;" onclick=3D"th=
+is.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Frcc.uchicago.e=
+du\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEfBeGgXP_XeIaQPauHLjfDz_bfRA&#39=
+;;return true;">https://rcc.uchicago.edu</a></div><div><br></div></div></di=
+v>
+</div></div></span></div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+Y3RgmCAFBgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+Y3RgmCAFBgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div=
+ dir=3D"ltr"><div>Gregory M. Kurtzer</div><div>CEO, SingularityWare, LLC.</=
+div><div>Senior Architect, RStor</div></div></div></div></div></div></div><=
+/div></div>
+</div></div>
+</blockquote></div>
+------=_Part_9235_23927857.1509417771852--
+
+------=_Part_9234_1315320008.1509417771852--

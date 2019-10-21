@@ -1,0 +1,136 @@
+Date: Tue, 12 Dec 2017 09:27:04 -0800 (PST)
+From: Kushal Datta <kusha...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <03f2ef4e-b773-4d05-9d7f-ce2f2b53d7a9@lbl.gov>
+Subject: Clarifications on singularity run
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_9741_1683107723.1513099624201"
+
+------=_Part_9741_1683107723.1513099624201
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_9742_2111153571.1513099624201"
+
+------=_Part_9742_2111153571.1513099624201
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi,
+
+Objective: To create singularity containers with Tensorflow and some 
+applications which will run on multiple servers with different generation 
+of Intel processors.
+Done already: Created a container an on an Intel Xeon server with Centos 7 
+and TF-1.3.0.
+Questions:
+1) When I run the container on an older generation of Intel processor, my 
+application died with just an 'Aborted' message. Dug a little further to 
+find that even 'singularity run test.img python -c 'import tensorflow as 
+tf; tf.Session()' dies with the same message. Probably this occurs due to 
+incompatibility of libc or other dpdt libraries, but the error message is 
+cryptic! What's the best way to debug this?
+2) If the OS, Python and TF versions are same between the host CPU where I 
+created the container and target CPU where I'm running it, the container 
+should work, right?
+3) Singularity is complaining that some of the applications are not in the 
+host machine where I am running the container. The specific error is with 
+on nethogs. I installed nethogs in the container, but singnularity couldn't 
+find it. Had to install nethogs in the host. I should be able to run all 
+applications installed inside the container, right?
+
+Definition File:
+BootStrap: yum
+OSVersion: 7
+MirrorURL: 
+http://mirror.centos.org/centos-%{OSVERSION}/%{OSVERSION}/os/$basearch/
+UpdateURL: 
+http://mirror.centos.org/centos-%{OSVERSION}/%{OSVERSION}/updates/$basearch
+Include: yum
+
+%labels
+
+%setup
+
+%environment
+
+%files
+    /home/bduser/tensorflow-1.4.0-cp27-cp27mu-linux_x86_64.whl /opt/
+    /home/user/run_my_training.py /opt/run_my_training.py
+
+%post -c /bin/bash
+    echo "Hello from inside the container"
+    yum -y install epel-release
+    yum -y install python-devel python-pip git numactl vim-minimal
+    yum -y install nethogs
+    pip install --upgrade pip
+    pip install --upgrade pysocks
+    pip --no-cache-dir install \
+            h5py \
+            jupyter \
+            matplotlib \
+            numpy \
+            pandas \
+            Pillow \
+            scipy \
+            sklearn
+    mkdir -p /data
+
+%test
+    python -c 'import tensorflow as tf; print tf.__version__'
+
+%runscript
+    /opt/run_my_training.py
+
+Thanks,
+-Kushal.
+
+------=_Part_9742_2111153571.1513099624201
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi,<div><br></div><div>Objective: To create singularity co=
+ntainers with Tensorflow and some applications which will run on multiple s=
+ervers with different generation of Intel processors.</div><div>Done alread=
+y: Created a container an on an Intel Xeon server with Centos 7 and TF-1.3.=
+0.</div><div>Questions:</div><div>1) When I run the container on an older g=
+eneration of Intel processor, my application died with just an &#39;Aborted=
+&#39; message. Dug a little further to find that even &#39;singularity run =
+test.img python -c &#39;import tensorflow as tf; tf.Session()&#39; dies wit=
+h the same message. Probably this occurs due to incompatibility of libc or =
+other dpdt libraries, but the error message is cryptic! What&#39;s the best=
+ way to debug this?</div><div>2) If the OS, Python and TF versions are same=
+ between the host CPU where I created the container and target CPU where I&=
+#39;m running it, the container should work, right?</div><div>3) Singularit=
+y is complaining that some of the applications are not in the host machine =
+where I am running the container. The specific error is with on nethogs. I =
+installed nethogs in the container, but singnularity couldn&#39;t find it. =
+Had to install nethogs in the host. I should be able to run all application=
+s installed inside the container, right?</div><div><br></div><div>Definitio=
+n File:</div><div><div>BootStrap: yum</div><div>OSVersion: 7</div><div>Mirr=
+orURL: http://mirror.centos.org/centos-%{OSVERSION}/%{OSVERSION}/os/$basear=
+ch/</div><div>UpdateURL: http://mirror.centos.org/centos-%{OSVERSION}/%{OSV=
+ERSION}/updates/$basearch</div><div>Include: yum</div><div><br></div><div>%=
+labels</div><div><br></div><div>%setup</div><div><br></div><div>%environmen=
+t</div><div><br></div><div>%files</div><div>=C2=A0 =C2=A0 /home/bduser/tens=
+orflow-1.4.0-cp27-cp27mu-linux_x86_64.whl /opt/</div><div>=C2=A0 =C2=A0 /ho=
+me/user/run_my_training.py /opt/run_my_training.py<br></div><div><br></div>=
+<div>%post -c /bin/bash</div><div>=C2=A0 =C2=A0 echo &quot;Hello from insid=
+e the container&quot;</div><div>=C2=A0 =C2=A0 yum -y install epel-release</=
+div><div>=C2=A0 =C2=A0 yum -y install python-devel python-pip git numactl v=
+im-minimal</div><div>=C2=A0 =C2=A0 yum -y install nethogs</div><div>=C2=A0 =
+=C2=A0 pip install --upgrade pip</div><div>=C2=A0 =C2=A0 pip install --upgr=
+ade pysocks</div><div>=C2=A0 =C2=A0 pip --no-cache-dir install \</div><div>=
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 h5py \</div><div>=C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 jupyter \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 matplotlib \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 numpy \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 pandas \=
+</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Pillow \</div><div>=C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 scipy \</div><div>=C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 sklearn</div><div>=C2=A0 =C2=A0 mkdir -p /data</di=
+v><div><br></div><div>%test</div><div>=C2=A0 =C2=A0 python -c &#39;import t=
+ensorflow as tf; print tf.__version__&#39;<br></div><div><br></div><div>%ru=
+nscript</div><div>=C2=A0 =C2=A0 /opt/run_my_training.py</div></div><div><br=
+></div><div>Thanks,</div><div>-Kushal.</div></div>
+------=_Part_9742_2111153571.1513099624201--
+
+------=_Part_9741_1683107723.1513099624201--

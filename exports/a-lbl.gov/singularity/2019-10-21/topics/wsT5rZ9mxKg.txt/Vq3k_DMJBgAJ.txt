@@ -1,0 +1,286 @@
+Date: Wed, 17 Oct 2018 13:30:01 -0700 (PDT)
+From: Mike Moore <wxdu...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <ee35542c-02f9-4529-88dc-0674e3862ba0@lbl.gov>
+In-Reply-To: <CAM=pu+KpqJ42Z8z2Y2H9KKcX45B-+9RD3ULighMt49qr0Lk5_A@mail.gmail.com>
+References: <327123e2-fb31-46ac-afed-4cf060795af0@lbl.gov> <CAM=pu+LNZa_C0XCb08Tv0mEUiEQ2tRMP3abOy=DpOEbkwd3WsQ@mail.gmail.com>
+ <CAM=pu+KpqJ42Z8z2Y2H9KKcX45B-+9RD3ULighMt49qr0Lk5_A@mail.gmail.com>
+Subject: Re: [Singularity] Best practice for uploading containers to
+ sregistry with tags/versions
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2850_1901786850.1539808201848"
+
+------=_Part_2850_1901786850.1539808201848
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2851_44269999.1539808201849"
+
+------=_Part_2851_44269999.1539808201849
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Oh, I completely agree with your points.  We are going to have a system 
+with github/gitlab for recipes, some sort of CI to connect the recipes to 
+the build process and publication via sregistry.  I'm working on two 
+fronts.  One is to introduce Singularity to our environment as a Preview, 
+with fewer restrictions.  While our user base is learning/digesting that, 
+I'll get the version control/CI/large sregistry system in place to allow us 
+to tie the image back to the recipe.  I have nightmares about how would we 
+get everything back if the world blew up...  We're not there yet...  But 
+this is a step on the road.
+
+Thanks!
+-Mike
+
+
+On Wednesday, October 17, 2018 at 4:13:40 PM UTC-4, vanessa wrote:
+>
+> To be more specific answering your question - there is no universal best 
+> practice, because it depends on your use case. I can answer under the 
+> context of wanting to create then use reproducible software.
+>
+> *1.* If you build a container and you have no link back to its recipe, 
+> under version control, you can never go back and recreate it, if needed. 
+> You can't hand it off to a colleague and have him/her understand how the 
+> guts were generated. In my world, a container built under any context 
+> without a recipe linked to it, and one that is version controlled, is not 
+> good enough.
+> *2.* If you build a container and have no place to put it where it's 
+> programatically accessible, this is another fail case. I can build and have 
+> containers on my local machine to my heart's content, but if others aren't 
+> able to grab the exact same container, via some API, well that doesn't get 
+> me very far either.
+> *3.* This final point is what I think of as the "scrappy developer" 
+> quality. If you don't do 1 and 2 using tools and resources that are open 
+> and publicly available, it doesn't matter if you can afford to use it, the 
+> next person that you want to share with (that cannot) isn't as lucky as 
+> you, and you fail. For example, as a scrappy developer I would want to take 
+> advantage of building containers in the most version controlled and 
+> accessible way that I can. This means using services like CircleCI and 
+> Travis because A., the build recipes and the configs for the CI are both 
+> under version control, together, and B. Anyone can literally clone my repo, 
+> connect to the (free) service, and get the exact same thing. The containers 
+> built satisfy conditions 1. and 2. above. The only additional thing you 
+> need here is a Registry to push them to, but you can have confidence that 
+> if the registry explodes, you at least have a history of how it was built, 
+> and the recipe it was built from.
+>
+> Outside of those points, you can do whatever you want. You can have a big 
+> folder of containers you build in random places (local? some remote you are 
+> paying for?) but at the end of the day, you can't really reproduce that, or 
+> at least a third party that has (or loses) your container and wants to 
+> re-generate it cannot. You can choose to keep the recipe internal to the 
+> container, but then you delete the container, oops so much for that. If I 
+> were a general researcher, I would maximally take advantage of simple, free 
+> resources like Github and Continuous Integration (to build) and then for 
+> the registry, optimize based on what is available to me. Not sure if any of 
+> this is helpful, but glad to chat more :)
+>
+> Best,
+>
+> V
+>
+>
+> On Wed, Oct 17, 2018 at 3:48 PM v <v...@gmail.com <javascript:>> wrote:
+>
+>> Hey Mike,
+>>
+>> I can definitely help answer this one! Do you mean Singularity Registry 
+>> Server, or Singularity Hub? They are slightly different so I can adjust my 
+>> answer based on that. The short answer is that the tag of "latest" is 
+>> nothing special other than the default tag used given that the user doesn't 
+>> specify a tag (eg., built from the "Singularity" file in the Github repo 
+>> (no extension) or pulled without specifying a tag 
+>> (shub://vsoch/hello-world. This is a convention taken from Docker, and to 
+>> be honest I don't think it's the best practice, because "latest" now is not 
+>> "latest" later. It's much better to generally pull with a version (either a 
+>> commit or container hash for Singularity Hub) and as a builder, you don't 
+>> need to thin about this (it is figured out automatically from the container 
+>> and from your repository).
+>>
+>> For Singularity Registry, we can't derive a commit, but we can derive the 
+>> container hash. So generally I would think of a tag as a moving thing 
+>> (e.g., latest today isn't latest tomorrow) and when you interact with 
+>> images (such as specifying usage of one in a script) it's best practice to 
+>> include the hash (shub://<username>/<repo>:<tag>@<hash>
+>>
+>> What is missing for Singularity Registry are better hooks into CI (Circle 
+>> or Travis) which actually I've shown before with Travis ---> 
+>> https://github.com/singularityhub/singularity-ci/ that would push and 
+>> also provide the container for the registry to include a way back to its 
+>> source (the Github repo and commit!). The good news is that we don't need 
+>> some special builder or plugin, just an example recipe that will do the 
+>> build and push. I'd be happy to write this up for you (was planning on 
+>> updating that repo and making one for Circle too :)
+>>
+>> Best,
+>>
+>> Vanessa
+>>
+>> On Wed, Oct 17, 2018 at 3:30 PM Mike Moore <wx...@gmail.com 
+>> <javascript:>> wrote:
+>>
+>>> Hi,
+>>>
+>>>   So, I was wondering if anyone had any recommendations or best 
+>>> practices around the tagging/versioning of images uploaded to sregistry?  
+>>> I've seen cases where a container will have both a "latest" and a <version> 
+>>> entry in the registry.  Is it simply one upload with a "--tag latest --tag 
+>>> <version>", or two separate uploads , one for latest and one for 
+>>> <version>?  Just trying to figure out the best way to do this and provide 
+>>> the correct documentation to our users/developers.
+>>>
+>>> -Mike
+>>>
+>>>
+>>> -- 
+>>> You received this message because you are subscribed to the Google 
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>> an email to singu...@lbl.gov <javascript:>.
+>>>
+>>
+>>
+>> -- 
+>> Vanessa Villamia Sochat
+>> Stanford University '16
+>> (603) 321-0676
+>>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_2851_44269999.1539808201849
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Oh, I completely agree with your points.=C2=A0 We are goin=
+g to have a system with github/gitlab for recipes, some sort of CI to conne=
+ct the recipes to the build process and publication via sregistry.=C2=A0 I&=
+#39;m working on two fronts.=C2=A0 One is to introduce Singularity to our e=
+nvironment as a Preview, with fewer restrictions.=C2=A0 While our user base=
+ is learning/digesting that, I&#39;ll get the version control/CI/large sreg=
+istry system in place to allow us to tie the image back to the recipe.=C2=
+=A0 I have nightmares about how would we get everything back if the world b=
+lew up...=C2=A0 We&#39;re not there yet...=C2=A0 But this is a step on the =
+road.<br><br>Thanks!<br>-Mike<br><br><br>On Wednesday, October 17, 2018 at =
+4:13:40 PM UTC-4, vanessa wrote:<blockquote class=3D"gmail_quote" style=3D"=
+margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;=
+"><div dir=3D"ltr">To be more specific answering your question - there is n=
+o universal best practice, because it depends on your use case. I can answe=
+r under the context of wanting to create then use reproducible software.<di=
+v><b><br></b></div><div><b>1.</b> If you build a container and you have no =
+link back to its recipe, under version control, you can never go back and r=
+ecreate it, if needed. You can&#39;t hand it off to a colleague and have hi=
+m/her understand how the guts were generated. In my world, a container buil=
+t under any context without a recipe linked to it, and one that is version =
+controlled, is not good enough.<br></div><div><div><b>2.</b> If you build a=
+ container and have no place to put it where it&#39;s programatically acces=
+sible, this is another fail case. I can build and have containers on my loc=
+al machine to my heart&#39;s content, but if others aren&#39;t able to grab=
+ the exact same container, via some API, well that doesn&#39;t get me very =
+far either.</div><div><b>3.</b> This final point is what I think of as the =
+&quot;scrappy developer&quot; quality. If you don&#39;t do 1 and 2 using to=
+ols and resources that are open and publicly available, it doesn&#39;t matt=
+er if you can afford to use it, the next person that you want to share with=
+ (that cannot) isn&#39;t as lucky as you, and you fail. For example, as a s=
+crappy developer I would want to take advantage of building containers in t=
+he most version controlled and accessible way that I can. This means using =
+services like CircleCI and Travis because A., the build recipes and the con=
+figs for the CI are both under version control, together, and B. Anyone can=
+ literally clone my repo, connect to the (free) service, and get the exact =
+same thing. The containers built satisfy conditions 1. and 2. above. The on=
+ly additional thing you need here is a Registry to push them to, but you ca=
+n have confidence that if the registry explodes, you at least have a histor=
+y of how it was built, and the recipe it was built from.</div><div><br></di=
+v><div>Outside of those points, you can do whatever you want. You can have =
+a big folder of containers you build in random places (local? some remote y=
+ou are paying for?) but at the end of the day, you can&#39;t really reprodu=
+ce that, or at least a third party that has (or loses) your container and w=
+ants to re-generate it cannot. You can choose to keep the recipe internal t=
+o the container, but then you delete the container, oops so much for that. =
+If I were a general researcher, I would maximally take advantage of simple,=
+ free resources like Github and Continuous Integration (to build) and then =
+for the registry, optimize based on what is available to me. Not sure if an=
+y of this is helpful, but glad to chat more :)</div></div><div><br></div><d=
+iv>Best,</div><div><br></div><div>V</div><div><br></div></div><br><div clas=
+s=3D"gmail_quote"><div dir=3D"ltr">On Wed, Oct 17, 2018 at 3:48 PM v &lt;<a=
+ href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"1KaSbYtpBQ=
+AJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;retur=
+n true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">v...@gm=
+ail.com</a>&gt; wrote:<br></div><blockquote class=3D"gmail_quote" style=3D"=
+margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"=
+ltr"><div dir=3D"ltr">Hey Mike,<div><br></div><div>I can definitely help an=
+swer this one! Do you mean Singularity Registry Server, or Singularity Hub?=
+ They are slightly different so I can adjust my answer based on that. The s=
+hort answer is that the tag of &quot;latest&quot; is nothing special other =
+than the default tag used given that the user doesn&#39;t specify a tag (eg=
+., built from the &quot;Singularity&quot; file in the Github repo (no exten=
+sion) or pulled without specifying a tag (shub://vsoch/hello-world. This is=
+ a convention taken from Docker, and to be honest I don&#39;t think it&#39;=
+s the best practice, because &quot;latest&quot; now is not &quot;latest&quo=
+t; later. It&#39;s much better to generally pull with a version (either a c=
+ommit or container hash for Singularity Hub) and as a builder, you don&#39;=
+t need to thin about this (it is figured out automatically from the contain=
+er and from your repository).</div><div><br></div><div>For Singularity Regi=
+stry, we can&#39;t derive a commit, but we can derive the container hash. S=
+o generally I would think of a tag as a moving thing (e.g., latest today is=
+n&#39;t latest tomorrow) and when you interact with images (such as specify=
+ing usage of one in a script) it&#39;s best practice to include the hash (s=
+hub://&lt;username&gt;/&lt;repo&gt;:&lt;<wbr>tag&gt;@&lt;hash&gt;</div><div=
+><br></div><div>What is missing for Singularity Registry are better hooks i=
+nto CI (Circle or Travis) which actually I&#39;ve shown before with Travis =
+---&gt;=C2=A0<a href=3D"https://github.com/singularityhub/singularity-ci/" =
+target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://=
+www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsingularityhub%2Fsingula=
+rity-ci%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHsLda3gmCg7ZRWnUDaasCF8g=
+h6cg&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.com/=
+url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsingularityhub%2Fsingularity-ci%2F\x26s=
+a\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHsLda3gmCg7ZRWnUDaasCF8gh6cg&#39;;retur=
+n true;">https://github.com/<wbr>singularityhub/singularity-ci/</a> that wo=
+uld push and also provide the container for the registry to include a way b=
+ack to its source (the Github repo and commit!). The good news is that we d=
+on&#39;t need some special builder or plugin, just an example recipe that w=
+ill do the build and push. I&#39;d be happy to write this up for you (was p=
+lanning on updating that repo and making one for Circle too :)</div><div><b=
+r></div><div>Best,</div><div><br></div><div>Vanessa</div></div></div><br><d=
+iv class=3D"gmail_quote"><div dir=3D"ltr">On Wed, Oct 17, 2018 at 3:30 PM M=
+ike Moore &lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mail=
+to=3D"1KaSbYtpBQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javasc=
+ript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;retur=
+n true;">wx...@gmail.com</a>&gt; wrote:<br></div><blockquote class=3D"gmail=
+_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:=
+1ex"><div dir=3D"ltr">Hi,<br><br>=C2=A0 So, I was wondering if anyone had a=
+ny recommendations or best practices around the tagging/versioning of image=
+s uploaded to sregistry?=C2=A0 I&#39;ve seen cases where a container will h=
+ave both a &quot;latest&quot; and a &lt;version&gt; entry in the registry.=
+=C2=A0 Is it simply one upload with a &quot;--tag latest --tag &lt;version&=
+gt;&quot;, or two separate uploads , one for latest and one for &lt;version=
+&gt;?=C2=A0 Just trying to figure out the best way to do this and provide t=
+he correct documentation to our users/developers.<br><br>-Mike<br><br><br><=
+/div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+1KaSbYtpBQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><div>(=
+603) 321-0676</div></div></div></div>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><div>(=
+603) 321-0676</div></div></div></div>
+</blockquote></div>
+------=_Part_2851_44269999.1539808201849--
+
+------=_Part_2850_1901786850.1539808201848--

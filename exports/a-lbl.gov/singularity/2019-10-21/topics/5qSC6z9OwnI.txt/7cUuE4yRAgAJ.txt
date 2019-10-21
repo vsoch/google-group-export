@@ -1,0 +1,91 @@
+Date: Mon, 19 Jun 2017 11:09:27 -0700 (PDT)
+From: Michael Yourshaw <myou...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <eb59c921-09cd-40f2-b442-70a032b044fc@lbl.gov>
+Subject: Problems with /environment and PATH
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_3695_30951545.1497895767969"
+
+------=_Part_3695_30951545.1497895767969
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_3696_2120732906.1497895767970"
+
+------=_Part_3696_2120732906.1497895767970
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+I am using Singularity 2.3-dist.
+
+I want to have the same specific PATH in a container, regardless whether I 
+run "shell" or "exec". This PATH will not be not the same as the PATH value 
+outside the container.
+
+I have the following as the last step under %post in my .def file (note 
+that this path prioritizes /usr/apps:/usr/local/bin:/usr/local/sbin):
+
+```
+cat << 'EOF' > /environment
+# Define any environment init code here
+
+if test -z "${SINGULARITY_INIT}"; then
+    
+PATH=/usr/apps:/usr/local/bin:/usr/local/sbin:/bin:/sbin:/usr/bin:/usr/sbin
+    PS1="Singularity.${SINGULARITY_CONTAINER}> ${PS1}"
+    SINGULARITY_INIT=1
+    export PATH PS1 SINGULARITY_INIT
+fi
+EOF
+```
+
+I have confirmed that this custom /environment file exists in the container 
+and works as expected if I source it inside a "shell" container.
+
+However, what I actually observe is that if I use "shell", PATH is 
+`/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin`, which I 
+believe may come from the default /environment.
+
+If I use "exec", PATH is inherited from the non-container PATH, and is full 
+of irrelevancies: 
+`/home/yoursham/apps/python-3/bin:/home/yoursham/spack/bin:...`
+
+In both the "shell" and "exec" cases, it appears that my custom 
+/environment is not being sourced, PATH is not the desired value, and 
+${SINGULARITY_INIT} is an empty string.
+
+What is necessary to consistently get a specific PATH inside a container?
+
+Thanks.
+
+ 
+
+------=_Part_3696_2120732906.1497895767970
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">I am using Singularity 2.3-dist.<br><br>I want to have the=
+ same specific PATH in a container, regardless whether I run &quot;shell&qu=
+ot; or &quot;exec&quot;. This PATH will not be not the same as the PATH val=
+ue outside the container.<br><br>I have the following as the last step unde=
+r %post in my .def file (note that this path prioritizes /usr/apps:/usr/loc=
+al/bin:/usr/local/sbin):<br><br>```<br>cat &lt;&lt; &#39;EOF&#39; &gt; /env=
+ironment<br># Define any environment init code here<br><br>if test -z &quot=
+;${SINGULARITY_INIT}&quot;; then<br>=C2=A0=C2=A0=C2=A0 PATH=3D/usr/apps:/us=
+r/local/bin:/usr/local/sbin:/bin:/sbin:/usr/bin:/usr/sbin<br>=C2=A0=C2=A0=
+=C2=A0 PS1=3D&quot;Singularity.${SINGULARITY_CONTAINER}&gt; ${PS1}&quot;<br=
+>=C2=A0=C2=A0=C2=A0 SINGULARITY_INIT=3D1<br>=C2=A0=C2=A0=C2=A0 export PATH =
+PS1 SINGULARITY_INIT<br>fi<br>EOF<br>```<br><br>I have confirmed that this =
+custom /environment file exists in the container and works as expected if I=
+ source it inside a &quot;shell&quot; container.<br><br>However, what I act=
+ually observe is that if I use &quot;shell&quot;, PATH is `/bin:/sbin:/usr/=
+bin:/usr/sbin:/usr/local/bin:/usr/local/sbin`, which I believe may come fro=
+m the default /environment.<br><br>If I use &quot;exec&quot;, PATH is inher=
+ited from the non-container PATH, and is full of irrelevancies: `/home/your=
+sham/apps/python-3/bin:/home/yoursham/spack/bin:...`<br><br>In both the &qu=
+ot;shell&quot; and &quot;exec&quot; cases, it appears that my custom /envir=
+onment is not being sourced, PATH is not the desired value, and ${SINGULARI=
+TY_INIT} is an empty string.<br><br>What is necessary to consistently get a=
+ specific PATH inside a container?<br><br>Thanks.<br><br>=C2=A0<br></div>
+------=_Part_3696_2120732906.1497895767970--
+
+------=_Part_3695_30951545.1497895767969--

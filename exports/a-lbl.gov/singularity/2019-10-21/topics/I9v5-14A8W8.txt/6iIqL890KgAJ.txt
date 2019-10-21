@@ -1,0 +1,187 @@
+X-Received: by 10.140.240.76 with SMTP id l73mr10755221qhc.4.1463156019389;
+        Fri, 13 May 2016 09:13:39 -0700 (PDT)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.107.161.132 with SMTP id k126ls992072ioe.100.gmail; Fri, 13
+ May 2016 09:13:39 -0700 (PDT)
+X-Received: by 10.66.232.226 with SMTP id tr2mr24439160pac.44.1463156018961;
+        Fri, 13 May 2016 09:13:38 -0700 (PDT)
+Return-Path: <gmku...@lbl.gov>
+Received: from fe4.lbl.gov (fe4.lbl.gov. [128.3.41.71])
+        by mx.google.com with ESMTPS id a5si25157537pfj.210.2016.05.13.09.13.38
+        for <singu...@lbl.gov>
+        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Fri, 13 May 2016 09:13:38 -0700 (PDT)
+Received-SPF: pass (google.com: domain of gmku...@lbl.gov designates 74.125.82.71 as permitted sender) client-ip=74.125.82.71;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of gmku...@lbl.gov designates 74.125.82.71 as permitted sender) smtp.mailfrom=gmku...@lbl.gov
+X-Ironport-SBRS: 3.6
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2G2AAD9+zVXiEdSfUpehHsPBq1rhm6FBYF2hhECgSUHORMBAQEBAQEBAw8BAQEICwsJHzGEQwEBAwESEVsLCws3AgIhARIBBQEcBhMIGodzAw8IBaJCgTE+MYs7jFoNhCMBAQgCASQQimKCQ4FNC4MkglkFjlOEXYRGMQGMJIF5gWmET4hhh1yGJxIegQ4iAYJWgXUcMoccgT4BAQE
+X-IronPort-AV: E=Sophos;i="5.24,614,1455004800"; 
+   d="scan'208,217";a="23288245"
+Received: from mail-wm0-f71.google.com ([74.125.82.71])
+  by fe4.lbl.gov with ESMTP; 13 May 2016 09:13:37 -0700
+Received: by mail-wm0-f71.google.com with SMTP id e201so12390573wme.1
+        for <singu...@lbl.gov>; Fri, 13 May 2016 09:13:37 -0700 (PDT)
+X-Gm-Message-State: AOPr4FWPKpqEQV4LOD+EHHuTjqVJX2usE5nw5G3b4uq0FVeEcmUlpH7XKYf+7fOsILnjtAjjg7FYxmTPfr+0mo1zc5YXsIT7aOLbEex+5CU0kmjDcy1BxHMAJKfGYCRK4h8/wZXExku0uHZAx7iEFL4wvmo=
+X-Received: by 10.194.112.233 with SMTP id it9mr17833673wjb.22.1463156016807;
+        Fri, 13 May 2016 09:13:36 -0700 (PDT)
+MIME-Version: 1.0
+X-Received: by 10.194.112.233 with SMTP id it9mr17833658wjb.22.1463156016569;
+ Fri, 13 May 2016 09:13:36 -0700 (PDT)
+Received: by 10.28.144.200 with HTTP; Fri, 13 May 2016 09:13:36 -0700 (PDT)
+In-Reply-To: <a5f7347e-4bf8-486c-b06f-f00e2e762747@lbl.gov>
+References: <a5f7347e-4bf8-486c-b06f-f00e2e762747@lbl.gov>
+Date: Fri, 13 May 2016 09:13:36 -0700
+Message-ID: <CAN7etTwFQcnyMjry5ZvRKVqrWo2FqpAPAwQ1ZfpzJdOk3kRp_A@mail.gmail.com>
+Subject: Re: [Singularity] SIngularity and MPI implementations
+From: "Gregory M. Kurtzer" <gmku...@lbl.gov>
+To: singularity <singu...@lbl.gov>
+Content-Type: multipart/alternative; boundary=001a1130cf6c9ec5090532bb8e14
+
+--001a1130cf6c9ec5090532bb8e14
+Content-Type: text/plain; charset=UTF-8
+
+Hi Taras!
+
+
+On Fri, May 13, 2016 at 8:12 AM, Taras Shapovalov <shapov...@gmail.com>
+wrote:
+
+> Hey guys,
+>
+> I've heard many times that Singularity has a nice support in Open MPI 2.0,
+> but could someone describes how exactly such integration affects the
+> execution of MPI application? Older Open MPI and MPICH work in SAPP as
+> well, so I don't really get what Open MPI 2.0 brings us.
+>
+
+I believe the answer to your question depends on the definition of
+"support". I will explain... There are generally two ways to implement MPI
+from within a container:
+
+1. The entire MPI stack lives completely within the container. This is
+model I've heard most about how people integrate MPI and containers, but it
+has some serious drawbacks. For instance, this implies that the MPI is
+built with the necessary features and dependencies and tunings for where
+the container is *going* to run (not where it was created). This
+significantly impacts the portability and potential performance of the
+container. Additionally, this approach implies that one container knows how
+to reach another container both in terms of address resolution and port
+(e.g. the appropriate daemons must be listening within the container ...
+sshd?).
+
+2. The MPI is split partially between the host and the container. This is
+the preferable approach in that the MPI within the container does not have
+to be built specifically for a target host or resource. It also alleviates
+much the networking complexities and satisfies a much more typical work
+flow and thus scheduler integration. But it isn't the easiest to do
+properly. This is where the integration of Open MPI 2.x comes in (but the
+support is not limited to Open MPI, for example I haven't tested personally
+but I'm aware of MPICH derivatives also working properly with Singularity
+in this model).
+
+
+>
+> Moreover I see MPI support in Singularity is positioned as one of the
+> features that is implemented better than in Shifter (correct?). But Shifter
+> also allows to run MPI apps, well, at least I see Cray runs MPICH in
+> Shifter's chroot (not sure about Open MPI though). Could you explain please
+> what is the difference (if any) between running, say, MPICH with
+> Singularity vs running it in Shifter (from HPC prospective of course)?
+>
+
+I will not speak definitively about Shifter on this topic, but I do believe
+you are correct in that it runs the CRAY MPI inside the container. I also
+believe Shifter has built in mechanisms to mitigate some of the issues I
+mentioned above and it works for Shifter for the use-case it was developed
+for. Singularity's use-case is somewhat different. Unlike Shifter, the
+images are not built on a particular HPC resource for that HPC resource. In
+Singularity, the images are considered the vector of portability, so they
+are of a different format. Additionally, Shifter is designed around the
+integration with the scheduler, while Singularity is focused on the concept
+of standard command line usage. Interestingly enough, one aspect that makes
+Singularity so easy to adopt with MPI is because it does adopt standard
+command line principals (e.g. "mpirun -np X singularity exec ~/Centos-5.img
+mpi_application_inside_container" [1] works exactly as you would expect as
+long as the image file is reachable via all nodes).
+
+Hope that helps!
+
+
+[1]: This example is with Singularity v2.x which is still in development
+and due to release in the coming weeks.
+
+-- 
+Gregory M. Kurtzer
+High Performance Computing Services (HPCS)
+University of California
+Lawrence Berkeley National Laboratory
+One Cyclotron Road, Berkeley, CA 94720
+
+--001a1130cf6c9ec5090532bb8e14
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Taras!<div><br><div class=3D"gmail_extra"><br><div clas=
+s=3D"gmail_quote">On Fri, May 13, 2016 at 8:12 AM, Taras Shapovalov <span d=
+ir=3D"ltr">&lt;<a href=3D"mailto:shapov...@gmail.com" target=3D"_blank">sha=
+pov...@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote"=
+ style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><d=
+iv dir=3D"ltr">Hey guys,<br><br>I&#39;ve heard many times that Singularity =
+has a nice support in Open MPI 2.0, but could someone describes how exactly=
+ such integration affects the execution of MPI application? Older Open MPI =
+and MPICH work in SAPP as well, so I don&#39;t really get what Open MPI 2.0=
+ brings us.<br></div></blockquote><div><br></div><div>I believe the answer =
+to your question depends on the definition of &quot;support&quot;. I will e=
+xplain... There are generally two ways to implement MPI from within a conta=
+iner:</div><div><br></div><div>1. The entire MPI stack lives completely wit=
+hin the container. This is model I&#39;ve heard most about how people integ=
+rate MPI and containers, but it has some serious drawbacks. For instance, t=
+his implies that the MPI is built with the necessary features and dependenc=
+ies and tunings for where the container is *going* to run (not where it was=
+ created). This significantly impacts the portability and potential perform=
+ance of the container. Additionally, this approach implies that one contain=
+er knows how to reach another container both in terms of address resolution=
+ and port (e.g. the appropriate daemons must be listening within the contai=
+ner ... sshd?).</div><div><br></div><div>2. The MPI is split partially betw=
+een the host and the container. This is the preferable approach in that the=
+ MPI within the container does not have to be built specifically for a targ=
+et host or resource. It also alleviates much the networking complexities an=
+d satisfies a much more typical work flow and thus scheduler integration. B=
+ut it isn&#39;t the easiest to do properly. This is where the integration o=
+f Open MPI 2.x comes in (but the support is not limited to Open MPI, for ex=
+ample I haven&#39;t tested personally but I&#39;m aware of MPICH derivative=
+s also working properly with Singularity in this model).</div><div>=C2=A0</=
+div><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-lef=
+t:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr"><br>Moreover I see MPI =
+support in Singularity is positioned as one of the features that is impleme=
+nted better than in Shifter (correct?). But Shifter also allows to run MPI =
+apps, well, at least I see Cray runs MPICH in Shifter&#39;s chroot (not sur=
+e about Open MPI though). Could you explain please what is the difference (=
+if any)  between running, say, MPICH with Singularity vs running it in Shif=
+ter (from HPC prospective of course)?<br></div></blockquote><div><br></div>=
+<div>I will not speak definitively about Shifter on this topic, but I do be=
+lieve you are correct in that it runs the CRAY MPI inside the container. I =
+also believe Shifter has built in mechanisms to mitigate some of the issues=
+ I mentioned above and it works for Shifter for the use-case it was develop=
+ed for. Singularity&#39;s use-case is somewhat different. Unlike Shifter, t=
+he images are not built on a particular HPC resource for that HPC resource.=
+ In Singularity, the images are considered the vector of portability, so th=
+ey are of a different format. Additionally, Shifter is designed around the =
+integration with the scheduler, while Singularity is focused on the concept=
+ of standard command line usage. Interestingly enough, one aspect that make=
+s Singularity so easy to adopt with MPI is because it does adopt standard c=
+ommand line principals (e.g. &quot;mpirun -np X singularity exec ~/Centos-5=
+.img mpi_application_inside_container&quot; [1] works exactly as you would =
+expect as long as the image file is reachable via all nodes).</div><div><br=
+></div><div>Hope that helps!</div><div><br></div><div><br></div></div><div>=
+[1]: This example is with Singularity v2.x which is still in development an=
+d due to release in the coming weeks.</div><div><br></div>-- <br><div class=
+=3D"gmail_signature"><div dir=3D"ltr"><div>Gregory M. Kurtzer<br>High Perfo=
+rmance Computing Services (HPCS)<br>University of California<br>Lawrence Be=
+rkeley National Laboratory<br>One Cyclotron Road, Berkeley, CA 94720</div><=
+/div></div>
+</div></div></div>
+
+--001a1130cf6c9ec5090532bb8e14--

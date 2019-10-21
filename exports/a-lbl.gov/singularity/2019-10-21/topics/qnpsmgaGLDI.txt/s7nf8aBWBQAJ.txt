@@ -1,0 +1,305 @@
+Date: Tue, 4 Jun 2019 13:52:41 -0700 (PDT)
+From: Dean Pettinga <dean...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <ece8a25d-5717-496b-a8ef-aa60cca30391@lbl.gov>
+In-Reply-To: <CAM=pu++9g7EHN1b0DArLbBmrqaLSusyhNLRuVWLzTbKJAGH5kQ@mail.gmail.com>
+References: <4e3f0796-dbb8-48ac-a786-28ee3ff9f7f8@lbl.gov>
+ <CAM=pu++9g7EHN1b0DArLbBmrqaLSusyhNLRuVWLzTbKJAGH5kQ@mail.gmail.com>
+Subject: Re: [Singularity] Mounting to Singularity container invoked by
+ snakemake on HPC cluster
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1113_1453700638.1559681561167"
+
+------=_Part_1113_1453700638.1559681561167
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1114_927342236.1559681561168"
+
+------=_Part_1114_927342236.1559681561168
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hey Vanessa,
+
+to answer those few things:
+
+- I'm able to shell into the container and bind anything i want with -B 
+option
+- I've been using --singularity-args in an attempt to bind, but thus far, 
+it has not worked, leading me to believe it might be an issue to do with 
+snakemake or the session folder.
+- haven't looked at sci-f too closely, but i don't think it's going to be 
+helpful for my situation.
+- My pipeline uses at most 8-16 parallel processes, so i'm planning to pull 
+the s-hub container as i'm hoping to make this easily reproducible for 
+other users.
+
+I'm still at a bit of an impasse...
+-Dean
+
+On Tuesday, June 4, 2019 at 11:01:32 AM UTC-4, vanessa wrote:
+>
+> I've used Snakemake + Singularity (without the official 
+> --with-singularity) flag, here is the repo if it's helpful: 
+> https://github.com/sci-f/snakemake.scif
+>
+> A few things to try:
+>
+>  - I would first shell into the container (that works) and see what binds 
+> you have, by default. If your cluster disabled some set of mounts, that 
+> could be the issue, or you might need to ask for them.
+>  - I'm looking at the Singularity command group 
+> <https://snakemake.readthedocs.io/en/stable/executable.html?highlight=singularity#SINGULARITY>, 
+> and I wonder if you can try setting --singularity-args to make binds to 
+> your system that are needed? It does seem like something might be up with 
+> the session folder, others can comment too :)
+>  - If your pipeline doesn't have needs beyond singularity, you could also 
+> try the approach I linked above, adding the snakemake deps into a container 
+> first, and then running it.
+>  - Finally, I would recommend pulling an image first and then setting 
+> --singularity-dir to where it is, that way you can reuse the same image and 
+> not be pulling a gazillion if you run this in parallel.
+>
+> Best,
+>
+> Vanessa
+>
+> On Tue, Jun 4, 2019 at 10:44 AM Dean Pettinga <de...@gmail.com 
+> <javascript:>> wrote:
+>
+>> I'm currently trying to implement a snakemake workflow on a HPC cluster 
+>> using singularity containers for specific rules.
+>>
+>> I'm having issues when mounting to the singularity container invoked by 
+>> snakemake.
+>> $ cd /path/to/smk_pipeline
+>> $ snakemake --use-singularity
+>> ERROR  : Failed to mount home directory /path/to/smk_pipeline -> /cm/
+>> local/apps/singularity/2.4.2/var/singularity/mnt/session/path/to/
+>> smk_pipeline: Permission denied
+>> The rule being run invokes a container hosted at singularity-hub, but it 
+>> errors out before it's able to do anything. 
+>>
+>> If i shell into a container interactively, no such problem occurs.
+>> $ singularity shell rnaseq.simg
+>> Singularity: Invoking an interactive shell within container...
+>> Singularity rnaseq.simg:~>
+>>
+>> I think it might be due to the fact that write permissions on /cm/local/
+>> apps/singularity/2.4.2/var/singularity/mnt/ are set to 0755.
+>> One of our HPC admins suggested that I try to use a different mount point 
+>> for singularity, but I haven't been able to find any information on this 
+>> topic in the documentation...
+>>
+>> I'm confused about why singularity is unable to mount any directories 
+>> when invoked by snakemake, rather than by myself directly as a user. This 
+>> may be a question more fit for the snakemake folks, but i thought i'd start 
+>> here.
+>>
+>> cheers,
+>> Dean
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to si...@lbl.gov <javascript:>.
+>> To view this discussion on the web visit 
+>> https://groups.google.com/a/lbl.gov/d/msgid/singularity/4e3f0796-dbb8-48ac-a786-28ee3ff9f7f8%40lbl.gov 
+>> <https://groups.google.com/a/lbl.gov/d/msgid/singularity/4e3f0796-dbb8-48ac-a786-28ee3ff9f7f8%40lbl.gov?utm_medium=email&utm_source=footer>
+>> .
+>>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_1114_927342236.1559681561168
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hey Vanessa,<div><br></div><div>to answer those few things=
+:<div><br></div><div>- I&#39;m able to shell into the container and bind an=
+ything i want with -B option</div><div>- I&#39;ve been using --singularity-=
+args in an attempt to bind, but thus far, it has not worked, leading me to =
+believe it might be an issue to do with snakemake or the session folder.</d=
+iv><div>- haven&#39;t looked at sci-f too closely, but i don&#39;t think it=
+&#39;s going to be helpful for my situation.</div><div>- My pipeline uses a=
+t most 8-16 parallel processes, so i&#39;m planning to pull the s-hub conta=
+iner as i&#39;m hoping to make this easily reproducible for other users.<br=
+></div><div><br></div><div>I&#39;m still at a bit of an impasse...</div><di=
+v>-Dean</div><div><br>On Tuesday, June 4, 2019 at 11:01:32 AM UTC-4, vaness=
+a wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0=
+.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">I&#39=
+;ve used Snakemake=C2=A0+ Singularity (without the official --with-singular=
+ity) flag, here is the repo if it&#39;s helpful:=C2=A0<a href=3D"https://gi=
+thub.com/sci-f/snakemake.scif" target=3D"_blank" rel=3D"nofollow" onmousedo=
+wn=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub=
+.com%2Fsci-f%2Fsnakemake.scif\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFWU71=
+50ZppGifH7LqbTAYiyC7r9Q&#39;;return true;" onclick=3D"this.href=3D&#39;http=
+s://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsci-f%2Fsnakemake.sc=
+if\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFWU7150ZppGifH7LqbTAYiyC7r9Q&#39=
+;;return true;">https://github.com/<wbr>sci-f/snakemake.scif</a><div><br></=
+div><div>A few things to try:</div><div><br></div><div>=C2=A0- I would firs=
+t shell into the container (that works) and see what binds you have, by def=
+ault. If your cluster disabled some set of mounts, that could be the issue,=
+ or you might need to ask for them.</div><div>=C2=A0- I&#39;m looking at th=
+e <a href=3D"https://snakemake.readthedocs.io/en/stable/executable.html?hig=
+hlight=3Dsingularity#SINGULARITY" target=3D"_blank" rel=3D"nofollow" onmous=
+edown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fsna=
+kemake.readthedocs.io%2Fen%2Fstable%2Fexecutable.html%3Fhighlight%3Dsingula=
+rity%23SINGULARITY\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNG8F9wsoNeRdSEWUI=
+zFCfOOixRDOw&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.goo=
+gle.com/url?q\x3dhttps%3A%2F%2Fsnakemake.readthedocs.io%2Fen%2Fstable%2Fexe=
+cutable.html%3Fhighlight%3Dsingularity%23SINGULARITY\x26sa\x3dD\x26sntz\x3d=
+1\x26usg\x3dAFQjCNG8F9wsoNeRdSEWUIzFCfOOixRDOw&#39;;return true;">Singulari=
+ty command group</a>, and I wonder if you can try setting --singularity-arg=
+s to make binds to your system that are needed? It does seem like something=
+ might be up with the session folder, others can comment too :)</div><div>=
+=C2=A0- If your pipeline doesn&#39;t have needs beyond singularity, you cou=
+ld also try the approach I linked above, adding the snakemake deps into a c=
+ontainer first, and then running it.</div><div>=C2=A0- Finally, I would rec=
+ommend pulling an image first and then setting --singularity-dir to where i=
+t is, that way you can reuse the same image and not be pulling a gazillion =
+if you run this in parallel.</div><div><br></div><div>Best,</div><div><br><=
+/div><div>Vanessa</div></div><br><div class=3D"gmail_quote"><div dir=3D"ltr=
+">On Tue, Jun 4, 2019 at 10:44 AM Dean Pettinga &lt;<a href=3D"javascript:"=
+ target=3D"_blank" gdf-obfuscated-mailto=3D"Kq4831dMBgAJ" rel=3D"nofollow" =
+onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"t=
+his.href=3D&#39;javascript:&#39;;return true;">de...@gmail.com</a>&gt; wrot=
+e:<br></div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0=
+.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"l=
+tr"><div>I&#39;m currently trying to implement a snakemake workflow on a HP=
+C cluster using singularity containers for specific rules.</div><div><br></=
+div><div>I&#39;m having issues when mounting to the singularity container i=
+nvoked by snakemake.</div><div><div style=3D"background-color:rgb(250,250,2=
+50);border-color:rgb(187,187,187);border-style:solid;border-width:1px"><cod=
+e><div><span style=3D"color:rgb(0,0,0)">$ cd </span><span style=3D"color:rg=
+b(102,102,0)">/</span><font color=3D"#000000"><span style=3D"color:rgb(0,0,=
+0)">path</span><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"=
+color:rgb(0,0,0)">to</span></font><span style=3D"color:rgb(102,102,0)">/</s=
+pan><span style=3D"color:rgb(0,0,0)">smk_pipeline<br>$ snakemake </span><sp=
+an style=3D"color:rgb(102,102,0)">--</span><span style=3D"color:rgb(0,0,136=
+)">use</span><span style=3D"color:rgb(102,102,0)">-</span><span style=3D"co=
+lor:rgb(0,0,0)">singularity<br>ERROR =C2=A0</span><span style=3D"color:rgb(=
+102,102,0)">:</span><span style=3D"color:rgb(0,0,0)"> </span><span style=3D=
+"color:rgb(102,0,102)">Failed</span><span style=3D"color:rgb(0,0,0)"> to mo=
+unt home directory </span><span style=3D"color:rgb(102,102,0)">/</span><fon=
+t color=3D"#000000"><span style=3D"color:rgb(0,0,0)">path</span><span style=
+=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">to</span=
+></font><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:r=
+gb(0,0,0)">smk_pipeline </span><span style=3D"color:rgb(102,102,0)">-&gt;</=
+span><span style=3D"color:rgb(0,0,0)"> </span><span style=3D"color:rgb(0,13=
+6,0)">/cm/</span><span style=3D"color:rgb(0,0,136)">local</span><span style=
+=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">apps</sp=
+an><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,=
+0,0)">singularity</span><span style=3D"color:rgb(102,102,0)">/</span><span =
+style=3D"color:rgb(0,102,102)">2.4</span><span style=3D"color:rgb(102,102,0=
+)"><wbr>.</span><span style=3D"color:rgb(0,102,102)">2</span><span style=3D=
+"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,136)">var</span=
+><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,=
+0)">singularity</span><span style=3D"color:rgb(102,102,0)">/</span><span st=
+yle=3D"color:rgb(0,0,0)">mnt</span><span style=3D"color:rgb(102,102,0)">/</=
+span><span style=3D"color:rgb(0,0,0)">session</span><span style=3D"color:rg=
+b(102,102,0)"><wbr>/</span><font color=3D"#000000"><span style=3D"color:rgb=
+(0,0,0)">path</span><span style=3D"color:rgb(102,102,0)">/</span><span styl=
+e=3D"color:rgb(0,0,0)">to</span></font><span style=3D"color:rgb(102,102,0)"=
+>/</span><span style=3D"color:rgb(0,0,0)">smk_pipeline</span><span style=3D=
+"color:rgb(102,102,0)">:</span><span style=3D"color:rgb(0,0,0)"> </span><sp=
+an style=3D"color:rgb(102,0,102)">Permission</span><span style=3D"color:rgb=
+(0,0,0)"> denied</span></div></code></div></div><div>The rule being run inv=
+okes a container hosted at singularity-hub, but it errors out before it&#39=
+;s able to do anything.=C2=A0</div><div style=3D"color:rgb(51,51,51);font-f=
+amily:Roboto"><br></div><div>If i shell into a container interactively, no =
+such problem occurs.</div><div style=3D"background-color:rgb(250,250,250);b=
+order-color:rgb(187,187,187);border-style:solid;border-width:1px"><code><di=
+v><span style=3D"color:rgb(0,0,0)">$ singularity shell rnaseq</span><span s=
+tyle=3D"color:rgb(102,102,0)">.</span><span style=3D"color:rgb(0,0,0)">simg=
+<br></span><span style=3D"color:rgb(102,0,102)">Singularity</span><span sty=
+le=3D"color:rgb(102,102,0)">:</span><span style=3D"color:rgb(0,0,0)"> </spa=
+n><span style=3D"color:rgb(102,0,102)">Invoking</span><span style=3D"color:=
+rgb(0,0,0)"> an interactive shell within container</span><span style=3D"col=
+or:rgb(102,102,0)">...</span><span style=3D"color:rgb(0,0,0)"><br></span><s=
+pan style=3D"color:rgb(102,0,102)">Singularity</span><span style=3D"color:r=
+gb(0,0,0)"> rnaseq</span><span style=3D"color:rgb(102,102,0)">.</span><span=
+ style=3D"color:rgb(0,0,0)">simg</span><span style=3D"color:rgb(102,102,0)"=
+>:~&gt;</span></div></code></div><div><br>I think it might be due to the fa=
+ct that write permissions on=C2=A0<span style=3D"font-family:monospace;back=
+ground-color:rgb(250,250,250);color:rgb(0,136,0)">/cm/</span><span style=3D=
+"font-family:monospace;background-color:rgb(250,250,250);color:rgb(0,0,136)=
+">local</span><span style=3D"font-family:monospace;background-color:rgb(250=
+,250,250);color:rgb(102,102,0)">/</span><span style=3D"font-family:monospac=
+e;background-color:rgb(250,250,250);color:rgb(0,0,0)">apps</span><span styl=
+e=3D"font-family:monospace;background-color:rgb(250,250,250);color:rgb(102,=
+102,0)">/</span><span style=3D"font-family:monospace;background-color:rgb(2=
+50,250,250);color:rgb(0,0,0)">singularity</span><span style=3D"font-family:=
+monospace;background-color:rgb(250,250,250);color:rgb(102,102,0)">/</span><=
+span style=3D"font-family:monospace;background-color:rgb(250,250,250);color=
+:rgb(0,102,102)"><wbr>2.4</span><span style=3D"font-family:monospace;backgr=
+ound-color:rgb(250,250,250);color:rgb(102,102,0)">.</span><span style=3D"fo=
+nt-family:monospace;background-color:rgb(250,250,250);color:rgb(0,102,102)"=
+>2</span><span style=3D"font-family:monospace;background-color:rgb(250,250,=
+250);color:rgb(102,102,0)">/</span><span style=3D"font-family:monospace;bac=
+kground-color:rgb(250,250,250);color:rgb(0,0,136)">var</span><span style=3D=
+"font-family:monospace;background-color:rgb(250,250,250);color:rgb(102,102,=
+0)">/</span><span style=3D"font-family:monospace;background-color:rgb(250,2=
+50,250);color:rgb(0,0,0)">singularity</span><span style=3D"font-family:mono=
+space;background-color:rgb(250,250,250);color:rgb(102,102,0)">/</span><span=
+ style=3D"font-family:monospace;background-color:rgb(250,250,250);color:rgb=
+(0,0,0)">mnt</span><span style=3D"font-family:monospace;background-color:rg=
+b(250,250,250);color:rgb(102,102,0)">/</span>=C2=A0are set to=C2=A00755.</d=
+iv><div>One of our HPC admins suggested that I try to use a different mount=
+ point for singularity, but I haven&#39;t been able to find any information=
+ on this topic in the documentation...</div><div><br></div><div>I&#39;m con=
+fused about why singularity is unable to mount any directories when invoked=
+ by snakemake, rather than by myself directly as a user. This may be a ques=
+tion more fit for the snakemake folks, but i thought i&#39;d start here.</d=
+iv><div><br></div><div>cheers,</div><div>Dean</div><div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+Kq4831dMBgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singu...@lbl.<wbr>gov</a>.<br>
+To view this discussion on the web visit <a href=3D"https://groups.google.c=
+om/a/lbl.gov/d/msgid/singularity/4e3f0796-dbb8-48ac-a786-28ee3ff9f7f8%40lbl=
+.gov?utm_medium=3Demail&amp;utm_source=3Dfooter" target=3D"_blank" rel=3D"n=
+ofollow" onmousedown=3D"this.href=3D&#39;https://groups.google.com/a/lbl.go=
+v/d/msgid/singularity/4e3f0796-dbb8-48ac-a786-28ee3ff9f7f8%40lbl.gov?utm_me=
+dium\x3demail\x26utm_source\x3dfooter&#39;;return true;" onclick=3D"this.hr=
+ef=3D&#39;https://groups.google.com/a/lbl.gov/d/msgid/singularity/4e3f0796-=
+dbb8-48ac-a786-28ee3ff9f7f8%40lbl.gov?utm_medium\x3demail\x26utm_source\x3d=
+footer&#39;;return true;">https://groups.google.com/a/<wbr>lbl.gov/d/msgid/=
+singularity/<wbr>4e3f0796-dbb8-48ac-a786-<wbr>28ee3ff9f7f8%40lbl.gov</a>.<b=
+r>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><div>(=
+603) 321-0676</div></div></div></div>
+</blockquote></div></div></div>
+------=_Part_1114_927342236.1559681561168--
+
+------=_Part_1113_1453700638.1559681561167--

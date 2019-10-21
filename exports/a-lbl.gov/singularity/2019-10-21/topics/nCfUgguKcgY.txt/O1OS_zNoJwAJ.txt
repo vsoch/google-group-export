@@ -1,0 +1,237 @@
+X-Received: by 10.140.97.136 with SMTP id m8mr2375213qge.26.1462297733704;
+        Tue, 03 May 2016 10:48:53 -0700 (PDT)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.50.11.199 with SMTP id s7ls243633igb.18.gmail; Tue, 03 May
+ 2016 10:48:53 -0700 (PDT)
+X-Received: by 10.98.3.4 with SMTP id 4mr5458449pfd.33.1462297733008;
+        Tue, 03 May 2016 10:48:53 -0700 (PDT)
+Return-Path: <gmku...@lbl.gov>
+Received: from fe4.lbl.gov (fe4.lbl.gov. [128.3.41.71])
+        by mx.google.com with ESMTPS id fv2si325772pad.86.2016.05.03.10.48.52
+        for <singu...@lbl.gov>
+        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Tue, 03 May 2016 10:48:52 -0700 (PDT)
+Received-SPF: pass (google.com: domain of gmku...@lbl.gov designates 209.85.215.69 as permitted sender) client-ip=209.85.215.69;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of gmku...@lbl.gov designates 209.85.215.69 as permitted sender) smtp.mailfrom=gmku...@lbl.gov
+X-Ironport-SBRS: 3.6
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2FRAABP5ChXiEXXVdFehAtuDwaDM7FxhHMBDYF1FwGFeAKBOAc4FAEBAQEBAQEDDwEBAQgLCwkfMYRBAQEBAwESESswCwkCCw0qAgIiDwMBBQELEQYIBwQBHAQBiAAIBY5Hj0KBMT4xizuRAwEBAQEGAQEBAQEBGgqKY4QREQGDHIJZBYd1YIV3PoQahHIBjhePEo10Eh6BDh4BAYJHEQqBaxwwB4cAgTUBAQE
+X-IronPort-AV: E=Sophos;i="5.24,573,1455004800"; 
+   d="scan'208,217";a="22130153"
+Received: from mail-lf0-f69.google.com ([209.85.215.69])
+  by fe4.lbl.gov with ESMTP; 03 May 2016 10:48:30 -0700
+Received: by mail-lf0-f69.google.com with SMTP id j8so21036769lfd.0
+        for <singu...@lbl.gov>; Tue, 03 May 2016 10:48:30 -0700 (PDT)
+X-Gm-Message-State: AOPr4FXtMew74PTiCT6kfsBJhBzOdUwI5R2fCQFRJ0Cjl2HNbpTeBYx5D3MSML/uZYi9wb1gPZ8bGBqHPi2K1sXoGPsZNOgZ1l7lTr4w+RFUDFRwWLMNHk4CGBFgmIMS2fhXPFi8glSL3lFbkA4M5c+XqXo=
+X-Received: by 10.194.116.103 with SMTP id jv7mr4588712wjb.22.1462297709903;
+        Tue, 03 May 2016 10:48:29 -0700 (PDT)
+MIME-Version: 1.0
+X-Received: by 10.194.116.103 with SMTP id jv7mr4588702wjb.22.1462297709788;
+ Tue, 03 May 2016 10:48:29 -0700 (PDT)
+Received: by 10.28.144.200 with HTTP; Tue, 3 May 2016 10:48:29 -0700 (PDT)
+In-Reply-To: <cca976b1-9a61-490d-bc5d-c14937f2a141@lbl.gov>
+References: <20160429093521.45e6dc16@erebus.hpc.cam.ac.uk>
+	<CAN7etTyoeLmZE1xS3D8zVXvE5RTKTAGP5EvdLXWpKK6Z-6RayQ@mail.gmail.com>
+	<cca976b1-9a61-490d-bc5d-c14937f2a141@lbl.gov>
+Date: Tue, 3 May 2016 10:48:29 -0700
+Message-ID: <CAN7etTxoY9opLqhsjwmx5kJbAgFkcQss9vQxK-6sY5LVBiqG+g@mail.gmail.com>
+Subject: Re: [Singularity] Singularity VM Hello World Fail
+From: "Gregory M. Kurtzer" <gmku...@lbl.gov>
+To: singularity <singu...@lbl.gov>
+Content-Type: multipart/alternative; boundary=001a1130ca488c57e30531f3b7d8
+
+--001a1130ca488c57e30531f3b7d8
+Content-Type: text/plain; charset=UTF-8
+
+Hi Chris,
+
+Yes I am pretty sure the version of OMPI is the problem. The dependency
+solver for OMPI catches onto libopen-rte.so.* which will only work for the
+newer OMPI code bases. Ralph maybe able to chime in more with regards to
+the compatibility of older OMPI versions with containers and PMI, but I
+have a strong feeling that the easiest way forth would be to grab the Git
+master branch of OMPI and do a source based install from that.
+
+Hope that helps!
+
+Greg
+
+On Tue, May 3, 2016 at 3:15 AM, Chris Hadjigeorgiou <ch...@cam.ac.uk> wrote:
+
+> Hi Gregory,
+>
+> OpenMPI version  1.6.5:
+>
+> ubuntu@frontend001:~$ mpirun -V
+> mpirun (Open MPI) 1.6.5
+>
+> ldd output:
+>
+> ubuntu@frontend001:~$ ldd hello
+>         linux-vdso.so.1 =>  (0x00007ffcf89de000)
+>         libmpi.so.1 => /usr/lib/libmpi.so.1 (0x00007fa805838000)
+>         libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0
+> (0x00007fa80561a000)
+>         libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007fa805254000)
+>         libutil.so.1 => /lib/x86_64-linux-gnu/libutil.so.1
+> (0x00007fa805051000)
+>         libhwloc.so.5 => /usr/lib/x86_64-linux-gnu/libhwloc.so.5
+> (0x00007fa804e11000)
+>         libltdl.so.7 => /usr/lib/x86_64-linux-gnu/libltdl.so.7
+> (0x00007fa804c06000)
+>         /lib64/ld-linux-x86-64.so.2 (0x00007fa805bc3000)
+>         libnuma.so.1 => /usr/lib/x86_64-linux-gnu/libnuma.so.1
+> (0x00007fa8049fb000)
+>         libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007fa8047f7000)
+>
+> Thanks,
+> Chris
+>
+> On Friday, April 29, 2016 at 5:49:43 PM UTC+1, Gregory M. Kurtzer wrote:
+>>
+>> It doesn't look like your hello world program is linked against Open MPI.
+>> Can you confirm that you compiled it with the Open MPI version of mpicc? If
+>> you did, what version Open MPI are you using, and can you send me the
+>> output of
+>>
+>> $ ldd ./hello
+>>
+>> Thanks!
+>>
+>> On Fri, Apr 29, 2016 at 1:35 AM, Chris Hadjigeorgiou <c...@cam.ac.uk>
+>> wrote:
+>>
+>>> Hi,
+>>>
+>>> I've attached the build output for the failed singularity MPI job.
+>>>
+>>> Kind regards,
+>>>
+>>> Chris Hadjigeorgiou
+>>> HPC Consultant
+>>> Research Computing Services
+>>> University Information Services
+>>> University of Cambridge
+>>>
+>>> --
+>>> You received this message because you are subscribed to the Google
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send
+>>> an email to singu...@lbl.gov.
+>>>
+>>
+>>
+>>
+>> --
+>> Gregory M. Kurtzer
+>> Technical Lead and HPC Systems Architect
+>> High Performance Computing Services (HPCS)
+>> University of California
+>> Lawrence Berkeley National Laboratory
+>> One Cyclotron Road, Berkeley, CA 94720
+>>
+> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+>
+
+
+
+-- 
+Gregory M. Kurtzer
+Technical Lead and HPC Systems Architect
+High Performance Computing Services (HPCS)
+University of California
+Lawrence Berkeley National Laboratory
+One Cyclotron Road, Berkeley, CA 94720
+
+--001a1130ca488c57e30531f3b7d8
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Chris,<div><br></div><div>Yes I am pretty sure the vers=
+ion of OMPI is the problem. The dependency solver for OMPI catches onto lib=
+open-rte.so.* which will only work for the newer OMPI code bases. Ralph may=
+be able to chime in more with regards to the compatibility of older OMPI ve=
+rsions with containers and PMI, but I have a strong feeling that the easies=
+t way forth would be to grab the Git master branch of OMPI and do a source =
+based install from that.</div><div><br></div><div>Hope that helps!</div><di=
+v><br></div><div>Greg</div></div><div class=3D"gmail_extra"><br><div class=
+=3D"gmail_quote">On Tue, May 3, 2016 at 3:15 AM, Chris Hadjigeorgiou <span =
+dir=3D"ltr">&lt;<a href=3D"mailto:ch...@cam.ac.uk" target=3D"_blank">ch...@=
+cam.ac.uk</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=
+=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=
+=3D"ltr">Hi Gregory,<br><br>OpenMPI version=C2=A0 1.6.5:<br><br>ubuntu@fron=
+tend001:~$ mpirun -V<br>mpirun (Open MPI) 1.6.5<br><br>ldd output:<br><br>u=
+buntu@frontend001:~$ ldd hello<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 linux-vdso.so.1 =3D&gt;=C2=A0 (0x00007ffcf89de000)<br>=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0 libmpi.so.1 =3D&gt; /usr/lib/libmpi.so.1 (0x000=
+07fa805838000)<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 libpthread.so.=
+0 =3D&gt; /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007fa80561a000)<br>=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 libc.so.6 =3D&gt; /lib/x86_64-linux=
+-gnu/libc.so.6 (0x00007fa805254000)<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0 libutil.so.1 =3D&gt; /lib/x86_64-linux-gnu/libutil.so.1 (0x00007fa80=
+5051000)<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 libhwloc.so.5 =3D&gt=
+; /usr/lib/x86_64-linux-gnu/libhwloc.so.5 (0x00007fa804e11000)<br>=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 libltdl.so.7 =3D&gt; /usr/lib/x86_64-linu=
+x-gnu/libltdl.so.7 (0x00007fa804c06000)<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0 /lib64/ld-linux-x86-64.so.2 (0x00007fa805bc3000)<br>=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 libnuma.so.1 =3D&gt; /usr/lib/x86_64-linu=
+x-gnu/libnuma.so.1 (0x00007fa8049fb000)<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0 libdl.so.2 =3D&gt; /lib/x86_64-linux-gnu/libdl.so.2 (0x00007fa=
+8047f7000)<br><br>Thanks, <br>Chris<span class=3D""><br><br>On Friday, Apri=
+l 29, 2016 at 5:49:43 PM UTC+1, Gregory M. Kurtzer wrote:</span><blockquote=
+ class=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-left:1px =
+#ccc solid;padding-left:1ex"><span class=3D""><div dir=3D"ltr">It doesn&#39=
+;t look like your hello world program is linked against Open MPI. Can you c=
+onfirm that you compiled it with the Open MPI version of mpicc? If you did,=
+ what version Open MPI are you using, and can you send me the output of=C2=
+=A0<div><br></div><div>$ ldd ./hello</div><div><br></div><div>Thanks!</div>=
+</div></span><div><br><div class=3D"gmail_quote"><span class=3D"">On Fri, A=
+pr 29, 2016 at 1:35 AM, Chris Hadjigeorgiou <span dir=3D"ltr">&lt;<a rel=3D=
+"nofollow">c...@cam.ac.uk</a>&gt;</span> wrote:<br></span><blockquote class=
+=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padd=
+ing-left:1ex"><span class=3D"">Hi,<br>
+<br>
+I&#39;ve attached the build output for the failed singularity MPI job.<br>
+<br>
+Kind regards,<br>
+<br>
+Chris Hadjigeorgiou<br>
+HPC Consultant<br>
+Research Computing Services<br>
+University Information Services<br>
+University of Cambridge<br>
+</span><span><font color=3D"#888888"><span class=3D""><br>
+--<br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br></span>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</font></span></blockquote></div><span class=3D""><br><br clear=3D"all"><di=
+v><br></div>-- <br><div>Gregory M. Kurtzer<br>Technical Lead and HPC System=
+s Architect<br>High Performance Computing Services (HPCS)<br>University of =
+California<br>Lawrence Berkeley National Laboratory<br>One Cyclotron Road, =
+Berkeley, CA 94720</div>
+</span></div>
+</blockquote></div><div class=3D"HOEnZb"><div class=3D"h5">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singu...@lbl.=
+gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div class=3D"gmail_signature">Gregory M. Kurtzer<br>Technical Lead and HPC=
+ Systems Architect<br>High Performance Computing Services (HPCS)<br>Univers=
+ity of California<br>Lawrence Berkeley National Laboratory<br>One Cyclotron=
+ Road, Berkeley, CA 94720</div>
+</div>
+
+--001a1130ca488c57e30531f3b7d8--

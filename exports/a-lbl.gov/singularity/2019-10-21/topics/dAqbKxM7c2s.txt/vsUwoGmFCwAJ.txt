@@ -1,0 +1,423 @@
+Date: Fri, 27 Jan 2017 08:18:58 -0800 (PST)
+From: Jie Zhang <jessezh...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <23dd4099-4149-4296-b9f7-a3e90cb21840@lbl.gov>
+In-Reply-To: <CAJm6r9-oXj4pPnoDY48u1Sf58dHtavBCF25Ca3QuxegqiHOkog@mail.gmail.com>
+References: <CAJm6r9-oXj4pPnoDY48u1Sf58dHtavBCF25Ca3QuxegqiHOkog@mail.gmail.com>
+Subject: Re: [Singularity] Not able to return with MVAPICH2
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2384_45837100.1485533938811"
+
+------=_Part_2384_45837100.1485533938811
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2385_610036281.1485533938812"
+
+------=_Part_2385_610036281.1485533938812
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Thanks, Krishna,
+
+I corrected the way to run strace. 
+1. singularity exec singularity-centos7.img strace date
+2. mpirun_rsh -np 1  host1  singularity exec singularity-centos7.img strace 
+date
+
+I see both of them show `+++exited with 0+++' at the end, even though it's 
+stuck after that for #2.
+The log files are attached below.
+
+ 
+
+On Friday, January 27, 2017 at 3:47:30 AM UTC-5, Krishna Muriki wrote:
+>
+> Jie,
+>
+> What we should do is to run strace on the date command inside the 
+> singularity container not on the singularity command itself. Mount this 
+> singularity container singularity-centos7.img in read/write mode on your 
+> endpoint, install strace package into it. After then when you invoke 
+> mpirun_rsh run it like this:
+>
+> mpirun_rsh -np 1  host1  singularity exec singularity-centos7.img strace 
+> date
+>
+> Thanks,
+> Krishna.
+>
+> On Thu, Jan 26, 2017 at 10:55 PM, Jie Zhang <jes...@gmail.com 
+> <javascript:>> wrote:
+>
+>> Hi, Krishna,
+>>
+>> I tried adding strace to the plain singularity case (strace 
+>> /usr/local/bin/singularity exec singularity-centos7.img date), what I found 
+>> is that it actually exited with error (255) at the end 
+>> (non-root-strace.log).
+>> If trying with root (sudo strace /usr/local/bin/singularity exec 
+>> singularity-centos7.img date), there's no error. (root-strace.log)
+>> Trying with mpirun_rsh, it looks hanging on futex system call. 
+>> (non-root-mpirun_rsh-strace.log)
+>>
+>> Please take a look at the log files attached below to see if you have any 
+>> insight.
+>>
+>>
+>>
+>> On Thursday, January 26, 2017 at 8:10:22 PM UTC-5, Krishna Muriki wrote:
+>>>
+>>> Jie,
+>>>
+>>> Could you add strace to the container and run strace date to see why the 
+>>> date process is going defunct ? Also first try running with -np 1 host1 and 
+>>> then scale to -np 2 and multiple nodes. 
+>>>
+>>> Thanks,
+>>> Krishna.
+>>>
+>>> On Thu, Jan 26, 2017 at 5:07 PM, Jie Zhang <jes...@gmail.com> wrote:
+>>>
+>>>> Hi, Krishna,
+>>>>
+>>>>
+>>>> Without mpirun_rsh, all other tests work fine.
+>>>>
+>>>> ssh host1  singularity exec singularity-centos7.img date
+>>>> singularity exec singularity-centos7.img date
+>>>>
+>>>>
+>>>>
+>>>> On Thursday, January 26, 2017 at 7:58:21 PM UTC-5, Krishna Muriki wrote:
+>>>>>
+>>>>> Jie,
+>>>>>
+>>>>> Can you do a couple of tests, see if directly running  'singularity 
+>>>>> exec singularity-centos7.img date' without mpirun_rsh returns the prompt 
+>>>>> back to you properly. If that also gets struck, add strace to your 
+>>>>> container and run strace date.  
+>>>>>
+>>>>> If that does return properly try running with 'ssh host1  singularity 
+>>>>> exec singularity-centos7.img date' without mpirun_rsh and see if that works.
+>>>>>
+>>>>> --Krishna.
+>>>>>
+>>>>> On Thu, Jan 26, 2017 at 1:51 PM, Jie Zhang <zh...@osu.edu> wrote:
+>>>>>
+>>>>>> Hello,
+>>>>>>
+>>>>>> I'm trying singularity with MVAPICH2. I found a small issue here. 
+>>>>>> When running `mpirun_rsh -np 2  host1 host1  singularity exec 
+>>>>>> singularity-centos7.img date', the routine (date) got executed 
+>>>>>> successfully, but the mpi command is not able to return.
+>>>>>>
+>>>>>> [runbot@host1:singularity]$mpirun_rsh -np 2  host1 host1  singularity 
+>>>>>> exec singularity-centos7.img date
+>>>>>> Thu Jan 26 16:38:35 EST 2017
+>>>>>> Thu Jan 26 16:38:35 EST 2017
+>>>>>> (stuck here...., can Not return)
+>>>>>>
+>>>>>> And I can see the `date' command does not return properly.
+>>>>>> [runbot@host1:singularity]$ps -Af | grep runbot
+>>>>>> .........
+>>>>>> runbot   7347  7345  0 16:45 pts/1    00:00:00 
+>>>>>> /home/runbot/singularity/master.install/bin/mpispawn 0
+>>>>>> runbot  7349  7347  0 16:45 pts/1    00:00:00 
+>>>>>> /usr/local/libexec/singularity/sexec date
+>>>>>> runbot  7350  7347  0 16:45 pts/1    00:00:00 
+>>>>>> /usr/local/libexec/singularity/sexec date
+>>>>>> runbot  7355  7349  0 16:45 pts/1    00:00:00 [date] <defunct>
+>>>>>> runbot  7356  7350  0 16:45 pts/1    00:00:00 [date] <defunct> 
+>>>>>>
+>>>>>> I'm not sure whether the issue is from either mpi launcher, 
+>>>>>> singularity or the interaction between both. Do you have any idea?
+>>>>>>
+>>>>>>
+>>>>>> Thanks,
+>>>>>> -Jie
+>>>>>>
+>>>>>> --------------------------------------------
+>>>>>> Department of Computer Science & Engineering
+>>>>>> Erwin E. Dreese Laboratories, 2015 Neil Avenue
+>>>>>> Ohio State University
+>>>>>>
+>>>>>> -- 
+>>>>>> You received this message because you are subscribed to the Google 
+>>>>>> Groups "singularity" group.
+>>>>>> To unsubscribe from this group and stop receiving emails from it, 
+>>>>>> send an email to singu...@lbl.gov.
+>>>>>>
+>>>>>
+>>>>> -- 
+>>>> You received this message because you are subscribed to the Google 
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>> an email to singu...@lbl.gov.
+>>>>
+>>>
+>>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+------=_Part_2385_610036281.1485533938812
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Thanks, Krishna,<div><br></div><div>I corrected the way to=
+ run strace.=C2=A0</div><div><span style=3D"font-size: 12.8px;">1. singular=
+ity exec singularity-centos7.img=C2=A0</span>strace<span style=3D"font-size=
+: 12.8px;">=C2=A0date</span><br></div><div><span style=3D"font-size: 12.8px=
+;">2. mpirun_rsh -np 1 =C2=A0host1 =C2=A0singularity exec singularity-cento=
+s7.img strace date</span><br></div><div><br></div><div>I see both of them s=
+how `+++exited with 0+++&#39; at the end, even though it&#39;s stuck after =
+that for #2.</div><div>The log files are attached below.</div><div><br></di=
+v><div>=C2=A0<br><br>On Friday, January 27, 2017 at 3:47:30 AM UTC-5, Krish=
+na Muriki wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin=
+-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"lt=
+r">Jie,<div><br></div><div>What we should do is to run strace on the date c=
+ommand inside the singularity container not on the singularity command itse=
+lf. Mount this singularity container=C2=A0<span style=3D"font-size:12.8px">=
+singularity-centos7.<wbr>img in read/write mode on your endpoint, install s=
+trace package into it. After then when you invoke mpirun_rsh run it like th=
+is:</span></div><div><span style=3D"font-size:12.8px"><br></span></div><div=
+><span style=3D"font-size:12.8px">mpirun_rsh -np 1 =C2=A0host1 =C2=A0singul=
+arity exec singularity-centos7.img strace date</span><span style=3D"font-si=
+ze:12.8px"><br></span><div><br></div><div>Thanks,</div><div>Krishna.</div><=
+div><br><div class=3D"gmail_quote">On Thu, Jan 26, 2017 at 10:55 PM, Jie Zh=
+ang <span dir=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_blank" gdf-obf=
+uscated-mailto=3D"QizToMZsCwAJ" rel=3D"nofollow" onmousedown=3D"this.href=
+=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascri=
+pt:&#39;;return true;">jes...@gmail.com</a>&gt;</span> wrote:<br><blockquot=
+e class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px s=
+olid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr">Hi, Krishna,<div><=
+br></div><div>I tried=C2=A0adding strace=C2=A0to the plain singularity case=
+ (strace /usr/local/bin/singularity exec singularity-centos7.img date), wha=
+t I found is that it actually exited with error (255) at the end (non-root-=
+strace.log).</div><div>If trying with root (sudo strace=C2=A0/usr/local/bin=
+/<wbr>singularity exec singularity-centos7.img date), there&#39;s no error.=
+ (root-strace.log)</div><div>Trying with mpirun_rsh, it looks hanging on fu=
+tex=C2=A0system call. (non-root-mpirun_rsh-strace.<wbr>log)</div><div><br><=
+/div><div>Please take a look at the log files attached below to see if you =
+have any insight.</div><div><br></div><div><span><br><br>On Thursday, Janua=
+ry 26, 2017 at 8:10:22 PM UTC-5, Krishna Muriki wrote:</span><blockquote cl=
+ass=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid=
+ rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr">Jie,<div><br></div><sp=
+an><div>Could you add strace to the container and run strace date to see wh=
+y the date process is going defunct ? Also first try running with -np 1 hos=
+t1 and then scale to -np 2 and multiple nodes.=C2=A0</div><div><br></div><d=
+iv>Thanks,</div><div>Krishna.</div></span></div><div><div><div><br><div cla=
+ss=3D"gmail_quote">On Thu, Jan 26, 2017 at 5:07 PM, Jie Zhang <span dir=3D"=
+ltr">&lt;<a rel=3D"nofollow">jes...@gmail.com</a>&gt;</span> wrote:<br><blo=
+ckquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left=
+:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr">Hi, Krishna,=
+<div><br></div><div><br></div><div>Without mpirun_rsh, all other tests work=
+ fine.</div><span><div><span style=3D"font-size:12.8px"><br></span></div><d=
+iv><span style=3D"font-size:12.8px">ssh host1=C2=A0</span><span style=3D"fo=
+nt-size:12.8px">=C2=A0singularity exec singularity-centos7.img date</span><=
+br></div></span><div><span style=3D"font-size:12.8px">singularity exec sing=
+ularity-centos7.img date</span><span style=3D"font-size:12.8px"><br></span>=
+</div><div><span style=3D"font-size:12.8px"><br></span></div><div><span><br=
+><br>On Thursday, January 26, 2017 at 7:58:21 PM UTC-5, Krishna Muriki wrot=
+e:</span><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8e=
+x;border-left:1px solid rgb(204,204,204);padding-left:1ex"><span><div dir=
+=3D"ltr">Jie,<div><br></div><div>Can you do a couple of tests, see if direc=
+tly running=C2=A0<span style=3D"font-size:12.8px">=C2=A0&#39;singularity ex=
+ec singularity-centos7.img date&#39; without mpirun_rsh returns the prompt =
+back to you properly.=C2=A0</span><span style=3D"font-size:12.8px">If that =
+also gets struck, add strace to your container and run strace date. =C2=A0<=
+/span></div><div><span style=3D"font-size:12.8px"><br></span></div><div><sp=
+an style=3D"font-size:12.8px">If that does return properly t</span><span st=
+yle=3D"font-size:12.8px">ry running with &#39;ssh host1=C2=A0</span><span s=
+tyle=3D"font-size:12.8px">=C2=A0singularity exec singularity-centos7.img da=
+te&#39; without mpirun_rsh and see if that works.</span></div><div><span st=
+yle=3D"font-size:12.8px"><br></span></div><div><span style=3D"font-size:12.=
+8px">--Krishna.<br></span></div></div></span><div><br><div class=3D"gmail_q=
+uote"><div><div>On Thu, Jan 26, 2017 at 1:51 PM, Jie Zhang <span dir=3D"ltr=
+">&lt;<a rel=3D"nofollow">zh...@osu.edu</a>&gt;</span> wrote:<br></div></di=
+v><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;borde=
+r-left:1px solid rgb(204,204,204);padding-left:1ex"><div><div><div dir=3D"l=
+tr">Hello,<div><br></div><div><div>I&#39;m trying singularity with MVAPICH2=
+. I found a small issue here.=C2=A0</div><div>When running `mpirun_rsh -np =
+2 =C2=A0host1 host1 =C2=A0singularity exec singularity-centos7.img date&#39=
+;, the routine (date) got executed successfully, but the mpi command is not=
+ able to return.</div></div><div><br></div><div>[runbot@host1:singularity]$=
+<wbr>mpirun_rsh -np 2 =C2=A0host1 host1 =C2=A0singularity exec singularity-=
+centos7.img date<br></div><div>Thu Jan 26 16:38:35 EST 2017<br></div><div>T=
+hu Jan 26 16:38:35 EST 2017<br></div><div>(stuck here...., can Not return)<=
+/div><div><br></div><div>And I can see the `date&#39; command does not retu=
+rn properly.</div><div>[runbot@host1:singularity]$ps -Af | grep runbot</div=
+><div>.........</div><div>runbot =C2=A0 7347 =C2=A07345 =C2=A00 16:45 pts/1=
+ =C2=A0 =C2=A000:00:00 /home/runbot/singularity/<wbr>master.install/bin/mpi=
+spawn 0</div><div>runbot =C2=A07349 =C2=A07347 =C2=A00 16:45 pts/1 =C2=A0 =
+=C2=A000:00:00 /usr/local/libexec/<wbr>singularity/sexec date</div><div>run=
+bot =C2=A07350 =C2=A07347 =C2=A00 16:45 pts/1 =C2=A0 =C2=A000:00:00 /usr/lo=
+cal/libexec/<wbr>singularity/sexec date</div><div>runbot =C2=A07355 =C2=A07=
+349 =C2=A00 16:45 pts/1 =C2=A0 =C2=A000:00:00 [date] &lt;defunct&gt;</div><=
+div>runbot =C2=A07356 =C2=A07350 =C2=A00 16:45 pts/1 =C2=A0 =C2=A000:00:00 =
+[date] &lt;defunct&gt;=C2=A0</div><div><br></div><div>I&#39;m not sure whet=
+her the issue is from either mpi=C2=A0launcher, singularity or the interact=
+ion between both. Do you have any idea?</div><div><br></div><div><br clear=
+=3D"all"><div><div><div dir=3D"ltr"><div><font size=3D"2" face=3D"tahoma, s=
+ans-serif" color=3D"#000000">Thanks,</font></div><font size=3D"2" face=3D"t=
+ahoma, sans-serif" color=3D"#000000">-Jie<br><br>--------------------------=
+----<wbr>--------------<br>Department of Computer Science &amp; Engineering=
+<br>Erwin E. Dreese Laboratories, 2015 Neil Avenue<br>Ohio State University=
+</font><span><font color=3D"#888888"><br></font></span></div></div></div><s=
+pan><font color=3D"#888888">
+</font></span></div></div></div></div><span><font color=3D"#888888"><div><d=
+iv>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br></div></div>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</font></span></blockquote></div><br></div>
+</blockquote></div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</div></div></blockquote></div><br></div>
+</div></div></blockquote></div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+QizToMZsCwAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br></div></div></div>
+</blockquote></div></div>
+------=_Part_2385_610036281.1485533938812--
+
+------=_Part_2384_45837100.1485533938811
+Content-Type: text/plain; charset=US-ASCII; name=strace-date.log
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename=strace-date.log
+X-Attachment-Id: 0ccb4392-cd2b-45ba-a6c2-9a715a7acfb8
+Content-ID: <0ccb4392-cd2b-45ba-a6c2-9a715a7acfb8>
+
+execve("/usr/bin/date", ["date"], [/* 53 vars */]) = 0
+brk(0)                                  = 0x1ff6000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f53453d5000
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+open("/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=15081, ...}) = 0
+mmap(NULL, 15081, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7f53453d1000
+close(3)                                = 0
+open("/lib64/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0 \34\2\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=2112384, ...}) = 0
+mmap(NULL, 3936832, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f5344df3000
+mprotect(0x7f5344faa000, 2097152, PROT_NONE) = 0
+mmap(0x7f53451aa000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1b7000) = 0x7f53451aa000
+mmap(0x7f53451b0000, 16960, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f53451b0000
+close(3)                                = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f53453d0000
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f53453ce000
+arch_prctl(ARCH_SET_FS, 0x7f53453ce740) = 0
+mprotect(0x7f53451aa000, 16384, PROT_READ) = 0
+mprotect(0x60d000, 4096, PROT_READ)     = 0
+mprotect(0x7f53453d6000, 4096, PROT_READ) = 0
+munmap(0x7f53453d1000, 15081)           = 0
+brk(0)                                  = 0x1ff6000
+brk(0x2017000)                          = 0x2017000
+brk(0)                                  = 0x2017000
+open("/usr/lib/locale/locale-archive", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=106065056, ...}) = 0
+mmap(NULL, 106065056, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7f533e8cc000
+close(3)                                = 0
+open("/usr/share/zoneinfo/EST", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=118, ...}) = 0
+fstat(3, {st_mode=S_IFREG|0644, st_size=118, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f53453d4000
+read(3, "TZif2\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\1\0\0\0\0"..., 4096) = 118
+lseek(3, -62, SEEK_CUR)                 = 56
+read(3, "TZif2\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\1\0\0\0\0"..., 4096) = 62
+close(3)                                = 0
+munmap(0x7f53453d4000, 4096)            = 0
+fstat(1, {st_mode=S_IFIFO|0600, st_size=0, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f53453d4000
+write(1, "Fri Jan 27 11:11:33 EST 2017\n", 29Fri Jan 27 11:11:33 EST 2017
+) = 29
+close(1)                                = 0
+munmap(0x7f53453d4000, 4096)            = 0
+close(2)                                = 0
+exit_group(0)                           = ?
++++ exited with 0 +++
+
+------=_Part_2384_45837100.1485533938811
+Content-Type: text/plain; charset=US-ASCII; name=strace-mpirun_rsh-date.log
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename=strace-mpirun_rsh-date.log
+X-Attachment-Id: 64c1f57e-0333-429f-8527-451f12f6a9a1
+Content-ID: <64c1f57e-0333-429f-8527-451f12f6a9a1>
+
+mpispawn (pid=1284)
+FORK mpispawn (pid=1287)
+FORK MPI proc (pid=1291)
+execve("/usr/bin/date", ["date"], [/* 87 vars */]) = 0
+brk(0)                                  = 0x13ab000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2015687000
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+open("/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 6
+fstat(6, {st_mode=S_IFREG|0644, st_size=15081, ...}) = 0
+mmap(NULL, 15081, PROT_READ, MAP_PRIVATE, 6, 0) = 0x7f2015683000
+close(6)                                = 0
+open("/lib64/libc.so.6", O_RDONLY|O_CLOEXEC) = 6
+read(6, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0 \34\2\0\0\0\0\0"..., 832) = 832
+fstat(6, {st_mode=S_IFREG|0755, st_size=2112384, ...}) = 0
+mmap(NULL, 3936832, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 6, 0) = 0x7f20150a5000
+mprotect(0x7f201525c000, 2097152, PROT_NONE) = 0
+mmap(0x7f201545c000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 6, 0x1b7000) = 0x7f201545c000
+mmap(0x7f2015462000, 16960, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f2015462000
+close(6)                                = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2015682000
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2015680000
+arch_prctl(ARCH_SET_FS, 0x7f2015680740) = 0
+mprotect(0x7f201545c000, 16384, PROT_READ) = 0
+mprotect(0x60d000, 4096, PROT_READ)     = 0
+mprotect(0x7f2015688000, 4096, PROT_READ) = 0
+munmap(0x7f2015683000, 15081)           = 0
+brk(0)                                  = 0x13ab000
+brk(0x13cc000)                          = 0x13cc000
+brk(0)                                  = 0x13cc000
+open("/usr/lib/locale/locale-archive", O_RDONLY|O_CLOEXEC) = 6
+fstat(6, {st_mode=S_IFREG|0644, st_size=106065056, ...}) = 0
+mmap(NULL, 106065056, PROT_READ, MAP_PRIVATE, 6, 0) = 0x7f200eb7e000
+close(6)                                = 0
+open("/usr/share/zoneinfo/EST", O_RDONLY|O_CLOEXEC) = 6
+fstat(6, {st_mode=S_IFREG|0644, st_size=118, ...}) = 0
+fstat(6, {st_mode=S_IFREG|0644, st_size=118, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2015686000
+read(6, "TZif2\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\1\0\0\0\0"..., 4096) = 118
+lseek(6, -62, SEEK_CUR)                 = 56
+read(6, "TZif2\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\1\0\0\0\0"..., 4096) = 62
+close(6)                                = 0
+munmap(0x7f2015686000, 4096)            = 0
+fstat(1, {st_mode=S_IFIFO|0600, st_size=0, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2015686000
+write(1, "Fri Jan 27 11:12:09 EST 2017\n", 29Fri Jan 27 11:12:09 EST 2017
+) = 29
+close(1)                                = 0
+munmap(0x7f2015686000, 4096)            = 0
+close(2)                                = 0
+exit_group(0)                           = ?
++++ exited with 0 +++
+
+------=_Part_2384_45837100.1485533938811--

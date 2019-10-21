@@ -1,0 +1,150 @@
+Date: Wed, 18 Oct 2017 13:09:50 -0700 (PDT)
+From: Christopher Neal <chri...@snumerics.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <2ebbe192-9cc5-4642-9826-b39314ccef24@lbl.gov>
+Subject: Using Singularity to run an OpenMPI code on an HPC cluster
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_267_1798513652.1508357390726"
+
+------=_Part_267_1798513652.1508357390726
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_268_721305907.1508357390727"
+
+------=_Part_268_721305907.1508357390727
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi all,
+
+I'm very new to Singularity. I have experience with getting an application 
+containerized using Docker. I've successfully used Singularity to convert 
+my Docker image to a Singularity image and run it on a 24 core OpenSuse 
+42.3 machine(24 cores on 1 machine). The current workflow that I'm using to 
+run is shown below.
+
+
+*Local Machine Workflow:*1.) Start the container in an interactive mode: 
+singularity exec -H $HOME $1 /bin/bash --rcfile /opt/image_env_setup.sh
+            I'm mounting the home directory of the container to be the same 
+as the user who starts up the container (or at least that is what I think 
+I'm doing)
+            From the call I execute a simple shell script that sets up the 
+user environment in the container e.g. sets paths to the code so that it 
+can be called easily
+
+2.) (Now inside the running container) Move to a directory that contains 
+the necessary input files that the application needs to run
+
+3.) Run the application:  mpirun -np 10 /bin/stream --scheduleoutput 
+--nochomp -q solution caseName  > /dev/null >run.out 2>&1 &
+
+This starts up the application as a background process so that the user can 
+still move around/do things in the container. This seems to work just fine.
+
+
+Now on an HPC cluster a user has their home space and often there is a 
+scratch space that is not in the filetree of the user's home. So setting 
+the home directory seems like it wouldn't work because the scratch space 
+wouldn't be available. I don't have much experience with running an 
+application in a container in a non-interactive mode. It seems like it 
+would be feasible in this case to do such a thing. Just pass the entire 
+call in Step 3 as an argument to the 'singularity exec' statement.
+
+
+*Possible HPC workflow:*1.) module load singularity
+
+2.) Go to directory in the scratch space that contains the input files & 
+will serve as the directory for the code's output
+
+3.) In a job.pbs script specify the number of cores, etc via the #PBS 
+directives. 
+     Also specify the 'module load singularity' command. 
+     Then finally a line to execute: mpirun -np 10 singularity exec 
+ /bin/stream --scheduleoutput --nochomp -q solution caseName  > /dev/null 
+>run.out 2>&1 &  --rcfile /opt/image_env_setup.sh
+
+4.) Use 'qsub job.pbs' to submit the job to the HPC cluster.
+
+
+Am I overlooking any major issues here that would prevent the HPC workflow 
+that I've shown from working in practice?
+
+Thank you
+
+------=_Part_268_721305907.1508357390727
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi all,<br><div><br>I&#39;m very new to Singularity. I hav=
+e experience with getting an application containerized using Docker. I&#39;=
+ve successfully used Singularity to convert my Docker image to a Singularit=
+y image and run it on a 24 core OpenSuse 42.3 machine(24 cores on 1 machine=
+). The current workflow that I&#39;m using to run is shown below.<br><br><b=
+><u>Local Machine Workflow:<br></u></b>1.) Start the container in an intera=
+ctive mode: singularity exec  -H $HOME $1 /bin/bash --rcfile /opt/image_env=
+_setup.sh</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 I&#39;m mount=
+ing the home directory of the container to be the same as the user who star=
+ts up the container (or at least that is what I think I&#39;m doing)</div><=
+div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 From the call I execute a sim=
+ple shell script that sets up the user environment in the container e.g. se=
+ts paths to the code so that it can be called easily</div><div><br></div><d=
+iv>2.) (Now inside the running container) Move to a directory that contains=
+ the necessary input files that the application needs to run</div><div><br>=
+</div><div>3.) Run the application: =C2=A0mpirun -np 10 /bin/stream --sched=
+uleoutput --nochomp -q solution caseName =C2=A0&gt; /dev/null &gt;run.out 2=
+&gt;&amp;1 &amp;<br><br>This starts up the application as a background proc=
+ess so that the user can still move around/do things in the container. This=
+ seems to work just fine.<br><br><br>Now on an HPC cluster a user has their=
+ home space and often there is a scratch space that is not in the filetree =
+of the user&#39;s home. So setting the home directory seems like it wouldn&=
+#39;t work because the scratch space wouldn&#39;t be available. I don&#39;t=
+ have much experience with running an application in a container in a non-i=
+nteractive mode. It seems like it would be feasible in this case to do such=
+ a thing. Just pass the entire call in Step 3 as an argument to the &#39;si=
+ngularity exec&#39; statement.<br><br><b><u>Possible HPC workflow:<br></u><=
+/b>1.) module load singularity</div><div><br></div><div>2.) Go to directory=
+ in the scratch space that contains the input files &amp; will serve as the=
+ directory for the code&#39;s output</div><div><br></div><div>3.) In a job.=
+pbs script specify the number of cores, etc via the #PBS directives.=C2=A0<=
+/div><div>=C2=A0 =C2=A0 =C2=A0Also specify the &#39;module load singularity=
+&#39; command.=C2=A0</div><div>=C2=A0 =C2=A0 =C2=A0Then finally a line to e=
+xecute: mpirun -np 10 singularity exec =C2=A0/bin/stream --scheduleoutput -=
+-nochomp -q solution caseName =C2=A0&gt; /dev/null &gt;run.out 2&gt;&amp;1 =
+&amp; =C2=A0--rcfile /opt/image_env_setup.sh</div><div><br></div><div>4.) U=
+se &#39;qsub job.pbs&#39; to submit the job to the HPC cluster.<br><br><br>=
+</div><div>Am I overlooking any major issues here that would prevent the HP=
+C workflow that I&#39;ve shown from working in practice?</div><div><br></di=
+v><div>Thank you</div>
+
+
+
+
+<style type=3D"text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 13.0px Monaco; color: #d53bd3;=
+ background-color: #000000}
+span.s1 {font-variant-ligatures: no-common-ligatures; color: #f4f4f4}
+span.s2 {font-variant-ligatures: no-common-ligatures}
+span.s3 {font-variant-ligatures: no-common-ligatures; color: #cd7923}
+span.s4 {font-variant-ligatures: no-common-ligatures; color: #c33720}
+</style>
+
+
+
+
+
+
+
+<style type=3D"text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 13.0px Monaco; color: #f4f4f4;=
+ background-color: #000000}
+span.s1 {font-variant-ligatures: no-common-ligatures}
+span.s2 {font-variant-ligatures: no-common-ligatures; color: #cd7923}
+span.s3 {font-variant-ligatures: no-common-ligatures; color: #d53bd3}
+</style>
+
+
+</div>
+------=_Part_268_721305907.1508357390727--
+
+------=_Part_267_1798513652.1508357390726--

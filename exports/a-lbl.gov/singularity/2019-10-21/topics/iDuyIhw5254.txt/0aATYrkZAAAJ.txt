@@ -1,0 +1,206 @@
+Date: Thu, 29 Jun 2017 13:30:23 -0700 (PDT)
+From: Joshua Studen <joshua...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Cc: t...@pasteur.fr
+Message-Id: <730ffd01-be45-45bb-a693-db74dcc4e44e@lbl.gov>
+In-Reply-To: <20170629065429.GD17114@sillage.bis.pasteur.fr>
+References: <1f2912b6-7d91-47d6-9e05-7e0c317d14fe@lbl.gov>
+ <CAM=pu++Re3wt+UGUjddKb3dFUBrnk1gPYC6MOeGMMQQyNyBVpQ@mail.gmail.com>
+ <9853631e-4eaa-4aad-a0eb-15ea69e69e22@lbl.gov>
+ <20170629065429.GD17114@sillage.bis.pasteur.fr>
+Subject: Re: [Singularity] How to create an image from local node?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_12_1365398535.1498768223912"
+
+------=_Part_12_1365398535.1498768223912
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_13_945626584.1498768223913"
+
+------=_Part_13_945626584.1498768223913
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+What Tru is suggesting might be the right approach. 
+
+On Wednesday, June 28, 2017 at 11:54:31 PM UTC-7, Tru Huynh wrote:
+>
+> On Wed, Jun 28, 2017 at 04:14:19PM -0700, Joshua Studen wrote: 
+> > Right. that's kind of what I'm having an issue with. The examples all 
+> > involve pulling something from docker hub or using some mirror URL. 
+> > 
+> > We have sudo access on this cluster. We have a custom OS we're 
+> developing 
+> > so we need sudo to install it on the compute nodes. What we're trying to 
+> do 
+> > is have an absolute bare minimum compute node environment and then rely 
+> on 
+> > containers for additional functionality and services. 
+>
+> I would try something like: 
+> 1) on the node you want to convert to a container (assuming one there is 
+> a single / partition) 
+> # tar --one-file-system -czvSf /tmp/image.tgz / --exclude /tmp/image.tgz 
+> 2) transfer the /tmp/image.tgz to a machine with singularity installed 
+> $ singularity create --size XXXX image.img 
+> $ gunzip -dc image.tgz| sudo singularity import image.img 
+> 3) singularity mount the container, cleanup files (/etc/fstab,...) 
+> and add your custom singularity files. 
+> root@elitebook840g3:/# find singularity -ls 
+>   8099    0 lrwxrwxrwx   1 root     root           24 Jun 26 21:14 
+> singularity -> .singularity.d/runscript 
+> root@elitebook840g3:/# find .singularity.d -ls 
+>  80961    4 drwxr-xr-x   6 root     root         4096 Jun 27 18:42 
+> .singularity.d 
+> 115314    4 drwxr-xr-x   2 root     root         4096 Jun 27 18:42 
+> .singularity.d/bootstrap 
+> 115315    4 -rw-r--r--   1 root     root          270 Jun 27 18:42 
+> .singularity.d/bootstrap/Singularity 
+>  80962    4 drwxr-xr-x   2 root     root         4096 Jun 27 18:42 
+> .singularity.d/env 
+>  84213    4 -rwxr-xr-x   1 root     root          129 Jun 27 18:42 
+> .singularity.d/env/10-docker.sh 
+>  80964    4 -rwxr-xr-x   1 root     root           47 Jun 26 21:14 
+> .singularity.d/env/90-environment.sh 
+>  80963    4 -rwxr-xr-x   1 root     root         1061 Jun 26 21:14 
+> .singularity.d/env/01-base.sh 
+>  80965    4 -rwxr-xr-x   1 root     root         1255 Jun 26 21:14 
+> .singularity.d/env/99-base.sh 
+>  84214    4 -rwxr-xr-x   1 root     root          298 Jun 27 18:42 
+> .singularity.d/labels.json 
+>  80966    4 drwxr-xr-x   2 root     root         4096 Jun 26 21:14 
+> .singularity.d/actions 
+>  80968    4 -rwxr-xr-x   1 root     root          291 Jun 26 21:14 
+> .singularity.d/actions/run 
+>  80970    4 -rwxr-xr-x   1 root     root          286 Jun 26 21:14 
+> .singularity.d/actions/test 
+>  80967    4 -rwxr-xr-x   1 root     root          126 Jun 26 21:14 
+> .singularity.d/actions/exec 
+>  80969    4 -rwxr-xr-x   1 root     root          618 Jun 26 21:14 
+> .singularity.d/actions/shell 
+>  84215    4 -rw-r--r--   1 root     root          270 Jun 27 18:42 
+> .singularity.d/Singularity 
+>  80971    4 drwxr-xr-x   2 root     root         4096 Jun 26 21:14 
+> .singularity.d/libs 
+>  80972    4 -rwxr-xr-x   1 root     root           51 Jun 27 18:42 
+> .singularity.d/runscript 
+>  80973    0 lrwxrwxrwx   1 root     root           21 Jun 26 21:14 
+> .singularity.d/environment -> env/90-environment.sh 
+>
+> Cheers, 
+>
+> Tru 
+> -- 
+> Dr Tru Huynh          | http://www.pasteur.fr/research/bis           
+> mailto:t...@pasteur.fr <javascript:> | tel/fax +33 1 45 68 87 37/19 
+> Institut Pasteur, 25-28 rue du Docteur Roux, 75724 Paris CEDEX 15 France   
+>
+
+------=_Part_13_945626584.1498768223913
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">What Tru is suggesting might be the right approach.=C2=A0<=
+br><br>On Wednesday, June 28, 2017 at 11:54:31 PM UTC-7, Tru Huynh wrote:<b=
+lockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;borde=
+r-left: 1px #ccc solid;padding-left: 1ex;">On Wed, Jun 28, 2017 at 04:14:19=
+PM -0700, Joshua Studen wrote:
+<br>&gt; Right. that&#39;s kind of what I&#39;m having an issue with. The e=
+xamples all=20
+<br>&gt; involve pulling something from docker hub or using some mirror URL=
+.
+<br>&gt;=20
+<br>&gt; We have sudo access on this cluster. We have a custom OS we&#39;re=
+ developing=20
+<br>&gt; so we need sudo to install it on the compute nodes. What we&#39;re=
+ trying to do=20
+<br>&gt; is have an absolute bare minimum compute node environment and then=
+ rely on=20
+<br>&gt; containers for additional functionality and services.=20
+<br>
+<br>I would try something like:
+<br>1) on the node you want to convert to a container (assuming one there i=
+s
+<br>a single / partition)
+<br># tar --one-file-system -czvSf /tmp/image.tgz / --exclude /tmp/image.tg=
+z
+<br>2) transfer the /tmp/image.tgz to a machine with singularity installed
+<br>$ singularity create --size XXXX image.img=20
+<br>$ gunzip -dc image.tgz| sudo singularity import image.img
+<br>3) singularity mount the container, cleanup files (/etc/fstab,...)
+<br>and add your custom singularity files.
+<br>root@elitebook840g3:/# find singularity -ls
+<br>=C2=A0 8099 =C2=A0 =C2=A00 lrwxrwxrwx =C2=A0 1 root =C2=A0 =C2=A0 root =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 24 Jun 26 21:14 singularity -&gt; .singu=
+larity.d/runscript
+<br>root@elitebook840g3:/# find .singularity.d -ls
+<br>=C2=A080961 =C2=A0 =C2=A04 drwxr-xr-x =C2=A0 6 root =C2=A0 =C2=A0 root =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 4096 Jun 27 18:42 .singularity.d
+<br>115314 =C2=A0 =C2=A04 drwxr-xr-x =C2=A0 2 root =C2=A0 =C2=A0 root =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 4096 Jun 27 18:42 .singularity.d/bootstrap
+<br>115315 =C2=A0 =C2=A04 -rw-r--r-- =C2=A0 1 root =C2=A0 =C2=A0 root =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0270 Jun 27 18:42 .singularity.d/bootstrap/<w=
+br>Singularity
+<br>=C2=A080962 =C2=A0 =C2=A04 drwxr-xr-x =C2=A0 2 root =C2=A0 =C2=A0 root =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 4096 Jun 27 18:42 .singularity.d/env
+<br>=C2=A084213 =C2=A0 =C2=A04 -rwxr-xr-x =C2=A0 1 root =C2=A0 =C2=A0 root =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0129 Jun 27 18:42 .singularity.d/env/10-do=
+cker.<wbr>sh
+<br>=C2=A080964 =C2=A0 =C2=A04 -rwxr-xr-x =C2=A0 1 root =C2=A0 =C2=A0 root =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 47 Jun 26 21:14 .singularity.d/env/90-<w=
+br>environment.sh
+<br>=C2=A080963 =C2=A0 =C2=A04 -rwxr-xr-x =C2=A0 1 root =C2=A0 =C2=A0 root =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 1061 Jun 26 21:14 .singularity.d/env/01-base.sh
+<br>=C2=A080965 =C2=A0 =C2=A04 -rwxr-xr-x =C2=A0 1 root =C2=A0 =C2=A0 root =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 1255 Jun 26 21:14 .singularity.d/env/99-base.sh
+<br>=C2=A084214 =C2=A0 =C2=A04 -rwxr-xr-x =C2=A0 1 root =C2=A0 =C2=A0 root =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0298 Jun 27 18:42 .singularity.d/labels.js=
+on
+<br>=C2=A080966 =C2=A0 =C2=A04 drwxr-xr-x =C2=A0 2 root =C2=A0 =C2=A0 root =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 4096 Jun 26 21:14 .singularity.d/actions
+<br>=C2=A080968 =C2=A0 =C2=A04 -rwxr-xr-x =C2=A0 1 root =C2=A0 =C2=A0 root =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0291 Jun 26 21:14 .singularity.d/actions/r=
+un
+<br>=C2=A080970 =C2=A0 =C2=A04 -rwxr-xr-x =C2=A0 1 root =C2=A0 =C2=A0 root =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0286 Jun 26 21:14 .singularity.d/actions/t=
+est
+<br>=C2=A080967 =C2=A0 =C2=A04 -rwxr-xr-x =C2=A0 1 root =C2=A0 =C2=A0 root =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0126 Jun 26 21:14 .singularity.d/actions/e=
+xec
+<br>=C2=A080969 =C2=A0 =C2=A04 -rwxr-xr-x =C2=A0 1 root =C2=A0 =C2=A0 root =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0618 Jun 26 21:14 .singularity.d/actions/s=
+hell
+<br>=C2=A084215 =C2=A0 =C2=A04 -rw-r--r-- =C2=A0 1 root =C2=A0 =C2=A0 root =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0270 Jun 27 18:42 .singularity.d/Singulari=
+ty
+<br>=C2=A080971 =C2=A0 =C2=A04 drwxr-xr-x =C2=A0 2 root =C2=A0 =C2=A0 root =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 4096 Jun 26 21:14 .singularity.d/libs
+<br>=C2=A080972 =C2=A0 =C2=A04 -rwxr-xr-x =C2=A0 1 root =C2=A0 =C2=A0 root =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 51 Jun 27 18:42 .singularity.d/runscript
+<br>=C2=A080973 =C2=A0 =C2=A00 lrwxrwxrwx =C2=A0 1 root =C2=A0 =C2=A0 root =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 21 Jun 26 21:14 .singularity.d/environme=
+nt -&gt; env/90-environment.sh
+<br>
+<br>Cheers,
+<br>
+<br>Tru
+<br>--=20
+<br>Dr Tru Huynh =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0| <a href=3D"http://www.=
+pasteur.fr/research/bis" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"=
+this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwww.pasteur.fr=
+%2Fresearch%2Fbis\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHF2zhfvbshKVasCAh=
+a0LACsdD7Kg&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.googl=
+e.com/url?q\x3dhttp%3A%2F%2Fwww.pasteur.fr%2Fresearch%2Fbis\x26sa\x3dD\x26s=
+ntz\x3d1\x26usg\x3dAFQjCNHF2zhfvbshKVasCAha0LACsdD7Kg&#39;;return true;">ht=
+tp://www.pasteur.fr/<wbr>research/bis</a> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0=20
+<br>mailto:<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=
+=3D"6mK1J3BwAQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascri=
+pt:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return =
+true;">t...@pasteur.fr</a> | tel/fax +33 1 45 68 87 37/19
+<br>Institut Pasteur, 25-28 rue du Docteur Roux, 75724 Paris CEDEX 15 Franc=
+e =C2=A0
+<br></blockquote></div>
+------=_Part_13_945626584.1498768223913--
+
+------=_Part_12_1365398535.1498768223912--

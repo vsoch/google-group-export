@@ -1,0 +1,205 @@
+Date: Sun, 12 May 2019 13:55:30 -0700 (PDT)
+From: divyam jaiswal <divyam....@gmail.com>
+To: singularity <singu...@lbl.gov>
+Cc: jason...@gmail.com
+Message-Id: <6fd5abb1-f88d-48a4-9264-63cbb62a8ed1@lbl.gov>
+In-Reply-To: <20190420031404.GA63709@fnal.gov>
+References: <c3210c20-2c17-4647-bdff-0873dbe8b673@lbl.gov>
+ <c30cc58c-7f0b-46c1-9efe-448e4d5a50a8@lbl.gov>
+ <CAGfAqt9TkLV3Q=4D6uhrJQ4CKPQfiz23apbrMrKOE0ORG0Dm5w@mail.gmail.com>
+ <20180822223830.GA871@fnal.gov>
+ <6c30220a-0010-4a42-8a1d-3082b9953d30@lbl.gov>
+ <20190415212341.GA49040@fnal.gov>
+ <7a09d381-55a4-4215-ba1a-09b638dea0b2@lbl.gov>
+ <20190417185925.GA9384@fnal.gov>
+ <ecb1a11e-fd85-4ad4-8684-c6d2fa3dae3e@lbl.gov>
+ <20190420031404.GA63709@fnal.gov>
+Subject: Re: [Singularity] Re: Mount volumes without root permissions using
+ fuse
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1455_147454708.1557694530502"
+
+------=_Part_1455_147454708.1557694530502
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1456_819284799.1557694530502"
+
+------=_Part_1456_819284799.1557694530502
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi Dave,
+
+My usecase is a little different here.
+I want to create a mount point and fd for /dev/fuse/ before calling fuse 
+filesystem.
+The idea is to get the ability to read/write to /dev/fuse directly without 
+going through the kernel.
+
+To achieve this I am using a modification of your program where I simply 
+omit getuid and setuid part.
+But I get following error on unomunting the filesystem:
+"umount: /proc/self/mountinfo: parse error: ignore entry at line 24."
+
+Regards,
+Divyam
+
+
+On Friday, April 19, 2019 at 11:14:12 PM UTC-4, Dave Dykstra wrote:
+>
+> On Thu, Apr 18, 2019 at 09:21:52AM -0700, Jason Boles wrote: 
+> > > Oh, if you're willing to user linux kernel 4.18+ then you don't even 
+> > > need libfuse3. 
+> > > 
+> > > Just run "unshare -Ufirmp".  That gets you a fake root unprivileged 
+> user 
+> > > namespace.  Then just run sshfs giving it a mount point of some empty 
+> > > directory that you have write access to.  I haven't tried it in 
+> > > unprivileged docker yet, but it should work. 
+> > > 
+> > 
+> > Hi Dave,  I tried the "unshare -Ufirmp" but still get "Operation not 
+> > permitted" errors. 
+> > (tried both outside and inside the container) 
+>
+> Oh, unprivileged user namespaces are disabled by default on Debian, 
+> maybe they are also on Ubuntu: 
+>     
+> https://unix.stackexchange.com/questions/303213/how-to-enable-user-namespaces-in-the-kernel-for-unprivileged-unshare 
+>
+> The 4.19 ELRepo kernel I tried with CentOS 7.6 had it enabled by 
+> default. 
+>
+> > Maybe it's the same problem of container processes launching as children 
+> of 
+> > containerd ? 
+>
+> No, unshare is very simple and just invokes a few namespace-related 
+> system calls. 
+>
+> > Could a possible solution involve setns() within fuse-premount or using 
+> > `nsenter` with /proc/<pid>/ns/* (where PID is that of the containerized 
+> > process)? 
+>
+> I don't know if the process started by nsenter is allowed to do mounts. 
+> You'd have to try it.  It should be easier to pass a file descriptor to 
+> nsenter, you're right about that. 
+>
+> I don't recognize the usage of nsenter you're suggesting.  When I use it 
+> I pass it a pid (along with a bunch of options). 
+>
+> > Lastly, is it possible to pass a FD through docker run -v 
+> > /some/fd:/tmp/fd:shared ? 
+>
+> No I don't think it is possible.  -v just does a bind mount which acts 
+> on files, not file descriptors.  It would have to be a special option 
+> that does something like my fuserpremount program to pass a file 
+> descriptor from one process to another via a unix domain socket and 
+> SCM_RIGHTS (as described in man unix). 
+>
+> Dave 
+>
+
+------=_Part_1456_819284799.1557694530502
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Dave,<br><br>My usecase is a little different here.<br>=
+I want to create a mount point and fd for /dev/fuse/ before calling fuse fi=
+lesystem.<br>The idea is to get the ability to read/write to /dev/fuse dire=
+ctly without going through the kernel.<div><br>To achieve this I am using a=
+ modification of your program where I simply omit getuid and setuid part.<b=
+r>But I get following error on unomunting the filesystem:<br><font face=3D"=
+courier new, monospace" size=3D"2">&quot;<span style=3D"font-variant-ligatu=
+res: no-common-ligatures; color: rgb(0, 0, 0);">umount: /proc/self/mountinf=
+o: parse error: ignore entry at line 24.</span>&quot;<br><br></font>Regards=
+,<br>Divyam<br><br></div>
+
+
+
+
+<style type=3D"text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo; color: #000000}
+span.s1 {font-variant-ligatures: no-common-ligatures}
+</style>
+
+
+<div><br>On Friday, April 19, 2019 at 11:14:12 PM UTC-4, Dave Dykstra wrote=
+:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;bo=
+rder-left: 1px #ccc solid;padding-left: 1ex;">On Thu, Apr 18, 2019 at 09:21=
+:52AM -0700, Jason Boles wrote:
+<br>&gt; &gt; Oh, if you&#39;re willing to user linux kernel 4.18+ then you=
+ don&#39;t even=20
+<br>&gt; &gt; need libfuse3.=20
+<br>&gt; &gt;
+<br>&gt; &gt; Just run &quot;unshare -Ufirmp&quot;. =C2=A0That gets you a f=
+ake root unprivileged user=20
+<br>&gt; &gt; namespace. =C2=A0Then just run sshfs giving it a mount point =
+of some empty=20
+<br>&gt; &gt; directory that you have write access to. =C2=A0I haven&#39;t =
+tried it in=20
+<br>&gt; &gt; unprivileged docker yet, but it should work.=20
+<br>&gt; &gt;
+<br>&gt;=20
+<br>&gt; Hi Dave, =C2=A0I tried the &quot;unshare -Ufirmp&quot; but still g=
+et &quot;Operation not=20
+<br>&gt; permitted&quot; errors.
+<br>&gt; (tried both outside and inside the container)
+<br>
+<br>Oh, unprivileged user namespaces are disabled by default on Debian,
+<br>maybe they are also on Ubuntu:
+<br>=C2=A0 =C2=A0 <a href=3D"https://unix.stackexchange.com/questions/30321=
+3/how-to-enable-user-namespaces-in-the-kernel-for-unprivileged-unshare" tar=
+get=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www=
+.google.com/url?q\x3dhttps%3A%2F%2Funix.stackexchange.com%2Fquestions%2F303=
+213%2Fhow-to-enable-user-namespaces-in-the-kernel-for-unprivileged-unshare\=
+x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEREJOuzZ-N0XLMPuRFtvs1NxHIYA&#39;;r=
+eturn true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dht=
+tps%3A%2F%2Funix.stackexchange.com%2Fquestions%2F303213%2Fhow-to-enable-use=
+r-namespaces-in-the-kernel-for-unprivileged-unshare\x26sa\x3dD\x26sntz\x3d1=
+\x26usg\x3dAFQjCNEREJOuzZ-N0XLMPuRFtvs1NxHIYA&#39;;return true;">https://un=
+ix.stackexchange.<wbr>com/questions/303213/how-to-<wbr>enable-user-namespac=
+es-in-the-<wbr>kernel-for-unprivileged-<wbr>unshare</a>
+<br>
+<br>The 4.19 ELRepo kernel I tried with CentOS 7.6 had it enabled by
+<br>default.
+<br>
+<br>&gt; Maybe it&#39;s the same problem of container processes launching a=
+s children of=20
+<br>&gt; containerd ?
+<br>
+<br>No, unshare is very simple and just invokes a few namespace-related
+<br>system calls.
+<br>
+<br>&gt; Could a possible solution involve setns() within fuse-premount or =
+using=20
+<br>&gt; `nsenter` with /proc/&lt;pid&gt;/ns/* (where PID is that of the co=
+ntainerized=20
+<br>&gt; process)?
+<br>
+<br>I don&#39;t know if the process started by nsenter is allowed to do mou=
+nts.
+<br>You&#39;d have to try it. =C2=A0It should be easier to pass a file desc=
+riptor to
+<br>nsenter, you&#39;re right about that.
+<br>
+<br>I don&#39;t recognize the usage of nsenter you&#39;re suggesting. =C2=
+=A0When I use it
+<br>I pass it a pid (along with a bunch of options).
+<br>
+<br>&gt; Lastly, is it possible to pass a FD through docker run -v=20
+<br>&gt; /some/fd:/tmp/fd:shared ?
+<br>
+<br>No I don&#39;t think it is possible. =C2=A0-v just does a bind mount wh=
+ich acts
+<br>on files, not file descriptors. =C2=A0It would have to be a special opt=
+ion
+<br>that does something like my fuserpremount program to pass a file
+<br>descriptor from one process to another via a unix domain socket and
+<br>SCM_RIGHTS (as described in man unix).
+<br>
+<br>Dave
+<br></blockquote></div></div>
+------=_Part_1456_819284799.1557694530502--
+
+------=_Part_1455_147454708.1557694530502--

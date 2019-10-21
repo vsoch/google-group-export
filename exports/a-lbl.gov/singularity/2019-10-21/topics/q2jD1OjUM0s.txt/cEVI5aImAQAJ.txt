@@ -1,0 +1,103 @@
+Date: Fri, 24 Aug 2018 09:07:37 -0700 (PDT)
+From: David Trudgian <dtr...@sylabs.io>
+To: singularity <singu...@lbl.gov>
+Message-Id: <026bcd7d-1b1e-47d7-bfd8-7be2f22feac1@lbl.gov>
+In-Reply-To: <6e443ae0-8a19-485a-84e8-adf3013c09f7@lbl.gov>
+References: <6e443ae0-8a19-485a-84e8-adf3013c09f7@lbl.gov>
+Subject: Re: OverlayFS is 1MB when I run container with my user account
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_253_298130040.1535126857679"
+
+------=_Part_253_298130040.1535126857679
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_254_189200661.1535126857679"
+
+------=_Part_254_189200661.1535126857679
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi Michael,
+
+This OverlayFS space is not actually part of the container image - it's not 
+related to using `image.create` and specifying a size. The OverlayFS 
+filesystem is created at runtime as a place that small changes at runtime 
+can be written to (in RAM) and will be lost when the container exits. When 
+running as an individual user it's 1MB. When running as root it can use up 
+to ~50% of RAM on the machine.
+
+This has been brought up in an issue 
+here https://github.com/singularityware/singularity/issues/1485 and there 
+is documentation on how to create a persistent overlay here 
+- https://www.sylabs.io/guides/2.6/user-guide/persistent_overlays.html . A 
+persistent overlay can be used to provide more space if needed by a running 
+image.
+
+DT
+
+
+On Thursday, August 23, 2018 at 2:13:24 PM UTC-5, Michael Riera wrote:
+>
+> Hello, I have created a container in either sudo or not-sudo. My OverlayFS 
+> read 1MB causing my application to run out of space when it executes. 
+> However if I execute the container with sudo, the OverlayFS has all the 
+> memory that the image was created with.
+>
+> Reference:
+>
+> With sudo:
+> OverlayFS                            98370800       0  98370800   0% /
+>
+> Without sudo:
+> OverlayFS                                  1024           0       1024  
+>  0% /
+>
+> I need to be able to run these containers without sudo, has anyone ever 
+> seen such as issue, if so how can I correct it?
+>
+> My build commands are:
+>
+> sudo singularity image.create --size 16384 <image_name>
+> sudo singularity build --force <image_name> <definition file>
+>
+> thanks
+>
+
+------=_Part_254_189200661.1535126857679
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Michael,<div><br></div><div>This OverlayFS space is not=
+ actually part of the container image - it&#39;s not related to using `imag=
+e.create` and specifying a size. The OverlayFS filesystem is created at run=
+time as a place that small changes at runtime can be written to (in RAM) an=
+d will be lost when the container exits. When running as an individual user=
+ it&#39;s 1MB. When running as root it can use up to ~50% of RAM on the mac=
+hine.</div><div><br></div><div>This has been brought up in an issue here=C2=
+=A0https://github.com/singularityware/singularity/issues/1485 and there is =
+documentation on how to create a persistent overlay here -=C2=A0https://www=
+.sylabs.io/guides/2.6/user-guide/persistent_overlays.html . A persistent ov=
+erlay can be used to provide more space if needed by a running image.</div>=
+<div><br></div><div>DT</div><div><br><br>On Thursday, August 23, 2018 at 2:=
+13:24 PM UTC-5, Michael Riera wrote:<blockquote class=3D"gmail_quote" style=
+=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: =
+1ex;"><div dir=3D"ltr">Hello, I have created a container in either sudo or =
+not-sudo. My OverlayFS read 1MB causing my application to run out of space =
+when it executes. However if I execute the container with sudo, the Overlay=
+FS has all the memory that the image was created with.<div><br></div><div>R=
+eference:</div><div><br></div><div>With sudo:</div><div>OverlayFS=C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 98370800=C2=A0 =C2=A0 =C2=A0 =C2=A00=C2=A0 98370800=C2=A0 =C2=
+=A00% /<br></div><div><br></div><div>Without sudo:</div><div>OverlayFS=C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 1024=C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A00=C2=A0 =C2=A0 =C2=A0 =C2=A01024=C2=A0 =C2=A00% /<br></div><di=
+v><br></div><div>I need to be able to run these containers without sudo, ha=
+s anyone ever seen such as issue, if so how can I correct it?</div><div><br=
+></div><div>My build commands are:</div><div><br></div><div><div>sudo singu=
+larity image.create --size 16384 &lt;image_name&gt;</div><div>sudo singular=
+ity build --force &lt;image_name&gt; &lt;definition file&gt;</div></div><di=
+v><br></div><div>thanks</div></div></blockquote></div></div>
+------=_Part_254_189200661.1535126857679--
+
+------=_Part_253_298130040.1535126857679--

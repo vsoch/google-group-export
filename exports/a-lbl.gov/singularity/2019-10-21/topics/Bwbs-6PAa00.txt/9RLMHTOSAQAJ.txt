@@ -1,0 +1,586 @@
+X-Received: by 2002:a62:5d16:: with SMTP id r22-v6mr1745821pfb.31.1538381206411;
+        Mon, 01 Oct 2018 01:06:46 -0700 (PDT)
+X-BeenThere: singularity@lbl.gov
+Received: by 2002:a17:902:5c4:: with SMTP id f62-v6ls4020206plf.6.gmail; Mon,
+ 01 Oct 2018 01:06:45 -0700 (PDT)
+X-Received: by 2002:a17:902:b285:: with SMTP id u5-v6mr10379041plr.221.1538381205054;
+        Mon, 01 Oct 2018 01:06:45 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1538381205; cv=none;
+        d=google.com; s=arc-20160816;
+        b=M8XMyRGjoYDyTiR5a1ciycdkXAVIdC0zKdvXK1m69RoH3wcM8lCb/Y/gGCpaiGtaps
+         /WQFmsvPDOCU2puenLU+xR+HlEt0XY4VxjySjK84vumjVFTODSDm+aKYqnJRIwo/RJzC
+         V+i7r2NAiDpxq8/wQJhGqr/6vJIV0JAwzYHEEkYD43nrhaIXHT67nZpXKmNzZwirjrxH
+         p0vWcXauCm9ayQMgZ1i0/n0Zgsx2OcM9DdS4F+k9I8Fl5Gdo7La8LQNuWPKw9yxTCdX3
+         vf3uYdbmDQ6gUGvxKyfmjaOmIpFam/H+u4A2SRrkACC8kZCNiudIx6ZuVnDpE7hnXmgs
+         IiXA==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816;
+        h=to:subject:message-id:date:from:in-reply-to:references:mime-version
+         :dkim-signature;
+        bh=HJ3waCRLcrMi+3DzM1hmFdXpJpPwl++wNTRvaCVhFQE=;
+        b=ICmr5iH1tSCoWaJV5C3cAaUb8r9dNLyp4Aracoq28DPIvRVk+rVs+KL3fK/Ml5Atw2
+         nIgBQj4uoMnGL3wnxBU0XKhF28348H07zlxMvxoqz7aRhMoqBDQhsGy7XYCGolkZcVEh
+         6avDPgOh6SGpQ04AOTAmTDZpw75mYx9Ay0njPpOTAxgg83L6pKfrvSRWFCPbLbmtraw5
+         jrIk1EkrDM1mBUKigN/wy8WktWaQ805kf0phB8x3spwEDQz2TAKtzDeurtoM7aWAfcUn
+         JZG0e1mKZnH8Xdu4uZQFY8BImrfe9TH8lxlWqNH17bLOEGW/VRoDa32cgqsikbBgqnX/
+         Y9Xg==
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=pass head...@sylabs.io header.s=google header.b=aPsvJi4E;
+       spf=pass (google.com: domain of jo...@sylabs.io designates 209.85.217.46 as permitted sender) smtp.mailfrom=jo...@sylabs.io
+Return-Path: <jo...@sylabs.io>
+Received: from fe3.lbl.gov (fe3.lbl.gov. [128.3.41.68])
+        by mx.google.com with ESMTP id z2-v6si11953557pfn.13.2018.10.01.01.06.44
+        for <singu...@lbl.gov>;
+        Mon, 01 Oct 2018 01:06:44 -0700 (PDT)
+Received-SPF: pass (google.com: domain of jo...@sylabs.io designates 209.85.217.46 as permitted sender) client-ip=209.85.217.46;
+Authentication-Results: mx.google.com;
+       dkim=pass head...@sylabs.io header.s=google header.b=aPsvJi4E;
+       spf=pass (google.com: domain of jo...@sylabs.io designates 209.85.217.46 as permitted sender) smtp.mailfrom=jo...@sylabs.io
+X-Ironport-SBRS: 3.5
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: =?us-ascii?q?A2FSCgCq1LFbhy7ZVdFag2eBEH8og24Gg?=
+ =?us-ascii?q?R2CLZB7gg2IYog5hVOBEAMYFyQjAQUQgQJHgnUChAQhOBQBAwEBAgEBAgEBAhA?=
+ =?us-ascii?q?BAQEIDQkIGw4jDII1BQIDAh4FBDMCBwMMOgEDAQEBAQEBAQEBIwEBAQEBAQEBA?=
+ =?us-ascii?q?QEBAQEBAQEBAQEBAQEUAgwBJhATARkBAQEBAgEjBBkBAQwsBAsLCwoDKgICIQE?=
+ =?us-ascii?q?PAwEFARwOBwQBHASDAAEoAYFAAw0IBQqXfjyJWBEzb3szgnUBAQV0QweCcQ2CS?=
+ =?us-ascii?q?QgSgQmJZxeCAIQkglZFAQECGIEUARIBTIJUF4JAiH6FE4VoiQYsCYIMhDmDDIN?=
+ =?us-ascii?q?HgxwXWm1LjT2IeYMTb4UPAYMXMIE4SQ0wcTMaCCQMbAaCNQmCHA4Jg0aCZINth?=
+ =?us-ascii?q?AM9MAEPijRHgXcBAQ?=
+X-IronPort-AV: E=Sophos;i="5.54,327,1534834800"; 
+   d="scan'208,217";a="130236402"
+Received: from mail-vs1-f46.google.com ([209.85.217.46])
+  by fe3.lbl.gov with ESMTP; 01 Oct 2018 01:06:41 -0700
+Received: by mail-vs1-f46.google.com with SMTP id w16-v6so6947729vso.9
+        for <singu...@lbl.gov>; Mon, 01 Oct 2018 01:06:41 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=sylabs.io; s=google;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to;
+        bh=HJ3waCRLcrMi+3DzM1hmFdXpJpPwl++wNTRvaCVhFQE=;
+        b=aPsvJi4E3kUPmfTt2jxABAXZkrGCrKjMgk9H8K7ON6w6XgmmEqMTnP7vtS77lpja7X
+         XjvdxEmx03ilzjvb5r57U5ZhipfvZMeTkRQzwP93/GUXdvbPS4yz1WNvR+9nsgGAiA3d
+         sROonDTowzpyBAriJnooke9wGc+K1ZhZhmvbNQyy4khl9sGyUtM6xh3YpL/8YU0vsGSL
+         IDnXcKiuafjGqWxLxbizWUqneoVxmtOCECjz3M9s1Hb0TkyMJz2K/znJbrKxHjrfci9j
+         zOyuSuhaUqwAA5+vGV1pHKp6Cf6oMtYjOyZ2/vpML0cDrX4aGIU2iw8ATeeNR6ZGJvS9
+         m3+Q==
+X-Gm-Message-State: ABuFfoheQky3Kd2SwbGBM9bEIu2ocBkKlFwuMkDEmQwsdW1cwKRwYRZ0
+	RAoCJUlnNGwexno7+B60KT5RUkyEmZMShEmecnwgbkMKJoNYwA==
+X-Received: by 2002:a67:1c87:: with SMTP id c129-v6mr3495337vsc.194.1538381200463;
+ Mon, 01 Oct 2018 01:06:40 -0700 (PDT)
+MIME-Version: 1.0
+References: <938214f3-5f66-47a5-9de8-4c6a6ea8875c@lbl.gov> <CACbNy8FU1bq-gg-RDkq7Fu9arDVOe_zhSzhN0Vhat2FhFdA5Ng@mail.gmail.com>
+ <CABMg7==M+N2y0CRw0V5z-mKsJLnC2504duB_ipFJGQGjWxfPGA@mail.gmail.com>
+In-Reply-To: <CABMg7==M+N2y0CRw0V5z-mKsJLnC2504duB_ipFJGQGjWxfPGA@mail.gmail.com>
+From: Joana Chavez <jo...@sylabs.io>
+Date: Mon, 1 Oct 2018 10:06:29 +0200
+Message-ID: <CACbNy8FwDi8jt586S8+yO-m-tJTiUkL1iw6wrMGBFwegR5PE9w@mail.gmail.com>
+Subject: Re: [Singularity] not found
+To: singularity@lbl.gov
+Content-Type: multipart/alternative; boundary="000000000000fbafeb057726483d"
+
+--000000000000fbafeb057726483d
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+Hello Michal, in order to load the environment when running the container,
+I recommend you create the environment inside the runscript section and
+then load it from there (see recipe below). Yet another way would be to
+create a file (environment.yml) with your environment set up inside like
+stated here ->
+https://conda.io/docs/user-guide/tasks/manage-environments.html#creating-an=
+-environment-from-an-environment-yml-file
+and
+then copy it to the container in the %files section, after that you can set
+up that environment also in the runscript but from the environment.yml.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*BootStrap: dockerFrom: debian:stretch-backports%help  A container with
+3d-dna%post  apt-get update && apt-get -y upgrade  apt-get -y install \
+build-essential \    wget \    bzip2 \    ca-certificates \    libglib2.0-0
+\    libxext6 \    libsm6 \    libxrender1 \    git  rm -rf
+/var/lib/apt/lists/*  apt-get clean  # download and install Miniconda  wget
+-c https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh
+<https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh>
+/bin/bash Miniconda2-latest-Linux-x86_64.sh -bfp /usr/local  ln -s
+/usr/local/etc/profile.d/conda.sh /etc/profile.d/conda.sh  rm -rf
+Miniconda2-latest-Linux-x86_64.sh  # add bioconda channels  conda config
+--add channels defaults  conda config --add channels conda-forge  conda
+config --add channels bioconda  conda update conda    # install 3d-dna  git
+clone https://github.com/theaidenlab/3d-dna.git
+<https://github.com/theaidenlab/3d-dna.git>%environment  export
+PATH=3D/usr/local/bin/:$PATH%runscript*
+
+* conda create -y --name 3d-dna lastz=3D1.0.4 openjdk=3D8.0.152 gawk=3D4.2.=
+1
+coreutils=3D8.30 parallel=3D20180522 python=3D2.7 numpy=3D1.15.1 scipy=3D1.=
+1.0
+matplotlib=3D2.2.3  conda clean --all --yes*
+
+*  source /etc/profile.d/conda.sh  exec conda activate 3d-dna*
+
+
+On Fri, Sep 28, 2018 at 12:22 AM Micha=C5=82 T. Lorenc <m.t....@gmail.com>
+wrote:
+
+> Hi Joana,
+> I updated the %runscript section:
+>
+> %runscript
+>   *source /etc/profile.d/conda.sh*
+>   exec conda activate 3d-dna
+>
+> but when I used *singularity shell 3d-dna.simg* it does not load the
+> environment. Only when I manually type *source /etc/profile.d/conda.sh .*
+>
+> How can I automatically load the conda enviroment when the Singularity
+> container starts?
+>
+> The current recipe is:
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+> *BootStrap: dockerFrom: debian:stretch-backports%help  A container with
+> 3d-dna%post  apt-get update && apt-get -y upgrade  apt-get -y install \
+> build-essential \    wget \    bzip2 \    ca-certificates \    libglib2.0=
+-0
+> \    libxext6 \    libsm6 \    libxrender1 \    git  rm -rf
+> /var/lib/apt/lists/*  apt-get clean  # download and install Miniconda  wg=
+et
+> -c https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh
+> <https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh>
+> /bin/bash Miniconda2-latest-Linux-x86_64.sh -bfp /usr/local  ln -s
+> /usr/local/etc/profile.d/conda.sh /etc/profile.d/conda.sh  rm -rf
+> Miniconda2-latest-Linux-x86_64.sh  # add bioconda channels  conda config
+> --add channels defaults  conda config --add channels conda-forge  conda
+> config --add channels bioconda  conda update conda  # install 3d-dna
+> dependecies  conda create -y --name 3d-dna lastz=3D1.0.4 openjdk=3D8.0.15=
+2
+> gawk=3D4.2.1 coreutils=3D8.30 parallel=3D20180522 python=3D2.7 numpy=3D1.=
+15.1
+> scipy=3D1.1.0 matplotlib=3D2.2.3  conda clean --all --yes  # install 3d-d=
+na
+> git clone https://github.com/theaidenlab/3d-dna.git
+> <https://github.com/theaidenlab/3d-dna.git>%environment  export
+> PATH=3D/usr/local/bin/:$PATH%runscript  source /etc/profile.d/conda.sh  e=
+xec
+> conda activate 3d-dna*
+>
+> Thank you in advance.
+>
+> Michal
+>
+>
+> On Thu, Sep 27, 2018 at 10:21 PM Joana Chavez <jo...@sylabs.io> wrote:
+>
+>> Hello Michal, how about exporting the PATH environment variable in your
+>> %environment section?
+>>
+>>
+>> *%environment  PATH=3D/opt/conda/bin:$PATH*
+>> *  export PATH*
+>>
+>> let us know if you could solve it that way or if you need any more help.
+>> Thank you
+>>
+>> Joana
+>>
+>> On Thu, Sep 27, 2018 at 6:22 AM Micha=C5=82 T. Lorenc <m.t....@gmail.com=
+>
+>> wrote:
+>>
+>>> Hi,
+>>> During building the containder *conda* was working but when I started
+>>> the container with *singularity run 3d-dna.simg *I got *sh: 51: conda:
+>>> not found *. Here is the Singularity file:
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>> *BootStrap: dockerFrom: debian:stretch-backports%help  A container with
+>>> 3d-dna%environment  PATH=3D/opt/conda/bin:$PATH%post  apt-get update &&
+>>> apt-get -y upgrade  apt-get -y install \    build-essential \    wget \
+>>> bzip2 \    ca-certificates \    libglib2.0-0 \    libxext6 \    libsm6 =
+\
+>>> libxrender1 \    git  rm -rf /var/lib/apt/lists/*  apt-get clean  #
+>>> download and install Miniconda  echo 'export PATH=3D/opt/conda/bin:$PAT=
+H' >
+>>> /etc/profile.d/conda.sh  wget -c
+>>> https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh
+>>> <https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh>
+>>> /bin/bash Miniconda2-latest-Linux-x86_64.sh -bfp /usr/local  rm -rf
+>>> Miniconda2-latest-Linux-x86_64.sh  # add bioconda channels  conda confi=
+g
+>>> --add channels defaults  conda config --add channels conda-forge  conda
+>>> config --add channels bioconda  conda update conda    # install 3d-dna
+>>> dependecies  conda create -y --name 3d-dna lastz=3D1.0.4 openjdk=3D8.0.=
+152
+>>> gawk=3D4.2.1 coreutils=3D8.30 parallel=3D20180522 python=3D2.7 numpy=3D=
+1.15.1
+>>> scipy=3D1.1.0 matplotlib=3D2.2.3  conda clean --all --yes  # install 3d=
+-dna
+>>> git clone https://github.com/theaidenlab/3d-dna.git
+>>> <https://github.com/theaidenlab/3d-dna.git>%runscript   exec conda acti=
+vate
+>>> 3d-dna*
+>>> What did I miss?
+>>>
+>>> Thank you in advance.
+>>>
+>>> Michal
+>>>
+>>> --
+>>>
+>> You received this message because you are subscribed to the Google Group=
+s
+>>> "singularity" group.
+>>>
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n
+>>> email to singu...@lbl.gov.
+>>>
+>>
+>>
+>> --
+>> *Joana Chavez La Valle*
+>> *Software Engineer*
+>>
+>> http://www.sylabs.io
+>>
+>> --
+>> You received this message because you are subscribed to a topic in the
+>> Google Groups "singularity" group.
+>> To unsubscribe from this topic, visit
+>> https://groups.google.com/a/lbl.gov/d/topic/singularity/Bwbs-6PAa00/unsu=
+bscribe
+>> .
+>> To unsubscribe from this group and all its topics, send an email to
+>> singu...@lbl.gov.
+>>
+> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+>
+
+
+--=20
+*Joana Chavez La Valle*
+*Software Engineer*
+
+http://www.sylabs.io
+
+--000000000000fbafeb057726483d
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div dir=3D"ltr">Hello Michal, in order to load the enviro=
+nment when running the container, I recommend you create the environment in=
+side the runscript section and then load it from there (see recipe below). =
+Yet another way would be to create a file (environment.yml) with your envir=
+onment set up inside like stated here -&gt;=C2=A0<a href=3D"https://conda.i=
+o/docs/user-guide/tasks/manage-environments.html#creating-an-environment-fr=
+om-an-environment-yml-file">https://conda.io/docs/user-guide/tasks/manage-e=
+nvironments.html#creating-an-environment-from-an-environment-yml-file</a>=
+=C2=A0and then copy it to the container in the %files section, after that y=
+ou can set up that environment also in the runscript but from the environme=
+nt.yml.=C2=A0<div><br></div><div><i><span class=3D"gmail-im" style=3D"color=
+:rgb(80,0,80)">BootStrap: docker<br>From: debian:stretch-backports<br><br>%=
+help<br>=C2=A0 A container with 3d-dna<br><br>%post<br>=C2=A0 apt-get updat=
+e &amp;&amp; apt-get -y upgrade<br>=C2=A0 apt-get -y install \<br>=C2=A0=C2=
+=A0=C2=A0 build-essential \<br>=C2=A0=C2=A0=C2=A0 wget \<br>=C2=A0=C2=A0=C2=
+=A0 bzip2 \<br>=C2=A0=C2=A0=C2=A0 ca-certificates \<br>=C2=A0=C2=A0=C2=A0 l=
+ibglib2.0-0 \<br>=C2=A0=C2=A0=C2=A0 libxext6 \<br>=C2=A0=C2=A0=C2=A0 libsm6=
+ \<br>=C2=A0=C2=A0=C2=A0 libxrender1 \<br>=C2=A0=C2=A0=C2=A0 git<br><br>=C2=
+=A0 rm -rf /var/lib/apt/lists/*<br>=C2=A0 apt-get clean<br><br>=C2=A0 # dow=
+nload and install Miniconda<br>=C2=A0 wget -c=C2=A0<a href=3D"https://repo.=
+continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh" target=3D"_blank"=
+>https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh</a><=
+br>=C2=A0=C2=A0=C2=A0 /bin/bash Miniconda2-latest-Linux-x86_64.sh -bfp /usr=
+/local<br><br></span>=C2=A0 ln -s /usr/local/etc/profile.d/conda.sh /etc/pr=
+ofile.d/conda.sh<span class=3D"gmail-im" style=3D"color:rgb(80,0,80)"><br>=
+=C2=A0 rm -rf Miniconda2-latest-Linux-x86_64.sh<br><br>=C2=A0 # add biocond=
+a channels<br>=C2=A0 conda config --add channels defaults<br>=C2=A0 conda c=
+onfig --add channels conda-forge<br>=C2=A0 conda config --add channels bioc=
+onda<br>=C2=A0 conda update conda=C2=A0=C2=A0<br><br>=C2=A0 # install 3d-dn=
+a<br>=C2=A0 git clone=C2=A0<a href=3D"https://github.com/theaidenlab/3d-dna=
+.git" target=3D"_blank">https://github.com/theaidenlab/3d-dna.git</a><br><b=
+r></span>%environment<br>=C2=A0 export PATH=3D/usr/local/bin/:$PATH<br><br>=
+%runscript</i></div><div><b><font color=3D"#ff0000"><i>=C2=A0</i><i><span c=
+lass=3D"gmail-im">conda create -y --name 3d-dna lastz=3D1.0.4 openjdk=3D8.0=
+.152 gawk=3D4.2.1 coreutils=3D8.30 parallel=3D20180522 python=3D2.7 numpy=
+=3D1.15.1 scipy=3D1.1.0 matplotlib=3D2.2.3<br>=C2=A0 conda clean --all --ye=
+s</span></i></font></b><i><br>=C2=A0 source /etc/profile.d/conda.sh<br>=C2=
+=A0 exec conda activate 3d-dna</i><div><br></div></div></div></div><br><div=
+ class=3D"gmail_quote"><div dir=3D"ltr">On Fri, Sep 28, 2018 at 12:22 AM Mi=
+cha=C5=82 T. Lorenc &lt;<a href=3D"mailto:m.t....@gmail.com" target=3D"_bla=
+nk">m.t....@gmail.com</a>&gt; wrote:<br></div><blockquote class=3D"gmail_qu=
+ote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex=
+"><div dir=3D"ltr"><div>Hi Joana,</div><div>I updated the %runscript sectio=
+n:<br></div><div><br></div><div>%runscript<br>=C2=A0 <b>source /etc/profile=
+.d/conda.sh</b><br>=C2=A0 exec conda activate 3d-dna</div><div><br></div><d=
+iv>but when I used <i>singularity shell 3d-dna.simg</i> it does not load th=
+e environment. Only when I manually type <i>source /etc/profile.d/conda.sh =
+.</i></div><div><i><br></i></div><div>How can I automatically load the cond=
+a enviroment when the Singularity container starts?</div><div><br></div><di=
+v>The current recipe is:</div><div><br></div><div><i>BootStrap: docker<br>F=
+rom: debian:stretch-backports<br><br>%help<br>=C2=A0 A container with 3d-dn=
+a<br><br>%post<br>=C2=A0 apt-get update &amp;&amp; apt-get -y upgrade<br>=
+=C2=A0 apt-get -y install \<br>=C2=A0=C2=A0=C2=A0 build-essential \<br>=C2=
+=A0=C2=A0=C2=A0 wget \<br>=C2=A0=C2=A0=C2=A0 bzip2 \<br>=C2=A0=C2=A0=C2=A0 =
+ca-certificates \<br>=C2=A0=C2=A0=C2=A0 libglib2.0-0 \<br>=C2=A0=C2=A0=C2=
+=A0 libxext6 \<br>=C2=A0=C2=A0=C2=A0 libsm6 \<br>=C2=A0=C2=A0=C2=A0 libxren=
+der1 \<br>=C2=A0=C2=A0=C2=A0 git<br><br>=C2=A0 rm -rf /var/lib/apt/lists/*<=
+br>=C2=A0 apt-get clean<br><br>=C2=A0 # download and install Miniconda<br>=
+=C2=A0 wget -c <a href=3D"https://repo.continuum.io/miniconda/Miniconda2-la=
+test-Linux-x86_64.sh" target=3D"_blank">https://repo.continuum.io/miniconda=
+/Miniconda2-latest-Linux-x86_64.sh</a><br>=C2=A0=C2=A0=C2=A0 /bin/bash Mini=
+conda2-latest-Linux-x86_64.sh -bfp /usr/local<br><br>=C2=A0 ln -s /usr/loca=
+l/etc/profile.d/conda.sh /etc/profile.d/conda.sh<br>=C2=A0 rm -rf Miniconda=
+2-latest-Linux-x86_64.sh<br><br>=C2=A0 # add bioconda channels<br>=C2=A0 co=
+nda config --add channels defaults<br>=C2=A0 conda config --add channels co=
+nda-forge<br>=C2=A0 conda config --add channels bioconda<br>=C2=A0 conda up=
+date conda<br><br>=C2=A0 # install 3d-dna dependecies<br>=C2=A0 conda creat=
+e -y --name 3d-dna lastz=3D1.0.4 openjdk=3D8.0.152 gawk=3D4.2.1 coreutils=
+=3D8.30 parallel=3D20180522 python=3D2.7 numpy=3D1.15.1 scipy=3D1.1.0 matpl=
+otlib=3D2.2.3<br>=C2=A0 conda clean --all --yes<br><br>=C2=A0 # install 3d-=
+dna<br>=C2=A0 git clone <a href=3D"https://github.com/theaidenlab/3d-dna.gi=
+t" target=3D"_blank">https://github.com/theaidenlab/3d-dna.git</a><br><br>%=
+environment<br>=C2=A0 export PATH=3D/usr/local/bin/:$PATH<br><br>%runscript=
+<br>=C2=A0 source /etc/profile.d/conda.sh<br>=C2=A0 exec conda activate 3d-=
+dna</i></div><div><i><br></i></div><div>Thank you in advance.</div><div><br=
+></div><div>Michal<br></div><div><br></div></div><br><div class=3D"gmail_qu=
+ote"><div dir=3D"ltr">On Thu, Sep 27, 2018 at 10:21 PM Joana Chavez &lt;<a =
+href=3D"mailto:jo...@sylabs.io" target=3D"_blank">jo...@sylabs.io</a>&gt; w=
+rote:<br></div><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex=
+;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Hello Michal=
+, how about exporting the PATH environment variable in your %environment se=
+ction?=C2=A0<div><b><br>%environment<br>=C2=A0 PATH=3D/opt/conda/bin:$PATH<=
+/b><br></div><div><b>=C2=A0<span style=3D"background-color:rgb(243,243,243)=
+"><font color=3D"#ff0000"> export PATH</font></span></b></div><div><br></di=
+v><div>let us know if you could solve it that way or if you need any more h=
+elp. Thank you<div><br></div><div>Joana</div></div></div><br><div class=3D"=
+gmail_quote"></div><div class=3D"gmail_quote"><div dir=3D"ltr">On Thu, Sep =
+27, 2018 at 6:22 AM Micha=C5=82 T. Lorenc &lt;<a href=3D"mailto:m.t....@gma=
+il.com" target=3D"_blank">m.t....@gmail.com</a>&gt; wrote:<br></div></div><=
+div class=3D"gmail_quote"><blockquote class=3D"gmail_quote" style=3D"margin=
+:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr"><=
+div>Hi,</div><div>During building the containder <i><b>conda</b></i> was wo=
+rking but when I started the container with <b><i>singularity run 3d-dna.si=
+mg </i></b>I got <b><i>sh: 51: conda: not found </i></b>. Here is the Singu=
+larity file:<br></div><div><br></div><div><b>BootStrap: docker<br>From: deb=
+ian:stretch-backports<br><br>%help<br>=C2=A0 A container with 3d-dna<br><br=
+>%environment<br>=C2=A0 PATH=3D/opt/conda/bin:$PATH<br><br>%post<br>=C2=A0 =
+apt-get update &amp;&amp; apt-get -y upgrade<br>=C2=A0 apt-get -y install \=
+<br>=C2=A0=C2=A0=C2=A0 build-essential \<br>=C2=A0=C2=A0=C2=A0 wget \<br>=
+=C2=A0=C2=A0=C2=A0 bzip2 \<br>=C2=A0=C2=A0=C2=A0 ca-certificates \<br>=C2=
+=A0=C2=A0=C2=A0 libglib2.0-0 \<br>=C2=A0=C2=A0=C2=A0 libxext6 \<br>=C2=A0=
+=C2=A0=C2=A0 libsm6 \<br>=C2=A0=C2=A0=C2=A0 libxrender1 \<br>=C2=A0=C2=A0=
+=C2=A0 git<br><br>=C2=A0 rm -rf /var/lib/apt/lists/*<br>=C2=A0 apt-get clea=
+n<br><br>=C2=A0 # download and install Miniconda<br>=C2=A0 echo &#39;export=
+ PATH=3D/opt/conda/bin:$PATH&#39; &gt; /etc/profile.d/conda.sh<br>=C2=A0 wg=
+et -c <a href=3D"https://repo.continuum.io/miniconda/Miniconda2-latest-Linu=
+x-x86_64.sh" target=3D"_blank">https://repo.continuum.io/miniconda/Minicond=
+a2-latest-Linux-x86_64.sh</a><br>=C2=A0=C2=A0=C2=A0 /bin/bash Miniconda2-la=
+test-Linux-x86_64.sh -bfp /usr/local<br><br>=C2=A0 rm -rf Miniconda2-latest=
+-Linux-x86_64.sh<br><br>=C2=A0 # add bioconda channels<br>=C2=A0 conda conf=
+ig --add channels defaults<br>=C2=A0 conda config --add channels conda-forg=
+e<br>=C2=A0 conda config --add channels bioconda<br>=C2=A0 conda update con=
+da<br>=C2=A0 <br>=C2=A0 # install 3d-dna dependecies<br>=C2=A0 conda create=
+ -y --name 3d-dna lastz=3D1.0.4 openjdk=3D8.0.152 gawk=3D4.2.1 coreutils=3D=
+8.30 parallel=3D20180522 python=3D2.7 numpy=3D1.15.1 scipy=3D1.1.0 matplotl=
+ib=3D2.2.3<br>=C2=A0 conda clean --all --yes<br><br>=C2=A0 # install 3d-dna=
+<br>=C2=A0 git clone <a href=3D"https://github.com/theaidenlab/3d-dna.git" =
+target=3D"_blank">https://github.com/theaidenlab/3d-dna.git</a><br><br>%run=
+script<br>=C2=A0=C2=A0 exec conda activate 3d-dna<br></b><br></div><div>Wha=
+t did I miss?<br></div><div><br></div><div>Thank you in advance.</div><div>=
+<br></div><div>Michal<br></div></div>
+
+<p></p>
+
+-- <br></blockquote></div><div class=3D"gmail_quote"><blockquote class=3D"g=
+mail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-l=
+eft:1ex">
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br></blockquote></div><div class=3D"gmail_quo=
+te"><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-lef=
+t:1px #ccc solid;padding-left:1ex">
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singu...@lbl.=
+gov</a>.<br>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+ class=3D"m_7053894865307626762m_7768089024119460950m_-4605552238401502711m=
+_1310020705972705861m_-2554920914237572860gmail_signature" data-smartmail=
+=3D"gmail_signature"><div dir=3D"ltr"><div><b><font face=3D"trebuchet ms, s=
+ans-serif" color=3D"#000000">Joana Chavez La Valle</font></b></div><div><b>=
+<font face=3D"trebuchet ms, sans-serif" color=3D"#000000">Software Engineer=
+</font></b></div><div><b><font face=3D"trebuchet ms, sans-serif" color=3D"#=
+000000"><img src=3D"https://docs.google.com/uc?export=3Ddownload&amp;id=3D1=
+eDpeQGiWvuJSKNs-n9WGcIBd-d01zpAw&amp;revid=3D0BxsHr5lyTpmyRWh6MmdGWGhiaTczd=
+UFycE1rMVRiV25ZQWxNPQ" width=3D"96" height=3D"96"><br></font></b></div><div=
+ style=3D"color:rgb(80,0,80)"><font face=3D"trebuchet ms, sans-serif"><a hr=
+ef=3D"http://www.sylabs.io" target=3D"_blank">http://www.sylabs.io</a></fon=
+t></div></div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to a topic in the Goog=
+le Groups &quot;singularity&quot; group.<br>
+To unsubscribe from this topic, visit <a href=3D"https://groups.google.com/=
+a/lbl.gov/d/topic/singularity/Bwbs-6PAa00/unsubscribe" target=3D"_blank">ht=
+tps://groups.google.com/a/lbl.gov/d/topic/singularity/Bwbs-6PAa00/unsubscri=
+be</a>.<br>
+To unsubscribe from this group and all its topics, send an email to <a href=
+=3D"mailto:singu...@lbl.gov" target=3D"_blank">singu...@lbl.gov</a>.<br>
+</blockquote></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singu...@lbl.=
+gov</a>.<br>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+ class=3D"m_7053894865307626762m_7768089024119460950m_-4605552238401502711g=
+mail_signature" data-smartmail=3D"gmail_signature"><div dir=3D"ltr"><div><b=
+><font face=3D"trebuchet ms, sans-serif" color=3D"#000000">Joana Chavez La =
+Valle</font></b></div><div><b><font face=3D"trebuchet ms, sans-serif" color=
+=3D"#000000">Software Engineer</font></b></div><div><b><font face=3D"trebuc=
+het ms, sans-serif" color=3D"#000000"><img src=3D"https://docs.google.com/u=
+c?export=3Ddownload&amp;id=3D1eDpeQGiWvuJSKNs-n9WGcIBd-d01zpAw&amp;revid=3D=
+0BxsHr5lyTpmyRWh6MmdGWGhiaTczdUFycE1rMVRiV25ZQWxNPQ" width=3D"96" height=3D=
+"96"><br></font></b></div><div style=3D"color:rgb(80,0,80)"><font face=3D"t=
+rebuchet ms, sans-serif"><a href=3D"http://www.sylabs.io" target=3D"_blank"=
+>http://www.sylabs.io</a></font></div></div></div>
+
+--000000000000fbafeb057726483d--

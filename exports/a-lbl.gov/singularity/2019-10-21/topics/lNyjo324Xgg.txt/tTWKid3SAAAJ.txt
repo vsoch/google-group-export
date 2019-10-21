@@ -1,0 +1,410 @@
+Date: Fri, 8 Dec 2017 04:11:45 -0800 (PST)
+From: Jeff Kriske <jekr...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <0b44a9d2-1946-4b85-870b-5692a250c328@lbl.gov>
+In-Reply-To: <bbbc14fc-c487-4ae9-89cc-0e09bcb6bcbe@lbl.gov>
+References: <bbbc14fc-c487-4ae9-89cc-0e09bcb6bcbe@lbl.gov>
+Subject: Re: How to use %setup
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_5090_220787550.1512735105773"
+
+------=_Part_5090_220787550.1512735105773
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_5091_1439097043.1512735105774"
+
+------=_Part_5091_1439097043.1512735105774
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+A couple things...
+
+First, it's not a bash script so get rid of the header.
+
+Second, it appears that you are making an empty directory and then you are 
+attempting to extract that directory from an archive 
+called biofilter-2.4.1.tar.gz that you are expecting to be in current 
+working directory.
+
+Perhaps you mean:
+tar -xf biofilter-2.4.1.tar.gz --strip-components 1 -C ${SINGULARITY_ROOTFS
+}/temp/
+
+strip components 1 gets rid of the parent directory and -C tells it where 
+to extract the files.
+
+Try this (I haven't tested the functionality, just the setup which is 
+taking forever to run) you might look it over before running, I added a 
+wget step because i didn't have the archive:
+
+BootStrap: docker
+From: continuumio/miniconda
+
+%runscript
+        export PATH=/opt/conda/bin:${PATH}
+        /bin/bash
+
+%environment
+        export PATH=/opt/conda/bin:${PATH}
+        unset CONDA_DEFAULT_ENV
+        export ANACONDA_HOME=/opt/conda
+
+%setup
+        apt install -y python-apsw python2.7 sqlite3
+
+        mkdir ${SINGULARITY_ROOTFS}/temp/
+        wget 
+https://ritchielab.psu.edu/files/RL_software/biofilter-2.4.1.tar.gz
+        tar -xf biofilter-2.4.1.tar.gz --strip-components 1 -C 
+${SINGULARITY_ROOTFS}/temp/
+        cd ${SINGULARITY_ROOTFS}/temp/
+
+        python setup.py install --prefix=${SINGULARITY_ROOTFS}/biofilter/ 
+--ldprofile
+        python loki-build.py --verbose --knowledge loki.db --update
+
+        rm -rf ${SINGULARITY_ROOTFS}/temp/
+
+%post
+        echo "nameserver 139.165.214.214" | tee /etc/resolv.conf > /dev/null
+
+        export PATH=/opt/conda/bin:${PATH}
+        conda update -y conda
+        conda update --all
+
+        conda config --add channels bioconda
+        conda config --add channels conda-forge
+        conda clean --index-cache --tarballs --packages --yes
+
+        conda list > /conda.txt
+        touch /`date -u -Iseconds`
+
+
+%labels
+        MAINTAINER laurent_fournier
+
+
+
+
+
+On Friday, December 8, 2017 at 3:48:53 AM UTC-5, Laurent Fournier wrote:
+>
+> Hi everyone,
+>
+> I am trying to get how, like this topic's title says, the %setup inside 
+> recipe files.
+> But... i hit our so-loved RETVAL
+>
+> ...
+> + mkdir /usr/local/var/singularity/mnt/container/temp/
+> + tar xfz biofilter-2.4.1.tar.gz 
+> /usr/local/var/singularity/mnt/container/temp/
+> tar: /usr/local/var/singularity/mnt/container/temp: Not found in archive
+> tar: Exiting with failure status due to previous errors
+> ABORT: Aborting with RETVAL=255
+>
+> What did i do wrong ? (I successfully created the tmp directory but it 
+> isn't there...Singularity, so we should expect quantum physics ? Hahah..)
+> Here's my recipe :
+>
+> #!/bin/bash 
+> # 
+> # Tru Huynh <t...@pasteur.fr> 
+> # 2017-12-01: initial version 
+> # use as baseline to build a container from miniconda 
+> # added bioconda + conda-forge from Laurent Fournier <l...@uliege.be> 
+> # added biofilter from Laurent Fournier <l...@uliege.be>
+>
+> BootStrap: docker
+> From: continuumio/miniconda 
+>
+> %runscript
+>         export PATH=/opt/conda/bin:${PATH}
+>         /bin/bash
+>
+> %environment
+>         export PATH=/opt/conda/bin:${PATH}
+>         unset CONDA_DEFAULT_ENV 
+>         export ANACONDA_HOME=/opt/conda
+>
+> %setup
+>         apt install -y python-apsw python2.7 sqlite3
+>         #
+>         mkdir ${SINGULARITY_ROOTFS}/temp/
+>         tar xfz biofilter-2.4.1.tar.gz ${SINGULARITY_ROOTFS}/temp/
+>         cd ${SINGULARITY_ROOTFS}/temp/
+>         #
+>         python setup.py install --prefix=${SINGULARITY_ROOTFS}/biofilter/ 
+> --ldprofile
+>         python loki-build.py --verbose --knowledge loki.db --update
+>         #
+>         rm -rf ${SINGULARITY_ROOTFS}/temp/
+>
+> %post
+>         echo "nameserver 139.165.214.214" | tee /etc/resolv.conf > /dev/
+> null
+>         # 
+>         export PATH=/opt/conda/bin:${PATH}
+>         conda update -y conda
+>         conda update --all 
+>         # 
+>         conda config --add channels bioconda
+>         conda config --add channels conda-forge
+>         conda clean --index-cache --tarballs --packages --yes 
+>         #
+>         conda list > /conda.txt
+>         touch /`date -u -Iseconds`
+>         #
+>
+> %labels
+>         MAINTAINER laurent_fournier
+>
+> Regards,
+> Laurent.
+>
+
+------=_Part_5091_1439097043.1512735105774
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">A couple things...<div><br></div><div>First, it&#39;s not =
+a bash script so get rid of the header.</div><div><br></div><div>Second, it=
+ appears that you are making an empty directory and then you are attempting=
+ to extract that directory from an archive called=C2=A0biofilter-2.4.1.tar.=
+gz that you are expecting to be in current working directory.</div><div><br=
+></div><div>Perhaps you mean:</div><div style=3D"border-width: 1px; border-=
+style: solid; border-color: rgb(187, 187, 187); background-color: rgb(250, =
+250, 250); word-wrap: break-word;"><code><span style=3D"color: rgb(0, 0, 0)=
+;">tar=C2=A0</span><span style=3D"color: rgb(102, 102, 0);">-</span><span s=
+tyle=3D"color: rgb(0, 0, 0);">xf biofilter</span><span style=3D"color: rgb(=
+102, 102, 0);">-</span><span style=3D"color: rgb(0, 102, 102);">2.4</span><=
+span style=3D"color: rgb(102, 102, 0);">.</span><span style=3D"color: rgb(0=
+, 102, 102);">1.tar</span><span style=3D"color: rgb(102, 102, 0);">.</span>=
+<span style=3D"color: rgb(0, 0, 0);">gz=C2=A0</span><span style=3D"color: r=
+gb(102, 102, 0);">--</span><span style=3D"color: rgb(0, 0, 0);">strip</span=
+><span style=3D"color: rgb(102, 102, 0);">-</span><span style=3D"color: rgb=
+(0, 0, 0);">components=C2=A0</span><span style=3D"color: rgb(0, 102, 102);"=
+>1</span><span style=3D"color: rgb(0, 0, 0);">=C2=A0</span><span style=3D"c=
+olor: rgb(102, 102, 0);">-</span><span style=3D"color: rgb(0, 0, 0);">C $</=
+span><span style=3D"color: rgb(102, 102, 0);">{</span><span style=3D"color:=
+ rgb(0, 0, 0);">SINGULARITY_ROOTFS</span><span style=3D"color: rgb(102, 102=
+, 0);">}/</span><span style=3D"color: rgb(0, 0, 0);">temp</span><span style=
+=3D"color: rgb(102, 102, 0);">/</span><span style=3D"color: rgb(0, 0, 0);">=
+<br></span></code></div><div><br>strip components 1 gets rid of the parent =
+directory and -C tells it where to extract the files.<br></div><div><br></d=
+iv><div>Try this (I haven&#39;t tested the functionality, just the setup wh=
+ich is taking forever to run) you might look it over before running, I adde=
+d a wget step because i didn&#39;t have the archive:</div><div><br></div><d=
+iv><div style=3D"border-width: 1px; border-style: solid; border-color: rgb(=
+187, 187, 187); background-color: rgb(250, 250, 250); word-wrap: break-word=
+;"><code><div><font color=3D"#000000"><div>BootStrap: docker</div><div>From=
+: continuumio/miniconda</div><div><br></div><div>%runscript</div><div>=C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 export PATH=3D/opt/conda/bin:${PATH}</div><div>=C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 /bin/bash</div><div><br></div><div>%environment</d=
+iv><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 export PATH=3D/opt/conda/bin:${PATH}</d=
+iv><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 unset CONDA_DEFAULT_ENV</div><div>=C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 export ANACONDA_HOME=3D/opt/conda</div><div><br></=
+div><div>%setup</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 apt install -y python=
+-apsw python2.7 sqlite3</div><div><br></div><div>=C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 mkdir ${SINGULARITY_ROOTFS}/temp/</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ wget=C2=A0<a href=3D"https://ritchielab.psu.edu/files/RL_software/biofilte=
+r-2.4.1.tar.gz" target=3D"_blank" rel=3D"nofollow" style=3D"cursor: pointer=
+;">https://ritchielab.psu.edu/<wbr>files/RL_software/biofilter-2.<wbr>4.1.t=
+ar.gz</a></div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 tar -xf biofilter-2.4.1.tar=
+.gz --strip-components 1 -C ${SINGULARITY_ROOTFS}/temp/</div><div>=C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 cd ${SINGULARITY_ROOTFS}/temp/</div><div><br></div><di=
+v>=C2=A0 =C2=A0 =C2=A0 =C2=A0 python setup.py install --prefix=3D${SINGULAR=
+ITY_ROOTFS}<wbr>/biofilter/ --ldprofile</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 python loki-build.py --verbose --knowledge loki.db --update</div><div><=
+br></div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 rm -rf ${SINGULARITY_ROOTFS}/temp=
+/</div><div><br></div><div>%post</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 echo=
+ &quot;nameserver 139.165.214.214&quot; | tee /etc/resolv.conf &gt; /dev/nu=
+ll</div><div><br></div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 export PATH=3D/opt/=
+conda/bin:${PATH}</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 conda update -y con=
+da</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 conda update --all</div><div><br><=
+/div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 conda config --add channels bioconda<=
+/div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 conda config --add channels conda-for=
+ge</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 conda clean --index-cache --tarbal=
+ls --packages --yes</div><div><br></div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 co=
+nda list &gt; /conda.txt</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 touch /`date=
+ -u -Iseconds`</div><div><br></div><div><br></div><div>%labels</div><div>=
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 MAINTAINER laurent_fournier</div></font></div><=
+/code></div><br><br></div><div><br></div><div><br></div><div><br>On Friday,=
+ December 8, 2017 at 3:48:53 AM UTC-5, Laurent Fournier wrote:<blockquote c=
+lass=3D"gmail_quote" style=3D"margin: 0px 0px 0px 0.8ex; border-left: 1px s=
+olid rgb(204, 204, 204); padding-left: 1ex;"><div dir=3D"ltr">Hi everyone,<=
+div><br></div><div>I am trying to get how, like this topic&#39;s title says=
+, the %setup inside recipe files.</div><div>But... i hit our so-loved RETVA=
+L</div><div><br></div><div><div style=3D"border-width: 1px; border-style: s=
+olid; border-color: rgb(187, 187, 187); background-color: rgb(250, 250, 250=
+); word-wrap: break-word;"><code><div>...<br>+ mkdir /usr/local/var/singula=
+rity/<wbr>mnt/container/temp/</div><div>+ tar xfz biofilter-2.4.1.tar.gz /u=
+sr/local/var/singularity/<wbr>mnt/container/temp/</div><div>tar: /usr/local=
+/var/singularity/<wbr>mnt/container/temp: Not found in archive</div><div>ta=
+r: Exiting with failure status due to previous errors</div><div>ABORT: Abor=
+ting with RETVAL=3D255</div></code></div><br>What did i do wrong ? (I succe=
+ssfully created the tmp directory but it isn&#39;t there...Singularity, so =
+we should expect quantum physics ? Hahah..)</div><div>Here&#39;s my recipe =
+:</div><div><br></div><div><div style=3D"border-width: 1px; border-style: s=
+olid; border-color: rgb(187, 187, 187); background-color: rgb(250, 250, 250=
+); word-wrap: break-word;"><code><span style=3D"color: rgb(136, 0, 0);">#!/=
+bin/bash=C2=A0</span><span style=3D"color: rgb(0, 0, 0);"><br></span><span =
+style=3D"color: rgb(136, 0, 0);">#=C2=A0</span><span style=3D"color: rgb(0,=
+ 0, 0);"><br></span><span style=3D"color: rgb(136, 0, 0);"># Tru Huynh &lt;=
+<a style=3D"cursor: pointer;">t...@pasteur.fr</a>&gt;=C2=A0</span><span sty=
+le=3D"color: rgb(0, 0, 0);"><br></span><span style=3D"color: rgb(136, 0, 0)=
+;"># 2017-12-01: initial version=C2=A0</span><span style=3D"color: rgb(0, 0=
+, 0);"><br></span><span style=3D"color: rgb(136, 0, 0);"># use as baseline =
+to build a container from miniconda=C2=A0</span><span style=3D"color: rgb(0=
+, 0, 0);"><br></span><span style=3D"color: rgb(136, 0, 0);"># added biocond=
+a + conda-forge from Laurent Fournier &lt;<a style=3D"cursor: pointer;">l..=
+.@uliege.be</a>&gt;=C2=A0</span><span style=3D"color: rgb(0, 0, 0);"><br></=
+span><span style=3D"color: rgb(136, 0, 0);"># added biofilter from Laurent =
+Fournier &lt;<a style=3D"cursor: pointer;">l...@uliege.be</a>&gt;</span><sp=
+an style=3D"color: rgb(0, 0, 0);"><br><br></span><span style=3D"color: rgb(=
+102, 0, 102);">BootStrap</span><span style=3D"color: rgb(102, 102, 0);">:</=
+span><span style=3D"color: rgb(0, 0, 0);">=C2=A0docker<br></span><span styl=
+e=3D"color: rgb(102, 0, 102);">From</span><span style=3D"color: rgb(102, 10=
+2, 0);">:</span><span style=3D"color: rgb(0, 0, 0);">=C2=A0continuumio</spa=
+n><span style=3D"color: rgb(102, 102, 0);">/</span><span style=3D"color: rg=
+b(0, 0, 0);">miniconda=C2=A0<br><br></span><span style=3D"color: rgb(102, 1=
+02, 0);">%</span><span style=3D"color: rgb(0, 0, 0);">runscript<br>=C2=A0 =
+=C2=A0 =C2=A0 =C2=A0=C2=A0</span><span style=3D"color: rgb(0, 0, 136);">exp=
+ort</span><span style=3D"color: rgb(0, 0, 0);">=C2=A0PATH</span><span style=
+=3D"color: rgb(102, 102, 0);">=3D</span><span style=3D"color: rgb(0, 136, 0=
+);">/opt/</span><span style=3D"color: rgb(0, 0, 0);">conda</span><span styl=
+e=3D"color: rgb(102, 102, 0);">/</span><span style=3D"color: rgb(0, 0, 0);"=
+>bin</span><span style=3D"color: rgb(102, 102, 0);">:</span><span style=3D"=
+color: rgb(0, 0, 0);">$</span><span style=3D"color: rgb(102, 102, 0);">{</s=
+pan><span style=3D"color: rgb(0, 0, 0);">PATH</span><span style=3D"color: r=
+gb(102, 102, 0);">}</span><span style=3D"color: rgb(0, 0, 0);"><br>=C2=A0 =
+=C2=A0 =C2=A0 =C2=A0=C2=A0</span><span style=3D"color: rgb(102, 102, 0);">/=
+</span><span style=3D"color: rgb(0, 0, 0);">bin</span><span style=3D"color:=
+ rgb(102, 102, 0);">/</span><span style=3D"color: rgb(0, 0, 0);">bash<br><b=
+r></span><span style=3D"color: rgb(102, 102, 0);">%</span><span style=3D"co=
+lor: rgb(0, 0, 0);">environment<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0=C2=A0</span>=
+<span style=3D"color: rgb(0, 0, 136);">export</span><span style=3D"color: r=
+gb(0, 0, 0);">=C2=A0PATH</span><span style=3D"color: rgb(102, 102, 0);">=3D=
+</span><span style=3D"color: rgb(0, 136, 0);">/opt/</span><span style=3D"co=
+lor: rgb(0, 0, 0);">conda</span><span style=3D"color: rgb(102, 102, 0);">/<=
+/span><span style=3D"color: rgb(0, 0, 0);">bin</span><span style=3D"color: =
+rgb(102, 102, 0);">:</span><span style=3D"color: rgb(0, 0, 0);">$</span><sp=
+an style=3D"color: rgb(102, 102, 0);">{</span><span style=3D"color: rgb(0, =
+0, 0);">PATH</span><span style=3D"color: rgb(102, 102, 0);">}</span><span s=
+tyle=3D"color: rgb(0, 0, 0);"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 unset CONDA_D=
+EFAULT_ENV=C2=A0<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0=C2=A0</span><span style=3D"=
+color: rgb(0, 0, 136);">export</span><span style=3D"color: rgb(0, 0, 0);">=
+=C2=A0ANACONDA_HOME</span><span style=3D"color: rgb(102, 102, 0);">=3D</spa=
+n><span style=3D"color: rgb(0, 136, 0);">/opt/</span><span style=3D"color: =
+rgb(0, 0, 0);">conda<br><br></span><span style=3D"color: rgb(102, 102, 0);"=
+>%</span><span style=3D"color: rgb(0, 0, 0);">setup<br>=C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 apt install=C2=A0</span><span style=3D"color: rgb(102, 102, 0);">-<=
+/span><span style=3D"color: rgb(0, 0, 0);">y python</span><span style=3D"co=
+lor: rgb(102, 102, 0);">-</span><span style=3D"color: rgb(0, 0, 0);">apsw p=
+ython2</span><span style=3D"color: rgb(102, 102, 0);">.</span><span style=
+=3D"color: rgb(0, 102, 102);">7</span><span style=3D"color: rgb(0, 0, 0);">=
+=C2=A0sqlite3<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0=C2=A0</span><span style=3D"col=
+or: rgb(136, 0, 0);">#</span><span style=3D"color: rgb(0, 0, 0);"><br>=C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 mkdir $</span><span style=3D"color: rgb(102, 102, =
+0);">{</span><span style=3D"color: rgb(0, 0, 0);">SINGULARITY_ROOTFS</span>=
+<span style=3D"color: rgb(102, 102, 0);">}/</span><span style=3D"color: rgb=
+(0, 0, 0);">temp</span><span style=3D"color: rgb(102, 102, 0);">/</span><sp=
+an style=3D"color: rgb(0, 0, 0);"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 tar xfz b=
+iofilter</span><span style=3D"color: rgb(102, 102, 0);">-</span><span style=
+=3D"color: rgb(0, 102, 102);">2.4</span><span style=3D"color: rgb(102, 102,=
+ 0);">.</span><span style=3D"color: rgb(0, 102, 102);">1.tar</span><span st=
+yle=3D"color: rgb(102, 102, 0);">.</span><span style=3D"color: rgb(0, 0, 0)=
+;">gz $</span><span style=3D"color: rgb(102, 102, 0);">{</span><span style=
+=3D"color: rgb(0, 0, 0);">SINGULARITY_ROOTFS</span><span style=3D"color: rg=
+b(102, 102, 0);">}/</span><span style=3D"color: rgb(0, 0, 0);">temp</span><=
+span style=3D"color: rgb(102, 102, 0);">/</span><span style=3D"color: rgb(0=
+, 0, 0);"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 cd $</span><span style=3D"color: =
+rgb(102, 102, 0);">{</span><span style=3D"color: rgb(0, 0, 0);">SINGULARITY=
+_ROOTFS</span><span style=3D"color: rgb(102, 102, 0);">}/</span><span style=
+=3D"color: rgb(0, 0, 0);">temp</span><span style=3D"color: rgb(102, 102, 0)=
+;">/</span><span style=3D"color: rgb(0, 0, 0);"><br>=C2=A0 =C2=A0 =C2=A0 =
+=C2=A0=C2=A0</span><span style=3D"color: rgb(136, 0, 0);">#</span><span sty=
+le=3D"color: rgb(0, 0, 0);"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 python setup</s=
+pan><span style=3D"color: rgb(102, 102, 0);">.</span><span style=3D"color: =
+rgb(0, 0, 0);">py install=C2=A0</span><span style=3D"color: rgb(102, 102, 0=
+);">--</span><span style=3D"color: rgb(0, 0, 0);">prefix</span><span style=
+=3D"color: rgb(102, 102, 0);">=3D</span><span style=3D"color: rgb(0, 0, 0);=
+">$</span><span style=3D"color: rgb(102, 102, 0);">{</span><span style=3D"c=
+olor: rgb(0, 0, 0);">SINGULARITY_ROOTFS</span><span style=3D"color: rgb(102=
+, 102, 0);">}<wbr>/</span><span style=3D"color: rgb(0, 0, 0);">biofilter</s=
+pan><span style=3D"color: rgb(102, 102, 0);">/</span><span style=3D"color: =
+rgb(0, 0, 0);">=C2=A0</span><span style=3D"color: rgb(102, 102, 0);">--</sp=
+an><span style=3D"color: rgb(0, 0, 0);">ldprofile<br>=C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 python loki</span><span style=3D"color: rgb(102, 102, 0);">-</span><=
+span style=3D"color: rgb(0, 0, 0);">build</span><span style=3D"color: rgb(1=
+02, 102, 0);">.</span><span style=3D"color: rgb(0, 0, 0);">py=C2=A0</span><=
+span style=3D"color: rgb(102, 102, 0);">--</span><span style=3D"color: rgb(=
+0, 0, 0);">verbose=C2=A0</span><span style=3D"color: rgb(102, 102, 0);">--<=
+/span><span style=3D"color: rgb(0, 0, 0);">knowledge loki</span><span style=
+=3D"color: rgb(102, 102, 0);">.</span><span style=3D"color: rgb(0, 0, 0);">=
+db=C2=A0</span><span style=3D"color: rgb(102, 102, 0);">--</span><span styl=
+e=3D"color: rgb(0, 0, 0);">update<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0=C2=A0</spa=
+n><span style=3D"color: rgb(136, 0, 0);">#</span><span style=3D"color: rgb(=
+0, 0, 0);"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 rm=C2=A0</span><span style=3D"co=
+lor: rgb(102, 102, 0);">-</span><span style=3D"color: rgb(0, 0, 0);">rf $</=
+span><span style=3D"color: rgb(102, 102, 0);">{</span><span style=3D"color:=
+ rgb(0, 0, 0);">SINGULARITY_ROOTFS</span><span style=3D"color: rgb(102, 102=
+, 0);">}/</span><span style=3D"color: rgb(0, 0, 0);">temp</span><span style=
+=3D"color: rgb(102, 102, 0);">/</span><span style=3D"color: rgb(0, 0, 0);">=
+<br><br></span><span style=3D"color: rgb(102, 102, 0);">%</span><span style=
+=3D"color: rgb(0, 0, 0);">post<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 echo=C2=A0</s=
+pan><span style=3D"color: rgb(0, 136, 0);">&quot;nameserver 139.165.214.214=
+&quot;</span><span style=3D"color: rgb(0, 0, 0);">=C2=A0</span><span style=
+=3D"color: rgb(102, 102, 0);">|</span><span style=3D"color: rgb(0, 0, 0);">=
+=C2=A0tee=C2=A0</span><span style=3D"color: rgb(102, 102, 0);">/</span><spa=
+n style=3D"color: rgb(0, 0, 0);">etc</span><span style=3D"color: rgb(102, 1=
+02, 0);">/</span><span style=3D"color: rgb(0, 0, 0);">resolv</span><span st=
+yle=3D"color: rgb(102, 102, 0);">.</span><span style=3D"color: rgb(0, 0, 0)=
+;">conf=C2=A0</span><span style=3D"color: rgb(102, 102, 0);">&gt;</span><sp=
+an style=3D"color: rgb(0, 0, 0);">=C2=A0</span><span style=3D"color: rgb(0,=
+ 136, 0);">/dev/</span><span style=3D"color: rgb(0, 0, 136);">null</span><s=
+pan style=3D"color: rgb(0, 0, 0);"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0=C2=A0</s=
+pan><span style=3D"color: rgb(136, 0, 0);">#=C2=A0</span><span style=3D"col=
+or: rgb(0, 0, 0);"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0=C2=A0</span><span style=
+=3D"color: rgb(0, 0, 136);">export</span><span style=3D"color: rgb(0, 0, 0)=
+;">=C2=A0PATH</span><span style=3D"color: rgb(102, 102, 0);">=3D</span><spa=
+n style=3D"color: rgb(0, 136, 0);">/opt/</span><span style=3D"color: rgb(0,=
+ 0, 0);">conda</span><span style=3D"color: rgb(102, 102, 0);">/</span><span=
+ style=3D"color: rgb(0, 0, 0);">bin</span><span style=3D"color: rgb(102, 10=
+2, 0);">:</span><span style=3D"color: rgb(0, 0, 0);">$</span><span style=3D=
+"color: rgb(102, 102, 0);">{</span><span style=3D"color: rgb(0, 0, 0);">PAT=
+H</span><span style=3D"color: rgb(102, 102, 0);">}</span><span style=3D"col=
+or: rgb(0, 0, 0);"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 conda update=C2=A0</span=
+><span style=3D"color: rgb(102, 102, 0);">-</span><span style=3D"color: rgb=
+(0, 0, 0);">y conda<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 conda update=C2=A0</span=
+><span style=3D"color: rgb(102, 102, 0);">--</span><span style=3D"color: rg=
+b(0, 0, 0);">all=C2=A0<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0=C2=A0</span><span sty=
+le=3D"color: rgb(136, 0, 0);">#=C2=A0</span><span style=3D"color: rgb(0, 0,=
+ 0);"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 conda config=C2=A0</span><span style=
+=3D"color: rgb(102, 102, 0);">--</span><span style=3D"color: rgb(0, 0, 0);"=
+>add channels bioconda<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 conda config=C2=A0</s=
+pan><span style=3D"color: rgb(102, 102, 0);">--</span><span style=3D"color:=
+ rgb(0, 0, 0);">add channels conda</span><span style=3D"color: rgb(102, 102=
+, 0);">-</span><span style=3D"color: rgb(0, 0, 0);">forge<br>=C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 conda clean=C2=A0</span><span style=3D"color: rgb(102, 102, 0=
+);">--</span><span style=3D"color: rgb(0, 0, 0);">index</span><span style=
+=3D"color: rgb(102, 102, 0);">-</span><span style=3D"color: rgb(0, 0, 0);">=
+cache=C2=A0</span><span style=3D"color: rgb(102, 102, 0);">--</span><span s=
+tyle=3D"color: rgb(0, 0, 0);">tarballs=C2=A0</span><span style=3D"color: rg=
+b(102, 102, 0);">--</span><span style=3D"color: rgb(0, 0, 0);">packages=C2=
+=A0</span><span style=3D"color: rgb(102, 102, 0);">--</span><span style=3D"=
+color: rgb(0, 0, 0);">yes=C2=A0<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0=C2=A0</span>=
+<span style=3D"color: rgb(136, 0, 0);">#</span><span style=3D"color: rgb(0,=
+ 0, 0);"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 conda list=C2=A0</span><span style=
+=3D"color: rgb(102, 102, 0);">&gt;</span><span style=3D"color: rgb(0, 0, 0)=
+;">=C2=A0</span><span style=3D"color: rgb(0, 136, 0);">/conda.txt<br>=C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 touch /`date -u -Iseconds`</span><span style=3D"color=
+: rgb(0, 0, 0);"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0=C2=A0</span><span style=3D=
+"color: rgb(136, 0, 0);">#</span><span style=3D"color: rgb(0, 0, 0);"><br><=
+br></span><span style=3D"color: rgb(102, 102, 0);">%</span><span style=3D"c=
+olor: rgb(0, 0, 0);">labels<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 MAINTAINER laure=
+nt_fournier</span></code></div><div><br></div></div><div>Regards,</div><div=
+>Laurent.</div></div></blockquote></div></div>
+------=_Part_5091_1439097043.1512735105774--
+
+------=_Part_5090_220787550.1512735105773--

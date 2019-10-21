@@ -1,0 +1,100 @@
+Date: Mon, 9 Apr 2018 15:01:03 -0700 (PDT)
+From: =?UTF-8?Q?Erik_Sj=C3=B6lund?= <erik....@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <ef37a545-bb06-4546-ab4f-84237fa6e506@lbl.gov>
+Subject: What happens if argv[0] is NULL?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_22655_217180649.1523311263716"
+
+------=_Part_22655_217180649.1523311263716
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_22656_886598641.1523311263717"
+
+------=_Part_22656_886598641.1523311263717
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Regarding the file src/util/suid.c
+If argv[0] is equal to NULL before entering this code passage
+
+argv[0] =3D strdup(self);
+singularity_priv_drop_perm();
+execv(argv[0], argv);
+
+it seems argv is used without NULL termination in the execv() system call.
+Information from the process memory could then be sent as arguments to the
+/usr/local/libexec/singularity/bin/mount
+
+Maybe a user could use a symlink race condition to replace
+/usr/local/libexec/singularity/bin/mount
+with something else.=20
+It's a bit speculating from my side.
+
+Another question is if there is any secret information to reveal
+from the memory of the setuid process?
+
+I just did a quick test
+
+$ grep "allow setuid" /usr/local/etc/singularity/singularity.conf
+allow setuid =3D no=20
+$ cat main.c
+#include <unistd.h>
+int main() {
+  char* args[] =3D {NULL};
+  execv("/usr/local/libexec/singularity/bin/mount-suid",args);
+  return 0;
+}
+$ gcc main.c
+
+Before ./a.out was started, environment variables were set.
+
+When I replaced=20
+/usr/local/libexec/singularity/bin/mount
+with such a program
+
+#include <stdio.h>
+int main(int argc, char **argv) {
+  fprintf(stderr , "argc =3D %d\n", argc);
+  return 0;
+}
+
+the text "argc =3D 66" was printed on the terminal.
+
+Best regards
+Erik Sj=C3=B6lund
+
+------=_Part_22656_886598641.1523311263717
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Regarding the file src/util/suid.c<br></div><div>If a=
+rgv[0] is equal to NULL before entering this code passage</div><div><br></d=
+iv><div>argv[0] =3D strdup(self);</div><div>singularity_priv_drop_perm();<b=
+r></div><div>execv(argv[0], argv);<br></div><div><br></div><div>it seems ar=
+gv is used without NULL termination in the execv() system call.</div><div>I=
+nformation from the process memory could then be sent as arguments to the</=
+div><div>/usr/local/libexec/singularity/bin/mount<br></div><div><br></div><=
+div>Maybe a user could use a symlink race condition to replace</div><div>/u=
+sr/local/libexec/singularity/bin/mount<br></div><div>with something else.=
+=C2=A0</div><div>It&#39;s a bit speculating from my side.</div><div><br></d=
+iv><div>Another question is if there is any secret information to reveal</d=
+iv><div>from the memory of the setuid process?</div><div><br></div><div>I j=
+ust did a quick test</div><div><div><br></div><div>$ grep &quot;allow setui=
+d&quot; /usr/local/etc/singularity/singularity.conf</div><div>allow setuid =
+=3D no=C2=A0</div></div><div>$ cat main.c</div><div><div>#include &lt;unist=
+d.h&gt;</div><div>int main() {</div><div>=C2=A0 char* args[] =3D {NULL};</d=
+iv><div>=C2=A0 execv(&quot;/usr/local/libexec/singularity/bin/mount-suid&qu=
+ot;,args);</div><div>=C2=A0 return 0;</div><div>}</div></div><div>$ gcc mai=
+n.c</div><div><br></div><div>Before ./a.out was started, environment variab=
+les were set.<br></div><div><br></div><div>When I replaced=C2=A0</div><div>=
+/usr/local/libexec/singularity/bin/mount<br></div><div>with such a program<=
+/div><div><div><br></div><div>#include &lt;stdio.h&gt;</div></div><div>int =
+main(int argc, char **argv) {<br></div><div><div>=C2=A0 fprintf(stderr , &q=
+uot;argc =3D %d\n&quot;, argc);</div><div>=C2=A0 return 0;</div><div>}</div=
+></div><div><br></div><div>the text &quot;argc =3D 66&quot; was printed on =
+the terminal.</div><div><br></div><div>Best regards</div><div>Erik Sj=C3=B6=
+lund</div></div>
+------=_Part_22656_886598641.1523311263717--
+
+------=_Part_22655_217180649.1523311263716--

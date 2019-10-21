@@ -1,0 +1,215 @@
+Date: Tue, 27 Aug 2019 02:28:54 -0700 (PDT)
+From: Vang Le Quy <lqva...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <d74ad067-3c38-40ca-97ab-adeb2a891e7f@lbl.gov>
+In-Reply-To: <bece7fde-73f0-4b9b-852a-4bd9576cc968@lbl.gov>
+References: <bece7fde-73f0-4b9b-852a-4bd9576cc968@lbl.gov>
+Subject: Re: run ssh server in a Singularity container?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1929_1478408563.1566898134632"
+
+------=_Part_1929_1478408563.1566898134632
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1930_1520778174.1566898134632"
+
+------=_Part_1930_1520778174.1566898134632
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi Thomas and Oliver.
+
+I need a full instance of Ubuntu with tensorflow, GPU driver, etc to do 
+some machine learning inside the container. The ssh connection will allow 
+remote debug functionality for python code with pyCharm. So a light weight 
+busybox will not work. Regarding firewall, this reason can be excluded for 
+now, because I logged on to the FE and do ssh to localhost. More 
+importantly, the ssh service itself inside the instance is not running (see 
+terminal output at the end of my first email). So I must get the ssh server 
+up and running inside the instance first.
+
+Cheers
+Vang
+
+On Tuesday, August 27, 2019 at 9:44:01 AM UTC+2, Vang Le Quy wrote:
+>
+>
+> *This is my setup:*
+>
+> Laptop (LT) -> slurm front-end(FE) containing Singularity executable -> 
+> Compute node (CN) with GPUs, and also contains Singularity executable.
+>
+> FE and CN share a partition so users can have shared home directories 
+> between FE and CN.
+>
+> Singularity version: 3.3.0
+>
+> *Intermediate goal:*
+>
+> Start a singularity container/instance on FE, and SSH server service 
+> therein. Then do SSH from LT into that container.
+>
+> *Final Goal:*
+>
+> Submit a slurm job from FE which in turn start a Singularity 
+> container/instance on CN. SSH from LT to that Container on CN via FE 
+> because users can't logon to CN directly.
+>
+>
+> *My try so far:*
+>
+> This is my DEF file:
+>
+> #############
+> Bootstrap: docker
+> From: nvidia/tensorflow:19.05-py3
+> Registry: nvcr.io
+> IncludeCmd: yes
+>
+> %environment
+>     export LANG=en_US.UTF-8
+>
+> %post
+>     apt-get update && apt-get install -y --no-install-recommends apt-utils
+>     LANG=en_US.UTF-8
+>     # Language/locale settings
+>     echo $LANG UTF-8 > /etc/locale.gen
+>     apt-get install -y locales && update-locale --reset LANG=$LANG
+>
+>     apt-get install -y --no-install-recommends wget lsb-release parallel 
+> vim openssh-server
+>     systemctl enable ssh
+>
+> %startscript
+>     systemctl start ssh
+> ###############
+>
+> Build: 
+> singularity build --fakeroot tensorflow_19.05-py3.sif Singularity.def
+>
+> Run:
+> mkdir overlay
+> singularity instance start -B /run:/run  --writable-tmpfs --overlay 
+> $PWD/overlay  --fakeroot --net --network-args="portmap=2222:22/tcp" 
+> ./tensorflow_19.05-py3.sif sshins
+>
+> INFO:    Convert SIF file to sandbox...
+> WARNING: Ignoring --writable-tmpfs as it requires overlay support
+> Could not watch jobs: Operation not permitted
+>
+> INFO:    instance started successfully
+>
+> Test ssh server status:
+>
+> singularity shell instance://sshins
+> Singularity rootfs-054517279:/tmp/> whoami
+> root
+> Singularity rootfs-054517279:/tmp> service ssh status
+> Failed to retrieve unit: Access denied
+> Failed to get properties: Access denied
+> Singularity rootfs-054517279:/tmp> ps -ef
+> UID         PID   PPID  C STIME TTY          TIME CMD
+> root          1      0  0 07:33 ?        00:00:00 sinit
+> root         25      0  0 07:34 pts/27   00:00:00 /bin/bash --norc
+> root        253     25  0 07:35 pts/27   00:00:00 ps -ef
+>
+>
+> On FE:
+> ssh -p 2222 feuser@localhost
+> ssh: connect to host localhost port 2222: Connection refused
+>
+> This is a dead end to me at the moment. Any info and suggestions are 
+> welcome.
+>
+> Kind regards
+> Vang
+>
+
+------=_Part_1930_1520778174.1566898134632
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Hi Thomas and Oliver.</div><div><br></div><div>I need=
+ a full instance of Ubuntu with tensorflow, GPU driver, etc to do some mach=
+ine learning inside the container. The ssh connection will allow remote deb=
+ug functionality for python code with pyCharm. So a light weight busybox wi=
+ll not work. Regarding firewall, this reason can be excluded for now, becau=
+se I logged on to the FE and do ssh to localhost. More importantly, the ssh=
+ service itself inside the instance is not running (see terminal output at =
+the end of my first email). So I must get the ssh server up and running ins=
+ide the instance first.</div><div><br></div><div>Cheers</div><div>Vang<br><=
+/div><br>On Tuesday, August 27, 2019 at 9:44:01 AM UTC+2, Vang Le Quy wrote=
+:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;bo=
+rder-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr"><div><b><br>=
+</b></div><div><b>This is my setup:</b></div><div><span style=3D"font-famil=
+y:courier new,monospace"><br></span></div><div><span style=3D"font-family:c=
+ourier new,monospace">Laptop (LT) -&gt; slurm front-end(FE) containing Sing=
+ularity executable -&gt; Compute node (CN) with GPUs, and also contains Sin=
+gularity executable.</span></div><div><br></div><div>FE and CN share a part=
+ition so users can have shared home directories between FE and CN.</div><di=
+v><br></div><div>Singularity version: 3.3.0</div><div></div><div><br></div>=
+<div><b>Intermediate goal:</b></div><div><br></div><div>Start a singularity=
+ container/instance on FE, and SSH server service therein. Then do SSH from=
+ LT into that container.<br></div><div><br></div><div><b>Final Goal:</b></d=
+iv><div><br></div><div>Submit a slurm job from FE which in turn start a Sin=
+gularity container/instance on CN. SSH from LT to that Container on CN via =
+FE because users can&#39;t logon to CN directly.</div><div><br></div><div><=
+br></div><div><b>My try so far:</b></div><div><br></div><div>This is my DEF=
+ file:</div><div><br></div><div><span style=3D"font-family:courier new,mono=
+space">#############</span></div><div><span style=3D"font-family:courier ne=
+w,monospace">Bootstrap: docker<br>From: nvidia/tensorflow:19.05-py3<br>Regi=
+stry: <a href=3D"http://nvcr.io" target=3D"_blank" rel=3D"nofollow" onmouse=
+down=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fnvcr.i=
+o\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGCkPpMqfSCPvFW5vNVrqBgbRrDog&#39;=
+;return true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dh=
+ttp%3A%2F%2Fnvcr.io\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGCkPpMqfSCPvFW5=
+vNVrqBgbRrDog&#39;;return true;">nvcr.io</a><br>IncludeCmd: yes<br><br>%env=
+ironment<br>=C2=A0=C2=A0=C2=A0 export LANG=3Den_US.UTF-8<br><br>%post<br>=
+=C2=A0=C2=A0=C2=A0 apt-get update &amp;&amp; apt-get install -y --no-instal=
+l-recommends apt-utils<br>=C2=A0=C2=A0=C2=A0 LANG=3Den_US.UTF-8<br>=C2=A0=
+=C2=A0=C2=A0 # Language/locale settings<br>=C2=A0=C2=A0=C2=A0 echo $LANG UT=
+F-8 &gt; /etc/locale.gen<br>=C2=A0=C2=A0=C2=A0 apt-get install -y locales &=
+amp;&amp; update-locale --reset LANG=3D$LANG<br><br>=C2=A0=C2=A0=C2=A0 apt-=
+get install -y --no-install-recommends wget lsb-release parallel vim openss=
+h-server<br>=C2=A0=C2=A0=C2=A0 systemctl enable ssh<br><br>%startscript<br>=
+=C2=A0=C2=A0=C2=A0 systemctl start ssh</span></div><div><span style=3D"font=
+-family:courier new,monospace">###############</span><br></div><div><br></d=
+iv><div> Build: <br></div><div><span style=3D"font-family:courier new,monos=
+pace">singularity build --fakeroot tensorflow_19.05-py3.sif Singularity.def=
+</span></div><div></div><div><br></div><div>Run:</div><div><span style=3D"f=
+ont-family:courier new,monospace">mkdir overlay<br></span></div><div><span =
+style=3D"font-family:courier new,monospace">singularity instance start -B /=
+run:/run=C2=A0 --writable-tmpfs --overlay $PWD/overlay=C2=A0 --fakeroot --n=
+et --network-args=3D&quot;portmap=3D2222:<wbr>22/tcp&quot; ./tensorflow_19.=
+05-py3.sif sshins</span></div><div><span style=3D"font-family:courier new,m=
+onospace"><br></span></div><div><span style=3D"font-family:courier new,mono=
+space">INFO:=C2=A0=C2=A0=C2=A0 Convert SIF file to sandbox...<br>WARNING: I=
+gnoring --writable-tmpfs as it requires overlay support<br>Could not watch =
+jobs: Operation not permitted<br><br>INFO:=C2=A0=C2=A0=C2=A0 instance start=
+ed successfully</span></div><div><br></div><div>Test ssh server status:</di=
+v><div><br></div><div><span style=3D"font-family:courier new,monospace">sin=
+gularity shell instance://sshins<br>Singularity rootfs-054517279:/tmp/&gt; =
+whoami<br>root<br>Singularity rootfs-054517279:/tmp&gt; service ssh status<=
+br>Failed to retrieve unit: Access denied<br>Failed to get properties: Acce=
+ss denied</span></div><div><span style=3D"font-family:courier new,monospace=
+">Singularity rootfs-054517279:/tmp&gt; ps -ef<br>UID=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0 PID=C2=A0=C2=A0 PPID=C2=A0 C STIME TTY=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 TIME CMD<br>root=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 1=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =
+0=C2=A0 0 07:33 ?=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 00:00:00 sinit<=
+br>root=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 25=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0 0=C2=A0 0 07:34 pts/27=C2=A0=C2=A0 00:00:00 /bin/bash --nor=
+c<br>root=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 253=C2=A0=C2=A0=C2=A0=
+=C2=A0 25=C2=A0 0 07:35 pts/27=C2=A0=C2=A0 00:00:00 ps -ef<br></span></div>=
+<div><span style=3D"font-family:courier new,monospace"><br></span></div><di=
+v><span style=3D"font-family:courier new,monospace"><br></span></div><div><=
+span style=3D"font-family:courier new,monospace"><span style=3D"font-family=
+:arial,sans-serif">On FE:</span><br></span></div><div><span style=3D"font-f=
+amily:courier new,monospace">ssh -p 2222 feuser@localhost<br>ssh: connect t=
+o host localhost port 2222: Connection refused<br></span></div><div><br></d=
+iv><div>This is a dead end to me at the moment. Any info and suggestions ar=
+e welcome.</div><div><br></div><div>Kind regards</div><div>Vang<br></div></=
+div></blockquote></div>
+------=_Part_1930_1520778174.1566898134632--
+
+------=_Part_1929_1478408563.1566898134632--

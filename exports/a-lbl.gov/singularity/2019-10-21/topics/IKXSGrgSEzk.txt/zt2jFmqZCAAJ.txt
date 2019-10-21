@@ -1,0 +1,158 @@
+X-Received: by 10.107.3.201 with SMTP id e70mr498879ioi.6.1484711506342;
+        Tue, 17 Jan 2017 19:51:46 -0800 (PST)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.107.25.145 with SMTP id 139ls215640ioz.20.gmail; Tue, 17 Jan
+ 2017 19:51:45 -0800 (PST)
+X-Received: by 10.99.188.2 with SMTP id q2mr1526578pge.34.1484711505811;
+        Tue, 17 Jan 2017 19:51:45 -0800 (PST)
+Return-Path: <gmku...@lbl.gov>
+Received: from fe3.lbl.gov (fe3.lbl.gov. [128.3.41.68])
+        by mx.google.com with ESMTP id p83si26409562pfi.65.2017.01.17.19.51.45
+        for <singu...@lbl.gov>;
+        Tue, 17 Jan 2017 19:51:45 -0800 (PST)
+Received-SPF: pass (google.com: domain of gmku...@lbl.gov designates 209.85.213.200 as permitted sender) client-ip=209.85.213.200;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of gmku...@lbl.gov designates 209.85.213.200 as permitted sender) smtp.mailfrom=gmku...@lbl.gov
+X-Ironport-SBRS: 2.7
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2EIAQDG5X5Yf8jVVdFdHRgHDBgHgjhKAQEBAQFAPngRB4NKnCCCYI0hhSuBSBsoJoJGgzYCgVkHPxgBAQEBAQEBAQEBAQIQAQEJCwsKGzKCMxsJBD0KAy8BAQEBAQEBAQEBAQEBAQEaAg0xAyoBBAEYC1sLCws3AgIiEgEFARwGExSIZwgFowY/jAOCJYouAQEBBwEBAQEkEosahCSDKoJeBZAhixkBhl6LAoJIjiWRKBQegRQPEIFICDNdBYY6HTWGPYI9AQEB
+X-IronPort-AV: E=Sophos;i="5.33,247,1477983600"; 
+   d="scan'208,217";a="61078340"
+Received: from mail-yb0-f200.google.com ([209.85.213.200])
+  by fe3.lbl.gov with ESMTP; 17 Jan 2017 19:51:44 -0800
+Received: by mail-yb0-f200.google.com with SMTP id 186so1675412yby.5
+        for <singu...@lbl.gov>; Tue, 17 Jan 2017 19:51:44 -0800 (PST)
+X-Gm-Message-State: AIkVDXL3rfCSjcdHV0nf6GmxLRSONy701Ax8ZHLNKgpGblD8wyub4Cqc3nCn9cp/KqzWGfeq0w27gGoJqtAm3X9whaa0jA5p/HmywS/njdySVtPafNVMeH87TANLcR3FrBalEIsocoEMvwf+ZHXv7N8vBic=
+X-Received: by 10.13.227.4 with SMTP id m4mr1001591ywe.124.1484711504446;
+        Tue, 17 Jan 2017 19:51:44 -0800 (PST)
+X-Received: by 10.13.227.4 with SMTP id m4mr1001584ywe.124.1484711504250; Tue,
+ 17 Jan 2017 19:51:44 -0800 (PST)
+MIME-Version: 1.0
+Received: by 10.129.153.2 with HTTP; Tue, 17 Jan 2017 19:51:43 -0800 (PST)
+In-Reply-To: <8a569f24-bd38-4bf0-b025-5843a1525141@lbl.gov>
+References: <8a569f24-bd38-4bf0-b025-5843a1525141@lbl.gov>
+From: "Gregory M. Kurtzer" <gmku...@lbl.gov>
+Date: Tue, 17 Jan 2017 19:51:43 -0800
+Message-ID: <CAN7etTz5bYr-TTXJibNH+5qii9z_7pKpU_HXyR-SyNLiLRQk-A@mail.gmail.com>
+Subject: Re: [Singularity] Survey: MPI Hybrid mode vs MPI native?
+To: singularity <singu...@lbl.gov>
+Content-Type: multipart/alternative; boundary=94eb2c07d624ce38ff0546565562
+
+--94eb2c07d624ce38ff0546565562
+Content-Type: text/plain; charset=UTF-8
+
+On Tue, Jan 10, 2017 at 12:25 AM, 'Stefan Kombrink' via singularity <
+singu...@lbl.gov> wrote:
+
+> Happy new year, dear Singularity-community,
+>
+>  I am asking those of you using the MPI Hybrid mode with OpenMPI 2 for
+> sharing your experience.
+> What does the hybrid approach do for you that cannot be done by having MPI
+> within the container?
+>
+
+A few that come up quick for me are:
+
+* if MPI is inside container jobs are typically limited to single node runs
+* resource managers can not communicate reasonably to MPI inside container
+(e.g. no coupling of the MPI and RM)
+* In this model, MPI would try to interface with ssh within the container,
+and thus expect sshd running within the other containers (which is opening
+pandora's box on traditional HPC)
+
+
+>
+> We offer a large collection of software suites with various different MPI
+> version on our site.
+> To my understanding the hybrid approach is great if you utilize one
+> OpenMPI version mainly.
+>
+
+Hybrid also works with Intel MPI, MPICH, and MVAPICH (as has been reported
+to me). OpenMPI actually is the most finicky but it is what I am most
+familiar with so I tend to focus on that.
+
+
+>
+> Use cases I can think of are
+> - Easily run multi-node containers provided the hybrid MPI version
+> supports fast interconnects
+> - Containers can have MPI excluded entirely
+> - Container may utilize either its containerized MPI or a unified MPI
+> provided by the cluster environment
+>
+> So...If you use hybrid MPI - what are your motivations to do so?
+>
+>
+As I understand it, if/when more MPI's leverage PMIx this will become
+mostly a non-issue but I would defer to the PMIx powers that be (if any of
+them happen to be listening... <poke Ralph>!).
+
+Hope that helps and happy new year!
+
+-- 
+Gregory M. Kurtzer
+HPC Systems Architect and Technology Developer
+Lawrence Berkeley National Laboratory HPCS
+University of California Berkeley Research IT
+Singularity Linux Containers (http://singularity.lbl.gov/)
+Warewulf Cluster Management (http://warewulf.lbl.gov/)
+GitHub: https://github.com/gmkurtzer, Twitter: https://twitter.com/gmkurtzer
+
+--94eb2c07d624ce38ff0546565562
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><br><div class=3D"gmail_extra"><br><div class=3D"gmail_quo=
+te">On Tue, Jan 10, 2017 at 12:25 AM, &#39;Stefan Kombrink&#39; via singula=
+rity <span dir=3D"ltr">&lt;<a href=3D"mailto:singu...@lbl.gov" target=3D"_b=
+lank">singu...@lbl.gov</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_=
+quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1=
+ex"><div dir=3D"ltr">Happy new year, dear Singularity-community,<br><br>=C2=
+=A0I am asking those of you using the MPI Hybrid mode with OpenMPI 2 for sh=
+aring your experience.<br>What does the hybrid approach do for you that can=
+not be done by having MPI within the container?<br></div></blockquote><div>=
+<br></div><div>A few that come up quick for me are:</div><div><br></div><di=
+v>* if MPI is inside container jobs are typically limited to single node ru=
+ns</div><div>* resource managers can not communicate reasonably to MPI insi=
+de container (e.g. no coupling of the MPI and RM)</div><div>* In this model=
+, MPI would try to interface with ssh within the container, and thus expect=
+ sshd running within the other containers (which is opening pandora&#39;s b=
+ox on traditional HPC)</div><div>=C2=A0</div><blockquote class=3D"gmail_quo=
+te" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"=
+><div dir=3D"ltr"><br>We offer a large collection of software suites with v=
+arious different MPI version on our site.<br>To my understanding the hybrid=
+ approach is great if you utilize one OpenMPI version mainly.<br></div></bl=
+ockquote><div><br></div><div>Hybrid also works with Intel MPI, MPICH, and M=
+VAPICH (as has been reported to me). OpenMPI actually is the most finicky b=
+ut it is what I am most familiar with so I tend to focus on that.</div><div=
+>=C2=A0</div><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;b=
+order-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr"><br>Use cases =
+I can think of are<br>- Easily run multi-node containers provided the hybri=
+d MPI version supports fast interconnects<br>- Containers can have MPI excl=
+uded entirely<br>- Container may utilize either its containerized MPI or a =
+unified MPI provided by the cluster environment<br><br>So...If you use hybr=
+id MPI - what are your motivations to do so?<span class=3D"HOEnZb"><font co=
+lor=3D"#888888"><br><br></font></span></div></blockquote><div><br></div><di=
+v>As I understand it, if/when more MPI&#39;s leverage PMIx this will become=
+ mostly a non-issue but I would defer to the PMIx powers that be (if any of=
+ them happen to be listening... &lt;poke Ralph&gt;!).</div><div><br></div><=
+div>Hope that helps and happy new year!</div></div><div><br></div>-- <br><d=
+iv class=3D"gmail_signature" data-smartmail=3D"gmail_signature"><div dir=3D=
+"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><di=
+v dir=3D"ltr"><div dir=3D"ltr"><div>Gregory M. Kurtzer</div><div>HPC System=
+s Architect and Technology Developer</div><div>Lawrence Berkeley National L=
+aboratory HPCS<br>University of California Berkeley Research IT<br>Singular=
+ity Linux Containers=C2=A0(<a href=3D"http://singularity.lbl.gov/" target=
+=3D"_blank">http://singularity.lbl.gov/</a>)</div><div>Warewulf Cluster Man=
+agement=C2=A0(<a href=3D"http://warewulf.lbl.gov/" target=3D"_blank">http:/=
+/warewulf.lbl.gov/</a>)</div><div>GitHub:=C2=A0<a href=3D"https://github.co=
+m/gmkurtzer" target=3D"_blank">https://github.com/gmkurtzer</a>,=C2=A0<span=
+ style=3D"font-size:12.8px">Twitter:=C2=A0</span><a href=3D"https://twitter=
+.com/gmkurtzer" style=3D"font-size:12.8px" target=3D"_blank">https://twitte=
+r.com/gmkurtzer</a></div></div></div></div></div></div></div></div></div></=
+div></div>
+</div></div>
+
+--94eb2c07d624ce38ff0546565562--

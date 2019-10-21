@@ -1,0 +1,245 @@
+Date: Thu, 29 Jun 2017 15:29:58 -0700 (PDT)
+From: Joshua Studen <joshua...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <cac16257-91be-42f3-be8f-6e5905111597@lbl.gov>
+In-Reply-To: <CAM=pu++xvnVWG1aov6X93ZeB9jwth6=rMr=V__Yj8pY7ttcsUQ@mail.gmail.com>
+References: <1f2912b6-7d91-47d6-9e05-7e0c317d14fe@lbl.gov> <CAM=pu++Re3wt+UGUjddKb3dFUBrnk1gPYC6MOeGMMQQyNyBVpQ@mail.gmail.com>
+ <9853631e-4eaa-4aad-a0eb-15ea69e69e22@lbl.gov> <CAM=pu+L6WtAryb+S4GS1gzEFZNOmw61cOB0y_7p56HV_TJuPQw@mail.gmail.com>
+ <50223e5e-62ad-4afb-99cf-06f70e6e23ed@lbl.gov>
+ <CAM=pu++xvnVWG1aov6X93ZeB9jwth6=rMr=V__Yj8pY7ttcsUQ@mail.gmail.com>
+Subject: Re: [Singularity] How to create an image from local node?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_83_185559133.1498775398210"
+
+------=_Part_83_185559133.1498775398210
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_84_1734286462.1498775398210"
+
+------=_Part_84_1734286462.1498775398210
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+What Tru has suggested seems like it might be a feasible solution? From 
+looking at the documentation, piping in a tar file into singularity import 
+seems to be sufficient, so long as I make sure I get everything I need. 
+
+On Thursday, June 29, 2017 at 2:57:10 PM UTC-7, vanessa wrote:
+>
+> This is an amazing idea! It's something that I wanted to try, but hadn't 
+> really thought about how to go about it. If a user / someone is able to 
+> package the node where he/she is actively working, this basically let's us 
+> create a workflow like:
+>
+> 1. user logs into node
+> 2. user does work, perhaps it's recorded in history (to save and mimic as 
+> some kind of deffile)
+> 3. when user is finished, some kind of trigger is done (or running a 
+> command for an admin to do so) to package the node
+> 4. the node is packaged, moved somewhere where it can be turned into an 
+> image.
+> 5. the image is made available for the user.
+>
+> There are many concerns with regard to security - namely being that "files 
+> with credentials you forgot about" could be exposed. I'm also not sure we 
+> would capture everything that is needed? (would we miss anything from the 
+> environment?)
+>
+> If anyone is interested, I'd like to develop this - I think it would be 
+> hugely useful for many different things. To get us started, I created some 
+> starting functions to package and unpack that I got working, on a google 
+> cloud node. I wrote up complete instructions here:
+>
+>
+>> https://github.com/vsoch/singularity-python/tree/development/examples/create/package_node
+>
+>
+> The final function would live with singularity-python proper, and for now 
+> it's on singularity-python (vsoch development) branch. If you don't want to 
+> read the link, the steps come down to:
+>
+> *On Node*
+>
+> from singularity.package import package_node
+>> package = package_node() 
+>
+>  
+>
+> package
+>> '/tmp/tmp06ww_8_n/vanessa-testing-self-cloning.tgz'
+>>
+>
+> *On Host*
+>
+> from singularity.package import unpack_node
+>> image = unpack_node(image_path=package,size=9000)
+>
+>
+> It creates a container without the essential metadata folders (eg 
+> .singularity.d/) so we would need to 1) add those, possibly via bootstrap 
+> flow? And then 2. check things like permissions, groups, etc.
+>
+> Thoughts?? This is wicked!! 
+>
+>
+>
+> On Thu, Jun 29, 2017 at 4:29 PM, Joshua Studen <jos...@gmail.com 
+> <javascript:>> wrote:
+>
+>> So I guess I don't understand why I need to upload an OS to some URL just 
+>> to pull it later? The files I have on my local node should be all the files 
+>> I need to create a local image.. I have a /usr/bin a /usr/local/bin, /opt 
+>> /etc etc, etc, etc. What is preventing me from just creating an image from 
+>> these files directly? 
+>>
+>> something like singularity create localimage.img --include 
+>> /usr:/opt:/etc:/sys and so on and so forth? When I look inside a downloaded 
+>> container image for say centos7, all it contains is basically those 
+>> directories and files.
+>>
+>> On Wednesday, June 28, 2017 at 5:02:27 PM UTC-7, vanessa wrote:
+>>>
+>>> Oh, interesting. If you don't want to download anything, including a 
+>>> mirror URL, then I suppose your only option is to import the same kinds of 
+>>> files, but FTP / transferred to your filesystem? What is your plan for 
+>>> downloading any kind of file if you don't have an internet connection - do 
+>>> you want to build locally? But then where are the dependencies coming from?
+>>>
+>>> What you can't do is create an operating system out of nothing. If you 
+>>> want super minimal base images to work with, then you could either host a 
+>>> Docker registry and pull (and keep and close off) the layers for building 
+>>> custom images on top of, or you could do the same with mirror urls. The 
+>>> most basic images I know tend to be in the alpine/busybox family, but there 
+>>> are likely many others to choose from. What might be cool is to see if you 
+>>> can package up the system you are using (eg one node from another) and then 
+>>> dump that into a container. You would use the "create" command to create an 
+>>> image, and then import the layers or tar.gz.
+>>>
+>>>
+>>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_84_1734286462.1498775398210
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">What Tru has suggested seems like it might be a feasible s=
+olution? From looking at the documentation, piping in a tar file into singu=
+larity import seems to be sufficient, so long as I make sure I get everythi=
+ng I need.=C2=A0<br><br>On Thursday, June 29, 2017 at 2:57:10 PM UTC-7, van=
+essa wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left=
+: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">Th=
+is is an amazing idea! It&#39;s something that I wanted to try, but hadn&#3=
+9;t really thought about how to go about it. If a user / someone is able to=
+ package the node where he/she is actively working, this basically let&#39;=
+s us create a workflow like:<div><br></div><div>1. user logs into node</div=
+><div>2. user does work, perhaps it&#39;s recorded in history (to save and =
+mimic as some kind of deffile)</div><div>3. when user is finished, some kin=
+d of trigger is done (or running a command for an admin to do so) to packag=
+e the node</div><div>4. the node is packaged, moved somewhere where it can =
+be turned into an image.</div><div>5. the image is made available for the u=
+ser.</div><div><br></div><div>There are many concerns with regard to securi=
+ty - namely being that &quot;files with credentials you forgot about&quot; =
+could be exposed. I&#39;m also not sure we would capture everything that is=
+ needed? (would we miss anything from the environment?)</div><div><br></div=
+><div>If anyone is interested, I&#39;d like to develop this - I think it wo=
+uld be hugely useful for many different things. To get us started, I create=
+d some starting functions to package and unpack that I got working, on a go=
+ogle cloud node. I wrote up complete instructions here:</div><div><br></div=
+><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border=
+-left:1px solid rgb(204,204,204);padding-left:1ex"><a href=3D"https://githu=
+b.com/vsoch/singularity-python/tree/development/examples/create/package_nod=
+e" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;https=
+://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fvsoch%2Fsingularity-p=
+ython%2Ftree%2Fdevelopment%2Fexamples%2Fcreate%2Fpackage_node\x26sa\x3dD\x2=
+6sntz\x3d1\x26usg\x3dAFQjCNFxygxVshuPWk43GTyPM0pJcbflag&#39;;return true;" =
+onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fg=
+ithub.com%2Fvsoch%2Fsingularity-python%2Ftree%2Fdevelopment%2Fexamples%2Fcr=
+eate%2Fpackage_node\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFxygxVshuPWk43G=
+TyPM0pJcbflag&#39;;return true;">https://github.com/vsoch/<wbr>singularity-=
+python/tree/<wbr>development/examples/create/<wbr>package_node</a></blockqu=
+ote><div><br></div><div>The final function would live with singularity-pyth=
+on proper, and for now it&#39;s on singularity-python (vsoch development) b=
+ranch. If you don&#39;t want to read the link, the steps come down to:</div=
+><div><b><br></b></div><div><b>On Node</b></div><div><b><br></b></div><bloc=
+kquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:=
+1px solid rgb(204,204,204);padding-left:1ex">from singularity.package impor=
+t package_node<br>package =3D package_node()=C2=A0</blockquote><blockquote =
+class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px sol=
+id rgb(204,204,204);padding-left:1ex">=C2=A0</blockquote><blockquote class=
+=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rg=
+b(204,204,204);padding-left:1ex">package<br>&#39;/tmp/tmp06ww_8_n/vanessa-<=
+wbr>testing-self-cloning.tgz&#39;<br></blockquote><div><br></div><div><b>On=
+ Host</b></div><div><br></div><div><blockquote class=3D"gmail_quote" style=
+=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding=
+-left:1ex">from singularity.package import unpack_node<br>image =3D unpack_=
+node(image_path=3D<wbr>package,size=3D9000)</blockquote><div><br></div><div=
+>It creates a container without the essential metadata folders (eg .singula=
+rity.d/) so we would need to 1) add those, possibly via bootstrap flow? And=
+ then 2. check things like permissions, groups, etc.</div><div><br></div><d=
+iv>Thoughts?? This is wicked!!=C2=A0</div></div><div><br></div><div><br></d=
+iv></div><div><br><div class=3D"gmail_quote">On Thu, Jun 29, 2017 at 4:29 P=
+M, Joshua Studen <span dir=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_b=
+lank" gdf-obfuscated-mailto=3D"-XSf6rGhAQAJ" rel=3D"nofollow" onmousedown=
+=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D=
+&#39;javascript:&#39;;return true;">jos...@gmail.com</a>&gt;</span> wrote:<=
+br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left=
+:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">So I guess I don&#39;t u=
+nderstand why I need to upload an OS to some URL just to pull it later? The=
+ files I have on my local node should be all the files I need to create a l=
+ocal image.. I have a /usr/bin a /usr/local/bin, /opt /etc etc, etc, etc. W=
+hat is preventing me from just creating an image from these files directly?=
+=C2=A0<div><br></div><div>something like singularity create localimage.img =
+--include /usr:/opt:/etc:/sys and so on and so forth? When I look inside a =
+downloaded container image for say centos7, all it contains is basically th=
+ose directories and files.<span><br><br>On Wednesday, June 28, 2017 at 5:02=
+:27 PM UTC-7, vanessa wrote:<blockquote class=3D"gmail_quote" style=3D"marg=
+in:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><div di=
+r=3D"ltr">Oh, interesting. If you don&#39;t want to download anything, incl=
+uding a mirror URL, then I suppose your only option is to import the same k=
+inds of files, but FTP / transferred to your filesystem? What is your plan =
+for downloading any kind of file if you don&#39;t have an internet connecti=
+on - do you want to build locally? But then where are the dependencies comi=
+ng from?<div><br></div><div>What you can&#39;t do is create an operating sy=
+stem out of nothing. If you want super minimal base images to work with, th=
+en you could either host a Docker registry and pull (and keep and close off=
+) the layers for building custom images on top of, or you could do the same=
+ with mirror urls. The most basic images I know tend to be in the alpine/bu=
+sybox family, but there are likely many others to choose from. What might b=
+e cool is to see if you can package up the system you are using (eg one nod=
+e from another) and then dump that into a container. You would use the &quo=
+t;create&quot; command to create an image, and then import the layers or ta=
+r.gz.<br></div><div><div>
+</div><div><br></div><div><br></div></div></div>
+</blockquote></span></div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+-XSf6rGhAQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><d=
+iv>(603) 321-0676</div></div></div></div>
+</div>
+</blockquote></div>
+------=_Part_84_1734286462.1498775398210--
+
+------=_Part_83_185559133.1498775398210--

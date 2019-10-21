@@ -1,0 +1,165 @@
+Date: Tue, 18 Sep 2018 13:22:28 -0700 (PDT)
+From: Mike Moore <wxdu...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <b7759a4e-8f63-414a-90e9-f5c6cc6a6cf5@lbl.gov>
+In-Reply-To: <1D6C3063-CDAA-4845-887B-C700DCB1DC4C@sylabs.io>
+References: <8ca86754-1ce0-4dc6-98bf-61b10c908084@lbl.gov>
+ <1D6C3063-CDAA-4845-887B-C700DCB1DC4C@sylabs.io>
+Subject: Re: [Singularity] sregistry-cli cross-os compatibility issue
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2436_1494255025.1537302148410"
+
+------=_Part_2436_1494255025.1537302148410
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2437_1583467992.1537302148410"
+
+------=_Part_2437_1583467992.1537302148410
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+
+
+On Tuesday, September 18, 2018 at 3:37:22 PM UTC-4, David Trudgian wrote:
+>
+> Hi Mike,
+>
+> Most usually this type of stuff is caused by some python packages in your=
+=20
+> $HOME. Singularity mounts $HOME into the container by default, so python=
+=20
+> inside the container can see anything you=E2=80=99ve installed on the hos=
+t with=20
+> `pip install =E2=80=94user` etc.
+>
+> Can you try running the container with the =E2=80=94contain option to Sin=
+gularity?=20
+> This will avoid any issues from what=E2=80=99s on $HOME
+>
+> If there=E2=80=99s still stuff wonky can you send debug output from runni=
+ng=20
+> singularity with `-d` and provide complete info on how the container was=
+=20
+> built?
+>
+> Cheers,
+>
+> DT
+>
+=20
+Hi Dave,
+
+  Well..  This is completely crazy. =20
+
+  I tried to run singularity with the --contain option:  singularity shell=
+=20
+--contain sregistry.simg
+
+I get the following:
+
+ERROR  : Multiple devpts instances unsupported and "mount devpts" configure=
+d
+ABORT  : Retval =3D 255
+
+So, I tried to run the container on another CentOS 6 system that has a=20
+different home directory on our shared cluster storage for myself with=20
+nothing python related in my home directory...  I get the same failures.
+A third system (VM with local home directory) that I use for basic dev=20
+testing, same CentOS 6 image but empty home.  It works.
+
+I don't have any python virtualenv's in my home directory.  I have some=20
+directories that are expanded tarballs from pypi, but I'm not a huge python=
+=20
+user.
+
+In my /etc/singularity/singularity.conf file, we have the following set:
+
+
+allow setuid =3D yes
+max loop devices =3D 256
+allow pid ns =3D yes
+config passwd =3D yes
+config group =3D yes
+config resolv_conf =3D yes
+mount proc =3D yes
+mount sys =3D yes
+mount dev =3D yes
+mount devpts =3D yes
+mount home =3D yes
+mount tmp =3D yes
+mount hostfs =3D no
+bind path =3D /etc/localtime
+bind path =3D /etc/hosts
+bind path =3D /gpfs
+bind path =3D /fs
+bind path =3D /.local/work
+bind path =3D /work
+bind path =3D /ceph
+user bind control =3D yes
+enable overlay =3D try
+mount slave =3D yes
+sessiondir max size =3D 16
+allow container dir =3D yes
+allow container extfs =3D yes
+allow container squashfs =3D yes
+
+I am using the puppet forge module to configure singularity.conf.  Our=20
+environment is very customized at the current time.  I am trying to use=20
+Singularity to contain the customization into the container allowing us to=
+=20
+make the bare-metal image sane.  I also tried to build an image from the=20
+sregistry-cli recipe available on Singularity Hub.  I got the exact same=20
+behavior....
+
+------=_Part_2437_1583467992.1537302148410
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><br><br>On Tuesday, September 18, 2018 at 3:37:22 PM UTC-4=
+, David Trudgian wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0=
+;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div st=
+yle=3D"word-wrap:break-word;line-break:after-white-space">Hi Mike,<div><br>=
+</div><div>Most usually this type of stuff is caused by some python package=
+s in your $HOME. Singularity mounts $HOME into the container by default, so=
+ python inside the container can see anything you=E2=80=99ve installed on t=
+he host with `pip install =E2=80=94user` etc.</div><div><br></div><div>Can =
+you try running the container with the =E2=80=94contain option to Singulari=
+ty? This will avoid any issues from what=E2=80=99s on $HOME</div><div><br><=
+/div><div>If there=E2=80=99s still stuff wonky can you send debug output fr=
+om running singularity with `-d` and provide complete info on how the conta=
+iner was built?</div><div><br></div><div>Cheers,</div><div><br></div><div>D=
+T<br></div></div></blockquote><div>=C2=A0<br>Hi Dave,<br><br>=C2=A0 Well..=
+=C2=A0 This is completely crazy.=C2=A0 <br><br>=C2=A0 I tried to run singul=
+arity with the --contain option:=C2=A0 <span style=3D"font-family: courier =
+new,monospace;">singularity shell --contain sregistry.simg<br><br><font fac=
+e=3D"arial,sans-serif">I get the following:<br><span style=3D"color: rgb(25=
+5, 0, 0);"><span style=3D"font-family: courier new,monospace;"><br>ERROR=C2=
+=A0 : Multiple devpts instances unsupported and &quot;mount devpts&quot; co=
+nfigured<br>ABORT=C2=A0 : Retval =3D 255</span></span><br><br>So, I tried t=
+o run the container on another CentOS 6 system that has a different home di=
+rectory on our shared cluster storage for myself with nothing python relate=
+d in my home directory...=C2=A0 I get the same failures.<br>A third system =
+(VM with local home directory) that I use for basic dev testing, same CentO=
+S 6 image but empty home.=C2=A0 It works.<br><br>I don&#39;t have any pytho=
+n virtualenv&#39;s in my home directory.=C2=A0 I have some directories that=
+ are expanded tarballs from pypi, but I&#39;m not a huge python user.<br><b=
+r>In my /etc/singularity/singularity.conf file, we have the following set:<=
+br><span style=3D"font-family: courier new,monospace;"><br><br>allow setuid=
+ =3D yes<br>max loop devices =3D 256<br>allow pid ns =3D yes<br>config pass=
+wd =3D yes<br>config group =3D yes<br>config resolv_conf =3D yes<br>mount p=
+roc =3D yes<br>mount sys =3D yes<br>mount dev =3D yes<br>mount devpts =3D y=
+es<br>mount home =3D yes<br>mount tmp =3D yes<br>mount hostfs =3D no<br>bin=
+d path =3D /etc/localtime<br>bind path =3D /etc/hosts<br>bind path =3D /gpf=
+s<br>bind path =3D /fs<br>bind path =3D /.local/work<br>bind path =3D /work=
+<br>bind path =3D /ceph<br>user bind control =3D yes<br>enable overlay =3D =
+try<br>mount slave =3D yes<br>sessiondir max size =3D 16<br>allow container=
+ dir =3D yes<br>allow container extfs =3D yes<br>allow container squashfs =
+=3D yes<br></span><br>I am using the puppet forge module to configure singu=
+larity.conf.=C2=A0 Our environment is very customized at the current time.=
+=C2=A0 I am trying to use Singularity to contain the customization into the=
+ container allowing us to make the bare-metal image sane.=C2=A0 I also trie=
+d to build an image from the sregistry-cli recipe available on Singularity =
+Hub.=C2=A0 I got the exact same behavior....<br></font></span></div></div>
+------=_Part_2437_1583467992.1537302148410--
+
+------=_Part_2436_1494255025.1537302148410--

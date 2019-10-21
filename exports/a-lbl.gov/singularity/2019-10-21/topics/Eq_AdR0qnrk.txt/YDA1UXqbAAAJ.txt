@@ -1,0 +1,650 @@
+X-Received: by 2002:a17:902:6902:: with SMTP id j2-v6mr513180plk.16.1518751889786;
+        Thu, 15 Feb 2018 19:31:29 -0800 (PST)
+X-BeenThere: singularity@lbl.gov
+Received: by 2002:a17:902:3084:: with SMTP id v4-v6ls480159plb.4.gmail; Thu,
+ 15 Feb 2018 19:31:28 -0800 (PST)
+X-Received: by 2002:a17:902:848b:: with SMTP id c11-v6mr993332plo.372.1518751888438;
+        Thu, 15 Feb 2018 19:31:28 -0800 (PST)
+ARC-Seal: i=1; a=rsa-sha256; t=1518751888; cv=none;
+        d=google.com; s=arc-20160816;
+        b=00OrTKBL5t2BuxWQAZKI+3NVbAHeCqD3rWIVFKN6eVRkD0DQhaTZwkoxsOdBULfXWx
+         j3ituDFAJ8SHng4GP+IlfT86uMA+DFrGxpbN6ktHYOJJSvelspNznrY27lceGrLEWAYj
+         JcXW1/VJy7jfl9lCNeca+/fWP956QuO7YOVAFcg8JkvOPBiJcsO9l4NwfRnoiszmdaM8
+         eeR41cekysa5v70zGnKh7RkMXWrR3RXHJcaUiCyvJo4nM9qiWkxi1YITeIQdRWr2+IGj
+         2lBue3Ae3v7w510EI0YRunUlgybGKCjXZLnm0h53u3+X3dFWgdbf1Y+4h+TeDTKxCpcu
+         mscQ==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816;
+        h=mime-version:content-language:accept-language:in-reply-to
+         :references:message-id:date:thread-index:thread-topic:subject:cc:to
+         :from:arc-authentication-results;
+        bh=GgGwUyHq07LEPs9gYnOiHNszyvgT8eNdE+6jcRG0fB0=;
+        b=R3l5uamXZssL1E5EVbB9Nu1Eq4xptvX/eqQ6paxJ4z5Ydf6OvEHWOqd5O2QXNhftP+
+         3i6+SSSaK+H4MTp7qIJixgpFaFWRnJw44SUYCNDvn5Rs8xtM08E0rBZU4YdDlR1AuYjE
+         sCpEtVGabXjL7DlSindFNbhI2wVCwrToxcpg9P5+hsIvoSHugOGBZYNVQ+CidIc3OIFc
+         g/pTKIrH91/f7ePiVYDhXUPZuqRK0xnXMyAIl0fThi5keW5H4Bg4xYUPAsZtqHaHu+3Q
+         RvzCuCtccgk+uSgfD4KRrIk4yYekmpxR0bwnK039QEbAeyY7wZsTnuwvCMeJK+iqVyCp
+         TcVA==
+ARC-Authentication-Results: i=1; mx.google.com;
+       spf=pass (google.com: domain of mka...@sdsc.edu designates 132.239.0.122 as permitted sender) smtp.mailfrom=mka...@sdsc.edu
+Return-Path: <mka...@sdsc.edu>
+Received: from fe3.lbl.gov (fe3.lbl.gov. [128.3.41.68])
+        by mx.google.com with ESMTP id g13si855353pgu.229.2018.02.15.19.31.28
+        for <singu...@lbl.gov>;
+        Thu, 15 Feb 2018 19:31:28 -0800 (PST)
+Received-SPF: pass (google.com: domain of mka...@sdsc.edu designates 132.239.0.122 as permitted sender) client-ip=132.239.0.122;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of mka...@sdsc.edu designates 132.239.0.122 as permitted sender) smtp.mailfrom=mka...@sdsc.edu
+X-Ironport-SBRS: 2.2
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: =?us-ascii?q?A0F+AgCnToZaenoA74RcGQEBAQEBAQEBA?=
+ =?us-ascii?q?QEBAQcBAQEBAYJaIimBE3AoCoNUiyCNDoICgReHf4hqhVwVgX8EAQkYAQaFHAK?=
+ =?us-ascii?q?CQlUXAQIBAQEBAQECAQIQAQEJCwwHKCQLgjgFAgMaBglLWQEBAQEBASMCE1cBA?=
+ =?us-ascii?q?QEBA04XFBACAQgRBAEBCx0HIRABFAkIAgQIBgEEAQcVBIhAcEwDFQEEC7EMhz0?=
+ =?us-ascii?q?NRwEHY4ITAQEBAQEBAQEBAQEBAQEBAQEBAQEBHYUDgieBWIFngy6CazmBSwESA?=
+ =?us-ascii?q?SE0gxKCNAWKc4gpkGE1AwYCkHiJL5Aijk2GGIM3gTwgAWoucXITPYJGCYRueAE?=
+ =?us-ascii?q?Pi0dJXAGBGAEBAQ?=
+X-IPAS-Result: =?us-ascii?q?A0F+AgCnToZaenoA74RcGQEBAQEBAQEBAQEBAQcBAQEBAYJ?=
+ =?us-ascii?q?aIimBE3AoCoNUiyCNDoICgReHf4hqhVwVgX8EAQkYAQaFHAKCQlUXAQIBAQEBA?=
+ =?us-ascii?q?QECAQIQAQEJCwwHKCQLgjgFAgMaBglLWQEBAQEBASMCE1cBAQEBA04XFBACAQg?=
+ =?us-ascii?q?RBAEBCx0HIRABFAkIAgQIBgEEAQcVBIhAcEwDFQEEC7EMhz0NRwEHY4ITAQEBA?=
+ =?us-ascii?q?QEBAQEBAQEBAQEBAQEBAQEBHYUDgieBWIFngy6CazmBSwESASE0gxKCNAWKc4g?=
+ =?us-ascii?q?pkGE1AwYCkHiJL5Aijk2GGIM3gTwgAWoucXITPYJGCYRueAEPi0dJXAGBGAEBA?=
+ =?us-ascii?q?Q?=
+X-IronPort-AV: E=Sophos;i="5.46,519,1511856000"; 
+   d="scan'208,217";a="106203286"
+Received: from iport-bcv4-out.ucsd.edu ([132.239.0.122])
+  by fe3.lbl.gov with ESMTP; 15 Feb 2018 19:31:26 -0800
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: =?us-ascii?q?A2FoAQBYT4Za/3IA74RcGQEBAQEBAQEBA?=
+ =?us-ascii?q?QEBAQcBAQEBAYJaIimBE3AoCoNUiyCPEIEXh3+ORhWBfwQBCRgBBoUcAoMYFgE?=
+ =?us-ascii?q?CAQEBAQEBAgECaB0LgjgFAgMaBglLWQEBAQEBASMCE1cBAQEBA04XFBACAQgRB?=
+ =?us-ascii?q?AEBCx0HIRABFAkIAgQIBgEEAQcVBIhAcEwDFQEPsQuHPQ1HAQdjghMBAQEBAQE?=
+ =?us-ascii?q?BAQEBAQEBAQEBAQEBAQEdhQODf4Fngy6CazmBSwESASE0gxKCNAWKc4gpkGE1A?=
+ =?us-ascii?q?wYCkHiJL5Aijk2GGIM3gTwmBC8yLnFyEz2CRgmEbngBD4tHSVwBgRgBAQE?=
+X-IPAS-Result: =?us-ascii?q?A2FoAQBYT4Za/3IA74RcGQEBAQEBAQEBAQEBAQcBAQEBAYJ?=
+ =?us-ascii?q?aIimBE3AoCoNUiyCPEIEXh3+ORhWBfwQBCRgBBoUcAoMYFgECAQEBAQEBAgECa?=
+ =?us-ascii?q?B0LgjgFAgMaBglLWQEBAQEBASMCE1cBAQEBA04XFBACAQgRBAEBCx0HIRABFAk?=
+ =?us-ascii?q?IAgQIBgEEAQcVBIhAcEwDFQEPsQuHPQ1HAQdjghMBAQEBAQEBAQEBAQEBAQEBA?=
+ =?us-ascii?q?QEBAQEdhQODf4Fngy6CazmBSwESASE0gxKCNAWKc4gpkGE1AwYCkHiJL5Aijk2?=
+ =?us-ascii?q?GGIM3gTwmBC8yLnFyEz2CRgmEbngBD4tHSVwBgRgBAQE?=
+X-IronPort-AV: E=Sophos;i="5.46,519,1511856000"; 
+   d="scan'208,217";a="28157525"
+X-Spam-Status: No
+X-Spam-Level: 
+Received: from xcore-cub2.ucsd.edu (HELO XCORE-CUB2.AD.UCSD.EDU) ([132.239.0.114])
+  by iport-bcv4-out.ucsd.edu with ESMTP/TLS/AES256-GCM-SHA384; 15 Feb 2018 19:31:25 -0800
+Received: from XMAIL-MBX-BT1.AD.UCSD.EDU ([fe80::b066:a961:2460:32af]) by
+ XCORE-CUB2.AD.UCSD.EDU ([fe80::41db:8e96:185a:5d02%11]) with mapi id
+ 14.03.0319.002; Thu, 15 Feb 2018 19:31:25 -0800
+From: "Kandes, Martin" <mka...@sdsc.edu>
+To: "singu...@lbl.gov" <singu...@lbl.gov>
+CC: "vict...@gmail.com" <vict...@gmail.com>
+Subject: RE: [Singularity] singularity container on HPC
+Thread-Topic: [Singularity] singularity container on HPC
+Thread-Index: AQHTpmGxbOFUE8VS3kulnO3UThL1naOmFrGAgADD8AD//4RK2Q==
+Date: Fri, 16 Feb 2018 03:31:24 +0000
+Message-ID: <B58197C146EC324AA00A2A07DC082602B15A6C21@XMAIL-MBX-BT1.AD.UCSD.EDU>
+References: <CAHqiYpfh5BO7h8MZM09+7wmWpz5jKQtzE7wAPMBf9Qbnk=ANoQ@mail.gmail.com>
+ <CA+Wz_Fwcs-zqn5=G_8A2jAa4P7wGb=vvqSp6xCojYWFOdmSQhg@mail.gmail.com>,<CAHqiYpc4mrffsA3kQ+q=1jttq-OKuHDPcZtAv+02mUqUNYbSbg@mail.gmail.com>
+In-Reply-To: <CAHqiYpc4mrffsA3kQ+q=1jttq-OKuHDPcZtAv+02mUqUNYbSbg@mail.gmail.com>
+Accept-Language: en-US
+Content-Language: en-US
+X-MS-Has-Attach:
+X-MS-TNEF-Correlator:
+x-originating-ip: [137.110.34.0]
+Content-Type: multipart/alternative;
+	boundary="_000_B58197C146EC324AA00A2A07DC082602B15A6C21XMAILMBXBT1ADUC_"
+MIME-Version: 1.0
+
+--_000_B58197C146EC324AA00A2A07DC082602B15A6C21XMAILMBXBT1ADUC_
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+Hi Haseed,
+
+I guess my first question would be: why do you need to build NAMD within a =
+Singularity container? I've built it on a few systems before with different=
+ build options. It usually plays nicely with most systems. If you're doing =
+an 'mpi' comm  build, here is a build script I've used before [1]. Maybe it=
+'ll help.
+
+Marty
+
+[1]
+
+#!/bin/bash
+#
+# A build script for NAMD
+
+declare -r COMPILER_MODULE=3D'gnu/4.9.2'
+declare -r MPI_MODULE=3D'mvapich2_ib/2.1'
+
+declare -r OS=3D'linux'
+declare -r ARCH=3D'x86_64'
+
+declare -r NAMD_NAME=3D'NAMD'
+declare -r NAMD_VERSION=3D'2.12'
+declare -r NAMD_TARBALL=3D"${NAMD_NAME}_${NAMD_VERSION}_Source.tar.gz"
+declare -r NAMD_DIR=3D"${NAMD_NAME}_${NAMD_VERSION}_Source"
+declare -r NAMD_URL=3D'http://www.ks.uiuc.edu/Research/namd'
+declare -r NAMD_COMPILER=3D'g++'
+declare -r NAMD_ARCH=3D"Linux-${ARCH}-${NAMD_COMPILER}"
+
+declare -r CHARM_NAME=3D'charm'
+declare -r CHARM_VERSION=3D'6.7.1'
+declare -r CHARM_TARFILE=3D"${CHARM_NAME}-${CHARM_VERSION}.tar"
+declare -r CHARM_DIR=3D"${CHARM_NAME}-${CHARM_VERSION}"
+declare -r CHARM_COMM=3D'mpi'
+declare -r CHARM_ARCH=3D"${CHARM_COMM}-${OS}-${ARCH}"
+declare -r CHARM_OPTIONS=3D'mpicxx'
+
+declare -r FFTW_NAME=3D'fftw'
+declare -r FFTW_TARBALL=3D"${FFTW_NAME}-${OS}-${ARCH}.tar.gz"
+
+declare -r TCL_NAME=3D'tcl'
+declare -r TCL_VERSION=3D'8.5.9'
+declare -r TCL_TARBALL=3D"${TCL_NAME}${TCL_VERSION}-${OS}-${ARCH}.tar.gz"
+declare -r TCL_THREADED_TARBALL=3D"${TCL_NAME}${TCL_VERSION}-${OS}-${ARCH}-=
+threaded.tar.gz"
+
+module purge
+module load "${COMPILER_MODULE}"
+module load "${MPI_MODULE}"
+
+tar -xzvf "${PWD}/tarballs/${NAMD_TARBALL}"
+cd "${NAMD_DIR}"
+
+wget "${NAMD_URL}/libraries/${FFTW_TARBALL}"
+wget "${NAMD_URL}/libraries/${TCL_TARBALL}"
+wget "${NAMD_URL}/libraries/${TCL_THREADED_TARBALL}"
+
+tar -xvf "${CHARM_TARFILE}"
+tar -xzvf "${FFTW_TARBALL}"
+tar -xzvf "${TCL_TARBALL}"
+tar -xzvf "${TCL_THREADED_TARBALL}"
+
+mv "${OS}-${ARCH}" fftw
+mv "${TCL_NAME}${TCL_VERSION}-${OS}-${ARCH}" tcl
+mv "${TCL_NAME}${TCL_VERSION}-${OS}-${ARCH}-threaded" tcl-threaded
+
+cd "${CHARM_DIR}"
+./build charm++ "${CHARM_ARCH}" "${CHARM_OPTIONS}" --with-production
+
+cd ../
+./config "${NAMD_ARCH}" --charm-arch "${CHARM_ARCH}-${CHARM_OPTIONS}"
+cd "${NAMD_ARCH}"
+make
+
+
+
+________________________________
+From: Haseeb Mahmud [smahm...@gmail.com]
+Sent: Thursday, February 15, 2018 6:48 PM
+To: singu...@lbl.gov
+Cc: vict...@gmail.com
+Subject: Re: [Singularity] singularity container on HPC
+
+Hello,
+
+Since my email I rebuilt my container with NAMD linked against OpenMPI vers=
+ion 2.10. I then ran my container on my host which also uses OpenMPI versio=
+n 2.10.. And I get new errors. Looks like now now it is using both nodes bu=
+t I get the below errors.
+
+
+[compute-0.cluster:64549] mca_btl_tcp_proc: unknown af_family received: 255
+[compute-0.cluster:64549] unknown address family for tcp: 0
+[compute-0.cluster:64549] mca_btl_tcp_proc: unknown af_family received: 255
+[compute-0.cluster:64549] unknown address family for tcp: 0
+*** Error in `/NAMD_2.12_Source/Linux-x86_64-g++/namd2': munmap_chunk(): in=
+valid pointer: 0x00000000098c5cb0 ***
+*** Error in `/NAMD_2.12_Source/Linux-x86_64-g++/namd2': corrupted double-l=
+inked list: 0x0000000008b4b540 ***
+
+Charm++> Running on MPI version: 3.1
+Charm++> level of thread support used: MPI_THREAD_SINGLE (desired: MPI_THRE=
+AD_SINGLE)
+Charm++> Running in non-SMP mode: numPes 88
+Charm++> Using recursive bisection (scheme 3) for topology aware partitions
+Converse/Charm++ Commit ID: v6.7.1-0-gbdf6a1b-namd-charm-6.7.1-build-2016-N=
+ov-07-136676
+Warning> Randomization of stack pointer is turned on in kernel, thread migr=
+ation may not work! Run 'echo 0 > /proc/sys/kernel/randomize_va_space' as r=
+oot to disable it, or try run with '+isomalloc_sync'.
+CharmLB> Load balancer assumes all CPUs are same.
+Charm++> Running on 2 unique compute nodes (88-way SMP).
+Charm++> cpu topology info is gathered in 0.019 seconds.
+
+Info: Startup phase 9 took 0.00478208 s, 1237.92 MB of memory in use
+Info: CREATING 44375 COMPUTE OBJECTS
+Info: Startup phase 10 took 0.0075435 s, 1237.92 MB of memory in use
+Info: Startup phase 11 took 0.000689846 s, 1237.92 MB of memory in use
+Info: Startup phase 12 took 4.81852e-05 s, 1237.92 MB of memory in use
+Info: Finished startup at 13.4259 s, 1237.92 MB of memory in use
+
+Info: useSync: 0 useProxySync: 0
+[compute-0:64562] *** Process received signal ***
+[compute-0:64562] Signal: Segmentation fault (11)
+[compute-0:64562] Signal code: Address not mapped (1)
+[compute-0:64562] Failing at address: 0x7
+[compute-0:64699] *** Process received signal ***
+[compute-0:64699] Signal: Segmentation fault (11)
+[compute-0:64699] Signal code: Address not mapped (1)
+[compute-0:64699] Failing at address: 0xffffffffffffffff
+[compute-0:64737] *** Process received signal ***
+[compute-0:64737] Signal: Segmentation fault (11)
+
+
+
+Haseeb
+
+
+
+On Thu, Feb 15, 2018 at 10:07 AM, victor sv <vict...@gmail.com<mailto:vict.=
+..@gmail.com>> wrote:
+HI Haseeb,
+
+first of all I would like to understand with MPI family and version is runn=
+ing in and out the containers.
+
+NAMD is linked agains OpenMPI or MPICH?
+
+Which MPI family and version is running in the host? it should be enough if=
+ you show the output of "mpirun --version".
+
+BR,
+V=EDctor.
+
+2018-02-15 14:33 GMT+01:00 Haseeb Mahmud <smahm...@gmail.com<mailto:smahm..=
+.@gmail.com>>:
+Hello,
+
+I have built a namd container that uses the MPI build of NAMD 2.12 that I b=
+uilt from source. I am trying to execute  this container  on my HPC using m=
+pirun on my host slurm script using multiple nodes , however, although the =
+job runs , it looks to be only using 1 processer and 1 node.
+
+I built my container from a script  with an Ubuntu operating syytem and In =
+my %post section, I first configure and make openmpi-2.1.0  then i install =
+mpich using "apt install mpich"  because my MPI build of NAMD wont compile =
+without it.  Then in my %post section I also build the namd 2.12 MPI build =
+itself as all the NAMD source files are in my container as well.
+
+In my slurm script when I run " mpirun -np #P singularity exec  namdimage.s=
+img /path_to namd_executable_in_container/namd2 inputfile" ,I get the probl=
+em  of no scaling.
+
+
+
+
+My sample out looks like :
+Charm++> Running on MPI version: 3.0
+Charm++> level of thread support used: MPI_THREAD_SINGLE (desired: MPI_THRE=
+AD_SINGLE)
+Charm++> Running in non-SMP mode: numPes 1
+Charm++> Using recursive bisection (scheme 3) for topology aware partitions
+..........
+
+Info: Running on 1 processors, 1 nodes, 1 physical nodes.
+
+
+Any ideas what I may be doing wrong.
+
+Thanks,
+
+Haseeb
+
+--
+You received this message because you are subscribed to the Google Groups "=
+singularity" group.
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to singu...@lbl.gov<mailto:singu...@lbl.gov>.
+
+
+--
+You received this message because you are subscribed to the Google Groups "=
+singularity" group.
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to singu...@lbl.gov<mailto:singu...@lbl.gov>.
+
+
+--
+You received this message because you are subscribed to the Google Groups "=
+singularity" group.
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to singu...@lbl.gov<mailto:singu...@lbl.gov>.
+
+--_000_B58197C146EC324AA00A2A07DC082602B15A6C21XMAILMBXBT1ADUC_
+Content-Type: text/html; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+<html dir=3D"ltr">
+<head>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Diso-8859-=
+1">
+<style type=3D"text/css" id=3D"owaParaStyle">P {margin-top:0;margin-bottom:=
+0;}</style>
+</head>
+<body fpstyle=3D"1" ocsi=3D"0">
+<div style=3D"direction: ltr;font-family: Tahoma;color: #000000;font-size: =
+10pt;">Hi Haseed,<br>
+<br>
+I guess my first question would be: why do you need to build NAMD within a =
+Singularity container? I've built it on a few systems before with different=
+ build options. It usually plays nicely with most systems. If you're doing =
+an 'mpi' comm&nbsp; build, here is a
+ build script I've used before [1]. Maybe it'll help. <br>
+<br>
+Marty<br>
+<br>
+[1]<br>
+<br>
+#!/bin/bash<br>
+#<br>
+# A build script for NAMD<br>
+<br>
+declare -r COMPILER_MODULE=3D'gnu/4.9.2'<br>
+declare -r MPI_MODULE=3D'mvapich2_ib/2.1'<br>
+<br>
+declare -r OS=3D'linux'<br>
+declare -r ARCH=3D'x86_64'<br>
+<br>
+declare -r NAMD_NAME=3D'NAMD'<br>
+declare -r NAMD_VERSION=3D'2.12'<br>
+declare -r NAMD_TARBALL=3D&quot;${NAMD_NAME}_${NAMD_VERSION}_Source.tar.gz&=
+quot;<br>
+declare -r NAMD_DIR=3D&quot;${NAMD_NAME}_${NAMD_VERSION}_Source&quot;<br>
+declare -r NAMD_URL=3D'http://www.ks.uiuc.edu/Research/namd'<br>
+declare -r NAMD_COMPILER=3D'g&#43;&#43;'<br>
+declare -r NAMD_ARCH=3D&quot;Linux-${ARCH}-${NAMD_COMPILER}&quot;<br>
+<br>
+declare -r CHARM_NAME=3D'charm'<br>
+declare -r CHARM_VERSION=3D'6.7.1'<br>
+declare -r CHARM_TARFILE=3D&quot;${CHARM_NAME}-${CHARM_VERSION}.tar&quot;<b=
+r>
+declare -r CHARM_DIR=3D&quot;${CHARM_NAME}-${CHARM_VERSION}&quot;<br>
+declare -r CHARM_COMM=3D'mpi'<br>
+declare -r CHARM_ARCH=3D&quot;${CHARM_COMM}-${OS}-${ARCH}&quot;<br>
+declare -r CHARM_OPTIONS=3D'mpicxx'<br>
+<br>
+declare -r FFTW_NAME=3D'fftw'<br>
+declare -r FFTW_TARBALL=3D&quot;${FFTW_NAME}-${OS}-${ARCH}.tar.gz&quot;<br>
+<br>
+declare -r TCL_NAME=3D'tcl'<br>
+declare -r TCL_VERSION=3D'8.5.9'<br>
+declare -r TCL_TARBALL=3D&quot;${TCL_NAME}${TCL_VERSION}-${OS}-${ARCH}.tar.=
+gz&quot;<br>
+declare -r TCL_THREADED_TARBALL=3D&quot;${TCL_NAME}${TCL_VERSION}-${OS}-${A=
+RCH}-threaded.tar.gz&quot;<br>
+<br>
+module purge<br>
+module load &quot;${COMPILER_MODULE}&quot;<br>
+module load &quot;${MPI_MODULE}&quot;<br>
+<br>
+tar -xzvf &quot;${PWD}/tarballs/${NAMD_TARBALL}&quot;<br>
+cd &quot;${NAMD_DIR}&quot;<br>
+<br>
+wget &quot;${NAMD_URL}/libraries/${FFTW_TARBALL}&quot;<br>
+wget &quot;${NAMD_URL}/libraries/${TCL_TARBALL}&quot;<br>
+wget &quot;${NAMD_URL}/libraries/${TCL_THREADED_TARBALL}&quot;<br>
+<br>
+tar -xvf &quot;${CHARM_TARFILE}&quot;<br>
+tar -xzvf &quot;${FFTW_TARBALL}&quot;<br>
+tar -xzvf &quot;${TCL_TARBALL}&quot;<br>
+tar -xzvf &quot;${TCL_THREADED_TARBALL}&quot;<br>
+<br>
+mv &quot;${OS}-${ARCH}&quot; fftw<br>
+mv &quot;${TCL_NAME}${TCL_VERSION}-${OS}-${ARCH}&quot; tcl<br>
+mv &quot;${TCL_NAME}${TCL_VERSION}-${OS}-${ARCH}-threaded&quot; tcl-threade=
+d<br>
+<br>
+cd &quot;${CHARM_DIR}&quot;<br>
+./build charm&#43;&#43; &quot;${CHARM_ARCH}&quot; &quot;${CHARM_OPTIONS}&qu=
+ot; --with-production<br>
+<br>
+cd ../<br>
+./config &quot;${NAMD_ARCH}&quot; --charm-arch &quot;${CHARM_ARCH}-${CHARM_=
+OPTIONS}&quot;<br>
+cd &quot;${NAMD_ARCH}&quot;<br>
+make<br>
+<br>
+<br>
+<br>
+<div style=3D"font-family: Times New Roman; color: #000000; font-size: 16px=
+">
+<hr tabindex=3D"-1">
+<div id=3D"divRpF234675" style=3D"direction: ltr;"><font size=3D"2" color=
+=3D"#000000" face=3D"Tahoma"><b>From:</b> Haseeb Mahmud [smahm...@gmail.com=
+]<br>
+<b>Sent:</b> Thursday, February 15, 2018 6:48 PM<br>
+<b>To:</b> singu...@lbl.gov<br>
+<b>Cc:</b> vict...@gmail.com<br>
+<b>Subject:</b> Re: [Singularity] singularity container on HPC<br>
+</font><br>
+</div>
+<div></div>
+<div>
+<div dir=3D"ltr">Hello,
+<div><br>
+</div>
+<div>Since my email I rebuilt my container with NAMD linked against OpenMPI=
+ version 2.10. I then ran my container on my host which also uses OpenMPI v=
+ersion 2.10.. And I get new errors. Looks like now now it is using both nod=
+es but I get the below errors.</div>
+<div><br>
+</div>
+<div><br>
+</div>
+<div>
+<div>[compute-0.cluster:64549] mca_btl_tcp_proc: unknown af_family received=
+: 255</div>
+<div>[compute-0.cluster:64549] unknown address family for tcp: 0</div>
+<div>[compute-0.cluster:64549] mca_btl_tcp_proc: unknown af_family received=
+: 255</div>
+<div>[compute-0.cluster:64549] unknown address family for tcp: 0</div>
+<div>*** Error in `/NAMD_2.12_Source/Linux-x86_64-g&#43;&#43;/namd2': munma=
+p_chunk(): invalid pointer: 0x00000000098c5cb0 ***</div>
+<div>*** Error in `/NAMD_2.12_Source/Linux-x86_64-g&#43;&#43;/namd2': corru=
+pted double-linked list: 0x0000000008b4b540 ***</div>
+</div>
+<div><br>
+</div>
+<div>
+<div>Charm&#43;&#43;&gt; Running on MPI version: 3.1</div>
+<div>Charm&#43;&#43;&gt; level of thread support used: MPI_THREAD_SINGLE (d=
+esired: MPI_THREAD_SINGLE)</div>
+<div>Charm&#43;&#43;&gt; Running in non-SMP mode: numPes 88</div>
+<div>Charm&#43;&#43;&gt; Using recursive bisection (scheme 3) for topology =
+aware partitions</div>
+<div>Converse/Charm&#43;&#43; Commit ID: v6.7.1-0-gbdf6a1b-namd-charm-6.7.1=
+-build-2016-Nov-07-136676</div>
+<div>Warning&gt; Randomization of stack pointer is turned on in kernel, thr=
+ead migration may not work! Run 'echo 0 &gt; /proc/sys/kernel/randomize_va_=
+space' as root to disable it, or try run with '&#43;isomalloc_sync'.</div>
+<div>CharmLB&gt; Load balancer assumes all CPUs are same.</div>
+<div>Charm&#43;&#43;&gt; Running on 2 unique compute nodes (88-way SMP).</d=
+iv>
+<div>Charm&#43;&#43;&gt; cpu topology info is gathered in 0.019 seconds.</d=
+iv>
+</div>
+<div><br>
+</div>
+<div>
+<div>Info: Startup phase 9 took 0.00478208 s, 1237.92 MB of memory in use</=
+div>
+<div>Info: CREATING 44375 COMPUTE OBJECTS</div>
+<div>Info: Startup phase 10 took 0.0075435 s, 1237.92 MB of memory in use</=
+div>
+<div>Info: Startup phase 11 took 0.000689846 s, 1237.92 MB of memory in use=
+</div>
+<div>Info: Startup phase 12 took 4.81852e-05 s, 1237.92 MB of memory in use=
+</div>
+<div>Info: Finished startup at 13.4259 s, 1237.92 MB of memory in use</div>
+<div><br>
+</div>
+<div>Info: useSync: 0 useProxySync: 0</div>
+<div>[compute-0:64562] *** Process received signal ***</div>
+<div>[compute-0:64562] Signal: Segmentation fault (11)</div>
+<div>[compute-0:64562] Signal code: Address not mapped (1)</div>
+<div>[compute-0:64562] Failing at address: 0x7</div>
+<div>[compute-0:64699] *** Process received signal ***</div>
+<div>[compute-0:64699] Signal: Segmentation fault (11)</div>
+<div>[compute-0:64699] Signal code: Address not mapped (1)</div>
+<div>[compute-0:64699] Failing at address: 0xffffffffffffffff</div>
+<div>[compute-0:64737] *** Process received signal ***</div>
+<div>[compute-0:64737] Signal: Segmentation fault (11)</div>
+</div>
+<div><br>
+</div>
+<div><br>
+</div>
+<div><br>
+</div>
+<div>Haseeb&nbsp;</div>
+<div><br>
+</div>
+<div><br>
+</div>
+</div>
+<div class=3D"gmail_extra"><br>
+<div class=3D"gmail_quote">On Thu, Feb 15, 2018 at 10:07 AM, victor sv <spa=
+n dir=3D"ltr">
+&lt;<a href=3D"mailto:vict...@gmail.com" target=3D"_blank">vict...@gmail.co=
+m</a>&gt;</span> wrote:<br>
+<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex; border-left:1=
+px #ccc solid; padding-left:1ex">
+<div dir=3D"ltr">
+<div>
+<div>
+<div>
+<div>
+<div>HI Haseeb,<br>
+<br>
+</div>
+first of all I would like to understand with MPI family and version is runn=
+ing in and out the containers.<br>
+<br>
+</div>
+NAMD is linked agains OpenMPI or MPICH?<br>
+<br>
+</div>
+Which MPI family and version is running in the host? it should be enough if=
+ you show the output of &quot;mpirun --version&quot;.<br>
+<br>
+</div>
+BR,<br>
+</div>
+V=EDctor.<br>
+</div>
+<div class=3D"gmail_extra"><br>
+<div class=3D"gmail_quote">
+<div>
+<div class=3D"h5">2018-02-15 14:33 GMT&#43;01:00 Haseeb Mahmud <span dir=3D=
+"ltr">&lt;<a href=3D"mailto:smahm...@gmail.com" target=3D"_blank">smahm...@=
+gmail.com</a>&gt;</span>:<br>
+</div>
+</div>
+<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex; border-left:1=
+px #ccc solid; padding-left:1ex">
+<div>
+<div class=3D"h5">
+<div dir=3D"ltr">Hello,
+<div><br>
+</div>
+<div>I have built a namd container that uses the MPI build of NAMD 2.12 tha=
+t I built from source. I am trying to execute&nbsp; this container&nbsp; on=
+ my HPC using mpirun on my host slurm script using multiple nodes , however=
+, although the job runs , it looks to be only
+ using 1 processer and 1 node.&nbsp;</div>
+<div><br>
+</div>
+<div>I built my container from a script&nbsp; with an Ubuntu operating syyt=
+em and In my %post section, I first configure and make openmpi-2.1.0&nbsp; =
+then i install mpich using &quot;apt install mpich&quot;&nbsp; because my M=
+PI build of NAMD wont compile without it.&nbsp; Then in my %post
+ section I also build the namd 2.12 MPI build itself as all the NAMD source=
+ files are in my container as well.</div>
+<div><br>
+</div>
+<div>In my slurm script when I run &quot; mpirun -np #P singularity exec&nb=
+sp; namdimage.simg /path_to namd_executable_in_container/n<wbr>amd2 inputfi=
+le&quot; ,I get the problem&nbsp; of no scaling.</div>
+<div><br>
+</div>
+<div><br>
+</div>
+<div><br>
+</div>
+<div><br>
+</div>
+<div>My sample out looks like :</div>
+<div>
+<div>Charm&#43;&#43;&gt; Running on MPI version: 3.0</div>
+<div>Charm&#43;&#43;&gt; level of thread support used: MPI_THREAD_SINGLE (d=
+esired: MPI_THREAD_SINGLE)</div>
+<div>Charm&#43;&#43;&gt; Running in non-SMP mode: numPes 1</div>
+<div>Charm&#43;&#43;&gt; Using recursive bisection (scheme 3) for topology =
+aware partitions</div>
+</div>
+<div>..........</div>
+<div><br>
+</div>
+<div>
+<div>Info: Running on 1 processors, 1 nodes, 1 physical nodes.</div>
+</div>
+<div><br>
+</div>
+<div><br>
+</div>
+<div>Any ideas what I may be doing wrong.</div>
+<div><br>
+</div>
+<div>Thanks,</div>
+<div><br>
+</div>
+<div>Haseeb</div>
+</div>
+</div>
+</div>
+<span class=3D"HOEnZb"><font color=3D"#888888"><span class=3D"m_-6963216037=
+349168429HOEnZb"><font color=3D"#888888">
+<p></p>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to
+<a href=3D"mailto:singularity&#43;unsu...@lbl.gov" target=3D"_blank">singul=
+arity&#43;unsubscribe@lbl.go<wbr>v</a>.<br>
+</font></span></font></span></blockquote>
+</div>
+<span class=3D"HOEnZb"><font color=3D"#888888"><br>
+</font></span></div>
+<span class=3D"HOEnZb"><font color=3D"#888888">
+<p></p>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to
+<a href=3D"mailto:singularity&#43;unsu...@lbl.gov" target=3D"_blank">singul=
+arity&#43;unsubscribe@lbl.<wbr>gov</a>.<br>
+</font></span></blockquote>
+</div>
+<br>
+</div>
+<p></p>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to
+<a href=3D"mailto:singularity&#43;unsu...@lbl.gov" target=3D"_blank">singul=
+arity&#43;unsu...@lbl.gov</a>.<br>
+</div>
+</div>
+</div>
+</body>
+</html>
+
+--_000_B58197C146EC324AA00A2A07DC082602B15A6C21XMAILMBXBT1ADUC_--

@@ -1,0 +1,494 @@
+Date: Thu, 5 Apr 2018 06:27:59 -0700 (PDT)
+From: Maurice Manning <maurice...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <181b5c82-3e7c-46d4-bda6-34321ac2180f@lbl.gov>
+Subject: Convert from docker container to singularity introduces error
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2883_460916906.1522934879712"
+
+------=_Part_2883_460916906.1522934879712
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2884_1248210689.1522934879713"
+
+------=_Part_2884_1248210689.1522934879713
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hello 
+Ran into an issue with converting a Docker container containing Photoscan 
+into a Singularity container. When I run the Docker container with a basic 
+Photoscan command it notifies me that I don't have a license (expected) 
+then exits. Then I push this build to docker hub and pull into a 
+Singularity container. When I run the same command on the Singularity 
+container I get local encoding errors.
+
+Working as expected with Docker:
+vagrant@vagrant:~/photoscan13-containerized$ *docker run -v 
+/home/vagrant/:/opt  -it  photoscan13 /usr/local/photoscan-pro/photoscan.sh 
+-r /opt/ps.py*
+No license found.
+Details: No license for product (-1)
+vagrant@vagrant:~/photoscan13-containerized$ docker tag photoscan13:latest 
+mmmanning/photoscan13:latest
+
+New errors when run as Singularity:
+vagrant@vagrant:~/photoscan13-containerized$* singularity exec -B 
+/home/vagrant/:/opt/ photoscan13-latest.img 
+/usr/local/photoscan-pro/photoscan.sh -r /opt/ps.py*
+No license found.
+Details: No license for product (-1)
+Can't load geoid: /usr/local/photoscan-pro/geoids/egm96-15.tif
+Fatal Python error: Py_Initialize: Unable to get the locale encoding
+ImportError: No module named 'encodings'
+
+Current thread 0x00007f407236b7c0 (most recent call first):
+
+(process:29277): Gtk-WARNING **: Locale not supported by C library.
+Using the fallback 'C' locale.
+Aborted (core dumped)
+vagrant@vagrant:~/photoscan13-containerized$
+
+ My Dockerfile:
+
+
+##
+## Dockerfile for photoscan13
+##
+
+
+FROM ubuntu:xenial
+RUN apt-get update && \
+apt-get -y upgrade && \
+apt-get install -y software-properties-common libglib2.0 libqt5gui5 
+libgtk2.0-0 libglu1-mesa libgomp1 zlib1g && \
+apt-get install -y language-pack-en language-pack-en-base wget vim 
+## install Agisoft Photoscan 1.3
+RUN wget --directory-prefix=/usr/local 
+http://download.agisoft.com/photoscan-pro_1_3_0_amd64.tar.gz ;\
+(cd /usr/local && tar zxvf photoscan-pro_1_3_0_amd64.tar.gz) ;\
+(cd /usr/local/bin && ln -s ../photoscan-pro/photoscan-pro.sh) ;\
+rm -f /usr/local/photoscan-pro_1_3_0_amd64.tar.gz ;\
+dpkg-reconfigure locales ;\
+chmod 755 /usr/local//photoscan-pro/ ;\
+chmod 755 /usr/local//photoscan-pro/*
+
+CMD ["bash"]
+
+
+My build process:
+
+git clone https://github.com/mauricemanning/photoscan13-containerizedcd photoscan13-containerized
+docker build --rm --tag photoscan13 .
+docker tag photoscan13:latest mmmanning/photoscan13:latest
+docker push mmmanning/photoscan13:latest
+docker images
+singularity pull docker://mmmanning/photoscan13:latest
+
+
+
+Thanks for an ideas.
+Maurice
+
+
+
+------=_Part_2884_1248210689.1522934879713
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hello=C2=A0<div>Ran into an issue with converting a Docker=
+ container containing Photoscan into a Singularity container. When I run th=
+e Docker container with a basic Photoscan command it notifies me that I don=
+&#39;t have a license (expected) then exits. Then I push this build to dock=
+er hub and pull into a Singularity container. When I run the same command o=
+n the Singularity container I get local encoding errors.</div><div><br></di=
+v><div>Working as expected with Docker:</div><div><div style=3D"color: rgb(=
+38, 40, 42); font-family: &quot;times new roman&quot;, &quot;new york&quot;=
+, times, serif; font-size: 16px; font-variant-ligatures: normal; orphans: 2=
+; widows: 2;">vagrant@vagrant:~/photoscan13-containerized$=C2=A0<b>docker r=
+un -v /home/vagrant/:/opt=C2=A0 -it=C2=A0 photoscan13 /usr/local/photoscan-=
+pro/photoscan.sh -r /opt/ps.py</b></div><div style=3D"color: rgb(38, 40, 42=
+); font-family: &quot;times new roman&quot;, &quot;new york&quot;, times, s=
+erif; font-size: 16px; font-variant-ligatures: normal; orphans: 2; widows: =
+2;">No license found.</div><div style=3D"color: rgb(38, 40, 42); font-famil=
+y: &quot;times new roman&quot;, &quot;new york&quot;, times, serif; font-si=
+ze: 16px; font-variant-ligatures: normal; orphans: 2; widows: 2;">Details: =
+No license for product (-1)</div><div style=3D"color: rgb(38, 40, 42); font=
+-family: &quot;times new roman&quot;, &quot;new york&quot;, times, serif; f=
+ont-size: 16px; font-variant-ligatures: normal; orphans: 2; widows: 2;">vag=
+rant@vagrant:~/photoscan13-containerized$ docker tag photoscan13:latest mmm=
+anning/photoscan13:latest</div></div><div style=3D"color: rgb(38, 40, 42); =
+font-family: &quot;times new roman&quot;, &quot;new york&quot;, times, seri=
+f; font-size: 16px; font-variant-ligatures: normal; orphans: 2; widows: 2;"=
+><br></div><div>New errors when run as Singularity:</div><div><div style=3D=
+"color: rgb(38, 40, 42); font-family: &quot;times new roman&quot;, &quot;ne=
+w york&quot;, times, serif; font-size: 16px; font-variant-ligatures: normal=
+; orphans: 2; widows: 2;">vagrant@vagrant:~/photoscan13-containerized$<b>=
+=C2=A0singularity exec -B /home/vagrant/:/opt/ photoscan13-latest.img /usr/=
+local/photoscan-pro/photoscan.sh -r /opt/ps.py</b></div><div style=3D"color=
+: rgb(38, 40, 42); font-family: &quot;times new roman&quot;, &quot;new york=
+&quot;, times, serif; font-size: 16px; font-variant-ligatures: normal; orph=
+ans: 2; widows: 2;">No license found.</div><div style=3D"color: rgb(38, 40,=
+ 42); font-family: &quot;times new roman&quot;, &quot;new york&quot;, times=
+, serif; font-size: 16px; font-variant-ligatures: normal; orphans: 2; widow=
+s: 2;">Details: No license for product (-1)</div><div style=3D"color: rgb(3=
+8, 40, 42); font-family: &quot;times new roman&quot;, &quot;new york&quot;,=
+ times, serif; font-size: 16px; font-variant-ligatures: normal; orphans: 2;=
+ widows: 2;">Can&#39;t load geoid: /usr/local/photoscan-pro/geoids/egm96-15=
+.tif</div><div style=3D"color: rgb(38, 40, 42); font-family: &quot;times ne=
+w roman&quot;, &quot;new york&quot;, times, serif; font-size: 16px; font-va=
+riant-ligatures: normal; orphans: 2; widows: 2;">Fatal Python error: Py_Ini=
+tialize: Unable to get the locale encoding</div><div style=3D"color: rgb(38=
+, 40, 42); font-family: &quot;times new roman&quot;, &quot;new york&quot;, =
+times, serif; font-size: 16px; font-variant-ligatures: normal; orphans: 2; =
+widows: 2;">ImportError: No module named &#39;encodings&#39;</div><div styl=
+e=3D"color: rgb(38, 40, 42); font-family: &quot;times new roman&quot;, &quo=
+t;new york&quot;, times, serif; font-size: 16px; font-variant-ligatures: no=
+rmal; orphans: 2; widows: 2;"><br clear=3D"none"></div><div style=3D"color:=
+ rgb(38, 40, 42); font-family: &quot;times new roman&quot;, &quot;new york&=
+quot;, times, serif; font-size: 16px; font-variant-ligatures: normal; orpha=
+ns: 2; widows: 2;">Current thread 0x00007f407236b7c0 (most recent call firs=
+t):</div><div style=3D"color: rgb(38, 40, 42); font-family: &quot;times new=
+ roman&quot;, &quot;new york&quot;, times, serif; font-size: 16px; font-var=
+iant-ligatures: normal; orphans: 2; widows: 2;"><br clear=3D"none"></div><d=
+iv style=3D"color: rgb(38, 40, 42); font-family: &quot;times new roman&quot=
+;, &quot;new york&quot;, times, serif; font-size: 16px; font-variant-ligatu=
+res: normal; orphans: 2; widows: 2;">(process:29277): Gtk-WARNING **: Local=
+e not supported by C library.</div><div style=3D"color: rgb(38, 40, 42); fo=
+nt-family: &quot;times new roman&quot;, &quot;new york&quot;, times, serif;=
+ font-size: 16px; font-variant-ligatures: normal; orphans: 2; widows: 2;"><=
+span style=3D"white-space: pre-wrap;">=09</span>Using the fallback &#39;C&#=
+39; locale.</div><div style=3D"color: rgb(38, 40, 42); font-family: &quot;t=
+imes new roman&quot;, &quot;new york&quot;, times, serif; font-size: 16px; =
+font-variant-ligatures: normal; orphans: 2; widows: 2;">Aborted (core dumpe=
+d)</div><div style=3D"color: rgb(38, 40, 42); font-family: &quot;times new =
+roman&quot;, &quot;new york&quot;, times, serif; font-size: 16px; font-vari=
+ant-ligatures: normal; orphans: 2; widows: 2;">vagrant@vagrant:~/photoscan1=
+3-containerized$</div></div><div style=3D"color: rgb(38, 40, 42); font-fami=
+ly: &quot;times new roman&quot;, &quot;new york&quot;, times, serif; font-s=
+ize: 16px; font-variant-ligatures: normal; orphans: 2; widows: 2;"><br></di=
+v><div style=3D"color: rgb(38, 40, 42); font-family: &quot;times new roman&=
+quot;, &quot;new york&quot;, times, serif; font-size: 16px; font-variant-li=
+gatures: normal; orphans: 2; widows: 2;">=C2=A0My Dockerfile:</div><div sty=
+le=3D"color: rgb(38, 40, 42); font-family: &quot;times new roman&quot;, &qu=
+ot;new york&quot;, times, serif; font-size: 16px; font-variant-ligatures: n=
+ormal; orphans: 2; widows: 2;"><br><br><table class=3D"highlight tab-size j=
+s-file-line-container" data-tab-size=3D"8" style=3D"box-sizing: border-box;=
+ border-collapse: collapse; tab-size: 8; color: rgb(36, 41, 46); font-famil=
+y: -apple-system, system-ui, &quot;Segoe UI&quot;, Helvetica, Arial, sans-s=
+erif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Sego=
+e UI Symbol&quot;; font-size: 14px; font-variant-ligatures: normal;"><tbody=
+ style=3D"box-sizing: border-box;"><tr style=3D"box-sizing: border-box;"><t=
+d id=3D"LC3" class=3D"blob-code blob-code-inner js-file-line" style=3D"box-=
+sizing: border-box; padding-right: 10px; padding-left: 10px; position: rela=
+tive; line-height: 20px; vertical-align: top; overflow: visible; font-famil=
+y: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, m=
+onospace; font-size: 12px; word-wrap: normal; white-space: pre;"><span clas=
+s=3D"pl-c" style=3D"box-sizing: border-box; color: rgb(106, 115, 125);"><sp=
+an class=3D"pl-c" style=3D"box-sizing: border-box;">#</span>#</span></td></=
+tr><tr style=3D"box-sizing: border-box;"><td id=3D"L4" class=3D"blob-num js=
+-line-number" data-line-number=3D"4" style=3D"box-sizing: border-box; paddi=
+ng-right: 10px; padding-left: 10px; width: 50px; min-width: 50px; font-fami=
+ly: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, =
+monospace; font-size: 12px; line-height: 20px; color: rgba(27, 31, 35, 0.29=
+8039); text-align: right; white-space: nowrap; vertical-align: top; cursor:=
+ pointer;"></td><td id=3D"LC4" class=3D"blob-code blob-code-inner js-file-l=
+ine" style=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10=
+px; position: relative; line-height: 20px; vertical-align: top; overflow: v=
+isible; font-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;,=
+ Menlo, Courier, monospace; font-size: 12px; word-wrap: normal; white-space=
+: pre;"><span class=3D"pl-c" style=3D"box-sizing: border-box; color: rgb(10=
+6, 115, 125);"><span class=3D"pl-c" style=3D"box-sizing: border-box;">#</sp=
+an># Dockerfile for photoscan13</span></td></tr><tr style=3D"box-sizing: bo=
+rder-box;"><td id=3D"L5" class=3D"blob-num js-line-number" data-line-number=
+=3D"5" style=3D"box-sizing: border-box; padding-right: 10px; padding-left: =
+10px; width: 50px; min-width: 50px; font-family: SFMono-Regular, Consolas, =
+&quot;Liberation Mono&quot;, Menlo, Courier, monospace; font-size: 12px; li=
+ne-height: 20px; color: rgba(27, 31, 35, 0.298039); text-align: right; whit=
+e-space: nowrap; vertical-align: top; cursor: pointer;"></td><td id=3D"LC5"=
+ class=3D"blob-code blob-code-inner js-file-line" style=3D"box-sizing: bord=
+er-box; padding-right: 10px; padding-left: 10px; position: relative; line-h=
+eight: 20px; vertical-align: top; overflow: visible; font-family: SFMono-Re=
+gular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace; fo=
+nt-size: 12px; word-wrap: normal; white-space: pre;"><span class=3D"pl-c" s=
+tyle=3D"box-sizing: border-box; color: rgb(106, 115, 125);"><span class=3D"=
+pl-c" style=3D"box-sizing: border-box;">#</span>#</span></td></tr><tr style=
+=3D"box-sizing: border-box;"><td id=3D"L6" class=3D"blob-num js-line-number=
+" data-line-number=3D"6" style=3D"box-sizing: border-box; padding-right: 10=
+px; padding-left: 10px; width: 50px; min-width: 50px; font-family: SFMono-R=
+egular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace; f=
+ont-size: 12px; line-height: 20px; color: rgba(27, 31, 35, 0.298039); text-=
+align: right; white-space: nowrap; vertical-align: top; cursor: pointer;"><=
+br></td><td id=3D"LC6" class=3D"blob-code blob-code-inner js-file-line" sty=
+le=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10px; posi=
+tion: relative; line-height: 20px; vertical-align: top; overflow: visible; =
+font-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, =
+Courier, monospace; font-size: 12px; word-wrap: normal; white-space: pre;">=
+<br></td></tr><tr style=3D"box-sizing: border-box;"><td id=3D"L10" class=3D=
+"blob-num js-line-number" data-line-number=3D"10" style=3D"box-sizing: bord=
+er-box; padding-right: 10px; padding-left: 10px; width: 50px; min-width: 50=
+px; font-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Men=
+lo, Courier, monospace; font-size: 12px; line-height: 20px; color: rgba(27,=
+ 31, 35, 0.298039); text-align: right; white-space: nowrap; vertical-align:=
+ top; cursor: pointer;"></td><td id=3D"LC10" class=3D"blob-code blob-code-i=
+nner js-file-line" style=3D"box-sizing: border-box; padding-right: 10px; pa=
+dding-left: 10px; position: relative; line-height: 20px; vertical-align: to=
+p; overflow: visible; font-family: SFMono-Regular, Consolas, &quot;Liberati=
+on Mono&quot;, Menlo, Courier, monospace; font-size: 12px; word-wrap: norma=
+l; white-space: pre;">
+</td></tr><tr style=3D"box-sizing: border-box;"><td id=3D"L11" class=3D"blo=
+b-num js-line-number" data-line-number=3D"11" style=3D"box-sizing: border-b=
+ox; padding-right: 10px; padding-left: 10px; width: 50px; min-width: 50px; =
+font-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, =
+Courier, monospace; font-size: 12px; line-height: 20px; color: rgba(27, 31,=
+ 35, 0.298039); text-align: right; white-space: nowrap; vertical-align: top=
+; cursor: pointer;"></td><td id=3D"LC11" class=3D"blob-code blob-code-inner=
+ js-file-line" style=3D"box-sizing: border-box; padding-right: 10px; paddin=
+g-left: 10px; position: relative; line-height: 20px; vertical-align: top; o=
+verflow: visible; font-family: SFMono-Regular, Consolas, &quot;Liberation M=
+ono&quot;, Menlo, Courier, monospace; font-size: 12px; word-wrap: normal; w=
+hite-space: pre;"><span class=3D"pl-k" style=3D"box-sizing: border-box; col=
+or: rgb(215, 58, 73);">FROM</span> ubuntu:xenial</td></tr><tr style=3D"box-=
+sizing: border-box;"><td id=3D"L12" class=3D"blob-num js-line-number" data-=
+line-number=3D"12" style=3D"box-sizing: border-box; padding-right: 10px; pa=
+dding-left: 10px; width: 50px; min-width: 50px; font-family: SFMono-Regular=
+, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace; font-si=
+ze: 12px; line-height: 20px; color: rgba(27, 31, 35, 0.298039); text-align:=
+ right; white-space: nowrap; vertical-align: top; cursor: pointer;"></td><t=
+d id=3D"LC12" class=3D"blob-code blob-code-inner js-file-line" style=3D"box=
+-sizing: border-box; padding-right: 10px; padding-left: 10px; position: rel=
+ative; line-height: 20px; vertical-align: top; overflow: visible; font-fami=
+ly: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, =
+monospace; font-size: 12px; word-wrap: normal; white-space: pre;">
+</td></tr><tr style=3D"box-sizing: border-box;"><td id=3D"L13" class=3D"blo=
+b-num js-line-number" data-line-number=3D"13" style=3D"box-sizing: border-b=
+ox; padding-right: 10px; padding-left: 10px; width: 50px; min-width: 50px; =
+font-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, =
+Courier, monospace; font-size: 12px; line-height: 20px; color: rgba(27, 31,=
+ 35, 0.298039); text-align: right; white-space: nowrap; vertical-align: top=
+; cursor: pointer;"></td><td id=3D"LC13" class=3D"blob-code blob-code-inner=
+ js-file-line" style=3D"box-sizing: border-box; padding-right: 10px; paddin=
+g-left: 10px; position: relative; line-height: 20px; vertical-align: top; o=
+verflow: visible; font-family: SFMono-Regular, Consolas, &quot;Liberation M=
+ono&quot;, Menlo, Courier, monospace; font-size: 12px; word-wrap: normal; w=
+hite-space: pre;"><span class=3D"pl-k" style=3D"box-sizing: border-box; col=
+or: rgb(215, 58, 73);">RUN</span> apt-get update &amp;&amp; \</td></tr><tr =
+style=3D"box-sizing: border-box;"><td id=3D"L14" class=3D"blob-num js-line-=
+number" data-line-number=3D"14" style=3D"box-sizing: border-box; padding-ri=
+ght: 10px; padding-left: 10px; width: 50px; min-width: 50px; font-family: S=
+FMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monos=
+pace; font-size: 12px; line-height: 20px; color: rgba(27, 31, 35, 0.298039)=
+; text-align: right; white-space: nowrap; vertical-align: top; cursor: poin=
+ter;"></td><td id=3D"LC14" class=3D"blob-code blob-code-inner js-file-line"=
+ style=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10px; =
+position: relative; line-height: 20px; vertical-align: top; overflow: visib=
+le; font-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Men=
+lo, Courier, monospace; font-size: 12px; word-wrap: normal; white-space: pr=
+e;">    apt-get -y upgrade &amp;&amp; \</td></tr><tr style=3D"box-sizing: b=
+order-box;"><td id=3D"L15" class=3D"blob-num js-line-number" data-line-numb=
+er=3D"15" style=3D"box-sizing: border-box; padding-right: 10px; padding-lef=
+t: 10px; width: 50px; min-width: 50px; font-family: SFMono-Regular, Consola=
+s, &quot;Liberation Mono&quot;, Menlo, Courier, monospace; font-size: 12px;=
+ line-height: 20px; color: rgba(27, 31, 35, 0.298039); text-align: right; w=
+hite-space: nowrap; vertical-align: top; cursor: pointer;"></td><td id=3D"L=
+C15" class=3D"blob-code blob-code-inner js-file-line" style=3D"box-sizing: =
+border-box; padding-right: 10px; padding-left: 10px; position: relative; li=
+ne-height: 20px; vertical-align: top; overflow: visible; font-family: SFMon=
+o-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace=
+; font-size: 12px; word-wrap: normal; white-space: pre;">    apt-get instal=
+l -y software-properties-common libglib2.0 libqt5gui5 libgtk2.0-0 libglu1-m=
+esa libgomp1 zlib1g &amp;&amp; \</td></tr><tr style=3D"box-sizing: border-b=
+ox;"><td id=3D"L16" class=3D"blob-num js-line-number" data-line-number=3D"1=
+6" style=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10px=
+; width: 50px; min-width: 50px; font-family: SFMono-Regular, Consolas, &quo=
+t;Liberation Mono&quot;, Menlo, Courier, monospace; font-size: 12px; line-h=
+eight: 20px; color: rgba(27, 31, 35, 0.298039); text-align: right; white-sp=
+ace: nowrap; vertical-align: top; cursor: pointer;"></td><td id=3D"LC16" cl=
+ass=3D"blob-code blob-code-inner js-file-line" style=3D"box-sizing: border-=
+box; padding-right: 10px; padding-left: 10px; position: relative; line-heig=
+ht: 20px; vertical-align: top; overflow: visible; font-family: SFMono-Regul=
+ar, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace; font-=
+size: 12px; word-wrap: normal; white-space: pre;">    apt-get install -y la=
+nguage-pack-en language-pack-en-base wget vim </td></tr><tr style=3D"box-si=
+zing: border-box;"><td id=3D"L17" class=3D"blob-num js-line-number" data-li=
+ne-number=3D"17" style=3D"box-sizing: border-box; padding-right: 10px; padd=
+ing-left: 10px; width: 50px; min-width: 50px; font-family: SFMono-Regular, =
+Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace; font-size=
+: 12px; line-height: 20px; color: rgba(27, 31, 35, 0.298039); text-align: r=
+ight; white-space: nowrap; vertical-align: top; cursor: pointer;"></td><td =
+id=3D"LC17" class=3D"blob-code blob-code-inner js-file-line" style=3D"box-s=
+izing: border-box; padding-right: 10px; padding-left: 10px; position: relat=
+ive; line-height: 20px; vertical-align: top; overflow: visible; font-family=
+: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, mo=
+nospace; font-size: 12px; word-wrap: normal; white-space: pre;">    </td></=
+tr><tr style=3D"box-sizing: border-box;"><td id=3D"L18" class=3D"blob-num j=
+s-line-number" data-line-number=3D"18" style=3D"box-sizing: border-box; pad=
+ding-right: 10px; padding-left: 10px; width: 50px; min-width: 50px; font-fa=
+mily: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier=
+, monospace; font-size: 12px; line-height: 20px; color: rgba(27, 31, 35, 0.=
+298039); text-align: right; white-space: nowrap; vertical-align: top; curso=
+r: pointer;"></td><td id=3D"LC18" class=3D"blob-code blob-code-inner js-fil=
+e-line" style=3D"box-sizing: border-box; padding-right: 10px; padding-left:=
+ 10px; position: relative; line-height: 20px; vertical-align: top; overflow=
+: visible; font-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quo=
+t;, Menlo, Courier, monospace; font-size: 12px; word-wrap: normal; white-sp=
+ace: pre;"><span class=3D"pl-c" style=3D"box-sizing: border-box; color: rgb=
+(106, 115, 125);"><span class=3D"pl-c" style=3D"box-sizing: border-box;">#<=
+/span># install Agisoft Photoscan 1.3</span></td></tr><tr style=3D"box-sizi=
+ng: border-box;"><td id=3D"L19" class=3D"blob-num js-line-number" data-line=
+-number=3D"19" style=3D"box-sizing: border-box; padding-right: 10px; paddin=
+g-left: 10px; width: 50px; min-width: 50px; font-family: SFMono-Regular, Co=
+nsolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace; font-size: =
+12px; line-height: 20px; color: rgba(27, 31, 35, 0.298039); text-align: rig=
+ht; white-space: nowrap; vertical-align: top; cursor: pointer;"></td><td id=
+=3D"LC19" class=3D"blob-code blob-code-inner js-file-line" style=3D"box-siz=
+ing: border-box; padding-right: 10px; padding-left: 10px; position: relativ=
+e; line-height: 20px; vertical-align: top; overflow: visible; font-family: =
+SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, mono=
+space; font-size: 12px; word-wrap: normal; white-space: pre;"><span class=
+=3D"pl-k" style=3D"box-sizing: border-box; color: rgb(215, 58, 73);">RUN</s=
+pan> wget --directory-prefix=3D/usr/local http://download.agisoft.com/photo=
+scan-pro_1_3_0_amd64.tar.gz ;\</td></tr><tr style=3D"box-sizing: border-box=
+;"><td id=3D"L20" class=3D"blob-num js-line-number" data-line-number=3D"20"=
+ style=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10px; =
+width: 50px; min-width: 50px; font-family: SFMono-Regular, Consolas, &quot;=
+Liberation Mono&quot;, Menlo, Courier, monospace; font-size: 12px; line-hei=
+ght: 20px; color: rgba(27, 31, 35, 0.298039); text-align: right; white-spac=
+e: nowrap; vertical-align: top; cursor: pointer;"></td><td id=3D"LC20" clas=
+s=3D"blob-code blob-code-inner js-file-line" style=3D"box-sizing: border-bo=
+x; padding-right: 10px; padding-left: 10px; position: relative; line-height=
+: 20px; vertical-align: top; overflow: visible; font-family: SFMono-Regular=
+, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace; font-si=
+ze: 12px; word-wrap: normal; white-space: pre;">(cd /usr/local &amp;&amp; t=
+ar zxvf photoscan-pro_1_3_0_amd64.tar.gz) ;\</td></tr><tr style=3D"box-sizi=
+ng: border-box;"><td id=3D"L21" class=3D"blob-num js-line-number" data-line=
+-number=3D"21" style=3D"box-sizing: border-box; padding-right: 10px; paddin=
+g-left: 10px; width: 50px; min-width: 50px; font-family: SFMono-Regular, Co=
+nsolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace; font-size: =
+12px; line-height: 20px; color: rgba(27, 31, 35, 0.298039); text-align: rig=
+ht; white-space: nowrap; vertical-align: top; cursor: pointer;"></td><td id=
+=3D"LC21" class=3D"blob-code blob-code-inner js-file-line" style=3D"box-siz=
+ing: border-box; padding-right: 10px; padding-left: 10px; position: relativ=
+e; line-height: 20px; vertical-align: top; overflow: visible; font-family: =
+SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, mono=
+space; font-size: 12px; word-wrap: normal; white-space: pre;">(cd /usr/loca=
+l/bin &amp;&amp; ln -s ../photoscan-pro/photoscan-pro.sh) ;\</td></tr><tr s=
+tyle=3D"box-sizing: border-box;"><td id=3D"L22" class=3D"blob-num js-line-n=
+umber" data-line-number=3D"22" style=3D"box-sizing: border-box; padding-rig=
+ht: 10px; padding-left: 10px; width: 50px; min-width: 50px; font-family: SF=
+Mono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monosp=
+ace; font-size: 12px; line-height: 20px; color: rgba(27, 31, 35, 0.298039);=
+ text-align: right; white-space: nowrap; vertical-align: top; cursor: point=
+er;"></td><td id=3D"LC22" class=3D"blob-code blob-code-inner js-file-line" =
+style=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10px; p=
+osition: relative; line-height: 20px; vertical-align: top; overflow: visibl=
+e; font-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menl=
+o, Courier, monospace; font-size: 12px; word-wrap: normal; white-space: pre=
+;">rm -f /usr/local/photoscan-pro_1_3_0_amd64.tar.gz ;\</td></tr><tr style=
+=3D"box-sizing: border-box;"><td id=3D"L23" class=3D"blob-num js-line-numbe=
+r" data-line-number=3D"23" style=3D"box-sizing: border-box; padding-right: =
+10px; padding-left: 10px; width: 50px; min-width: 50px; font-family: SFMono=
+-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;=
+ font-size: 12px; line-height: 20px; color: rgba(27, 31, 35, 0.298039); tex=
+t-align: right; white-space: nowrap; vertical-align: top; cursor: pointer;"=
+></td><td id=3D"LC23" class=3D"blob-code blob-code-inner js-file-line" styl=
+e=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10px; posit=
+ion: relative; line-height: 20px; vertical-align: top; overflow: visible; f=
+ont-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, C=
+ourier, monospace; font-size: 12px; word-wrap: normal; white-space: pre;">d=
+pkg-reconfigure locales ;\</td></tr><tr style=3D"box-sizing: border-box;"><=
+td id=3D"L24" class=3D"blob-num js-line-number" data-line-number=3D"24" sty=
+le=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10px; widt=
+h: 50px; min-width: 50px; font-family: SFMono-Regular, Consolas, &quot;Libe=
+ration Mono&quot;, Menlo, Courier, monospace; font-size: 12px; line-height:=
+ 20px; color: rgba(27, 31, 35, 0.298039); text-align: right; white-space: n=
+owrap; vertical-align: top; cursor: pointer;"></td><td id=3D"LC24" class=3D=
+"blob-code blob-code-inner js-file-line" style=3D"box-sizing: border-box; p=
+adding-right: 10px; padding-left: 10px; position: relative; line-height: 20=
+px; vertical-align: top; overflow: visible; font-family: SFMono-Regular, Co=
+nsolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace; font-size: =
+12px; word-wrap: normal; white-space: pre;">chmod 755 /usr/local//photoscan=
+-pro/ ;\</td></tr><tr style=3D"box-sizing: border-box;"><td id=3D"L25" clas=
+s=3D"blob-num js-line-number" data-line-number=3D"25" style=3D"box-sizing: =
+border-box; padding-right: 10px; padding-left: 10px; width: 50px; min-width=
+: 50px; font-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;,=
+ Menlo, Courier, monospace; font-size: 12px; line-height: 20px; color: rgba=
+(27, 31, 35, 0.298039); text-align: right; white-space: nowrap; vertical-al=
+ign: top; cursor: pointer;"></td><td id=3D"LC25" class=3D"blob-code blob-co=
+de-inner js-file-line" style=3D"box-sizing: border-box; padding-right: 10px=
+; padding-left: 10px; position: relative; line-height: 20px; vertical-align=
+: top; overflow: visible; font-family: SFMono-Regular, Consolas, &quot;Libe=
+ration Mono&quot;, Menlo, Courier, monospace; font-size: 12px; word-wrap: n=
+ormal; white-space: pre;">chmod 755 /usr/local//photoscan-pro/*</td></tr><t=
+r style=3D"box-sizing: border-box;"><td id=3D"L26" class=3D"blob-num js-lin=
+e-number" data-line-number=3D"26" style=3D"box-sizing: border-box; padding-=
+right: 10px; padding-left: 10px; width: 50px; min-width: 50px; font-family:=
+ SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, mon=
+ospace; font-size: 12px; line-height: 20px; color: rgba(27, 31, 35, 0.29803=
+9); text-align: right; white-space: nowrap; vertical-align: top; cursor: po=
+inter;"></td><td id=3D"LC26" class=3D"blob-code blob-code-inner js-file-lin=
+e" style=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10px=
+; position: relative; line-height: 20px; vertical-align: top; overflow: vis=
+ible; font-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, M=
+enlo, Courier, monospace; font-size: 12px; word-wrap: normal; white-space: =
+pre;"><br></td></tr><tr style=3D"box-sizing: border-box;"><td id=3D"L30" cl=
+ass=3D"blob-num js-line-number" data-line-number=3D"30" style=3D"box-sizing=
+: border-box; padding-right: 10px; padding-left: 10px; width: 50px; min-wid=
+th: 50px; font-family: SFMono-Regular, Consolas, &quot;Liberation Mono&quot=
+;, Menlo, Courier, monospace; font-size: 12px; line-height: 20px; color: rg=
+ba(27, 31, 35, 0.298039); text-align: right; white-space: nowrap; vertical-=
+align: top; cursor: pointer;"></td><td id=3D"LC30" class=3D"blob-code blob-=
+code-inner js-file-line" style=3D"box-sizing: border-box; padding-right: 10=
+px; padding-left: 10px; position: relative; line-height: 20px; vertical-ali=
+gn: top; overflow: visible; font-family: SFMono-Regular, Consolas, &quot;Li=
+beration Mono&quot;, Menlo, Courier, monospace; font-size: 12px; word-wrap:=
+ normal; white-space: pre;"><span class=3D"pl-k" style=3D"box-sizing: borde=
+r-box; color: rgb(215, 58, 73);">CMD</span> [<span class=3D"pl-s" style=3D"=
+box-sizing: border-box; color: rgb(3, 47, 98);">&quot;bash&quot;</span>]</t=
+d></tr></tbody></table></div><div style=3D"color: rgb(38, 40, 42); font-fam=
+ily: &quot;times new roman&quot;, &quot;new york&quot;, times, serif; font-=
+size: 16px; font-variant-ligatures: normal; orphans: 2; widows: 2;"><br></d=
+iv><div style=3D"color: rgb(38, 40, 42); font-family: &quot;times new roman=
+&quot;, &quot;new york&quot;, times, serif; font-size: 16px; font-variant-l=
+igatures: normal; orphans: 2; widows: 2;"><br></div><div style=3D"color: rg=
+b(38, 40, 42); font-family: &quot;times new roman&quot;, &quot;new york&quo=
+t;, times, serif; font-size: 16px; font-variant-ligatures: normal; orphans:=
+ 2; widows: 2;">My build process:</div><div style=3D"color: rgb(38, 40, 42)=
+; font-family: &quot;times new roman&quot;, &quot;new york&quot;, times, se=
+rif; font-size: 16px; font-variant-ligatures: normal; orphans: 2; widows: 2=
+;"><pre style=3D"box-sizing: border-box; font-family: SFMono-Regular, Conso=
+las, &quot;Liberation Mono&quot;, Menlo, Courier, monospace; font-size: 13.=
+6px; word-wrap: normal; padding: 16px; overflow: auto; line-height: 1.45; b=
+ackground-color: rgb(246, 248, 250); border-top-left-radius: 3px; border-to=
+p-right-radius: 3px; border-bottom-right-radius: 3px; border-bottom-left-ra=
+dius: 3px; word-break: normal; color: rgb(36, 41, 46); font-variant-ligatur=
+es: normal;">git clone https://github.com/mauricemanning/photoscan13-contai=
+nerized
+<span class=3D"pl-c1" style=3D"box-sizing: border-box; color: rgb(0, 92, 19=
+7);">cd</span> photoscan13-containerized
+docker build --rm --tag photoscan13 <span class=3D"pl-c1" style=3D"box-sizi=
+ng: border-box; color: rgb(0, 92, 197);">.</span>
+docker tag photoscan13:latest mmmanning/photoscan13:latest
+docker push mmmanning/photoscan13:latest
+docker images
+singularity pull docker://mmmanning/photoscan13:latest</pre></div><div styl=
+e=3D"color: rgb(38, 40, 42); font-family: &quot;times new roman&quot;, &quo=
+t;new york&quot;, times, serif; font-size: 16px; font-variant-ligatures: no=
+rmal; orphans: 2; widows: 2;"><br></div><div style=3D"color: rgb(38, 40, 42=
+); font-family: &quot;times new roman&quot;, &quot;new york&quot;, times, s=
+erif; font-size: 16px; font-variant-ligatures: normal; orphans: 2; widows: =
+2;"><br></div><div style=3D"color: rgb(38, 40, 42); font-family: &quot;time=
+s new roman&quot;, &quot;new york&quot;, times, serif; font-size: 16px; fon=
+t-variant-ligatures: normal; orphans: 2; widows: 2;">Thanks for an ideas.</=
+div><div style=3D"color: rgb(38, 40, 42); font-family: &quot;times new roma=
+n&quot;, &quot;new york&quot;, times, serif; font-size: 16px; font-variant-=
+ligatures: normal; orphans: 2; widows: 2;">Maurice</div><div style=3D"color=
+: rgb(38, 40, 42); font-family: &quot;times new roman&quot;, &quot;new york=
+&quot;, times, serif; font-size: 16px; font-variant-ligatures: normal; orph=
+ans: 2; widows: 2;"><br></div><div style=3D"color: rgb(38, 40, 42); font-fa=
+mily: &quot;times new roman&quot;, &quot;new york&quot;, times, serif; font=
+-size: 16px; font-variant-ligatures: normal; orphans: 2; widows: 2;"><br></=
+div></div>
+------=_Part_2884_1248210689.1522934879713--
+
+------=_Part_2883_460916906.1522934879712--

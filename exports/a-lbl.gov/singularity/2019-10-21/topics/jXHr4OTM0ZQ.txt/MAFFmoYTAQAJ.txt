@@ -1,0 +1,860 @@
+Date: Wed, 1 Mar 2017 23:08:26 -0800 (PST)
+From: Stefan Kombrink <stefan....@googlemail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <476f3a67-5e74-4fe0-a84d-b652de3b1254@lbl.gov>
+In-Reply-To: <CAN7etTxvj7C3PDyE1qCVzO6sDLJ4BaA9uqGV+AX3WW-Vi1iiyw@mail.gmail.com>
+References: <1f92fe2c-5535-44ec-bca4-4b47f415c83e@lbl.gov> <5218828d-d47b-455d-9b48-617363509a15@lbl.gov>
+ <CABWwhHqye6SWo140hau-6nsf3b4H20SPNWU9_9QUUpx5uo4brQ@mail.gmail.com>
+ <c9ca4810-4e73-471b-b8fd-dda9a7447d72@lbl.gov> <CAN9aCec_o1hZP=5_9etRTDcRnrU3XLe3gnfBPuPx82iu52ovxg@mail.gmail.com>
+ <20170301122605.GY14538@sillage.bis.pasteur.fr> <CABWwhHp3g7Rq5S=h28R6e4bdV22XY=90W_NAqzRfjYjLiGNA-w@mail.gmail.com>
+ <d674f9b4-d986-4b95-a395-e48c59b111ab@lbl.gov> <CAN7etTwWz2dnwpO4F+osHOGXi+sY5OTCfDf=in+KupFkF=SmZA@mail.gmail.com>
+ <0cb36e83-901b-4f01-988f-9e514a87e784@lbl.gov> <CAN7etTx4WXCWKtd-OpaNknNfWnThmExZ2vZft2NFtWWy3e5UXg@mail.gmail.com>
+ <C9972027-FAA8-404D-A08B-9777A95170C3@llnl.gov> <CAN7etTyCyXd3OD+swEzwYhpjXLZfQLw45W5qdKLOH9mWbs4SaA@mail.gmail.com>
+ <08F277E3-804A-40BC-8841-0913A93F6EF8@llnl.gov>
+ <CAN7etTxvj7C3PDyE1qCVzO6sDLJ4BaA9uqGV+AX3WW-Vi1iiyw@mail.gmail.com>
+Subject: Re: [Singularity] $HOME mounting in a container-modification
+ session
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_68_532589285.1488438506200"
+
+------=_Part_68_532589285.1488438506200
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_69_812688161.1488438506202"
+
+------=_Part_69_812688161.1488438506202
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+chown is destructive, especially recursively. Is a GID / UID mapping maybe=
+=20
+an alternative?
+Let's say I can map the calling GID/UID to a well-defined SINGULARITY=20
+UID/GID which apply during shelling/execution?
+When storing user content in a container they'd be owned by SINGULARITY=20
+UID/GID=20
+I usually do not want to preserve the original UID/GID because then another=
+=20
+user might have trouble accessing this data.
+
+Am Donnerstag, 2. M=C3=A4rz 2017 05:23:48 UTC+1 schrieb Gregory M. Kurtzer:
+>
+>
+>
+> On Wed, Mar 1, 2017 at 5:48 PM, Gamblin, Todd <ga...@llnl.gov=20
+> <javascript:>> wrote:
+>
+>> Greg:=20
+>>
+>> On Mar 1, 2017, at 4:34 PM, Gregory M. Kurtzer <gm...@lbl.gov=20
+>> <javascript:>> wrote:
+>>
+>> So I am thinking about this... If the invocation of Singularity changes=
+=20
+>> the ownership of the directory `/applications` to the calling user, and=
+=20
+>> then the calling user (let's assume UID=3D1234) installs files into that=
+=20
+>> path, when the container exits, would it be considered tolerable that th=
+e=20
+>> files would always be owned by UID 1234?
+>>
+>>
+>> No.  Basically I=E2=80=99m trying to enable users to package user-space =
+things,=20
+>> which is what they currently do on our systems.  An app developer (say,=
+=20
+>> user1) would build up a software stack in their home directory, then=20
+>> snapshot that, and they try to share it with other users.  I want user2 =
+to=20
+>> be able to log in and see exactly what user1 built, but as user2. =20
+>>
+>
+> Unless I am misunderstanding, that would involve a recursive chown.=20
+> Something I would prefer to avoid if at all possible as it kinda abuses t=
+he=20
+> SUID privilege that Singularity has. It also would defy the principal of=
+=20
+> least astonishment... Well at least for me it will. Or perhaps I am=20
+> confused. haha... If so, sorry, can you elaborate.
+> =20
+>
+>>
+>> Basically I want it to be like I called in some build expert, they sat a=
+t=20
+>> my terminal and built stuff for me, and then they handed the terminal ba=
+ck=20
+>> to me.  This is why I want /applications to be owned by <whoever launche=
+d=20
+>> the container>.
+>>
+>
+> I can do a non recursive chown on just the directory `/applications` as a=
+=20
+> compromise.
+> =20
+>
+>>
+>> If /applications is always owned by 1234, and I share that with someone=
+=20
+>> running on a system where there is no user 1234, then the person using t=
+he=20
+>> container wouldn=E2=80=99t be able to write to /applications.
+>>
+>
+> Yep. Except that they could write to the `/applications` directory, just=
+=20
+> not any other files that are already there (unless I recursively chown).
+> =20
+>
+>>
+>> I ask because there are some things I am rather OCD on, and file=20
+>> ownerships and correct permissions are one of them.
+>>
+>>
+>> I can understand that.  But I think that most container are not well=20
+>> suited to HPC environments because they don=E2=80=99t containerize user =
+space=20
+>> (where HPC people work).  They containerize system space.  In system spa=
+ce=20
+>> there are a fixed set of known user ids (root, etc.) that it makes sense=
+ to=20
+>> freeze in an absolute sense.  You=E2=80=99re snapshotting what the vendo=
+r did.  The=20
+>> vendor is always someone other than the user.  But for any use case, the=
+=20
+>> =E2=80=9Cuser=E2=80=9D could be lots of different people, but I want to =
+hand my environment=20
+>> off to them and have them use it as themselves.
+>>
+>
+> I didn't consider the differentiation between user spaces (from the kerne=
+l=20
+> perspective, anything not kernel space is user space), but there is value=
+=20
+> in doing that as you pointed out. So we have the "system" space which is=
+=20
+> the non-kernel components of the operating system. Then we have a user's=
+=20
+> environment (e.g. $HOME and scratch directories). In Singularity terms,=
+=20
+> $HOME and scratch is shared with the host, but (again, if I am following)=
+=20
+> you are suggesting another space that kind of sits between the two; user=
+=20
+> controlled applications that exist within a container, maybe akin to a=20
+> software module farm?
+> =20
+>
+>>
+>> I don=E2=80=99t think this violates reproducibility =E2=80=94 it allows =
+me to reproduce=20
+>> user-space things for different users.
+>>
+>
+> If the application space follows the container, it doesn't violate=20
+> reproducibility of the container itself, but what about reproducibility o=
+f=20
+> creating that container (e.g. for Singularity Hub, or a build service, or=
+=20
+> someone that wants to leverage all of your work but make some minor chang=
+es=20
+> to the recipe)? For me, the golden nugget of reproducibility is two=20
+> fold,... one is the container itself, but on the other hand, it is the=20
+> bootstrap definition file.
+> =20
+>
+>>
+>> Going off on a related tangent... I think the best way to address this i=
+s=20
+>> actually for people not ever to modify containers once they have been=20
+>> bootstrapped. The --writable option is a doubled edged sword because it=
+=20
+>> breaks reproducibility and if we can find a way for non-root users to=20
+>> bootstrap, and then integrate something like Spack or EasyBuild into the=
+=20
+>> bootstrap recipe, I think that would be the ideal way to go, but I'm not=
+=20
+>> sure exactly what that integration layer would look like. Thoughts?
+>>
+>>
+>> I agree in principle.  I think people should shoot to make a bootstrap=
+=20
+>> recipe.  But like Robin said, I think you want to be able to make the th=
+ing=20
+>> writable so that people can iterate in the container environment, THEN m=
+ake=20
+>> a recipe.  Or iterate on a build, THEN snapshot it.
+>>
+>> Put differently, I want interactive use so I can debug my setup before I=
+=20
+>> snapshot it for production use.  That=E2=80=99s especially important if =
+the=20
+>> container environment is some OS I=E2=80=99m not used to, or some enviro=
+nment I=E2=80=99ve=20
+>> never tried.
+>>
+>
+> Yes, I agree, and apologies for my previous wording. Debugging and=20
+> development is far easier when done interactively.
+>
+> Thanks, great ideas you guys!
+>
+> Greg
+>
+>
+>
+>
+> =20
+>
+>>
+>> -Todd
+>>
+>>
+>>
+>>
+>> Thanks!
+>>
+>> On Wed, Mar 1, 2017 at 4:02 PM, Gamblin, Todd <ga...@llnl.gov=20
+>> <javascript:>> wrote:
+>>
+>>> Greg:=20
+>>>
+>>> Comments below.
+>>>
+>>> On Mar 1, 2017, at 3:28 PM, Gregory M. Kurtzer <gm...@lbl.gov=20
+>>> <javascript:>> wrote:
+>>>
+>>>>
+>>>> This would allow our users to build containers the same way they=20
+>>>> currently do on our clusters, without them having to understand any fa=
+ncy=20
+>>>> filesystem mounts, overlay semantics, or external build farms.  Couple=
+d=20
+>>>> with Spack (an entirely user-space package manager) they could also ea=
+sily=20
+>>>> build their dependencies in the "myuser" directory, without worrying a=
+bout=20
+>>>> portability concerns that arise from differently named home directorie=
+s on=20
+>>>> different systems.
+>>>>
+>>>> Does that make sense, and would it be an easy tweak?  Or am I missing=
+=20
+>>>> something?
+>>>>
+>>>
+>>> I think that is a great idea! If I am understanding correctly, could an=
+=20
+>>> example implementation look like this:
+>>>
+>>> $ singularity shell --writable ~/container.img
+>>> Singularity container.img> echo $PATH
+>>> /bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/applications/bin
+>>> Singularity container.img> cd ~/git/awesomeness
+>>> Singularity container.img> ./configure --prefix=3D/applications && make=
+ &&=20
+>>> make install
+>>>
+>>> If so, that would be pretty straight forward to implement.
+>>>
+>>>
+>>> Yes!  if /applications is always owned by <whoever launched the=20
+>>> container> then I think this is exactly my use case!
+>>>
+>>> -Todd
+>>>
+>>>
+>>>
+>>>
+>>>
+>>>
+>>> Thanks!
+>>> =20
+>>> --=20
+>>> Gregory M. Kurtzer
+>>> HPC Systems Architect and Technology Developer
+>>> Lawrence Berkeley National Laboratory HPCS
+>>> University of California Berkeley Research IT
+>>> Singularity Linux Containers (http://singularity.lbl.gov/)
+>>> Warewulf Cluster Management (http://warewulf.lbl.gov/)
+>>> GitHub: https://github.com/gmkurtzer, Twitter:=20
+>>> https://twitter.com/gmkurtzer
+>>>
+>>> --=20
+>>> You received this message because you are subscribed to the Google=20
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send=
+=20
+>>> an email to singu...@lbl.gov <javascript:>.
+>>>
+>>>
+>>>
+>>> --=20
+>>> You received this message because you are subscribed to the Google=20
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send=
+=20
+>>> an email to singu...@lbl.gov <javascript:>.
+>>>
+>>
+>>
+>>
+>> --=20
+>> Gregory M. Kurtzer
+>> HPC Systems Architect and Technology Developer
+>> Lawrence Berkeley National Laboratory HPCS
+>> University of California Berkeley Research IT
+>> Singularity Linux Containers (http://singularity.lbl.gov/)
+>> Warewulf Cluster Management (http://warewulf.lbl.gov/)
+>> GitHub: https://github.com/gmkurtzer, Twitter:=20
+>> https://twitter.com/gmkurtzer
+>>
+>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s=20
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n=20
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>>
+>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s=20
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n=20
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> --=20
+> Gregory M. Kurtzer
+> HPC Systems Architect and Technology Developer
+> Lawrence Berkeley National Laboratory HPCS
+> University of California Berkeley Research IT
+> Singularity Linux Containers (http://singularity.lbl.gov/)
+> Warewulf Cluster Management (http://warewulf.lbl.gov/)
+> GitHub: https://github.com/gmkurtzer, Twitter:=20
+> https://twitter.com/gmkurtzer
+>
+
+------=_Part_69_812688161.1488438506202
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">chown is destructive, especially recursively. Is a GID / U=
+ID mapping maybe an alternative?<br>Let&#39;s say I can map the calling GID=
+/UID to a well-defined SINGULARITY UID/GID which apply during shelling/exec=
+ution?<br>When storing user content in a container they&#39;d be owned by S=
+INGULARITY UID/GID <br>I usually do not want to preserve the original UID/G=
+ID because then another user might have trouble accessing this data.<br><br=
+>Am Donnerstag, 2. M=C3=A4rz 2017 05:23:48 UTC+1 schrieb Gregory M. Kurtzer=
+:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;bo=
+rder-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr"><br><div><br=
+><div class=3D"gmail_quote">On Wed, Mar 1, 2017 at 5:48 PM, Gamblin, Todd <=
+span dir=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscat=
+ed-mailto=3D"TqWmr4oKAQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39=
+;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39=
+;;return true;">ga...@llnl.gov</a>&gt;</span> wrote:<br><blockquote class=
+=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padd=
+ing-left:1ex">
+
+
+
+<div style=3D"word-wrap:break-word">
+Greg:
+<div><br>
+<div><span>
+<blockquote type=3D"cite">
+<div>On Mar 1, 2017, at 4:34 PM, Gregory M. Kurtzer &lt;<a href=3D"javascri=
+pt:" target=3D"_blank" gdf-obfuscated-mailto=3D"TqWmr4oKAQAJ" rel=3D"nofoll=
+ow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=
+=3D"this.href=3D&#39;javascript:&#39;;return true;">gm...@lbl.gov</a>&gt; w=
+rote:</div>
+<br>
+<div>
+<div dir=3D"ltr">
+<div>So I am thinking about this... If the invocation of Singularity change=
+s the ownership of the directory `/applications` to the calling user, and t=
+hen the calling user (let&#39;s assume UID=3D1234) installs files into that=
+ path, when the container exits,
+ would it be considered tolerable that the files would always be owned by U=
+ID 1234?</div>
+</div>
+</div>
+</blockquote>
+<div><br>
+</div>
+</span><div>No.=C2=A0 Basically I=E2=80=99m trying to enable users to packa=
+ge user-space things, which is what they currently do on our systems.=C2=A0=
+ An app developer (say, user1) would build up a software stack in their hom=
+e directory, then snapshot that, and they try to share it
+ with other users.=C2=A0 I want user2 to be able to log in and see exactly =
+what user1 built, but as user2. =C2=A0</div></div></div></div></blockquote>=
+<div><br></div><div>Unless I am misunderstanding, that would involve a recu=
+rsive chown. Something I would prefer to avoid if at all possible as it kin=
+da abuses the SUID privilege that Singularity has. It also would defy the p=
+rincipal of least astonishment... Well at least for me it will. Or perhaps =
+I am confused. haha... If so, sorry, can you elaborate.</div><div>=C2=A0</d=
+iv><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left=
+:1px #ccc solid;padding-left:1ex"><div style=3D"word-wrap:break-word"><div>=
+<div>
+<div><br>
+</div>
+<div>Basically I want it to be like I called in some build expert, they sat=
+ at my terminal and built stuff for me, and then they handed the terminal b=
+ack to me.=C2=A0 This is why I want /applications to be owned by &lt;whoeve=
+r launched the container&gt;.</div></div></div></div></blockquote><div><br>=
+</div><div>I can do a non recursive chown on just the directory `/applicati=
+ons` as a compromise.</div><div>=C2=A0</div><blockquote class=3D"gmail_quot=
+e" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">=
+<div style=3D"word-wrap:break-word"><div><div>
+<div><br>
+</div>
+<div>If /applications is always owned by 1234, and I share that with someon=
+e running on a system where there is no user 1234, then the person using th=
+e container wouldn=E2=80=99t be able to write to /applications.</div></div>=
+</div></div></blockquote><div><br></div><div>Yep. Except that they could wr=
+ite to the `/applications` directory, just not any other files that are alr=
+eady there (unless I recursively chown).</div><div>=C2=A0</div><blockquote =
+class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid=
+;padding-left:1ex"><div style=3D"word-wrap:break-word"><div><div><span>
+<div><br>
+</div>
+<blockquote type=3D"cite">
+<div dir=3D"ltr">
+<div>I ask because there are some things I am rather OCD on, and file owner=
+ships and correct permissions are one of them.</div>
+</div>
+</blockquote>
+<div><br>
+</div>
+</span><div>I can understand that.=C2=A0 But I think that most container ar=
+e not well suited to HPC environments because they don=E2=80=99t containeri=
+ze user space (where HPC people work).=C2=A0 They containerize system space=
+.=C2=A0 In system space there are a fixed set of known user ids
+ (root, etc.) that it makes sense to freeze in an absolute sense.=C2=A0 You=
+=E2=80=99re snapshotting what the vendor did.=C2=A0 The vendor is always so=
+meone other than the user.=C2=A0 But for any use case, the =E2=80=9Cuser=E2=
+=80=9D could be lots of different people, but I want to hand my environment
+ off to them and have them use it as themselves.</div></div></div></div></b=
+lockquote><div><br></div><div>I didn&#39;t consider the differentiation bet=
+ween user spaces (from the kernel perspective, anything not kernel space is=
+ user space), but there is value in doing that as you pointed out. So we ha=
+ve the &quot;system&quot; space which is the non-kernel components of the o=
+perating system. Then we have a user&#39;s environment (e.g. $HOME and scra=
+tch directories). In Singularity terms, $HOME and scratch is shared with th=
+e host, but (again, if I am following) you are suggesting another space tha=
+t kind of sits between the two; user controlled applications that exist wit=
+hin a container, maybe akin to a software module farm?</div><div>=C2=A0</di=
+v><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:=
+1px #ccc solid;padding-left:1ex"><div style=3D"word-wrap:break-word"><div><=
+div>
+<div><br>
+</div>
+<div>I don=E2=80=99t think this violates reproducibility =E2=80=94 it allow=
+s me to reproduce user-space things for different users.</div></div></div><=
+/div></blockquote><div><br></div><div>If the application space follows the =
+container, it doesn&#39;t violate reproducibility of the container itself, =
+but what about reproducibility of creating that container (e.g. for Singula=
+rity Hub, or a build service, or someone that wants to leverage all of your=
+ work but make some minor changes to the recipe)? For me, the golden nugget=
+ of reproducibility is two fold,... one is the container itself, but on the=
+ other hand, it is the bootstrap definition file.</div><div>=C2=A0</div><bl=
+ockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #=
+ccc solid;padding-left:1ex"><div style=3D"word-wrap:break-word"><div><div><=
+span>
+<div><br>
+</div>
+<blockquote type=3D"cite">
+<div dir=3D"ltr">
+<div>Going off on a related tangent... I think the best way to address this=
+ is actually for people not ever to modify containers once they have been b=
+ootstrapped. The --writable option is a doubled edged sword because it brea=
+ks reproducibility and
+ if we can find a way for non-root users to bootstrap, and then integrate s=
+omething like Spack or EasyBuild into the bootstrap recipe, I think that wo=
+uld be the ideal way to go, but I&#39;m not sure exactly what that integrat=
+ion layer would look like. Thoughts?</div>
+</div>
+</blockquote>
+<div><br>
+</div>
+</span><div>I agree in principle.=C2=A0 I think people should shoot to make=
+ a bootstrap recipe.=C2=A0 But like Robin said, I think you want to be able=
+ to make the thing writable so that people can iterate in the container env=
+ironment, THEN make a recipe.=C2=A0 Or iterate on a build,
+ THEN snapshot it.</div>
+<div><br>
+</div>
+<div>Put differently, I want interactive use so I can debug my setup before=
+ I snapshot it for production use.=C2=A0 That=E2=80=99s especially importan=
+t if the container environment is some OS I=E2=80=99m not used to, or some =
+environment I=E2=80=99ve never tried.</div></div></div></div></blockquote><=
+div><br></div><div>Yes, I agree, and apologies for my previous wording. Deb=
+ugging and development is far easier when done interactively.</div><div><br=
+></div><div>Thanks, great ideas you guys!</div><div><br></div><div>Greg</di=
+v><div><br></div><div><br></div><div><br></div><div><br></div><div>=C2=A0</=
+div><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-lef=
+t:1px #ccc solid;padding-left:1ex"><div style=3D"word-wrap:break-word"><div=
+><div><span><font color=3D"#888888">
+<div><br>
+</div>
+<div>-Todd</div></font></span><div><div>
+<div><br>
+</div>
+<div><br>
+</div>
+<br>
+<blockquote type=3D"cite">
+<div dir=3D"ltr">
+<div><br>
+</div>
+<div>Thanks!</div>
+</div>
+<div><br>
+<div class=3D"gmail_quote">On Wed, Mar 1, 2017 at 4:02 PM, Gamblin, Todd <s=
+pan dir=3D"ltr">
+&lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"TqWm=
+r4oKAQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;=
+;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">g=
+a...@llnl.gov</a>&gt;</span> wrote:<br>
+<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
+x #ccc solid;padding-left:1ex">
+<div style=3D"word-wrap:break-word">Greg:
+<div><br>
+</div>
+<div>Comments below.</div>
+<div><br>
+<div><span>
+<blockquote type=3D"cite">
+<div>On Mar 1, 2017, at 3:28 PM, Gregory M. Kurtzer &lt;<a href=3D"javascri=
+pt:" target=3D"_blank" gdf-obfuscated-mailto=3D"TqWmr4oKAQAJ" rel=3D"nofoll=
+ow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=
+=3D"this.href=3D&#39;javascript:&#39;;return true;">gm...@lbl.gov</a>&gt; w=
+rote:</div>
+<div>
+<div dir=3D"ltr" style=3D"font-family:Helvetica;font-size:12px;font-style:n=
+ormal;font-weight:normal;letter-spacing:normal;text-align:start;text-indent=
+:0px;text-transform:none;white-space:normal;word-spacing:0px">
+<div>
+<div>
+<div class=3D"gmail_quote">
+<blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-=
+left-width:1px;border-left-color:rgb(204,204,204);border-left-style:solid;p=
+adding-left:1ex">
+<div dir=3D"ltr">
+<div><br>
+</div>
+<div>This would allow our users to build containers the same way they curre=
+ntly do on our clusters, without them having to understand any fancy filesy=
+stem mounts, overlay semantics, or external build farms.=C2=A0 Coupled with=
+ Spack (an entirely user-space
+ package manager) they could also easily build their dependencies in the &q=
+uot;myuser&quot; directory, without worrying about portability concerns tha=
+t arise from differently named home directories on different systems.</div>
+<div><br>
+</div>
+<div>Does that make sense, and would it be an easy tweak?=C2=A0 Or am I mis=
+sing something?</div>
+</div>
+</blockquote>
+<div><br>
+</div>
+<div>I think that is a great idea! If I am understanding correctly, could a=
+n example implementation look like this:</div>
+<div><br>
+</div>
+<div>$ singularity shell --writable ~/container.img</div>
+<div>Singularity container.img&gt; echo $PATH</div>
+<div>/bin:/usr/bin:/sbin:/usr/sbin:<wbr>/usr/local/bin:/applications/<wbr>b=
+in</div>
+<div>Singularity container.img&gt; cd ~/git/awesomeness</div>
+<div>Singularity container.img&gt; ./configure --prefix=3D/applications &am=
+p;&amp; make &amp;&amp; make install</div>
+<div><br>
+</div>
+<div>If so, that would be pretty straight forward to implement.</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</blockquote>
+<div><br>
+</div>
+</span>
+<div>Yes! =C2=A0if /applications is always owned by &lt;whoever launched th=
+e container&gt; then I think this is exactly my use case!</div>
+<span><font color=3D"#888888">
+<div><br>
+</div>
+<div>-Todd</div>
+<div><br>
+</div>
+<div><br>
+</div>
+<div><br>
+</div>
+<div><br>
+</div>
+<br>
+</font></span>
+<blockquote type=3D"cite">
+<div><span>
+<div dir=3D"ltr" style=3D"font-family:Helvetica;font-size:12px;font-style:n=
+ormal;font-weight:normal;letter-spacing:normal;text-align:start;text-indent=
+:0px;text-transform:none;white-space:normal;word-spacing:0px">
+<div>
+<div>
+<div class=3D"gmail_quote">
+<div><br>
+</div>
+<div>Thanks!</div>
+<div>=C2=A0</div>
+</div>
+--<span>=C2=A0</span><br>
+<div>
+<div dir=3D"ltr">
+<div>
+<div dir=3D"ltr">
+<div>
+<div dir=3D"ltr">
+<div>
+<div dir=3D"ltr">
+<div dir=3D"ltr">
+<div dir=3D"ltr">
+<div>Gregory M. Kurtzer</div>
+<div>HPC Systems Architect and Technology Developer</div>
+<div>Lawrence Berkeley National Laboratory HPCS<br>
+University of California Berkeley Research IT<br>
+Singularity Linux Containers=C2=A0(<a href=3D"http://singularity.lbl.gov/" =
+target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://w=
+ww.google.com/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.gov%2F\x26sa\x3dD\x26sn=
+tz\x3d1\x26usg\x3dAFQjCNHITKHVjde-iKsg1vSOOrRt58XtEQ&#39;;return true;" onc=
+lick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fsingul=
+arity.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHITKHVjde-iKsg1vSO=
+OrRt58XtEQ&#39;;return true;">http://<wbr>singularity.lbl.gov/</a>)</div>
+<div>Warewulf Cluster Management=C2=A0(<a href=3D"http://warewulf.lbl.gov/"=
+ target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://=
+www.google.com/url?q\x3dhttp%3A%2F%2Fwarewulf.lbl.gov%2F\x26sa\x3dD\x26sntz=
+\x3d1\x26usg\x3dAFQjCNFPtSL1wiDx3C_BKcVgBhWc77Jxww&#39;;return true;" oncli=
+ck=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwarewulf=
+.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPtSL1wiDx3C_BKcVgBhWc7=
+7Jxww&#39;;return true;">http://warewulf.<wbr>lbl.gov/</a>)</div>
+<div>GitHub:=C2=A0<a href=3D"https://github.com/gmkurtzer" target=3D"_blank=
+" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.google.com/u=
+rl?q\x3dhttps%3A%2F%2Fgithub.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg=
+\x3dAFQjCNHgwLrV-1wbChhxINJY_U3Xyjg2uw&#39;;return true;" onclick=3D"this.h=
+ref=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fgmkur=
+tzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHgwLrV-1wbChhxINJY_U3Xyjg2uw&#=
+39;;return true;">https://github.com/<wbr>gmkurtzer</a>,=C2=A0<span style=
+=3D"font-size:12.8px">Twitter:=C2=A0</span><a href=3D"https://twitter.com/g=
+mkurtzer" style=3D"font-size:12.8px" target=3D"_blank" rel=3D"nofollow" onm=
+ousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2F=
+twitter.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGiphjH-YHVV=
+hLsKsNsH_Zw5B_gRA&#39;;return true;" onclick=3D"this.href=3D&#39;https://ww=
+w.google.com/url?q\x3dhttps%3A%2F%2Ftwitter.com%2Fgmkurtzer\x26sa\x3dD\x26s=
+ntz\x3d1\x26usg\x3dAFQjCNGiphjH-YHVVhLsKsNsH_Zw5B_gRA&#39;;return true;">ht=
+tps://<wbr>twitter.com/gmkurtzer</a></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div style=3D"font-family:Helvetica;font-size:12px;font-style:normal;font-w=
+eight:normal;letter-spacing:normal;text-align:start;text-indent:0px;text-tr=
+ansform:none;white-space:normal;word-spacing:0px">
+<br>
+</div>
+</span><span><span style=3D"font-family:Helvetica;font-size:12px;font-style=
+:normal;font-weight:normal;letter-spacing:normal;text-align:start;text-inde=
+nt:0px;text-transform:none;white-space:normal;word-spacing:0px;float:none;d=
+isplay:inline!important">--<span>=C2=A0</span></span><br style=3D"font-fami=
+ly:Helvetica;font-size:12px;font-style:normal;font-weight:normal;letter-spa=
+cing:normal;text-align:start;text-indent:0px;text-transform:none;white-spac=
+e:normal;word-spacing:0px">
+<span style=3D"font-family:Helvetica;font-size:12px;font-style:normal;font-=
+weight:normal;letter-spacing:normal;text-align:start;text-indent:0px;text-t=
+ransform:none;white-space:normal;word-spacing:0px;float:none;display:inline=
+!important">You
+ received this message because you are subscribed to the Google Groups &quo=
+t;singularity&quot; group.</span><br style=3D"font-family:Helvetica;font-si=
+ze:12px;font-style:normal;font-weight:normal;letter-spacing:normal;text-ali=
+gn:start;text-indent:0px;text-transform:none;white-space:normal;word-spacin=
+g:0px">
+<span style=3D"font-family:Helvetica;font-size:12px;font-style:normal;font-=
+weight:normal;letter-spacing:normal;text-align:start;text-indent:0px;text-t=
+ransform:none;white-space:normal;word-spacing:0px;float:none;display:inline=
+!important">To
+ unsubscribe from this group and stop receiving emails from it, send an ema=
+il to<span>=C2=A0</span></span><a href=3D"javascript:" style=3D"font-family=
+:Helvetica;font-size:12px;font-style:normal;font-weight:normal;letter-spaci=
+ng:normal;text-align:start;text-indent:0px;text-transform:none;white-space:=
+normal;word-spacing:0px" target=3D"_blank" gdf-obfuscated-mailto=3D"TqWmr4o=
+KAQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;re=
+turn true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">sing=
+ularity...@<wbr>lbl.gov</a><span style=3D"font-family:Helvetica;font-size:1=
+2px;font-style:normal;font-weight:normal;letter-spacing:normal;text-align:s=
+tart;text-indent:0px;text-transform:none;white-space:normal;word-spacing:0p=
+x;float:none;display:inline!important">.</span></span></div>
+</blockquote>
+</div>
+<br>
+</div>
+</div>
+<div>
+<div>
+<div><br>
+</div>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to
+<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"TqWmr4oK=
+AQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;ret=
+urn true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">singu=
+larity...@lbl.<wbr>gov</a>.<br>
+</div>
+</div>
+</blockquote>
+</div>
+<br>
+<br clear=3D"all">
+<div><br>
+</div>
+-- <br>
+<div>
+<div dir=3D"ltr">
+<div>
+<div dir=3D"ltr">
+<div>
+<div dir=3D"ltr">
+<div>
+<div dir=3D"ltr">
+<div dir=3D"ltr">
+<div dir=3D"ltr">
+<div>Gregory M. Kurtzer</div>
+<div>HPC Systems Architect and Technology Developer</div>
+<div>Lawrence Berkeley National Laboratory HPCS<br>
+University of California Berkeley Research IT<br>
+Singularity Linux Containers=C2=A0(<a href=3D"http://singularity.lbl.gov/" =
+target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://w=
+ww.google.com/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.gov%2F\x26sa\x3dD\x26sn=
+tz\x3d1\x26usg\x3dAFQjCNHITKHVjde-iKsg1vSOOrRt58XtEQ&#39;;return true;" onc=
+lick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fsingul=
+arity.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHITKHVjde-iKsg1vSO=
+OrRt58XtEQ&#39;;return true;">http://<wbr>singularity.lbl.gov/</a>)</div>
+<div>Warewulf Cluster Management=C2=A0(<a href=3D"http://warewulf.lbl.gov/"=
+ target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://=
+www.google.com/url?q\x3dhttp%3A%2F%2Fwarewulf.lbl.gov%2F\x26sa\x3dD\x26sntz=
+\x3d1\x26usg\x3dAFQjCNFPtSL1wiDx3C_BKcVgBhWc77Jxww&#39;;return true;" oncli=
+ck=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwarewulf=
+.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPtSL1wiDx3C_BKcVgBhWc7=
+7Jxww&#39;;return true;">http://warewulf.<wbr>lbl.gov/</a>)</div>
+<div>GitHub:=C2=A0<a href=3D"https://github.com/gmkurtzer" target=3D"_blank=
+" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.google.com/u=
+rl?q\x3dhttps%3A%2F%2Fgithub.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg=
+\x3dAFQjCNHgwLrV-1wbChhxINJY_U3Xyjg2uw&#39;;return true;" onclick=3D"this.h=
+ref=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fgmkur=
+tzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHgwLrV-1wbChhxINJY_U3Xyjg2uw&#=
+39;;return true;">https://github.com/<wbr>gmkurtzer</a>,=C2=A0<span style=
+=3D"font-size:12.8px">Twitter:=C2=A0</span><a href=3D"https://twitter.com/g=
+mkurtzer" style=3D"font-size:12.8px" target=3D"_blank" rel=3D"nofollow" onm=
+ousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2F=
+twitter.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGiphjH-YHVV=
+hLsKsNsH_Zw5B_gRA&#39;;return true;" onclick=3D"this.href=3D&#39;https://ww=
+w.google.com/url?q\x3dhttps%3A%2F%2Ftwitter.com%2Fgmkurtzer\x26sa\x3dD\x26s=
+ntz\x3d1\x26usg\x3dAFQjCNGiphjH-YHVVhLsKsNsH_Zw5B_gRA&#39;;return true;">ht=
+tps://<wbr>twitter.com/gmkurtzer</a></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div><br>
+</div>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to
+<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"TqWmr4oK=
+AQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;ret=
+urn true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">singu=
+larity...@lbl.<wbr>gov</a>.<br>
+</blockquote>
+</div></div></div>
+<br>
+</div>
+</div><div><div>
+
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+TqWmr4oKAQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div=
+ dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div>Gregory M. Kurtzer</div=
+><div>HPC Systems Architect and Technology Developer</div><div>Lawrence Ber=
+keley National Laboratory HPCS<br>University of California Berkeley Researc=
+h IT<br>Singularity Linux Containers=C2=A0(<a href=3D"http://singularity.lb=
+l.gov/" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;=
+http://www.google.com/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.gov%2F\x26sa\x3=
+dD\x26sntz\x3d1\x26usg\x3dAFQjCNHITKHVjde-iKsg1vSOOrRt58XtEQ&#39;;return tr=
+ue;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%=
+2Fsingularity.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHITKHVjde-=
+iKsg1vSOOrRt58XtEQ&#39;;return true;">http://<wbr>singularity.lbl.gov/</a>)=
+</div><div>Warewulf Cluster Management=C2=A0(<a href=3D"http://warewulf.lbl=
+.gov/" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;h=
+ttp://www.google.com/url?q\x3dhttp%3A%2F%2Fwarewulf.lbl.gov%2F\x26sa\x3dD\x=
+26sntz\x3d1\x26usg\x3dAFQjCNFPtSL1wiDx3C_BKcVgBhWc77Jxww&#39;;return true;"=
+ onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwa=
+rewulf.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPtSL1wiDx3C_BKcV=
+gBhWc77Jxww&#39;;return true;">http://warewulf.<wbr>lbl.gov/</a>)</div><div=
+>GitHub:=C2=A0<a href=3D"https://github.com/gmkurtzer" target=3D"_blank" re=
+l=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q=
+\x3dhttps%3A%2F%2Fgithub.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3d=
+AFQjCNHgwLrV-1wbChhxINJY_U3Xyjg2uw&#39;;return true;" onclick=3D"this.href=
+=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fgmkurtze=
+r\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHgwLrV-1wbChhxINJY_U3Xyjg2uw&#39;=
+;return true;">https://github.com/<wbr>gmkurtzer</a>,=C2=A0<span style=3D"f=
+ont-size:12.8px">Twitter:=C2=A0</span><a href=3D"https://twitter.com/gmkurt=
+zer" style=3D"font-size:12.8px" target=3D"_blank" rel=3D"nofollow" onmoused=
+own=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Ftwitt=
+er.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGiphjH-YHVVhLsKs=
+NsH_Zw5B_gRA&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.goo=
+gle.com/url?q\x3dhttps%3A%2F%2Ftwitter.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x=
+3d1\x26usg\x3dAFQjCNGiphjH-YHVVhLsKsNsH_Zw5B_gRA&#39;;return true;">https:/=
+/<wbr>twitter.com/gmkurtzer</a></div></div></div></div></div></div></div></=
+div></div></div></div>
+</div></div>
+</blockquote></div>
+------=_Part_69_812688161.1488438506202--
+
+------=_Part_68_532589285.1488438506200--

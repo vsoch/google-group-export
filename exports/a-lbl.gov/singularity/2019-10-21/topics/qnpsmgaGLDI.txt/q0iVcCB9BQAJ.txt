@@ -1,0 +1,1499 @@
+Date: Sun, 22 Sep 2019 13:09:00 -0700 (PDT)
+From: Dean Pettinga <dean...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <e3a9f88d-9622-46ba-95e3-14d6b3cf0749@lbl.gov>
+In-Reply-To: <CAM=pu++vmZ0Ruuoe9pGH8ypYVVtftouQX=_BP-Lsv+NW_N17mw@mail.gmail.com>
+References: <4e3f0796-dbb8-48ac-a786-28ee3ff9f7f8@lbl.gov> <CAM=pu++9g7EHN1b0DArLbBmrqaLSusyhNLRuVWLzTbKJAGH5kQ@mail.gmail.com>
+ <ece8a25d-5717-496b-a8ef-aa60cca30391@lbl.gov> <CAM=pu+L7BL89E6or5ATQ7qZnQ8HhUj7X=cm6H9GAEapg2kSVWg@mail.gmail.com>
+ <1e966ec5-e71d-48bf-9ca4-ba43fd7fece3@lbl.gov> <CAM=pu+JARY_MBKVHDH8pgA1972_JytYszjr267Uv2hA6HUwxtA@mail.gmail.com>
+ <c8bc281b-1cf6-4bde-92f0-d847adf0ddb5@lbl.gov>
+ <CAM=pu++vmZ0Ruuoe9pGH8ypYVVtftouQX=_BP-Lsv+NW_N17mw@mail.gmail.com>
+Subject: Re: [Singularity] Mounting to Singularity container invoked by
+ snakemake on HPC cluster
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_423_1163490115.1569182941095"
+
+------=_Part_423_1163490115.1569182941095
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_424_198130500.1569182941098"
+
+------=_Part_424_198130500.1569182941098
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+I spoke with my HPC admin and spent some time working through this 
+permissions issue. it appears to be a problem with inherited permissions 
+and POSIX/ACL cross-talk. Since the cluster-wide installation of 
+Singularity is pretty old (2.4.2), we tested Singularity 3.4, which appears 
+to solve this issue. 
+
+On Tuesday, June 11, 2019 at 11:22:48 AM UTC-4, vanessa wrote:
+>
+> Can you run this:
+>
+> $ singularity exec  --bind /secondary/projects/bbc/tools/dean_miniconda3/
+>> lib/python3.6/site-packages:/mnt/snakemake /secondary/projects/bbc/
+>> research/smk_pipeline/.snakemake/singularity/
+>> 2f95debcc77a32fc723cdf8a4ad18fa2.simg bash -c 'echo hello'
+>
+>
+> With --debug for singularity? Is there a simple dummy/toy example you can 
+> give me to reproduce on my local machine? That would be a lot easier / 
+> faster to figure out, if you are able!
+>
+> On Tue, Jun 11, 2019 at 10:48 AM Dean Pettinga <de...@gmail.com 
+> <javascript:>> wrote:
+>
+>> ok. so here's a few more things:
+>>
+>> exec command *without* the mount:
+>> [dean.pettinga@node065 smk_pipeline]$ singularity exec /secondary/
+>> projects/bbc/research/smk_pipeline/.snakemake/singularity/
+>> 2f95debcc77a32fc723cdf8a4ad18fa2.simg bash -c 'echo hello'
+>> hello
+>>
+>>
+>> *with* the mount:
+>>
+>> [dean.pettinga@node065 smk_pipeline]$ singularity exec  --bind /secondary
+>> /projects/bbc/tools/dean_miniconda3/lib/python3.6/site-packages:/mnt/snakemake 
+>> /secondary/projects/bbc/research/smk_pipeline/.snakemake/singularity/
+>> 2f95debcc77a32fc723cdf8a4ad18fa2.simg bash -c 'echo hello'
+>>
+>> ERROR  : There was an error binding the path /secondary/projects/bbc/
+>> tools/dean_miniconda3/lib/python3.6/site-packages: Permission denied
+>>
+>> ABORT  : Retval = 255
+>>
+>> different mount:
+>>
+>> [dean.pettinga@node065 smk_pipeline]$ singularity exec --bind /secondary 
+>> .snakemake/singularity/2f95debcc77a32fc723cdf8a4ad18fa2.simg bash -c 'echo 
+>> hello'
+>>
+>> hello
+>>
+>> Full output from debug:
+>>
+>> [dean.pettinga@node065 smk_pipeline]$ snakemake --use-singularity --debug 
+>> --singularity-args '-B /secondary,/primary'
+>>
+>> Building DAG of jobs...
+>>
+>> Using shell: /bin/bash
+>>
+>> Provided cores: 1
+>>
+>> Rules claiming more threads will be scaled down.
+>>
+>> Job counts:
+>>
+>>       count   jobs
+>>
+>>       1       all
+>>
+>>       1       edgeR_longReport
+>>
+>>       1       edgeR_shortReport
+>>
+>>       3
+>>
+>>
+>> [Mon Jun 10 16:34:02 2019]
+>>
+>> rule edgeR_longReport:
+>>
+>>    input: deliverables/UniquelyMappingRates.txt, deliverables/
+>> UniquelyMappingReads.txt, deliverables/starMatrix.txt
+>>
+>>    output: r_objects/topGenes.LPS_vs_PBS.rds, r_objects/topGenes.
+>> IL4_vs_PBS.rds, r_objects/topGenes.LPS_vs_IL4.rds, r_objects/volcano.
+>> LPS_vs_PBS.rds, r_objects/volcano.IL4_vs_PBS.rds, r_objects/volcano.
+>> LPS_vs_IL4.rds, r_objects/contrastMatrix.LPS_vs_PBS.rds, r_objects/
+>> contrastMatrix.IL4_vs_PBS.rds, r_objects/contrastMatrix.LPS_vs_IL4.rds, 
+>> r_objects/pca_plot.rds, r_objects/var_plot.rds, r_objects/heatmap.rds, 
+>> r_objects/DGE_design.rds, deliverables/LPS_vs_PBS.txt, deliverables/
+>> IL4_vs_PBS.txt, deliverables/LPS_vs_IL4.txt, deliverables/LPS_vs_PBS.cls, 
+>> deliverables/IL4_vs_PBS.cls, deliverables/LPS_vs_IL4.cls, deliverables/
+>> LPS_vs_PBS.gct, deliverables/IL4_vs_PBS.gct, deliverables/LPS_vs_IL4.gct, 
+>> deliverables/edgeR_longReport.html
+>>
+>>    jobid: 54
+>>
+>>
+>> Activating singularity image /secondary/projects/bbc/research/
+>> smk_pipeline/.snakemake/singularity/2f95debcc77a32fc723cdf8a4ad18fa2.simg
+>>
+>> ERROR  : Failed to mount home directory /secondary/projects/bbc/research/smk_pipeline 
+>> -> /cm/local/apps/singularity/2.4.2/var/singularity/mnt/session/secondary
+>> /projects/bbc/research/smk_pipeline: Permission denied
+>>
+>> ABORT  : Retval = 255
+>>
+>> [Mon Jun 10 16:34:02 2019]
+>>
+>> Error in rule edgeR_longReport:
+>>
+>>    jobid: 54
+>>
+>>    output: r_objects/topGenes.LPS_vs_PBS.rds, r_objects/topGenes.
+>> IL4_vs_PBS.rds, r_objects/topGenes.LPS_vs_IL4.rds, r_objects/volcano.
+>> LPS_vs_PBS.rds, r_objects/volcano.IL4_vs_PBS.rds, r_objects/volcano.
+>> LPS_vs_IL4.rds, r_objects/contrastMatrix.LPS_vs_PBS.rds, r_objects/
+>> contrastMatrix.IL4_vs_PBS.rds, r_objects/contrastMatrix.LPS_vs_IL4.rds, 
+>> r_objects/pca_plot.rds, r_objects/var_plot.rds, r_objects/heatmap.rds, 
+>> r_objects/DGE_design.rds, deliverables/LPS_vs_PBS.txt, deliverables/
+>> IL4_vs_PBS.txt, deliverables/LPS_vs_IL4.txt, deliverables/LPS_vs_PBS.cls, 
+>> deliverables/IL4_vs_PBS.cls, deliverables/LPS_vs_IL4.cls, deliverables/
+>> LPS_vs_PBS.gct, deliverables/IL4_vs_PBS.gct, deliverables/LPS_vs_IL4.gct, 
+>> deliverables/edgeR_longReport.html
+>>
+>>
+>> RuleException:
+>>
+>> CalledProcessError in line 141 of /secondary/projects/bbc/research/
+>> smk_pipeline/Snakefile:
+>>
+>> Command ' singularity exec --home 
+>> /secondary/projects/bbc/research/smk_pipeline -B /secondary,/primary --bind 
+>> /secondary/projects/bbc/tools/dean_miniconda3/lib/python3.6/site-packages:/mnt/snakemake 
+>> /secondary/projects/bbc/research/smk_pipeline/.snakemake/singularity/2f95debcc77a32fc723cdf8a4ad18fa2.simg 
+>> bash -c 'set -euo pipefail;  Rscript -e '\''rmarkdown::render(
+>> "scripts/edgeR_longReport.Rmd",output_format="html_document")'\'''' 
+>> returned non-zero exit status 255.
+>>
+>>  File "/secondary/projects/bbc/research/smk_pipeline/Snakefile", line 141
+>> , in __rule_edgeR_longReport
+>>
+>>  File 
+>> "/secondary/projects/bbc/tools/dean_miniconda3/lib/python3.6/concurrent/futures/thread.py"
+>> , line 56, in run
+>>
+>> Shutting down, this might take some time.
+>>
+>> Exiting because a job execution failed. Look above for error message
+>>
+>> Complete log: /secondary/projects/bbc/research/smk_pipeline/.snakemake/
+>> log/2019-06-10T163401.115637.snakemake.log
+>>
+>> permissions for 
+>> /secondary/projects/bbc/tools/dean_miniconda3/lib/python3.6/site-packages: 
+>> drwxr-xr-x 
+>> don't understand why it would need write permissions... 
+>>
+>>
+>>
+>>
+>>
+>> On Monday, June 10, 2019 at 5:34:11 PM UTC-4, vanessa wrote:
+>>>
+>>> And the final error is a permission denied? Snakemake is helping us a 
+>>> lot by providing the command that fails, so let's start by determining if 
+>>> it's the --home bind (or not). Try the same command, but remove the bind to 
+>>> the custom home:
+>>>
+>>> singularity exec  --bind 
+>>>> /secondary/projects/bbc/tools/dean_miniconda3/lib/python3.6/site-packages:/mnt/snakemake 
+>>>> /secondary/projects/bbc/research/smk_pipeline/.snakemake/singularity/2f95debcc77a32fc723cdf8a4ad18fa2.simg 
+>>>> bash -c 'set -euo pipefail;  Rscript -e 
+>>>> '\''rmarkdown::render("scripts/edgeR_longReport.Rmd",output_format="html_document")'\'
+>>>
+>>>
+>>> If you are already sitting in your home, it's redundant anyway. And to 
+>>> simplify things a bit more, just exec a command like an echo or a which:
+>>>
+>>> singularity exec  --bind 
+>>>> /secondary/projects/bbc/tools/dean_miniconda3/lib/python3.6/site-packages:/mnt/snakemake 
+>>>> /secondary/projects/bbc/research/smk_pipeline/.snakemake/singularity/2f95debcc77a32fc723cdf8a4ad18fa2.simg 
+>>>> bash -c 'echo hello'
+>>>
+>>>
+>>> And can you show the full output from debug? Snakemake seems to be 
+>>> cching images in the .snakemake folder, and what I want to also understand 
+>>> is why it's binding the Python packages base to /mnt/snakemake (do you 
+>>> know?).  
+>>>
+>>> Best,
+>>>
+>>> Vanessa
+>>>
+>>> On Mon, Jun 10, 2019 at 4:37 PM Dean Pettinga <de...@gmail.com> wrote:
+>>>
+>>>> Hey Vanessa,
+>>>>
+>>>> I've run in debug mode, e.g.
+>>>> snakemake --use-singularity --debug
+>>>>
+>>>> i believe the relevant info from the output is below:
+>>>>
+>>>> RuleException:
+>>>>
+>>>> CalledProcessError in line 141 of /secondary/projects/bbc/research/
+>>>> smk_pipeline/Snakefile:
+>>>>
+>>>> Command ' singularity exec --home 
+>>>> /secondary/projects/bbc/research/smk_pipeline  --bind 
+>>>> /secondary/projects/bbc/tools/dean_miniconda3/lib/python3.6/site-packages:/mnt/snakemake 
+>>>> /secondary/projects/bbc/research/smk_pipeline/.snakemake/singularity/2f95debcc77a32fc723cdf8a4ad18fa2.simg 
+>>>> bash -c 'set -euo pipefail;  Rscript -e '\''rmarkdown::render(
+>>>> "scripts/edgeR_longReport.Rmd",output_format="html_document")'\'''' 
+>>>> returned non-zero exit status 255.
+>>>>
+>>>>  File "/secondary/projects/bbc/research/smk_pipeline/Snakefile", line 
+>>>> 141, in __rule_edgeR_longReport
+>>>>
+>>>>  File 
+>>>> "/secondary/projects/bbc/tools/dean_miniconda3/lib/python3.6/concurrent/futures/thread.py"
+>>>> , line 56, in run
+>>>>
+>>>> I *am* working in a subdirectory of my $HOME directory. It seems like 
+>>>> this may be the root of the issue.
+>>>>
+>>>> -Dean
+>>>>
+>>>> On Tuesday, June 4, 2019 at 5:20:46 PM UTC-4, vanessa wrote:
+>>>>>
+>>>>> Can you try running with debug? I'm looking at the Snakemake source 
+>>>>> code and I see a few things. First, snakemake is creating a mountpoint for 
+>>>>> itself:
+>>>>>
+>>>>> SNAKEMAKE_MOUNTPOINT = "/mnt/snakemake"
+>>>>>
+>>>>>
+>>>>> which is added as a bind to the container (and I haven't looked 
+>>>>> further but I'm guessing things like the Snakefile are bound here) 
+>>>>>
+>>>>> args += " --bind {}:{}".format(SNAKEMAKE_SEARCHPATH, 
+>>>>> SNAKEMAKE_MOUNTPOINT)
+>>>>>
+>>>>> It might be good to run a test and just list what is included that. 
+>>>>> What I'm also noticing for the shellcmd function (possibly this is used 
+>>>>> when you run a singularity command, since it uses exec despite it's name) 
+>>>>> is that the os.getcwd() is always bound as --home
+>>>>>
+>>>>> cmd = "{} singularity exec --home {} {} {} {} -c '{}'".format(
+>>>>> envvars, os.getcwd(), args, img_path, shell_executable,
+>>>>> cmd.replace("'", r"'\''"))
+>>>>> logger.debug(cmd)
+>>>>>
+>>>>>
+>>>>> Are you working in a folder that is a subset of your actual home? It 
+>>>>> seems to be having trouble with that particular bind. Either way, if you 
+>>>>> might be able to run in debug so we see any commands that are printed? The 
+>>>>> full code is here, for those interested:
+>>>>>
+>>>>>
+>>>>> https://bitbucket.org/snakemake/snakemake/src/master/snakemake/singularity.py
+>>>>>
+>>>>>
+>>>>>
+>>>>> On Tue, Jun 4, 2019 at 4:52 PM Dean Pettinga <de...@gmail.com> 
+>>>>> wrote:
+>>>>>
+>>>>>> Hey Vanessa,
+>>>>>>
+>>>>>> to answer those few things:
+>>>>>>
+>>>>>> - I'm able to shell into the container and bind anything i want with 
+>>>>>> -B option
+>>>>>> - I've been using --singularity-args in an attempt to bind, but thus 
+>>>>>> far, it has not worked, leading me to believe it might be an issue to do 
+>>>>>> with snakemake or the session folder.
+>>>>>> - haven't looked at sci-f too closely, but i don't think it's going 
+>>>>>> to be helpful for my situation.
+>>>>>> - My pipeline uses at most 8-16 parallel processes, so i'm planning 
+>>>>>> to pull the s-hub container as i'm hoping to make this easily reproducible 
+>>>>>> for other users.
+>>>>>>
+>>>>>> I'm still at a bit of an impasse...
+>>>>>> -Dean
+>>>>>>
+>>>>>> On Tuesday, June 4, 2019 at 11:01:32 AM UTC-4, vanessa wrote:
+>>>>>>>
+>>>>>>> I've used Snakemake + Singularity (without the official 
+>>>>>>> --with-singularity) flag, here is the repo if it's helpful: 
+>>>>>>> https://github.com/sci-f/snakemake.scif
+>>>>>>>
+>>>>>>> A few things to try:
+>>>>>>>
+>>>>>>>  - I would first shell into the container (that works) and see what 
+>>>>>>> binds you have, by default. If your cluster disabled some set of mounts, 
+>>>>>>> that could be the issue, or you might need to ask for them.
+>>>>>>>  - I'm looking at the Singularity command group 
+>>>>>>> <https://snakemake.readthedocs.io/en/stable/executable.html?highlight=singularity#SINGULARITY>, 
+>>>>>>> and I wonder if you can try setting --singularity-args to make binds to 
+>>>>>>> your system that are needed? It does seem like something might be up with 
+>>>>>>> the session folder, others can comment too :)
+>>>>>>>  - If your pipeline doesn't have needs beyond singularity, you could 
+>>>>>>> also try the approach I linked above, adding the snakemake deps into a 
+>>>>>>> container first, and then running it.
+>>>>>>>  - Finally, I would recommend pulling an image first and then 
+>>>>>>> setting --singularity-dir to where it is, that way you can reuse the same 
+>>>>>>> image and not be pulling a gazillion if you run this in parallel.
+>>>>>>>
+>>>>>>> Best,
+>>>>>>>
+>>>>>>> Vanessa
+>>>>>>>
+>>>>>>> On Tue, Jun 4, 2019 at 10:44 AM Dean Pettinga <de...@gmail.com> 
+>>>>>>> wrote:
+>>>>>>>
+>>>>>>>> I'm currently trying to implement a snakemake workflow on a HPC 
+>>>>>>>> cluster using singularity containers for specific rules.
+>>>>>>>>
+>>>>>>>> I'm having issues when mounting to the singularity container 
+>>>>>>>> invoked by snakemake.
+>>>>>>>> $ cd /path/to/smk_pipeline
+>>>>>>>> $ snakemake --use-singularity
+>>>>>>>> ERROR  : Failed to mount home directory /path/to/smk_pipeline -> 
+>>>>>>>> /cm/local/apps/singularity/2.4.2/var/singularity/mnt/session/path/
+>>>>>>>> to/smk_pipeline: Permission denied
+>>>>>>>> The rule being run invokes a container hosted at singularity-hub, 
+>>>>>>>> but it errors out before it's able to do anything. 
+>>>>>>>>
+>>>>>>>> If i shell into a container interactively, no such problem occurs.
+>>>>>>>> $ singularity shell rnaseq.simg
+>>>>>>>> Singularity: Invoking an interactive shell within container...
+>>>>>>>> Singularity rnaseq.simg:~>
+>>>>>>>>
+>>>>>>>> I think it might be due to the fact that write permissions on /cm/
+>>>>>>>> local/apps/singularity/2.4.2/var/singularity/mnt/ are set to 0755.
+>>>>>>>> One of our HPC admins suggested that I try to use a different mount 
+>>>>>>>> point for singularity, but I haven't been able to find any information on 
+>>>>>>>> this topic in the documentation...
+>>>>>>>>
+>>>>>>>> I'm confused about why singularity is unable to mount any 
+>>>>>>>> directories when invoked by snakemake, rather than by myself directly as a 
+>>>>>>>> user. This may be a question more fit for the snakemake folks, but i 
+>>>>>>>> thought i'd start here.
+>>>>>>>>
+>>>>>>>> cheers,
+>>>>>>>> Dean
+>>>>>>>>
+>>>>>>>> -- 
+>>>>>>>> You received this message because you are subscribed to the Google 
+>>>>>>>> Groups "singularity" group.
+>>>>>>>> To unsubscribe from this group and stop receiving emails from it, 
+>>>>>>>> send an email to si...@lbl.gov.
+>>>>>>>> To view this discussion on the web visit 
+>>>>>>>> https://groups.google.com/a/lbl.gov/d/msgid/singularity/4e3f0796-dbb8-48ac-a786-28ee3ff9f7f8%40lbl.gov 
+>>>>>>>> <https://groups.google.com/a/lbl.gov/d/msgid/singularity/4e3f0796-dbb8-48ac-a786-28ee3ff9f7f8%40lbl.gov?utm_medium=email&utm_source=footer>
+>>>>>>>> .
+>>>>>>>>
+>>>>>>>
+>>>>>>>
+>>>>>>> -- 
+>>>>>>> Vanessa Villamia Sochat
+>>>>>>> Stanford University '16
+>>>>>>> (603) 321-0676
+>>>>>>>
+>>>>>> -- 
+>>>>>> You received this message because you are subscribed to the Google 
+>>>>>> Groups "singularity" group.
+>>>>>> To unsubscribe from this group and stop receiving emails from it, 
+>>>>>> send an email to si...@lbl.gov.
+>>>>>> To view this discussion on the web visit 
+>>>>>> https://groups.google.com/a/lbl.gov/d/msgid/singularity/ece8a25d-5717-496b-a8ef-aa60cca30391%40lbl.gov 
+>>>>>> <https://groups.google.com/a/lbl.gov/d/msgid/singularity/ece8a25d-5717-496b-a8ef-aa60cca30391%40lbl.gov?utm_medium=email&utm_source=footer>
+>>>>>> .
+>>>>>>
+>>>>>
+>>>>>
+>>>>> -- 
+>>>>> Vanessa Villamia Sochat
+>>>>> Stanford University '16
+>>>>> (603) 321-0676
+>>>>>
+>>>> -- 
+>>>> You received this message because you are subscribed to the Google 
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>> an email to si...@lbl.gov.
+>>>> To view this discussion on the web visit 
+>>>> https://groups.google.com/a/lbl.gov/d/msgid/singularity/1e966ec5-e71d-48bf-9ca4-ba43fd7fece3%40lbl.gov 
+>>>> <https://groups.google.com/a/lbl.gov/d/msgid/singularity/1e966ec5-e71d-48bf-9ca4-ba43fd7fece3%40lbl.gov?utm_medium=email&utm_source=footer>
+>>>> .
+>>>>
+>>>
+>>>
+>>> -- 
+>>> Vanessa Villamia Sochat
+>>> Stanford University '16
+>>> (603) 321-0676
+>>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to si...@lbl.gov <javascript:>.
+>> To view this discussion on the web visit 
+>> https://groups.google.com/a/lbl.gov/d/msgid/singularity/c8bc281b-1cf6-4bde-92f0-d847adf0ddb5%40lbl.gov 
+>> <https://groups.google.com/a/lbl.gov/d/msgid/singularity/c8bc281b-1cf6-4bde-92f0-d847adf0ddb5%40lbl.gov?utm_medium=email&utm_source=footer>
+>> .
+>>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_424_198130500.1569182941098
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">I spoke with my HPC admin and spent some time working thro=
+ugh this permissions issue. it appears to be a problem with inherited permi=
+ssions and POSIX/ACL cross-talk. Since the cluster-wide installation of Sin=
+gularity is pretty old (2.4.2), we tested Singularity 3.4, which appears to=
+ solve this issue.=C2=A0<br><br>On Tuesday, June 11, 2019 at 11:22:48 AM UT=
+C-4, vanessa wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;mar=
+gin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D=
+"ltr">Can you run this:<br><div><br></div><blockquote class=3D"gmail_quote"=
+ style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);p=
+adding-left:1ex"><span style=3D"font-family:monospace;background-color:rgb(=
+250,250,250);color:rgb(0,0,0)">$ singularity=C2=A0</span><span style=3D"fon=
+t-family:monospace;background-color:rgb(250,250,250);color:rgb(0,0,136)">ex=
+ec</span><span style=3D"font-family:monospace;background-color:rgb(250,250,=
+250)"><span style=3D"color:rgb(0,0,0)">=C2=A0=C2=A0</span></span><span styl=
+e=3D"font-family:monospace;background-color:rgb(250,250,250);color:rgb(102,=
+102,0)">--</span><span style=3D"font-family:monospace;background-color:rgb(=
+250,250,250);color:rgb(0,0,0)">bind=C2=A0</span><span style=3D"font-family:=
+monospace;background-color:rgb(250,250,250);color:rgb(102,102,0)">/</span><=
+span style=3D"font-family:monospace;background-color:rgb(250,250,250);color=
+:rgb(0,0,0)">seco<wbr>ndary</span><span style=3D"font-family:monospace;back=
+ground-color:rgb(250,250,250);color:rgb(102,102,0)">/</span><span style=3D"=
+font-family:monospace;background-color:rgb(250,250,250);color:rgb(0,0,0)">p=
+rojects</span><span style=3D"font-family:monospace;background-color:rgb(250=
+,250,250);color:rgb(102,102,0)">/</span><span style=3D"font-family:monospac=
+e;background-color:rgb(250,250,250);color:rgb(0,0,0)">bbc</span><span style=
+=3D"font-family:monospace;background-color:rgb(250,250,250);color:rgb(102,1=
+02,0)">/</span><span style=3D"font-family:monospace;background-color:rgb(25=
+0,250,250);color:rgb(0,0,0)">tools</span><span style=3D"font-family:monospa=
+ce;background-color:rgb(250,250,250);color:rgb(102,102,0)">/</span><span st=
+yle=3D"font-family:monospace;background-color:rgb(250,250,250);color:rgb(0,=
+0,0)">dean_<wbr>miniconda3</span><span style=3D"font-family:monospace;backg=
+round-color:rgb(250,250,250);color:rgb(102,102,0)">/</span><span style=3D"f=
+ont-family:monospace;background-color:rgb(250,250,250);color:rgb(0,0,0)">li=
+b</span><span style=3D"font-family:monospace;background-color:rgb(250,250,2=
+50);color:rgb(102,102,0)">/</span><span style=3D"font-family:monospace;back=
+ground-color:rgb(250,250,250);color:rgb(0,0,0)">python3</span><span style=
+=3D"font-family:monospace;background-color:rgb(250,250,250);color:rgb(102,1=
+02,0)">.</span><span style=3D"font-family:monospace;background-color:rgb(25=
+0,250,250);color:rgb(0,102,102)">6</span><span style=3D"font-family:monospa=
+ce;background-color:rgb(250,250,250);color:rgb(102,102,0)">/</span><span st=
+yle=3D"font-family:monospace;background-color:rgb(250,250,250);color:rgb(0,=
+0,0)">site</span><span style=3D"font-family:monospace;background-color:rgb(=
+250,250,250);color:rgb(102,102,0)">-</span><span style=3D"font-family:monos=
+pace;background-color:rgb(250,250,250);color:rgb(0,0,0)"><wbr>packages</spa=
+n><span style=3D"font-family:monospace;background-color:rgb(250,250,250);co=
+lor:rgb(102,102,0)">:</span><span style=3D"font-family:monospace;background=
+-color:rgb(250,250,250);color:rgb(0,136,0)">/mnt/</span><span style=3D"font=
+-family:monospace;background-color:rgb(250,250,250);color:rgb(0,0,0)">snake=
+make=C2=A0</span><span style=3D"font-family:monospace;background-color:rgb(=
+250,250,250);color:rgb(102,102,0)">/</span><span style=3D"font-family:monos=
+pace;background-color:rgb(250,250,250);color:rgb(0,0,0)">secon<wbr>dary</sp=
+an><span style=3D"font-family:monospace;background-color:rgb(250,250,250);c=
+olor:rgb(102,102,0)">/</span><span style=3D"font-family:monospace;backgroun=
+d-color:rgb(250,250,250);color:rgb(0,0,0)">projects</span><span style=3D"fo=
+nt-family:monospace;background-color:rgb(250,250,250);color:rgb(102,102,0)"=
+>/</span><span style=3D"font-family:monospace;background-color:rgb(250,250,=
+250);color:rgb(0,0,0)">bbc</span><span style=3D"font-family:monospace;backg=
+round-color:rgb(250,250,250);color:rgb(102,102,0)">/</span><span style=3D"f=
+ont-family:monospace;background-color:rgb(250,250,250);color:rgb(0,0,0)">re=
+search</span><span style=3D"font-family:monospace;background-color:rgb(250,=
+250,250);color:rgb(102,102,0)">/</span><span style=3D"font-family:monospace=
+;background-color:rgb(250,250,250);color:rgb(0,0,0)">smk<wbr>_pipeline</spa=
+n><span style=3D"font-family:monospace;background-color:rgb(250,250,250);co=
+lor:rgb(102,102,0)">/.</span><span style=3D"font-family:monospace;backgroun=
+d-color:rgb(250,250,250);color:rgb(0,0,0)">snakemake</span><span style=3D"f=
+ont-family:monospace;background-color:rgb(250,250,250);color:rgb(102,102,0)=
+">/</span><span style=3D"font-family:monospace;background-color:rgb(250,250=
+,250);color:rgb(0,0,0)">singulari<wbr>ty</span><span style=3D"font-family:m=
+onospace;background-color:rgb(250,250,250);color:rgb(102,102,0)">/</span><s=
+pan style=3D"font-family:monospace;background-color:rgb(250,250,250);color:=
+rgb(0,102,102)">2f95debcc77a32fc723cdf8a4ad<wbr>18fa2.simg</span><span styl=
+e=3D"font-family:monospace;background-color:rgb(250,250,250);color:rgb(0,0,=
+0)">=C2=A0bash=C2=A0</span><span style=3D"font-family:monospace;background-=
+color:rgb(250,250,250);color:rgb(102,102,0)">-</span><span style=3D"font-fa=
+mily:monospace;background-color:rgb(250,250,250);color:rgb(0,0,0)">c=C2=A0<=
+/span><span style=3D"font-family:monospace;background-color:rgb(250,250,250=
+);color:rgb(0,136,0)">&#39;echo hello&#39;</span></blockquote><div><span st=
+yle=3D"font-family:monospace;background-color:rgb(250,250,250);color:rgb(0,=
+136,0)"><br></span></div><div>With --debug for singularity? Is there a simp=
+le dummy/toy example you can give me to reproduce on my local machine? That=
+ would be a lot easier / faster to figure out, if you are able!</div></div>=
+<br><div class=3D"gmail_quote"><div dir=3D"ltr">On Tue, Jun 11, 2019 at 10:=
+48 AM Dean Pettinga &lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfus=
+cated-mailto=3D"raGJMWipAAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&=
+#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&=
+#39;;return true;">de...@gmail.com</a>&gt; wrote:<br></div><blockquote clas=
+s=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid r=
+gb(204,204,204);padding-left:1ex"><div dir=3D"ltr"><p><span>ok. so here&#39=
+;s a few more things:<br><br>exec command <b>without</b>=C2=A0the mount:</s=
+pan></p><div style=3D"background-color:rgb(250,250,250);border-color:rgb(18=
+7,187,187);border-style:solid;border-width:1px"><code><div><span style=3D"c=
+olor:rgb(102,102,0)">[</span><span style=3D"color:rgb(0,0,0)">dean</span><s=
+pan style=3D"color:rgb(102,102,0)">.</span><span style=3D"color:rgb(0,0,0)"=
+>pettinga@node065 smk_pipeline</span><span style=3D"color:rgb(102,102,0)">]=
+</span><span style=3D"color:rgb(0,0,0)">$ singularity </span><span style=3D=
+"color:rgb(0,0,136)">exec</span><span style=3D"color:rgb(0,0,0)"> </span><s=
+pan style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)"=
+>secondary</span><span style=3D"color:rgb(102,102,0)">/</span><span style=
+=3D"color:rgb(0,0,0)">projects</span><span style=3D"color:rgb(102,102,0)">/=
+</span><span style=3D"color:rgb(0,0,0)">bbc</span><span style=3D"color:rgb(=
+102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">resear<wbr>ch</span><s=
+pan style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)"=
+>smk_pipeline</span><span style=3D"color:rgb(102,102,0)">/.</span><span sty=
+le=3D"color:rgb(0,0,0)">snakemake</span><span style=3D"color:rgb(102,102,0)=
+">/</span><span style=3D"color:rgb(0,0,0)">sin<wbr>gularity</span><span sty=
+le=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,102,102)">2f=
+95debcc77a32fc723cd<wbr>f8a4ad18fa2.simg</span><span style=3D"color:rgb(0,0=
+,0)"> bash </span><span style=3D"color:rgb(102,102,0)">-</span><span style=
+=3D"color:rgb(0,0,0)">c </span><span style=3D"color:rgb(0,136,0)">&#39;echo=
+ hello&#39;</span><span style=3D"color:rgb(0,0,0)"><br>hello</span></div></=
+code></div><p><span><br></span></p><div><b>with</b> the mount:<br></div><di=
+v style=3D"background-color:rgb(250,250,250);border-color:rgb(187,187,187);=
+border-style:solid;border-width:1px"><code><div><p><span><span style=3D"col=
+or:rgb(102,102,0)">[</span><span style=3D"color:rgb(0,0,0)">dean</span><spa=
+n style=3D"color:rgb(102,102,0)">.</span><span style=3D"color:rgb(0,0,0)">p=
+ettinga@node065 smk_pipeline</span><span style=3D"color:rgb(102,102,0)">]</=
+span><span style=3D"color:rgb(0,0,0)">$ singularity </span><span style=3D"c=
+olor:rgb(0,0,136)">exec</span><span><span style=3D"color:rgb(0,0,0)"> =C2=
+=A0</span></span><span style=3D"color:rgb(102,102,0)">--</span><span style=
+=3D"color:rgb(0,0,0)">bind </span><span style=3D"color:rgb(102,102,0)">/</s=
+pan><span style=3D"color:rgb(0,0,0)">secondary</span><span style=3D"color:r=
+gb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">projects</span><spa=
+n style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">b=
+bc</span><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:=
+rgb(0,0,0)">tools</span><span style=3D"color:rgb(102,102,0)">/</span><span =
+style=3D"color:rgb(0,0,0)"><wbr>dean_miniconda3</span><span style=3D"color:=
+rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">lib</span><span st=
+yle=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">pytho=
+n3</span><span style=3D"color:rgb(102,102,0)">.</span><span style=3D"color:=
+rgb(0,102,102)">6</span><span style=3D"color:rgb(102,102,0)">/</span><span =
+style=3D"color:rgb(0,0,0)"><wbr>site</span><span style=3D"color:rgb(102,102=
+,0)">-</span><span style=3D"color:rgb(0,0,0)">packages</span><span style=3D=
+"color:rgb(102,102,0)">:</span><span style=3D"color:rgb(0,136,0)">/mnt/</sp=
+an><span style=3D"color:rgb(0,0,0)">snakemake </span><span style=3D"color:r=
+gb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">secondary</span><sp=
+an style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">=
+projects</span><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"=
+color:rgb(0,0,0)">bbc</span><span style=3D"color:rgb(102,102,0)">/</span><s=
+pan style=3D"color:rgb(0,0,0)">resear<wbr>ch</span><span style=3D"color:rgb=
+(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">smk_pipeline</span><s=
+pan style=3D"color:rgb(102,102,0)">/.</span><span style=3D"color:rgb(0,0,0)=
+">snakemake</span><span style=3D"color:rgb(102,102,0)">/</span><span style=
+=3D"color:rgb(0,0,0)">sin<wbr>gularity</span><span style=3D"color:rgb(102,1=
+02,0)">/</span><span style=3D"color:rgb(0,102,102)">2f95debcc77a32fc723cd<w=
+br>f8a4ad18fa2.simg</span><span style=3D"color:rgb(0,0,0)"> bash </span><sp=
+an style=3D"color:rgb(102,102,0)">-</span><span style=3D"color:rgb(0,0,0)">=
+c </span><span style=3D"color:rgb(0,136,0)">&#39;echo hello&#39;</span></sp=
+an></p><p><span><span style=3D"color:rgb(0,0,0)">ERROR</span><span><span st=
+yle=3D"color:rgb(0,0,0)"> =C2=A0</span></span><span style=3D"color:rgb(102,=
+102,0)">:</span><span style=3D"color:rgb(0,0,0)"> </span><span style=3D"col=
+or:rgb(102,0,102)">There</span><span style=3D"color:rgb(0,0,0)"> was an err=
+or binding the path </span><span style=3D"color:rgb(102,102,0)">/</span><sp=
+an style=3D"color:rgb(0,0,0)">secondary</span><span style=3D"color:rgb(102,=
+102,0)">/</span><span style=3D"color:rgb(0,0,0)">projects</span><span style=
+=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">bbc</spa=
+n><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0=
+,0)">tools</span><span style=3D"color:rgb(102,102,0)">/</span><span style=
+=3D"color:rgb(0,0,0)"><wbr>dean_miniconda3</span><span style=3D"color:rgb(1=
+02,102,0)">/</span><span style=3D"color:rgb(0,0,0)">lib</span><span style=
+=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">python3<=
+/span><span style=3D"color:rgb(102,102,0)">.</span><span style=3D"color:rgb=
+(0,102,102)">6</span><span style=3D"color:rgb(102,102,0)">/</span><span sty=
+le=3D"color:rgb(0,0,0)"><wbr>site</span><span style=3D"color:rgb(102,102,0)=
+">-</span><span style=3D"color:rgb(0,0,0)">packages</span><span style=3D"co=
+lor:rgb(102,102,0)">:</span><span style=3D"color:rgb(0,0,0)"> </span><span =
+style=3D"color:rgb(102,0,102)">Permission</span><span style=3D"color:rgb(0,=
+0,0)"> denied</span></span></p><p><span><span style=3D"color:rgb(0,0,0)">AB=
+ORT</span><span><span style=3D"color:rgb(0,0,0)"> =C2=A0</span></span><span=
+ style=3D"color:rgb(102,102,0)">:</span><span style=3D"color:rgb(0,0,0)"> <=
+/span><span style=3D"color:rgb(102,0,102)">Retval</span><span style=3D"colo=
+r:rgb(0,0,0)"> </span><span style=3D"color:rgb(102,102,0)">=3D</span><span =
+style=3D"color:rgb(0,0,0)"> </span><span style=3D"color:rgb(0,102,102)">255=
+</span></span></p></div></code></div><div><br></div><div>different mount:</=
+div><div><div style=3D"background-color:rgb(250,250,250);border-color:rgb(1=
+87,187,187);border-style:solid;border-width:1px"><code><div><p><span><span =
+style=3D"color:rgb(102,102,0)">[</span><span style=3D"color:rgb(0,0,0)">dea=
+n</span><span style=3D"color:rgb(102,102,0)">.</span><span style=3D"color:r=
+gb(0,0,0)">pettinga@node065 smk_pipeline</span><span style=3D"color:rgb(102=
+,102,0)">]</span><span style=3D"color:rgb(0,0,0)">$ singularity </span><spa=
+n style=3D"color:rgb(0,0,136)">exec</span><span><span style=3D"color:rgb(0,=
+0,0)"> </span></span><span style=3D"color:rgb(102,102,0)">--</span><span st=
+yle=3D"color:rgb(0,0,0)">bind </span><span style=3D"color:rgb(102,102,0)">/=
+</span><span style=3D"color:rgb(0,0,0)">secondary </span><span style=3D"col=
+or:rgb(102,102,0)">.</span><span style=3D"color:rgb(0,0,0)">snakemake</span=
+><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,=
+0)">singularity</span><span style=3D"color:rgb(102,102,0)">/</span><span st=
+yle=3D"color:rgb(0,102,102)">2f95deb<wbr>cc77a32fc723cdf8a4ad18fa2.simg</sp=
+an><span style=3D"color:rgb(0,0,0)"> bash </span><span style=3D"color:rgb(1=
+02,102,0)">-</span><span style=3D"color:rgb(0,0,0)">c </span><span style=3D=
+"color:rgb(0,136,0)">&#39;echo hello&#39;</span></span></p><p><span><span s=
+tyle=3D"color:rgb(0,0,0)">hello</span></span></p></div></code></div></div><=
+div><br></div>Full output from debug:<br><div style=3D"background-color:rgb=
+(250,250,250);border-color:rgb(187,187,187);border-style:solid;border-width=
+:1px"><code><div><p><span><span style=3D"color:rgb(102,102,0)">[</span><spa=
+n style=3D"color:rgb(0,0,0)">dean</span><span style=3D"color:rgb(102,102,0)=
+">.</span><span style=3D"color:rgb(0,0,0)">pettinga@node065 smk_pipeline</s=
+pan><span style=3D"color:rgb(102,102,0)">]</span><span style=3D"color:rgb(0=
+,0,0)">$ snakemake </span><span style=3D"color:rgb(102,102,0)">--</span><sp=
+an style=3D"color:rgb(0,0,136)">use</span><span style=3D"color:rgb(102,102,=
+0)">-</span><span style=3D"color:rgb(0,0,0)">singularity </span><span style=
+=3D"color:rgb(102,102,0)">--</span><span style=3D"color:rgb(0,0,0)">debug <=
+/span><span style=3D"color:rgb(102,102,0)">--</span><span style=3D"color:rg=
+b(0,0,0)">singularity</span><span style=3D"color:rgb(102,102,0)">-</span><s=
+pan style=3D"color:rgb(0,0,0)">args </span><span style=3D"color:rgb(0,136,0=
+)">&#39;-B /secondary,/primary&#39;</span><span style=3D"color:rgb(0,0,0)">=
+<br></span></span></p><p><span><span style=3D"color:rgb(102,0,102)">Buildin=
+g</span><span style=3D"color:rgb(0,0,0)"> DAG of jobs</span><span style=3D"=
+color:rgb(102,102,0)">...</span></span></p><p><span><span style=3D"color:rg=
+b(102,0,102)">Using</span><span style=3D"color:rgb(0,0,0)"> shell</span><sp=
+an style=3D"color:rgb(102,102,0)">:</span><span style=3D"color:rgb(0,0,0)">=
+ </span><span style=3D"color:rgb(0,136,0)">/bin/</span><span style=3D"color=
+:rgb(0,0,0)">bash</span></span></p><p><span><span style=3D"color:rgb(0,0,0)=
+">Provided cores</span><span style=3D"color:rgb(102,102,0)">:</span><span s=
+tyle=3D"color:rgb(0,0,0)"> </span><span style=3D"color:rgb(0,102,102)">1</s=
+pan></span></p><p><span><span style=3D"color:rgb(0,102,102)">Rules</span><s=
+pan style=3D"color:rgb(0,0,0)"> claiming more threads will be scaled down</=
+span><span style=3D"color:rgb(102,102,0)">.</span></span></p><p><span><span=
+ style=3D"color:rgb(102,0,102)">Job</span><span style=3D"color:rgb(0,0,0)">=
+ counts</span><span style=3D"color:rgb(102,102,0)">:</span></span></p><p><s=
+pan><span><span style=3D"color:rgb(0,0,0)"> =C2=A0 =C2=A0 =C2=A0 </span></s=
+pan><span style=3D"color:rgb(0,0,0)">count</span><span><span style=3D"color=
+:rgb(0,0,0)"> =C2=A0 </span></span><span style=3D"color:rgb(0,0,0)">jobs</s=
+pan></span></p><p><span><span><span style=3D"color:rgb(0,0,0)"> =C2=A0 =C2=
+=A0 =C2=A0 </span></span><span style=3D"color:rgb(0,102,102)">1</span><span=
+><span style=3D"color:rgb(0,0,0)"> =C2=A0 =C2=A0 =C2=A0 </span></span><span=
+ style=3D"color:rgb(0,0,0)">all</span></span></p><p><span><span><span style=
+=3D"color:rgb(0,0,0)"> =C2=A0 =C2=A0 =C2=A0 </span></span><span style=3D"co=
+lor:rgb(0,102,102)">1</span><span><span style=3D"color:rgb(0,0,0)"> =C2=A0 =
+=C2=A0 =C2=A0 </span></span><span style=3D"color:rgb(0,0,0)">edgeR_longRepo=
+rt</span></span></p><p><span><span><span style=3D"color:rgb(0,0,0)"> =C2=A0=
+ =C2=A0 =C2=A0 </span></span><span style=3D"color:rgb(0,102,102)">1</span><=
+span><span style=3D"color:rgb(0,0,0)"> =C2=A0 =C2=A0 =C2=A0 </span></span><=
+span style=3D"color:rgb(0,0,0)">edgeR_shortReport</span></span></p><p><span=
+><span><span style=3D"color:rgb(0,0,0)"> =C2=A0 =C2=A0 =C2=A0 </span></span=
+><span style=3D"color:rgb(0,102,102)">3</span></span></p><p><span></span><s=
+pan style=3D"color:rgb(0,0,0)"><br></span></p><p><span><span style=3D"color=
+:rgb(102,102,0)">[</span><span style=3D"color:rgb(102,0,102)">Mon</span><sp=
+an style=3D"color:rgb(0,0,0)"> </span><span style=3D"color:rgb(102,0,102)">=
+Jun</span><span style=3D"color:rgb(0,0,0)"> </span><span style=3D"color:rgb=
+(0,102,102)">10</span><span style=3D"color:rgb(0,0,0)"> </span><span style=
+=3D"color:rgb(0,102,102)">16</span><span style=3D"color:rgb(102,102,0)">:</=
+span><span style=3D"color:rgb(0,102,102)">34</span><span style=3D"color:rgb=
+(102,102,0)">:</span><span style=3D"color:rgb(0,102,102)">02</span><span st=
+yle=3D"color:rgb(0,0,0)"> </span><span style=3D"color:rgb(0,102,102)">2019<=
+/span><span style=3D"color:rgb(102,102,0)">]</span></span></p><p><span><spa=
+n style=3D"color:rgb(0,0,0)">rule edgeR_longReport</span><span style=3D"col=
+or:rgb(102,102,0)">:</span></span></p><p><span><span><span style=3D"color:r=
+gb(0,0,0)"> =C2=A0 =C2=A0</span></span><span style=3D"color:rgb(0,0,0)">inp=
+ut</span><span style=3D"color:rgb(102,102,0)">:</span><span style=3D"color:=
+rgb(0,0,0)"> deliverables</span><span style=3D"color:rgb(102,102,0)">/</spa=
+n><span style=3D"color:rgb(102,0,102)">UniquelyMappingRa<wbr>tes</span><spa=
+n style=3D"color:rgb(102,102,0)">.</span><span style=3D"color:rgb(0,0,0)">t=
+xt</span><span style=3D"color:rgb(102,102,0)">,</span><span style=3D"color:=
+rgb(0,0,0)"> deliverables</span><span style=3D"color:rgb(102,102,0)">/</spa=
+n><span style=3D"color:rgb(102,0,102)">UniquelyMappingRe<wbr>ads</span><spa=
+n style=3D"color:rgb(102,102,0)">.</span><span style=3D"color:rgb(0,0,0)">t=
+xt</span><span style=3D"color:rgb(102,102,0)">,</span><span style=3D"color:=
+rgb(0,0,0)"> deliverables</span><span style=3D"color:rgb(102,102,0)">/</spa=
+n><span style=3D"color:rgb(0,0,0)">starMatrix</span><span style=3D"color:rg=
+b(102,102,0)">.</span><span style=3D"color:rgb(0,0,0)">txt</span></span></p=
+><p><span><span><span style=3D"color:rgb(0,0,0)"> =C2=A0 =C2=A0</span></spa=
+n><span style=3D"color:rgb(0,0,0)">output</span><span style=3D"color:rgb(10=
+2,102,0)">:</span><span style=3D"color:rgb(0,0,0)"> r_objects</span><span s=
+tyle=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">topG=
+enes</span><span style=3D"color:rgb(102,102,0)">.</span><span style=3D"colo=
+r:rgb(0,0,0)">LPS_vs_PBS</span><span style=3D"color:rgb(102,102,0)">.</span=
+><span style=3D"color:rgb(0,0,0)"><wbr>rds</span><span style=3D"color:rgb(1=
+02,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> r_objects</span><span =
+style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">top=
+Genes</span><span style=3D"color:rgb(102,102,0)">.</span><span style=3D"col=
+or:rgb(0,0,0)">IL4_vs_PBS</span><span style=3D"color:rgb(102,102,0)">.</spa=
+n><span style=3D"color:rgb(0,0,0)"><wbr>rds</span><span style=3D"color:rgb(=
+102,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> r_objects</span><span=
+ style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">to=
+pGenes</span><span style=3D"color:rgb(102,102,0)">.</span><span style=3D"co=
+lor:rgb(0,0,0)">LPS_vs_IL4</span><span style=3D"color:rgb(102,102,0)">.</sp=
+an><span style=3D"color:rgb(0,0,0)"><wbr>rds</span><span style=3D"color:rgb=
+(102,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> r_objects</span><spa=
+n style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">v=
+olcano</span><span style=3D"color:rgb(102,102,0)">.</span><span style=3D"co=
+lor:rgb(0,0,0)">LPS_vs_PBS</span><span style=3D"color:rgb(102,102,0)">.</sp=
+an><span style=3D"color:rgb(0,0,0)">r<wbr>ds</span><span style=3D"color:rgb=
+(102,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> r_objects</span><spa=
+n style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">v=
+olcano</span><span style=3D"color:rgb(102,102,0)">.</span><span style=3D"co=
+lor:rgb(0,0,0)">IL4_vs_PBS</span><span style=3D"color:rgb(102,102,0)">.</sp=
+an><span style=3D"color:rgb(0,0,0)">r<wbr>ds</span><span style=3D"color:rgb=
+(102,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> r_objects</span><spa=
+n style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">v=
+olcano</span><span style=3D"color:rgb(102,102,0)">.</span><span style=3D"co=
+lor:rgb(0,0,0)">LPS_vs_IL4</span><span style=3D"color:rgb(102,102,0)">.</sp=
+an><span style=3D"color:rgb(0,0,0)">r<wbr>ds</span><span style=3D"color:rgb=
+(102,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> r_objects</span><spa=
+n style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">c=
+ontrastMatrix</span><span style=3D"color:rgb(102,102,0)">.</span><span styl=
+e=3D"color:rgb(0,0,0)">LPS_<wbr>vs_PBS</span><span style=3D"color:rgb(102,1=
+02,0)">.</span><span style=3D"color:rgb(0,0,0)">rds</span><span style=3D"co=
+lor:rgb(102,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> r_objects</sp=
+an><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,=
+0,0)">contrastMatrix</span><span style=3D"color:rgb(102,102,0)">.</span><sp=
+an style=3D"color:rgb(0,0,0)">IL4_<wbr>vs_PBS</span><span style=3D"color:rg=
+b(102,102,0)">.</span><span style=3D"color:rgb(0,0,0)">rds</span><span styl=
+e=3D"color:rgb(102,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> r_obje=
+cts</span><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"color=
+:rgb(0,0,0)">contrastMatrix</span><span style=3D"color:rgb(102,102,0)">.</s=
+pan><span style=3D"color:rgb(0,0,0)">LPS_<wbr>vs_IL4</span><span style=3D"c=
+olor:rgb(102,102,0)">.</span><span style=3D"color:rgb(0,0,0)">rds</span><sp=
+an style=3D"color:rgb(102,102,0)">,</span><span style=3D"color:rgb(0,0,0)">=
+ r_objects</span><span style=3D"color:rgb(102,102,0)">/</span><span style=
+=3D"color:rgb(0,0,0)">pca_plot</span><span style=3D"color:rgb(102,102,0)">.=
+</span><span style=3D"color:rgb(0,0,0)">rds</span><span style=3D"color:rgb(=
+102,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> r_objects</span><span=
+ style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">va=
+r_plot</span><span style=3D"color:rgb(102,102,0)">.</span><span style=3D"co=
+lor:rgb(0,0,0)">rds</span><span style=3D"color:rgb(102,102,0)">,</span><spa=
+n style=3D"color:rgb(0,0,0)"> r_objects</span><span style=3D"color:rgb(102,=
+102,0)">/</span><span style=3D"color:rgb(0,0,0)">heatmap</span><span style=
+=3D"color:rgb(102,102,0)">.</span><span style=3D"color:rgb(0,0,0)">rds</spa=
+n><span style=3D"color:rgb(102,102,0)">,</span><span style=3D"color:rgb(0,0=
+,0)"> r_objects</span><span style=3D"color:rgb(102,102,0)">/</span><span st=
+yle=3D"color:rgb(0,0,0)">DGE_design</span><span style=3D"color:rgb(102,102,=
+0)">.</span><span style=3D"color:rgb(0,0,0)">rds</span><span style=3D"color=
+:rgb(102,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> deliverables</sp=
+an><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,=
+0,0)">LPS_vs_PBS</span><span style=3D"color:rgb(102,102,0)">.</span><span s=
+tyle=3D"color:rgb(0,0,0)">txt</span><span style=3D"color:rgb(102,102,0)">,<=
+/span><span style=3D"color:rgb(0,0,0)"> deliverables</span><span style=3D"c=
+olor:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">IL4_vs_PBS</s=
+pan><span style=3D"color:rgb(102,102,0)">.</span><span style=3D"color:rgb(0=
+,0,0)">txt</span><span style=3D"color:rgb(102,102,0)">,</span><span style=
+=3D"color:rgb(0,0,0)"> deliverables</span><span style=3D"color:rgb(102,102,=
+0)">/</span><span style=3D"color:rgb(0,0,0)">LPS_vs_IL4</span><span style=
+=3D"color:rgb(102,102,0)">.</span><span style=3D"color:rgb(0,0,0)">txt</spa=
+n><span style=3D"color:rgb(102,102,0)">,</span><span style=3D"color:rgb(0,0=
+,0)"> deliverables</span><span style=3D"color:rgb(102,102,0)">/</span><span=
+ style=3D"color:rgb(0,0,0)">LPS_vs_PBS</span><span style=3D"color:rgb(102,1=
+02,0)">.</span><span style=3D"color:rgb(0,0,0)">cls</span><span style=3D"co=
+lor:rgb(102,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> deliverables<=
+/span><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb=
+(0,0,0)">IL4_vs_PBS</span><span style=3D"color:rgb(102,102,0)">.</span><spa=
+n style=3D"color:rgb(0,0,0)">cls</span><span style=3D"color:rgb(102,102,0)"=
+>,</span><span style=3D"color:rgb(0,0,0)"> deliverables</span><span style=
+=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">LPS_vs_I=
+L4</span><span style=3D"color:rgb(102,102,0)">.</span><span style=3D"color:=
+rgb(0,0,0)">cls</span><span style=3D"color:rgb(102,102,0)">,</span><span st=
+yle=3D"color:rgb(0,0,0)"> deliverables</span><span style=3D"color:rgb(102,1=
+02,0)">/</span><span style=3D"color:rgb(0,0,0)">LPS_vs_PBS</span><span styl=
+e=3D"color:rgb(102,102,0)">.</span><span style=3D"color:rgb(0,0,0)">gct</sp=
+an><span style=3D"color:rgb(102,102,0)">,</span><span style=3D"color:rgb(0,=
+0,0)"> deliverables</span><span style=3D"color:rgb(102,102,0)">/</span><spa=
+n style=3D"color:rgb(0,0,0)">IL4_vs_PBS</span><span style=3D"color:rgb(102,=
+102,0)">.</span><span style=3D"color:rgb(0,0,0)">gct</span><span style=3D"c=
+olor:rgb(102,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> deliverables=
+</span><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rg=
+b(0,0,0)">LPS_vs_IL4</span><span style=3D"color:rgb(102,102,0)">.</span><sp=
+an style=3D"color:rgb(0,0,0)">gct</span><span style=3D"color:rgb(102,102,0)=
+">,</span><span style=3D"color:rgb(0,0,0)"> deliverables</span><span style=
+=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">edgeR_lo=
+ngReport</span><span style=3D"color:rgb(102,102,0)">.</span><span style=3D"=
+color:rgb(0,0,0)"><wbr>html</span></span></p><p><span><span><span style=3D"=
+color:rgb(0,0,0)"> =C2=A0 =C2=A0</span></span><span style=3D"color:rgb(0,0,=
+0)">jobid</span><span style=3D"color:rgb(102,102,0)">:</span><span style=3D=
+"color:rgb(0,0,0)"> </span><span style=3D"color:rgb(0,102,102)">54</span></=
+span></p><p><span></span><span style=3D"color:rgb(0,0,0)"><br></span></p><p=
+><span><span style=3D"color:rgb(102,0,102)">Activating</span><span style=3D=
+"color:rgb(0,0,0)"> singularity image </span><span style=3D"color:rgb(102,1=
+02,0)">/</span><span style=3D"color:rgb(0,0,0)">secondary</span><span style=
+=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">projects=
+</span><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rg=
+b(0,0,0)">bbc</span><span style=3D"color:rgb(102,102,0)">/</span><span styl=
+e=3D"color:rgb(0,0,0)">resear<wbr>ch</span><span style=3D"color:rgb(102,102=
+,0)">/</span><span style=3D"color:rgb(0,0,0)">smk_pipeline</span><span styl=
+e=3D"color:rgb(102,102,0)">/.</span><span style=3D"color:rgb(0,0,0)">snakem=
+ake</span><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"color=
+:rgb(0,0,0)">sin<wbr>gularity</span><span style=3D"color:rgb(102,102,0)">/<=
+/span><span style=3D"color:rgb(0,102,102)">2f95debcc77a32fc723cd<wbr>f8a4ad=
+18fa2.simg</span></span></p><p><span><span style=3D"color:rgb(0,102,102)">E=
+RROR</span><span><span style=3D"color:rgb(0,0,0)"> =C2=A0</span></span><spa=
+n style=3D"color:rgb(102,102,0)">:</span><span style=3D"color:rgb(0,0,0)"> =
+</span><span style=3D"color:rgb(102,0,102)">Failed</span><span style=3D"col=
+or:rgb(0,0,0)"> to mount home directory </span><span style=3D"color:rgb(102=
+,102,0)">/</span><span style=3D"color:rgb(0,0,0)">secondary</span><span sty=
+le=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">projec=
+ts</span><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:=
+rgb(0,0,0)">bbc</span><span style=3D"color:rgb(102,102,0)">/</span><span st=
+yle=3D"color:rgb(0,0,0)">resear<wbr>ch</span><span style=3D"color:rgb(102,1=
+02,0)">/</span><span style=3D"color:rgb(0,0,0)">smk_pipeline </span><span s=
+tyle=3D"color:rgb(102,102,0)">-&gt;</span><span style=3D"color:rgb(0,0,0)">=
+ </span><span style=3D"color:rgb(0,136,0)">/cm/</span><span style=3D"color:=
+rgb(0,0,136)">local</span><span style=3D"color:rgb(102,102,0)">/</span><spa=
+n style=3D"color:rgb(0,0,0)">apps</span><span style=3D"color:rgb(102,102,0)=
+">/</span><span style=3D"color:rgb(0,0,0)">singularity</span><span style=3D=
+"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,102,102)">2.4</sp=
+an><span style=3D"color:rgb(102,102,0)"><wbr>.</span><span style=3D"color:r=
+gb(0,102,102)">2</span><span style=3D"color:rgb(102,102,0)">/</span><span s=
+tyle=3D"color:rgb(0,0,136)">var</span><span style=3D"color:rgb(102,102,0)">=
+/</span><span style=3D"color:rgb(0,0,0)">singularity</span><span style=3D"c=
+olor:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">mnt</span><sp=
+an style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">=
+session</span><span style=3D"color:rgb(102,102,0)"><wbr>/</span><span style=
+=3D"color:rgb(0,0,0)">secondary</span><span style=3D"color:rgb(102,102,0)">=
+/</span><span style=3D"color:rgb(0,0,0)">projects</span><span style=3D"colo=
+r:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">bbc</span><span =
+style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">res=
+ear<wbr>ch</span><span style=3D"color:rgb(102,102,0)">/</span><span style=
+=3D"color:rgb(0,0,0)">smk_pipeline</span><span style=3D"color:rgb(102,102,0=
+)">:</span><span style=3D"color:rgb(0,0,0)"> </span><span style=3D"color:rg=
+b(102,0,102)">Permission</span><span style=3D"color:rgb(0,0,0)"> denied</sp=
+an></span></p><p><span><span style=3D"color:rgb(0,0,0)">ABORT</span><span><=
+span style=3D"color:rgb(0,0,0)"> =C2=A0</span></span><span style=3D"color:r=
+gb(102,102,0)">:</span><span style=3D"color:rgb(0,0,0)"> </span><span style=
+=3D"color:rgb(102,0,102)">Retval</span><span style=3D"color:rgb(0,0,0)"> </=
+span><span style=3D"color:rgb(102,102,0)">=3D</span><span style=3D"color:rg=
+b(0,0,0)"> </span><span style=3D"color:rgb(0,102,102)">255</span></span></p=
+><p><span><span style=3D"color:rgb(102,102,0)">[</span><span style=3D"color=
+:rgb(102,0,102)">Mon</span><span style=3D"color:rgb(0,0,0)"> </span><span s=
+tyle=3D"color:rgb(102,0,102)">Jun</span><span style=3D"color:rgb(0,0,0)"> <=
+/span><span style=3D"color:rgb(0,102,102)">10</span><span style=3D"color:rg=
+b(0,0,0)"> </span><span style=3D"color:rgb(0,102,102)">16</span><span style=
+=3D"color:rgb(102,102,0)">:</span><span style=3D"color:rgb(0,102,102)">34</=
+span><span style=3D"color:rgb(102,102,0)">:</span><span style=3D"color:rgb(=
+0,102,102)">02</span><span style=3D"color:rgb(0,0,0)"> </span><span style=
+=3D"color:rgb(0,102,102)">2019</span><span style=3D"color:rgb(102,102,0)">]=
+</span></span></p><p><span><span style=3D"color:rgb(102,0,102)">Error</span=
+><span style=3D"color:rgb(0,0,0)"> </span><span style=3D"color:rgb(0,0,136)=
+">in</span><span style=3D"color:rgb(0,0,0)"> rule edgeR_longReport</span><s=
+pan style=3D"color:rgb(102,102,0)">:</span></span></p><p><span><span><span =
+style=3D"color:rgb(0,0,0)"> =C2=A0 =C2=A0</span></span><span style=3D"color=
+:rgb(0,0,0)">jobid</span><span style=3D"color:rgb(102,102,0)">:</span><span=
+ style=3D"color:rgb(0,0,0)"> </span><span style=3D"color:rgb(0,102,102)">54=
+</span></span></p><p><span><span><span style=3D"color:rgb(0,0,0)"> =C2=A0 =
+=C2=A0</span></span><span style=3D"color:rgb(0,0,0)">output</span><span sty=
+le=3D"color:rgb(102,102,0)">:</span><span style=3D"color:rgb(0,0,0)"> r_obj=
+ects</span><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"colo=
+r:rgb(0,0,0)">topGenes</span><span style=3D"color:rgb(102,102,0)">.</span><=
+span style=3D"color:rgb(0,0,0)">LPS_vs_PBS</span><span style=3D"color:rgb(1=
+02,102,0)">.</span><span style=3D"color:rgb(0,0,0)"><wbr>rds</span><span st=
+yle=3D"color:rgb(102,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> r_ob=
+jects</span><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"col=
+or:rgb(0,0,0)">topGenes</span><span style=3D"color:rgb(102,102,0)">.</span>=
+<span style=3D"color:rgb(0,0,0)">IL4_vs_PBS</span><span style=3D"color:rgb(=
+102,102,0)">.</span><span style=3D"color:rgb(0,0,0)"><wbr>rds</span><span s=
+tyle=3D"color:rgb(102,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> r_o=
+bjects</span><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"co=
+lor:rgb(0,0,0)">topGenes</span><span style=3D"color:rgb(102,102,0)">.</span=
+><span style=3D"color:rgb(0,0,0)">LPS_vs_IL4</span><span style=3D"color:rgb=
+(102,102,0)">.</span><span style=3D"color:rgb(0,0,0)"><wbr>rds</span><span =
+style=3D"color:rgb(102,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> r_=
+objects</span><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"c=
+olor:rgb(0,0,0)">volcano</span><span style=3D"color:rgb(102,102,0)">.</span=
+><span style=3D"color:rgb(0,0,0)">LPS_vs_PBS</span><span style=3D"color:rgb=
+(102,102,0)">.</span><span style=3D"color:rgb(0,0,0)">r<wbr>ds</span><span =
+style=3D"color:rgb(102,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> r_=
+objects</span><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"c=
+olor:rgb(0,0,0)">volcano</span><span style=3D"color:rgb(102,102,0)">.</span=
+><span style=3D"color:rgb(0,0,0)">IL4_vs_PBS</span><span style=3D"color:rgb=
+(102,102,0)">.</span><span style=3D"color:rgb(0,0,0)">r<wbr>ds</span><span =
+style=3D"color:rgb(102,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> r_=
+objects</span><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"c=
+olor:rgb(0,0,0)">volcano</span><span style=3D"color:rgb(102,102,0)">.</span=
+><span style=3D"color:rgb(0,0,0)">LPS_vs_IL4</span><span style=3D"color:rgb=
+(102,102,0)">.</span><span style=3D"color:rgb(0,0,0)">r<wbr>ds</span><span =
+style=3D"color:rgb(102,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> r_=
+objects</span><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"c=
+olor:rgb(0,0,0)">contrastMatrix</span><span style=3D"color:rgb(102,102,0)">=
+.</span><span style=3D"color:rgb(0,0,0)">LPS_<wbr>vs_PBS</span><span style=
+=3D"color:rgb(102,102,0)">.</span><span style=3D"color:rgb(0,0,0)">rds</spa=
+n><span style=3D"color:rgb(102,102,0)">,</span><span style=3D"color:rgb(0,0=
+,0)"> r_objects</span><span style=3D"color:rgb(102,102,0)">/</span><span st=
+yle=3D"color:rgb(0,0,0)">contrastMatrix</span><span style=3D"color:rgb(102,=
+102,0)">.</span><span style=3D"color:rgb(0,0,0)">IL4_<wbr>vs_PBS</span><spa=
+n style=3D"color:rgb(102,102,0)">.</span><span style=3D"color:rgb(0,0,0)">r=
+ds</span><span style=3D"color:rgb(102,102,0)">,</span><span style=3D"color:=
+rgb(0,0,0)"> r_objects</span><span style=3D"color:rgb(102,102,0)">/</span><=
+span style=3D"color:rgb(0,0,0)">contrastMatrix</span><span style=3D"color:r=
+gb(102,102,0)">.</span><span style=3D"color:rgb(0,0,0)">LPS_<wbr>vs_IL4</sp=
+an><span style=3D"color:rgb(102,102,0)">.</span><span style=3D"color:rgb(0,=
+0,0)">rds</span><span style=3D"color:rgb(102,102,0)">,</span><span style=3D=
+"color:rgb(0,0,0)"> r_objects</span><span style=3D"color:rgb(102,102,0)">/<=
+/span><span style=3D"color:rgb(0,0,0)">pca_plot</span><span style=3D"color:=
+rgb(102,102,0)">.</span><span style=3D"color:rgb(0,0,0)">rds</span><span st=
+yle=3D"color:rgb(102,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> r_ob=
+jects</span><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"col=
+or:rgb(0,0,0)">var_plot</span><span style=3D"color:rgb(102,102,0)">.</span>=
+<span style=3D"color:rgb(0,0,0)">rds</span><span style=3D"color:rgb(102,102=
+,0)">,</span><span style=3D"color:rgb(0,0,0)"> r_objects</span><span style=
+=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">heatmap<=
+/span><span style=3D"color:rgb(102,102,0)">.</span><span style=3D"color:rgb=
+(0,0,0)">rds</span><span style=3D"color:rgb(102,102,0)">,</span><span style=
+=3D"color:rgb(0,0,0)"> r_objects</span><span style=3D"color:rgb(102,102,0)"=
+>/</span><span style=3D"color:rgb(0,0,0)">DGE_design</span><span style=3D"c=
+olor:rgb(102,102,0)">.</span><span style=3D"color:rgb(0,0,0)">rds</span><sp=
+an style=3D"color:rgb(102,102,0)">,</span><span style=3D"color:rgb(0,0,0)">=
+ deliverables</span><span style=3D"color:rgb(102,102,0)">/</span><span styl=
+e=3D"color:rgb(0,0,0)">LPS_vs_PBS</span><span style=3D"color:rgb(102,102,0)=
+">.</span><span style=3D"color:rgb(0,0,0)">txt</span><span style=3D"color:r=
+gb(102,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> deliverables</span=
+><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,=
+0)">IL4_vs_PBS</span><span style=3D"color:rgb(102,102,0)">.</span><span sty=
+le=3D"color:rgb(0,0,0)">txt</span><span style=3D"color:rgb(102,102,0)">,</s=
+pan><span style=3D"color:rgb(0,0,0)"> deliverables</span><span style=3D"col=
+or:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">LPS_vs_IL4</spa=
+n><span style=3D"color:rgb(102,102,0)">.</span><span style=3D"color:rgb(0,0=
+,0)">txt</span><span style=3D"color:rgb(102,102,0)">,</span><span style=3D"=
+color:rgb(0,0,0)"> deliverables</span><span style=3D"color:rgb(102,102,0)">=
+/</span><span style=3D"color:rgb(0,0,0)">LPS_vs_PBS</span><span style=3D"co=
+lor:rgb(102,102,0)">.</span><span style=3D"color:rgb(0,0,0)">cls</span><spa=
+n style=3D"color:rgb(102,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> =
+deliverables</span><span style=3D"color:rgb(102,102,0)">/</span><span style=
+=3D"color:rgb(0,0,0)">IL4_vs_PBS</span><span style=3D"color:rgb(102,102,0)"=
+>.</span><span style=3D"color:rgb(0,0,0)">cls</span><span style=3D"color:rg=
+b(102,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> deliverables</span>=
+<span style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0=
+)">LPS_vs_IL4</span><span style=3D"color:rgb(102,102,0)">.</span><span styl=
+e=3D"color:rgb(0,0,0)">cls</span><span style=3D"color:rgb(102,102,0)">,</sp=
+an><span style=3D"color:rgb(0,0,0)"> deliverables</span><span style=3D"colo=
+r:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">LPS_vs_PBS</span=
+><span style=3D"color:rgb(102,102,0)">.</span><span style=3D"color:rgb(0,0,=
+0)">gct</span><span style=3D"color:rgb(102,102,0)">,</span><span style=3D"c=
+olor:rgb(0,0,0)"> deliverables</span><span style=3D"color:rgb(102,102,0)">/=
+</span><span style=3D"color:rgb(0,0,0)">IL4_vs_PBS</span><span style=3D"col=
+or:rgb(102,102,0)">.</span><span style=3D"color:rgb(0,0,0)">gct</span><span=
+ style=3D"color:rgb(102,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> d=
+eliverables</span><span style=3D"color:rgb(102,102,0)">/</span><span style=
+=3D"color:rgb(0,0,0)">LPS_vs_IL4</span><span style=3D"color:rgb(102,102,0)"=
+>.</span><span style=3D"color:rgb(0,0,0)">gct</span><span style=3D"color:rg=
+b(102,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> deliverables</span>=
+<span style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0=
+)">edgeR_longReport</span><span style=3D"color:rgb(102,102,0)">.</span><spa=
+n style=3D"color:rgb(0,0,0)"><wbr>html</span></span></p><p><span></span><sp=
+an style=3D"color:rgb(0,0,0)"><br></span></p><p><span><span style=3D"color:=
+rgb(102,0,102)">RuleException</span><span style=3D"color:rgb(102,102,0)">:<=
+/span></span></p><p><span><span style=3D"color:rgb(102,0,102)">CalledProces=
+sError</span><span style=3D"color:rgb(0,0,0)"> </span><span style=3D"color:=
+rgb(0,0,136)">in</span><span style=3D"color:rgb(0,0,0)"> line </span><span =
+style=3D"color:rgb(0,102,102)">141</span><span style=3D"color:rgb(0,0,0)"> =
+of </span><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"color=
+:rgb(0,0,0)">secondary</span><span style=3D"color:rgb(102,102,0)">/</span><=
+span style=3D"color:rgb(0,0,0)">projects</span><span style=3D"color:rgb(102=
+,102,0)">/</span><span style=3D"color:rgb(0,0,0)">bbc</span><span style=3D"=
+color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">resear<wbr>c=
+h</span><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:r=
+gb(0,0,0)">smk_pipeline</span><span style=3D"color:rgb(102,102,0)">/</span>=
+<span style=3D"color:rgb(102,0,102)">Snakefile</span><span style=3D"color:r=
+gb(102,102,0)">:</span></span></p><p><span><span style=3D"color:rgb(102,0,1=
+02)">Command</span><span style=3D"color:rgb(0,0,0)"> </span><span style=3D"=
+color:rgb(0,136,0)">&#39; singularity exec --home /secondary/projects/bbc/<=
+wbr>research/smk_pipeline -B /secondary,/primary --bind /secondary/projects=
+/bbc/tools/<wbr>dean_miniconda3/lib/python3.6/<wbr>site-packages:/mnt/snake=
+make /secondary/projects/bbc/<wbr>research/smk_pipeline/.<wbr>snakemake/sin=
+gularity/<wbr>2f95debcc77a32fc723cdf8a4ad18f<wbr>a2.simg bash -c &#39;</spa=
+n><span style=3D"color:rgb(0,0,136)">set</span><span style=3D"color:rgb(0,0=
+,0)"> </span><span style=3D"color:rgb(102,102,0)">-</span><span style=3D"co=
+lor:rgb(0,0,0)">euo pipefail</span><span style=3D"color:rgb(102,102,0)">;</=
+span><span><span style=3D"color:rgb(0,0,0)"> =C2=A0</span></span><span styl=
+e=3D"color:rgb(102,0,102)">Rscript</span><span style=3D"color:rgb(0,0,0)"> =
+</span><span style=3D"color:rgb(102,102,0)">-</span><span style=3D"color:rg=
+b(0,0,0)">e </span><span style=3D"color:rgb(0,136,0)">&#39;\&#39;&#39;</spa=
+n><span style=3D"color:rgb(0,0,0)">rmarkdown</span><span style=3D"color:rgb=
+(102,102,0)">::</span><span style=3D"color:rgb(0,0,0)">render</span><span s=
+tyle=3D"color:rgb(102,102,0)">(</span><span style=3D"color:rgb(0,136,0)">&q=
+uot;<wbr>scripts/edgeR_longReport.Rmd&quot;</span><span style=3D"color:rgb(=
+102,102,0)">,</span><span style=3D"color:rgb(0,0,0)"><wbr>output_format</sp=
+an><span style=3D"color:rgb(102,102,0)">=3D</span><span style=3D"color:rgb(=
+0,136,0)">&quot;html_document&quot;</span><span style=3D"color:rgb(102,102,=
+0)">)</span><span style=3D"color:rgb(0,136,0)"><wbr>&#39;\&#39;&#39;&#39;&#=
+39;</span><span style=3D"color:rgb(0,0,0)"> returned non</span><span style=
+=3D"color:rgb(102,102,0)">-</span><span style=3D"color:rgb(0,0,0)">zero </s=
+pan><span style=3D"color:rgb(0,0,136)">exit</span><span style=3D"color:rgb(=
+0,0,0)"> status </span><span style=3D"color:rgb(0,102,102)">255.</span></sp=
+an></p><p><span><span><span style=3D"color:rgb(0,0,0)"> =C2=A0</span></span=
+><span style=3D"color:rgb(102,0,102)">File</span><span style=3D"color:rgb(0=
+,0,0)"> </span><span style=3D"color:rgb(0,136,0)">&quot;/secondary/projects=
+/bbc/<wbr>research/smk_pipeline/<wbr>Snakefile&quot;</span><span style=3D"c=
+olor:rgb(102,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> line </span>=
+<span style=3D"color:rgb(0,102,102)">141</span><span style=3D"color:rgb(102=
+,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> </span><span style=3D"co=
+lor:rgb(0,0,136)">in</span><span style=3D"color:rgb(0,0,0)"> __rule_edgeR_l=
+ongReport</span></span></p><p><span><span><span style=3D"color:rgb(0,0,0)">=
+ =C2=A0</span></span><span style=3D"color:rgb(102,0,102)">File</span><span =
+style=3D"color:rgb(0,0,0)"> </span><span style=3D"color:rgb(0,136,0)">&quot=
+;/secondary/projects/bbc/<wbr>tools/dean_miniconda3/lib/<wbr>python3.6/conc=
+urrent/futures/<wbr>thread.py&quot;</span><span style=3D"color:rgb(102,102,=
+0)">,</span><span style=3D"color:rgb(0,0,0)"> line </span><span style=3D"co=
+lor:rgb(0,102,102)">56</span><span style=3D"color:rgb(102,102,0)">,</span><=
+span style=3D"color:rgb(0,0,0)"> </span><span style=3D"color:rgb(0,0,136)">=
+in</span><span style=3D"color:rgb(0,0,0)"> run</span></span></p><p><span><s=
+pan style=3D"color:rgb(0,0,0)">Shutting down</span><span style=3D"color:rgb=
+(102,102,0)">,</span><span style=3D"color:rgb(0,0,0)"> </span><span style=
+=3D"color:rgb(0,0,136)">this</span><span style=3D"color:rgb(0,0,0)"> might =
+take some time</span><span style=3D"color:rgb(102,102,0)">.</span></span></=
+p><p><span><span style=3D"color:rgb(102,0,102)">Exiting</span><span style=
+=3D"color:rgb(0,0,0)"> because a job execution failed</span><span style=3D"=
+color:rgb(102,102,0)">.</span><span style=3D"color:rgb(0,0,0)"> </span><spa=
+n style=3D"color:rgb(102,0,102)">Look</span><span style=3D"color:rgb(0,0,0)=
+"> above </span><span style=3D"color:rgb(0,0,136)">for</span><span style=3D=
+"color:rgb(0,0,0)"> error message</span></span></p><p><span style=3D"color:=
+rgb(0,0,0)">Complete log</span><span style=3D"color:rgb(102,102,0)">:</span=
+><span style=3D"color:rgb(0,0,0)"> </span><span style=3D"color:rgb(0,136,0)=
+">/secondary/</span><span style=3D"color:rgb(0,0,0)">projects</span><span s=
+tyle=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">bbc<=
+/span><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb=
+(0,0,0)">resear<wbr>ch</span><span style=3D"color:rgb(102,102,0)">/</span><=
+span style=3D"color:rgb(0,0,0)">smk_pipeline</span><span style=3D"color:rgb=
+(102,102,0)">/.</span><span style=3D"color:rgb(0,0,0)">snakemake</span><spa=
+n style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">l=
+og</span><span style=3D"color:rgb(102,102,0)"><wbr>/</span><span style=3D"c=
+olor:rgb(0,102,102)">2019</span><span style=3D"color:rgb(102,102,0)">-</spa=
+n><span style=3D"color:rgb(0,102,102)">06</span><span style=3D"color:rgb(10=
+2,102,0)">-</span><span style=3D"color:rgb(0,102,102)">10T163401.115637</sp=
+an><span style=3D"color:rgb(102,102,0)">.</span><span style=3D"color:rgb(0,=
+0,0)">snak<wbr>emake</span><span style=3D"color:rgb(102,102,0)">.</span><sp=
+an style=3D"color:rgb(0,0,0)">log<br></span></p></div></code></div><div><br=
+></div>permissions for=C2=A0<span style=3D"color:rgb(0,136,0);font-family:m=
+onospace;background-color:rgb(250,250,250)">/secondary/projects/bbc/<wbr>to=
+ols/dean_miniconda3/lib/<wbr>python3.6/site-packages:=C2=A0</span>drwxr<wbr=
+>-xr-x=C2=A0<div>don&#39;t understand why it would need write permissions..=
+.=C2=A0</div><div><br></div><div><br><br><br><br>On Monday, June 10, 2019 a=
+t 5:34:11 PM UTC-4, vanessa wrote:<blockquote class=3D"gmail_quote" style=
+=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding=
+-left:1ex"><div dir=3D"ltr">And the final error is a permission denied? Sna=
+kemake is helping us a lot by providing the command that fails, so let&#39;=
+s start by determining if it&#39;s the --home bind (or not). Try the same c=
+ommand, but remove the bind to the custom home:<div><br></div><blockquote c=
+lass=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px soli=
+d rgb(204,204,204);padding-left:1ex">singularity exec=C2=A0 --bind /seconda=
+ry/projects/bbc/tools/<wbr>dean_miniconda3/lib/python3.6/<wbr>site-packages=
+:/mnt/snakemake /secondary/projects/bbc/<wbr>research/smk_pipeline/.<wbr>sn=
+akemake/singularity/<wbr>2f95debcc77a32fc723cdf8a4ad18f<wbr>a2.simg bash -c=
+ &#39;set -euo pipefail; =C2=A0Rscript -e &#39;\&#39;&#39;rmarkdown::render=
+(&quot;<wbr>scripts/edgeR_longReport.Rmd&quot;,<wbr>output_format=3D&quot;h=
+tml_document&quot;)<wbr>&#39;\&#39;</blockquote><div><br></div><div>If you =
+are already sitting in your home, it&#39;s redundant anyway. And to simplif=
+y things a bit more, just exec a command like an echo or a which:</div><div=
+><br></div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.=
+8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex">singularity ex=
+ec=C2=A0 --bind /secondary/projects/bbc/tools/<wbr>dean_miniconda3/lib/pyth=
+on3.6/<wbr>site-packages:/mnt/snakemake /secondary/projects/bbc/<wbr>resear=
+ch/smk_pipeline/.<wbr>snakemake/singularity/<wbr>2f95debcc77a32fc723cdf8a4a=
+d18f<wbr>a2.simg bash -c &#39;echo hello&#39;</blockquote><div><br></div><d=
+iv>And can you show the full output from debug? Snakemake seems to be cchin=
+g images in the .snakemake folder, and what I want to also understand is wh=
+y it&#39;s binding the Python packages base to /mnt/snakemake (do you know?=
+).=C2=A0=C2=A0</div><div><br></div><div>Best,</div><div><br></div><div>Vane=
+ssa</div></div><br><div class=3D"gmail_quote"><div dir=3D"ltr">On Mon, Jun =
+10, 2019 at 4:37 PM Dean Pettinga &lt;<a rel=3D"nofollow">de...@gmail.com</=
+a>&gt; wrote:<br></div><blockquote class=3D"gmail_quote" style=3D"margin:0p=
+x 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"><d=
+iv dir=3D"ltr">Hey Vanessa,<div><br></div><div>I&#39;ve run in debug mode, =
+e.g.</div><div style=3D"background-color:rgb(250,250,250);border-color:rgb(=
+187,187,187);border-style:solid;border-width:1px"><code><div><span style=3D=
+"color:rgb(0,0,0)">snakemake </span><span style=3D"color:rgb(102,102,0)">--=
+</span><span style=3D"color:rgb(0,0,136)">use</span><span style=3D"color:rg=
+b(102,102,0)">-</span><span style=3D"color:rgb(0,0,0)">singularity </span><=
+span style=3D"color:rgb(102,102,0)">--</span><span style=3D"color:rgb(0,0,0=
+)">debug</span></div></code></div><div><br></div><div>i believe the relevan=
+t info from the output is below:<br><div style=3D"background-color:rgb(250,=
+250,250);border-color:rgb(187,187,187);border-style:solid;border-width:1px"=
+><code><div><p><span><span style=3D"color:rgb(102,0,102)">RuleException</sp=
+an><span style=3D"color:rgb(102,102,0)">:</span></span></p><p><span><span s=
+tyle=3D"color:rgb(102,0,102)">CalledProcessError</span><span style=3D"color=
+:rgb(0,0,0)"> </span><span style=3D"color:rgb(0,0,136)">in</span><span styl=
+e=3D"color:rgb(0,0,0)"> line </span><span style=3D"color:rgb(0,102,102)">14=
+1</span><span style=3D"color:rgb(0,0,0)"> of </span><span style=3D"color:rg=
+b(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">secondary</span><spa=
+n style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">p=
+rojects</span><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"c=
+olor:rgb(0,0,0)">bbc</span><span style=3D"color:rgb(102,102,0)">/</span><sp=
+an style=3D"color:rgb(0,0,0)">resear<wbr>ch</span><span style=3D"color:rgb(=
+102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">smk_pipeline</span><sp=
+an style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(102,0,10=
+2)">Snakefile</span><span style=3D"color:rgb(102,102,0)">:</span></span></p=
+><p><span><span style=3D"color:rgb(102,0,102)">Command</span><span style=3D=
+"color:rgb(0,0,0)"> </span><span style=3D"color:rgb(0,136,0)">&#39; singula=
+rity exec --home /secondary/projects/bbc/<wbr>research/smk_pipeline</span><=
+span><span style=3D"color:rgb(0,136,0)"> =C2=A0</span></span><span style=3D=
+"color:rgb(0,136,0)">--bind /secondary/projects/bbc/tools/<wbr>dean_minicon=
+da3/lib/python3.6/<wbr>site-packages:/mnt/snakemake /secondary/projects/bbc=
+/<wbr>research/smk_pipeline/.<wbr>snakemake/singularity/<wbr>2f95debcc77a32=
+fc723cdf8a4ad18f<wbr>a2.simg bash -c &#39;</span><span style=3D"color:rgb(0=
+,0,136)">set</span><span style=3D"color:rgb(0,0,0)"> </span><span style=3D"=
+color:rgb(102,102,0)">-</span><span style=3D"color:rgb(0,0,0)">euo pipefail=
+</span><span style=3D"color:rgb(102,102,0)">;</span><span><span style=3D"co=
+lor:rgb(0,0,0)"> =C2=A0</span></span><span style=3D"color:rgb(102,0,102)">R=
+script</span><span style=3D"color:rgb(0,0,0)"> </span><span style=3D"color:=
+rgb(102,102,0)">-</span><span style=3D"color:rgb(0,0,0)">e </span><span sty=
+le=3D"color:rgb(0,136,0)">&#39;\&#39;&#39;</span><span style=3D"color:rgb(0=
+,0,0)">rmarkdown</span><span style=3D"color:rgb(102,102,0)">::</span><span =
+style=3D"color:rgb(0,0,0)">render</span><span style=3D"color:rgb(102,102,0)=
+">(</span><span style=3D"color:rgb(0,136,0)">&quot;<wbr>scripts/edgeR_longR=
+eport.Rmd&quot;</span><span style=3D"color:rgb(102,102,0)">,</span><span st=
+yle=3D"color:rgb(0,0,0)"><wbr>output_format</span><span style=3D"color:rgb(=
+102,102,0)">=3D</span><span style=3D"color:rgb(0,136,0)">&quot;html_documen=
+t&quot;</span><span style=3D"color:rgb(102,102,0)">)</span><span style=3D"c=
+olor:rgb(0,136,0)"><wbr>&#39;\&#39;&#39;&#39;&#39;</span><span style=3D"col=
+or:rgb(0,0,0)"> returned non</span><span style=3D"color:rgb(102,102,0)">-</=
+span><span style=3D"color:rgb(0,0,0)">zero </span><span style=3D"color:rgb(=
+0,0,136)">exit</span><span style=3D"color:rgb(0,0,0)"> status </span><span =
+style=3D"color:rgb(0,102,102)">255.</span></span></p><p><span><span><span s=
+tyle=3D"color:rgb(0,0,0)"> =C2=A0</span></span><span style=3D"color:rgb(102=
+,0,102)">File</span><span style=3D"color:rgb(0,0,0)"> </span><span style=3D=
+"color:rgb(0,136,0)">&quot;/secondary/projects/bbc/<wbr>research/smk_pipeli=
+ne/<wbr>Snakefile&quot;</span><span style=3D"color:rgb(102,102,0)">,</span>=
+<span style=3D"color:rgb(0,0,0)"> line </span><span style=3D"color:rgb(0,10=
+2,102)">141</span><span style=3D"color:rgb(102,102,0)">,</span><span style=
+=3D"color:rgb(0,0,0)"> </span><span style=3D"color:rgb(0,0,136)">in</span><=
+span style=3D"color:rgb(0,0,0)"> __rule_edgeR_longReport</span></span></p><=
+p><span><span><span style=3D"color:rgb(0,0,0)"> =C2=A0</span></span><span s=
+tyle=3D"color:rgb(102,0,102)">File</span><span style=3D"color:rgb(0,0,0)"> =
+</span><span style=3D"color:rgb(0,136,0)">&quot;/secondary/projects/bbc/<wb=
+r>tools/dean_miniconda3/lib/<wbr>python3.6/concurrent/futures/<wbr>thread.p=
+y&quot;</span><span style=3D"color:rgb(102,102,0)">,</span><span style=3D"c=
+olor:rgb(0,0,0)"> line </span><span style=3D"color:rgb(0,102,102)">56</span=
+><span style=3D"color:rgb(102,102,0)">,</span><span style=3D"color:rgb(0,0,=
+0)"> </span><span style=3D"color:rgb(0,0,136)">in</span><span style=3D"colo=
+r:rgb(0,0,0)"> run</span></span></p></div></code></div><div><br></div></div=
+><div>I <i><b>am</b></i> working in a subdirectory of my $HOME directory. I=
+t seems like this may be the root of the issue.</div><div><br></div><div>-D=
+ean</div><div><br>On Tuesday, June 4, 2019 at 5:20:46 PM UTC-4, vanessa wro=
+te:<blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;bord=
+er-left:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr">Can y=
+ou try running with debug? I&#39;m looking at the Snakemake source code and=
+ I see a few things. First, snakemake is creating a mountpoint for itself:<=
+div><br></div><div><div style=3D"line-height:18px"><blockquote class=3D"gma=
+il_quote" style=3D"color:rgb(0,0,0);font-family:SFMono-Medium,&quot;SF Mono=
+&quot;,&quot;Segoe UI Mono&quot;,&quot;Roboto Mono&quot;,&quot;Ubuntu Mono&=
+quot;,Menlo,monospace;font-size:13px;white-space:pre-wrap;background-color:=
+rgb(255,255,254);margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204=
+,204);padding-left:1ex"><span style=3D"color:rgb(101,84,192)">SNAKEMAKE_MOU=
+NTPOINT</span> =3D <span style=3D"color:rgb(9,101,69)">&quot;/mnt/snakemake=
+&quot;</span></blockquote><div style=3D"color:rgb(0,0,0);font-family:SFMono=
+-Medium,&quot;SF Mono&quot;,&quot;Segoe UI Mono&quot;,&quot;Roboto Mono&quo=
+t;,&quot;Ubuntu Mono&quot;,Menlo,monospace;font-size:13px;white-space:pre-w=
+rap;background-color:rgb(255,255,254)"><br></div><div style=3D"color:rgb(0,=
+0,0);font-family:SFMono-Medium,&quot;SF Mono&quot;,&quot;Segoe UI Mono&quot=
+;,&quot;Roboto Mono&quot;,&quot;Ubuntu Mono&quot;,Menlo,monospace;font-size=
+:13px;white-space:pre-wrap;background-color:rgb(255,255,254)"><span style=
+=3D"background-color:rgb(255,255,255);color:rgb(34,34,34);font-family:Arial=
+,Helvetica,sans-serif;font-size:small;white-space:normal">which is added as=
+ a bind to the container (and I haven&#39;t looked further but I&#39;m gues=
+sing things like the Snakefile are bound here)=C2=A0</span></div><div style=
+=3D"color:rgb(0,0,0);font-family:SFMono-Medium,&quot;SF Mono&quot;,&quot;Se=
+goe UI Mono&quot;,&quot;Roboto Mono&quot;,&quot;Ubuntu Mono&quot;,Menlo,mon=
+ospace;font-size:13px;white-space:pre-wrap;background-color:rgb(255,255,254=
+)"><span style=3D"background-color:rgb(255,255,255);color:rgb(34,34,34);fon=
+t-family:Arial,Helvetica,sans-serif;font-size:small;white-space:normal"><br=
+></span></div><div style=3D"color:rgb(0,0,0);font-family:SFMono-Medium,&quo=
+t;SF Mono&quot;,&quot;Segoe UI Mono&quot;,&quot;Roboto Mono&quot;,&quot;Ubu=
+ntu Mono&quot;,Menlo,monospace;font-size:13px;white-space:pre-wrap;backgrou=
+nd-color:rgb(255,255,254)"><div style=3D"line-height:18px"><div><span style=
+=3D"color:rgb(32,32,32)">args</span> +=3D <span style=3D"color:rgb(9,101,69=
+)">&quot; --bind {}:{}&quot;</span>.<span style=3D"color:rgb(9,30,66);font-=
+weight:bold">format</span>(<span style=3D"color:rgb(101,84,192)">SNAKEMAKE_=
+<wbr>SEARCHPATH</span>, <span style=3D"color:rgb(101,84,192)">SNAKEMAKE_MOU=
+NTPOINT</span>)</div><div><br></div></div></div><div style=3D"line-height:1=
+8px"><div><span style=3D"background-color:rgb(255,255,255)">It might be goo=
+d to run a test and just list what is included that. What I&#39;m also noti=
+cing for the shellcmd function (possibly this is used when you run a singul=
+arity command, since it uses exec despite it&#39;s name) is that the os.get=
+cwd() is always bound as --home</span></div><div><span style=3D"background-=
+color:rgb(255,255,255)"><br></span></div><div><div style=3D"color:rgb(0,0,0=
+);background-color:rgb(255,255,254);font-family:SFMono-Medium,&quot;SF Mono=
+&quot;,&quot;Segoe UI Mono&quot;,&quot;Roboto Mono&quot;,&quot;Ubuntu Mono&=
+quot;,Menlo,monospace;font-size:13px;line-height:18px;white-space:pre-wrap"=
+><div>    <span style=3D"color:rgb(32,32,32)">cmd</span> =3D <span style=3D=
+"color:rgb(9,101,69)">&quot;{} singularity exec --home {} {} {} {} -c &#39;=
+{}&#39;&quot;</span>.<span style=3D"color:rgb(9,30,66);font-weight:bold">fo=
+rmat</span>(<br></div><div>        <span style=3D"color:rgb(32,32,32)">envv=
+ars</span>, <span style=3D"color:rgb(32,32,32)">os</span>.<span style=3D"co=
+lor:rgb(32,32,32)">getcwd</span>(), <span style=3D"color:rgb(32,32,32)">arg=
+s</span>, <span style=3D"color:rgb(32,32,32)">img_path</span>, <span style=
+=3D"color:rgb(32,32,32)">shell_executable</span>,</div><div>        <span s=
+tyle=3D"color:rgb(32,32,32)">cmd</span>.<span style=3D"color:rgb(32,32,32)"=
+>replace</span>(<span style=3D"color:rgb(9,101,69)">&quot;&#39;&quot;</span=
+>, <span style=3D"color:rgb(32,32,32)">r</span><span style=3D"color:rgb(9,1=
+01,69)">&quot;&#39;\&#39;&#39;&quot;</span>))</div><div>    <span style=3D"=
+color:rgb(32,32,32)">logger</span>.<span style=3D"color:rgb(32,32,32)">debu=
+g</span>(<span style=3D"color:rgb(32,32,32)">cmd</span>)</div></div></div><=
+div><span style=3D"background-color:rgb(255,255,255)"><br></span></div><div=
+><span style=3D"background-color:rgb(255,255,255)"><br></span></div><div><s=
+pan style=3D"background-color:rgb(255,255,255)">Are you working in a folder=
+ that is a subset of your actual home? It seems to be having trouble with t=
+hat particular bind. Either way, if you might be able to run in debug so we=
+ see any commands that are printed? The full code is here, for those intere=
+sted:</span></div><div><span style=3D"background-color:rgb(255,255,255)"><b=
+r></span></div><div><a href=3D"https://bitbucket.org/snakemake/snakemake/sr=
+c/master/snakemake/singularity.py" rel=3D"nofollow" target=3D"_blank" onmou=
+sedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fbi=
+tbucket.org%2Fsnakemake%2Fsnakemake%2Fsrc%2Fmaster%2Fsnakemake%2Fsingularit=
+y.py\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGSGgUSPBB0Po5PwL8ZFJ23Ao4c9w&#=
+39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\=
+x3dhttps%3A%2F%2Fbitbucket.org%2Fsnakemake%2Fsnakemake%2Fsrc%2Fmaster%2Fsna=
+kemake%2Fsingularity.py\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGSGgUSPBB0P=
+o5PwL8ZFJ23Ao4c9w&#39;;return true;">https://bitbucket.org/<wbr>snakemake/s=
+nakemake/src/<wbr>master/snakemake/singularity.<wbr>py</a><span style=3D"ba=
+ckground-color:rgb(255,255,255)"><br></span></div><div><span style=3D"backg=
+round-color:rgb(255,255,255)"><br></span></div></div><div style=3D"color:rg=
+b(0,0,0);font-family:SFMono-Medium,&quot;SF Mono&quot;,&quot;Segoe UI Mono&=
+quot;,&quot;Roboto Mono&quot;,&quot;Ubuntu Mono&quot;,Menlo,monospace;font-=
+size:13px;white-space:pre-wrap;background-color:rgb(255,255,254);line-heigh=
+t:18px"><br></div></div></div></div><br><div class=3D"gmail_quote"><div dir=
+=3D"ltr">On Tue, Jun 4, 2019 at 4:52 PM Dean Pettinga &lt;<a rel=3D"nofollo=
+w">de...@gmail.com</a>&gt; wrote:<br></div><blockquote class=3D"gmail_quote=
+" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);=
+padding-left:1ex"><div dir=3D"ltr">Hey Vanessa,<div><br></div><div>to answe=
+r those few things:<div><br></div><div>- I&#39;m able to shell into the con=
+tainer and bind anything i want with -B option</div><div>- I&#39;ve been us=
+ing --singularity-args in an attempt to bind, but thus far, it has not work=
+ed, leading me to believe it might be an issue to do with snakemake or the =
+session folder.</div><div>- haven&#39;t looked at sci-f too closely, but i =
+don&#39;t think it&#39;s going to be helpful for my situation.</div><div>- =
+My pipeline uses at most 8-16 parallel processes, so i&#39;m planning to pu=
+ll the s-hub container as i&#39;m hoping to make this easily reproducible f=
+or other users.<br></div><div><br></div><div>I&#39;m still at a bit of an i=
+mpasse...</div><div>-Dean</div><div><br>On Tuesday, June 4, 2019 at 11:01:3=
+2 AM UTC-4, vanessa wrote:<blockquote class=3D"gmail_quote" style=3D"margin=
+:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"=
+><div dir=3D"ltr">I&#39;ve used Snakemake=C2=A0+ Singularity (without the o=
+fficial --with-singularity) flag, here is the repo if it&#39;s helpful:=C2=
+=A0<a href=3D"https://github.com/sci-f/snakemake.scif" rel=3D"nofollow" tar=
+get=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q=
+\x3dhttps%3A%2F%2Fgithub.com%2Fsci-f%2Fsnakemake.scif\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNFWU7150ZppGifH7LqbTAYiyC7r9Q&#39;;return true;" onclick=
+=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.c=
+om%2Fsci-f%2Fsnakemake.scif\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFWU7150=
+ZppGifH7LqbTAYiyC7r9Q&#39;;return true;">https://github.com/<wbr>sci-f/snak=
+emake.scif</a><div><br></div><div>A few things to try:</div><div><br></div>=
+<div>=C2=A0- I would first shell into the container (that works) and see wh=
+at binds you have, by default. If your cluster disabled some set of mounts,=
+ that could be the issue, or you might need to ask for them.</div><div>=C2=
+=A0- I&#39;m looking at the <a href=3D"https://snakemake.readthedocs.io/en/=
+stable/executable.html?highlight=3Dsingularity#SINGULARITY" rel=3D"nofollow=
+" target=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/=
+url?q\x3dhttps%3A%2F%2Fsnakemake.readthedocs.io%2Fen%2Fstable%2Fexecutable.=
+html%3Fhighlight%3Dsingularity%23SINGULARITY\x26sa\x3dD\x26sntz\x3d1\x26usg=
+\x3dAFQjCNG8F9wsoNeRdSEWUIzFCfOOixRDOw&#39;;return true;" onclick=3D"this.h=
+ref=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fsnakemake.readthed=
+ocs.io%2Fen%2Fstable%2Fexecutable.html%3Fhighlight%3Dsingularity%23SINGULAR=
+ITY\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNG8F9wsoNeRdSEWUIzFCfOOixRDOw&#3=
+9;;return true;">Singularity command group</a>, and I wonder if you can try=
+ setting --singularity-args to make binds to your system that are needed? I=
+t does seem like something might be up with the session folder, others can =
+comment too :)</div><div>=C2=A0- If your pipeline doesn&#39;t have needs be=
+yond singularity, you could also try the approach I linked above, adding th=
+e snakemake deps into a container first, and then running it.</div><div>=C2=
+=A0- Finally, I would recommend pulling an image first and then setting --s=
+ingularity-dir to where it is, that way you can reuse the same image and no=
+t be pulling a gazillion if you run this in parallel.</div><div><br></div><=
+div>Best,</div><div><br></div><div>Vanessa</div></div><br><div class=3D"gma=
+il_quote"><div dir=3D"ltr">On Tue, Jun 4, 2019 at 10:44 AM Dean Pettinga &l=
+t;<a rel=3D"nofollow">de...@gmail.com</a>&gt; wrote:<br></div><blockquote c=
+lass=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px soli=
+d rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr"><div>I&#39;m currentl=
+y trying to implement a snakemake workflow on a HPC cluster using singulari=
+ty containers for specific rules.</div><div><br></div><div>I&#39;m having i=
+ssues when mounting to the singularity container invoked by snakemake.</div=
+><div><div style=3D"background-color:rgb(250,250,250);border-color:rgb(187,=
+187,187);border-style:solid;border-width:1px"><code><div><span style=3D"col=
+or:rgb(0,0,0)">$ cd </span><span style=3D"color:rgb(102,102,0)">/</span><fo=
+nt color=3D"#000000"><span style=3D"color:rgb(0,0,0)">path</span><span styl=
+e=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">to</spa=
+n></font><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:=
+rgb(0,0,0)">smk_pipeline<br>$ snakemake </span><span style=3D"color:rgb(102=
+,102,0)">--</span><span style=3D"color:rgb(0,0,136)">use</span><span style=
+=3D"color:rgb(102,102,0)">-</span><span style=3D"color:rgb(0,0,0)">singular=
+ity<br>ERROR =C2=A0</span><span style=3D"color:rgb(102,102,0)">:</span><spa=
+n style=3D"color:rgb(0,0,0)"> </span><span style=3D"color:rgb(102,0,102)">F=
+ailed</span><span style=3D"color:rgb(0,0,0)"> to mount home directory </spa=
+n><span style=3D"color:rgb(102,102,0)">/</span><font color=3D"#000000"><spa=
+n style=3D"color:rgb(0,0,0)">path</span><span style=3D"color:rgb(102,102,0)=
+">/</span><span style=3D"color:rgb(0,0,0)">to</span></font><span style=3D"c=
+olor:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">smk_pipeline =
+</span><span style=3D"color:rgb(102,102,0)">-&gt;</span><span style=3D"colo=
+r:rgb(0,0,0)"> </span><span style=3D"color:rgb(0,136,0)">/cm/</span><span s=
+tyle=3D"color:rgb(0,0,136)">local</span><span style=3D"color:rgb(102,102,0)=
+">/</span><span style=3D"color:rgb(0,0,0)">apps</span><span style=3D"color:=
+rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">singularity</span>=
+<span style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,102=
+,102)">2.4</span><span style=3D"color:rgb(102,102,0)"><wbr>.</span><span st=
+yle=3D"color:rgb(0,102,102)">2</span><span style=3D"color:rgb(102,102,0)">/=
+</span><span style=3D"color:rgb(0,0,136)">var</span><span style=3D"color:rg=
+b(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">singularity</span><s=
+pan style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)"=
+>mnt</span><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"colo=
+r:rgb(0,0,0)">session</span><span style=3D"color:rgb(102,102,0)"><wbr>/</sp=
+an><font color=3D"#000000"><span style=3D"color:rgb(0,0,0)">path</span><spa=
+n style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">t=
+o</span></font><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"=
+color:rgb(0,0,0)">smk_pipeline</span><span style=3D"color:rgb(102,102,0)">:=
+</span><span style=3D"color:rgb(0,0,0)"> </span><span style=3D"color:rgb(10=
+2,0,102)">Permission</span><span style=3D"color:rgb(0,0,0)"> denied</span><=
+/div></code></div></div><div>The rule being run invokes a container hosted =
+at singularity-hub, but it errors out before it&#39;s able to do anything.=
+=C2=A0</div><div style=3D"color:rgb(51,51,51);font-family:Roboto"><br></div=
+><div>If i shell into a container interactively, no such problem occurs.</d=
+iv><div style=3D"background-color:rgb(250,250,250);border-color:rgb(187,187=
+,187);border-style:solid;border-width:1px"><code><div><span style=3D"color:=
+rgb(0,0,0)">$ singularity shell rnaseq</span><span style=3D"color:rgb(102,1=
+02,0)">.</span><span style=3D"color:rgb(0,0,0)">simg<br></span><span style=
+=3D"color:rgb(102,0,102)">Singularity</span><span style=3D"color:rgb(102,10=
+2,0)">:</span><span style=3D"color:rgb(0,0,0)"> </span><span style=3D"color=
+:rgb(102,0,102)">Invoking</span><span style=3D"color:rgb(0,0,0)"> an intera=
+ctive shell within container</span><span style=3D"color:rgb(102,102,0)">...=
+</span><span style=3D"color:rgb(0,0,0)"><br></span><span style=3D"color:rgb=
+(102,0,102)">Singularity</span><span style=3D"color:rgb(0,0,0)"> rnaseq</sp=
+an><span style=3D"color:rgb(102,102,0)">.</span><span style=3D"color:rgb(0,=
+0,0)">simg</span><span style=3D"color:rgb(102,102,0)">:~&gt;</span></div></=
+code></div><div><br>I think it might be due to the fact that write permissi=
+ons on=C2=A0<span style=3D"font-family:monospace;background-color:rgb(250,2=
+50,250);color:rgb(0,136,0)">/cm/</span><span style=3D"font-family:monospace=
+;background-color:rgb(250,250,250);color:rgb(0,0,136)">local</span><span st=
+yle=3D"font-family:monospace;background-color:rgb(250,250,250);color:rgb(10=
+2,102,0)">/</span><span style=3D"font-family:monospace;background-color:rgb=
+(250,250,250);color:rgb(0,0,0)">apps</span><span style=3D"font-family:monos=
+pace;background-color:rgb(250,250,250);color:rgb(102,102,0)">/</span><span =
+style=3D"font-family:monospace;background-color:rgb(250,250,250);color:rgb(=
+0,0,0)">singularity</span><span style=3D"font-family:monospace;background-c=
+olor:rgb(250,250,250);color:rgb(102,102,0)">/</span><span style=3D"font-fam=
+ily:monospace;background-color:rgb(250,250,250);color:rgb(0,102,102)"><wbr>=
+2.4</span><span style=3D"font-family:monospace;background-color:rgb(250,250=
+,250);color:rgb(102,102,0)">.</span><span style=3D"font-family:monospace;ba=
+ckground-color:rgb(250,250,250);color:rgb(0,102,102)">2</span><span style=
+=3D"font-family:monospace;background-color:rgb(250,250,250);color:rgb(102,1=
+02,0)">/</span><span style=3D"font-family:monospace;background-color:rgb(25=
+0,250,250);color:rgb(0,0,136)">var</span><span style=3D"font-family:monospa=
+ce;background-color:rgb(250,250,250);color:rgb(102,102,0)">/</span><span st=
+yle=3D"font-family:monospace;background-color:rgb(250,250,250);color:rgb(0,=
+0,0)">singularity</span><span style=3D"font-family:monospace;background-col=
+or:rgb(250,250,250);color:rgb(102,102,0)">/</span><span style=3D"font-famil=
+y:monospace;background-color:rgb(250,250,250);color:rgb(0,0,0)">mnt</span><=
+span style=3D"font-family:monospace;background-color:rgb(250,250,250);color=
+:rgb(102,102,0)">/</span>=C2=A0are set to=C2=A00755.</div><div>One of our H=
+PC admins suggested that I try to use a different mount point for singulari=
+ty, but I haven&#39;t been able to find any information on this topic in th=
+e documentation...</div><div><br></div><div>I&#39;m confused about why sing=
+ularity is unable to mount any directories when invoked by snakemake, rathe=
+r than by myself directly as a user. This may be a question more fit for th=
+e snakemake folks, but i thought i&#39;d start here.</div><div><br></div><d=
+iv>cheers,</div><div>Dean</div><div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">si...@lbl.gov</a>.<br>
+To view this discussion on the web visit <a href=3D"https://groups.google.c=
+om/a/lbl.gov/d/msgid/singularity/4e3f0796-dbb8-48ac-a786-28ee3ff9f7f8%40lbl=
+.gov?utm_medium=3Demail&amp;utm_source=3Dfooter" rel=3D"nofollow" target=3D=
+"_blank" onmousedown=3D"this.href=3D&#39;https://groups.google.com/a/lbl.go=
+v/d/msgid/singularity/4e3f0796-dbb8-48ac-a786-28ee3ff9f7f8%40lbl.gov?utm_me=
+dium\x3demail\x26utm_source\x3dfooter&#39;;return true;" onclick=3D"this.hr=
+ef=3D&#39;https://groups.google.com/a/lbl.gov/d/msgid/singularity/4e3f0796-=
+dbb8-48ac-a786-28ee3ff9f7f8%40lbl.gov?utm_medium\x3demail\x26utm_source\x3d=
+footer&#39;;return true;">https://groups.google.com/a/<wbr>lbl.gov/d/msgid/=
+singularity/<wbr>4e3f0796-dbb8-48ac-a786-<wbr>28ee3ff9f7f8%40lbl.gov</a>.<b=
+r>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><div>(=
+603) 321-0676</div></div></div></div>
+</blockquote></div></div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">si...@lbl.gov</a>.<br>
+To view this discussion on the web visit <a href=3D"https://groups.google.c=
+om/a/lbl.gov/d/msgid/singularity/ece8a25d-5717-496b-a8ef-aa60cca30391%40lbl=
+.gov?utm_medium=3Demail&amp;utm_source=3Dfooter" rel=3D"nofollow" target=3D=
+"_blank" onmousedown=3D"this.href=3D&#39;https://groups.google.com/a/lbl.go=
+v/d/msgid/singularity/ece8a25d-5717-496b-a8ef-aa60cca30391%40lbl.gov?utm_me=
+dium\x3demail\x26utm_source\x3dfooter&#39;;return true;" onclick=3D"this.hr=
+ef=3D&#39;https://groups.google.com/a/lbl.gov/d/msgid/singularity/ece8a25d-=
+5717-496b-a8ef-aa60cca30391%40lbl.gov?utm_medium\x3demail\x26utm_source\x3d=
+footer&#39;;return true;">https://groups.google.com/a/<wbr>lbl.gov/d/msgid/=
+singularity/<wbr>ece8a25d-5717-496b-a8ef-<wbr>aa60cca30391%40lbl.gov</a>.<b=
+r>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><div>(=
+603) 321-0676</div></div></div></div>
+</blockquote></div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">si...@lbl.gov</a>.<br>
+To view this discussion on the web visit <a href=3D"https://groups.google.c=
+om/a/lbl.gov/d/msgid/singularity/1e966ec5-e71d-48bf-9ca4-ba43fd7fece3%40lbl=
+.gov?utm_medium=3Demail&amp;utm_source=3Dfooter" rel=3D"nofollow" target=3D=
+"_blank" onmousedown=3D"this.href=3D&#39;https://groups.google.com/a/lbl.go=
+v/d/msgid/singularity/1e966ec5-e71d-48bf-9ca4-ba43fd7fece3%40lbl.gov?utm_me=
+dium\x3demail\x26utm_source\x3dfooter&#39;;return true;" onclick=3D"this.hr=
+ef=3D&#39;https://groups.google.com/a/lbl.gov/d/msgid/singularity/1e966ec5-=
+e71d-48bf-9ca4-ba43fd7fece3%40lbl.gov?utm_medium\x3demail\x26utm_source\x3d=
+footer&#39;;return true;">https://groups.google.com/a/<wbr>lbl.gov/d/msgid/=
+singularity/<wbr>1e966ec5-e71d-48bf-9ca4-<wbr>ba43fd7fece3%40lbl.gov</a>.<b=
+r>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><div>(=
+603) 321-0676</div></div></div></div>
+</blockquote></div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+raGJMWipAAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singu...@lbl.<wbr>gov</a>.<br>
+To view this discussion on the web visit <a href=3D"https://groups.google.c=
+om/a/lbl.gov/d/msgid/singularity/c8bc281b-1cf6-4bde-92f0-d847adf0ddb5%40lbl=
+.gov?utm_medium=3Demail&amp;utm_source=3Dfooter" target=3D"_blank" rel=3D"n=
+ofollow" onmousedown=3D"this.href=3D&#39;https://groups.google.com/a/lbl.go=
+v/d/msgid/singularity/c8bc281b-1cf6-4bde-92f0-d847adf0ddb5%40lbl.gov?utm_me=
+dium\x3demail\x26utm_source\x3dfooter&#39;;return true;" onclick=3D"this.hr=
+ef=3D&#39;https://groups.google.com/a/lbl.gov/d/msgid/singularity/c8bc281b-=
+1cf6-4bde-92f0-d847adf0ddb5%40lbl.gov?utm_medium\x3demail\x26utm_source\x3d=
+footer&#39;;return true;">https://groups.google.com/a/<wbr>lbl.gov/d/msgid/=
+singularity/<wbr>c8bc281b-1cf6-4bde-92f0-<wbr>d847adf0ddb5%40lbl.gov</a>.<b=
+r>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><div>(=
+603) 321-0676</div></div></div></div>
+</blockquote></div>
+------=_Part_424_198130500.1569182941098--
+
+------=_Part_423_1163490115.1569182941095--

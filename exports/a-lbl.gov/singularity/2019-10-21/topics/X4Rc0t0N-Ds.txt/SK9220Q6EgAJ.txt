@@ -1,0 +1,757 @@
+X-Received: by 10.129.154.197 with SMTP id r188mr11902337ywg.40.1452905788727;
+        Fri, 15 Jan 2016 16:56:28 -0800 (PST)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.107.164.216 with SMTP id d85ls975051ioj.73.gmail; Fri, 15 Jan
+ 2016 16:56:28 -0800 (PST)
+X-Received: by 10.98.70.17 with SMTP id t17mr18932625pfa.107.1452905788124;
+        Fri, 15 Jan 2016 16:56:28 -0800 (PST)
+Return-Path: <gmku...@lbl.gov>
+Received: from fe4.lbl.gov (fe4.lbl.gov. [128.3.41.71])
+        by mx.google.com with ESMTPS id r71si19985785pfi.85.2016.01.15.16.56.27
+        for <singu...@lbl.gov>
+        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Fri, 15 Jan 2016 16:56:28 -0800 (PST)
+Received-SPF: pass (google.com: domain of gmku...@lbl.gov designates 74.125.82.51 as permitted sender) client-ip=74.125.82.51;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of gmku...@lbl.gov designates 74.125.82.51 as permitted sender) smtp.mailfrom=gmku...@lbl.gov
+X-Ironport-SBRS: 5.5
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2G9AQDmlJlWmzNSfUpbA4JugR5tBohQtFtBIoFshAECgSoHPBABAQEBAQEBAw4BAQEBAQYLCwkhLj6BeCAMDC8BAQEBAQEBAQEBAQEBHQIvCzEBAQEDARIRVgULCwsNIAEJAgIhARIBBQEcBhMIGodkAwoIBQmiNYExPjGLSIxtDYNHAQEBAQEFAQEBAQEBAQEBGgqGTIR+gk+CKSaCVoFJBYdjhV93PYgjAWeEX4YfgXiBXkqMWYZ/g22CJREkgRcRKII8FQeBfh00AQGFKiSBJwEBAQ
+X-IronPort-AV: E=Sophos;i="5.22,302,1449561600"; 
+   d="scan'208,217";a="10572750"
+Received: from mail-wm0-f51.google.com ([74.125.82.51])
+  by fe4.lbl.gov with ESMTP; 15 Jan 2016 16:56:25 -0800
+Received: by mail-wm0-f51.google.com with SMTP id u188so42730645wmu.1
+        for <singu...@lbl.gov>; Fri, 15 Jan 2016 16:56:25 -0800 (PST)
+X-Gm-Message-State: ALoCoQmw9XWIyshXQdMCrdb6iVpGi+V+7RGQDlfwLLl5fqBXuvs8i/6kePHg8/hWrA/sBwZd1pPh1VNWlCLD64t9DnJMGLy/aAT9+T8zjGLowjN65rOG3PWk4G9/ZbbsLqMk7IfsRwxYg70gjkm6qRcqh7DyLd6cDiWQTWF07sXO+kpl86ee+6w=
+X-Received: by 10.194.89.226 with SMTP id br2mr14665962wjb.22.1452905785221;
+        Fri, 15 Jan 2016 16:56:25 -0800 (PST)
+MIME-Version: 1.0
+X-Received: by 10.194.89.226 with SMTP id br2mr14665954wjb.22.1452905785046;
+ Fri, 15 Jan 2016 16:56:25 -0800 (PST)
+Received: by 10.28.218.71 with HTTP; Fri, 15 Jan 2016 16:56:24 -0800 (PST)
+In-Reply-To: <90807905.4rBopGsV4v@stunted>
+References: <1889932.uPsTCzQSxG@stunted>
+	<58F72211-6818-4149-8655-591FCCAFF462@lbl.gov>
+	<90807905.4rBopGsV4v@stunted>
+Date: Fri, 15 Jan 2016 16:56:24 -0800
+Message-ID: <CAN7etTxxDJk2wfmfR2ojS9kNKsTetT0XKBcnE5zRZeswA8kg6g@mail.gmail.com>
+Subject: Re: Compiled MATLAB app not including all libs.
+From: "Gregory M. Kurtzer" <gmku...@lbl.gov>
+To: harry mangalam <hjman...@gmail.com>
+Cc: singularity <singu...@lbl.gov>
+Content-Type: multipart/alternative; boundary=089e010d7dde35cbec052968fd2a
+
+--089e010d7dde35cbec052968fd2a
+Content-Type: text/plain; charset=UTF-8
+
+Harry,
+
+One thing additionally you can try is to add a %test scriptlet in your
+spec. It will try to execute this scriptlet on the temporary container
+before packaging everything up.
+
+The bit about using specgen as well is that it will grab every file
+touched... which includes locales and archives which may not be
+specifically necessary (and will add a lot of space).
+
+You can also try a brute force method of including everything from your
+Matlab path instead of referencing single paths of each of the libraries.
+Maybe that will help?
+
+Greg
+
+On Fri, Jan 15, 2016 at 11:48 AM, harry mangalam <hjman...@gmail.com>
+wrote:
+
+> Thanks Greg,
+>
+>
+>
+> The use of the 'specgen' option seemed to help quite a bit. It did not
+> insert the full path of the executable (which I think may qualify as a
+> bug), and inserted the requirements of some temporary lock files that were
+> not available when the matlab app was not-running, but otherwise seemed to
+> catch ~140 files that were referenced and explicitly included them in the
+> '%files' stanza.
+>
+>
+>
+> The build took a very long time (~32m) to complete and resulted in a 640MB
+> sapp file(!). When that sapp file was executed, 'top' shows a few seconds
+> of gzip & cpio, followed by an unending stream of only this line:
+>
+>
+>
+> utLoadlibrary mcos_impl failed, error = 1
+>
+>
+>
+> using about 100% of a CPU, until killed (after waiting about 10m)
+>
+>
+>
+> the top line:
+>
+> PID USER PR NI VIRT RES SHR S %CPU %MEM TIME+ COMMAND
+>
+> 31879 hjm 20 0 504272 66612 50944 S 98.9 0.4 8:06.44 image2pce
+>
+>
+>
+> so I'm further along in the process but not quite there. this is an
+> especially hairy use case and it will be amazing if it actually works..
+>
+>
+>
+> hjm
+>
+>
+>
+> On Friday, January 15, 2016 09:31:02 AM Gregory M. Kurtzer wrote:
+>
+> > Try to start off with using "singularity specgen ...."
+>
+> >
+>
+> > It works really well at identifying dependencies of the primary thread
+> (not
+>
+> > forks) and will write a new specfile for you.
+>
+> >
+>
+> > Other the. That, the more that you can include in the spec he shorter the
+>
+> > amount of dependency loops will need to occur.
+>
+> >
+>
+> > Hope that helps!!
+>
+> >
+>
+> >
+>
+> >
+>
+> > Sent from my iPhone
+>
+> >
+>
+> > > On Jan 15, 2016, at 9:13 AM, harry mangalam <hjman...@gmail.com>
+> wrote:
+>
+> > >
+>
+> > > Starting a new subject line since this is now the next step..
+>
+> > >
+>
+> > > The previous was just a lead-up to the real reason for trying Sing.
+>
+> > > I have a MATLAB script that requires a lib that has a GLIBC
+>
+> > > incompatibility with our current cluster OS but that the PI is
+> desperate
+>
+> > > to run.
+>
+> > >
+>
+> > > I've compiled the mcode on my laptop to 'image2pce' and it runs as
+>
+> > > required, but as you might guess, has a zillion direct lib dependencies
+>
+> > > and zillions more indirect lib deps.
+>
+> > >
+>
+> > > When I try to Sing-wrap it, Sing goes thru multiple resolution phases,
+> but
+>
+> > > eventually it is built (all 225MB), but when trying to launch, keeps
+>
+> > > complaining about missing libs.
+>
+> > >
+>
+> > > the short form is:
+>
+> > > # set the LD_LIBRARY_PATH to include the nec. MATLAB paths
+>
+> > > # mcc-compile the mcode into a native executable
+>
+> > >
+>
+> > > #set the sspec file to:
+>
+> > > ====
+>
+> > > Name: image2pce
+>
+> > > Exec: /home/hjm/nacs/zeba/pct_hpc/standalone/image2pce
+>
+> > > ====
+>
+> > >
+>
+> > > #create the sapp:
+>
+> > > $ time singularity build image2pce.sspec image2pce.sapp > sapp.output
+>
+> > >
+>
+> > > real 5m36.986s
+>
+> > >
+>
+> > > # try to run the sapp:
+>
+> > > $ ./image2pce.sapp
+>
+> > > An Error has occurred while trying to initialize the MATLAB Runtime.
+>
+> > > The error is: Fatal error loading library
+>
+> > > /home/hjm/MATLAB/R2015b/bin/glnxa64/libmat.so Error:
+>
+> > > /home/hjm/MATLAB/R2015b/bin/glnxa64/libmat.so: cannot open shared
+> object
+>
+> > > file: No such file or directory Error:mclmcr initialization failed
+>
+> > >
+>
+> > >
+>
+> > > # and it's true, the file libmat.so is not included in the build output
+>
+> > > $ grep libmat.so sapp.output
+>
+> > > # nothing
+>
+> > >
+>
+> > > # !!! BUT !!! it's also true that it's not included in the ldd output
+> from
+>
+> > > the compiled app:
+>
+> > >
+>
+> > > ldd image2pce | grep libmat.so
+>
+> > > # nothing
+>
+> > >
+>
+> > > !! so this is a problem - if the app doesn't acknowledge the
+> requirement
+>
+> > > for libmat.so, how will Singularity resolve it?
+>
+> > >
+>
+> > > # however, when I try to include it explicitly in the sspec file
+>
+> > > ====
+>
+> > > Name: image2pce
+>
+> > > Exec: /home/hjm/nacs/zeba/pct_hpc/standalone/image2pce
+>
+> > > %files
+>
+> > > /home/hjm/MATLAB/R2015b/bin/glnxa64/libmat.so
+>
+> > > ====
+>
+> > >
+>
+> > > # and then rebuild
+>
+> > > time singularity build image2pce.sspec image2pce.sapp > sapp.output
+>
+> > >
+>
+> > > # and check:
+>
+> > > $ grep libmat.so sapp.output
+>
+> > > Installing file: /home/hjm/MATLAB/R2015b/bin/glnxa64/libmat.so
+>
+> > >
+>
+> > > # and now it's something else....
+>
+> > >
+>
+> > > $ ./image2pce.sapp
+>
+> > > An Error has occurred while trying to initialize the MATLAB Runtime.
+>
+> > > The error is: Fatal error loading library
+>
+> > > /home/hjm/MATLAB/R2015b/bin/glnxa64/libmwmclbase.so Error:
+>
+> > > /home/hjm/MATLAB/R2015b/bin/glnxa64/libmwmclbase.so: cannot open shared
+>
+> > > object file: No such file or directory Error:mclmcr initialization
+> failed
+>
+> > >
+>
+> > > there are 1.8GB of files in /home/hjm/MATLAB/R2015b/bin/glnxa64/, so
+>
+> > > adding all of them explicitly is a non-starter.
+>
+> > >
+>
+> > > and at 5.5min per re-wrapping file-by-file additions, that's going to
+> be
+>
+> > > tiring..
+>
+> > >
+>
+> > > Is there a way to pre-resolve the deps? Maybe this is more a MATLAB
+>
+> > > problem than a Sing problem..
+>
+> > >
+>
+> > > hjm
+>
+> > >
+>
+> > >
+>
+> > > ---
+>
+> > > Harry Mangalam - Research Computing, OIT, Rm 225 MSTB, UC Irvine
+>
+> > > [m/c 2225] / 92697 Google Voice Multiplexer: (949) 478-4487
+>
+> > > 415 South Circle View Dr, Irvine, CA, 92697 [shipping]
+>
+> > > XSEDE 'Campus Champion' - ask me about your research computing needs.
+>
+> > > Map to Office | Map to Data Center Gate
+>
+> > > [the command line is the new black]
+>
+> > > ---
+>
+>
+>
+>
+> ---
+>
+> Harry Mangalam - Research Computing, OIT, Rm 225 MSTB, UC Irvine
+>
+> [m/c 2225] / 92697 Google Voice Multiplexer: (949) 478-4487
+>
+> 415 South Circle View Dr, Irvine, CA, 92697 [shipping]
+>
+> XSEDE 'Campus Champion' - ask me about your research computing needs.
+>
+> Map to Office <http://maps.google.com/maps?q=33.641950,-117.844348&z=17>
+> | Map to Data Center Gate
+> <http://maps.google.com/maps?q=33.643569,-117.839008&z=17>
+>
+> [the command line is the new black]
+>
+> ---
+>
+>
+>
+
+
+
+-- 
+Gregory M. Kurtzer
+Technical Lead and HPC Systems Architect
+High Performance Computing Services (HPCS)
+University of California
+Lawrence Berkeley National Laboratory
+One Cyclotron Road, Berkeley, CA 94720
+
+--089e010d7dde35cbec052968fd2a
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Harry,<div><br></div><div>One thing additionally you can t=
+ry is to add a %test scriptlet in your spec. It will try to execute this sc=
+riptlet on the temporary container before packaging everything up.</div><di=
+v><br></div><div>The bit about using specgen as well is that it will grab e=
+very file touched... which includes locales and archives which may not be s=
+pecifically necessary (and will add a lot of space).=C2=A0</div><div><br></=
+div><div>You can also try a brute force method of including everything from=
+ your Matlab path instead of referencing single paths of each of the librar=
+ies. Maybe that will help?</div><div><br></div><div>Greg</div></div><div cl=
+ass=3D"gmail_extra"><br><div class=3D"gmail_quote">On Fri, Jan 15, 2016 at =
+11:48 AM, harry mangalam <span dir=3D"ltr">&lt;<a href=3D"mailto:hjman...@g=
+mail.com" target=3D"_blank">hjman...@gmail.com</a>&gt;</span> wrote:<br><bl=
+ockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #=
+ccc solid;padding-left:1ex"><u></u>
+<div style=3D"font-family:&#39;Ubuntu Mono&#39;;font-size:14pt;font-weight:=
+400;font-style:normal">
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">Thanks Greg,</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">=C2=A0</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">The use of the &#39;specgen&#39; option seemed to help =
+quite a bit.  It did not insert the full path of the executable (which I th=
+ink may qualify as a bug), and inserted the requirements of some temporary =
+lock files that were not available when the matlab app was not-running, but=
+ otherwise seemed to catch ~140 files that were referenced and explicitly i=
+ncluded them in the &#39;%files&#39; stanza.</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">=C2=A0</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">The build took a very long time (~32m) to complete and =
+resulted in a 640MB sapp file(!).  When that sapp file was executed, &#39;t=
+op&#39; shows a few seconds of gzip &amp; cpio, followed by an unending str=
+eam of only this line:</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">=C2=A0</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">utLoadlibrary mcos_impl failed, error =3D 1</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">=C2=A0</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">using about 100% of a CPU, until killed (after waiting =
+about 10m)</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">=C2=A0</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">the top line:</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">  PID USER      PR  NI    VIRT    RES    SHR S  %CPU %M=
+EM     TIME+ COMMAND</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">31879 hjm       20   0  504272  66612  50944 S  98.9  0=
+.4   8:06.44 image2pce                  </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">=C2=A0</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">so I&#39;m further along in the process but not quite t=
+here.  this is an especially hairy use case and it will be amazing if it ac=
+tually works..</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">=C2=A0</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">hjm</p><div><div class=3D"h5">
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">=C2=A0</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">On Friday, January 15, 2016 09:31:02 AM Gregory M. Kurt=
+zer wrote:</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; Try to start off with using &quot;singularity spec=
+gen ....&quot;</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; It works really well at identifying dependencies o=
+f the primary thread (not</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; forks) and will write a new specfile for you.</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; Other the. That, the more that you can include in =
+the spec he shorter the</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; amount of dependency loops will need to occur.</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; Hope that helps!!</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; Sent from my iPhone</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; On Jan 15, 2016, at 9:13 AM, harry mangalam &=
+lt;<a href=3D"mailto:hjman...@gmail.com" target=3D"_blank">hjman...@gmail.c=
+om</a>&gt; wrote:</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; Starting a new subject line since this is now=
+ the next step..</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; The previous was just a lead-up to the real r=
+eason for trying Sing.</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; I have a MATLAB script that requires a lib th=
+at has a GLIBC</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; incompatibility with our current cluster OS b=
+ut that the PI is desperate</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; to run.</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; I&#39;ve compiled the mcode on my laptop to &=
+#39;image2pce&#39; and it runs as</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; required, but as you might guess, has a zilli=
+on direct lib dependencies</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; and zillions more indirect lib deps.</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; When I try to Sing-wrap it, Sing goes thru mu=
+ltiple resolution phases, but</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; eventually it is built (all 225MB), but when =
+trying to launch, keeps</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; complaining about missing libs.</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; the short form is:</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; # set the LD_LIBRARY_PATH to include the nec.=
+ MATLAB paths</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; # mcc-compile the mcode into a native executa=
+ble</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; #set the sspec file to:</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; =3D=3D=3D=3D</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; Name: image2pce</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; Exec: /home/hjm/nacs/zeba/pct_hpc/standalone/=
+image2pce</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; =3D=3D=3D=3D</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; #create the sapp:</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; $ time singularity build image2pce.sspec imag=
+e2pce.sapp &gt; sapp.output</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; real 5m36.986s</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; # try to run the sapp:</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; $ ./image2pce.sapp</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; An Error has occurred while trying to initial=
+ize the MATLAB Runtime.</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; The error is: Fatal error loading library</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; /home/hjm/MATLAB/R2015b/bin/glnxa64/libmat.so=
+ Error:</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; /home/hjm/MATLAB/R2015b/bin/glnxa64/libmat.so=
+: cannot open shared object</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; file: No such file or directory Error:mclmcr =
+initialization failed</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; # and it&#39;s true, the file libmat.so is no=
+t included in the build output</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; $ grep libmat.so sapp.output</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; # nothing</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; # !!! BUT !!! it&#39;s also true that it&#39;=
+s not included in the ldd output from</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; the compiled app:</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; ldd image2pce | grep libmat.so</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; # nothing</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; !! so this is a problem - if the app doesn&#3=
+9;t acknowledge the requirement</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; for libmat.so, how will Singularity resolve i=
+t?</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; # however, when I try to include it explicitl=
+y in the sspec file</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; =3D=3D=3D=3D</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; Name: image2pce</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; Exec: /home/hjm/nacs/zeba/pct_hpc/standalone/=
+image2pce</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; %files</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; /home/hjm/MATLAB/R2015b/bin/glnxa64/libmat.so=
+</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; =3D=3D=3D=3D</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; # and then rebuild</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; time singularity build image2pce.sspec image2=
+pce.sapp &gt; sapp.output</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; # and check:</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; $ grep libmat.so sapp.output</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; Installing file: /home/hjm/MATLAB/R2015b/bin/=
+glnxa64/libmat.so</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; # and now it&#39;s something else....</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; $ ./image2pce.sapp</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; An Error has occurred while trying to initial=
+ize the MATLAB Runtime.</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; The error is: Fatal error loading library</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; /home/hjm/MATLAB/R2015b/bin/glnxa64/libmwmclb=
+ase.so Error:</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; /home/hjm/MATLAB/R2015b/bin/glnxa64/libmwmclb=
+ase.so: cannot open shared</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; object file: No such file or directory Error:=
+mclmcr initialization failed</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; there are 1.8GB of files in /home/hjm/MATLAB/=
+R2015b/bin/glnxa64/, so</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; adding all of them explicitly is a non-starte=
+r.</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; and at 5.5min per re-wrapping file-by-file ad=
+ditions, that&#39;s going to be</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; tiring..</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; Is there a way to pre-resolve the deps? Maybe=
+ this is more a MATLAB</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; problem than a Sing problem..</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; hjm</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; ---</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; Harry Mangalam - Research Computing, OIT, Rm =
+225 MSTB, UC Irvine</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; [m/c 2225] / 92697 Google Voice Multiplexer: =
+<a href=3D"tel:%28949%29%20478-4487" value=3D"+19494784487" target=3D"_blan=
+k">(949) 478-4487</a></p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; 415 South Circle View Dr, Irvine, CA, 92697 [=
+shipping]</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; XSEDE &#39;Campus Champion&#39; - ask me abou=
+t your research computing needs.</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; Map to Office | Map to Data Center Gate</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; [the command line is the new black]</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">&gt; &gt; ---</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px"><br></p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">=C2=A0</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">---</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">Harry Mangalam - Research Computing, OIT, Rm 225 MSTB, =
+UC Irvine</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">[m/c 2225] / 92697 Google Voice Multiplexer: <a href=3D=
+"tel:%28949%29%20478-4487" value=3D"+19494784487" target=3D"_blank">(949) 4=
+78-4487</a></p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">415 South Circle View Dr, Irvine, CA, 92697 [shipping]<=
+/p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">XSEDE &#39;Campus Champion&#39; - ask me about your res=
+earch computing needs.</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px"><a href=3D"http://maps.google.com/maps?q=3D33.641950,-1=
+17.844348&amp;z=3D17" target=3D"_blank"><span style=3D"text-decoration:unde=
+rline;color:#0057ae">Map to Office</span></a> | <a href=3D"http://maps.goog=
+le.com/maps?q=3D33.643569,-117.839008&amp;z=3D17" target=3D"_blank"><span s=
+tyle=3D"text-decoration:underline;color:#0057ae">Map to Data Center Gate</s=
+pan></a> </p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">[the command line is the new black]</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">---</p>
+<p style=3D"margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0=
+px;text-indent:0px">=C2=A0</p></div></div></div></blockquote></div><br><br =
+clear=3D"all"><div><br></div>-- <br><div class=3D"gmail_signature">Gregory =
+M. Kurtzer<br>Technical Lead and HPC Systems Architect<br>High Performance =
+Computing Services (HPCS)<br>University of California<br>Lawrence Berkeley =
+National Laboratory<br>One Cyclotron Road, Berkeley, CA 94720</div>
+</div>
+
+--089e010d7dde35cbec052968fd2a--

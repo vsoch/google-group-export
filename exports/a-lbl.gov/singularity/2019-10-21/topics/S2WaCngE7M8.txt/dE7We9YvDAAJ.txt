@@ -1,0 +1,321 @@
+X-Received: by 10.237.36.238 with SMTP id u43mr1041954qtc.14.1481920918015;
+        Fri, 16 Dec 2016 12:41:58 -0800 (PST)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.107.30.148 with SMTP id e142ls2743173ioe.18.gmail; Fri, 16 Dec
+ 2016 12:41:57 -0800 (PST)
+X-Received: by 10.99.143.9 with SMTP id n9mr8796438pgd.133.1481920917246;
+        Fri, 16 Dec 2016 12:41:57 -0800 (PST)
+Return-Path: <gmku...@lbl.gov>
+Received: from fe3.lbl.gov (fe3.lbl.gov. [128.3.41.68])
+        by mx.google.com with ESMTP id d72si9305391pfl.168.2016.12.16.12.41.57
+        for <singu...@lbl.gov>;
+        Fri, 16 Dec 2016 12:41:57 -0800 (PST)
+Received-SPF: pass (google.com: domain of gmku...@lbl.gov designates 209.85.215.72 as permitted sender) client-ip=209.85.215.72;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of gmku...@lbl.gov designates 209.85.215.72 as permitted sender) smtp.mailfrom=gmku...@lbl.gov
+X-Ironport-SBRS: 2.8
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2EoAADCUFRYgEjXVdFcGgEBAQECAQEBAQgBAQEBFQEBAQECAQEBAQgBAQEBgkhEAQEBAQF5dhAHgzyKC5ZWgl6FF4dzgxaCD4FGGygfAQyEHIFaAoIRBz8UAQEBAQEBAQEBAQECEAEBCQ0JCRsyQIFzBAIDEQUEBD0KAwMBAQEBAQEBAQEjAQEBAQEBAQEBAQEBAQEBGgINFB0DDwIYAQEBAgEBIyswCwkCCw0jBAMCAiEBDwMBBQELEQYIBwQBHASIMAMPCAUJiySRCz+MAoIohzQNg1cBCgEBAQEBIhKKfYI2Aw+BAEoRAQaDGoJdBY9+ij01AYZRhnCDcoF0UYJNiztJhyeBcoQ3gkkUHoEUDxB2JRkHWwODA2INgWYdNAEBBYcOR4FnAQEB
+X-IronPort-AV: E=Sophos;i="5.33,359,1477983600"; 
+   d="scan'208,217";a="58875578"
+Received: from mail-lf0-f72.google.com ([209.85.215.72])
+  by fe3.lbl.gov with ESMTP; 16 Dec 2016 12:41:54 -0800
+Received: by mail-lf0-f72.google.com with SMTP id t196so9158743lff.3
+        for <singu...@lbl.gov>; Fri, 16 Dec 2016 12:41:54 -0800 (PST)
+X-Gm-Message-State: AKaTC00PAnZlxHa6nmx8tN1LwC3g1vqMouzch7iNnYuDl6alrWVqmt3zCXalikbvRWAFoj6rIpwdjVIGgIoU4tlGSn/SLo0qwNZBYShcYugu4DXkfkjVkStXlafeXZDJ4V3h157Ny1IZB30wzPx3U1lQrcE=
+X-Received: by 10.46.32.135 with SMTP id g7mr1934623lji.70.1481920913829;
+        Fri, 16 Dec 2016 12:41:53 -0800 (PST)
+X-Received: by 10.46.32.135 with SMTP id g7mr1934607lji.70.1481920913397; Fri,
+ 16 Dec 2016 12:41:53 -0800 (PST)
+MIME-Version: 1.0
+Received: by 10.25.215.105 with HTTP; Fri, 16 Dec 2016 12:41:52 -0800 (PST)
+In-Reply-To: <CAFDcVCQ1PxOU+w0MYtcvEc3p1+qY-QU2PYhL4uOBOtBVKHgV9A@mail.gmail.com>
+References: <8f9ac610-b58a-4af1-8da9-7c536ae2ba4b@lbl.gov> <20161216083536.GF7514@sillage.bis.pasteur.fr>
+ <CAFDcVCQ1PxOU+w0MYtcvEc3p1+qY-QU2PYhL4uOBOtBVKHgV9A@mail.gmail.com>
+From: "Gregory M. Kurtzer" <gmku...@lbl.gov>
+Date: Fri, 16 Dec 2016 12:41:52 -0800
+Message-ID: <CAN7etTyRJ+gV44UmMrkgvDmFb=YFK_kVQ9m7vvboAo7YONiVkw@mail.gmail.com>
+Subject: Re: [Singularity] singularity shell busybox.img: ERROR Could not set
+ NO_NEW_PRIVS safeguard: Invalid argument
+To: singularity <singu...@lbl.gov>
+Content-Type: multipart/alternative; boundary=001a1142b3aca0ea750543cc9907
+
+--001a1142b3aca0ea750543cc9907
+Content-Type: text/plain; charset=UTF-8
+
+We seem to be seeing this error pop up much more often then I would have
+thought. It is basically happening because at compile time, the build
+checks to see if prctl() supports PR_SET_NO_NEW_PRIVS in user space. If it
+does, it compiles itself with support for that feature. But at runtime, if
+you try to execute it and the kernel does not support it, you will see this
+error. So in a nutshell, it is caused because the user space is not in
+alignment with the kernel features/functionality. In most cases it is
+because people have updated their operating system (e.g. `yum update`) but
+not booted into the latest matching kernel.
+
+Orr, it is just that the Linux vendor is distributing a user space that
+does not match the kernel.
+
+This seems like another good FAQ! ... Surely someone can volunteer to help
+out with that! ;)
+
+Greg
+
+On Fri, Dec 16, 2016 at 9:28 AM, Henrik Bengtsson <
+henrik....@gmail.com> wrote:
+
+> On Fri, Dec 16, 2016 at 12:35 AM, Tru Huynh <t...@pasteur.fr> wrote:
+> > Hi,
+> >
+> > On Thu, Dec 15, 2016 at 10:04:33PM -0800, Henrik Bengtsson wrote:
+> >> I'm trying to get Singularity working on a small cluster which runs RHEL
+> >> 6.6 (kernel 2.6.32-504.12.2) (*), but I get:
+> >>
+> >> $ singularity shell busybox.img
+> >> ERROR  : Could not set NO_NEW_PRIVS safeguard: Invalid argument
+> >> ABORT  : Retval = 255
+> >>
+> >> Could this be due to the kernel being too old:
+> >>
+> >> $ cat /etc/*elease | grep Red | head -1
+> >> Red Hat Enterprise Linux Server release 6.6 (Santiago)
+> >> $ cat /proc/version
+> >> Linux version 2.6.32-504.12.2.el6.664g0000.x86_64
+> >> (root@-home-lgu-olaf-RHEL-6ES-6-x86_64.larkspur) (gcc version 4.4.7
+> >> 20120313 (Red Hat 4.4.7-11) (GCC) ) #1 SMP Wed Mar 11 14:20:51 EDT 2015
+> >
+> > That does not look like a genuine RHEL kernel, but a vendor (penguin)
+> > 2.6.32-504.12.2.el6.664g0000.x86_64
+> >                     ^^^^^^^^^
+> > ref:
+> > http://www.penguincomputing.com/wp-content/uploads/2015/
+> 04/ReleaseNotes.pdf
+>
+> Indeed - good catch (and also why I verified the same behavior on
+> Centos 6.6 (2.6.32-504) below)
+>
+> >
+> >> I can reproduce this error running a fresh Centos 6.6 (2.6.32-504) in
+> >> Vagrant:
+> >>
+> >> $ cat /etc/*elease | head -1
+> >> CentOS release 6.6 (Final)
+> >> $ cat /proc/version
+> >> Linux version 2.6.32-504.el6.x86_64 (mock...@c6b9.bsys.dev.centos.org
+> )
+> >> (gcc version 4.4.7 20120313 (Red Hat 4.4.7-11) (GCC) ) #1 SMP Wed Oct 15
+> >> 04:27:16 UTC 2014
+> >>
+> >> It does work if I run as root.
+> >>
+> >> Also, the image DOES work in a fresh Centos 6.8 (2.6.32-642.11.1) in
+> >> Vagrant:
+> > ...
+> > So I would conclude the same: too old kernel (no longer supported,
+> > anyway). Imho, don't bother, just use the latest CentOS-6/7 :)
+>
+> Yeah, we'll push for this to happen, but for different reasons (e.g.
+> "don't break things that work"), updates are happening conservatively
+> until next upgrade is in place so it'll still take some time.
+>
+> Since I know there are still lots of Centos 6.x HPC clusters out
+> there, I can imagine others might find this thread later.  For
+> completeness, I've now verified that Singularity DOES also work with
+> Centos 6.7 (2.6.32-573.7.1):
+>
+> $ cat /etc/*elease | head -1
+> CentOS release 6.7 (Final)
+> $ cat /proc/version
+> Linux version 2.6.32-573.7.1.el6.x86_64
+> (mock...@c6b8.bsys.dev.centos.org) (gcc version 4.4.7 20120313 (Red
+> Hat 4.4.7-16) (GCC) ) #1 SMP Tue Sep 22 22:00:00 UTC 2015
+>
+> Thanks,
+>
+> Henrik
+>
+> >
+> > Cheers
+> >
+> > Tru
+> > --
+> > Dr Tru Huynh          | http://www.pasteur.fr/research/bis
+> > mailto:t...@pasteur.fr | tel/fax +33 1 45 68 87 37/19
+> > Institut Pasteur, 25-28 rue du Docteur Roux, 75724 Paris CEDEX 15 France
+> >
+> > --
+> > You received this message because you are subscribed to the Google
+> Groups "singularity" group.
+> > To unsubscribe from this group and stop receiving emails from it, send
+> an email to singu...@lbl.gov.
+>
+> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+>
+
+
+
+-- 
+Gregory M. Kurtzer
+HPC Systems Architect and Technology Developer
+Lawrence Berkeley National Laboratory HPCS
+University of California Berkeley Research IT
+Singularity Linux Containers (http://singularity.lbl.gov/)
+Warewulf Cluster Management (http://warewulf.lbl.gov/)
+GitHub: https://github.com/gmkurtzer, Twitter: https://twitter.com/gmkurtzer
+
+--001a1142b3aca0ea750543cc9907
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">We seem to be seeing this error pop up much more often the=
+n I would have thought. It is basically happening because at compile time, =
+the build checks to see if prctl() supports PR_SET_NO_NEW_PRIVS in user spa=
+ce. If it does, it compiles itself with support for that feature. But at ru=
+ntime, if you try to execute it and the kernel does not support it, you wil=
+l see this error. So in a nutshell, it is caused because the user space is =
+not in alignment with the kernel features/functionality. In most cases it i=
+s because people have updated their operating system (e.g. `yum update`) bu=
+t not booted into the latest matching kernel.<div><br></div><div>Orr, it is=
+ just that the Linux vendor is distributing a user space that does not matc=
+h the kernel.</div><div><br></div><div>This seems like another good FAQ! ..=
+. Surely someone can volunteer to help out with that! ;)</div><div><br></di=
+v><div>Greg</div></div><div class=3D"gmail_extra"><br><div class=3D"gmail_q=
+uote">On Fri, Dec 16, 2016 at 9:28 AM, Henrik Bengtsson <span dir=3D"ltr">&=
+lt;<a href=3D"mailto:henrik....@gmail.com" target=3D"_blank">henrik....@gma=
+il.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"=
+margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><span class=
+=3D"">On Fri, Dec 16, 2016 at 12:35 AM, Tru Huynh &lt;<a href=3D"mailto:t..=
+.@pasteur.fr">t...@pasteur.fr</a>&gt; wrote:<br>
+&gt; Hi,<br>
+&gt;<br>
+&gt; On Thu, Dec 15, 2016 at 10:04:33PM -0800, Henrik Bengtsson wrote:<br>
+&gt;&gt; I&#39;m trying to get Singularity working on a small cluster which=
+ runs RHEL<br>
+&gt;&gt; 6.6 (kernel 2.6.32-504.12.2) (*), but I get:<br>
+&gt;&gt;<br>
+&gt;&gt; $ singularity shell busybox.img<br>
+&gt;&gt; ERROR=C2=A0 : Could not set NO_NEW_PRIVS safeguard: Invalid argume=
+nt<br>
+&gt;&gt; ABORT=C2=A0 : Retval =3D 255<br>
+&gt;&gt;<br>
+&gt;&gt; Could this be due to the kernel being too old:<br>
+&gt;&gt;<br>
+&gt;&gt; $ cat /etc/*elease | grep Red | head -1<br>
+&gt;&gt; Red Hat Enterprise Linux Server release 6.6 (Santiago)<br>
+&gt;&gt; $ cat /proc/version<br>
+&gt;&gt; Linux version 2.6.32-504.12.2.el6.664g0000.<wbr>x86_64<br>
+&gt;&gt; (root@-home-lgu-olaf-RHEL-6ES-<wbr>6-x86_64.larkspur) (gcc version=
+ 4.4.7<br>
+&gt;&gt; 20120313 (Red Hat 4.4.7-11) (GCC) ) #1 SMP Wed Mar 11 14:20:51 EDT=
+ 2015<br>
+&gt;<br>
+&gt; That does not look like a genuine RHEL kernel, but a vendor (penguin)<=
+br>
+&gt; 2.6.32-504.12.2.el6.664g0000.<wbr>x86_64<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0^^^^^^^^^<br>
+&gt; ref:<br>
+&gt; <a href=3D"http://www.penguincomputing.com/wp-content/uploads/2015/04/=
+ReleaseNotes.pdf" rel=3D"noreferrer" target=3D"_blank">http://www.penguinco=
+mputing.<wbr>com/wp-content/uploads/2015/<wbr>04/ReleaseNotes.pdf</a><br>
+<br>
+</span>Indeed - good catch (and also why I verified the same behavior on<br=
+>
+Centos 6.6 (2.6.32-504) below)<br>
+<span class=3D""><br>
+&gt;<br>
+&gt;&gt; I can reproduce this error running a fresh Centos 6.6 (2.6.32-504)=
+ in<br>
+&gt;&gt; Vagrant:<br>
+&gt;&gt;<br>
+&gt;&gt; $ cat /etc/*elease | head -1<br>
+&gt;&gt; CentOS release 6.6 (Final)<br>
+&gt;&gt; $ cat /proc/version<br>
+&gt;&gt; Linux version 2.6.32-504.el6.x86_64 (<a href=3D"mailto:mock...@c6b=
+9.bsys.dev.centos.org">mock...@c6b9.bsys.dev.<wbr>centos.org</a>)<br>
+&gt;&gt; (gcc version 4.4.7 20120313 (Red Hat 4.4.7-11) (GCC) ) #1 SMP Wed =
+Oct 15<br>
+&gt;&gt; 04:27:16 UTC 2014<br>
+&gt;&gt;<br>
+&gt;&gt; It does work if I run as root.<br>
+&gt;&gt;<br>
+&gt;&gt; Also, the image DOES work in a fresh Centos 6.8 (2.6.32-642.11.1) =
+in<br>
+&gt;&gt; Vagrant:<br>
+&gt; ...<br>
+&gt; So I would conclude the same: too old kernel (no longer supported,<br>
+&gt; anyway). Imho, don&#39;t bother, just use the latest CentOS-6/7 :)<br>
+<br>
+</span>Yeah, we&#39;ll push for this to happen, but for different reasons (=
+e.g.<br>
+&quot;don&#39;t break things that work&quot;), updates are happening conser=
+vatively<br>
+until next upgrade is in place so it&#39;ll still take some time.<br>
+<br>
+Since I know there are still lots of Centos 6.x HPC clusters out<br>
+there, I can imagine others might find this thread later.=C2=A0 For<br>
+completeness, I&#39;ve now verified that Singularity DOES also work with<br=
+>
+Centos 6.7 (2.6.32-573.7.1):<br>
+<span class=3D""><br>
+$ cat /etc/*elease | head -1<br>
+</span>CentOS release 6.7 (Final)<br>
+$ cat /proc/version<br>
+Linux version 2.6.32-573.7.1.el6.x86_64<br>
+(<a href=3D"mailto:mock...@c6b8.bsys.dev.centos.org">mock...@c6b8.bsys.dev.=
+<wbr>centos.org</a>) (gcc version 4.4.7 20120313 (Red<br>
+Hat 4.4.7-16) (GCC) ) #1 SMP Tue Sep 22 22:00:00 UTC 2015<br>
+<br>
+Thanks,<br>
+<br>
+Henrik<br>
+<div class=3D"HOEnZb"><div class=3D"h5"><br>
+&gt;<br>
+&gt; Cheers<br>
+&gt;<br>
+&gt; Tru<br>
+&gt; --<br>
+&gt; Dr Tru Huynh=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 | <a href=3D"http://www=
+.pasteur.fr/research/bis" rel=3D"noreferrer" target=3D"_blank">http://www.p=
+asteur.fr/<wbr>research/bis</a><br>
+&gt; mailto:<a href=3D"mailto:t...@pasteur.fr">t...@pasteur.fr</a> | tel/fa=
+x <a href=3D"tel:%2B33%201%2045%2068%2087%2037" value=3D"+33145688737">+33 =
+1 45 68 87 37</a>/19<br>
+&gt; Institut Pasteur, 25-28 rue du Docteur Roux, 75724 Paris CEDEX 15 Fran=
+ce<br>
+&gt;<br>
+&gt; --<br>
+&gt; You received this message because you are subscribed to the Google Gro=
+ups &quot;singularity&quot; group.<br>
+&gt; To unsubscribe from this group and stop receiving emails from it, send=
+ an email to <a href=3D"mailto:singularity%...@lbl.gov">singularity+unsubsc=
+ribe@lbl.<wbr>gov</a>.<br>
+<br>
+--<br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singularity%...@lbl.gov">singularity+unsubscribe@=
+lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div class=3D"gmail_signature" data-smartmail=3D"gmail_signature"><div dir=
+=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr">=
+<div dir=3D"ltr"><div dir=3D"ltr"><div>Gregory M. Kurtzer</div><div>HPC Sys=
+tems Architect and Technology Developer</div><div>Lawrence Berkeley Nationa=
+l Laboratory HPCS<br>University of California Berkeley Research IT<br>Singu=
+larity Linux Containers=C2=A0(<a href=3D"http://singularity.lbl.gov/" targe=
+t=3D"_blank">http://singularity.lbl.gov/</a>)</div><div>Warewulf Cluster Ma=
+nagement=C2=A0(<a href=3D"http://warewulf.lbl.gov/" target=3D"_blank">http:=
+//warewulf.lbl.gov/</a>)</div><div>GitHub:=C2=A0<a href=3D"https://github.c=
+om/gmkurtzer" target=3D"_blank">https://github.com/gmkurtzer</a>,=C2=A0<spa=
+n style=3D"font-size:12.8px">Twitter:=C2=A0</span><a href=3D"https://twitte=
+r.com/gmkurtzer" style=3D"font-size:12.8px" target=3D"_blank">https://twitt=
+er.com/gmkurtzer</a></div></div></div></div></div></div></div></div></div><=
+/div></div>
+</div>
+
+--001a1142b3aca0ea750543cc9907--

@@ -1,0 +1,771 @@
+Date: Tue, 15 May 2018 14:07:52 -0700 (PDT)
+From: Robert Wagner <robert...@computecanada.ca>
+To: singularity <singu...@lbl.gov>
+Message-Id: <703af698-f15c-4c73-9bc1-93912be98e85@lbl.gov>
+In-Reply-To: <43e4df24-5896-4233-98e0-2603cd6693f9@lbl.gov>
+References: <bfd62bcd-8878-42cd-a8b0-67522694c6cd@lbl.gov> <CAGfAqt-jzuNLY=yDmy-EXqMeCNmS0C0LQTsa0ZpSAFOXeTzFhQ@mail.gmail.com>
+ <CAFVt7K44cUc_v9zcCsdf_S7_WjZQq6a2h9wPRkcPnAT+gjbzKw@mail.gmail.com>
+ <CAFVt7K6yk0CaHvq-NHyc3uTB+ebUYFm4cHBMGMnHh0BDMfjzsw@mail.gmail.com>
+ <d0d4439a-d8c6-478c-8e7d-fd20609163d0@lbl.gov> <CAFVt7K6x1Cn6ZQirz6b0VhL3=ORaXucm39bUukWaq6qC=JqAKA@mail.gmail.com>
+ <92b60776-9261-46f6-aba7-d39d69a4e5af@lbl.gov>
+ <CAFVt7K7LupAikzNu+kn9EEYOmdLgrOaUwwCXO2NJgG5Q2YwvGQ@mail.gmail.com>
+ <fd5c7e2b-a19a-4b26-93d8-8da655ff9a2e@lbl.gov>
+ <c5a436a0-273e-47e7-8282-fad4e80588c8@lbl.gov>
+ <43e4df24-5896-4233-98e0-2603cd6693f9@lbl.gov>
+Subject: Re: [Singularity] Failed to obtain user identity information (as
+ non-root user)
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_19267_1054743290.1526418472336"
+
+------=_Part_19267_1054743290.1526418472336
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_19268_457929877.1526418472337"
+
+------=_Part_19268_457929877.1526418472337
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+You are onto something here, it appears there is something with our nix +=
+=20
+CVMFS environment (which is standard for users) talking to what is on the=
+=20
+system.  Here is ldd output for the failing binaries.
+
+$ ldd /cvmfs/soft.computecanada.ca/nix/var/nix/profiles/16.09/bin/ls
+linux-vdso.so.1 (0x00002aaaaaace000)
+libacl.so.1 =3D>=20
+/cvmfs/soft.computecanada.ca/nix/store/kcx5g4mywjxpdcmxp2rrs34x7857xcfa-acl=
+-2.2.52/lib/libacl.so.1=20
+(0x00002aaaaacd0000)
+librt.so.1 =3D>=20
+/cvmfs/soft.computecanada.ca/nix/store/77k5s2iy82zny2xazfsrrysbyifyy79b-gli=
+bc-2.24/lib/librt.so.1=20
+(0x00002aaaaaed9000)
+libpthread.so.0 =3D>=20
+/cvmfs/soft.computecanada.ca/nix/store/77k5s2iy82zny2xazfsrrysbyifyy79b-gli=
+bc-2.24/lib/libpthread.so.0=20
+(0x00002aaaab0e1000)
+libc.so.6 =3D>=20
+/cvmfs/soft.computecanada.ca/nix/store/77k5s2iy82zny2xazfsrrysbyifyy79b-gli=
+bc-2.24/lib/libc.so.6=20
+(0x00002aaaab2fe000)
+libattr.so.1 =3D>=20
+/cvmfs/soft.computecanada.ca/nix/store/b2jniwwnq7vafp2f94yapj14xpsjmvzz-att=
+r-2.4.47/lib/libattr.so.1=20
+(0x00002aaaab69c000)
+/cvmfs/soft.computecanada.ca/nix/store/77k5s2iy82zny2xazfsrrysbyifyy79b-gli=
+bc-2.24/lib/ld-linux-x86-64.so.2=20
+(0x00002aaaaaaab000)
+
+$ ldd /opt/software/singularity-2.4.2/libexec/singularity/bin/action-suid
+linux-vdso.so.1 (0x00002aaaaaaab000)
+libc.so.6 =3D>=20
+/cvmfs/soft.computecanada.ca/nix/var/nix/profiles/16.09/lib/libc.so.6=20
+(0x00002aaaaaab0000)
+/cvmfs/soft.computecanada.ca/nix/var/nix/profiles/16.09/lib/ld-linux-x86-64=
+.so.2=20
+=3D>=20
+/cvmfs/soft.computecanada.ca/nix/store/77k5s2iy82zny2xazfsrrysbyifyy79b-gli=
+bc-2.24/lib64/ld-linux-x86-64.so.2=20
+(0x0000555555554000)
+
+$ ldd /opt/software/singularity-2.4.2/libexec/singularity/bin/action
+linux-vdso.so.1 (0x00002aaaaaace000)
+libsingularity-image.so.1 =3D>=20
+/opt/software/singularity-2.4.2/lib/singularity/libsingularity-image.so.1=
+=20
+(0x00002aaaaacd0000)
+libsingularity-runtime.so.1 =3D>=20
+/opt/software/singularity-2.4.2/lib/singularity/libsingularity-runtime.so.1=
+=20
+(0x00002aaaaaee2000)
+libc.so.6 =3D>=20
+/cvmfs/soft.computecanada.ca/nix/var/nix/profiles/16.09/lib/libc.so.6=20
+(0x00002aaaab101000)
+/cvmfs/soft.computecanada.ca/nix/var/nix/profiles/16.09/lib/ld-linux-x86-64=
+.so.2=20
+(0x00002aaaaaaab000)
+
+If I completely exclude the CVMFS/nix environment during build time, and=20
+ensure that LD_LIBRARY_PATH doesn't reference the nix libraries, I have no=
+=20
+trouble at run-time.  It's not ideal, but I may be able to force this to=20
+work.
+
+$ ldd /opt/software/singularity-2.4.2/libexec/singularity/bin/action
+linux-vdso.so.1 =3D>  (0x00002aaaaaacc000)
+libsingularity-image.so.1 =3D>=20
+/opt/software/singularity-2.4.2/lib/singularity/libsingularity-image.so.1=
+=20
+(0x00002aaaaaccf000)
+libsingularity-runtime.so.1 =3D>=20
+/opt/software/singularity-2.4.2/lib/singularity/libsingularity-runtime.so.1=
+=20
+(0x00002aaaaaee2000)
+libc.so.6 =3D> /lib64/libc.so.6 (0x00002aaaab101000)
+/lib64/ld-linux-x86-64.so.2 (0x00002aaaaaaab000)
+
+$ ldd /opt/software/singularity-2.4.2/libexec/singularity/bin/action-suid
+linux-vdso.so.1 (0x00002aaaaaaab000)
+libc.so.6 =3D>=20
+/cvmfs/soft.computecanada.ca/nix/store/77k5s2iy82zny2xazfsrrysbyifyy79b-gli=
+bc-2.24/lib/libc.so.6=20
+(0x00002aaaaaab0000)
+/lib64/ld-linux-x86-64.so.2 =3D>=20
+/cvmfs/soft.computecanada.ca/nix/store/77k5s2iy82zny2xazfsrrysbyifyy79b-gli=
+bc-2.24/lib64/ld-linux-x86-64.so.2=20
+(0x0000555555554000)
+
+$ ldd /bin/ls
+linux-vdso.so.1 =3D>  (0x00002aaaaaacc000)
+libselinux.so.1 =3D> /lib64/libselinux.so.1 (0x00002aaaaaccf000)
+libcap.so.2 =3D> /lib64/libcap.so.2 (0x00002aaaaaef6000)
+libacl.so.1 =3D> /lib64/libacl.so.1 (0x00002aaaab0fb000)
+libc.so.6 =3D> /lib64/libc.so.6 (0x00002aaaab304000)
+libpcre.so.1 =3D> /lib64/libpcre.so.1 (0x00002aaaab6c7000)
+libdl.so.2 =3D> /lib64/libdl.so.2 (0x00002aaaab929000)
+/lib64/ld-linux-x86-64.so.2 (0x00002aaaaaaab000)
+libattr.so.1 =3D> /lib64/libattr.so.1 (0x00002aaaabb2d000)
+libpthread.so.0 =3D> /lib64/libpthread.so.0 (0x00002aaaabd32000)
+
+Regards,
+
+Rob
+
+On Tuesday, May 15, 2018 at 2:35:19 PM UTC-6, C=C3=A9dric Clerget wrote:
+>
+> I think there is something wrong with libnss and LDAP, could you paste=20
+> output of commands :
+>
+> $ ldd /bin/ls
+> $ ldd /opt/software/singularity-2.4.2/libexec/singularity/bin/action
+> $ ldd /opt/software/singularity-2.4.2/libexec/singularity/bin/action-suid
+>
+> C=C3=A9dric
+>
+> Le mardi 15 mai 2018 22:09:53 UTC+2, Robert Wagner a =C3=A9crit :
+>>
+>> Tested.
+>>
+>> Singularity 2.4.2 provides the same output as 2.4.6 on this system. =20
+>> (same segfault, though some of the debug looks different).
+>>
+>> Debug output: https://pastebin.com/LfRxNPq3=20
+>> <https://www.google.com/url?q=3Dhttps%3A%2F%2Fpastebin.com%2FLfRxNPq3&sa=
+=3DD&sntz=3D1&usg=3DAFQjCNEGqlqhKXPFGWHtn4jqx_CVkGFKhw>
+>>
+>>
+>> On Tuesday, May 15, 2018 at 1:58:44 PM UTC-6, C=C3=A9dric Clerget wrote:
+>>>
+>>> Can you give a try with this version:=20
+>>> https://github.com/singularityware/singularity/releases/download/2.4.2/=
+singularity-2.4.2.tar.gz
+>>>
+>>> C=C3=A9dric
+>>>
+>>> Le mardi 15 mai 2018 21:41:37 UTC+2, Robert Wagner a =C3=A9crit :
+>>>>
+>>>> Test does execute on the head node in question. (without user in passw=
+d=20
+>>>> file)
+>>>>
+>>>> $ ./test
+>>>> username: rmw086
+>>>>
+>>>> Regards,
+>>>>
+>>>> Rob
+>>>>
+>>>> On Tue, May 15, 2018 at 1:23 PM, C=C3=A9dric Clerget <ced...@gmail.com=
+>=20
+>>>> wrote:
+>>>>
+>>>>> Ok, to better identify where the issue lies, could you compile the=20
+>>>>> test program in attachment
+>>>>>
+>>>>> Please build with same compiler and environment as you did with=20
+>>>>> Singularity :
+>>>>> $ gcc test.c -o test && ./test
+>>>>>
+>>>>> if it display "failed to determine your username", there is something=
+=20
+>>>>> wrong with build
+>>>>> if it display "username: ...", there is a problem on Singularity side
+>>>>>
+>>>>> C=C3=A9dric
+>>>>>
+>>>>> Le mardi 15 mai 2018 20:41:58 UTC+2, Robert Wagner a =C3=A9crit :
+>>>>>>
+>>>>>> Hi C=C3=A9dric,
+>>>>>>
+>>>>>> I hadn't actually tried 2.4.x (or any prior release on here).  I=20
+>>>>>> compiled and tried 2.4.6, with similar results:
+>>>>>> 1) Without --home: Home is not identified
+>>>>>> 2) With --home:  segfault at singularity_runtime_files_passwd()
+>>>>>>
+>>>>>> Debug output for 2.4.6: https://pastebin.com/hZELGB5L
+>>>>>>
+>>>>>> In both versions tested, I was running on the same node I compiled=
+=20
+>>>>>> on.  (I tested on compute nodes as well with the same results)
+>>>>>>
+>>>>>> Regards,
+>>>>>>
+>>>>>> Rob
+>>>>>>
+>>>>>> On Tue, May 15, 2018 at 12:30 PM, C=C3=A9dric Clerget <
+>>>>>> ced...@gmail.com> wrote:
+>>>>>>
+>>>>>>> Hi Robert,
+>>>>>>>
+>>>>>>> Is Singularity 2.4.X versions worked before ?
+>>>>>>>
+>>>>>>> Have you tried to run Singularity on same host where you compiled=
+=20
+>>>>>>> Singularity and see if it fail too ?
+>>>>>>>
+>>>>>>> C=C3=A9dric
+>>>>>>>
+>>>>>>> Le mardi 15 mai 2018 19:56:47 UTC+2, Robert Wagner a =C3=A9crit :
+>>>>>>>>
+>>>>>>>> Sorry to spam, but I made one more test:
+>>>>>>>>
+>>>>>>>> I copied output from getent for my passwd entry, pasted that into=
+=20
+>>>>>>>> the local /etc/passwd file on my head node.  This resolved both is=
+sues=20
+>>>>>>>> listed above.  Unfortunately, this really isn't a sustainable opti=
+on for=20
+>>>>>>>> this cluster.
+>>>>>>>>
+>>>>>>>> Regards,
+>>>>>>>>
+>>>>>>>> Rob
+>>>>>>>>
+>>>>>>>> On Tue, May 15, 2018 at 11:53 AM, Robert Wagner <
+>>>>>>>> rob...@computecanada.ca> wrote:
+>>>>>>>>
+>>>>>>>>> Almost forgot:
+>>>>>>>>>
+>>>>>>>>> Oh, and no SSSD.
+>>>>>>>>>
+>>>>>>>>> Using LDAP local to cluster for auth.
+>>>>>>>>>
+>>>>>>>>>
+>>>>>>>>> Cheers,
+>>>>>>>>>
+>>>>>>>>> Rob
+>>>>>>>>>
+>>>>>>>>>
+>>>>>>>>>
+>>>>>>>>> On Tue, May 15, 2018 at 11:19 AM, Jason Stover <
+>>>>>>>>> ja...@gmail.com> wrote:
+>>>>>>>>>
+>>>>>>>>>> Hi Rob,
+>>>>>>>>>>
+>>>>>>>>>>   Hrmmm... The "Failed to obtain user identity information" was=
+=20
+>>>>>>>>>> just
+>>>>>>>>>> added in after we ran into this issue with another user. Do you=
+=20
+>>>>>>>>>> have
+>>>>>>>>>> sssd running?
+>>>>>>>>>>
+>>>>>>>>>>   Can we see the output from a shell:  ls -l /proc/self/fd/
+>>>>>>>>>>
+>>>>>>>>>>   For the previous issue see:
+>>>>>>>>>> https://github.com/singularityware/singularity/issues/1489
+>>>>>>>>>>
+>>>>>>>>>>   This all comes back to the same issue.... we can't look-up you=
+r=20
+>>>>>>>>>> user
+>>>>>>>>>> information from the authentication server. We had _hoped_ in=20
+>>>>>>>>>> 2.5.1
+>>>>>>>>>> this was fixed. :/
+>>>>>>>>>>
+>>>>>>>>>> -J
+>>>>>>>>>>
+>>>>>>>>>>
+>>>>>>>>>>
+>>>>>>>>>> On Tue, May 15, 2018 at 12:03 PM, Robert Wagner
+>>>>>>>>>> <rob...@computecanada.ca> wrote:
+>>>>>>>>>> > Hi all,
+>>>>>>>>>> >
+>>>>>>>>>> > Having some troubles with fresh install of 2.5.1, built from=
+=20
+>>>>>>>>>> source, on RHEL
+>>>>>>>>>> > 7.4 cluster using LDAP (Bright Cluster).  Installing with=20
+>>>>>>>>>> software on shared
+>>>>>>>>>> > filesystem, local state directory on each node, but is not=20
+>>>>>>>>>> operating on any.
+>>>>>>>>>> > I had similar issues with 2.5.0, though it would simply=20
+>>>>>>>>>> segfault at the same
+>>>>>>>>>> > point.
+>>>>>>>>>> >
+>>>>>>>>>> > If run as root, I can execute containers.  If I execute as a=
+=20
+>>>>>>>>>> user, I have
+>>>>>>>>>> > two issues (one minor, one show-stopper) - listing both in the=
+=20
+>>>>>>>>>> case they are
+>>>>>>>>>> > related.  singularity.conf is completely default.
+>>>>>>>>>> >
+>>>>>>>>>> > 1) Home directory not owned by calling user: /  - If I specify=
+=20
+>>>>>>>>>> --home $HOME,
+>>>>>>>>>> > this isn't an issue. My /home mount is an NFS filesystem, but=
+=20
+>>>>>>>>>> no symlinks
+>>>>>>>>>> > involved.
+>>>>>>>>>> >
+>>>>>>>>>> > Config file: https://pastebin.com/gnKgBc3C
+>>>>>>>>>> > Debug output: https://pastebin.com/w1gWytv1
+>>>>>>>>>> >
+>>>>>>>>>> > 2) Failed to obtain user identity information.   I'm not sure=
+=20
+>>>>>>>>>> if this is
+>>>>>>>>>> > tied to my use of LDAP for user information, but this one is=
+=20
+>>>>>>>>>> stumping me.
+>>>>>>>>>> > Again, this does not occur if run as root. (I have not tried=
+=20
+>>>>>>>>>> with users that
+>>>>>>>>>> > have been manually added to /etc/passwd, but I will try that=
+=20
+>>>>>>>>>> shortly).
+>>>>>>>>>> > Singularity dies at step "singularity_file_passwd_create()". =
+=20
+>>>>>>>>>>  Using v2.5.0,
+>>>>>>>>>> > I disabled passwd creation in the config file, and that allowe=
+d=20
+>>>>>>>>>> execution to
+>>>>>>>>>> > continue. Using 2.5.1, it dies whether the setting is on or=20
+>>>>>>>>>> off. (as if the
+>>>>>>>>>> > option is being ignored)
+>>>>>>>>>> >
+>>>>>>>>>> > Debug output:
+>>>>>>>>>> >
+>>>>>>>>>> > https://pastebin.com/fsbAkCZJ
+>>>>>>>>>> >
+>>>>>>>>>> > Debug output with config option for passwd creation disabled:
+>>>>>>>>>> >
+>>>>>>>>>> > https://pastebin.com/W0R83kbb
+>>>>>>>>>> >
+>>>>>>>>>> >
+>>>>>>>>>> > Thanks for any insights.
+>>>>>>>>>> >
+>>>>>>>>>> > Cheers,
+>>>>>>>>>> >
+>>>>>>>>>> > Rob
+>>>>>>>>>> >
+>>>>>>>>>> > --
+>>>>>>>>>> > You received this message because you are subscribed to the=20
+>>>>>>>>>> Google Groups
+>>>>>>>>>> > "singularity" group.
+>>>>>>>>>> > To unsubscribe from this group and stop receiving emails from=
+=20
+>>>>>>>>>> it, send an
+>>>>>>>>>> > email to singu...@lbl.gov.
+>>>>>>>>>>
+>>>>>>>>>> --=20
+>>>>>>>>>> You received this message because you are subscribed to the=20
+>>>>>>>>>> Google Groups "singularity" group.
+>>>>>>>>>> To unsubscribe from this group and stop receiving emails from it=
+,=20
+>>>>>>>>>> send an email to singu...@lbl.gov.
+>>>>>>>>>>
+>>>>>>>>>
+>>>>>>>>>
+>>>>>>>> --=20
+>>>>>>> You received this message because you are subscribed to the Google=
+=20
+>>>>>>> Groups "singularity" group.
+>>>>>>> To unsubscribe from this group and stop receiving emails from it,=
+=20
+>>>>>>> send an email to singu...@lbl.gov.
+>>>>>>>
+>>>>>>
+>>>>>> --=20
+>>>>> You received this message because you are subscribed to the Google=20
+>>>>> Groups "singularity" group.
+>>>>> To unsubscribe from this group and stop receiving emails from it, sen=
+d=20
+>>>>> an email to singu...@lbl.gov.
+>>>>>
+>>>>
+>>>>
+------=_Part_19268_457929877.1526418472337
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>You are onto something here, it appears there is some=
+thing with our nix + CVMFS environment (which is standard for users) talkin=
+g to what is on the system.=C2=A0 Here is ldd output for the failing binari=
+es.</div><div><br></div><div><div>$ ldd /cvmfs/soft.computecanada.ca/nix/va=
+r/nix/profiles/16.09/bin/ls</div><div><span style=3D"white-space:pre">=09</=
+span>linux-vdso.so.1 (0x00002aaaaaace000)</div><div><span style=3D"white-sp=
+ace:pre">=09</span>libacl.so.1 =3D&gt; /cvmfs/soft.computecanada.ca/nix/sto=
+re/kcx5g4mywjxpdcmxp2rrs34x7857xcfa-acl-2.2.52/lib/libacl.so.1 (0x00002aaaa=
+acd0000)</div><div><span style=3D"white-space:pre">=09</span>librt.so.1 =3D=
+&gt; /cvmfs/soft.computecanada.ca/nix/store/77k5s2iy82zny2xazfsrrysbyifyy79=
+b-glibc-2.24/lib/librt.so.1 (0x00002aaaaaed9000)</div><div><span style=3D"w=
+hite-space:pre">=09</span>libpthread.so.0 =3D&gt; /cvmfs/soft.computecanada=
+.ca/nix/store/77k5s2iy82zny2xazfsrrysbyifyy79b-glibc-2.24/lib/libpthread.so=
+.0 (0x00002aaaab0e1000)</div><div><span style=3D"white-space:pre">=09</span=
+>libc.so.6 =3D&gt; /cvmfs/soft.computecanada.ca/nix/store/77k5s2iy82zny2xaz=
+fsrrysbyifyy79b-glibc-2.24/lib/libc.so.6 (0x00002aaaab2fe000)</div><div><sp=
+an style=3D"white-space:pre">=09</span>libattr.so.1 =3D&gt; /cvmfs/soft.com=
+putecanada.ca/nix/store/b2jniwwnq7vafp2f94yapj14xpsjmvzz-attr-2.4.47/lib/li=
+battr.so.1 (0x00002aaaab69c000)</div><div><span style=3D"white-space:pre">=
+=09</span>/cvmfs/soft.computecanada.ca/nix/store/77k5s2iy82zny2xazfsrrysbyi=
+fyy79b-glibc-2.24/lib/ld-linux-x86-64.so.2 (0x00002aaaaaaab000)</div></div>=
+<div><br></div><div><div>$ ldd /opt/software/singularity-2.4.2/libexec/sing=
+ularity/bin/action-suid</div><div><span style=3D"white-space:pre">=09</span=
+>linux-vdso.so.1 (0x00002aaaaaaab000)</div><div><span style=3D"white-space:=
+pre">=09</span>libc.so.6 =3D&gt; /cvmfs/soft.computecanada.ca/nix/var/nix/p=
+rofiles/16.09/lib/libc.so.6 (0x00002aaaaaab0000)</div><div><span style=3D"w=
+hite-space:pre">=09</span>/cvmfs/soft.computecanada.ca/nix/var/nix/profiles=
+/16.09/lib/ld-linux-x86-64.so.2 =3D&gt; /cvmfs/soft.computecanada.ca/nix/st=
+ore/77k5s2iy82zny2xazfsrrysbyifyy79b-glibc-2.24/lib64/ld-linux-x86-64.so.2 =
+(0x0000555555554000)</div></div><div><br></div><div>$ ldd /opt/software/sin=
+gularity-2.4.2/libexec/singularity/bin/action<br></div><div><span style=3D"=
+white-space:pre">=09</span>linux-vdso.so.1 (0x00002aaaaaace000)</div><div><=
+span style=3D"white-space:pre">=09</span>libsingularity-image.so.1 =3D&gt; =
+/opt/software/singularity-2.4.2/lib/singularity/libsingularity-image.so.1 (=
+0x00002aaaaacd0000)</div><div><span style=3D"white-space:pre">=09</span>lib=
+singularity-runtime.so.1 =3D&gt; /opt/software/singularity-2.4.2/lib/singul=
+arity/libsingularity-runtime.so.1 (0x00002aaaaaee2000)</div><div><span styl=
+e=3D"white-space:pre">=09</span>libc.so.6 =3D&gt; /cvmfs/soft.computecanada=
+.ca/nix/var/nix/profiles/16.09/lib/libc.so.6 (0x00002aaaab101000)</div><div=
+><span style=3D"white-space:pre">=09</span>/cvmfs/soft.computecanada.ca/nix=
+/var/nix/profiles/16.09/lib/ld-linux-x86-64.so.2 (0x00002aaaaaaab000)</div>=
+<div><br></div><div>If I completely exclude the CVMFS/nix environment durin=
+g build time, and ensure that LD_LIBRARY_PATH doesn&#39;t reference the nix=
+ libraries, I have no trouble at run-time.=C2=A0 It&#39;s not ideal, but I =
+may be able to force this to work.</div><div><br></div><div><div>$ ldd /opt=
+/software/singularity-2.4.2/libexec/singularity/bin/action</div><div><span =
+style=3D"white-space:pre">=09</span>linux-vdso.so.1 =3D&gt;=C2=A0 (0x00002a=
+aaaaacc000)</div><div><span style=3D"white-space:pre">=09</span>libsingular=
+ity-image.so.1 =3D&gt; /opt/software/singularity-2.4.2/lib/singularity/libs=
+ingularity-image.so.1 (0x00002aaaaaccf000)</div><div><span style=3D"white-s=
+pace:pre">=09</span>libsingularity-runtime.so.1 =3D&gt; /opt/software/singu=
+larity-2.4.2/lib/singularity/libsingularity-runtime.so.1 (0x00002aaaaaee200=
+0)</div><div><span style=3D"white-space:pre">=09</span>libc.so.6 =3D&gt; /l=
+ib64/libc.so.6 (0x00002aaaab101000)</div><div><span style=3D"white-space:pr=
+e">=09</span>/lib64/ld-linux-x86-64.so.2 (0x00002aaaaaaab000)</div></div><d=
+iv><br></div><div><div>$ ldd /opt/software/singularity-2.4.2/libexec/singul=
+arity/bin/action-suid</div><div><span style=3D"white-space:pre">=09</span>l=
+inux-vdso.so.1 (0x00002aaaaaaab000)</div><div><span style=3D"white-space:pr=
+e">=09</span>libc.so.6 =3D&gt; /cvmfs/soft.computecanada.ca/nix/store/77k5s=
+2iy82zny2xazfsrrysbyifyy79b-glibc-2.24/lib/libc.so.6 (0x00002aaaaaab0000)</=
+div><div><span style=3D"white-space:pre">=09</span>/lib64/ld-linux-x86-64.s=
+o.2 =3D&gt; /cvmfs/soft.computecanada.ca/nix/store/77k5s2iy82zny2xazfsrrysb=
+yifyy79b-glibc-2.24/lib64/ld-linux-x86-64.so.2 (0x0000555555554000)</div></=
+div><div><br></div><div><div>$ ldd /bin/ls</div><div><span style=3D"white-s=
+pace:pre">=09</span>linux-vdso.so.1 =3D&gt;=C2=A0 (0x00002aaaaaacc000)</div=
+><div><span style=3D"white-space:pre">=09</span>libselinux.so.1 =3D&gt; /li=
+b64/libselinux.so.1 (0x00002aaaaaccf000)</div><div><span style=3D"white-spa=
+ce:pre">=09</span>libcap.so.2 =3D&gt; /lib64/libcap.so.2 (0x00002aaaaaef600=
+0)</div><div><span style=3D"white-space:pre">=09</span>libacl.so.1 =3D&gt; =
+/lib64/libacl.so.1 (0x00002aaaab0fb000)</div><div><span style=3D"white-spac=
+e:pre">=09</span>libc.so.6 =3D&gt; /lib64/libc.so.6 (0x00002aaaab304000)</d=
+iv><div><span style=3D"white-space:pre">=09</span>libpcre.so.1 =3D&gt; /lib=
+64/libpcre.so.1 (0x00002aaaab6c7000)</div><div><span style=3D"white-space:p=
+re">=09</span>libdl.so.2 =3D&gt; /lib64/libdl.so.2 (0x00002aaaab929000)</di=
+v><div><span style=3D"white-space:pre">=09</span>/lib64/ld-linux-x86-64.so.=
+2 (0x00002aaaaaaab000)</div><div><span style=3D"white-space:pre">=09</span>=
+libattr.so.1 =3D&gt; /lib64/libattr.so.1 (0x00002aaaabb2d000)</div><div><sp=
+an style=3D"white-space:pre">=09</span>libpthread.so.0 =3D&gt; /lib64/libpt=
+hread.so.0 (0x00002aaaabd32000)</div></div><div><br></div><div>Regards,</di=
+v><div><br></div><div>Rob</div><br>On Tuesday, May 15, 2018 at 2:35:19 PM U=
+TC-6, C=C3=A9dric Clerget wrote:<blockquote class=3D"gmail_quote" style=3D"=
+margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;=
+"><div dir=3D"ltr"><div>I think there is something wrong with libnss and LD=
+AP, could you paste output of commands :</div><div><br></div><div>$ ldd /bi=
+n/ls</div><div>$ ldd /opt/software/singularity-2.4.<wbr>2/libexec/singulari=
+ty/bin/<wbr>action</div><div>$ ldd /opt/software/singularity-2.4.<wbr>2/lib=
+exec/singularity/bin/<wbr>action-suid</div><div><br></div><div>C=C3=A9dric<=
+br></div><div><br></div>Le mardi 15 mai 2018 22:09:53 UTC+2, Robert Wagner =
+a =C3=A9crit=C2=A0:<blockquote class=3D"gmail_quote" style=3D"margin:0;marg=
+in-left:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr"=
+><div>Tested.</div><div><br></div>Singularity 2.4.2 provides the same outpu=
+t as 2.4.6 on this system.=C2=A0 (same segfault, though some of the debug l=
+ooks different).<div><br></div><div>Debug output: <a href=3D"https://www.go=
+ogle.com/url?q=3Dhttps%3A%2F%2Fpastebin.com%2FLfRxNPq3&amp;sa=3DD&amp;sntz=
+=3D1&amp;usg=3DAFQjCNEGqlqhKXPFGWHtn4jqx_CVkGFKhw" rel=3D"nofollow" target=
+=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3=
+dhttps%3A%2F%2Fpastebin.com%2FLfRxNPq3\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAF=
+QjCNEGqlqhKXPFGWHtn4jqx_CVkGFKhw&#39;;return true;" onclick=3D"this.href=3D=
+&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fpastebin.com%2FLfRxNPq3\=
+x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEGqlqhKXPFGWHtn4jqx_CVkGFKhw&#39;;r=
+eturn true;">https://pastebin.com/LfRxNPq3</a></div><div><br><br>On Tuesday=
+, May 15, 2018 at 1:58:44 PM UTC-6, C=C3=A9dric Clerget wrote:<blockquote c=
+lass=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-left:1px #c=
+cc solid;padding-left:1ex"><div dir=3D"ltr"><div>Can you give a try with th=
+is version: <a href=3D"https://github.com/singularityware/singularity/relea=
+ses/download/2.4.2/singularity-2.4.2.tar.gz" rel=3D"nofollow" target=3D"_bl=
+ank" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%=
+3A%2F%2Fgithub.com%2Fsingularityware%2Fsingularity%2Freleases%2Fdownload%2F=
+2.4.2%2Fsingularity-2.4.2.tar.gz\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFN=
+4ltvLHcqK3TwGyOLOWlpEo-Dww&#39;;return true;" onclick=3D"this.href=3D&#39;h=
+ttps://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsingularityware%2=
+Fsingularity%2Freleases%2Fdownload%2F2.4.2%2Fsingularity-2.4.2.tar.gz\x26sa=
+\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFN4ltvLHcqK3TwGyOLOWlpEo-Dww&#39;;return=
+ true;">https://github.com/<wbr>singularityware/singularity/<wbr>releases/d=
+ownload/2.4.2/<wbr>singularity-2.4.2.tar.gz</a></div><div><br></div><div>C=
+=C3=A9dric<br></div><br>Le mardi 15 mai 2018 21:41:37 UTC+2, Robert Wagner =
+a =C3=A9crit=C2=A0:<blockquote class=3D"gmail_quote" style=3D"margin:0;marg=
+in-left:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr"=
+><div>Test does execute on the head node in question. (without user in pass=
+wd file)</div><div><br></div><div>$ ./test</div><div>username: rmw086</div>=
+<div><br></div><div>Regards,</div><div><br></div><div>Rob</div></div><div><=
+br><div class=3D"gmail_quote">On Tue, May 15, 2018 at 1:23 PM, C=C3=A9dric =
+Clerget <span dir=3D"ltr">&lt;<a rel=3D"nofollow">ced...@gmail.com</a>&gt;<=
+/span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8=
+ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr"><div>Ok, t=
+o better identify where the issue lies, could you compile the test program =
+in attachment<br></div><div><br></div><div>Please build with same compiler =
+and environment as you did with Singularity :<br></div><div></div><div>$ gc=
+c test.c -o test &amp;&amp; ./test</div><div><br></div><div>if it display &=
+quot;failed to determine your username&quot;, there is something wrong with=
+ build</div><div>if it display &quot;username: ...&quot;, there is a proble=
+m on Singularity side<span><font color=3D"#888888"><br></font></span></div>=
+<span><font color=3D"#888888"><div><br></div><div>C=C3=A9dric</div></font><=
+/span><span><div><br></div>Le mardi 15 mai 2018 20:41:58 UTC+2, Robert Wagn=
+er a =C3=A9crit=C2=A0:</span><blockquote class=3D"gmail_quote" style=3D"mar=
+gin:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><span>=
+<div dir=3D"ltr">Hi=C2=A0<span style=3D"color:rgb(34,34,34);font-family:ari=
+al,sans-serif;font-size:12.8px;font-style:normal;letter-spacing:normal;text=
+-align:left;text-indent:0px;text-transform:none;white-space:nowrap;word-spa=
+cing:0px;background-color:rgb(255,255,255);float:none;display:inline">C=C3=
+=A9dric,</span><div><span style=3D"color:rgb(34,34,34);font-family:arial,sa=
+ns-serif;font-size:12.8px;font-style:normal;letter-spacing:normal;text-alig=
+n:left;text-indent:0px;text-transform:none;white-space:nowrap;word-spacing:=
+0px;background-color:rgb(255,255,255);float:none;display:inline"><br></span=
+></div><div><span style=3D"color:rgb(34,34,34);font-family:arial,sans-serif=
+;font-size:12.8px;font-style:normal;letter-spacing:normal;text-align:left;t=
+ext-indent:0px;text-transform:none;white-space:nowrap;word-spacing:0px;back=
+ground-color:rgb(255,255,255);float:none;display:inline">I hadn&#39;t actua=
+lly tried 2.4.x (or any prior release on here).=C2=A0 I compiled and tried =
+2.4.6, with similar results:</span></div><div><span style=3D"color:rgb(34,3=
+4,34);font-family:arial,sans-serif;font-size:12.8px;font-style:normal;lette=
+r-spacing:normal;text-align:left;text-indent:0px;text-transform:none;white-=
+space:nowrap;word-spacing:0px;background-color:rgb(255,255,255);float:none;=
+display:inline">1) Without --home: Home is not identified</span></div><div>=
+<span style=3D"color:rgb(34,34,34);font-family:arial,sans-serif;font-size:1=
+2.8px;font-style:normal;letter-spacing:normal;text-align:left;text-indent:0=
+px;text-transform:none;white-space:nowrap;word-spacing:0px;background-color=
+:rgb(255,255,255);float:none;display:inline">2) With --home:=C2=A0 segfault=
+ at singularity_runtime_files_<wbr>passwd()</span></div><div><span style=3D=
+"color:rgb(34,34,34);font-family:arial,sans-serif;font-size:12.8px;font-sty=
+le:normal;letter-spacing:normal;text-align:left;text-indent:0px;text-transf=
+orm:none;white-space:nowrap;word-spacing:0px;background-color:rgb(255,255,2=
+55);float:none;display:inline"><br></span></div><div><span style=3D"color:r=
+gb(34,34,34);font-family:arial,sans-serif;font-size:12.8px;font-style:norma=
+l;letter-spacing:normal;text-align:left;text-indent:0px;text-transform:none=
+;white-space:nowrap;word-spacing:0px;background-color:rgb(255,255,255);floa=
+t:none;display:inline">Debug output for 2.4.6:=C2=A0<a href=3D"https://past=
+ebin.com/hZELGB5L" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.h=
+ref=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fpastebin.com%2FhZE=
+LGB5L\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNE2xynoP5Ziqdr-wE0WflbVv4Utqg&=
+#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q=
+\x3dhttps%3A%2F%2Fpastebin.com%2FhZELGB5L\x26sa\x3dD\x26sntz\x3d1\x26usg\x3=
+dAFQjCNE2xynoP5Ziqdr-wE0WflbVv4Utqg&#39;;return true;">https://pastebin.com=
+/<wbr>hZELGB5L</a></span></div><div><span style=3D"color:rgb(34,34,34);font=
+-family:arial,sans-serif;font-size:12.8px;font-style:normal;letter-spacing:=
+normal;text-align:left;text-indent:0px;text-transform:none;white-space:nowr=
+ap;word-spacing:0px;background-color:rgb(255,255,255);float:none;display:in=
+line"><br></span></div><div><span style=3D"color:rgb(34,34,34);font-family:=
+arial,sans-serif;font-size:12.8px;font-style:normal;letter-spacing:normal;t=
+ext-align:left;text-indent:0px;text-transform:none;white-space:nowrap;word-=
+spacing:0px;background-color:rgb(255,255,255);float:none;display:inline">In=
+ both versions tested, I was running on the same node I compiled on.=C2=A0 =
+(I tested on compute nodes as well with the same results)</span></div><div>=
+<span style=3D"color:rgb(34,34,34);font-family:arial,sans-serif;font-size:1=
+2.8px;font-style:normal;letter-spacing:normal;text-align:left;text-indent:0=
+px;text-transform:none;white-space:nowrap;word-spacing:0px;background-color=
+:rgb(255,255,255);float:none;display:inline"><br></span></div><div><span st=
+yle=3D"font-size:12.8px;white-space:nowrap">Regards,</span></div><div><span=
+ style=3D"font-size:12.8px;white-space:nowrap"><br></span></div><div><span =
+style=3D"font-size:12.8px;white-space:nowrap">Rob</span></div></div></span>=
+<div><div><div><br><div class=3D"gmail_quote">On Tue, May 15, 2018 at 12:30=
+ PM, C=C3=A9dric Clerget <span dir=3D"ltr">&lt;<a rel=3D"nofollow">ced...@g=
+mail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=
+=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=
+=3D"ltr"><div>Hi Robert,</div><div><br></div><div>Is Singularity 2.4.X vers=
+ions worked before ?</div><div><br></div><div>Have you tried to run Singula=
+rity on same host where you compiled Singularity and see if it fail too ?</=
+div><div><br></div><div>C=C3=A9dric<br></div><span><br>Le mardi 15 mai 2018=
+ 19:56:47 UTC+2, Robert Wagner a =C3=A9crit=C2=A0:</span><blockquote class=
+=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc s=
+olid;padding-left:1ex"><span><div dir=3D"ltr">Sorry to spam, but I made one=
+ more test:<div><br></div><div>I copied output from getent for my passwd en=
+try, pasted that into the local /etc/passwd file on my head node.=C2=A0 Thi=
+s resolved both issues listed above.=C2=A0 Unfortunately, this really isn&#=
+39;t a sustainable option for this cluster.</div><div><br></div><div>Regard=
+s,</div><div><br></div><div>Rob</div></div></span><div><br><div class=3D"gm=
+ail_quote"><span>On Tue, May 15, 2018 at 11:53 AM, Robert Wagner <span dir=
+=3D"ltr">&lt;<a rel=3D"nofollow">rob...@computecanada.ca</a>&gt;</span> wro=
+te:<br></span><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;=
+border-left:1px #ccc solid;padding-left:1ex"><span><div dir=3D"ltr"><div>Al=
+most forgot:</div><div><br></div>Oh, and no SSSD.<div><br></div><div>Using =
+LDAP local to cluster for auth.</div><div><br></div><div><br></div><div>Che=
+ers,</div><div><br></div><div>Rob</div><div><br></div><div><br></div></div>=
+</span><div><br><div class=3D"gmail_quote"><span><span>On Tue, May 15, 2018=
+ at 11:19 AM, Jason Stover <span dir=3D"ltr">&lt;<a rel=3D"nofollow">ja...@=
+gmail.com</a>&gt;</span> wrote:<br></span></span><div><div><blockquote clas=
+s=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;pad=
+ding-left:1ex"><span>Hi Rob,<br>
+<br>
+=C2=A0 Hrmmm... The &quot;Failed to obtain user identity information&quot; =
+was just<br>
+added in after we ran into this issue with another user. Do you have<br>
+sssd running?<br>
+<br>
+=C2=A0 Can we see the output from a shell:=C2=A0 ls -l /proc/self/fd/<br>
+<br>
+=C2=A0 For the previous issue see:<br>
+<a href=3D"https://github.com/singularityware/singularity/issues/1489" rel=
+=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www=
+.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsingularityware%2Fsingulari=
+ty%2Fissues%2F1489\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEiEJi3EvIfeGP8Jb=
+J6xWcQvllYXg&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.goo=
+gle.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsingularityware%2Fsingularity%2=
+Fissues%2F1489\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEiEJi3EvIfeGP8JbJ6xW=
+cQvllYXg&#39;;return true;">https://github.com/<wbr>singularityware/singula=
+rity/<wbr>issues/1489</a><br>
+<br>
+=C2=A0 This all comes back to the same issue.... we can&#39;t look-up your =
+user<br>
+information from the authentication server. We had _hoped_ in 2.5.1<br>
+this was fixed. :/<br>
+<span><font color=3D"#888888"><br>
+-J<br>
+</font></span></span><div><div><span><br>
+<br>
+<br>
+On Tue, May 15, 2018 at 12:03 PM, Robert Wagner<br></span><div><div>
+&lt;<a rel=3D"nofollow">rob...@computecanada.ca</a>&gt; wrote:<br>
+&gt; Hi all,<br>
+&gt;<br>
+&gt; Having some troubles with fresh install of 2.5.1, built from source, o=
+n RHEL<br>
+&gt; 7.4 cluster using LDAP (Bright Cluster).=C2=A0 Installing with softwar=
+e on shared<br>
+&gt; filesystem, local state directory on each node, but is not operating o=
+n any.<br>
+&gt; I had similar issues with 2.5.0, though it would simply segfault at th=
+e same<br>
+&gt; point.<br>
+&gt;<br>
+&gt; If run as root, I can execute containers.=C2=A0 If I execute as a user=
+, I have<br>
+&gt; two issues (one minor, one show-stopper) - listing both in the case th=
+ey are<br>
+&gt; related.=C2=A0 singularity.conf is completely default.<br>
+&gt;<br>
+&gt; 1) Home directory not owned by calling user: /=C2=A0 - If I specify --=
+home $HOME,<br>
+&gt; this isn&#39;t an issue. My /home mount is an NFS filesystem, but no s=
+ymlinks<br>
+&gt; involved.<br>
+&gt;<br>
+&gt; Config file: <a href=3D"https://pastebin.com/gnKgBc3C" rel=3D"nofollow=
+" target=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/=
+url?q\x3dhttps%3A%2F%2Fpastebin.com%2FgnKgBc3C\x26sa\x3dD\x26sntz\x3d1\x26u=
+sg\x3dAFQjCNEfBO_-dDbie23fv-STKDWO-esF9A&#39;;return true;" onclick=3D"this=
+.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fpastebin.com%2Fg=
+nKgBc3C\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEfBO_-dDbie23fv-STKDWO-esF9=
+A&#39;;return true;">https://pastebin.com/gnKgBc3C</a><br>
+&gt; Debug output: <a href=3D"https://pastebin.com/w1gWytv1" rel=3D"nofollo=
+w" target=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.google.com=
+/url?q\x3dhttps%3A%2F%2Fpastebin.com%2Fw1gWytv1\x26sa\x3dD\x26sntz\x3d1\x26=
+usg\x3dAFQjCNHqKPpV4iMG7C4H4j0I7QHGZeDZ6A&#39;;return true;" onclick=3D"thi=
+s.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fpastebin.com%2F=
+w1gWytv1\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHqKPpV4iMG7C4H4j0I7QHGZeDZ=
+6A&#39;;return true;">https://pastebin.com/w1gWytv1</a><br>
+&gt;<br>
+&gt; 2) Failed to obtain user identity information.=C2=A0 =C2=A0I&#39;m not=
+ sure if this is<br>
+&gt; tied to my use of LDAP for user information, but this one is stumping =
+me.<br>
+&gt; Again, this does not occur if run as root. (I have not tried with user=
+s that<br>
+&gt; have been manually added to /etc/passwd, but I will try that shortly).=
+<br>
+&gt; Singularity dies at step &quot;singularity_file_passwd_<wbr>create()&q=
+uot;.=C2=A0 =C2=A0Using v2.5.0,<br>
+&gt; I disabled passwd creation in the config file, and that allowed execut=
+ion to<br>
+&gt; continue. Using 2.5.1, it dies whether the setting is on or off. (as i=
+f the<br>
+&gt; option is being ignored)<br>
+&gt;<br>
+&gt; Debug output:<br>
+&gt;<br>
+&gt; <a href=3D"https://pastebin.com/fsbAkCZJ" rel=3D"nofollow" target=3D"_=
+blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttp=
+s%3A%2F%2Fpastebin.com%2FfsbAkCZJ\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNH=
+8jN4HgdmmJ2YSi3VjBAikM7gEQw&#39;;return true;" onclick=3D"this.href=3D&#39;=
+https://www.google.com/url?q\x3dhttps%3A%2F%2Fpastebin.com%2FfsbAkCZJ\x26sa=
+\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNH8jN4HgdmmJ2YSi3VjBAikM7gEQw&#39;;return=
+ true;">https://pastebin.com/fsbAkCZJ</a><br>
+&gt;<br>
+&gt; Debug output with config option for passwd creation disabled:<br>
+&gt;<br>
+&gt; <a href=3D"https://pastebin.com/W0R83kbb" rel=3D"nofollow" target=3D"_=
+blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttp=
+s%3A%2F%2Fpastebin.com%2FW0R83kbb\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNF=
+Ws9LS3xYCic6ejI-2G1sSVAXhrg&#39;;return true;" onclick=3D"this.href=3D&#39;=
+https://www.google.com/url?q\x3dhttps%3A%2F%2Fpastebin.com%2FW0R83kbb\x26sa=
+\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFWs9LS3xYCic6ejI-2G1sSVAXhrg&#39;;return=
+ true;">https://pastebin.com/W0R83kbb</a><br>
+&gt;<br>
+&gt;<br>
+&gt; Thanks for any insights.<br>
+&gt;<br>
+&gt; Cheers,<br>
+&gt;<br>
+&gt; Rob<br>
+&gt;<br>
+&gt; --<br>
+&gt; You received this message because you are subscribed to the Google Gro=
+ups<br>
+&gt; &quot;singularity&quot; group.<br>
+&gt; To unsubscribe from this group and stop receiving emails from it, send=
+ an<br></div></div>
+&gt; email to <a rel=3D"nofollow">singu...@lbl.gov</a>.<span><br>
+<br>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br></span>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</div></div></blockquote></div></div></div><br></div>
+</blockquote></div><br></div>
+</blockquote></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</div></div></blockquote></div><br></div>
+</div></div></blockquote></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</div></div></blockquote></div><br></div>
+</blockquote></div></blockquote></div></div></blockquote></div></blockquote=
+></div>
+------=_Part_19268_457929877.1526418472337--
+
+------=_Part_19267_1054743290.1526418472336--

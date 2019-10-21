@@ -1,0 +1,236 @@
+Date: Tue, 12 Dec 2017 10:49:01 -0800 (PST)
+From: Jeff Kriske <jekr...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <c0660606-db16-4988-95dc-f1a7eb8fa51d@lbl.gov>
+In-Reply-To: <0a6d57e5-1c8f-4a40-951d-53e6fd86567f@lbl.gov>
+References: <03f2ef4e-b773-4d05-9d7f-ce2f2b53d7a9@lbl.gov>
+ <0a6d57e5-1c8f-4a40-951d-53e6fd86567f@lbl.gov>
+Subject: Re: Clarifications on singularity run
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_9457_2015884424.1513104541982"
+
+------=_Part_9457_2015884424.1513104541982
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_9458_1202956337.1513104541982"
+
+------=_Part_9458_1202956337.1513104541982
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Oh, and make sure you don't have python libraries installed in your home 
+directory inside a .local folder interfering with this test.
+
+On Tuesday, December 12, 2017 at 1:46:07 PM UTC-5, Jeff Kriske wrote:
+>
+> I don't have your scripts to copy over and I'm not seeing where you 
+> install gcc or install tensorflow...but can you do this:
+>
+> Bootstrap: docker
+> From: centos:latest
+>
+> %labels
+>
+> %setup
+>
+> %environment
+>
+> %post -c /bin/bash
+>     echo "Hello from inside the container"
+>     yum -y install epel-release
+>     yum -y install python-devel python-pip git numactl vim-minimal
+>     yum -y install nethogs gcc
+>     pip install --upgrade pip
+>     pip install --upgrade pysocks
+>     pip --no-cache-dir install \
+>             h5py \
+>             jupyter \
+>             matplotlib \
+>             numpy \
+>             pandas \
+>             Pillow \
+>             scipy \
+>             sklearn \
+>             tensorflow
+>     mkdir -p /data
+>
+> %test
+>     python -c 'import tensorflow as tf; print tf.__version__'
+>
+> %runscript
+>     python -c 'import tensorflow as tf; print tf.__version__'
+>
+>
+>
+> On Tuesday, December 12, 2017 at 12:27:04 PM UTC-5, Kushal Datta wrote:
+>>
+>> Hi,
+>>
+>> Objective: To create singularity containers with Tensorflow and some 
+>> applications which will run on multiple servers with different generation 
+>> of Intel processors.
+>> Done already: Created a container an on an Intel Xeon server with Centos 
+>> 7 and TF-1.3.0.
+>> Questions:
+>> 1) When I run the container on an older generation of Intel processor, my 
+>> application died with just an 'Aborted' message. Dug a little further to 
+>> find that even 'singularity run test.img python -c 'import tensorflow as 
+>> tf; tf.Session()' dies with the same message. Probably this occurs due to 
+>> incompatibility of libc or other dpdt libraries, but the error message is 
+>> cryptic! What's the best way to debug this?
+>> 2) If the OS, Python and TF versions are same between the host CPU where 
+>> I created the container and target CPU where I'm running it, the container 
+>> should work, right?
+>> 3) Singularity is complaining that some of the applications are not in 
+>> the host machine where I am running the container. The specific error is 
+>> with on nethogs. I installed nethogs in the container, but singnularity 
+>> couldn't find it. Had to install nethogs in the host. I should be able to 
+>> run all applications installed inside the container, right?
+>>
+>> Definition File:
+>> BootStrap: yum
+>> OSVersion: 7
+>> MirrorURL: 
+>> http://mirror.centos.org/centos-%{OSVERSION}/%{OSVERSION}/os/$basearch/
+>> UpdateURL: 
+>> http://mirror.centos.org/centos-%{OSVERSION}/%{OSVERSION}/updates/$basearch
+>> Include: yum
+>>
+>> %labels
+>>
+>> %setup
+>>
+>> %environment
+>>
+>> %files
+>>     /home/bduser/tensorflow-1.4.0-cp27-cp27mu-linux_x86_64.whl /opt/
+>>     /home/user/run_my_training.py /opt/run_my_training.py
+>>
+>> %post -c /bin/bash
+>>     echo "Hello from inside the container"
+>>     yum -y install epel-release
+>>     yum -y install python-devel python-pip git numactl vim-minimal
+>>     yum -y install nethogs
+>>     pip install --upgrade pip
+>>     pip install --upgrade pysocks
+>>     pip --no-cache-dir install \
+>>             h5py \
+>>             jupyter \
+>>             matplotlib \
+>>             numpy \
+>>             pandas \
+>>             Pillow \
+>>             scipy \
+>>             sklearn
+>>     mkdir -p /data
+>>
+>> %test
+>>     python -c 'import tensorflow as tf; print tf.__version__'
+>>
+>> %runscript
+>>     /opt/run_my_training.py
+>>
+>> Thanks,
+>> -Kushal.
+>>
+>
+------=_Part_9458_1202956337.1513104541982
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Oh, and make sure you don&#39;t have python libraries inst=
+alled in your home directory inside a .local folder interfering with this t=
+est.<br><br>On Tuesday, December 12, 2017 at 1:46:07 PM UTC-5, Jeff Kriske =
+wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8=
+ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">I don&#=
+39;t have your scripts to copy over and I&#39;m not seeing where you instal=
+l gcc or install tensorflow...but can you do this:<div><br></div><div><div =
+style=3D"background-color:rgb(250,250,250);border-color:rgb(187,187,187);bo=
+rder-style:solid;border-width:1px;word-wrap:break-word"><code><div><font co=
+lor=3D"#660066"><div>Bootstrap: docker</div><div>From: centos:latest</div><=
+div><br></div><div>%labels</div><div><br></div><div>%setup</div><div><br></=
+div><div>%environment</div><div><br></div><div>%post -c /bin/bash</div><div=
+>=C2=A0 =C2=A0 echo &quot;Hello from inside the container&quot;</div><div>=
+=C2=A0 =C2=A0 yum -y install epel-release</div><div>=C2=A0 =C2=A0 yum -y in=
+stall python-devel python-pip git numactl vim-minimal</div><div>=C2=A0 =C2=
+=A0 yum -y install nethogs gcc</div><div>=C2=A0 =C2=A0 pip install --upgrad=
+e pip</div><div>=C2=A0 =C2=A0 pip install --upgrade pysocks</div><div>=C2=
+=A0 =C2=A0 pip --no-cache-dir install \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 h5py \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 jupyter \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 matplotli=
+b \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 numpy \</div><div>=
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 pandas \</div><div>=C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 Pillow \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 scipy \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 s=
+klearn \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 tensorflow</di=
+v><div>=C2=A0 =C2=A0 mkdir -p /data</div><div><br></div><div>%test</div><di=
+v>=C2=A0 =C2=A0 python -c &#39;import tensorflow as tf; print tf.__version_=
+_&#39;</div><div><br></div><div>%runscript</div><div>=C2=A0 =C2=A0 python -=
+c &#39;import tensorflow as tf; print tf.__version__&#39;</div></font></div=
+></code></div><br><br><br>On Tuesday, December 12, 2017 at 12:27:04 PM UTC-=
+5, Kushal Datta wrote:<blockquote class=3D"gmail_quote" style=3D"margin:0;m=
+argin-left:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"l=
+tr">Hi,<div><br></div><div>Objective: To create singularity containers with=
+ Tensorflow and some applications which will run on multiple servers with d=
+ifferent generation of Intel processors.</div><div>Done already: Created a =
+container an on an Intel Xeon server with Centos 7 and TF-1.3.0.</div><div>=
+Questions:</div><div>1) When I run the container on an older generation of =
+Intel processor, my application died with just an &#39;Aborted&#39; message=
+. Dug a little further to find that even &#39;singularity run test.img pyth=
+on -c &#39;import tensorflow as tf; tf.Session()&#39; dies with the same me=
+ssage. Probably this occurs due to incompatibility of libc or other dpdt li=
+braries, but the error message is cryptic! What&#39;s the best way to debug=
+ this?</div><div>2) If the OS, Python and TF versions are same between the =
+host CPU where I created the container and target CPU where I&#39;m running=
+ it, the container should work, right?</div><div>3) Singularity is complain=
+ing that some of the applications are not in the host machine where I am ru=
+nning the container. The specific error is with on nethogs. I installed net=
+hogs in the container, but singnularity couldn&#39;t find it. Had to instal=
+l nethogs in the host. I should be able to run all applications installed i=
+nside the container, right?</div><div><br></div><div>Definition File:</div>=
+<div><div>BootStrap: yum</div><div>OSVersion: 7</div><div>MirrorURL: <a hre=
+f=3D"http://mirror.centos.org/centos-%%7BOSVERSION%7D/%%7BOSVERSION%7D/os/$=
+basearch/" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#=
+39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fmirror.centos.org%2Fcentos-%=
+25%257BOSVERSION%257D%2F%25%257BOSVERSION%257D%2Fos%2F%24basearch%2F\x26sa\=
+x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHfH2HjUXZK-hJjm03wlVLzlhIsAw&#39;;return =
+true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2=
+F%2Fmirror.centos.org%2Fcentos-%25%257BOSVERSION%257D%2F%25%257BOSVERSION%2=
+57D%2Fos%2F%24basearch%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHfH2HjUXZ=
+K-hJjm03wlVLzlhIsAw&#39;;return true;">http://mirror.centos.org/<wbr>centos=
+-%{OSVERSION}/%{<wbr>OSVERSION}/os/$basearch/</a></div><div>UpdateURL: <a h=
+ref=3D"http://mirror.centos.org/centos-%%7BOSVERSION%7D/%%7BOSVERSION%7D/up=
+dates/$basearch" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.hre=
+f=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fmirror.centos.org%2Fce=
+ntos-%25%257BOSVERSION%257D%2F%25%257BOSVERSION%257D%2Fupdates%2F%24basearc=
+h\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFCZO1oH55q2sT08wn7wBHFzRnOkQ&#39;=
+;return true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dh=
+ttp%3A%2F%2Fmirror.centos.org%2Fcentos-%25%257BOSVERSION%257D%2F%25%257BOSV=
+ERSION%257D%2Fupdates%2F%24basearch\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjC=
+NFCZO1oH55q2sT08wn7wBHFzRnOkQ&#39;;return true;">http://mirror.centos.org/<=
+wbr>centos-%{OSVERSION}/%{<wbr>OSVERSION}/updates/$basearch</a></div><div>I=
+nclude: yum</div><div><br></div><div>%labels</div><div><br></div><div>%setu=
+p</div><div><br></div><div>%environment</div><div><br></div><div>%files</di=
+v><div>=C2=A0 =C2=A0 /home/bduser/tensorflow-1.4.0-<wbr>cp27-cp27mu-linux_x=
+86_64.whl /opt/</div><div>=C2=A0 =C2=A0 /home/user/run_my_training.py /opt/=
+run_my_training.py<br></div><div><br></div><div>%post -c /bin/bash</div><di=
+v>=C2=A0 =C2=A0 echo &quot;Hello from inside the container&quot;</div><div>=
+=C2=A0 =C2=A0 yum -y install epel-release</div><div>=C2=A0 =C2=A0 yum -y in=
+stall python-devel python-pip git numactl vim-minimal</div><div>=C2=A0 =C2=
+=A0 yum -y install nethogs</div><div>=C2=A0 =C2=A0 pip install --upgrade pi=
+p</div><div>=C2=A0 =C2=A0 pip install --upgrade pysocks</div><div>=C2=A0 =
+=C2=A0 pip --no-cache-dir install \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 h5py \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 ju=
+pyter \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 matplotlib \</d=
+iv><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 numpy \</div><div>=C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 pandas \</div><div>=C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 Pillow \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 scipy \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 sklearn<=
+/div><div>=C2=A0 =C2=A0 mkdir -p /data</div><div><br></div><div>%test</div>=
+<div>=C2=A0 =C2=A0 python -c &#39;import tensorflow as tf; print tf.__versi=
+on__&#39;<br></div><div><br></div><div>%runscript</div><div>=C2=A0 =C2=A0 /=
+opt/run_my_training.py</div></div><div><br></div><div>Thanks,</div><div>-Ku=
+shal.</div></div></blockquote></div></div></blockquote></div>
+------=_Part_9458_1202956337.1513104541982--
+
+------=_Part_9457_2015884424.1513104541982--

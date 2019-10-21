@@ -1,0 +1,157 @@
+X-Received: by 10.99.251.83 with SMTP id w19mr8200976pgj.24.1487609816974;
+        Mon, 20 Feb 2017 08:56:56 -0800 (PST)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.107.15.68 with SMTP id x65ls2925837ioi.33.gmail; Mon, 20 Feb
+ 2017 08:56:56 -0800 (PST)
+X-Received: by 10.99.100.69 with SMTP id y66mr13870869pgb.103.1487609816265;
+        Mon, 20 Feb 2017 08:56:56 -0800 (PST)
+Return-Path: <gmku...@lbl.gov>
+Received: from fe3.lbl.gov (fe3.lbl.gov. [128.3.41.68])
+        by mx.google.com with ESMTP id j17si19111052pgg.167.2017.02.20.08.56.56
+        for <singu...@lbl.gov>;
+        Mon, 20 Feb 2017 08:56:56 -0800 (PST)
+Received-SPF: pass (google.com: domain of gmku...@lbl.gov designates 209.85.213.198 as permitted sender) client-ip=209.85.213.198;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of gmku...@lbl.gov designates 209.85.213.198 as permitted sender) smtp.mailfrom=gmku...@lbl.gov
+X-Ironport-SBRS: 2.7
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2E5AQD/HqtYf8bVVdFegx+BBD94EQeDTAicHYJkil4VgjGCQ4JpgUkbKB8BBoV8AoJFBz8YAQEBAQEBAQEBAQECEAEBCQsLChsxgjMEAgMBHQQEPQoDLwEBAQEBAQEBAQEBAQEBARoCDTEDKgEEASMrMAsLCzcCAiIPAwEFARwGCAcEARwEiUYIBaFOP4wDgiaLUAEBAQEGAQEBAQEBIhKLKYQmEQGDIoJfBYkDh0MQhQiGJgGGc4VfhUqCToEHjTWRWxQegRUPEIECLwgZCTdkBYQuHYICHzUHiFxHgWcBAQE
+X-IronPort-AV: E=Sophos;i="5.35,187,1484035200"; 
+   d="scan'208,217";a="65295660"
+Received: from mail-yb0-f198.google.com ([209.85.213.198])
+  by fe3.lbl.gov with ESMTP; 20 Feb 2017 08:56:54 -0800
+Received: by mail-yb0-f198.google.com with SMTP id t7so48019787yba.1
+        for <singu...@lbl.gov>; Mon, 20 Feb 2017 08:56:54 -0800 (PST)
+X-Gm-Message-State: AMke39kUjXmldyuKdmnZxvO+bl+QkKsDjNYgBQIVb0UL/UjB4IEPSvqDg0TjKHZNYerhfs6VUGADRVSLUgbvdk0qyarTjtxFxLyPTuhIf9UejfAF9ejcO1HR8BNxe9/qCACidmuit3mGlxqwNfnoP8gfPdg=
+X-Received: by 10.129.108.215 with SMTP id h206mr16133881ywc.164.1487609814481;
+        Mon, 20 Feb 2017 08:56:54 -0800 (PST)
+X-Received: by 10.129.108.215 with SMTP id h206mr16133867ywc.164.1487609814215;
+ Mon, 20 Feb 2017 08:56:54 -0800 (PST)
+MIME-Version: 1.0
+Received: by 10.129.62.29 with HTTP; Mon, 20 Feb 2017 08:56:53 -0800 (PST)
+In-Reply-To: <4a675b1d-5116-4702-a9e4-cc0024dcb436@lbl.gov>
+References: <4a675b1d-5116-4702-a9e4-cc0024dcb436@lbl.gov>
+From: "Gregory M. Kurtzer" <gmku...@lbl.gov>
+Date: Mon, 20 Feb 2017 08:56:53 -0800
+Message-ID: <CAN7etTzUMksoSB_H1ZgA3+-fFvM2pO+XzeD3E-pLqLiiL69c4w@mail.gmail.com>
+Subject: Re: [Singularity] job with multiple singularity calls (mixed
+ MPI/serial) fails
+To: singularity <singu...@lbl.gov>
+Content-Type: multipart/alternative; boundary=001a114dc75e8aea8c0548f926a2
+
+--001a114dc75e8aea8c0548f926a2
+Content-Type: text/plain; charset=UTF-8
+
+Hi Geert,
+
+The directory is only supposed to be removed when the flock()s have all
+been released. I just did some fixups for this in one of the development
+branches, but 2.2* should be working in the same way. Is `/tmp` a local
+directory, or is it on some form of shared NFS? Does it have any mount
+options to disable locking?
+
+Can you also try with --debug enabled and send all of the output?
+
+Thanks!
+
+On Mon, Feb 20, 2017 at 6:25 AM, Geert Jan BEX <geert...@uhasselt.be>
+wrote:
+
+> Dear,
+>
+> I've run into a problem with singularity, and out of ideas by now.
+>
+> When running a job that involves multiple calls to singularity (same image
+> each time), some of them serial, some MPI, the MPI ones intermittently fail
+> with:
+> ERROR  : Could not remove session directory /tmp/.singularity-session-2530140.42.465829344:
+> Device or resource busy
+>
+> This is for OpenMPI 1.10.2 on host and in image.  The host OS is CentOS 7,
+> the image OS Ubuntu 16.04,  Singularity 2.2.  The job runs on 4 nodes, 27
+> processes each.
+>
+> I've tried several approaches (sleep between calls, setting a session
+> directory per singularity call, ...).
+>
+> Any ideas?
+>
+> Thanks in advance, Geert Jan Bex
+>
+>
+>
+> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+>
+
+
+
+-- 
+Gregory M. Kurtzer
+HPC Systems Architect and Technology Developer
+Lawrence Berkeley National Laboratory HPCS
+University of California Berkeley Research IT
+Singularity Linux Containers (http://singularity.lbl.gov/)
+Warewulf Cluster Management (http://warewulf.lbl.gov/)
+GitHub: https://github.com/gmkurtzer, Twitter: https://twitter.com/gmkurtzer
+
+--001a114dc75e8aea8c0548f926a2
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Geert,<div><br></div><div>The directory is only suppose=
+d to be removed when the flock()s have all been released. I just did some f=
+ixups for this in one of the development branches, but 2.2* should be worki=
+ng in the same way. Is `/tmp` a local directory, or is it on some form of s=
+hared NFS? Does it have any mount options to disable locking?</div><div><br=
+></div><div>Can you also try with --debug enabled and send all of the outpu=
+t?=C2=A0</div><div><br></div><div>Thanks!</div></div><div class=3D"gmail_ex=
+tra"><br><div class=3D"gmail_quote">On Mon, Feb 20, 2017 at 6:25 AM, Geert =
+Jan BEX <span dir=3D"ltr">&lt;<a href=3D"mailto:geert...@uhasselt.be" targe=
+t=3D"_blank">geert...@uhasselt.be</a>&gt;</span> wrote:<br><blockquote clas=
+s=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;pad=
+ding-left:1ex"><div dir=3D"ltr">Dear,<div><br></div><div>I&#39;ve run into =
+a problem with singularity, and out of ideas by now.</div><div><br></div><d=
+iv>When running a job that involves multiple calls to singularity (same ima=
+ge each time), some of them serial, some MPI, the MPI ones intermittently f=
+ail with:</div><div><div>ERROR =C2=A0: Could not remove session directory /=
+tmp/.singularity-session-<wbr>2530140.42.465829344: Device or resource busy=
+</div></div><div><br></div><div>This is for OpenMPI 1.10.2 on host and in i=
+mage.=C2=A0 The host OS is CentOS 7, the image OS Ubuntu 16.04, =C2=A0Singu=
+larity 2.2.=C2=A0 The job runs on 4 nodes, 27 processes each.</div><div><br=
+></div><div>I&#39;ve tried several approaches (sleep between calls, setting=
+ a session directory per singularity call, ...).</div><div><br></div><div>A=
+ny ideas?</div><div><br></div><div>Thanks in advance, Geert Jan Bex</div><s=
+pan class=3D"HOEnZb"><font color=3D"#888888"><div><br></div><div><br></div>=
+<div><br></div></font></span></div><span class=3D"HOEnZb"><font color=3D"#8=
+88888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singularity+u=
+nsubscribe@lbl.<wbr>gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div class=3D"gmail_signature" data-smartmail=3D"gmail_signature"><div di=
+r=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"=
+><div dir=3D"ltr"><div dir=3D"ltr"><div>Gregory M. Kurtzer</div><div>HPC Sy=
+stems Architect and Technology Developer</div><div>Lawrence Berkeley Nation=
+al Laboratory HPCS<br>University of California Berkeley Research IT<br>Sing=
+ularity Linux Containers=C2=A0(<a href=3D"http://singularity.lbl.gov/" targ=
+et=3D"_blank">http://singularity.lbl.gov/</a>)</div><div>Warewulf Cluster M=
+anagement=C2=A0(<a href=3D"http://warewulf.lbl.gov/" target=3D"_blank">http=
+://warewulf.lbl.gov/</a>)</div><div>GitHub:=C2=A0<a href=3D"https://github.=
+com/gmkurtzer" target=3D"_blank">https://github.com/gmkurtzer</a>,=C2=A0<sp=
+an style=3D"font-size:12.8px">Twitter:=C2=A0</span><a href=3D"https://twitt=
+er.com/gmkurtzer" style=3D"font-size:12.8px" target=3D"_blank">https://twit=
+ter.com/gmkurtzer</a></div></div></div></div></div></div></div></div></div>=
+</div></div>
+</div>
+
+--001a114dc75e8aea8c0548f926a2--

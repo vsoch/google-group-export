@@ -1,0 +1,196 @@
+Date: Sat, 6 Jan 2018 13:13:53 -0800 (PST)
+From: Jonathan Greenberg <jgr...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <ebe8cd20-664c-4e92-b56f-e2b427de0023@lbl.gov>
+In-Reply-To: <CAM=pu+L3Wr0nrYWAC2gmJyRse9q9fRxBUgmoZu4OCVkQju8cRQ@mail.gmail.com>
+References: <d1451673-bccf-41f0-b3d8-b0f13463f222@lbl.gov>
+ <CAM=pu+L3Wr0nrYWAC2gmJyRse9q9fRxBUgmoZu4OCVkQju8cRQ@mail.gmail.com>
+Subject: Re: [Singularity] Can a singularity container execute programs
+ "outside" of the container?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_8315_745392675.1515273233206"
+
+------=_Part_8315_745392675.1515273233206
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_8316_1393118941.1515273233207"
+
+------=_Part_8316_1393118941.1515273233207
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Vanessa:
+
+Thanks!  Is there something I have to do to specify the host environment in 
+a definition when building an image?  How do I specify the path to host 
+commands?
+
+When I "which" squeue/sbatch (which is NOT in the container, rather, on the 
+host running singularity):
+
+which: no sbatch in 
+(/opt/rh/devtoolset-7/root/usr/bin:/opt/rh/devtoolset-7/root/usr/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin)
+Singularity r-base-3.4.3.simg:/pathto/> 
+
+It is only searching within the container's environment, it appears.
+
+--j
+
+
+On Saturday, January 6, 2018 at 12:46:42 PM UTC-8, vanessa wrote:
+>
+> Hey Jonathan,
+>
+> The environment between the container and your host should be seamless, so 
+> if you have an "external" job manager, given that the command is on the 
+> path when you are inside the container (e.g., if you were to add something 
+> like --containall you would limit sharing from the host). It sounds like in 
+> your case you want to check the following things:
+>
+> 0. That R and rslurm is found within the container, period
+> 1. That the R in your container is using the R library on the host with 
+> the correct RSlurm
+> 2. That no "other" installation of Rslurm in the container (that isn't 
+> properly configured with your cluster) is being used instead
+> 3. if it's the case that a container version of Rslurm is being used, that 
+> it is configured correctly.
+>
+> So to start, I would simply do an interactive shell into the container, 
+> and start testing. 
+>
+> *singularity shell container.simg*
+>
+> which R
+> R
+>
+> >> do some tests here for rslurm
+>
+> Once you get started if you want to send progress back to the list there 
+> are probably enough R and slurm folk on here to help out. After you are 
+> confident about the things being used / called, try executing some working 
+> command to the container to test it out, eg:
+>
+> *singularity exec container.simg Rscript myscript.R*
+>
+> TLDR: you shouldn't need to send commands "up" one environment level 
+> because you are on the correct level - the environments are shared.
+>
+> Best,
+>
+> Vanessa
+>
+> On Sat, Jan 6, 2018 at 11:47 AM, Jonathan Greenberg <j...@gmail.com 
+> <javascript:>> wrote:
+>
+>> Weird question, I know, given the whole point of singularity is to avoid 
+>> this sort of thing.  We are working with a SLURM queue on an HPC that 
+>> requires singularity containers (fair enough).  My lab does a lot of R 
+>> processing, and there is a package called "rslurm" that, in theory, send 
+>> jobs to the queue.  However, this R is containerized so what it is 
+>> currently attempting to do is send jobs to the containerized SLURM (which 
+>> does not exist). I'd like it to send commands "up a level" to the level 
+>> where the container was executed (the user's non-singularity environment) 
+>> so it can be executed.  Is this possible?  If so, how do I accomplish this?
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_8316_1393118941.1515273233207
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Vanessa:<div><br></div><div>Thanks!=C2=A0 Is there somethi=
+ng I have to do to specify the host environment in a definition when buildi=
+ng an image?=C2=A0 How do I specify the path to host commands?</div><div><b=
+r></div><div>When I &quot;which&quot; squeue/sbatch (which is NOT in the co=
+ntainer, rather, on the host running singularity):</div><div><br></div><div=
+><div>which: no sbatch in (/opt/rh/devtoolset-7/root/usr/bin:/opt/rh/devtoo=
+lset-7/root/usr/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin=
+:/bin)</div><div>Singularity r-base-3.4.3.simg:/pathto/&gt;=C2=A0</div><div=
+><br></div><div>It is only searching within the container&#39;s environment=
+, it appears.</div><div><br></div><div>--j</div><div><br></div><br>On Satur=
+day, January 6, 2018 at 12:46:42 PM UTC-8, vanessa wrote:<blockquote class=
+=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #cc=
+c solid;padding-left: 1ex;"><div dir=3D"ltr"><span style=3D"font-size:12.8p=
+x">Hey Jonathan,</span><div style=3D"font-size:12.8px"><br></div><div style=
+=3D"font-size:12.8px">The environment between the container and your host s=
+hould be seamless, so if you have an &quot;external&quot; job manager, give=
+n that the command is on the path when you are inside the container (e.g., =
+if you were to add something like --containall you would limit sharing from=
+ the host). It sounds like in your case you want to check the following thi=
+ngs:</div><div style=3D"font-size:12.8px"><br></div><div style=3D"font-size=
+:12.8px">0. That R and rslurm is found within the container, period</div><d=
+iv style=3D"font-size:12.8px">1. That the R in your container is using the =
+R library on the host with the correct RSlurm</div><div style=3D"font-size:=
+12.8px">2. That no &quot;other&quot; installation of Rslurm in the containe=
+r (that isn&#39;t properly configured with your cluster) is being used inst=
+ead</div><div style=3D"font-size:12.8px">3. if it&#39;s the case that a con=
+tainer version of Rslurm is being used, that it is configured correctly.</d=
+iv><div style=3D"font-size:12.8px"><br></div><div style=3D"font-size:12.8px=
+">So to start, I would simply do an interactive shell into the container, a=
+nd start testing.=C2=A0</div><div style=3D"font-size:12.8px"><b><br></b></d=
+iv><div style=3D"font-size:12.8px"><b>singularity shell container.simg</b><=
+/div><div style=3D"font-size:12.8px"><br></div><div style=3D"font-size:12.8=
+px">which R</div><div style=3D"font-size:12.8px">R</div><div style=3D"font-=
+size:12.8px"><br></div><div style=3D"font-size:12.8px">&gt;&gt; do some tes=
+ts here for rslurm</div><div style=3D"font-size:12.8px"><br></div><div styl=
+e=3D"font-size:12.8px">Once you get started if you want to send progress ba=
+ck to the list there are probably enough R and slurm folk on here to help o=
+ut. After you are confident about the things being used / called, try execu=
+ting some working command to the container to test it out, eg:</div><div st=
+yle=3D"font-size:12.8px"><br></div><div style=3D"font-size:12.8px"><b>singu=
+larity exec container.simg Rscript myscript.R</b></div><div style=3D"font-s=
+ize:12.8px"><br></div><div style=3D"font-size:12.8px">TLDR: you shouldn&#39=
+;t need to send commands &quot;up&quot; one environment level because you a=
+re on the correct level - the environments are shared.</div><div style=3D"f=
+ont-size:12.8px"><br></div><div style=3D"font-size:12.8px">Best,</div><div =
+style=3D"font-size:12.8px"><br></div><div style=3D"font-size:12.8px">Vaness=
+a</div></div><div><br><div class=3D"gmail_quote">On Sat, Jan 6, 2018 at 11:=
+47 AM, Jonathan Greenberg <span dir=3D"ltr">&lt;<a href=3D"javascript:" tar=
+get=3D"_blank" gdf-obfuscated-mailto=3D"joCR3Uh2DwAJ" rel=3D"nofollow" onmo=
+usedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.=
+href=3D&#39;javascript:&#39;;return true;">j...@gmail.com</a>&gt;</span> wr=
+ote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border=
+-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Weird question, I k=
+now, given the whole point of singularity is to avoid this sort of thing.=
+=C2=A0 We are working with a SLURM queue on an HPC that requires singularit=
+y containers (fair enough).=C2=A0 My lab does a lot of R processing, and th=
+ere is a package called &quot;rslurm&quot; that, in theory, send jobs to th=
+e queue.=C2=A0 However, this R is containerized so what it is currently att=
+empting to do is send jobs to the containerized SLURM (which does not exist=
+). I&#39;d like it to send commands &quot;up a level&quot; to the level whe=
+re the container was executed (the user&#39;s non-singularity environment) =
+so it can be executed.=C2=A0 Is this possible?=C2=A0 If so, how do I accomp=
+lish this?</div><span><font color=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+joCR3Uh2DwAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div>=
+<div><span id=3D"gc-number-1" class=3D"gc-cs-link" title=3D"Call with Googl=
+e Voice">(603) 321-0676</span></div></div></div></div>
+</div>
+</blockquote></div></div>
+------=_Part_8316_1393118941.1515273233207--
+
+------=_Part_8315_745392675.1515273233206--

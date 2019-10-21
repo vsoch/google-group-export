@@ -1,0 +1,177 @@
+Date: Fri, 2 Aug 2019 09:43:32 -0700 (PDT)
+From: Dmitriy Morozov <dmor...@lbl.gov>
+To: singularity <singu...@lbl.gov>
+Message-Id: <915e3544-4459-4859-844d-99d716617116@lbl.gov>
+Subject: Not using in-memory filesystem to build an image
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_837_670521066.1564764212071"
+
+------=_Part_837_670521066.1564764212071
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_838_1813908398.1564764212071"
+
+------=_Part_838_1813908398.1564764212071
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Is there a way to disable using tmpfs to store / in memory, when building 
+an image, and use the disk for / instead?
+
+I have a possibly strange setup. I'm running Linux in a VM on a Mac and 
+trying to build an image of ArchLinux. The definition file is below. In 
+this definition I'm trying to add cuda, which is what causes the problem: 
+things break because / is out of space. There is enough space on the disk 
+(/dev/sda2), but / is mounted in memory and it doesn't have the requisite 
+5GB.
+
+I've tried using the sandbox mode, but it too seems to go through memory 
+first.
+
+Any advice is appreciated.
+Dmitriy
+
+arch-cuda.def:
+Bootstrap: docker
+FROM: archlinux/base
+
+%post
+  mount -o remount,rw /etc/resolv.conf
+  mount -o remount,rw /etc/hosts
+
+  pacman -Sy --noconfirm
+
+  mount
+  df -h
+  df -i
+
+  pacman -S --noconfirm -dd cuda
+
+
+sudo singularity build arch-cuda.sif arch-cuda.def
+...
++ df -h
+Filesystem      Size  Used Avail Use% Mounted on
+tmpfs           4.9G  640M  4.3G  13% /
+/dev/sda2        18G  4.3G   14G  24% /var/tmp
+dev             4.9G     0  4.9G   0% /dev
+tmpfs           4.9G     0  4.9G   0% /dev/shm
++ df -i
+Filesystem      Inodes IUsed   IFree IUse% Mounted on
+tmpfs          1279027 27634 1251393    3% /
+/dev/sda2            0     0       0     - /var/tmp
+dev            1277181   323 1276858    1% /dev
+tmpfs          1279027     1 1279026    1% /dev/shm
++ pacman -S --noconfirm -dd cuda
+looking for conflicting packages...
+
+Packages (1) cuda-10.1.168-4
+
+Total Download Size:   2166.21 MiB
+Total Installed Size:  5535.70 MiB
+...
+cuda-10.1.168-4-x86_64                                                      
+          406.0 KiB  6.01M/s 00:00 
+[##################################################################] 100%
+(1/1) checking keys in keyring                                              
+                                    
+[##################################################################] 100%
+(1/1) checking package integrity                                            
+                                    
+[##################################################################] 100%
+(1/1) loading package files                                                
+                                    
+ [##################################################################] 100%
+(1/1) checking for file conflicts                                          
+                                    
+ [##################################################################] 100%
+(1/1) checking available disk space                                        
+                                    
+ [##################################################################] 100%
+error: Partition / too full: 1429780 blocks needed, 560732 blocks free
+error: not enough free disk space
+error: failed to commit transaction (not enough free disk space)
+Errors occurred, no packages were upgraded.
+FATAL:   post proc: exit status 1
+FATAL:   While performing build: while running engine: exit status 255
+
+------=_Part_838_1813908398.1564764212071
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Is there a way to disable using tmpfs to store / in memory=
+, when building an image, and use the disk for / instead?<div><br></div><di=
+v>I have a possibly strange setup. I&#39;m running Linux in a VM on a Mac a=
+nd trying to build an image of ArchLinux. The definition file is below. In =
+this definition I&#39;m trying to add cuda, which is what causes the proble=
+m: things break because / is out of space. There is enough space on the dis=
+k (/dev/sda2), but / is mounted in memory and it doesn&#39;t have the requi=
+site 5GB.</div><div><br></div><div>I&#39;ve tried using the sandbox mode, b=
+ut it too seems to go through memory first.</div><div><br></div><div>Any ad=
+vice is appreciated.</div><div>Dmitriy</div><div><br></div><div>arch-cuda.d=
+ef:</div><div><div>Bootstrap: docker</div><div>FROM: archlinux/base</div><d=
+iv><br></div><div>%post</div><div>=C2=A0 mount -o remount,rw /etc/resolv.co=
+nf</div><div>=C2=A0 mount -o remount,rw /etc/hosts</div><div><br></div><div=
+>=C2=A0 pacman -Sy --noconfirm</div><div><br></div><div>=C2=A0 mount</div><=
+div>=C2=A0 df -h</div><div>=C2=A0 df -i</div><div><br></div><div>=C2=A0 pac=
+man -S --noconfirm -dd cuda</div></div><div><br></div><div><br></div><div>s=
+udo singularity build arch-cuda.sif arch-cuda.def<br></div><div>...</div><d=
+iv>+ df -h<br></div><div><div>Filesystem=C2=A0 =C2=A0 =C2=A0 Size=C2=A0 Use=
+d Avail Use% Mounted on</div><div>tmpfs=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A04.9G=C2=A0 640M=C2=A0 4.3G=C2=A0 13% /</div><div>/dev/sda2=C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 18G=C2=A0 4.3G=C2=A0 =C2=A014G=C2=A0 24% /var/tmp</div><d=
+iv>dev=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A04.9G=C2=A0 =C2=A0 =C2=
+=A00=C2=A0 4.9G=C2=A0 =C2=A00% /dev</div><div>tmpfs=C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A04.9G=C2=A0 =C2=A0 =C2=A00=C2=A0 4.9G=C2=A0 =C2=A00% /dev/s=
+hm</div><div>+ df -i</div><div>Filesystem=C2=A0 =C2=A0 =C2=A0 Inodes IUsed=
+=C2=A0 =C2=A0IFree IUse% Mounted on</div><div>tmpfs=C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 1279027 27634 1251393=C2=A0 =C2=A0 3% /</div><div>/dev/sda2=C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0=C2=A0 =C2=A0 =C2=A00=C2=A0 =C2=A0 =
+=C2=A0 =C2=A00=C2=A0 =C2=A0 =C2=A0- /var/tmp</div><div>dev=C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 1277181=C2=A0 =C2=A0323 1276858=C2=A0 =C2=A0 1% /d=
+ev</div><div>tmpfs=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 1279027=C2=A0 =C2=A0 =
+=C2=A01 1279026=C2=A0 =C2=A0 1% /dev/shm</div></div><div>+ pacman -S --noco=
+nfirm -dd cuda</div><div>looking for conflicting packages...</div><div><br>=
+</div><div>Packages (1) cuda-10.1.168-4</div><div><br></div><div>Total Down=
+load Size:=C2=A0 =C2=A02166.21 MiB</div><div>Total Installed Size:=C2=A0 55=
+35.70 MiB</div><div>...<br></div><div><div>cuda-10.1.168-4-x86_64=C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 406.0 Ki=
+B=C2=A0 6.01M/s 00:00 [####################################################=
+##############] 100%</div><div>(1/1) checking keys in keyring=C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 [#####################=
+#############################################] 100%</div><div>(1/1) checkin=
+g package integrity=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 [##################################################################] 10=
+0%</div><div>(1/1) loading package files=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0[#############################=
+#####################################] 100%</div><div>(1/1) checking for fi=
+le conflicts=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0[#####=
+#############################################################] 100%</div><d=
+iv>(1/1) checking available disk space=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0[#########################################################=
+#########] 100%</div><div>error: Partition / too full: 1429780 blocks neede=
+d, 560732 blocks free</div><div>error: not enough free disk space</div><div=
+>error: failed to commit transaction (not enough free disk space)</div><div=
+>Errors occurred, no packages were upgraded.</div><div>FATAL:=C2=A0 =C2=A0p=
+ost proc: exit status 1</div><div>FATAL:=C2=A0 =C2=A0While performing build=
+: while running engine: exit status 255</div></div></div>
+------=_Part_838_1813908398.1564764212071--
+
+------=_Part_837_670521066.1564764212071--

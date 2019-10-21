@@ -1,0 +1,162 @@
+Date: Sat, 10 Feb 2018 08:09:02 -0800 (PST)
+From: Jeff Kriske <jekr...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <0ab60812-4d3e-4f94-892b-09020d3a4d79@lbl.gov>
+In-Reply-To: <1df508c3-5dbc-44ac-86e7-427569e5a039@lbl.gov>
+References: <CADU1CXnO-Ux-ZG2CzRMpKqyq53EiA=Ly1LMn3D=cstJHSmvs5g@mail.gmail.com>
+ <1df508c3-5dbc-44ac-86e7-427569e5a039@lbl.gov>
+Subject: Re: How to use "external" variable in a recipe when building an
+ image?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_6097_1267629095.1518278942962"
+
+------=_Part_6097_1267629095.1518278942962
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_6098_1707589777.1518278942962"
+
+------=_Part_6098_1707589777.1518278942962
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+I should also mention if you set an environment variable SOMENAME in 
+%environment during build and you use SINGULARITYENV_SOMENAME at runtime it 
+doesn't overwrite the variable as one might expect... which is weird, but 
+that's how it currently functions.
+
+-Jeff
+
+
+On Saturday, February 10, 2018 at 11:02:40 AM UTC-5, Jeff Kriske wrote:
+>
+> Personally, I prefer that the host environment is sanitized before 
+> starting the build process.
+>
+> My question would be, what are you looking for in your environment that 
+> can't be determined by some other means in %setup or in %post?
+> What you're describing is not scripting the generation of the container as 
+> much as scripting the generation of the definition file.
+>
+> At that point you could have a Singularity definition file template and 
+> have bits filled in depending on whatever factors you want.
+>
+> If you can determine what you want during %setup using other factors you 
+> can always set a variable to work during %post, for example:
+>
+> BootStrap: docker
+> From: alpine:latest
+>
+> %setup
+>  echo $HELLOWORLD
+>  echo "HELLOWORLD='Hello there'" >> 
+> $SINGULARITY_ROOTFS$SINGULARITY_ENVIRONMENT
+>
+> %post
+>   source $SINGULARITY_ENVIRONMENT
+>   echo $HELLOWORLD
+>   rm $SINGULARITY_ENVIRONMENT
+>
+> %runscript
+>   exec echo $HELLOWORLD
+>
+> If you have it in your environment the first $HELLOWORLD is stripped which 
+> is expected. Next you can use any logic you want to determine and set an 
+> env variable for %post, you can use it in %post and delete it afterwards if 
+> you want.
+>
+> When actually running the container you can set SINGULARITYENV_HELLOWORLD 
+> on the host and the container will read it when you run it.
+>
+> Although, to your point, it'd be interesting if SINGULARITYENV_anything 
+> wasn't stripped at build time... I can already think of other possible uses.
+>
+>
+> On Friday, February 9, 2018 at 9:49:02 AM UTC-5, Christophe Trophime wrote:
+>>
+>> Hi,
+>> I would like to script the generation of a container
+>> and add a variable defined as a  parameter of the script to add
+>> some additional package within the container: 
+>>
+>> Bootstrap: docker
+>> From: ....
+>>
+>> %runscript
+>> %setup
+>> %environment
+>> %post
+>>
+>> # Add other stuff
+>> if [ "$isOtherStuff" = "1" ]; then
+>>    apt-get -y install otherstuff ....
+>> fi
+>>
+>> so far I've tried without success to :
+>>
+>> export isOtherStuff="1"
+>> sudo -E singularity build ...
+>>
+>> I'm pretty sure it's possible to custom the recipe using variables...
+>> Thank for your help
+>>
+>> Best
+>>
+>
+------=_Part_6098_1707589777.1518278942962
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">I should also mention if you set an environment variable S=
+OMENAME in %environment during build and you use SINGULARITYENV_SOMENAME at=
+ runtime it doesn&#39;t overwrite the variable as one might expect... which=
+ is weird, but that&#39;s how it currently functions.<div><br></div><div>-J=
+eff<br><div><br><br>On Saturday, February 10, 2018 at 11:02:40 AM UTC-5, Je=
+ff Kriske wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin=
+-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"lt=
+r"><div>Personally, I prefer that the host environment is sanitized before =
+starting the build process.<br></div><div><br></div><div>My question would =
+be, what are you looking for in your environment that can&#39;t be determin=
+ed by some other means in %setup or in %post?</div><div>What you&#39;re des=
+cribing is not scripting the generation of the container as much as scripti=
+ng the generation of the definition file.</div><div><br></div><div>At that =
+point you could have a Singularity definition file template and have bits f=
+illed in depending on whatever factors you want.</div><div><br></div><div>I=
+f you can determine what you want during %setup using other factors you can=
+ always set a variable to work during %post, for example:</div><div><br></d=
+iv><div><div style=3D"background-color:rgb(250,250,250);border-color:rgb(18=
+7,187,187);border-style:solid;border-width:1px;word-wrap:break-word"><code>=
+<div><font color=3D"#660066"><div>BootStrap: docker</div><div>From: alpine:=
+latest</div><div><br></div><div>%setup</div><div>=C2=A0echo $HELLOWORLD</di=
+v><div>=C2=A0echo &quot;HELLOWORLD=3D&#39;Hello there&#39;&quot; &gt;&gt; $=
+SINGULARITY_ROOTFS$<wbr>SINGULARITY_ENVIRONMENT</div><div><br></div><div>%p=
+ost</div><div>=C2=A0 source $SINGULARITY_ENVIRONMENT</div><div>=C2=A0 echo =
+$HELLOWORLD</div><div>=C2=A0 rm $SINGULARITY_ENVIRONMENT</div><div><br></di=
+v><div>%runscript</div><div>=C2=A0 exec echo $HELLOWORLD</div></font></div>=
+</code></div><br>If you have it in your environment the first $HELLOWORLD i=
+s stripped which is expected. Next you can use any logic you want to determ=
+ine and set an env variable for %post, you can use it in %post and delete i=
+t afterwards if you want.</div><div><br></div><div>When actually running th=
+e container you can set SINGULARITYENV_HELLOWORLD on the host and the conta=
+iner will read it when you run it.</div><div><br></div><div>Although, to yo=
+ur point, it&#39;d be interesting if SINGULARITYENV_anything wasn&#39;t str=
+ipped at build time... I can already think of other possible uses.</div><di=
+v><br><div><br>On Friday, February 9, 2018 at 9:49:02 AM UTC-5, Christophe =
+Trophime wrote:<blockquote class=3D"gmail_quote" style=3D"margin:0;margin-l=
+eft:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr"><di=
+v>Hi,</div><div>I would like to script the generation of a container</div><=
+div>and add a variable defined as a=C2=A0 parameter of the script to add</d=
+iv><div>some additional package within the container:=C2=A0</div><div><br><=
+/div><div>Bootstrap: docker</div><div>From: ....</div><div><br></div><div>%=
+runscript</div><div>%setup<br></div><div>%environment</div><div>%post</div>=
+<div><br></div><div># Add other stuff<br></div><div>if [ &quot;$isOtherStuf=
+f&quot; =3D &quot;1&quot; ]; then</div><div>=C2=A0 =C2=A0apt-get -y install=
+ otherstuff ....</div><div>fi</div><div><br></div><div>so far I&#39;ve trie=
+d without success to :</div><div><br></div><div>export isOtherStuff=3D&quot=
+;1&quot;</div><div>sudo=C2=A0-E singularity build ...</div><div><br></div><=
+div>I&#39;m pretty sure it&#39;s possible to custom the recipe using variab=
+les...</div><div>Thank for your help</div><div><br></div><div>Best</div></d=
+iv>
+</blockquote></div></div></div></blockquote></div></div></div>
+------=_Part_6098_1707589777.1518278942962--
+
+------=_Part_6097_1267629095.1518278942962--

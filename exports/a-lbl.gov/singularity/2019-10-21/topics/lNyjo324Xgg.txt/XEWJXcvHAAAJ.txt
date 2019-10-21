@@ -1,0 +1,317 @@
+Date: Fri, 8 Dec 2017 00:48:53 -0800 (PST)
+From: Laurent Fournier <ma...@laurent-fournier.be>
+To: singularity <singu...@lbl.gov>
+Message-Id: <bbbc14fc-c487-4ae9-89cc-0e09bcb6bcbe@lbl.gov>
+Subject: How to use %setup
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_4740_1405298528.1512722933200"
+
+------=_Part_4740_1405298528.1512722933200
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_4741_1195178384.1512722933201"
+
+------=_Part_4741_1195178384.1512722933201
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi everyone,
+
+I am trying to get how, like this topic's title says, the %setup inside 
+recipe files.
+But... i hit our so-loved RETVAL
+
+...
++ mkdir /usr/local/var/singularity/mnt/container/temp/
++ tar xfz biofilter-2.4.1.tar.gz 
+/usr/local/var/singularity/mnt/container/temp/
+tar: /usr/local/var/singularity/mnt/container/temp: Not found in archive
+tar: Exiting with failure status due to previous errors
+ABORT: Aborting with RETVAL=255
+
+What did i do wrong ? (I successfully created the tmp directory but it 
+isn't there...Singularity, so we should expect quantum physics ? Hahah..)
+Here's my recipe :
+
+#!/bin/bash 
+# 
+# Tru Huynh <t...@pasteur.fr> 
+# 2017-12-01: initial version 
+# use as baseline to build a container from miniconda 
+# added bioconda + conda-forge from Laurent Fournier <l...@uliege.be> 
+# added biofilter from Laurent Fournier <l...@uliege.be>
+
+BootStrap: docker
+From: continuumio/miniconda 
+
+%runscript
+        export PATH=/opt/conda/bin:${PATH}
+        /bin/bash
+
+%environment
+        export PATH=/opt/conda/bin:${PATH}
+        unset CONDA_DEFAULT_ENV 
+        export ANACONDA_HOME=/opt/conda
+
+%setup
+        apt install -y python-apsw python2.7 sqlite3
+        #
+        mkdir ${SINGULARITY_ROOTFS}/temp/
+        tar xfz biofilter-2.4.1.tar.gz ${SINGULARITY_ROOTFS}/temp/
+        cd ${SINGULARITY_ROOTFS}/temp/
+        #
+        python setup.py install --prefix=${SINGULARITY_ROOTFS}/biofilter/ --
+ldprofile
+        python loki-build.py --verbose --knowledge loki.db --update
+        #
+        rm -rf ${SINGULARITY_ROOTFS}/temp/
+
+%post
+        echo "nameserver 139.165.214.214" | tee /etc/resolv.conf > /dev/null
+        # 
+        export PATH=/opt/conda/bin:${PATH}
+        conda update -y conda
+        conda update --all 
+        # 
+        conda config --add channels bioconda
+        conda config --add channels conda-forge
+        conda clean --index-cache --tarballs --packages --yes 
+        #
+        conda list > /conda.txt
+        touch /`date -u -Iseconds`
+        #
+
+%labels
+        MAINTAINER laurent_fournier
+
+Regards,
+Laurent.
+
+------=_Part_4741_1195178384.1512722933201
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi everyone,<div><br></div><div>I am trying to get how, li=
+ke this topic&#39;s title says, the %setup inside recipe files.</div><div>B=
+ut... i hit our so-loved RETVAL</div><div><br></div><div><div class=3D"pret=
+typrint" style=3D"background-color: rgb(250, 250, 250); border-color: rgb(1=
+87, 187, 187); border-style: solid; border-width: 1px; word-wrap: break-wor=
+d;"><code class=3D"prettyprint"><div class=3D"subprettyprint"><div class=3D=
+"subprettyprint">...<br>+ mkdir /usr/local/var/singularity/mnt/container/te=
+mp/</div><div class=3D"subprettyprint">+ tar xfz biofilter-2.4.1.tar.gz /us=
+r/local/var/singularity/mnt/container/temp/</div><div class=3D"subprettypri=
+nt">tar: /usr/local/var/singularity/mnt/container/temp: Not found in archiv=
+e</div><div class=3D"subprettyprint">tar: Exiting with failure status due t=
+o previous errors</div><div class=3D"subprettyprint">ABORT: Aborting with R=
+ETVAL=3D255</div></div></code></div><br>What did i do wrong ? (I successful=
+ly created the tmp directory but it isn&#39;t there...Singularity, so we sh=
+ould expect quantum physics ? Hahah..)</div><div>Here&#39;s my recipe :</di=
+v><div><br></div><div><div class=3D"prettyprint" style=3D"background-color:=
+ rgb(250, 250, 250); border-color: rgb(187, 187, 187); border-style: solid;=
+ border-width: 1px; word-wrap: break-word;"><code class=3D"prettyprint"><di=
+v class=3D"subprettyprint"><span style=3D"color: #800;" class=3D"styled-by-=
+prettify">#!/bin/bash </span><span style=3D"color: #000;" class=3D"styled-b=
+y-prettify"><br></span><span style=3D"color: #800;" class=3D"styled-by-pret=
+tify"># </span><span style=3D"color: #000;" class=3D"styled-by-prettify"><b=
+r></span><span style=3D"color: #800;" class=3D"styled-by-prettify"># Tru Hu=
+ynh &lt...@pasteur.fr&gt; </span><span style=3D"color: #000;" class=3D"styl=
+ed-by-prettify"><br></span><span style=3D"color: #800;" class=3D"styled-by-=
+prettify"># 2017-12-01: initial version </span><span style=3D"color: #000;"=
+ class=3D"styled-by-prettify"><br></span><span style=3D"color: #800;" class=
+=3D"styled-by-prettify"># use as baseline to build a container from minicon=
+da </span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br></s=
+pan><span style=3D"color: #800;" class=3D"styled-by-prettify"># added bioco=
+nda + conda-forge from Laurent Fournier &lt...@uliege.be&gt; </span><span s=
+tyle=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span style=
+=3D"color: #800;" class=3D"styled-by-prettify"># added biofilter from Laure=
+nt Fournier &lt...@uliege.be&gt;</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"><br><br></span><span style=3D"color: #606;" class=
+=3D"styled-by-prettify">BootStrap</span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">:</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify"> docker<br></span><span style=3D"color: #606;" class=3D"styl=
+ed-by-prettify">From</span><span style=3D"color: #660;" class=3D"styled-by-=
+prettify">:</span><span style=3D"color: #000;" class=3D"styled-by-prettify"=
+> continuumio</span><span style=3D"color: #660;" class=3D"styled-by-prettif=
+y">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">minico=
+nda <br><br></span><span style=3D"color: #660;" class=3D"styled-by-prettify=
+">%</span><span style=3D"color: #000;" class=3D"styled-by-prettify">runscri=
+pt<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 </span><span style=3D"color: #008;" class=
+=3D"styled-by-prettify">export</span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify"> PATH</span><span style=3D"color: #660;" class=3D"style=
+d-by-prettify">=3D</span><span style=3D"color: #080;" class=3D"styled-by-pr=
+ettify">/opt/</span><span style=3D"color: #000;" class=3D"styled-by-prettif=
+y">conda</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/<=
+/span><span style=3D"color: #000;" class=3D"styled-by-prettify">bin</span><=
+span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify">$</span><span style=3D"colo=
+r: #660;" class=3D"styled-by-prettify">{</span><span style=3D"color: #000;"=
+ class=3D"styled-by-prettify">PATH</span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">}</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 </span><span style=3D"color:=
+ #660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" c=
+lass=3D"styled-by-prettify">bin</span><span style=3D"color: #660;" class=3D=
+"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"styled-b=
+y-prettify">bash<br><br></span><span style=3D"color: #660;" class=3D"styled=
+-by-prettify">%</span><span style=3D"color: #000;" class=3D"styled-by-prett=
+ify">environment<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 </span><span style=3D"color=
+: #008;" class=3D"styled-by-prettify">export</span><span style=3D"color: #0=
+00;" class=3D"styled-by-prettify"> PATH</span><span style=3D"color: #660;" =
+class=3D"styled-by-prettify">=3D</span><span style=3D"color: #080;" class=
+=3D"styled-by-prettify">/opt/</span><span style=3D"color: #000;" class=3D"s=
+tyled-by-prettify">conda</span><span style=3D"color: #660;" class=3D"styled=
+-by-prettify">/</span><span style=3D"color: #000;" class=3D"styled-by-prett=
+ify">bin</span><span style=3D"color: #660;" class=3D"styled-by-prettify">:<=
+/span><span style=3D"color: #000;" class=3D"styled-by-prettify">$</span><sp=
+an style=3D"color: #660;" class=3D"styled-by-prettify">{</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify">PATH</span><span style=3D"co=
+lor: #660;" class=3D"styled-by-prettify">}</span><span style=3D"color: #000=
+;" class=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 unset CONDA=
+_DEFAULT_ENV <br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 </span><span style=3D"color: #=
+008;" class=3D"styled-by-prettify">export</span><span style=3D"color: #000;=
+" class=3D"styled-by-prettify"> ANACONDA_HOME</span><span style=3D"color: #=
+660;" class=3D"styled-by-prettify">=3D</span><span style=3D"color: #080;" c=
+lass=3D"styled-by-prettify">/opt/</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">conda<br><br></span><span style=3D"color: #660;" cl=
+ass=3D"styled-by-prettify">%</span><span style=3D"color: #000;" class=3D"st=
+yled-by-prettify">setup<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 apt install </span><=
+span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify">y python</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify">apsw python2</span><span style=3D"col=
+or: #660;" class=3D"styled-by-prettify">.</span><span style=3D"color: #066;=
+" class=3D"styled-by-prettify">7</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> sqlite3<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 </span><spa=
+n style=3D"color: #800;" class=3D"styled-by-prettify">#</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 mkdir $</span><span style=3D"color: #660;" class=3D"styled-by-prettify"=
+>{</span><span style=3D"color: #000;" class=3D"styled-by-prettify">SINGULAR=
+ITY_ROOTFS</span><span style=3D"color: #660;" class=3D"styled-by-prettify">=
+}/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">temp</sp=
+an><span style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span =
+style=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 tar xfz biofilter</span><span style=3D"color: #660;" class=3D"st=
+yled-by-prettify">-</span><span style=3D"color: #066;" class=3D"styled-by-p=
+rettify">2.4</span><span style=3D"color: #660;" class=3D"styled-by-prettify=
+">.</span><span style=3D"color: #066;" class=3D"styled-by-prettify">1.tar</=
+span><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><spa=
+n style=3D"color: #000;" class=3D"styled-by-prettify">gz $</span><span styl=
+e=3D"color: #660;" class=3D"styled-by-prettify">{</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify">SINGULARITY_ROOTFS</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">}/</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify">temp</span><span style=3D"color: #66=
+0;" class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 cd $</span><span st=
+yle=3D"color: #660;" class=3D"styled-by-prettify">{</span><span style=3D"co=
+lor: #000;" class=3D"styled-by-prettify">SINGULARITY_ROOTFS</span><span sty=
+le=3D"color: #660;" class=3D"styled-by-prettify">}/</span><span style=3D"co=
+lor: #000;" class=3D"styled-by-prettify">temp</span><span style=3D"color: #=
+660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" cla=
+ss=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 </span><span styl=
+e=3D"color: #800;" class=3D"styled-by-prettify">#</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 pyth=
+on setup</span><span style=3D"color: #660;" class=3D"styled-by-prettify">.<=
+/span><span style=3D"color: #000;" class=3D"styled-by-prettify">py install =
+</span><span style=3D"color: #660;" class=3D"styled-by-prettify">--</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify">prefix</span><span=
+ style=3D"color: #660;" class=3D"styled-by-prettify">=3D</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify">$</span><span style=3D"color=
+: #660;" class=3D"styled-by-prettify">{</span><span style=3D"color: #000;" =
+class=3D"styled-by-prettify">SINGULARITY_ROOTFS</span><span style=3D"color:=
+ #660;" class=3D"styled-by-prettify">}/</span><span style=3D"color: #000;" =
+class=3D"styled-by-prettify">biofilter</span><span style=3D"color: #660;" c=
+lass=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"s=
+tyled-by-prettify"> </span><span style=3D"color: #660;" class=3D"styled-by-=
+prettify">--</span><span style=3D"color: #000;" class=3D"styled-by-prettify=
+">ldprofile<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 python loki</span><span style=3D=
+"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify">build</span><span style=3D"color: #660;"=
+ class=3D"styled-by-prettify">.</span><span style=3D"color: #000;" class=3D=
+"styled-by-prettify">py </span><span style=3D"color: #660;" class=3D"styled=
+-by-prettify">--</span><span style=3D"color: #000;" class=3D"styled-by-pret=
+tify">verbose </span><span style=3D"color: #660;" class=3D"styled-by-pretti=
+fy">--</span><span style=3D"color: #000;" class=3D"styled-by-prettify">know=
+ledge loki</span><span style=3D"color: #660;" class=3D"styled-by-prettify">=
+.</span><span style=3D"color: #000;" class=3D"styled-by-prettify">db </span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">--</span><span s=
+tyle=3D"color: #000;" class=3D"styled-by-prettify">update<br>=C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 </span><span style=3D"color: #800;" class=3D"styled-by-pretti=
+fy">#</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br>=
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 rm </span><span style=3D"color: #660;" class=3D=
+"styled-by-prettify">-</span><span style=3D"color: #000;" class=3D"styled-b=
+y-prettify">rf $</span><span style=3D"color: #660;" class=3D"styled-by-pret=
+tify">{</span><span style=3D"color: #000;" class=3D"styled-by-prettify">SIN=
+GULARITY_ROOTFS</span><span style=3D"color: #660;" class=3D"styled-by-prett=
+ify">}/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">tem=
+p</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify"><br><br></span><sp=
+an style=3D"color: #660;" class=3D"styled-by-prettify">%</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify">post<br>=C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 echo </span><span style=3D"color: #080;" class=3D"styled-by-prettif=
+y">&quot;nameserver 139.165.214.214&quot;</span><span style=3D"color: #000;=
+" class=3D"styled-by-prettify"> </span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">|</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify"> tee </span><span style=3D"color: #660;" class=3D"styled-by-=
+prettify">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify"=
+>etc</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify">resolv</span><s=
+pan style=3D"color: #660;" class=3D"styled-by-prettify">.</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify">conf </span><span style=3D"c=
+olor: #660;" class=3D"styled-by-prettify">&gt;</span><span style=3D"color: =
+#000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #080;" cl=
+ass=3D"styled-by-prettify">/dev/</span><span style=3D"color: #008;" class=
+=3D"styled-by-prettify">null</span><span style=3D"color: #000;" class=3D"st=
+yled-by-prettify"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 </span><span style=3D"col=
+or: #800;" class=3D"styled-by-prettify"># </span><span style=3D"color: #000=
+;" class=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 </span><spa=
+n style=3D"color: #008;" class=3D"styled-by-prettify">export</span><span st=
+yle=3D"color: #000;" class=3D"styled-by-prettify"> PATH</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">=3D</span><span style=3D"col=
+or: #080;" class=3D"styled-by-prettify">/opt/</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify">conda</span><span style=3D"color: #660;"=
+ class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D=
+"styled-by-prettify">bin</span><span style=3D"color: #660;" class=3D"styled=
+-by-prettify">:</span><span style=3D"color: #000;" class=3D"styled-by-prett=
+ify">$</span><span style=3D"color: #660;" class=3D"styled-by-prettify">{</s=
+pan><span style=3D"color: #000;" class=3D"styled-by-prettify">PATH</span><s=
+pan style=3D"color: #660;" class=3D"styled-by-prettify">}</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 conda update </span><span style=3D"color: #660;" class=3D"styled-by-pre=
+ttify">-</span><span style=3D"color: #000;" class=3D"styled-by-prettify">y =
+conda<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 conda update </span><span style=3D"col=
+or: #660;" class=3D"styled-by-prettify">--</span><span style=3D"color: #000=
+;" class=3D"styled-by-prettify">all <br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 </span>=
+<span style=3D"color: #800;" class=3D"styled-by-prettify"># </span><span st=
+yle=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 conda config </span><span style=3D"color: #660;" class=3D"styled-by-=
+prettify">--</span><span style=3D"color: #000;" class=3D"styled-by-prettify=
+">add channels bioconda<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 conda config </span>=
+<span style=3D"color: #660;" class=3D"styled-by-prettify">--</span><span st=
+yle=3D"color: #000;" class=3D"styled-by-prettify">add channels conda</span>=
+<span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span sty=
+le=3D"color: #000;" class=3D"styled-by-prettify">forge<br>=C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 conda clean </span><span style=3D"color: #660;" class=3D"styled-=
+by-prettify">--</span><span style=3D"color: #000;" class=3D"styled-by-prett=
+ify">index</span><span style=3D"color: #660;" class=3D"styled-by-prettify">=
+-</span><span style=3D"color: #000;" class=3D"styled-by-prettify">cache </s=
+pan><span style=3D"color: #660;" class=3D"styled-by-prettify">--</span><spa=
+n style=3D"color: #000;" class=3D"styled-by-prettify">tarballs </span><span=
+ style=3D"color: #660;" class=3D"styled-by-prettify">--</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify">packages </span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">--</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify">yes <br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+</span><span style=3D"color: #800;" class=3D"styled-by-prettify">#</span><s=
+pan style=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 conda list </span><span style=3D"color: #660;" class=3D"style=
+d-by-prettify">&gt;</span><span style=3D"color: #000;" class=3D"styled-by-p=
+rettify"> </span><span style=3D"color: #080;" class=3D"styled-by-prettify">=
+/conda.txt<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 touch /`date -u -Iseconds`</span>=
+<span style=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 </span><span style=3D"color: #800;" class=3D"styled-by-prett=
+ify">#</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br>=
+<br></span><span style=3D"color: #660;" class=3D"styled-by-prettify">%</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify">labels<br>=C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 MAINTAINER laurent_fournier</span></div></code></d=
+iv><div><br></div></div><div>Regards,</div><div>Laurent.</div></div>
+------=_Part_4741_1195178384.1512722933201--
+
+------=_Part_4740_1405298528.1512722933200--

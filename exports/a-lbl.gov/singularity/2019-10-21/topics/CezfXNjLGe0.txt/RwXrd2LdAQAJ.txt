@@ -1,0 +1,191 @@
+Date: Sat, 8 Oct 2016 21:05:27 -0700 (PDT)
+From: Jianxiong Dong <jdong...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <f0e683cc-7b0e-4dba-ae18-95b5412924f8@lbl.gov>
+In-Reply-To: <404f9dca-6150-4719-be05-b6024e037d19@lbl.gov>
+References: <02b27dd5-dcc4-4800-97f6-7dcfcc85afd8@lbl.gov> <CAA8GL6Bsyt5oHK8O9GrDS6F=USv-aP0K9a+m8Q+jfOJ8kpxrhA@mail.gmail.com>
+ <CAA8GL6DP3KhfbWV7nK5JGxNn4S+=M0=vEV0mACsoRrd6Ag2GpQ@mail.gmail.com>
+ <718cb7c4-524f-4b08-bde9-3a36013fba59@lbl.gov> <4e52c56a-5475-4075-a3c7-2ae22191b544@lbl.gov>
+ <CAA8GL6BdE1TRBaPD-oM7qcj8QK1cBsmJsUzYyrvkRPBP9CX+hQ@mail.gmail.com>
+ <CAMfmYehdPLtiouQqMGqOx4ZbEXFbbPRL5QOxsP_vQo0us1QLuA@mail.gmail.com>
+ <B927B7F6-3CFB-452D-92AB-866F9B8024E4@gmail.com> <CAMfmYeiSvcReO4jvSGJkavnex64wGZ8Phxva2kAxJ7pcp48YiA@mail.gmail.com>
+ <CAMfmYeiaTxVQSNqwprHe5ckcDHPcJXy3imdepiRL+KkDh12TCQ@mail.gmail.com>
+ <65CD778F-6CD1-4DB4-9668-4D89839B7053@gmail.com> <CAMfmYeg_pnJcyKGetK7WVChToaWCgGYH-nrYY9v=2+RSkuWZuQ@mail.gmail.com>
+ <C5AE54CB-2BA1-4E59-88FC-D20224A46086@gmail.com> <CAMfmYeg2rR9-U-zyviCeDXRt_QgKv_K0p9pf-+qgoGPQAjxjXA@mail.gmail.com>
+ <95039222-908B-4AE8-8844-551646C9733C@gmail.com> <CAMfmYeh9m_Z7N5KQy5f5ocumCrG7bX33OjpsT4jh9KgOekWcWg@mail.gmail.com>
+ <CAMfmYegA2BbQ6V-ZmUDRgm35GSoBXiMh82K7bAhZLvynGce7Cw@mail.gmail.com>
+ <CAMfmYeg=OkyMa5_b5K30==3ww_sS1ONeA7oaNO-gU8B=yRnmUg@mail.gmail.com>
+ <68d76dc9-db97-406a-acc8-41fa057d2cbe@lbl.gov> <6EC1A210-1B0D-482C-A1D4-95B08047D3CD@gmail.com>
+ <a4e01874-db59-43fa-8c26-7dcbe41c2264@lbl.gov>
+ <CAM=pu+JvEF_qGwb1ELw7E1sTsAz6skmGmZ7DB8A6LWQsT5NZiQ@mail.gmail.com>
+ <404f9dca-6150-4719-be05-b6024e037d19@lbl.gov>
+Subject: Re: [Singularity] How to use GPU in singularity?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_4720_1135613212.1475985927625"
+
+------=_Part_4720_1135613212.1475985927625
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_4721_922843002.1475985927626"
+
+------=_Part_4721_922843002.1475985927626
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi, Venessa,
+     I found a solution and updated it 
+in https://github.com/jdongca2003/Tensorflow-singularity-container-with-GPU-support.
+
+The trick is to bind the current folder into /mnt inside the container 
+based on '-B'
+
+sudo singularity exec -B `pwd`:/mnt -w ubuntu_tensorflow_GPU.img sh 
+/mnt/tensorflow.sh
+
+The downside is that I need to use /mnt in the path.
+
+tensorflow.sh
+-----
+driver_version=352.93 sh /mnt/NVIDIA-Linux-x86_64-$driver_version.run -x 
+Maybe Greg can provide the best practice to do it. Thanks Jianxiong
+
+On Saturday, October 8, 2016 at 6:12:58 PM UTC-7, Jianxiong Dong wrote:
+>
+> Hi, Venessa,
+>      > Just out of curiosity - did you try generating from the tensorflow 
+> gpu docker image?
+> No.  The idea is simple: first build ubuntu contain base image and then 
+> install nvidia driver/tensorflow binary packages to update the image.
+>
+> build.sh
+> ======
+> rm -f ubuntu_tensorflow_GPU.img
+> singularity create ubuntu_tensorflow_GPU.img
+> singularity expand --size 5000 ubuntu_tensorflow_GPU.img
+> singularity bootstrap ubuntu_tensorflow_GPU.img ubuntu.def
+>
+> #install nvidia GPU driver/cuda/cudnn/tensorflow
+> singularity exec -w ubuntu_tensorflow_GPU.img sh ./tensorflow.sh
+>
+> tensorflow.sh
+> ---------
+> driver_version=352.93
+> sh NVIDIA-Linux-x86_64-$driver_version.run -x
+> mv NVIDIA-Linux-x86_64-$driver_version /usr/local/
+> sh links.sh $driver_version
+>
+> sh ./cuda_7.5.18_linux.run --toolkit --silent
+> tar xvf ./cudnn-7.5-linux-x64-v5.1.tgz -C /usr/local
+>
+> driver_path=/usr/local/NVIDIA-Linux-x86_64-$driver_version
+> echo "LD_LIBRARY_PATH=/usr/local/cuda/lib64:$driver_path:$LD_LIBRARY_PATH" 
+> >> /environment
+> echo "PATH=$driver_path:\$PATH" >> /environment
+> echo "export PATH LD_LIBRARY_PATH" >> /environment
+>
+> pip install --upgrade pip
+> pip install matplotlib
+> pip install --upgrade 
+> https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow-0.10.0-cp27-none-linux_x86_64.whl
+>
+>
+> > What I would do (and this might be silly, but it's worth a go) is to 
+> clone your repo in the %post section, and move the files to where you need 
+> them in the image
+> Thank for your suggestion. I will try it.
+>
+> Jianxiong
+>
+>
+------=_Part_4721_922843002.1475985927626
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Hi, Venessa,</div><div>=C2=A0 =C2=A0 =C2=A0I found a =
+solution and updated it in=C2=A0https://github.com/jdongca2003/Tensorflow-s=
+ingularity-container-with-GPU-support.</div><div><br></div><div>The trick i=
+s to bind the current folder into /mnt inside the container based on &#39;-=
+B&#39;</div><div><br></div><div><span style=3D"color: rgb(51, 51, 51); font=
+-family: Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace; =
+font-size: 12px; white-space: pre;">sudo singularity </span><span class=3D"=
+pl-c1" style=3D"box-sizing: border-box; color: rgb(0, 134, 179); font-famil=
+y: Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace; font-s=
+ize: 12px; white-space: pre;">exec</span><span style=3D"color: rgb(51, 51, =
+51); font-family: Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, mo=
+nospace; font-size: 12px; white-space: pre;"> -B </span><span class=3D"pl-s=
+" style=3D"box-sizing: border-box; color: rgb(24, 54, 145); font-family: Co=
+nsolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace; font-size: =
+12px; white-space: pre;"><span class=3D"pl-pds" style=3D"box-sizing: border=
+-box;">`</span><span class=3D"pl-c1" style=3D"box-sizing: border-box; color=
+: rgb(0, 134, 179);">pwd</span><span class=3D"pl-pds" style=3D"box-sizing: =
+border-box;">`</span></span><span style=3D"color: rgb(51, 51, 51); font-fam=
+ily: Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace; font=
+-size: 12px; white-space: pre;">:/mnt -w ubuntu_tensorflow_GPU.img sh /mnt/=
+tensorflow.sh</span><br></div><div><span style=3D"color: rgb(51, 51, 51); f=
+ont-family: Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospac=
+e; font-size: 12px; white-space: pre;"><br></span></div><div><span style=3D=
+"color: rgb(51, 51, 51); font-family: Consolas, &quot;Liberation Mono&quot;=
+, Menlo, Courier, monospace; font-size: 12px; white-space: pre;">The downsi=
+de is that I need to use /mnt in the path.</span></div><div><span style=3D"=
+color: rgb(51, 51, 51); font-family: Consolas, &quot;Liberation Mono&quot;,=
+ Menlo, Courier, monospace; font-size: 12px; white-space: pre;"><br></span>=
+</div><div><span style=3D"color: rgb(51, 51, 51); font-family: Consolas, &q=
+uot;Liberation Mono&quot;, Menlo, Courier, monospace; font-size: 12px; whit=
+e-space: pre;">tensorflow.sh</span></div><div><span style=3D"color: rgb(51,=
+ 51, 51); font-family: Consolas, &quot;Liberation Mono&quot;, Menlo, Courie=
+r, monospace; font-size: 12px; white-space: pre;">-----</span></div><div><t=
+able class=3D"highlight tab-size js-file-line-container" data-tab-size=3D"8=
+" style=3D"box-sizing: border-box; border-collapse: collapse; tab-size: 8; =
+color: rgb(51, 51, 51); font-family: -apple-system, BlinkMacSystemFont, &qu=
+ot;Segoe UI&quot;, Helvetica, Arial, sans-serif, &quot;Apple Color Emoji&qu=
+ot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;; font-size: 14=
+px;"><tbody style=3D"box-sizing: border-box;"><tr style=3D"box-sizing: bord=
+er-box;"><td id=3D"LC1" class=3D"blob-code blob-code-inner js-file-line" st=
+yle=3D"box-sizing: border-box; padding-right: 10px; padding-left: 10px; pos=
+ition: relative; line-height: 20px; vertical-align: top; overflow: visible;=
+ font-family: Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monosp=
+ace; font-size: 12px; word-wrap: normal; white-space: pre;">driver_version=
+=3D352.93
+sh /mnt/NVIDIA-Linux-x86_64-$driver_version.run -x
+
+Maybe Greg can provide the best practice to do it.
+
+Thanks
+
+Jianxiong</td></tr></tbody></table></div><br>On Saturday, October 8, 2016 a=
+t 6:12:58 PM UTC-7, Jianxiong Dong wrote:<blockquote class=3D"gmail_quote" =
+style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-l=
+eft: 1ex;">Hi, Venessa,<br>=C2=A0 =C2=A0 =C2=A0&gt; Just out of curiosity -=
+ did you try generating from the tensorflow gpu docker image?<br>No. =C2=A0=
+The idea is simple: first build ubuntu contain base image and then install =
+nvidia driver/tensorflow binary packages to update the image.<p>build.sh<br=
+>=3D=3D=3D=3D=3D=3D<br>rm -f ubuntu_tensorflow_GPU.img<br>singularity creat=
+e ubuntu_tensorflow_GPU.img<br>singularity expand --size 5000 ubuntu_tensor=
+flow_GPU.img<br>singularity bootstrap ubuntu_tensorflow_GPU.img ubuntu.def<=
+/p><p>#install nvidia GPU driver/cuda/cudnn/tensorflow<br>singularity exec =
+-w ubuntu_tensorflow_GPU.img sh ./tensorflow.sh</p><p>tensorflow.sh<br>----=
+-----<br>driver_version=3D352.93<br>sh NVIDIA-Linux-x86_64-$driver_<wbr>ver=
+sion.run -x<br>mv NVIDIA-Linux-x86_64-$driver_<wbr>version /usr/local/<br>s=
+h links.sh $driver_version</p><p>sh ./cuda_7.5.18_linux.run --toolkit --sil=
+ent<br>tar xvf ./cudnn-7.5-linux-x64-v5.1.tgz -C /usr/local</p><p>driver_pa=
+th=3D/usr/local/NVIDIA-<wbr>Linux-x86_64-$driver_version<br>echo &quot;LD_L=
+IBRARY_PATH=3D/usr/local/<wbr>cuda/lib64:$driver_path:$LD_<wbr>LIBRARY_PATH=
+&quot; &gt;&gt; /environment<br>echo &quot;PATH=3D$driver_path:\$PATH&quot;=
+ &gt;&gt; /environment<br>echo &quot;export PATH LD_LIBRARY_PATH&quot; &gt;=
+&gt; /environment</p><p>pip install --upgrade pip<br>pip install matplotlib=
+<br>pip install --upgrade <a href=3D"https://storage.googleapis.com/tensorf=
+low/linux/gpu/tensorflow-0.10.0-cp27-none-linux_x86_64.whl" target=3D"_blan=
+k" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://storage.googlea=
+pis.com/tensorflow/linux/gpu/tensorflow-0.10.0-cp27-none-linux_x86_64.whl&#=
+39;;return true;" onclick=3D"this.href=3D&#39;https://storage.googleapis.co=
+m/tensorflow/linux/gpu/tensorflow-0.10.0-cp27-none-linux_x86_64.whl&#39;;re=
+turn true;">https://storage.googleapis.<wbr>com/tensorflow/linux/gpu/<wbr>t=
+ensorflow-0.10.0-cp27-none-<wbr>linux_x86_64.whl</a></p><p><br>&gt; What I =
+would do (and this might be silly, but it&#39;s worth a go) is to clone you=
+r repo in the %post section, and move the files to where you need them in t=
+he image<br>Thank for your suggestion. I will try it.</p><p>Jianxiong</p><p=
+></p><p></p><p></p><p></p><p></p><p></p><p></p><p></p><p></p><p></p><p></p>=
+<p></p><p></p></blockquote></div>
+------=_Part_4721_922843002.1475985927626--
+
+------=_Part_4720_1135613212.1475985927625--

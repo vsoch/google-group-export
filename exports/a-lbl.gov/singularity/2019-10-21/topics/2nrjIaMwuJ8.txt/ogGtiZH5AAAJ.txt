@@ -1,0 +1,293 @@
+X-Received: by 10.107.17.163 with SMTP id 35mr3372731ior.98.1488409966086;
+        Wed, 01 Mar 2017 15:12:46 -0800 (PST)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.107.11.222 with SMTP id 91ls1610091iol.41.gmail; Wed, 01 Mar
+ 2017 15:12:45 -0800 (PST)
+X-Received: by 10.98.63.140 with SMTP id z12mr12016627pfj.129.1488409965397;
+        Wed, 01 Mar 2017 15:12:45 -0800 (PST)
+Return-Path: <gmku...@lbl.gov>
+Received: from fe3.lbl.gov (fe3.lbl.gov. [128.3.41.68])
+        by mx.google.com with ESMTP id e70si5797560pfh.212.2017.03.01.15.12.45
+        for <singu...@lbl.gov>;
+        Wed, 01 Mar 2017 15:12:45 -0800 (PST)
+Received-SPF: pass (google.com: domain of gmku...@lbl.gov designates 209.85.161.200 as permitted sender) client-ip=209.85.161.200;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of gmku...@lbl.gov designates 209.85.161.200 as permitted sender) smtp.mailfrom=gmku...@lbl.gov
+X-Ironport-SBRS: 3.4
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2FgAADlVLdYhsihVdFdHQEFAQsBGAEFAQsBgkOBQ3gRB4NOCIoIkWWCZI0lhSyBShsoHwEMgkCDNgKCMgc/GAEBAQEBAQEBAQEBAhABAQEICwsKHS+CMwQCAxkFBAQ9CgMvAQEBAQEBAQEBAQEBAQEBGgINMQMpAQEBAwEjKzALCwsNKgICIg8DAQUBHAYIBwQBGgIEiVAIBQmlHj+MA4ImK4poAQEBAQYBAQEBASMSiiCBCYJ2gTARAYMigl8FiR6HNoUfhjUBhnSLPYJOgQmNR5FuFB6BFQ8QgQIwCBkKN2QFg3pKgg4fNQeHPUeBZwEBAQ
+X-IronPort-AV: E=Sophos;i="5.35,227,1484035200"; 
+   d="scan'208,217";a="66288050"
+Received: from mail-yw0-f200.google.com ([209.85.161.200])
+  by fe3.lbl.gov with ESMTP; 01 Mar 2017 15:12:43 -0800
+Received: by mail-yw0-f200.google.com with SMTP id s15so95798639ywg.4
+        for <singu...@lbl.gov>; Wed, 01 Mar 2017 15:12:43 -0800 (PST)
+X-Gm-Message-State: AMke39lioq8vf/Vi26XmW/DvXgOlyOVVeztR2qBo0uyw8hcfiPLNNl2aeM4Mb404dbDIxMtlJXU+qLc40IVw/8fN46gM7ce8ad4waHMTNCq3I59MwC7ODg3dwlCapTGLHSIFlwGSSo8NOhrCWlIPPrMwbI0=
+X-Received: by 10.129.68.26 with SMTP id r26mr3326663ywa.164.1488409962813;
+        Wed, 01 Mar 2017 15:12:42 -0800 (PST)
+X-Received: by 10.129.68.26 with SMTP id r26mr3326659ywa.164.1488409962495;
+ Wed, 01 Mar 2017 15:12:42 -0800 (PST)
+MIME-Version: 1.0
+Received: by 10.129.110.69 with HTTP; Wed, 1 Mar 2017 15:12:42 -0800 (PST)
+In-Reply-To: <101f5d04-2933-393c-d27a-7274d014404f@microway.com>
+References: <54cc2731-b5b5-4e54-98a0-2c00fa5f9a78@lbl.gov> <101f5d04-2933-393c-d27a-7274d014404f@microway.com>
+From: "Gregory M. Kurtzer" <gmku...@lbl.gov>
+Date: Wed, 1 Mar 2017 15:12:42 -0800
+Message-ID: <CAN7etTyomJjbvBHmTPpJwV7wxLavd-H_=xydPr+8kuE+Ke9B-Q@mail.gmail.com>
+Subject: Re: [Singularity] GPU Neural simulations in Singularity using Neurokernel
+To: singularity <singu...@lbl.gov>
+Content-Type: multipart/alternative; boundary=f403045eb55c1853210549b37341
+
+--f403045eb55c1853210549b37341
+Content-Type: text/plain; charset=UTF-8
+
+We have been working with some Nvidia engineers to figure out the best path
+forward here and we are planning on including a Singularity module to
+handle this natively. In a nutshell, the solution as I see it will look
+like:
+
+1. look for Nvidia libraries on the host in a given set of standard
+locations
+2. If they exist, bind them inside of the container
+3. Make sure that these libraries will be found and taken priority by the
+linker
+
+This will ensure that the libraries on the host, that match the host's
+kernel modules, will be available within the applications within the
+container automatically.
+
+Greg
+
+On Wed, Mar 1, 2017 at 12:25 PM, Eliot Eshelman <el...@microway.com> wrote:
+
+> The biggest problem with portability of GPU-accelerated Singularity is the
+> reliance on specific versions of the NVIDIA driver. Docker was in a similar
+> position a year or so ago, which is why NVIDIA created nvidia-docker. The
+> nvidia-docker tool is really just startup scripts which make the host's
+> NVIDIA driver files available to the container. Here's a peek into the
+> NVIDIA driver files and libraries that matter:
+>
+> https://github.com/NVIDIA/nvidia-docker/blob/master/src/
+> nvidia/volumes.go#L104
+>
+> I have been thinking about how to make an nvidia-singularity tool, but
+> haven't written a single line of code yet. I'd be interested to hear if
+> anyone else is also looking to tackle this one?
+>
+> Eliot
+>
+>
+>
+>
+> On 03/01/2017 06:49 AM, 'Adam Tomkins' via singularity wrote:
+>
+> Hello,
+>
+>
+> I'm new to Singularity, and I have built a container for the NeuroKernel
+> <https://neurokernel.github.io/> neuron simulator.
+>
+>
+> It currently works locally, assuming you have CUDA installed correctly,
+> however it is quite large.
+>
+>
+> I am looking for any feedback on how to make it more portable, or usable
+> in general, with the aim of eventually moving it to our HPC clusters.
+>
+>
+> You can find it on github here
+> <https://github.com/AdamRTomkins/Neurokernel-singularity-container>
+>
+>
+> Thanks for the great software.
+>
+>
+> Adam
+>
+>
+>
+>
+>
+> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+>
+>
+> --
+> Eliot Eshelman
+> Microway, Inc.
+>
+> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+>
+
+
+
+-- 
+Gregory M. Kurtzer
+HPC Systems Architect and Technology Developer
+Lawrence Berkeley National Laboratory HPCS
+University of California Berkeley Research IT
+Singularity Linux Containers (http://singularity.lbl.gov/)
+Warewulf Cluster Management (http://warewulf.lbl.gov/)
+GitHub: https://github.com/gmkurtzer, Twitter: https://twitter.com/gmkurtzer
+
+--f403045eb55c1853210549b37341
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">We have been working with some Nvidia engineers to figure =
+out the best path forward here and we are planning on including a Singulari=
+ty module to handle this natively. In a nutshell, the solution as I see it =
+will look like:<div><br></div><div>1. look for Nvidia libraries on the host=
+ in a given set of standard locations</div><div>2. If they exist, bind them=
+ inside of the container</div><div>3. Make sure that these libraries will b=
+e found and taken priority by the linker</div><div><br></div><div>This will=
+ ensure that the libraries on the host, that match the host&#39;s kernel mo=
+dules, will be available within the applications within the container autom=
+atically.</div><div><br></div><div>Greg</div></div><div class=3D"gmail_extr=
+a"><br><div class=3D"gmail_quote">On Wed, Mar 1, 2017 at 12:25 PM, Eliot Es=
+helman <span dir=3D"ltr">&lt;<a href=3D"mailto:el...@microway.com" target=
+=3D"_blank">el...@microway.com</a>&gt;</span> wrote:<br><blockquote class=
+=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padd=
+ing-left:1ex">
+ =20
+   =20
+ =20
+  <div bgcolor=3D"#FFFFFF" text=3D"#000000">
+    <div class=3D"m_-7836276335815361282moz-cite-prefix">The biggest proble=
+m with portability of
+      GPU-accelerated Singularity is the reliance on specific versions
+      of the NVIDIA driver. Docker was in a similar position a year or
+      so ago, which is why NVIDIA created nvidia-docker. The
+      nvidia-docker tool is really just startup scripts which make the
+      host&#39;s NVIDIA driver files available to the container. Here&#39;s=
+ a
+      peek into the NVIDIA driver files and libraries that matter:<br>
+      <br>
+      <a href=3D"https://github.com/NVIDIA/nvidia-docker/blob/master/src/nv=
+idia/volumes.go#L104" target=3D"_blank">https://github.com/NVIDIA/<wbr>nvid=
+ia-docker/blob/master/src/<wbr>nvidia/volumes.go#L104</a><br>
+      <br>
+      I have been thinking about how to make an nvidia-singularity tool,
+      but haven&#39;t written a single line of code yet. I&#39;d be interes=
+ted
+      to hear if anyone else is also looking to tackle this one?<br>
+      <br>
+      Eliot<div><div class=3D"h5"><br>
+      <br>
+      <br>
+      <br>
+      On 03/01/2017 06:49 AM, &#39;Adam Tomkins&#39; via singularity wrote:=
+<br>
+    </div></div></div><div><div class=3D"h5">
+    <blockquote type=3D"cite">
+      <p><u></u>Hello,<u></u></p>
+      <p><u></u><br>
+        <u></u></p>
+      <u></u>
+        <p><u></u>I&#39;m new to Singularity, and I have built a
+            container for the <a href=3D"https://neurokernel.github.io/" ta=
+rget=3D"_blank">NeuroKernel</a>=C2=A0neuron
+            simulator.=C2=A0<u></u></p>
+        <u></u>
+          <p><u></u><br>
+            <u></u></p>
+          <u></u>
+            <p><u></u>It currently works locally, assuming you
+                have CUDA installed correctly, however it is quite
+                large.=C2=A0<u></u></p>
+            <u></u>
+              <p><u></u><br>
+                <u></u></p>
+              <u></u>
+                <p><u></u>I am looking for any feedback on how to
+                    make it more portable, or usable in general, with
+                    the aim of eventually moving it to our HPC clusters.<u>=
+</u></p>
+                <u></u>
+                  <p><u></u><br>
+                    <u></u></p>
+                  <u></u>
+                    <p><u></u>You can find it on github <a href=3D"https://=
+github.com/AdamRTomkins/Neurokernel-singularity-container" target=3D"_blank=
+">here</a><u></u></p>
+                    <u></u>
+                      <p><u></u><br>
+                        <u></u></p>
+                      <u></u>
+                        <p><u></u>Thanks for the great software.<u></u></p>
+                        <u></u>
+                          <p><u></u><br>
+                            <u></u></p>
+                          <u></u>
+                            <p><u></u>Adam<u></u></p>
+                            <u></u>
+                              <p><u></u><br>
+                                <u></u></p>
+                              <u></u>
+                                <p><u></u><br>
+                                  <u></u></p>
+                                <u></u>
+                                  <p><u></u><br>
+                                    <u></u></p>
+                                  <u></u>
+                                    <p><u></u><br>
+                                      <u></u></p>
+                                    <u></u><u></u>
+                                        -- <br>
+                                        You received this message
+                                        because you are subscribed to
+                                        the Google Groups &quot;singularity=
+&quot;
+                                        group.<br>
+                                        To unsubscribe from this group
+                                        and stop receiving emails from
+                                        it, send an email to <a href=3D"mai=
+lto:singu...@lbl.gov" target=3D"_blank">singularity+unsubscribe@lbl.<wbr>go=
+v</a>.<br>
+                                      <u></u><u></u><u></u><u></u><u></u><u=
+></u><u></u><u></u><u></u><u></u><u></u><u></u><u></u><u></u><u></u><u></u>=
+<u></u></blockquote>
+    <p><br>
+    </p>
+    </div></div><span class=3D"HOEnZb"><font color=3D"#888888"><div class=
+=3D"m_-7836276335815361282moz-signature">-- <br>
+      Eliot Eshelman<br>
+      Microway, Inc.
+    </div>
+  </font></span></div><div class=3D"HOEnZb"><div class=3D"h5">
+
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singularity+u=
+nsubscribe@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div class=3D"gmail_signature" data-smartmail=3D"gmail_signature"><div dir=
+=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr">=
+<div dir=3D"ltr"><div dir=3D"ltr"><div>Gregory M. Kurtzer</div><div>HPC Sys=
+tems Architect and Technology Developer</div><div>Lawrence Berkeley Nationa=
+l Laboratory HPCS<br>University of California Berkeley Research IT<br>Singu=
+larity Linux Containers=C2=A0(<a href=3D"http://singularity.lbl.gov/" targe=
+t=3D"_blank">http://singularity.lbl.gov/</a>)</div><div>Warewulf Cluster Ma=
+nagement=C2=A0(<a href=3D"http://warewulf.lbl.gov/" target=3D"_blank">http:=
+//warewulf.lbl.gov/</a>)</div><div>GitHub:=C2=A0<a href=3D"https://github.c=
+om/gmkurtzer" target=3D"_blank">https://github.com/gmkurtzer</a>,=C2=A0<spa=
+n style=3D"font-size:12.8px">Twitter:=C2=A0</span><a href=3D"https://twitte=
+r.com/gmkurtzer" style=3D"font-size:12.8px" target=3D"_blank">https://twitt=
+er.com/gmkurtzer</a></div></div></div></div></div></div></div></div></div><=
+/div></div>
+</div>
+
+--f403045eb55c1853210549b37341--

@@ -1,0 +1,370 @@
+Date: Mon, 16 Oct 2017 10:45:48 -0700 (PDT)
+From: sabbene <sab...@nvidia.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <e81d4865-c6c9-45cb-99ca-d43ed0482fe6@lbl.gov>
+Subject: Singularity Clearing supplementary GIDs preventing binds
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_24771_342809483.1508175948079"
+
+------=_Part_24771_342809483.1508175948079
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_24772_1744552690.1508175948080"
+
+------=_Part_24772_1744552690.1508175948080
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hello,
+
+I am seeing an issue where singularity is getting permission denied errors 
+when trying to bind to nfs paths that have restrictive permissions.  
+
+Lets use this tree and users for an example:
+
+
+$ ls -ld /home/scratch/
+drwxrwxrwx 39 user1 group1 192512 Oct 13 16:41 /home/scratch
+
+
+$ ls -ld /home/scratch/test
+drwxrwx--- 3 user1 group2 4096 Oct 13 16:41 /home/scratch/test
+
+
+$ ls -ld /home/scratch/test/test2
+drwxr-xr-x 2 user1 group1 4096 Oct 13 16:41 /home/scratch/test/test2
+
+
+$ id
+uid=789(user1) gid=123(group1) groups=123(group1),456(group2)
+
+
+
+When I use singularity to bind to /home/scratch or /home/scratch/test 
+everything works fine, but if I try to bind to /home/scratch/test/test2 i 
+get a permission denied error, even though the user1 user has access to the 
+dir.  From looking at the --debug output when I recieve this error it looks 
+like singularity drops all the user's groups but the primary one.  I have 
+highlighted the line in the output below in yellow that gives me that 
+impression.
+
+DEBUG   [U=9035,P=33839]   singularity_registry_get()                
+Returning value from registry: 'OVERLAYFS_ENABLED' = '1'
+VERBOSE [U=9035,P=33839]   singularity_runtime_mount_userbinds()     
+Creating bind directory on overlay file system: /home/test
+DEBUG   [U=9035,P=33839]   s_mkpath()                                
+Creating directory: /tmp/singularity-2.4/var/singularity/mnt/final/home/test
+DEBUG   [U=9035,P=33839]   singularity_priv_escalate()               
+Temporarily escalating privileges (U=9035)
+DEBUG   [U=0,P=33839]      singularity_priv_escalate()               
+Clearing supplementary GIDs.
+VERBOSE [U=0,P=33839]      singularity_runtime_mount_userbinds()     Binding 
+'/home/scratch/test/test2' to 
+'/tmp/singularity-2.4/var/singularity/mnt/final//home/test'
+ERROR   [U=0,P=33839]      singularity_runtime_mount_userbinds()     There 
+was an error binding the path /home/scratch/test/test2: Permission denied
+ABORT   [U=0,P=33839]      singularity_runtime_mount_userbinds()     Retval 
+= 255
+
+
+Thanks,
+Stephen Abbene
+
+
+------=_Part_24772_1744552690.1508175948080
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hello,<div><br></div><div>I am seeing an issue where singu=
+larity is getting permission denied errors when trying to bind to nfs paths=
+ that have restrictive permissions.=C2=A0=C2=A0</div><div><br></div><div>Le=
+ts use this tree and users for an example:</div><div><br></div><div><br></d=
+iv><div class=3D"prettyprint" style=3D"background-color: rgb(250, 250, 250)=
+; border-color: rgb(187, 187, 187); border-style: solid; border-width: 1px;=
+ word-wrap: break-word;"><code class=3D"prettyprint"><div class=3D"subprett=
+yprint"><span style=3D"color: #000;" class=3D"styled-by-prettify">$ ls </sp=
+an><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span =
+style=3D"color: #000;" class=3D"styled-by-prettify">ld </span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify">home</span><span style=3D"color: #660=
+;" class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">scratch</span><span style=3D"color: #660;" class=3D=
+"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"styled-b=
+y-prettify"><br>drwxrwxrwx </span><span style=3D"color: #066;" class=3D"sty=
+led-by-prettify">39</span><span style=3D"color: #000;" class=3D"styled-by-p=
+rettify"> user1 group1 </span><span style=3D"color: #066;" class=3D"styled-=
+by-prettify">192512</span><span style=3D"color: #000;" class=3D"styled-by-p=
+rettify"> </span><span style=3D"color: #606;" class=3D"styled-by-prettify">=
+Oct</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> </span=
+><span style=3D"color: #066;" class=3D"styled-by-prettify">13</span><span s=
+tyle=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"c=
+olor: #066;" class=3D"styled-by-prettify">16</span><span style=3D"color: #6=
+60;" class=3D"styled-by-prettify">:</span><span style=3D"color: #066;" clas=
+s=3D"styled-by-prettify">41</span><span style=3D"color: #000;" class=3D"sty=
+led-by-prettify"> </span><span style=3D"color: #660;" class=3D"styled-by-pr=
+ettify">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">h=
+ome</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</span=
+><span style=3D"color: #000;" class=3D"styled-by-prettify">scratch<br><br><=
+br>$ ls </span><span style=3D"color: #660;" class=3D"styled-by-prettify">-<=
+/span><span style=3D"color: #000;" class=3D"styled-by-prettify">ld </span><=
+span style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify">home</span><span style=3D"c=
+olor: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify">scratch</span><span style=3D"color: #660;"=
+ class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D=
+"styled-by-prettify">test<br>drwxrwx</span><span style=3D"color: #660;" cla=
+ss=3D"styled-by-prettify">---</span><span style=3D"color: #000;" class=3D"s=
+tyled-by-prettify"> </span><span style=3D"color: #066;" class=3D"styled-by-=
+prettify">3</span><span style=3D"color: #000;" class=3D"styled-by-prettify"=
+> user1 group2 </span><span style=3D"color: #066;" class=3D"styled-by-prett=
+ify">4096</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> =
+</span><span style=3D"color: #606;" class=3D"styled-by-prettify">Oct</span>=
+<span style=3D"color: #000;" class=3D"styled-by-prettify"> </span><span sty=
+le=3D"color: #066;" class=3D"styled-by-prettify">13</span><span style=3D"co=
+lor: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #066=
+;" class=3D"styled-by-prettify">16</span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">:</span><span style=3D"color: #066;" class=3D"style=
+d-by-prettify">41</span><span style=3D"color: #000;" class=3D"styled-by-pre=
+ttify"> </span><span style=3D"color: #660;" class=3D"styled-by-prettify">/<=
+/span><span style=3D"color: #000;" class=3D"styled-by-prettify">home</span>=
+<span style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span sty=
+le=3D"color: #000;" class=3D"styled-by-prettify">scratch</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify">test<br><br><br>$ ls </span><span sty=
+le=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"col=
+or: #000;" class=3D"styled-by-prettify">ld </span><span style=3D"color: #66=
+0;" class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">home</span><span style=3D"color: #660;" class=3D"st=
+yled-by-prettify">/</span><span style=3D"color: #000;" class=3D"styled-by-p=
+rettify">scratch</span><span style=3D"color: #660;" class=3D"styled-by-pret=
+tify">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">tes=
+t</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify">test2<br>drwxr</sp=
+an><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span =
+style=3D"color: #000;" class=3D"styled-by-prettify">xr</span><span style=3D=
+"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify">x </span><span style=3D"color: #066;" cl=
+ass=3D"styled-by-prettify">2</span><span style=3D"color: #000;" class=3D"st=
+yled-by-prettify"> user1 group1 </span><span style=3D"color: #066;" class=
+=3D"styled-by-prettify">4096</span><span style=3D"color: #000;" class=3D"st=
+yled-by-prettify"> </span><span style=3D"color: #606;" class=3D"styled-by-p=
+rettify">Oct</span><span style=3D"color: #000;" class=3D"styled-by-prettify=
+"> </span><span style=3D"color: #066;" class=3D"styled-by-prettify">13</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify"> </span><span s=
+tyle=3D"color: #066;" class=3D"styled-by-prettify">16</span><span style=3D"=
+color: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color: #0=
+66;" class=3D"styled-by-prettify">41</span><span style=3D"color: #000;" cla=
+ss=3D"styled-by-prettify"> </span><span style=3D"color: #660;" class=3D"sty=
+led-by-prettify">/</span><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify">home</span><span style=3D"color: #660;" class=3D"styled-by-prettify=
+">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">scratch=
+</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</span><s=
+pan style=3D"color: #000;" class=3D"styled-by-prettify">test</span><span st=
+yle=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D"co=
+lor: #000;" class=3D"styled-by-prettify">test2<br><br><br>$ id<br>uid</span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">=3D</span><span =
+style=3D"color: #066;" class=3D"styled-by-prettify">789</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">(</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify">user1</span><span style=3D"color: #66=
+0;" class=3D"styled-by-prettify">)</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> gid</span><span style=3D"color: #660;" class=3D"st=
+yled-by-prettify">=3D</span><span style=3D"color: #066;" class=3D"styled-by=
+-prettify">123</span><span style=3D"color: #660;" class=3D"styled-by-pretti=
+fy">(</span><span style=3D"color: #000;" class=3D"styled-by-prettify">group=
+1</span><span style=3D"color: #660;" class=3D"styled-by-prettify">)</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify"> groups</span><spa=
+n style=3D"color: #660;" class=3D"styled-by-prettify">=3D</span><span style=
+=3D"color: #066;" class=3D"styled-by-prettify">123</span><span style=3D"col=
+or: #660;" class=3D"styled-by-prettify">(</span><span style=3D"color: #000;=
+" class=3D"styled-by-prettify">group1</span><span style=3D"color: #660;" cl=
+ass=3D"styled-by-prettify">),</span><span style=3D"color: #066;" class=3D"s=
+tyled-by-prettify">456</span><span style=3D"color: #660;" class=3D"styled-b=
+y-prettify">(</span><span style=3D"color: #000;" class=3D"styled-by-prettif=
+y">group2</span><span style=3D"color: #660;" class=3D"styled-by-prettify">)=
+</span></div></code></div><br><div><div><br></div></div><div><br></div><div=
+>When I use singularity to bind to /home/scratch or /home/scratch/test ever=
+ything works fine, but if I try to bind to /home/scratch/test/test2 i get a=
+ permission denied error, even though the user1 user has access to the dir.=
+=C2=A0 From looking at the --debug output when I recieve this error it look=
+s like singularity drops all the user&#39;s groups but the primary one.=C2=
+=A0 I have highlighted the line in the output below in yellow that gives me=
+ that impression.</div><div><br></div><div><div class=3D"prettyprint" style=
+=3D"border-color: rgb(187, 187, 187); border-style: solid; border-width: 1p=
+x; word-wrap: break-word;"><code class=3D"prettyprint" style=3D""><div clas=
+s=3D"subprettyprint" style=3D""><span style=3D"color: #000;" class=3D"style=
+d-by-prettify">DEBUG =C2=A0 </span><span style=3D"color: #660;" class=3D"st=
+yled-by-prettify">[</span><span style=3D"color: #000;" class=3D"styled-by-p=
+rettify">U</span><span style=3D"color: #660;" class=3D"styled-by-prettify">=
+=3D</span><span style=3D"color: #066;" class=3D"styled-by-prettify">9035</s=
+pan><span style=3D"color: #660;" class=3D"styled-by-prettify">,</span><span=
+ style=3D"color: #000;" class=3D"styled-by-prettify">P</span><span style=3D=
+"color: #660;" class=3D"styled-by-prettify">=3D</span><span style=3D"color:=
+ #066;" class=3D"styled-by-prettify">33839</span><span style=3D"color: #660=
+;" class=3D"styled-by-prettify">]</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> =C2=A0 singularity_registry_get</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">()</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0</span><span style=3D"color: #606;" class=3D"styled-by-=
+prettify">Returning</span><span style=3D"color: #000;" class=3D"styled-by-p=
+rettify"> value </span><span style=3D"color: #008;" class=3D"styled-by-pret=
+tify">from</span><span style=3D"color: #000;" class=3D"styled-by-prettify">=
+ registry</span><span style=3D"color: #660;" class=3D"styled-by-prettify">:=
+</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> </span><s=
+pan style=3D"color: #080;" class=3D"styled-by-prettify">&#39;OVERLAYFS_ENAB=
+LED&#39;</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> <=
+/span><span style=3D"color: #660;" class=3D"styled-by-prettify">=3D</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify"> </span><span styl=
+e=3D"color: #080;" class=3D"styled-by-prettify">&#39;1&#39;</span><span sty=
+le=3D"color: #000;" class=3D"styled-by-prettify"><br>VERBOSE </span><span s=
+tyle=3D"color: #660;" class=3D"styled-by-prettify">[</span><span style=3D"c=
+olor: #000;" class=3D"styled-by-prettify">U</span><span style=3D"color: #66=
+0;" class=3D"styled-by-prettify">=3D</span><span style=3D"color: #066;" cla=
+ss=3D"styled-by-prettify">9035</span><span style=3D"color: #660;" class=3D"=
+styled-by-prettify">,</span><span style=3D"color: #000;" class=3D"styled-by=
+-prettify">P</span><span style=3D"color: #660;" class=3D"styled-by-prettify=
+">=3D</span><span style=3D"color: #066;" class=3D"styled-by-prettify">33839=
+</span><span style=3D"color: #660;" class=3D"styled-by-prettify">]</span><s=
+pan style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 singularity=
+_runtime_mount_userbinds</span><span style=3D"color: #660;" class=3D"styled=
+-by-prettify">()</span><span style=3D"color: #000;" class=3D"styled-by-pret=
+tify"> =C2=A0 =C2=A0 </span><span style=3D"color: #606;" class=3D"styled-by=
+-prettify">Creating</span><span style=3D"color: #000;" class=3D"styled-by-p=
+rettify"> bind directory on overlay file system</span><span style=3D"color:=
+ #660;" class=3D"styled-by-prettify">:</span><span style=3D"color: #000;" c=
+lass=3D"styled-by-prettify"> </span><span style=3D"color: #080;" class=3D"s=
+tyled-by-prettify">/home/</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify">test<br>DEBUG =C2=A0 </span><span style=3D"color: #660;" cla=
+ss=3D"styled-by-prettify">[</span><span style=3D"color: #000;" class=3D"sty=
+led-by-prettify">U</span><span style=3D"color: #660;" class=3D"styled-by-pr=
+ettify">=3D</span><span style=3D"color: #066;" class=3D"styled-by-prettify"=
+>9035</span><span style=3D"color: #660;" class=3D"styled-by-prettify">,</sp=
+an><span style=3D"color: #000;" class=3D"styled-by-prettify">P</span><span =
+style=3D"color: #660;" class=3D"styled-by-prettify">=3D</span><span style=
+=3D"color: #066;" class=3D"styled-by-prettify">33839</span><span style=3D"c=
+olor: #660;" class=3D"styled-by-prettify">]</span><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify"> =C2=A0 s_mkpath</span><span style=3D"colo=
+r: #660;" class=3D"styled-by-prettify">()</span><span style=3D"color: #000;=
+" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0</span=
+><span style=3D"color: #606;" class=3D"styled-by-prettify">Creating</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify"> directory</span><=
+span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"colo=
+r: #080;" class=3D"styled-by-prettify">/tmp/</span><span style=3D"color: #0=
+00;" class=3D"styled-by-prettify">singularity</span><span style=3D"color: #=
+660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #066;" cla=
+ss=3D"styled-by-prettify">2.4</span><span style=3D"color: #660;" class=3D"s=
+tyled-by-prettify">/</span><span style=3D"color: #008;" class=3D"styled-by-=
+prettify">var</span><span style=3D"color: #660;" class=3D"styled-by-prettif=
+y">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">singul=
+arity</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</sp=
+an><span style=3D"color: #000;" class=3D"styled-by-prettify">mnt</span><spa=
+n style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=
+=3D"color: #008;" class=3D"styled-by-prettify">final</span><span style=3D"c=
+olor: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify">home</span><span style=3D"color: #660;" cl=
+ass=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"st=
+yled-by-prettify">test<br>DEBUG =C2=A0 </span><span style=3D"color: #660;" =
+class=3D"styled-by-prettify">[</span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify">U</span><span style=3D"color: #660;" class=3D"styled-by=
+-prettify">=3D</span><span style=3D"color: #066;" class=3D"styled-by-pretti=
+fy">9035</span><span style=3D"color: #660;" class=3D"styled-by-prettify">,<=
+/span><span style=3D"color: #000;" class=3D"styled-by-prettify">P</span><sp=
+an style=3D"color: #660;" class=3D"styled-by-prettify">=3D</span><span styl=
+e=3D"color: #066;" class=3D"styled-by-prettify">33839</span><span style=3D"=
+color: #660;" class=3D"styled-by-prettify">]</span><span style=3D"color: #0=
+00;" class=3D"styled-by-prettify"> =C2=A0 singularity_priv_escalate</span><=
+span style=3D"color: #660;" class=3D"styled-by-prettify">()</span><span sty=
+le=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 </span><span style=3D"color: #606;" class=3D"style=
+d-by-prettify">Temporarily</span><span style=3D"color: #000;" class=3D"styl=
+ed-by-prettify"> escalating privileges </span><span style=3D"color: #660;" =
+class=3D"styled-by-prettify">(</span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify">U</span><span style=3D"color: #660;" class=3D"styled-by=
+-prettify">=3D</span><span style=3D"color: #066;" class=3D"styled-by-pretti=
+fy">9035</span><span style=3D"color: #660;" class=3D"styled-by-prettify">)<=
+/span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br></span>=
+<span style=3D"background-color: rgb(255, 255, 0);"><span style=3D"color: #=
+000;" class=3D"styled-by-prettify">DEBUG =C2=A0 </span></span><span style=
+=3D"background-color: rgb(255, 255, 0);"><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">[</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify">U</span><span style=3D"color: #660;" class=3D"styled-by-pret=
+tify">=3D</span><span style=3D"color: #066;" class=3D"styled-by-prettify">0=
+</span><span style=3D"color: #660;" class=3D"styled-by-prettify">,</span><s=
+pan style=3D"color: #000;" class=3D"styled-by-prettify">P</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">=3D</span><span style=3D"col=
+or: #066;" class=3D"styled-by-prettify">33839</span><span style=3D"color: #=
+660;" class=3D"styled-by-prettify">]</span><span style=3D"color: #000;" cla=
+ss=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0singularity_priv_escalate</s=
+pan><span style=3D"color: #660;" class=3D"styled-by-prettify">()</span><spa=
+n style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 </span><span style=3D"color: #606;" class=3D"s=
+tyled-by-prettify">Clearing</span><span style=3D"color: #000;" class=3D"sty=
+led-by-prettify"> supplementary </span><span style=3D"color: #606;" class=
+=3D"styled-by-prettify">GIDs</span><span style=3D"color: #660;" class=3D"st=
+yled-by-prettify">.</span></span><span style=3D"color: #000;" class=3D"styl=
+ed-by-prettify"><br>VERBOSE </span><span style=3D"color: #660;" class=3D"st=
+yled-by-prettify">[</span><span style=3D"color: #000;" class=3D"styled-by-p=
+rettify">U</span><span style=3D"color: #660;" class=3D"styled-by-prettify">=
+=3D</span><span style=3D"color: #066;" class=3D"styled-by-prettify">0</span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">,</span><span st=
+yle=3D"color: #000;" class=3D"styled-by-prettify">P</span><span style=3D"co=
+lor: #660;" class=3D"styled-by-prettify">=3D</span><span style=3D"color: #0=
+66;" class=3D"styled-by-prettify">33839</span><span style=3D"color: #660;" =
+class=3D"styled-by-prettify">]</span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0singularity_runtime_mount_userbind=
+s</span><span style=3D"color: #660;" class=3D"styled-by-prettify">()</span>=
+<span style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 </=
+span><span style=3D"color: #606;" class=3D"styled-by-prettify">Binding</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify"> </span><span s=
+tyle=3D"color: #080;" class=3D"styled-by-prettify">&#39;/home/scratch/test/=
+test2&#39;</span><span style=3D"color: #000;" class=3D"styled-by-prettify">=
+ to </span><span style=3D"color: #080;" class=3D"styled-by-prettify">&#39;/=
+tmp/singularity-2.4/var/singularity/mnt/final//home/test&#39;</span><span s=
+tyle=3D"color: #000;" class=3D"styled-by-prettify"><br>ERROR =C2=A0 </span>=
+<span style=3D"color: #660;" class=3D"styled-by-prettify">[</span><span sty=
+le=3D"color: #000;" class=3D"styled-by-prettify">U</span><span style=3D"col=
+or: #660;" class=3D"styled-by-prettify">=3D</span><span style=3D"color: #06=
+6;" class=3D"styled-by-prettify">0</span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">,</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify">P</span><span style=3D"color: #660;" class=3D"styled-by-pret=
+tify">=3D</span><span style=3D"color: #066;" class=3D"styled-by-prettify">3=
+3839</span><span style=3D"color: #660;" class=3D"styled-by-prettify">]</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =
+=C2=A0singularity_runtime_mount_userbinds</span><span style=3D"color: #660;=
+" class=3D"styled-by-prettify">()</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> =C2=A0 =C2=A0 </span><span style=3D"color: #606;" =
+class=3D"styled-by-prettify">There</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> was an error binding the path </span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify">home</span><span style=3D"color: #660=
+;" class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">scratch</span><span style=3D"color: #660;" class=3D=
+"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"styled-b=
+y-prettify">test</span><span style=3D"color: #660;" class=3D"styled-by-pret=
+tify">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">tes=
+t2</span><span style=3D"color: #660;" class=3D"styled-by-prettify">:</span>=
+<span style=3D"color: #000;" class=3D"styled-by-prettify"> </span><span sty=
+le=3D"color: #606;" class=3D"styled-by-prettify">Permission</span><span sty=
+le=3D"color: #000;" class=3D"styled-by-prettify"> denied<br>ABORT =C2=A0 </=
+span><span style=3D"color: #660;" class=3D"styled-by-prettify">[</span><spa=
+n style=3D"color: #000;" class=3D"styled-by-prettify">U</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">=3D</span><span style=3D"col=
+or: #066;" class=3D"styled-by-prettify">0</span><span style=3D"color: #660;=
+" class=3D"styled-by-prettify">,</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">P</span><span style=3D"color: #660;" class=3D"style=
+d-by-prettify">=3D</span><span style=3D"color: #066;" class=3D"styled-by-pr=
+ettify">33839</span><span style=3D"color: #660;" class=3D"styled-by-prettif=
+y">]</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=
+=A0 =C2=A0 =C2=A0singularity_runtime_mount_userbinds</span><span style=3D"c=
+olor: #660;" class=3D"styled-by-prettify">()</span><span style=3D"color: #0=
+00;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 </span><span style=3D"colo=
+r: #606;" class=3D"styled-by-prettify">Retval</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #660;" cla=
+ss=3D"styled-by-prettify">=3D</span><span style=3D"color: #000;" class=3D"s=
+tyled-by-prettify"> </span><span style=3D"color: #066;" class=3D"styled-by-=
+prettify">255</span></div></code></div><div><br></div></div><div><br></div>=
+<div>Thanks,</div><div>Stephen Abbene</div><div><br></div></div>
+------=_Part_24772_1744552690.1508175948080--
+
+------=_Part_24771_342809483.1508175948079--

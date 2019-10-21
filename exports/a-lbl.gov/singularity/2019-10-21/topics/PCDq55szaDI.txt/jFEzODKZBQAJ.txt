@@ -1,0 +1,111 @@
+Date: Sun, 6 May 2018 13:13:07 -0700 (PDT)
+From: Matt <matp...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <956d1c1d-3051-407a-91db-a688fefb7539@lbl.gov>
+Subject: Compose images in production (or: multi-image workflow)
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_17352_500451163.1525637587162"
+
+------=_Part_17352_500451163.1525637587162
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_17353_924564906.1525637587162"
+
+------=_Part_17353_924564906.1525637587162
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi,
+
+I just started exploring Singularity, but I found it very easy to get 
+started: I could get a test image running, and perform some customizations.
+
+The next step would be to actually design a "real" workflow for our 
+simulations: in our case, we generally develop on our laptop, and when we 
+are ready, deploy to a remote cluster. The point of concern is that the 
+uplink is relatively slow, and my test image (OpenFOAM installed on ubuntu 
+image from docker hub using this procedure 
+<https://openfoam.org/download/5-0-ubuntu/>) is already 500 MB.
+
+Therefore, I imagine the following steps are likely:
+1. We can prepare a Singularity image with OpenFOAM and maybe some more 
+dependencies, and install our app;
+2. We upload the image to the cluster (this is pain);
+3. We run the image and get the first results (or an error);
+4. We now decide to change something in the app, and rebuild the image;
+5. We re-upload the image (this is pain) and re-iterate.
+
+To work around this situation, I came up with the idea of deploying the app 
+to a binded folder (e.g. the home directory). The image will have a 
+"%runscript" section which will actually run the app from this binded 
+folder. This way, if the app changes, we do not need to redeploy the image.
+
+This, however, will not save us if we decide that we need more 
+dependencies. Say that the app now needs SU2 <https://su2code.github.io/>, 
+too. In this case, I see no other way than rebuilding and re-uploading. 
+Again, as I am new to Singularity and containers in general, I might have 
+missed something even after much research, so I welcome any suggestions.
+
+I think that the feature we are missing is something like Docker Compose 
+<https://docs.docker.com/compose/overview/>. Again, I am new to containers 
+(and actually never used Docker), but as I understand from the "getting 
+started guide" (here 
+<https://docs.docker.com/get-started/part3/#about-services> and here 
+<https://docs.docker.com/get-started/part5/>), the way it works is that 
+multiple separate images can be combined at runtime thus providing 
+"stackable services". Therefore, in our case above, we would simply build 
+one more image with SU2, upload *just that* to the cluster, and combine it 
+with the OpenFOAM image.
+
+I have read about image overlays <https://singularity.lbl.gov/docs-overlay>, 
+but this seems to be a build-time feature, and therefore not quite suitable 
+for the use case described in this post.
+
+Is there anything available (or planned) in Singularity that we can 
+leverage to ease this situation?
+
+
+------=_Part_17353_924564906.1525637587162
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi,<br><br>I just started exploring Singularity, but I fou=
+nd it very easy to get started: I could get a test image running, and perfo=
+rm some customizations.<br><br>The next step would be to actually design a =
+&quot;real&quot; workflow for our simulations: in our case, we generally de=
+velop on our laptop, and when we are ready, deploy to a remote cluster. The=
+ point of concern is that the uplink is relatively slow, and my test image =
+(OpenFOAM installed on ubuntu image from docker hub using <a href=3D"https:=
+//openfoam.org/download/5-0-ubuntu/">this procedure</a>) is already 500 MB.=
+<br><br>Therefore, I imagine the following steps are likely:<br>1. We can p=
+repare a Singularity image with OpenFOAM and maybe some more dependencies, =
+and install our app;<br>2. We upload the image to the cluster (this is pain=
+);<br>3. We run the image and get the first results (or an error);<br>4. We=
+ now decide to change something in the app, and rebuild the image;<br>5. We=
+ re-upload the image (this is pain) and re-iterate.<br><br>To work around t=
+his situation, I came up with the idea of deploying the app to a binded fol=
+der (e.g. the home directory).  The image will have a &quot;%runscript&quot=
+; section which will actually run the app from this binded folder. This way=
+, if the app changes, we do not need to redeploy the image.<br><br>This, ho=
+wever, will not save us if we decide that we need more dependencies. Say th=
+at the app now needs <a href=3D"https://su2code.github.io/">SU2</a>, too. I=
+n this case, I see no other way than rebuilding and re-uploading. Again, as=
+ I am new to Singularity and containers in general, I might have missed som=
+ething even after much research, so I welcome any suggestions.<br><br>I thi=
+nk that the feature we are missing is something like <a href=3D"https://doc=
+s.docker.com/compose/overview/">Docker Compose</a>. Again, I am new to cont=
+ainers (and actually never used Docker), but as I understand from the &quot=
+;getting started guide&quot; (<a href=3D"https://docs.docker.com/get-starte=
+d/part3/#about-services">here</a> and <a href=3D"https://docs.docker.com/ge=
+t-started/part5/">here</a>), the way it works is that multiple separate ima=
+ges can be combined at runtime thus providing &quot;stackable services&quot=
+;. Therefore, in our case above, we would simply build one more image with =
+SU2, upload <b>just that</b> to the cluster, and combine it with the OpenFO=
+AM image.<br><br>I have read about <a href=3D"https://singularity.lbl.gov/d=
+ocs-overlay">image overlays</a>, but this seems to be a build-time feature,=
+ and therefore not quite suitable for the use case described in this post.<=
+br><br>Is there anything available (or planned) in Singularity that we can =
+leverage to ease this situation?<br><br></div>
+------=_Part_17353_924564906.1525637587162--
+
+------=_Part_17352_500451163.1525637587162--

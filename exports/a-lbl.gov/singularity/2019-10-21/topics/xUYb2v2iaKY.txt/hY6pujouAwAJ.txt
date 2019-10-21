@@ -1,0 +1,129 @@
+Date: Wed, 25 Apr 2018 05:01:54 -0700 (PDT)
+From: Paul Edwards <paul.m...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <623ab559-905c-4aca-8483-9a7597c799fc@lbl.gov>
+Subject: Running MPI with Infiniband on Azure
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_25033_492186285.1524657714605"
+
+------=_Part_25033_492186285.1524657714605
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_25034_1395143080.1524657714606"
+
+------=_Part_25034_1395143080.1524657714606
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi,
+
+I'm trying to use singularity on Azure with their Infiniband.  I am using 
+the CentOS 7.1 HPC image provided (which has the drivers and Intel MPI 
+installed) and I built singularity.  I would just like to run the MPI 
+benchmarks that come with Intel MPI but I get the "no such device" error 
+when I set it to use the DAPL driver.  Below is my def file:
+
+$ cat centos.def
+Bootstrap: yum
+OSVersion: 7
+MirrorURL: 
+http://mirror.centos.org/centos-%{OSVERSION}/%{OSVERSION}/os/$basearch/
+Include: yum
+
+%runscript
+source /opt/intel/impi/5.1.3.223/bin64/mpivars.sh
+exec "$@"
+
+%files
+intel.tgz /opt/intel.tgz
+
+%post
+yum install -y tar gzip libmlx4 librdmacm libibverbs dapl rdma net-tools 
+numactl
+cd /opt
+tar zxf intel.tgz
+
+
+The intel tar file is taken from the host.  I build (centos7.simg) and then 
+run the following:
+
+mpirun -np 2 \
+
+-genv I_MPI_FALLBACK 0 \
+
+-genv I_MPI_FABRICS dapl \
+
+-genv I_MPI_DAPL_PROVIDER ofa-v2-ib0 \
+
+-genv I_MPI_DYNAMIC_CONNECTION 0 \
+
+./centos7.simg /opt/intel/impi/5.1.3.223/bin64/IMB-MPI1 Allreduce
+
+
+The error I get is:
+
+singularity:CMA:1b5b:67212b40: 71 us(71 us):  open_hca: getaddr_netdev 
+ERROR:No such device. Is ib0 configured?
+[0] MPI startup(): dapl fabric is not available and fallback fabric is not 
+enabled
+singularity:CMA:1b5c:b8359b40: 77 us(77 us):  open_hca: getaddr_netdev 
+ERROR:No such device. Is ib0 configured?
+[1] MPI startup(): dapl fabric is not available and fallback fabric is not 
+enabled
+
+
+Note: this will all work if I use tcp rather than dapl.
+
+I'm new to singularity and any help/pointers would be greatly appreciated.
+
+Thanks,
+Paul
+
+------=_Part_25034_1395143080.1524657714606
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi,<div><br></div><div>I&#39;m trying to use singularity o=
+n Azure with their Infiniband.=C2=A0 I am using the CentOS 7.1 HPC image pr=
+ovided (which has the drivers and Intel MPI installed) and I built singular=
+ity.=C2=A0 I would just like to run the MPI benchmarks that come with Intel=
+ MPI but I get the &quot;no such device&quot; error when I set it to use th=
+e DAPL driver.=C2=A0 Below is my def file:</div><div><br></div><blockquote =
+style=3D"margin: 0 0 0 40px; border: none; padding: 0px;"><div><div>$ cat c=
+entos.def</div></div><div><div>Bootstrap: yum</div></div><div><div>OSVersio=
+n: 7</div></div><div><div>MirrorURL: http://mirror.centos.org/centos-%{OSVE=
+RSION}/%{OSVERSION}/os/$basearch/</div></div><div><div>Include: yum</div></=
+div><div><div><br></div></div><div><div>%runscript</div></div><div><div>sou=
+rce /opt/intel/impi/5.1.3.223/bin64/mpivars.sh</div></div><div><div>exec &q=
+uot;$@&quot;</div></div><div><div><br></div></div><div><div>%files</div></d=
+iv><div><div>intel.tgz /opt/intel.tgz</div></div><div><div><br></div></div>=
+<div><div>%post</div></div><div><div>yum install -y tar gzip libmlx4 librdm=
+acm libibverbs dapl rdma net-tools numactl</div></div><div><div>cd /opt</di=
+v></div><div><div>tar zxf intel.tgz</div></div></blockquote><div><br></div>=
+<div>The intel tar file is taken from the host.=C2=A0 I build (centos7.simg=
+) and then run the following:</div><div><br></div><blockquote style=3D"marg=
+in: 0 0 0 40px; border: none; padding: 0px;"><div>mpirun -np 2 \</div></blo=
+ckquote><blockquote style=3D"margin: 0 0 0 40px; border: none; padding: 0px=
+;"><blockquote style=3D"margin: 0 0 0 40px; border: none; padding: 0px;"><d=
+iv>-genv I_MPI_FALLBACK 0 \</div></blockquote><blockquote style=3D"margin: =
+0 0 0 40px; border: none; padding: 0px;"><div>-genv I_MPI_FABRICS dapl \</d=
+iv></blockquote><blockquote style=3D"margin: 0 0 0 40px; border: none; padd=
+ing: 0px;"><div>-genv I_MPI_DAPL_PROVIDER ofa-v2-ib0 \</div></blockquote><b=
+lockquote style=3D"margin: 0 0 0 40px; border: none; padding: 0px;"><div>-g=
+env I_MPI_DYNAMIC_CONNECTION 0 \</div></blockquote><blockquote style=3D"mar=
+gin: 0 0 0 40px; border: none; padding: 0px;"><div>./centos7.simg /opt/inte=
+l/impi/5.1.3.223/bin64/IMB-MPI1 Allreduce</div></blockquote></blockquote><d=
+iv><br></div><div>The error I get is:</div><div><br></div><blockquote style=
+=3D"margin: 0 0 0 40px; border: none; padding: 0px;"><div>singularity:CMA:1=
+b5b:67212b40: 71 us(71 us):=C2=A0 open_hca: getaddr_netdev ERROR:No such de=
+vice. Is ib0 configured?</div><div>[0] MPI startup(): dapl fabric is not av=
+ailable and fallback fabric is not enabled</div><div>singularity:CMA:1b5c:b=
+8359b40: 77 us(77 us):=C2=A0 open_hca: getaddr_netdev ERROR:No such device.=
+ Is ib0 configured?</div><div>[1] MPI startup(): dapl fabric is not availab=
+le and fallback fabric is not enabled</div></blockquote><div><br></div><div=
+>Note: this will all work if I use tcp rather than dapl.</div><div><br></di=
+v><div>I&#39;m new to singularity and any help/pointers would be greatly ap=
+preciated.</div><div><br></div><div>Thanks,<br>Paul</div></div>
+------=_Part_25034_1395143080.1524657714606--
+
+------=_Part_25033_492186285.1524657714605--

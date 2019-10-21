@@ -1,0 +1,853 @@
+X-Received: by 10.98.160.153 with SMTP id p25mr904330pfl.42.1494362545793;
+        Tue, 09 May 2017 13:42:25 -0700 (PDT)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.36.122.147 with SMTP id a141ls2988063itc.9.canary-gmail; Tue,
+ 09 May 2017 13:42:25 -0700 (PDT)
+X-Received: by 10.84.130.67 with SMTP id 61mr2878217plc.150.1494362544882;
+        Tue, 09 May 2017 13:42:24 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1494362544; cv=none;
+        d=google.com; s=arc-20160816;
+        b=jQ+zH10QSxV1kq1EmT2PvZzp1lGHKpX9LKxaT7J1lqFWA6pv/1y6fStrachP/QFFju
+         c1r14zf5HzRbuRKZtqPZS9AkSGQKdIQT6YD0o/Kt+7xYZ50woCl04r82fQtQsVJvBFYJ
+         AF/Ck66CPdtW0/Qb6tC3soNPSueelRDVQIt2OWeOTUj90OHeA1kwh8ins3j4euddDLnD
+         rfBQucc0tXowbyN8bybyN+7VmsZZBziJoNIxTtFV11eo++uVc3lgl/hj6bEeUkDRrtXL
+         vi1lG7QxWTgHI9/6Ydc553IX1L1oTwiSnMoqSwioCxWmnYZwLQYzRtOYngK+jkZ+ia5N
+         prUw==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816;
+        h=to:subject:message-id:date:from:references:in-reply-to:mime-version
+         :dkim-signature:arc-authentication-results;
+        bh=ZIV+QNl4Heaa8123ytkGOpIdJXkKhmzBJGFMhT/HCyM=;
+        b=sz44JzHv/nXNXtk85rmMNc+B7RoQ+1x42goe40qHd3w92pJHyZmyv5CVQOo2x7TZm5
+         J+Z9cN7cWP7fKUicOJ4WIQ/KLP95iphey+7HeTTk6MbhODPDA3DWSZSR/M6zbpywe0WC
+         nbae6hT5xegPJcDd1hn3SYACMndspwzjwJdVHtgQmFUSqBIIVYRA0QKIA4KaP01wqE8A
+         K+mLmXkGp+/7VpVdgVWbGu/r2M4UrN2y/QRZJPdMD+woqbuLHl0hSXvJYnQmM+VjoYWt
+         V2OTDFeiUycbuCYFsODGf1lDO5rfbOinNGoinqg0fOxi6GsD7DPrOIu/Zs8XUQoGHzlK
+         f8ow==
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=pass head...@gmail.com;
+       spf=pass (google.com: domain of vso...@gmail.com designates 209.85.217.175 as permitted sender) smtp.mailfrom=vso...@gmail.com
+Return-Path: <vso...@gmail.com>
+Received: from fe4.lbl.gov (fe4.lbl.gov. [128.3.41.71])
+        by mx.google.com with ESMTP id o18si907966pfi.399.2017.05.09.13.42.24
+        for <singu...@lbl.gov>;
+        Tue, 09 May 2017 13:42:24 -0700 (PDT)
+Received-SPF: pass (google.com: domain of vso...@gmail.com designates 209.85.217.175 as permitted sender) client-ip=209.85.217.175;
+Authentication-Results: mx.google.com;
+       dkim=pass head...@gmail.com;
+       spf=pass (google.com: domain of vso...@gmail.com designates 209.85.217.175 as permitted sender) smtp.mailfrom=vso...@gmail.com
+X-Ironport-SBRS: 3.4
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: =?us-ascii?q?A2FAAADJKBJZhq/ZVdFaAQIcAQEEAQEKA?=
+ =?us-ascii?q?QEXAQEEAQEKAQGDAYELgQwHg1oIihiRVZJ6F4JhgUwbKCEBDIV2AoRmBz8YAQE?=
+ =?us-ascii?q?BAQEBAQEBAQECEAEBAQgLCwgoL4IzBAIDFwcEBDgOKQMBAQEBAQEBAQECAQEBA?=
+ =?us-ascii?q?QEBAQEBAQEVAQEBAQEBAQEBAQEBAQEBARoCCAUeHwUbAQEBAQIBIwQZAQ0OGAY?=
+ =?us-ascii?q?DAQsGAwILDRYCCAoCAiEBAQ4DAQUBHA4HBAEcBIg0gTMBAw0IBQmVFpEaP4pUE?=
+ =?us-ascii?q?YEjgWwYBQEcgwoFg1IKGScNVoJiAQEBBwEBAQEBAQEBGAIGEoo6gQyCVIFgEgE?=
+ =?us-ascii?q?INQwaAQYFgjeCXwWJPYg+hHKGXTuHHIcqhFOCBFWEZoosiH2CLYdOFB+BFQ8Qg?=
+ =?us-ascii?q?QUzC3AVX4QiKh+CCyQ2AQaGMQ4XMIFnAQEB?=
+X-IronPort-AV: E=Sophos;i="5.38,316,1491289200"; 
+   d="scan'208,217";a="73619697"
+Received: from mail-ua0-f175.google.com ([209.85.217.175])
+  by fe4.lbl.gov with ESMTP; 09 May 2017 13:42:23 -0700
+Received: by mail-ua0-f175.google.com with SMTP id e55so14059984uaa.2
+        for <singu...@lbl.gov>; Tue, 09 May 2017 13:42:23 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=mime-version:in-reply-to:references:from:date:message-id:subject:to;
+        bh=ZIV+QNl4Heaa8123ytkGOpIdJXkKhmzBJGFMhT/HCyM=;
+        b=mgDK78rFIv0hZvpMzH+NgFOD5xAlc8Wo5GDu1tNrWw99K4O9QDhIzyoPi5RMRhdQo/
+         zaibgCjzT7SYt346+Q0Jxg1raiBp6oH+RoLOIAJgRM1Qqb3rFJRJ1r2nYr81n8C2bKaT
+         SgIITqDIxEs7Bn0ELtv32BjR58arT5F2XHpPn5eC/JYhrnAEFLXJM7oWEZ2JbYuMfMfP
+         YM+mEQ188iZmW/WaySRSasJ6o2sZcc7yjyHacATR05pLLO58q4WPfkpE94Rw9HnvM4LH
+         N3/FgNQEwpakJi+pOxCBzp3MO20aj5yjD+Ma2tFfBFEJT/qHO93ruh3gnmLEsFuu3Pe7
+         wPxQ==
+X-Gm-Message-State: AODbwcCf3OCS2ZJmufg3+lrXh8q4LLAk+YgzfDev2InEe9NVlESQqCoF
+	GiR4GVci4fLfw4n9NbI7eDoS3HT/ImJl
+X-Received: by 10.31.130.143 with SMTP id e137mr781743vkd.15.1494362542557;
+ Tue, 09 May 2017 13:42:22 -0700 (PDT)
+MIME-Version: 1.0
+Received: by 10.103.48.143 with HTTP; Tue, 9 May 2017 13:42:02 -0700 (PDT)
+In-Reply-To: <db862cf4-c3ad-4453-8ac5-54c81e092c61@lbl.gov>
+References: <9c275bb2-1dd9-49ee-b7b3-25d6ff146607@lbl.gov> <db862cf4-c3ad-4453-8ac5-54c81e092c61@lbl.gov>
+From: vanessa s <vso...@gmail.com>
+Date: Tue, 9 May 2017 16:42:02 -0400
+Message-ID: <CAM=pu+JiEAL87uZ0TMoUyem62D2Vu-rg0DX6Nbueu=2rpdJFBw@mail.gmail.com>
+Subject: Re: [Singularity] Re: Cant find or run installed APP from within the container
+To: singularity@lbl.gov
+Content-Type: multipart/alternative; boundary=001a1141122e83d03a054f1d6439
+
+--001a1141122e83d03a054f1d6439
+Content-Type: text/plain; charset=UTF-8
+
+Hey M Noon,
+
+It's telling you STAR already exists, which tells me that you are trying to
+bootstrap again (on a failed image) without re-creating the image.
+Generally when you try things for a second time, you want to start with a
+new image, because the git clone is going to fail when it sees the old STAR
+directory is already there.
+
+Best,
+
+Vanessa
+
+On Tue, May 9, 2017 at 4:29 PM, M Noon <saad...@gmail.com> wrote:
+
+> No, It didn't help. I comment out both mkdir commands.
+>
+> sudo singularity bootstrap starMPI.img starMPI.def
+>
+> [sudo] password for mnoon:
+>
+> Sanitizing environment
+>
+> Building from bootstrap definition recipe
+>
+> Adding base Singularity environment to container
+>
+> Docker image path: index.docker.io/library/centos:7
+>
+> Cache folder set to /root/.singularity/docker
+>
+> Exploding layer: sha256:93857f76ae30d903bbdad13fbf7fad
+> 95ce1c0b52b7d5644651e01c6c7a906312.tar.gz
+>
+> Exploding layer: sha256:9326ff949485e53c2403126b5422ad
+> 659cb2176bddbc511461da81c10703a50c.tar.gz
+>
+> User defined %runscript found! Taking priority.
+>
+> Running post scriptlet
+>
+> + yum -y groupinstall 'Development Tools'
+>
+> Loaded plugins: fastestmirror, ovl
+>
+> Loading mirror speeds from cached hostfile
+>
+>  * base: repo1.sea.innoscale.net
+>
+>  * extras: centos.firehosted.com
+>
+>  * updates: mirrors.sonic.net
+>
+> Maybe run: yum groups mark install (see man yum)
+>
+> No packages in any requested group available to install or update
+>
+> + yum -y install zlib-devel
+>
+> Loaded plugins: fastestmirror, ovl
+>
+> Loading mirror speeds from cached hostfile
+>
+>  * base: repo1.sea.innoscale.net
+>
+>  * extras: centos.firehosted.com
+>
+>  * updates: mirrors.sonic.net
+>
+> Resolving Dependencies
+>
+> --> Running transaction check
+>
+> ---> Package zlib-devel.x86_64 0:1.2.7-17.el7 will be installed
+>
+> --> Finished Dependency Resolution
+>
+>
+> Dependencies Resolved
+>
+>
+> ============================================================
+> ============================================================
+> ======================================
+>
+>  Package                                Arch
+> Version                                     Repository
+>   Size
+>
+> ============================================================
+> ============================================================
+> ======================================
+>
+> Installing:
+>
+>  zlib-devel                             x86_64
+> 1.2.7-17.el7                                base
+>   50 k
+>
+>
+> Transaction Summary
+>
+> ============================================================
+> ============================================================
+> ======================================
+>
+> Install  1 Package
+>
+>
+> Total download size: 50 k
+>
+> Installed size: 132 k
+>
+> Downloading packages:
+>
+> warning: /var/cache/yum/x86_64/7/base/packages/zlib-devel-1.2.7-17.el7.x86_64.rpm:
+> Header V3 RSA/SHA256 Signature, key ID f4a80eb5: NOKEY
+>
+> Public key for zlib-devel-1.2.7-17.el7.x86_64.rpm is not installed
+>
+> zlib-devel-1.2.7-17.el7.x86_64.rpm
+>                                                               |  50 kB
+> 00:00:00
+>
+> Retrieving key from file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+>
+> Importing GPG key 0xF4A80EB5:
+>
+>  Userid     : "CentOS-7 Key (CentOS 7 Official Signing Key) <
+> secu...@centos.org>"
+>
+>  Fingerprint: 6341 ab27 53d7 8a78 a7c2 7bb1 24c6 a8a7 f4a8 0eb5
+>
+>  Package    : centos-release-7-3.1611.el7.centos.x86_64 (@CentOS)
+>
+>  From       : /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+>
+> Running transaction check
+>
+> Running transaction test
+>
+> Transaction test succeeded
+>
+> Running transaction
+>
+>   Installing : zlib-devel-1.2.7-17.el7.x86_64
+>
+>     1/1
+>
+>   Verifying  : zlib-devel-1.2.7-17.el7.x86_64
+>
+>     1/1
+>
+>
+> Installed:
+>
+>   zlib-devel.x86_64 0:1.2.7-17.el7
+>
+>
+>
+>
+> Complete!
+>
+> + cd /
+>
+> + git clone https://github.com/alexdobin/STAR.git
+>
+> fatal: destination path 'STAR' already exists and is not an empty
+> directory.
+>
+> ERROR: Aborting with RETVAL=255
+>
+>
+> On Monday, May 8, 2017 at 5:05:07 PM UTC-7, M Noon wrote:
+>
+>> Hi team,
+>>
+>> I am in the stage of getting familiarized with Singularity and don't know
+>> many details about it. I am trying to build a container with MPI libraries
+>> and genome aligner (STAR) that could be tested on HPC.
+>> After facing many errors, I succeeded to install both MPI libraries and
+>> STAR. I am using Centos7. I am git-cloning both tools within %POST.
+>> Logically, both programs/executables should be at "/usr/local/bin". Well,
+>> I do see mpi and it can be invoked when I am in shell mode. Despite great
+>> deal of efforts I couldn't find STAR executable or any folder that
+>> was/should have been cloned within the container. I may be missing
+>> something very trivial but I can't seem to work it out yet.
+>> Here is my Definition file:
+>>
+>>
+>> BootStrap: yum
+>>
+>> OSVersion: 7
+>>
+>> MirrorURL: http://mirror.centos.org/centos-%{OSVERSION}/%{OSVERSION}/
+>> os/$basearch/
+>>
+>> Include: yum wget
+>>
+>> # best to build up container using kickstart mentality.
+>>
+>> # ie, to add more packages to image,
+>>
+>> # re-run bootstrap command again.
+>>
+>> # bootstrap on existing image will build on top of it, not overwriting
+>> it/restarting from scratch
+>>
+>> # singularity .def file is like kickstart file
+>>
+>> # unix commands can be run, but if there is any error, the bootstrap
+>> process ends
+>>
+>>
+>>
+>> %setup
+>>
+>>    # commands to be executed on host outside container during bootstrap
+>>
+>>
+>>
+>> %post
+>>
+>>     # commands to be executed inside container during bootstrap
+>>
+>>     yum -y groupinstall "Development Tools"
+>>
+>>
+>>
+>> #    # Clone the OpenMPI GitHub master branch in current directory (on
+>> host)
+>>
+>>     git clone https://github.com/open-mpi/ompi.git
+>>
+>>     cd ompi
+>>
+>>
+>>     # Build OpenMPI in the working directory
+>>
+>>     ./autogen.pl
+>>
+>>     ./configure --prefix=/usr/local
+>>
+>>     make
+>>
+>>     make install
+>>
+>> #
+>>
+>>
+>>
+>>     # Instal "zlib1g" to aviod installation error
+>>
+>>     yum -y install zlib-devel
+>>
+>>
+>>
+>>     # Install STAR -  get STAR source using git
+>>
+>>     git clone https://github.com/alexdobin/STAR.git
+>>
+>>     cd STAR/source
+>>
+>>
+>>     echo "Within STAR"
+>>
+>>     echo "pwd"
+>>
+>>
+>>     # Build STAR
+>>
+>>     make STAR
+>>
+>>
+>>     echo $PATH
+>>
+>>     STAR --version
+>>
+>>
+>>     echo "OUT of Star Dir"
+>>
+>>     STAR --version
+>>
+>>
+>>     /usr/bin/STAR --help
+>>
+>>
+>>
+>>     # create bind points for storage.  Replace netid as appropriate
+>>
+>>     mkdir /extra/mnoon /rsgrps/zarnescu/
+>>
+>>     exit 0
+>>
+>>
+>>
+>>
+>>  %runscript
+>>
+>>    # commands to be executed when the container runs
+>>
+>>    echo "Arguments received: $*"
+>>
+>>    exec /usr/bin/python "$@"
+>>
+>>
+>>
+>>
+>>  %test
+>>
+>>    # commands to be executed within container at close of bootstrap
+>> process
+>>
+>>    python --version
+>>
+>>    STAR --version
+>>
+>>
+>>
+>>
+>> I also tried to install (git clone) STAR using this alternative method,
+>> below:
+>>
+>> sudo singularity exec -w centosMPI_star.img
+>>
+>> git clone https://github.com/alexdobin/STAR.git
+>>
+>> cd STAR/source/
+>>
+>> singularity exec ../../centosMPI_star.img make STAR
+>>
+>>
+>> When I do
+>>
+>> singularity shell centosMPI_star.img
+>>
+>>
+>> I can't find STAR in any possible directory other than the clonned
+>> version on /home/mnoon
+>>
+>>
+>> Can you please tell me what am I doing wrong? Also, Where should the
+>> installed tool/executable be located with the container?
+>>
+>>
+>> Regards,
+>>
+>> M
+>>
+>>
+>> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+>
+
+
+
+-- 
+Vanessa Villamia Sochat
+Stanford University '16
+(603) 321-0676
+
+--001a1141122e83d03a054f1d6439
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hey M Noon,<div><br></div><div>It&#39;s telling you STAR a=
+lready exists, which tells me that you are trying to bootstrap again (on a =
+failed image) without re-creating the image. Generally when you try things =
+for a second time, you want to start with a new image, because the git clon=
+e is going to fail when it sees the old STAR directory is already there.</d=
+iv><div><br></div><div>Best,</div><div><br></div><div>Vanessa</div></div><d=
+iv class=3D"gmail_extra"><br><div class=3D"gmail_quote">On Tue, May 9, 2017=
+ at 4:29 PM, M Noon <span dir=3D"ltr">&lt;<a href=3D"mailto:saad...@gmail.c=
+om" target=3D"_blank">saad...@gmail.com</a>&gt;</span> wrote:<br><blockquot=
+e class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc sol=
+id;padding-left:1ex"><div dir=3D"ltr">No, It didn&#39;t help. I comment out=
+ both mkdir commands.<div><br></div><div>
+
+
+
+
+
+
+
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">sudo singularity bootstrap starMPI.img starMPI.def=C2=A0</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">[sudo] password for mnoon:=C2=A0</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Sanitizing environment</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Building from bootstrap definition recipe</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Adding base Singularity environment to container</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Docker image path: <a href=3D"http://index.docker.io/library/centos:7" ta=
+rget=3D"_blank">index.docker.io/library/<wbr>centos:7</a></span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Cache folder set to /root/.singularity/docker</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Exploding layer: sha256:<wbr>93857f76ae30d903bbdad13fbf7fad<wbr>95ce1c0b5=
+2b7d5644651e01c6c7a90<wbr>6312.tar.gz</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Exploding layer: sha256:<wbr>9326ff949485e53c2403126b5422ad<wbr>659cb2176=
+bddbc511461da81c10703<wbr>a50c.tar.gz</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">User defined %runscript found! Taking priority.</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Running post scriptlet</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">+ yum -y groupinstall &#39;Development Tools&#39;</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Loaded plugins: fastestmirror, ovl</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Loading mirror speeds from cached hostfile</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">=C2=A0* base: <a href=3D"http://repo1.sea.innoscale.net" target=3D"_blank=
+">repo1.sea.innoscale.net</a></span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">=C2=A0* extras: <a href=3D"http://centos.firehosted.com" target=3D"_blank=
+">centos.firehosted.com</a></span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">=C2=A0* updates: <a href=3D"http://mirrors.sonic.net" target=3D"_blank">m=
+irrors.sonic.net</a></span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Maybe run: yum groups mark install (see man yum)</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">No packages in any requested group available to install or update</span><=
+/p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">+ yum -y install zlib-devel</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Loaded plugins: fastestmirror, ovl</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Loading mirror speeds from cached hostfile</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">=C2=A0* base: <a href=3D"http://repo1.sea.innoscale.net" target=3D"_blank=
+">repo1.sea.innoscale.net</a></span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">=C2=A0* extras: <a href=3D"http://centos.firehosted.com" target=3D"_blank=
+">centos.firehosted.com</a></span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">=C2=A0* updates: <a href=3D"http://mirrors.sonic.net" target=3D"_blank">m=
+irrors.sonic.net</a></span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Resolving Dependencies</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">--&gt; Running transaction check</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">---&gt; Package zlib-devel.x86_64 0:1.2.7-17.el7 will be installed</span>=
+</p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">--&gt; Finished Dependency Resolution</span></p>
+<p class=3D"m_9155153630423331802p2"><span class=3D"m_9155153630423331802s1=
+"></span><br></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Dependencies Resolved</span></p>
+<p class=3D"m_9155153630423331802p2"><span class=3D"m_9155153630423331802s1=
+"></span><br></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">=C2=A0Package=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Arch =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 Version =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 R=
+epository=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 Size</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Installing:</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">=C2=A0zlib-devel =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 x86_64 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 1=
+.2.7-17.el7=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 base=C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 50 k</span></p>
+<p class=3D"m_9155153630423331802p2"><span class=3D"m_9155153630423331802s1=
+"></span><br></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Transaction Summary</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Install=C2=A0 1 Package</span></p>
+<p class=3D"m_9155153630423331802p2"><span class=3D"m_9155153630423331802s1=
+"></span><br></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Total download size: 50 k</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Installed size: 132 k</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Downloading packages:</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">warning: /var/cache/yum/x86_64/7/base/<wbr>packages/zlib-devel-1.2.7-17.<=
+wbr>el7.x86_64.rpm: Header V3 RSA/SHA256 Signature, key ID f4a80eb5: NOKEY<=
+/span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Public key for zlib-devel-1.2.7-17.el7.x86_<wbr>64.rpm is not installed</=
+span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">zlib-devel-1.2.7-17.el7.x86_<wbr>64.rpm =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 |=C2=A0 50 kB=C2=A0 00:00:00=C2=A0 =C2=A0 =C2=A0</=
+span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Retrieving key from file:///etc/pki/rpm-gpg/RPM-<wbr>GPG-KEY-CentOS-7</sp=
+an></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Importing GPG key 0xF4A80EB5:</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">=C2=A0Userid =C2=A0 =C2=A0 : &quot;CentOS-7 Key (CentOS 7 Official Signin=
+g Key) &lt;<a href=3D"mailto:secu...@centos.org" target=3D"_blank">secu...@=
+centos.org</a>&gt;&quot;</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">=C2=A0Fingerprint: 6341 ab27 53d7 8a78 a7c2 7bb1 24c6 a8a7 f4a8 0eb5</spa=
+n></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">=C2=A0Package=C2=A0 =C2=A0 : centos-release-7-3.1611.el7.<wbr>centos.x86_=
+64 (@CentOS)</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">=C2=A0From =C2=A0 =C2=A0 =C2=A0 : /etc/pki/rpm-gpg/RPM-GPG-KEY-<wbr>CentO=
+S-7</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Running transaction check</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Running transaction test</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Transaction test succeeded</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Running transaction</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">=C2=A0 Installing : zlib-devel-1.2.7-17.el7.x86_64 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 1/1=C2=A0</s=
+pan></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">=C2=A0 Verifying=C2=A0 : zlib-devel-1.2.7-17.el7.x86_64 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 1/1=C2=
+=A0</span></p>
+<p class=3D"m_9155153630423331802p2"><span class=3D"m_9155153630423331802s1=
+"></span><br></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Installed:</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">=C2=A0 zlib-devel.x86_64 0:1.2.7-17.el7 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0</span></p>
+<p class=3D"m_9155153630423331802p2"><span class=3D"m_9155153630423331802s1=
+"></span><br></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">Complete!</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">+ cd /</span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">+ git clone <a href=3D"https://github.com/alexdobin/STAR.git" target=3D"_=
+blank">https://github.com/alexdobin/<wbr>STAR.git</a></span></p>
+<p class=3D"m_9155153630423331802p1"><span class=3D"m_9155153630423331802s1=
+">fatal: destination path &#39;STAR&#39; already exists and is not an empty=
+ directory.</span></p>
+<p class=3D"m_9155153630423331802p3"><span class=3D"m_9155153630423331802s1=
+">ERROR: Aborting with RETVAL=3D255</span></p></div><div><span class=3D""><=
+br><br>On Monday, May 8, 2017 at 5:05:07 PM UTC-7, M Noon wrote:</span><div=
+><div class=3D"h5"><blockquote class=3D"gmail_quote" style=3D"margin:0;marg=
+in-left:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr"=
+>Hi team,=C2=A0<div><br></div><div>I am in the stage of getting familiarize=
+d with Singularity and don&#39;t know many details about it. I am trying to=
+ build a container with MPI libraries and genome aligner (STAR) that could =
+be tested on HPC.</div><div>After facing many errors, I succeeded to instal=
+l both MPI libraries and STAR. I am using Centos7. I am git-cloning both to=
+ols within %POST.=C2=A0</div><div>Logically, both programs/executables shou=
+ld be at &quot;/usr/local/bin&quot;. Well, I do see mpi and it can be invok=
+ed when I am in shell mode. Despite great deal of efforts I couldn&#39;t fi=
+nd STAR executable or any folder that was/should have been cloned within th=
+e container. I may be missing something very trivial but I can&#39;t seem t=
+o work it out yet.</div><div>Here is my Definition file:</div><div><br></di=
+v><div><br></div><div>
+
+
+
+
+
+
+
+<p><span>BootStrap: yum</span></p>
+<p><span>OSVersion: 7</span></p>
+<p><span>MirrorURL: <a href=3D"http://mirror.centos.org/centos-%%7BOSVERSIO=
+N%7D/%%7BOSVERSION%7D/os/$basearch/" rel=3D"nofollow" target=3D"_blank">htt=
+p://mirror.centos.org/cento<wbr>s-%{OSVERSION}/%{OSVERSION}/<wbr>os/$basear=
+ch/</a></span></p>
+<p><span>Include: yum wget</span></p>
+<p><span># best to build up container using kickstart mentality. =C2=A0</sp=
+an></p>
+<p><span># ie, to add more packages to image,=C2=A0</span></p>
+<p><span># re-run bootstrap command again. =C2=A0</span></p>
+<p><span># bootstrap on existing image will build on top of it, not overwri=
+ting it/restarting from scratch</span></p>
+<p><span># singularity .def file is like kickstart file</span></p>
+<p><span># unix commands can be run, but if there is any error, the bootstr=
+ap process ends</span></p>
+<p><span></span><br></p>
+<p><span></span><br></p>
+<p><span>%setup</span></p>
+<p><span>=C2=A0=C2=A0 # commands to be executed on host outside container d=
+uring bootstrap</span></p>
+<p><span></span><br></p>
+<p><span></span><br></p>
+<p><span>%post</span></p>
+<p><span>=C2=A0 =C2=A0 # commands to be executed inside container during bo=
+otstrap</span></p>
+<p><span>=C2=A0 =C2=A0 yum -y groupinstall &quot;Development Tools&quot;</s=
+pan></p>
+<p><span></span><br></p>
+<p><span></span><br></p>
+<p><span>#=C2=A0 =C2=A0 # Clone the OpenMPI GitHub master branch in current=
+ directory (on host)</span></p>
+<p><span>=C2=A0 =C2=A0 git clone <a href=3D"https://github.com/open-mpi/omp=
+i.git" rel=3D"nofollow" target=3D"_blank">https://github.com/open-mpi/om<wb=
+r>pi.git</a></span></p>
+<p><span>=C2=A0 =C2=A0 cd ompi</span></p>
+<p><span></span><br></p>
+<p><span>=C2=A0 =C2=A0 # Build OpenMPI in the working directory</span></p>
+<p><span>=C2=A0 =C2=A0 ./<a href=3D"http://autogen.pl" rel=3D"nofollow" tar=
+get=3D"_blank">autogen.pl</a></span></p>
+<p><span>=C2=A0 =C2=A0 ./configure --prefix=3D/usr/local</span></p>
+<p><span>=C2=A0 =C2=A0 make</span></p>
+<p><span>=C2=A0 =C2=A0 make install</span></p>
+<p><span># =C2=A0 =C2=A0</span></p>
+<p><span>=C2=A0 =C2=A0 =C2=A0</span></p>
+<p><span>=C2=A0 =C2=A0 # Instal &quot;zlib1g&quot; to aviod installation er=
+ror</span></p>
+<p><span>=C2=A0 =C2=A0 yum -y install zlib-devel</span></p>
+<p><span>=C2=A0 =C2=A0 =C2=A0</span></p>
+<p><span>=C2=A0 =C2=A0 # Install STAR -=C2=A0 get STAR source using git</sp=
+an></p>
+<p><span>=C2=A0 =C2=A0 git clone <a href=3D"https://github.com/alexdobin/ST=
+AR.git" rel=3D"nofollow" target=3D"_blank">https://github.com/alexdobin/S<w=
+br>TAR.git</a></span></p>
+<p><span>=C2=A0 =C2=A0 cd STAR/source</span></p>
+<p><span></span><br></p>
+<p><span>=C2=A0 =C2=A0 echo &quot;Within STAR&quot;</span></p>
+<p><span>=C2=A0 =C2=A0 echo &quot;pwd&quot;=C2=A0</span></p>
+<p><span></span><br></p>
+<p><span>=C2=A0 =C2=A0 # Build STAR</span></p>
+<p><span>=C2=A0 =C2=A0 make STAR</span></p>
+<p><span></span><br></p>
+<p><span>=C2=A0 =C2=A0 echo $PATH</span></p>
+<p><span>=C2=A0 =C2=A0 STAR --version</span></p>
+<p><span></span><br></p>
+<p><span>=C2=A0 =C2=A0 echo &quot;OUT of Star Dir&quot;=C2=A0</span></p>
+<p><span>=C2=A0 =C2=A0 STAR --version</span></p>
+<p><span></span><br></p>
+<p><span>=C2=A0 =C2=A0 /usr/bin/STAR --help =C2=A0 =C2=A0</span></p>
+<p><span>=C2=A0</span></p>
+<p><span>=C2=A0 =C2=A0 # create bind points for storage.=C2=A0 Replace neti=
+d as appropriate</span></p>
+<p><span>=C2=A0 =C2=A0 mkdir /extra/mnoon /rsgrps/zarnescu/</span></p>
+<p><span>=C2=A0 =C2=A0 exit 0</span></p>
+<p><span></span><br></p>
+<p><span></span><br></p>
+<p><span></span><br></p>
+<p><span>=C2=A0%runscript</span></p>
+<p><span>=C2=A0=C2=A0 # commands to be executed when the container runs</sp=
+an></p>
+<p><span>=C2=A0=C2=A0 echo &quot;Arguments received: $*&quot;</span></p>
+<p><span>=C2=A0=C2=A0 exec /usr/bin/python &quot;$@&quot;</span></p>
+<p><span></span><br></p>
+<p><span></span><br></p>
+<p><span></span><br></p>
+<p><span>=C2=A0%test</span></p>
+<p><span>=C2=A0=C2=A0 # commands to be executed within container at close o=
+f bootstrap process</span></p>
+<p><span>=C2=A0=C2=A0 python --version</span></p>
+<p><span>=C2=A0=C2=A0 STAR --version</span></p></div><div><br></div><div><b=
+r></div><div><br></div><div><br></div><div>I also tried to install (git clo=
+ne) STAR using this alternative method, below:</div><div><br></div><div>
+
+
+
+
+
+
+
+<p><span>sudo singularity exec -w centosMPI_star.img</span></p><p><span>
+
+
+
+
+
+
+
+</span></p><p><span>git clone <a href=3D"https://github.com/alexdobin/STAR.=
+git" rel=3D"nofollow" target=3D"_blank">https://github.com/alexdobin/S<wbr>=
+TAR.git</a></span></p><p><span>
+
+
+
+
+
+
+
+</span></p><p><span>cd STAR/source/</span></p><p><span>
+
+
+
+
+
+
+
+</span></p><p><span>singularity exec ../../centosMPI_star.img make STAR</sp=
+an></p><p><br></p><p>When I do=C2=A0</p><p><span>singularity shell centosMP=
+I_star.img</span><br></p><p><span><br></span></p><p><span>I can&#39;t find =
+STAR in any possible directory other than the clonned version on /home/mnoo=
+n</span></p><p><span><br></span></p><p><span>Can you please tell me what am=
+ I doing wrong? Also, Where should the installed tool/executable be located=
+ with the container?</span></p><p><span><br></span></p><p><span>Regards,</s=
+pan></p><p><span>M</span></p><p><span><br></span></p></div></div></blockquo=
+te></div></div></div></div><div class=3D"HOEnZb"><div class=3D"h5">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singularity+u=
+nsubscribe@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div class=3D"gmail_signature" data-smartmail=3D"gmail_signature">Vanessa V=
+illamia Sochat<br>Stanford University &#39;16<br><div><div><div>(603) 321-0=
+676</div></div></div></div>
+</div>
+
+--001a1141122e83d03a054f1d6439--

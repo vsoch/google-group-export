@@ -1,0 +1,211 @@
+X-Received: by 10.66.118.108 with SMTP id kl12mr16003905pab.22.1468678749864;
+        Sat, 16 Jul 2016 07:19:09 -0700 (PDT)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.36.111.135 with SMTP id x129ls1543956itb.9.gmail; Sat, 16 Jul
+ 2016 07:19:09 -0700 (PDT)
+X-Received: by 10.66.142.233 with SMTP id rz9mr41643208pab.143.1468678749331;
+        Sat, 16 Jul 2016 07:19:09 -0700 (PDT)
+Return-Path: <gmku...@lbl.gov>
+Received: from fe3.lbl.gov (fe3.lbl.gov. [128.3.41.68])
+        by mx.google.com with ESMTPS id r11si1500837pag.260.2016.07.16.07.19.09
+        for <singu...@lbl.gov>
+        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Sat, 16 Jul 2016 07:19:09 -0700 (PDT)
+Received-SPF: pass (google.com: domain of gmku...@lbl.gov designates 74.125.82.70 as permitted sender) client-ip=74.125.82.70;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of gmku...@lbl.gov designates 74.125.82.70 as permitted sender) smtp.mailfrom=gmku...@lbl.gov
+X-Ironport-SBRS: 2.7
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2HJAACWQYpXf0ZSfUpchQIPBoM2qSGHF4J1gg+BeYYaAoEgBzgUAQEBAQEBAQMPAQEJCwsJHyYLhFwBAQQBEhErJgoLCQILDRUVAgIhAQ8DAQUBHAYIBwQBHAQBh3QDDwgFkiuPQoExPjGLO4liDYQeAQEBAQYBAQEBAR4ECwWKZ4JDgU8RAVuCQoJaBY8AhGOFDTQBiEmDeoIbgWuICIVEiCWGOhIegQ8ehEkcMgeGXIE1AQEB
+X-IronPort-AV: E=Sophos;i="5.28,373,1464678000"; 
+   d="scan'208,217";a="30537412"
+Received: from mail-wm0-f70.google.com ([74.125.82.70])
+  by fe3.lbl.gov with ESMTP; 16 Jul 2016 07:19:07 -0700
+Received: by mail-wm0-f70.google.com with SMTP id x83so31955978wma.2
+        for <singu...@lbl.gov>; Sat, 16 Jul 2016 07:19:08 -0700 (PDT)
+X-Gm-Message-State: ALyK8tIQaQRkpXJNsAKK34MPcM96IPVmtf9cx/H2+xZzqNRmanru/QnbrgNRLZBQDx/nIofd98oEflEvha9R1tz0mVY0Lwx9STNXRyw/Sei9YNu/xzZAnX8aROh+F9tvpOQM9LvJiUcF6GVSJcvwcG1VBSs=
+X-Received: by 10.46.9.71 with SMTP id 68mr12136287ljj.0.1468678747316;
+        Sat, 16 Jul 2016 07:19:07 -0700 (PDT)
+MIME-Version: 1.0
+X-Received: by 10.46.9.71 with SMTP id 68mr12136281ljj.0.1468678747002; Sat,
+ 16 Jul 2016 07:19:07 -0700 (PDT)
+Received: by 10.25.214.158 with HTTP; Sat, 16 Jul 2016 07:19:06 -0700 (PDT)
+In-Reply-To: <910ed8e1-3946-4e87-a896-49d2367271ce@lbl.gov>
+References: <4b6a642c-4982-4175-84bd-8492d41eddbc@lbl.gov>
+	<f6d9bf7b-a18f-46be-a664-f2c94cc2fd22@lbl.gov>
+	<910ed8e1-3946-4e87-a896-49d2367271ce@lbl.gov>
+Date: Sat, 16 Jul 2016 07:19:06 -0700
+Message-ID: <CAN7etTyYOZ4i3mycZ8E+z_XMg8_3pRiopfSx_Te90GHjdZmLfA@mail.gmail.com>
+Subject: Re: [Singularity] ABORT: Check installation, must be performed by root.
+From: "Gregory M. Kurtzer" <gmku...@lbl.gov>
+To: "singu...@lbl.gov" <singu...@lbl.gov>
+Content-Type: multipart/alternative; boundary=001a114b189c012e7b0537c16b49
+
+--001a114b189c012e7b0537c16b49
+Content-Type: text/plain; charset=UTF-8
+
+Hi Igor,
+
+Specifically it needs the command:
+
+# chmod 4755 $libexecdir/singularity/sexec
+
+But if I am understanding the scenario you describe, even then it won't
+work because you are changing the install path which would break
+Singularity (among other programs) because it relies on knowing where the
+other installed files exist (eg. it's config file and helper scripts).
+
+Unless you used $DESTDIR when installing into the staging directory:
+
+$ ./configure --prefix=/usr/local
+$ make
+$ make install DESTDIR=/stagedir
+
+And then:
+
+# rsync /stagedir/* /
+
+That would heroically get the paths right but it seems dangerous to me.
+
+Anyway, it is probably best to just do the make install as root to wherever
+it was configure to exist. Also then the admins can control the features
+via the config file. I recommend using RPM or DEB packaging formats to make
+it consistent. There is documentation on how to create RPMS and I need to
+write one up for DEB still.
+
+Hope that helps!
+
+
+
+On Friday, July 15, 2016, Igor <igor...@gmail.com> wrote:
+
+> OK, I checked: it is not enough that singularity is owned by root. You
+> cannot just rsync it from user account to root account. What else does
+> "make install" do that it is important to run it as root?
+>
+>
+> On Friday, July 15, 2016 at 11:46:31 PM UTC-5, Igor wrote:
+>>
+>> I guess, this is the reason:
+>> "The 'make install' is required to be run as root to get a properly
+>> installed Singularity implementation. If you do not run it as root, you
+>> will only be able to launch Singularity as root due to permission
+>> limitations."
+>>
+>> I cannot run "make install' as root. Our system works as follows: one
+>> installs a package as a user to a staging area and then a cron job rsyncs
+>> it to its final location owned by root. Would this work or one really needs
+>> to run "make install" as root?
+>>
+>>
+>> On Friday, July 15, 2016 at 11:08:54 PM UTC-5, Igor wrote:
+>>>
+>>> Hi All,
+>>> I have created Ununtu 16.04 image under Ubuntu 16.04 using singularity
+>>> 2.0.
+>>> It works on the original machine:
+>>>
+>>> $ singularity exec /tmp/tensorflow_0.9.img python
+>>> Python 2.7.11+ (default, Apr 17 2016, 14:00:29)
+>>> [GCC 5.3.1 20160413] on linux2
+>>> Type "help", "copyright", "credits" or "license" for more information.
+>>> >>>
+>>>
+>>> However, once I copied it to Scientific Linux 6.7 where I really want to
+>>> use it (because building tensorflow under SL6.7 is such a pain and so easy
+>>> under Ubuntu 16.04), the same command gives the error in the subject.
+>>> Any idea how to fix it?
+>>> Is the error message saying that the image must be own by root even if I
+>>> use it read-only?
+>>> Thank you,
+>>> Igor
+>>>
+>>>
+>>> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov
+> <javascript:_e(%7B%7D,'cvml','singularity%...@lbl.gov');>.
+>
+
+
+-- 
+Gregory M. Kurtzer
+High Performance Computing Services (HPCS)
+University of California
+Lawrence Berkeley National Laboratory
+One Cyclotron Road, Berkeley, CA 94720
+
+--001a114b189c012e7b0537c16b49
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Hi Igor,<div><br></div><div>Specifically it needs the command:</div><div><b=
+r></div><div># chmod 4755 $libexecdir/singularity/sexec</div><div><br></div=
+><div>But if I am understanding the scenario you describe, even then it won=
+&#39;t work because you are changing the install path which would break Sin=
+gularity (among other programs) because it relies on knowing where the othe=
+r installed files exist (eg.=C2=A0it&#39;s config file and helper scripts<s=
+pan></span>).=C2=A0</div><div><br></div>Unless you=C2=A0used $DESTDIR when =
+installing into the staging directory:<div><br></div><div>$ ./configure --p=
+refix=3D/usr/local</div><div>$ make</div><div>$ make install DESTDIR=3D/sta=
+gedir=C2=A0</div><div><br></div><div>And then:</div><div><br></div><div># r=
+sync /stagedir/* /</div><div><br></div><div>That would heroically get the p=
+aths right but it=C2=A0seems dangerous to me.=C2=A0</div><div><br></div><di=
+v>Anyway, it is probably best to just do the make install as root to wherev=
+er it was configure to exist. Also then the admins can control the features=
+ via the config file. I recommend using=C2=A0RPM or DEB packaging formats t=
+o make it consistent. There is documentation on how to create RPMS and I ne=
+ed to write one up for DEB still.=C2=A0</div><div><br></div><div>Hope that =
+helps!</div><div><br></div><div><br><div><div><br>On Friday, July 15, 2016,=
+ Igor &lt;<a href=3D"mailto:igor...@gmail.com">igor...@gmail.com</a>&gt; wr=
+ote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border=
+-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">OK, I checked: it i=
+s not enough that singularity is owned by root. You cannot just rsync it fr=
+om user account to root account. What else does &quot;make install&quot; do=
+ that it is important to run it as root?<div><br><br>On Friday, July 15, 20=
+16 at 11:46:31 PM UTC-5, Igor wrote:<blockquote class=3D"gmail_quote" style=
+=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-left:1ex"=
+><div dir=3D"ltr">I guess, this is the reason:<div>&quot;The &#39;make inst=
+all&#39; is required to be run as root to get a properly installed Singular=
+ity implementation. If you do not run it as root, you will only be able to =
+launch Singularity as root due to permission limitations.&quot;</div><div><=
+br></div><div>I cannot run &quot;make install&#39; as root. Our system work=
+s as follows: one installs a package as a user to a staging area and then a=
+ cron job rsyncs it to its final location owned by root. Would this work or=
+ one really needs to run &quot;make install&quot; as root?</div><div><br><b=
+r>On Friday, July 15, 2016 at 11:08:54 PM UTC-5, Igor wrote:<blockquote cla=
+ss=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc=
+ solid;padding-left:1ex"><div dir=3D"ltr">Hi All,<div>I have created Ununtu=
+ 16.04 image under Ubuntu 16.04 using singularity 2.0.</div><div>It works o=
+n the original machine:=C2=A0</div><div><br></div><div><span style=3D"font-=
+family:monospace"><span style=3D"color:rgb(0,0,0)">$ singularity exec /tmp/=
+tensorflow_0.9.img python =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0</span><br>Python 2=
+.7.11+ (default, Apr 17 2016, 14:00:29) =C2=A0<br>[GCC 5.3.1 20160413] on l=
+inux2
+<br>Type &quot;help&quot;, &quot;copyright&quot;, &quot;credits&quot; or &q=
+uot;license&quot; for more information.
+<br>&gt;&gt;&gt; <br>
+<br></span></div><div>However, once I copied it to Scientific Linux 6.7 whe=
+re I really want to use it (because building tensorflow under SL6.7 is such=
+ a pain and so easy under Ubuntu 16.04), the same command gives the error i=
+n the subject.=C2=A0<br></div><div>Any idea how to fix it?</div><div>Is the=
+ error message saying that the image must be own by root even if I use it r=
+ead-only?</div><div>Thank you,</div><div>Igor</div><div><br></div><div><br>=
+</div></div></blockquote></div></div></blockquote></div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:_e(%7B%7D,&#39;cvml&#39;,&#39;singularity...@=
+lbl.gov&#39;);" target=3D"_blank">singu...@lbl.gov</a>.<br>
+</blockquote></div></div></div><br><br>-- <br><div dir=3D"ltr"><div>Gregory=
+ M. Kurtzer<br>High Performance Computing Services (HPCS)<br>University of =
+California<br>Lawrence Berkeley National Laboratory<br>One Cyclotron Road, =
+Berkeley, CA 94720</div></div><br>
+
+--001a114b189c012e7b0537c16b49--

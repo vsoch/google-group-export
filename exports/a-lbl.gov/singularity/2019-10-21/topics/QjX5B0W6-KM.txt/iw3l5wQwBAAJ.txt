@@ -1,0 +1,325 @@
+Date: Wed, 13 Jun 2018 08:54:14 -0700 (PDT)
+From: Samy <smahan...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <f7703618-3b66-48d0-ad16-919ac48ceae2@lbl.gov>
+In-Reply-To: <CAN9aCedNkh0uenCVEC4adKUAFL5-V3GJdo3vr7w89oZ+EH21-A@mail.gmail.com>
+References: <d63bca24-e980-40b0-a509-9ff42a9a5815@lbl.gov> <372a0d6b-491c-4cc1-9ebf-f465fccc3d78@lbl.gov>
+ <CAM=pu+Jh1gBgLAkr-VSEpSizTtBnoTOVcf0Ty+h3f4Bka0Qpig@mail.gmail.com>
+ <CA+t3LJz7cvNcyDO7eXZ4Lwz=gV8B8=Ymq2D3JNPd3ACkmpEAQQ@mail.gmail.com> <CAM=pu+J4jxDo+k9H=LJ9qmwatfD3SrXfx8igRwUd9TKRMOUBSg@mail.gmail.com>
+ <CAN9aCedNkh0uenCVEC4adKUAFL5-V3GJdo3vr7w89oZ+EH21-A@mail.gmail.com>
+Subject: Re: [Singularity] Re: how to mount a directory to the container at
+ runtime?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_86478_1476866161.1528905254756"
+
+------=_Part_86478_1476866161.1528905254756
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_86479_1652396950.1528905254756"
+
+------=_Part_86479_1652396950.1528905254756
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Thank you everyone, Your suggestions really solved my issue.=20
+SINGULARITY_BINDPATH seems to be our most used.
+
+On Friday, June 8, 2018 at 7:43:28 AM UTC-7, David Godlove wrote:
+>
+> Let me echo Daniel's idea.  The directory inside the container does not=
+=20
+> need to be named the same as the directory that you are binding to on the=
+=20
+> host system.  So it doesn't matter if you don't know the name of the shar=
+ed=20
+> directory at build time.  You could just create a directory called "/shar=
+e"=20
+> or something and bind there.  Or if you are using a base image that has a=
+=20
+> directory like /mnt you could just bind there.
+>
+> As for the command line, you can always set the SINGULARITY_BINDPATH=20
+> environment variable.  That keeps your command line nice and clean.
+>
+> Dave
+>
+> On Tue, Jun 5, 2018 at 6:41 PM, v <v...@gmail.com <javascript:>> wrote:
+>
+>> I think @Samy is saying he doesn't want to use --bind at all, because th=
+e=20
+>> run command is already long and ugly. Having a --bind (or similar other =
+for=20
+>> the user to define) would of course be optimal. Other than:
+>>
+>>  - user variable for runtime
+>>  - custom mount to consistent location in container
+>>  - writing to TMP or HOME (or environment variable that points to likely=
+=20
+>> location to be bound automatically by Singularity)=20
+>>  - using a workflow tool / language
+>>  - environment or other config settings
+>> =20
+>> I'm not sure I have any more ideas. Thoughts?
+>>
+>> On Tue, Jun 5, 2018 at 3:31 PM, Daniel Estrela <de...@gmail.com=20
+>> <javascript:>> wrote:
+>>
+>>> Your output dir could be always, let's say, /mnt and at run time you=20
+>>> could use --bind /output_directory:/mnt .
+>>>
+>>> Cheers,
+>>>
+>>> Em ter, 5 de jun de 2018 =C3=A0s 19:18, v <v...@gmail.com <javascript:>=
+>=20
+>>> escreveu:
+>>>
+>>>> Well, you could also consider writing to a temporary location because=
+=20
+>>>> this is likely to exist across clusters and be mounted by default (but=
+ not=20
+>>>> guaranteed). Most languages have a variable that can quickly return th=
+e=20
+>>>> TMPDIR variable to indicate the system's temporary directory) and then=
+ you=20
+>>>> would want to clean up the intermediate files after. Or you could have=
+ the=20
+>>>> user set some value in a configuration file beforehand, or use an=20
+>>>> environment variable, or if what you are doing (step 1 --> step 2) is =
+more=20
+>>>> along the lines of a workflow, you might consider a workflow manager=
+=20
+>>>> (snakemake, nextflow, CWL, etc.) . But there isn't some universal,=20
+>>>> consistent location across all clusters everywhere that you can have=
+=20
+>>>> certainty to be able to bind in a container. This is why allowing the =
+user=20
+>>>> to define it with a runtime variable is a good solution, even if the r=
+un=20
+>>>> command is a little bit long. As for your frustration with that, I thi=
+nk=20
+>>>> all of us hear you :)=20
+>>>>
+>>>> "Welcome to scientific programming!" ! lol.
+>>>>
+>>>> On Tue, Jun 5, 2018 at 3:11 PM, Samy <sma...@gmail.com=20
+>>>> <javascript:>> wrote:
+>>>>
+>>>>> Vanessa,
+>>>>>
+>>>>> I'm hoping i don't have to pass it as an argument. My run command is=
+=20
+>>>>> very long and ugly. Don;t want to make it worse.
+>>>>>
+>>>>>
+>>>>> On Tuesday, June 5, 2018 at 2:07:19 PM UTC-7, Samy wrote:
+>>>>>>
+>>>>>> Hello everyone,
+>>>>>>
+>>>>>> I need to run a container on a cluster from a shared location. In th=
+e=20
+>>>>>> %runscript of the container,  I need to write the results to a file =
+and=20
+>>>>>> read it back again to parse it .=20
+>>>>>>
+>>>>>> I can't use --bind since I don't know the shared location prior to=
+=20
+>>>>>> building the container (so the shared location won't exist in the=20
+>>>>>> container) and it's different from a cluster to another. =20
+>>>>>>
+>>>>>> I'm having a problem writing these files in a shared location .  Any=
+=20
+>>>>>> ideas please?
+>>>>>>
+>>>>>> Thank you,
+>>>>>>
+>>>>> --=20
+>>>>> You received this message because you are subscribed to the Google=20
+>>>>> Groups "singularity" group.
+>>>>> To unsubscribe from this group and stop receiving emails from it, sen=
+d=20
+>>>>> an email to singu...@lbl.gov <javascript:>.
+>>>>>
+>>>>
+>>>>
+>>>>
+>>>> --=20
+>>>> Vanessa Villamia Sochat
+>>>> Stanford University '16
+>>>> (603) 321-0676
+>>>>
+>>>> --=20
+>>>> You received this message because you are subscribed to the Google=20
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send=
+=20
+>>>> an email to singu...@lbl.gov <javascript:>.
+>>>>
+>>> --=20
+>>> You received this message because you are subscribed to the Google=20
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send=
+=20
+>>> an email to singu...@lbl.gov <javascript:>.
+>>>
+>>
+>>
+>>
+>> --=20
+>> Vanessa Villamia Sochat
+>> Stanford University '16
+>> (603) 321-0676
+>>
+>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s=20
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n=20
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+------=_Part_86479_1652396950.1528905254756
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Thank you everyone, Your suggestions really solved my issu=
+e. SINGULARITY_BINDPATH seems to be our most used.<br><br>On Friday, June 8=
+, 2018 at 7:43:28 AM UTC-7, David Godlove wrote:<blockquote class=3D"gmail_=
+quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;pa=
+dding-left: 1ex;"><div dir=3D"ltr">Let me echo Daniel&#39;s idea.=C2=A0 The=
+ directory inside the container does not need to be named the same as the d=
+irectory that you are binding to on the host system.=C2=A0 So it doesn&#39;=
+t matter if you don&#39;t know the name of the shared directory at build ti=
+me.=C2=A0 You could just create a directory called &quot;/share&quot; or so=
+mething and bind there.=C2=A0 Or if you are using a base image that has a d=
+irectory like /mnt you could just bind there.<div><br></div><div>As for the=
+ command line, you can always set the SINGULARITY_BINDPATH environment vari=
+able.=C2=A0 That keeps your command line nice and clean.</div><div><br></di=
+v><div>Dave</div></div><div><br><div class=3D"gmail_quote">On Tue, Jun 5, 2=
+018 at 6:41 PM, v <span dir=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_=
+blank" gdf-obfuscated-mailto=3D"mGCW-LZWAgAJ" rel=3D"nofollow" onmousedown=
+=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D=
+&#39;javascript:&#39;;return true;">v...@gmail.com</a>&gt;</span> wrote:<br=
+><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1=
+px #ccc solid;padding-left:1ex"><div dir=3D"ltr">I think @Samy is saying he=
+ doesn&#39;t want to use --bind at all, because the run command is already =
+long and ugly. Having a --bind (or similar other for the user to define) wo=
+uld of course be optimal. Other than:<div><br></div><div>=C2=A0- user varia=
+ble for runtime</div><div>=C2=A0- custom mount to consistent location in co=
+ntainer</div><div>=C2=A0- writing to TMP or HOME (or environment variable t=
+hat points to likely location to be bound automatically by Singularity)=C2=
+=A0</div><div>=C2=A0- using a workflow tool / language</div><div>=C2=A0- en=
+vironment or other config settings</div><div>=C2=A0</div><div>I&#39;m not s=
+ure I have any more ideas. Thoughts?</div></div><div><div><div><br><div cla=
+ss=3D"gmail_quote">On Tue, Jun 5, 2018 at 3:31 PM, Daniel Estrela <span dir=
+=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailt=
+o=3D"mGCW-LZWAgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascr=
+ipt:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return=
+ true;">de...@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail=
+_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:=
+1ex"><div dir=3D"ltr">Your output dir could be always, let&#39;s say, /mnt =
+and at run time you could use --bind /output_directory:/mnt .<br><div><br><=
+/div><div>Cheers,</div><div><div><div><br></div><div class=3D"gmail_quote">=
+<div dir=3D"ltr">Em ter, 5 de jun de 2018 =C3=A0s 19:18, v &lt;<a href=3D"j=
+avascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"mGCW-LZWAgAJ" rel=3D=
+"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" o=
+nclick=3D"this.href=3D&#39;javascript:&#39;;return true;">v...@gmail.com</a=
+>&gt; escreveu:<br></div><blockquote class=3D"gmail_quote" style=3D"margin:=
+0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr"><f=
+ont style=3D"vertical-align:inherit"><font style=3D"vertical-align:inherit"=
+>Well, you could also consider writing to a temporary location because this=
+ is likely to exist across clusters and be mounted by default (but not guar=
+anteed). Most languages have a variable that can quickly return the TMPDIR =
+variable to indicate the system&#39;s temporary directory) and then you wou=
+ld want to clean up the intermediate files after. Or you could have the use=
+r set some value in a configuration file beforehand, or use an environment =
+variable, or if what you are doing (step 1 --&gt; step 2) is more along the=
+ lines of a workflow, you might consider a workflow manager (snakemake, nex=
+tflow, CWL, etc.) . But there isn&#39;t some universal, consistent location=
+ across all clusters everywhere that you can have certainty to be able to b=
+ind in a container. This is why allowing the user to define it with a runti=
+me variable is a good solution, even if the run command is a little bit lon=
+g. As for your frustration with that, I think all of us hear you :)=C2=A0</=
+font></font><div><font style=3D"vertical-align:inherit"><font style=3D"vert=
+ical-align:inherit"><br></font></font></div><div><font style=3D"vertical-al=
+ign:inherit"><font style=3D"vertical-align:inherit">&quot;Welcome to scient=
+ific programming!&quot; ! lol.</font></font></div></div><div><br><div class=
+=3D"gmail_quote">On Tue, Jun 5, 2018 at 3:11 PM, Samy <span dir=3D"ltr">&lt=
+;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"mGCW-LZ=
+WAgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;re=
+turn true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">sma.=
+..@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" sty=
+le=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div d=
+ir=3D"ltr">Vanessa,<div><br></div><div>I&#39;m hoping i don&#39;t have to p=
+ass it as an argument. My run command is very long and ugly. Don;t want to =
+make it worse.<div><div><br><br>On Tuesday, June 5, 2018 at 2:07:19 PM UTC-=
+7, Samy wrote:<blockquote class=3D"gmail_quote" style=3D"margin:0;margin-le=
+ft:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Hell=
+o everyone,<div><br></div><div>I need to run a container on a cluster from =
+a shared location. In the %runscript of the container,=C2=A0 I need to writ=
+e the results to a file and read it back again to parse it .=C2=A0</div><di=
+v><br></div><div>I can&#39;t use --bind since I don&#39;t know the shared l=
+ocation prior to building the container (so the shared location won&#39;t e=
+xist in the container) and it&#39;s different from a cluster to another.=C2=
+=A0=C2=A0</div><div><br></div><div>I&#39;m having a problem writing these f=
+iles in a shared location .=C2=A0 Any ideas please?</div><div><br></div><di=
+v>Thank you,</div></div></blockquote></div></div></div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+mGCW-LZWAgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><d=
+iv>(603) 321-0676</div></div></div></div>
+</div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+mGCW-LZWAgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</blockquote></div></div></div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+mGCW-LZWAgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><d=
+iv>(603) 321-0676</div></div></div></div>
+</div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+mGCW-LZWAgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br></div>
+</blockquote></div>
+------=_Part_86479_1652396950.1528905254756--
+
+------=_Part_86478_1476866161.1528905254756--

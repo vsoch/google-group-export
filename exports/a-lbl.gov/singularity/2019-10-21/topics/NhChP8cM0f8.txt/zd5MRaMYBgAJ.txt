@@ -1,0 +1,620 @@
+Date: Tue, 3 Apr 2018 14:51:24 -0700 (PDT)
+From: Matthew Rich <mat...@matthewrich.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <6c17a3b1-4f10-49b8-90bc-407771f32092@lbl.gov>
+In-Reply-To: <414c2f29-9ef6-4212-a950-9b21600c1215@lbl.gov>
+References: <414c2f29-9ef6-4212-a950-9b21600c1215@lbl.gov>
+Subject: Re: Error on HPC compute nodes, but not head node
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_25220_1814803693.1522792284306"
+
+------=_Part_25220_1814803693.1522792284306
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_25221_1446235667.1522792284307"
+
+------=_Part_25221_1446235667.1522792284307
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+It looks like you=E2=80=99ve installed Singularity into a shared filesystem=
+. Did=20
+you use the --localstatedir option when compiling? =20
+http://singularity.lbl.gov/admin-guide#prefix-in-special-places-localstated=
+ir
+
+On Tuesday, April 3, 2018 at 1:43:04 PM UTC-5, Steve wrote:
+>
+> When I try to use Singluarity (version 2.4.2) on the head node of our HPC=
+=20
+> (running CentOS 6.8), it works fine:
+>
+> $ module load singularity/2.4.2; singularity shell stevekm_ngs580-nf_base=
+-
+> 2018-03-15-ea494a9472a4.img
+>
+>
+> However, when I try to run the same thing on our compute nodes, it fails:
+>
+> $ module load singularity/2.4.2; singularity shell stevekm_ngs580-nf_base=
+-
+> 2018-03-15-ea494a9472a4.img
+> ERROR  : Singularity is not running with appropriate privileges!
+> ERROR  : Check installation path is not mounted with 'nosuid', and/or=20
+> consult manual.
+> ABORT  : Retval =3D 255
+>
+>
+> The compute nodes are supposed to be running with the exact same software=
+=20
+> configuration as the head node, so we are kinda stumped as to what might =
+be=20
+> causing this.=20
+>
+> I saw there are details about the config here:
+> http://singularity.lbl.gov/docs-config#parameters
+>
+> And I checked the contents of our config file but it all looks like the=
+=20
+> default values:
+>
+> $ cat /local/apps/singularity/2.4.2/etc/singularity/singularity.conf
+> # SINGULARITY.CONF
+> # This is the global configuration file for Singularity. This file contro=
+ls
+> # what the container is allowed to do on a particular host, and as a resu=
+lt
+> # this file must be owned by root.
+>
+>
+> # ALLOW SETUID: [BOOL]
+> # DEFAULT: yes
+> # Should we allow users to utilize the setuid program flow within=20
+> Singularity?
+> # note1: This is the default mode, and to utilize all features, this opti=
+on
+> # will need to be enabled.
+> # note2: If this option is disabled, it will rely on the user namespace
+> # exclusively which has not been integrated equally between the different
+> # Linux distributions.
+> allow setuid =3D yes
+>
+>
+> # MAX LOOP DEVICES: [INT]
+> # DEFAULT: 256
+> # Set the maximum number of loop devices that Singularity should ever=20
+> attempt
+> # to utilize.
+> max loop devices =3D 256
+>
+>
+> # ALLOW PID NS: [BOOL]
+> # DEFAULT: yes
+> # Should we allow users to request the PID namespace? Note that for some=
+=20
+> HPC
+> # resources, the PID namespace may confuse the resource manager and break=
+=20
+> how
+> # some MPI implementations utilize shared memory. (note, on some older
+> # systems, the PID namespace is always used)
+> allow pid ns =3D yes
+>
+>
+> # CONFIG PASSWD: [BOOL]
+> # DEFAULT: yes
+> # If /etc/passwd exists within the container, this will automatically=20
+> append
+> # an entry for the calling user.
+> config passwd =3D yes
+>
+>
+> # CONFIG GROUP: [BOOL]
+> # DEFAULT: yes
+> # If /etc/group exists within the container, this will automatically appe=
+nd
+> # group entries for the calling user.
+> config group =3D yes
+>
+>
+> # CONFIG RESOLV_CONF: [BOOL]
+> # DEFAULT: yes
+> # If there is a bind point within the container, use the host's
+> # /etc/resolv.conf.
+> config resolv_conf =3D yes
+>
+>
+> # MOUNT PROC: [BOOL]
+> # DEFAULT: yes
+> # Should we automatically bind mount /proc within the container?
+> mount proc =3D yes
+>
+>
+> # MOUNT SYS: [BOOL]
+> # DEFAULT: yes
+> # Should we automatically bind mount /sys within the container?
+> mount sys =3D yes
+>
+>
+> # MOUNT DEV: [yes/no/minimal]
+> # DEFAULT: yes
+> # Should we automatically bind mount /dev within the container? If=20
+> 'minimal'
+> # is chosen, then only 'null', 'zero', 'random', 'urandom', and 'shm' wil=
+l
+> # be included (the same effect as the --contain options)
+> mount dev =3D yes
+>
+>
+> # MOUNT DEVPTS: [BOOL]
+> # DEFAULT: yes
+> # Should we mount a new instance of devpts if there is a 'minimal'
+> # /dev, or -C is passed?  Note, this requires that your kernel was
+> # configured with CONFIG_DEVPTS_MULTIPLE_INSTANCES=3Dy, or that you're
+> # running kernel 4.7 or newer.
+> mount devpts =3D yes
+>
+>
+> # MOUNT HOME: [BOOL]
+> # DEFAULT: yes
+> # Should we automatically determine the calling user's home directory and
+> # attempt to mount it's base path into the container? If the --contain=20
+> option
+> # is used, the home directory will be created within the session director=
+y=20
+> or
+> # can be overridden with the SINGULARITY_HOME or SINGULARITY_WORKDIR
+> # environment variables (or their corresponding command line options).
+> mount home =3D yes
+>
+>
+> # MOUNT TMP: [BOOL]
+> # DEFAULT: yes
+> # Should we automatically bind mount /tmp and /var/tmp into the container=
+?=20
+> If
+> # the --contain option is used, both tmp locations will be created in the
+> # session directory or can be specified via the  SINGULARITY_WORKDIR
+> # environment variable (or the --workingdir command line option).
+> mount tmp =3D yes
+>
+>
+> # MOUNT HOSTFS: [BOOL]
+> # DEFAULT: no
+> # Probe for all mounted file systems that are mounted on the host, and bi=
+nd
+> # those into the container?
+> mount hostfs =3D no
+>
+>
+> # BIND PATH: [STRING]
+> # DEFAULT: Undefined
+> # Define a list of files/directories that should be made available from=
+=20
+> within
+> # the container. The file or directory must exist within the container on
+> # which to attach to. you can specify a different source and destination
+> # path (respectively) with a colon; otherwise source and dest are the sam=
+e.
+> #bind path =3D /etc/singularity/default-nsswitch.conf:/etc/nsswitch.conf
+> #bind path =3D /opt
+> #bind path =3D /scratch
+> bind path =3D /etc/localtime
+> bind path =3D /etc/hosts
+>
+>
+> # USER BIND CONTROL: [BOOL]
+> # DEFAULT: yes
+> # Allow users to influence and/or define bind points at runtime? This wil=
+l=20
+> allow
+> # users to specify bind points, scratch and tmp locations. (note: User bi=
+nd
+> # control is only allowed if the host also supports PR_SET_NO_NEW_PRIVS)
+> user bind control =3D yes
+>
+>
+> # ENABLE OVERLAY: [yes/no/try]
+> # DEFAULT: try
+> # Enabling this option will make it possible to specify bind paths to=20
+> locations
+> # that do not currently exist within the container.  If 'try' is chosen,
+> # overlayfs will be tried but if it is unavailable it will be silently=20
+> ignored.
+> enable overlay =3D try
+>
+>
+> # MOUNT SLAVE: [BOOL]
+> # DEFAULT: yes
+> # Should we automatically propagate file-system changes from the host?
+> # This should be set to 'yes' when autofs mounts in the system should
+> # show up in the container.
+> mount slave =3D yes
+>
+>
+> # SESSIONDIR MAXSIZE: [STRING]
+> # DEFAULT: 16
+> # This specifies how large the default sessiondir should be (in MB) and i=
+t=20
+> will
+> # only affect users who use the "--contain" options and don't also specif=
+y=20
+> a
+> # location to do default read/writes to (e.g. "--workdir" or "--home").
+> sessiondir max size =3D 16
+>
+>
+> # LIMIT CONTAINER OWNERS: [STRING]
+> # DEFAULT: NULL
+> # Only allow containers to be used that are owned by a given user. If thi=
+s
+> # configuration is undefined (commented or set to NULL), all containers a=
+re
+> # allowed to be used. This feature only applies when Singularity is=20
+> running in
+> # SUID mode and the user is non-root.
+> #limit container owners =3D gmk, singularity, nobody
+>
+>
+> # LIMIT CONTAINER PATHS: [STRING]
+> # DEFAULT: NULL
+> # Only allow containers to be used that are located within an allowed pat=
+h
+> # prefix. If this configuration is undefined (commented or set to NULL),
+> # containers will be allowed to run from anywhere on the file system. Thi=
+s
+> # feature only applies when Singularity is running in SUID mode and the=
+=20
+> user is
+> # non-root.
+> #limit container paths =3D /scratch, /tmp, /global
+>
+>
+> # ALLOW CONTAINER ${TYPE}: [BOOL]
+> # DEFAULT: yes
+> # This feature limits what kind of containers that Singularity will allow
+> # users to use (note this does not apply for root).
+> allow container squashfs =3D yes
+> allow container extfs =3D yes
+> allow container dir =3D yes
+>
+>
+> # AUTOFS BUG PATH: [STRING]
+> # DEFAULT: Undefined
+> # Define list of autofs directories which produces "Too many levels of=20
+> symbolink links"
+> # errors when accessed from container (typically bind mounts)
+> #autofs bug path =3D /nfs
+> #autofs bug path =3D /cifs-share
+>
+>
+>
+> Any ideas what might be happening?=20
+>
+>
+>
+>
+------=_Part_25221_1446235667.1522792284307
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><span style=3D"color:rgb(31, 73, 125);" class=3D"defanged3=
+0-colour"><span style=3D"font-family:&quot;Calibri&quot;, sans-serif;" clas=
+s=3D"defanged30-font"><span style=3D"font-size:11pt;" class=3D"defanged30-s=
+ize">It looks like you=E2=80=99ve installed Singularity into a shared
+filesystem. Did you use the --localstatedir option when compiling?=C2=A0 <a=
+ href=3D"http://singularity.lbl.gov/admin-guide#prefix-in-special-places-lo=
+calstatedir" rel=3D"noopener noreferrer" target=3D"_blank">http://singulari=
+ty.lbl.gov/admin-guide#prefix-in-special-places-localstatedir</a></span></s=
+pan></span><br><br>On Tuesday, April 3, 2018 at 1:43:04 PM UTC-5, Steve wro=
+te:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;=
+border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">When I try=
+ to use Singluarity (version 2.4.2) on the head node of our HPC (running Ce=
+ntOS 6.8), it works fine:<br><br><div style=3D"background-color:rgb(250,250=
+,250);border-color:rgb(187,187,187);border-style:solid;border-width:1px"><c=
+ode><div><span style=3D"color:#000">$ </span><span style=3D"color:#008">mod=
+ule</span><span style=3D"color:#000"> load singularity</span><span style=3D=
+"color:#660">/</span><span style=3D"color:#066">2.4</span><span style=3D"co=
+lor:#660">.</span><span style=3D"color:#066">2</span><span style=3D"color:#=
+660">;</span><span style=3D"color:#000"> singularity shell stevekm_ngs580</=
+span><span style=3D"color:#660">-</span><span style=3D"color:#000">nf_base<=
+/span><span style=3D"color:#660">-</span><span style=3D"color:#066">2018</s=
+pan><span style=3D"color:#660">-</span><span style=3D"color:#066">03</span>=
+<span style=3D"color:#660"><wbr>-</span><span style=3D"color:#066">15</span=
+><span style=3D"color:#660">-</span><span style=3D"color:#000">ea494a9472a4=
+</span><span style=3D"color:#660">.</span><span style=3D"color:#000">img<br=
+><br></span></div></code></div><br>However, when I try to run the same thin=
+g on our compute nodes, it fails:<br><br><div style=3D"background-color:rgb=
+(250,250,250);border-color:rgb(187,187,187);border-style:solid;border-width=
+:1px"><code><div><span style=3D"color:#000">$ </span><span style=3D"color:#=
+008">module</span><span style=3D"color:#000"> load singularity</span><span =
+style=3D"color:#660">/</span><span style=3D"color:#066">2.4</span><span sty=
+le=3D"color:#660">.</span><span style=3D"color:#066">2</span><span style=3D=
+"color:#660">;</span><span style=3D"color:#000"> singularity shell stevekm_=
+ngs580</span><span style=3D"color:#660">-</span><span style=3D"color:#000">=
+nf_base</span><span style=3D"color:#660">-</span><span style=3D"color:#066"=
+>2018</span><span style=3D"color:#660">-</span><span style=3D"color:#066">0=
+3</span><span style=3D"color:#660"><wbr>-</span><span style=3D"color:#066">=
+15</span><span style=3D"color:#660">-</span><span style=3D"color:#000">ea49=
+4a9472a4</span><span style=3D"color:#660">.</span><span style=3D"color:#000=
+">img<br>ERROR =C2=A0</span><span style=3D"color:#660">:</span><span style=
+=3D"color:#000"> </span><span style=3D"color:#606">Singularity</span><span =
+style=3D"color:#000"> </span><span style=3D"color:#008">is</span><span styl=
+e=3D"color:#000"> </span><span style=3D"color:#008">not</span><span style=
+=3D"color:#000"> running </span><span style=3D"color:#008">with</span><span=
+ style=3D"color:#000"> appropriate privileges</span><span style=3D"color:#6=
+60">!</span><span style=3D"color:#000"><br>ERROR =C2=A0</span><span style=
+=3D"color:#660">:</span><span style=3D"color:#000"> </span><span style=3D"c=
+olor:#606">Check</span><span style=3D"color:#000"> installation path </span=
+><span style=3D"color:#008">is</span><span style=3D"color:#000"> </span><sp=
+an style=3D"color:#008">not</span><span style=3D"color:#000"> mounted </spa=
+n><span style=3D"color:#008">with</span><span style=3D"color:#000"> </span>=
+<span style=3D"color:#080">&#39;nosuid&#39;</span><span style=3D"color:#660=
+">,</span><span style=3D"color:#000"> </span><span style=3D"color:#008">and=
+</span><span style=3D"color:#660">/</span><span style=3D"color:#008">or</sp=
+an><span style=3D"color:#000"> consult manual</span><span style=3D"color:#6=
+60">.</span><span style=3D"color:#000"><br>ABORT =C2=A0</span><span style=
+=3D"color:#660">:</span><span style=3D"color:#000"> </span><span style=3D"c=
+olor:#606">Retval</span><span style=3D"color:#000"> </span><span style=3D"c=
+olor:#660">=3D</span><span style=3D"color:#000"> </span><span style=3D"colo=
+r:#066">255</span><span style=3D"color:#000"><br><br></span></div></code></=
+div><br>The compute nodes are supposed to be running with the exact same so=
+ftware configuration as the head node, so we are kinda stumped as to what m=
+ight be causing this. <br><br>I saw there are details about the config here=
+:<br><a href=3D"http://singularity.lbl.gov/docs-config#parameters" target=
+=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://www.goo=
+gle.com/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.gov%2Fdocs-config%23parameter=
+s\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEDPS_ofCc0ehhnDq2luJZsIGCJGQ&#39;=
+;return true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dh=
+ttp%3A%2F%2Fsingularity.lbl.gov%2Fdocs-config%23parameters\x26sa\x3dD\x26sn=
+tz\x3d1\x26usg\x3dAFQjCNEDPS_ofCc0ehhnDq2luJZsIGCJGQ&#39;;return true;">htt=
+p://singularity.lbl.gov/<wbr>docs-config#parameters</a><br><br>And I checke=
+d the contents of our config file but it all looks like the default values:=
+<br><div style=3D"background-color:rgb(250,250,250);border-color:rgb(187,18=
+7,187);border-style:solid;border-width:1px"><code><div><span style=3D"color=
+:#000"><br>$ cat </span><span style=3D"color:#660">/</span><span style=3D"c=
+olor:#008">local</span><span style=3D"color:#660">/</span><span style=3D"co=
+lor:#000">apps</span><span style=3D"color:#660">/</span><span style=3D"colo=
+r:#000">singularity</span><span style=3D"color:#660">/</span><span style=3D=
+"color:#066">2.4</span><span style=3D"color:#660">.</span><span style=3D"co=
+lor:#066">2</span><span style=3D"color:#660">/</span><span style=3D"color:#=
+000"><wbr>etc</span><span style=3D"color:#660">/</span><span style=3D"color=
+:#000">singularity</span><span style=3D"color:#660">/</span><span style=3D"=
+color:#000">singularity</span><span style=3D"color:#660">.</span><span styl=
+e=3D"color:#000">co<wbr>nf<br></span><span style=3D"color:#800"># SINGULARI=
+TY.CONF</span><span style=3D"color:#000"><br></span><span style=3D"color:#8=
+00"># This is the global configuration file for Singularity. This file cont=
+rols</span><span style=3D"color:#000"><br></span><span style=3D"color:#800"=
+># what the container is allowed to do on a particular host, and as a resul=
+t</span><span style=3D"color:#000"><br></span><span style=3D"color:#800"># =
+this file must be owned by root.</span><span style=3D"color:#000"><br><br><=
+br></span><span style=3D"color:#800"># ALLOW SETUID: [BOOL]</span><span sty=
+le=3D"color:#000"><br></span><span style=3D"color:#800"># DEFAULT: yes</spa=
+n><span style=3D"color:#000"><br></span><span style=3D"color:#800"># Should=
+ we allow users to utilize the setuid program flow within Singularity?</spa=
+n><span style=3D"color:#000"><br></span><span style=3D"color:#800"># note1:=
+ This is the default mode, and to utilize all features, this option</span><=
+span style=3D"color:#000"><br></span><span style=3D"color:#800"># will need=
+ to be enabled.</span><span style=3D"color:#000"><br></span><span style=3D"=
+color:#800"># note2: If this option is disabled, it will rely on the user n=
+amespace</span><span style=3D"color:#000"><br></span><span style=3D"color:#=
+800"># exclusively which has not been integrated equally between the differ=
+ent</span><span style=3D"color:#000"><br></span><span style=3D"color:#800">=
+# Linux distributions.</span><span style=3D"color:#000"><br>allow setuid </=
+span><span style=3D"color:#660">=3D</span><span style=3D"color:#000"> yes<b=
+r><br><br></span><span style=3D"color:#800"># MAX LOOP DEVICES: [INT]</span=
+><span style=3D"color:#000"><br></span><span style=3D"color:#800"># DEFAULT=
+: 256</span><span style=3D"color:#000"><br></span><span style=3D"color:#800=
+"># Set the maximum number of loop devices that Singularity should ever att=
+empt</span><span style=3D"color:#000"><br></span><span style=3D"color:#800"=
+># to utilize.</span><span style=3D"color:#000"><br>max loop devices </span=
+><span style=3D"color:#660">=3D</span><span style=3D"color:#000"> </span><s=
+pan style=3D"color:#066">256</span><span style=3D"color:#000"><br><br><br><=
+/span><span style=3D"color:#800"># ALLOW PID NS: [BOOL]</span><span style=
+=3D"color:#000"><br></span><span style=3D"color:#800"># DEFAULT: yes</span>=
+<span style=3D"color:#000"><br></span><span style=3D"color:#800"># Should w=
+e allow users to request the PID namespace? Note that for some HPC</span><s=
+pan style=3D"color:#000"><br></span><span style=3D"color:#800"># resources,=
+ the PID namespace may confuse the resource manager and break how</span><sp=
+an style=3D"color:#000"><br></span><span style=3D"color:#800"># some MPI im=
+plementations utilize shared memory. (note, on some older</span><span style=
+=3D"color:#000"><br></span><span style=3D"color:#800"># systems, the PID na=
+mespace is always used)</span><span style=3D"color:#000"><br>allow pid ns <=
+/span><span style=3D"color:#660">=3D</span><span style=3D"color:#000"> yes<=
+br><br><br></span><span style=3D"color:#800"># CONFIG PASSWD: [BOOL]</span>=
+<span style=3D"color:#000"><br></span><span style=3D"color:#800"># DEFAULT:=
+ yes</span><span style=3D"color:#000"><br></span><span style=3D"color:#800"=
+># If /etc/passwd exists within the container, this will automatically appe=
+nd</span><span style=3D"color:#000"><br></span><span style=3D"color:#800">#=
+ an entry for the calling user.</span><span style=3D"color:#000"><br>config=
+ passwd </span><span style=3D"color:#660">=3D</span><span style=3D"color:#0=
+00"> yes<br><br><br></span><span style=3D"color:#800"># CONFIG GROUP: [BOOL=
+]</span><span style=3D"color:#000"><br></span><span style=3D"color:#800"># =
+DEFAULT: yes</span><span style=3D"color:#000"><br></span><span style=3D"col=
+or:#800"># If /etc/group exists within the container, this will automatical=
+ly append</span><span style=3D"color:#000"><br></span><span style=3D"color:=
+#800"># group entries for the calling user.</span><span style=3D"color:#000=
+"><br>config </span><span style=3D"color:#008">group</span><span style=3D"c=
+olor:#000"> </span><span style=3D"color:#660">=3D</span><span style=3D"colo=
+r:#000"> yes<br><br><br></span><span style=3D"color:#800"># CONFIG RESOLV_C=
+ONF: [BOOL]</span><span style=3D"color:#000"><br></span><span style=3D"colo=
+r:#800"># DEFAULT: yes</span><span style=3D"color:#000"><br></span><span st=
+yle=3D"color:#800"># If there is a bind point within the container, use the=
+ host&#39;s</span><span style=3D"color:#000"><br></span><span style=3D"colo=
+r:#800"># /etc/resolv.conf.</span><span style=3D"color:#000"><br>config res=
+olv_conf </span><span style=3D"color:#660">=3D</span><span style=3D"color:#=
+000"> yes<br><br><br></span><span style=3D"color:#800"># MOUNT PROC: [BOOL]=
+</span><span style=3D"color:#000"><br></span><span style=3D"color:#800"># D=
+EFAULT: yes</span><span style=3D"color:#000"><br></span><span style=3D"colo=
+r:#800"># Should we automatically bind mount /proc within the container?</s=
+pan><span style=3D"color:#000"><br>mount proc </span><span style=3D"color:#=
+660">=3D</span><span style=3D"color:#000"> yes<br><br><br></span><span styl=
+e=3D"color:#800"># MOUNT SYS: [BOOL]</span><span style=3D"color:#000"><br><=
+/span><span style=3D"color:#800"># DEFAULT: yes</span><span style=3D"color:=
+#000"><br></span><span style=3D"color:#800"># Should we automatically bind =
+mount /sys within the container?</span><span style=3D"color:#000"><br>mount=
+ sys </span><span style=3D"color:#660">=3D</span><span style=3D"color:#000"=
+> yes<br><br><br></span><span style=3D"color:#800"># MOUNT DEV: [yes/no/min=
+imal]</span><span style=3D"color:#000"><br></span><span style=3D"color:#800=
+"># DEFAULT: yes</span><span style=3D"color:#000"><br></span><span style=3D=
+"color:#800"># Should we automatically bind mount /dev within the container=
+? If &#39;minimal&#39;</span><span style=3D"color:#000"><br></span><span st=
+yle=3D"color:#800"># is chosen, then only &#39;null&#39;, &#39;zero&#39;, &=
+#39;random&#39;, &#39;urandom&#39;, and &#39;shm&#39; will</span><span styl=
+e=3D"color:#000"><br></span><span style=3D"color:#800"># be included (the s=
+ame effect as the --contain options)</span><span style=3D"color:#000"><br>m=
+ount dev </span><span style=3D"color:#660">=3D</span><span style=3D"color:#=
+000"> yes<br><br><br></span><span style=3D"color:#800"># MOUNT DEVPTS: [BOO=
+L]</span><span style=3D"color:#000"><br></span><span style=3D"color:#800">#=
+ DEFAULT: yes</span><span style=3D"color:#000"><br></span><span style=3D"co=
+lor:#800"># Should we mount a new instance of devpts if there is a &#39;min=
+imal&#39;</span><span style=3D"color:#000"><br></span><span style=3D"color:=
+#800"># /dev, or -C is passed? =C2=A0Note, this requires that your kernel w=
+as</span><span style=3D"color:#000"><br></span><span style=3D"color:#800">#=
+ configured with CONFIG_DEVPTS_MULTIPLE_<wbr>INSTANCES=3Dy, or that you&#39=
+;re</span><span style=3D"color:#000"><br></span><span style=3D"color:#800">=
+# running kernel 4.7 or newer.</span><span style=3D"color:#000"><br>mount d=
+evpts </span><span style=3D"color:#660">=3D</span><span style=3D"color:#000=
+"> yes<br><br><br></span><span style=3D"color:#800"># MOUNT HOME: [BOOL]</s=
+pan><span style=3D"color:#000"><br></span><span style=3D"color:#800"># DEFA=
+ULT: yes</span><span style=3D"color:#000"><br></span><span style=3D"color:#=
+800"># Should we automatically determine the calling user&#39;s home direct=
+ory and</span><span style=3D"color:#000"><br></span><span style=3D"color:#8=
+00"># attempt to mount it&#39;s base path into the container? If the --cont=
+ain option</span><span style=3D"color:#000"><br></span><span style=3D"color=
+:#800"># is used, the home directory will be created within the session dir=
+ectory or</span><span style=3D"color:#000"><br></span><span style=3D"color:=
+#800"># can be overridden with the SINGULARITY_HOME or SINGULARITY_WORKDIR<=
+/span><span style=3D"color:#000"><br></span><span style=3D"color:#800"># en=
+vironment variables (or their corresponding command line options).</span><s=
+pan style=3D"color:#000"><br>mount home </span><span style=3D"color:#660">=
+=3D</span><span style=3D"color:#000"> yes<br><br><br></span><span style=3D"=
+color:#800"># MOUNT TMP: [BOOL]</span><span style=3D"color:#000"><br></span=
+><span style=3D"color:#800"># DEFAULT: yes</span><span style=3D"color:#000"=
+><br></span><span style=3D"color:#800"># Should we automatically bind mount=
+ /tmp and /var/tmp into the container? If</span><span style=3D"color:#000">=
+<br></span><span style=3D"color:#800"># the --contain option is used, both =
+tmp locations will be created in the</span><span style=3D"color:#000"><br><=
+/span><span style=3D"color:#800"># session directory or can be specified vi=
+a the =C2=A0SINGULARITY_WORKDIR</span><span style=3D"color:#000"><br></span=
+><span style=3D"color:#800"># environment variable (or the --workingdir com=
+mand line option).</span><span style=3D"color:#000"><br>mount tmp </span><s=
+pan style=3D"color:#660">=3D</span><span style=3D"color:#000"> yes<br><br><=
+br></span><span style=3D"color:#800"># MOUNT HOSTFS: [BOOL]</span><span sty=
+le=3D"color:#000"><br></span><span style=3D"color:#800"># DEFAULT: no</span=
+><span style=3D"color:#000"><br></span><span style=3D"color:#800"># Probe f=
+or all mounted file systems that are mounted on the host, and bind</span><s=
+pan style=3D"color:#000"><br></span><span style=3D"color:#800"># those into=
+ the container?</span><span style=3D"color:#000"><br>mount hostfs </span><s=
+pan style=3D"color:#660">=3D</span><span style=3D"color:#000"> </span><span=
+ style=3D"color:#008">no</span><span style=3D"color:#000"><br><br><br></spa=
+n><span style=3D"color:#800"># BIND PATH: [STRING]</span><span style=3D"col=
+or:#000"><br></span><span style=3D"color:#800"># DEFAULT: Undefined</span><=
+span style=3D"color:#000"><br></span><span style=3D"color:#800"># Define a =
+list of files/directories that should be made available from within</span><=
+span style=3D"color:#000"><br></span><span style=3D"color:#800"># the conta=
+iner. The file or directory must exist within the container on</span><span =
+style=3D"color:#000"><br></span><span style=3D"color:#800"># which to attac=
+h to. you can specify a different source and destination</span><span style=
+=3D"color:#000"><br></span><span style=3D"color:#800"># path (respectively)=
+ with a colon; otherwise source and dest are the same.</span><span style=3D=
+"color:#000"><br></span><span style=3D"color:#800">#bind path =3D /etc/sing=
+ularity/default-<wbr>nsswitch.conf:/etc/nsswitch.<wbr>conf</span><span styl=
+e=3D"color:#000"><br></span><span style=3D"color:#800">#bind path =3D /opt<=
+/span><span style=3D"color:#000"><br></span><span style=3D"color:#800">#bin=
+d path =3D /scratch</span><span style=3D"color:#000"><br>bind path </span><=
+span style=3D"color:#660">=3D</span><span style=3D"color:#000"> </span><spa=
+n style=3D"color:#080">/etc/</span><span style=3D"color:#000">localtime<br>=
+bind path </span><span style=3D"color:#660">=3D</span><span style=3D"color:=
+#000"> </span><span style=3D"color:#080">/etc/</span><span style=3D"color:#=
+000">hosts<br><br><br></span><span style=3D"color:#800"># USER BIND CONTROL=
+: [BOOL]</span><span style=3D"color:#000"><br></span><span style=3D"color:#=
+800"># DEFAULT: yes</span><span style=3D"color:#000"><br></span><span style=
+=3D"color:#800"># Allow users to influence and/or define bind points at run=
+time? This will allow</span><span style=3D"color:#000"><br></span><span sty=
+le=3D"color:#800"># users to specify bind points, scratch and tmp locations=
+. (note: User bind</span><span style=3D"color:#000"><br></span><span style=
+=3D"color:#800"># control is only allowed if the host also supports PR_SET_=
+NO_NEW_PRIVS)</span><span style=3D"color:#000"><br>user bind control </span=
+><span style=3D"color:#660">=3D</span><span style=3D"color:#000"> yes<br><b=
+r><br></span><span style=3D"color:#800"># ENABLE OVERLAY: [yes/no/try]</spa=
+n><span style=3D"color:#000"><br></span><span style=3D"color:#800"># DEFAUL=
+T: try</span><span style=3D"color:#000"><br></span><span style=3D"color:#80=
+0"># Enabling this option will make it possible to specify bind paths to lo=
+cations</span><span style=3D"color:#000"><br></span><span style=3D"color:#8=
+00"># that do not currently exist within the container. =C2=A0If &#39;try&#=
+39; is chosen,</span><span style=3D"color:#000"><br></span><span style=3D"c=
+olor:#800"># overlayfs will be tried but if it is unavailable it will be si=
+lently ignored.</span><span style=3D"color:#000"><br>enable overlay </span>=
+<span style=3D"color:#660">=3D</span><span style=3D"color:#000"> </span><sp=
+an style=3D"color:#008">try</span><span style=3D"color:#000"><br><br><br></=
+span><span style=3D"color:#800"># MOUNT SLAVE: [BOOL]</span><span style=3D"=
+color:#000"><br></span><span style=3D"color:#800"># DEFAULT: yes</span><spa=
+n style=3D"color:#000"><br></span><span style=3D"color:#800"># Should we au=
+tomatically propagate file-system changes from the host?</span><span style=
+=3D"color:#000"><br></span><span style=3D"color:#800"># This should be set =
+to &#39;yes&#39; when autofs mounts in the system should</span><span style=
+=3D"color:#000"><br></span><span style=3D"color:#800"># show up in the cont=
+ainer.</span><span style=3D"color:#000"><br>mount slave </span><span style=
+=3D"color:#660">=3D</span><span style=3D"color:#000"> yes<br><br><br></span=
+><span style=3D"color:#800"># SESSIONDIR MAXSIZE: [STRING]</span><span styl=
+e=3D"color:#000"><br></span><span style=3D"color:#800"># DEFAULT: 16</span>=
+<span style=3D"color:#000"><br></span><span style=3D"color:#800"># This spe=
+cifies how large the default sessiondir should be (in MB) and it will</span=
+><span style=3D"color:#000"><br></span><span style=3D"color:#800"># only af=
+fect users who use the &quot;--contain&quot; options and don&#39;t also spe=
+cify a</span><span style=3D"color:#000"><br></span><span style=3D"color:#80=
+0"># location to do default read/writes to (e.g. &quot;--workdir&quot; or &=
+quot;--home&quot;).</span><span style=3D"color:#000"><br>sessiondir max siz=
+e </span><span style=3D"color:#660">=3D</span><span style=3D"color:#000"> <=
+/span><span style=3D"color:#066">16</span><span style=3D"color:#000"><br><b=
+r><br></span><span style=3D"color:#800"># LIMIT CONTAINER OWNERS: [STRING]<=
+/span><span style=3D"color:#000"><br></span><span style=3D"color:#800"># DE=
+FAULT: NULL</span><span style=3D"color:#000"><br></span><span style=3D"colo=
+r:#800"># Only allow containers to be used that are owned by a given user. =
+If this</span><span style=3D"color:#000"><br></span><span style=3D"color:#8=
+00"># configuration is undefined (commented or set to NULL), all containers=
+ are</span><span style=3D"color:#000"><br></span><span style=3D"color:#800"=
+># allowed to be used. This feature only applies when Singularity is runnin=
+g in</span><span style=3D"color:#000"><br></span><span style=3D"color:#800"=
+># SUID mode and the user is non-root.</span><span style=3D"color:#000"><br=
+></span><span style=3D"color:#800">#limit container owners =3D gmk, singula=
+rity, nobody</span><span style=3D"color:#000"><br><br><br></span><span styl=
+e=3D"color:#800"># LIMIT CONTAINER PATHS: [STRING]</span><span style=3D"col=
+or:#000"><br></span><span style=3D"color:#800"># DEFAULT: NULL</span><span =
+style=3D"color:#000"><br></span><span style=3D"color:#800"># Only allow con=
+tainers to be used that are located within an allowed path</span><span styl=
+e=3D"color:#000"><br></span><span style=3D"color:#800"># prefix. If this co=
+nfiguration is undefined (commented or set to NULL),</span><span style=3D"c=
+olor:#000"><br></span><span style=3D"color:#800"># containers will be allow=
+ed to run from anywhere on the file system. This</span><span style=3D"color=
+:#000"><br></span><span style=3D"color:#800"># feature only applies when Si=
+ngularity is running in SUID mode and the user is</span><span style=3D"colo=
+r:#000"><br></span><span style=3D"color:#800"># non-root.</span><span style=
+=3D"color:#000"><br></span><span style=3D"color:#800">#limit container path=
+s =3D /scratch, /tmp, /global</span><span style=3D"color:#000"><br><br><br>=
+</span><span style=3D"color:#800"># ALLOW CONTAINER ${TYPE}: [BOOL]</span><=
+span style=3D"color:#000"><br></span><span style=3D"color:#800"># DEFAULT: =
+yes</span><span style=3D"color:#000"><br></span><span style=3D"color:#800">=
+# This feature limits what kind of containers that Singularity will allow</=
+span><span style=3D"color:#000"><br></span><span style=3D"color:#800"># use=
+rs to use (note this does not apply for root).</span><span style=3D"color:#=
+000"><br>allow container squashfs </span><span style=3D"color:#660">=3D</sp=
+an><span style=3D"color:#000"> yes<br>allow container extfs </span><span st=
+yle=3D"color:#660">=3D</span><span style=3D"color:#000"> yes<br>allow conta=
+iner dir </span><span style=3D"color:#660">=3D</span><span style=3D"color:#=
+000"> yes<br><br><br></span><span style=3D"color:#800"># AUTOFS BUG PATH: [=
+STRING]</span><span style=3D"color:#000"><br></span><span style=3D"color:#8=
+00"># DEFAULT: Undefined</span><span style=3D"color:#000"><br></span><span =
+style=3D"color:#800"># Define list of autofs directories which produces &qu=
+ot;Too many levels of symbolink links&quot;</span><span style=3D"color:#000=
+"><br></span><span style=3D"color:#800"># errors when accessed from contain=
+er (typically bind mounts)</span><span style=3D"color:#000"><br></span><spa=
+n style=3D"color:#800">#autofs bug path =3D /nfs</span><span style=3D"color=
+:#000"><br></span><span style=3D"color:#800">#autofs bug path =3D /cifs-sha=
+re</span><span style=3D"color:#000"><br><br></span></div></code></div><br><=
+br>Any ideas what might be happening? <br><br><br><br></div></blockquote></=
+div>
+------=_Part_25221_1446235667.1522792284307--
+
+------=_Part_25220_1814803693.1522792284306--

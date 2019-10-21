@@ -1,0 +1,331 @@
+Date: Sun, 20 May 2018 20:54:30 -0700 (PDT)
+From: Remy Prechelt <rpre...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <86ed720c-4468-4070-87a7-ca51dfdd5316@lbl.gov>
+In-Reply-To: <CAM=pu+LC+7UWcEwMmb-zuQhoGL3HR2hf1h00eM5D0PD0GDZTAw@mail.gmail.com>
+References: <4c1e0e58-76a4-41fe-a887-778a2689f73b@lbl.gov>
+ <CAM=pu+LC+7UWcEwMmb-zuQhoGL3HR2hf1h00eM5D0PD0GDZTAw@mail.gmail.com>
+Subject: Re: [Singularity] Running command using sudo during %post [for Arch
+ Linux's makepkg]
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_19038_2069596921.1526874870553"
+
+------=_Part_19038_2069596921.1526874870553
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_19039_98611759.1526874870554"
+
+------=_Part_19039_98611759.1526874870554
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi Vanessa, 
+
+Thanks for the quick response. I was actually able to make this work last 
+night but the solution is less than ideal. I create a new user during the 
+build, remount the root filesystem with `suid` (missing step when I posted 
+my above answer), use that user to install whatever packages I need, 
+remount the root filesystem with `nosuid`, and then delete the user. This 
+is working for our current builds but is a little cumbersome. 
+
+I have included the code below in case anyone stumbles across this post in 
+the future. 
+
+
+    # create a singularity group
+    groupadd -f singularity
+
+    # remount the root filesystem so we can use sudo
+    # this is the CRUCIAL step otherwise everything will fail
+    mount -o remount,rw,exec,suid /
+
+    # create a singularity user
+    if [ ! $(id -u singularity) ]
+    then
+        useradd singularity -m -g singularity
+        echo "singularity ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/singularity 
+&& \
+        chmod 0440 /etc/sudoers.d/singularity
+
+    fi
+
+    # build and install cower from the AUR (for example - change this to 
+whatever package you want)
+    if [ ! -n "$(pacman -Qs cower)" ]; then
+        su - singularity -c "curl -o PKGBUILD 
+https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=cower"
+        su - singularity -c "makepkg PKGBUILD --skippgpcheck --install 
+--needed"
+        su - singularity -c "rm -f PKGBUILD"
+    fi
+
+    # and finally remount the filesystem with nosuid
+    mount -o remount,rw,nosuid /
+
+    # delete the singularity user
+    userdel -r singularity
+    groupdel singularity
+
+    # and get rid of sudo prermissions in case someone recreates a 
+singularity user
+    rm -f /etc/sudoers.d/singularity
+
+
+Thanks again!
+
+Remy Prechelt
+
+
+On Sunday, May 20, 2018 at 5:11:18 PM UTC-10, vanessa wrote:
+>
+> Hey Remy,
+>
+> Could you share what you have so far so others can reproduce and build off 
+> that? My intuition would be to run the command as a different user (e.g., 
+> su - vanessthemess -c "command") but I haven't tried much with the arch 
+> bootstrap.  Anyway, if you share what you have so far others can maybe 
+> build / help off that!
+>
+> Best,
+>
+> Vanessa
+>
+> On Sun, May 20, 2018 at 4:33 AM, Remy Prechelt <rp...@gmail.com 
+> <javascript:>> wrote:
+>
+>> What's the simplest method of running a command using sudo during %post? 
+>>
+>> I'm trying to build an Arch Linux based recipe (using `Bootstrap: arch`) 
+>> and want to install some packages provided by the AUR using the standard 
+>> `makepkg` suite. However, `makepkg` must be run as a regular user (with 
+>> sudo) as opposed to root (it will exit immediately if run as root). For our 
+>> current Docker builds we create a user, give them sudo permissions, do the 
+>> necessary installations using `makepkg`, and then delete the user. However, 
+>> my first pass using this method during %post fails because all the 
+>> available filesystems are mounted with `nosuid` (at least according to 
+>> `mount` run during %post). Short of binding an external filesystem and 
+>> using that as a suid environment, is there a way that I can make this work? 
+>> I have tried remounting the root filesystem during %post but still get a 
+>> `nosuid` error. Since there is already an Arch recipe on Github I am 
+>> imagining that someone has encountered this before and has a method of 
+>> getting `makepkg` working in a recipe.  
+>>
+>> Thanks in advance! 
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_19039_98611759.1526874870554
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Hi Vanessa, <br></div><div><br></div><div>Thanks for =
+the quick response. I was actually able to make this work last night but th=
+e solution is less than ideal. I create a new user during the build, remoun=
+t the root filesystem with `suid` (missing step when I posted my above answ=
+er), use that user to install whatever packages I need, remount the root fi=
+lesystem with `nosuid`, and then delete the user. This is working for our c=
+urrent builds but is a little cumbersome. <br></div><div><br></div><div>I h=
+ave included the code below in case anyone stumbles across this post in the=
+ future. <br></div><div><br></div><div style=3D"background-color: rgb(250, =
+250, 250); border-color: rgb(187, 187, 187); border-style: solid; border-wi=
+dth: 1px; overflow-wrap: break-word;" class=3D"prettyprint"><code class=3D"=
+prettyprint"><div class=3D"subprettyprint"><span style=3D"color: #000;" cla=
+ss=3D"styled-by-prettify"><br></span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify">=C2=A0 =C2=A0 </span><span style=3D"color: #800;" class=
+=3D"styled-by-prettify"># create a singularity group</span><span style=3D"c=
+olor: #000;" class=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 groupadd </span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span st=
+yle=3D"color: #000;" class=3D"styled-by-prettify">f singularity<br><br>=C2=
+=A0 =C2=A0 </span><span style=3D"color: #800;" class=3D"styled-by-prettify"=
+># remount the root filesystem so we can use sudo</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 </span><span style=
+=3D"color: #800;" class=3D"styled-by-prettify"># this is the CRUCIAL step o=
+therwise everything will fail</span><span style=3D"color: #000;" class=3D"s=
+tyled-by-prettify"><br>=C2=A0 =C2=A0 mount </span><span style=3D"color: #66=
+0;" class=3D"styled-by-prettify">-</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">o remount</span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">,</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify">rw</span><span style=3D"color: #660;" class=3D"styled-by-pre=
+ttify">,</span><span style=3D"color: #008;" class=3D"styled-by-prettify">ex=
+ec</span><span style=3D"color: #660;" class=3D"styled-by-prettify">,</span>=
+<span style=3D"color: #000;" class=3D"styled-by-prettify">suid </span><span=
+ style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D=
+"color: #000;" class=3D"styled-by-prettify"><br><br>=C2=A0 =C2=A0 </span><s=
+pan style=3D"color: #800;" class=3D"styled-by-prettify"># create a singular=
+ity user</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><b=
+r>=C2=A0 =C2=A0 </span><span style=3D"color: #008;" class=3D"styled-by-pret=
+tify">if</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> <=
+/span><span style=3D"color: #660;" class=3D"styled-by-prettify">[</span><sp=
+an style=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">!</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify"> $</span><span style=3D"color: #660;"=
+ class=3D"styled-by-prettify">(</span><span style=3D"color: #000;" class=3D=
+"styled-by-prettify">id </span><span style=3D"color: #660;" class=3D"styled=
+-by-prettify">-</span><span style=3D"color: #000;" class=3D"styled-by-prett=
+ify">u singularity</span><span style=3D"color: #660;" class=3D"styled-by-pr=
+ettify">)</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> =
+</span><span style=3D"color: #660;" class=3D"styled-by-prettify">]</span><s=
+pan style=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 <=
+/span><span style=3D"color: #008;" class=3D"styled-by-prettify">then</span>=
+<span style=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 useradd singularity </span><span style=3D"color: #660;" clas=
+s=3D"styled-by-prettify">-</span><span style=3D"color: #000;" class=3D"styl=
+ed-by-prettify">m </span><span style=3D"color: #660;" class=3D"styled-by-pr=
+ettify">-</span><span style=3D"color: #000;" class=3D"styled-by-prettify">g=
+ singularity<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 echo </span><span style=3D"colo=
+r: #080;" class=3D"styled-by-prettify">&quot;singularity ALL=3D(root) NOPAS=
+SWD:ALL&quot;</span><span style=3D"color: #000;" class=3D"styled-by-prettif=
+y"> </span><span style=3D"color: #660;" class=3D"styled-by-prettify">&gt;</=
+span><span style=3D"color: #000;" class=3D"styled-by-prettify"> </span><spa=
+n style=3D"color: #080;" class=3D"styled-by-prettify">/etc/</span><span sty=
+le=3D"color: #000;" class=3D"styled-by-prettify">sudoers</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">.</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify">d</span><span style=3D"color: #660;" =
+class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify">singularity </span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">&amp;&amp;</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> </span><span style=3D"color: #660;" class=3D"style=
+d-by-prettify">\</span><span style=3D"color: #000;" class=3D"styled-by-pret=
+tify"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 chmod </span><span style=3D"color: #0=
+66;" class=3D"styled-by-prettify">0440</span><span style=3D"color: #000;" c=
+lass=3D"styled-by-prettify"> </span><span style=3D"color: #660;" class=3D"s=
+tyled-by-prettify">/</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify">etc</span><span style=3D"color: #660;" class=3D"styled-by-prettif=
+y">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">sudoer=
+s</span><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify">d</span><span styl=
+e=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify">singularity<br><br>=C2=A0 =C2=A0 </s=
+pan><span style=3D"color: #008;" class=3D"styled-by-prettify">fi</span><spa=
+n style=3D"color: #000;" class=3D"styled-by-prettify"><br><br>=C2=A0 =C2=A0=
+ </span><span style=3D"color: #800;" class=3D"styled-by-prettify"># build a=
+nd install cower from the AUR (for example - change this to whatever packag=
+e you want)</span><span style=3D"color: #000;" class=3D"styled-by-prettify"=
+><br>=C2=A0 =C2=A0 </span><span style=3D"color: #008;" class=3D"styled-by-p=
+rettify">if</span><span style=3D"color: #000;" class=3D"styled-by-prettify"=
+> </span><span style=3D"color: #660;" class=3D"styled-by-prettify">[</span>=
+<span style=3D"color: #000;" class=3D"styled-by-prettify"> </span><span sty=
+le=3D"color: #660;" class=3D"styled-by-prettify">!</span><span style=3D"col=
+or: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #660;=
+" class=3D"styled-by-prettify">-</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">n </span><span style=3D"color: #080;" class=3D"styl=
+ed-by-prettify">&quot;$(pacman -Qs cower)&quot;</span><span style=3D"color:=
+ #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #660;" c=
+lass=3D"styled-by-prettify">];</span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify"> </span><span style=3D"color: #008;" class=3D"styled-by=
+-prettify">then</span><span style=3D"color: #000;" class=3D"styled-by-prett=
+ify"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 su </span><span style=3D"color: #660;"=
+ class=3D"styled-by-prettify">-</span><span style=3D"color: #000;" class=3D=
+"styled-by-prettify"> singularity </span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">-</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify">c </span><span style=3D"color: #080;" class=3D"styled-by-pre=
+ttify">&quot;curl -o PKGBUILD https://aur.archlinux.org/cgit/aur.git/plain/=
+PKGBUILD?h=3Dcower&quot;</span><span style=3D"color: #000;" class=3D"styled=
+-by-prettify"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 su </span><span style=3D"colo=
+r: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #000;"=
+ class=3D"styled-by-prettify"> singularity </span><span style=3D"color: #66=
+0;" class=3D"styled-by-prettify">-</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">c </span><span style=3D"color: #080;" class=3D"styl=
+ed-by-prettify">&quot;makepkg PKGBUILD --skippgpcheck --install --needed&qu=
+ot;</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 su </span><span style=3D"color: #660;" class=3D"st=
+yled-by-prettify">-</span><span style=3D"color: #000;" class=3D"styled-by-p=
+rettify"> singularity </span><span style=3D"color: #660;" class=3D"styled-b=
+y-prettify">-</span><span style=3D"color: #000;" class=3D"styled-by-prettif=
+y">c </span><span style=3D"color: #080;" class=3D"styled-by-prettify">&quot=
+;rm -f PKGBUILD&quot;</span><span style=3D"color: #000;" class=3D"styled-by=
+-prettify"><br>=C2=A0 =C2=A0 </span><span style=3D"color: #008;" class=3D"s=
+tyled-by-prettify">fi</span><span style=3D"color: #000;" class=3D"styled-by=
+-prettify"><br><br>=C2=A0 =C2=A0 </span><span style=3D"color: #800;" class=
+=3D"styled-by-prettify"># and finally remount the filesystem with nosuid</s=
+pan><span style=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 =
+=C2=A0 mount </span><span style=3D"color: #660;" class=3D"styled-by-prettif=
+y">-</span><span style=3D"color: #000;" class=3D"styled-by-prettify">o remo=
+unt</span><span style=3D"color: #660;" class=3D"styled-by-prettify">,</span=
+><span style=3D"color: #000;" class=3D"styled-by-prettify">rw</span><span s=
+tyle=3D"color: #660;" class=3D"styled-by-prettify">,</span><span style=3D"c=
+olor: #000;" class=3D"styled-by-prettify">nosuid </span><span style=3D"colo=
+r: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #000;"=
+ class=3D"styled-by-prettify"><br><br>=C2=A0 =C2=A0 </span><span style=3D"c=
+olor: #800;" class=3D"styled-by-prettify"># delete the singularity user</sp=
+an><span style=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 =C2=
+=A0 userdel </span><span style=3D"color: #660;" class=3D"styled-by-prettify=
+">-</span><span style=3D"color: #000;" class=3D"styled-by-prettify">r singu=
+larity<br>=C2=A0 =C2=A0 groupdel singularity<br><br>=C2=A0 =C2=A0 </span><s=
+pan style=3D"color: #800;" class=3D"styled-by-prettify"># and get rid of su=
+do prermissions in case someone recreates a singularity user</span><span st=
+yle=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 rm </sp=
+an><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span =
+style=3D"color: #000;" class=3D"styled-by-prettify">f </span><span style=3D=
+"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify">etc</span><span style=3D"color: #660;" c=
+lass=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"s=
+tyled-by-prettify">sudoers</span><span style=3D"color: #660;" class=3D"styl=
+ed-by-prettify">.</span><span style=3D"color: #000;" class=3D"styled-by-pre=
+ttify">d</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/<=
+/span><span style=3D"color: #000;" class=3D"styled-by-prettify">singularity=
+<br><br></span></div></code></div><div><br>Thanks again!</div><div><br></di=
+v><div>Remy Prechelt<br></div><div><br></div><br>On Sunday, May 20, 2018 at=
+ 5:11:18 PM UTC-10, vanessa wrote:<blockquote class=3D"gmail_quote" style=
+=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: =
+1ex;"><div dir=3D"ltr">Hey Remy,<div><br></div><div>Could you share what yo=
+u have so far so others can reproduce and build off that? My intuition woul=
+d be to run the command as a different user (e.g., su - vanessthemess -c &q=
+uot;command&quot;) but I haven&#39;t tried much with the arch bootstrap.=C2=
+=A0 Anyway, if you share what you have so far others can maybe build / help=
+ off that!</div><div><br></div><div>Best,</div><div><br></div><div>Vanessa<=
+/div></div><div><br><div class=3D"gmail_quote">On Sun, May 20, 2018 at 4:33=
+ AM, Remy Prechelt <span dir=3D"ltr">&lt;<a href=3D"javascript:" target=3D"=
+_blank" gdf-obfuscated-mailto=3D"YmrFJYhnCgAJ" rel=3D"nofollow" onmousedown=
+=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D=
+&#39;javascript:&#39;;return true;">rp...@gmail.com</a>&gt;</span> wrote:<b=
+r><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:=
+1px #ccc solid;padding-left:1ex"><div dir=3D"ltr"><div>What&#39;s the simpl=
+est method of running a command using sudo during %post? <br></div><br><div=
+>I&#39;m trying to build an Arch Linux based recipe (using `Bootstrap: arch=
+`) and want to install some packages provided by the AUR using the standard=
+ `makepkg` suite. However, `makepkg` must be run as a regular user (with su=
+do) as opposed to root (it will exit immediately if run as root). For our c=
+urrent Docker builds we create a user, give them sudo permissions, do the n=
+ecessary installations using `makepkg`, and then delete the user. However, =
+my first pass using this method during %post fails because all the availabl=
+e filesystems are mounted with `nosuid` (at least according to `mount` run =
+during %post). Short of binding an external filesystem and using that as a =
+suid environment, is there a way that I can make this work? I have tried re=
+mounting the root filesystem during %post but still get a `nosuid` error. S=
+ince there is already an Arch recipe on Github I am imagining that someone =
+has encountered this before and has a method of getting `makepkg` working i=
+n a recipe.=C2=A0 </div><div><br></div><div>Thanks in advance! <br></div></=
+div><span><font color=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+YmrFJYhnCgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div>=
+<div>(603) 321-0676</div></div></div></div>
+</div>
+</blockquote></div>
+------=_Part_19039_98611759.1526874870554--
+
+------=_Part_19038_2069596921.1526874870553--

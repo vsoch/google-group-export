@@ -1,0 +1,182 @@
+X-Received: by 10.13.218.66 with SMTP id c63mr5625437ywe.123.1490037981879;
+        Mon, 20 Mar 2017 12:26:21 -0700 (PDT)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.107.192.3 with SMTP id q3ls720469iof.29.gmail; Mon, 20 Mar
+ 2017 12:26:21 -0700 (PDT)
+X-Received: by 10.99.67.130 with SMTP id q124mr33278306pga.221.1490037980997;
+        Mon, 20 Mar 2017 12:26:20 -0700 (PDT)
+Return-Path: <gmku...@lbl.gov>
+Received: from fe4.lbl.gov (fe4.lbl.gov. [128.3.41.71])
+        by mx.google.com with ESMTP id x21si18293816pgf.396.2017.03.20.12.26.20
+        for <singu...@lbl.gov>;
+        Mon, 20 Mar 2017 12:26:20 -0700 (PDT)
+Received-SPF: pass (google.com: domain of gmku...@lbl.gov designates 209.85.161.200 as permitted sender) client-ip=209.85.161.200;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of gmku...@lbl.gov designates 209.85.161.200 as permitted sender) smtp.mailfrom=gmku...@lbl.gov
+X-Ironport-SBRS: 2.7
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2FgAAC0K9BYf8ihVdFeHgYMGQYMgkOBBT94EgeDUwibbYJkhS6IAoUvgUsbKB8BBoFzhAkCgwgHPxgBAQEBAQEBAQEBAQIQAQEJCwsIJjGCMwQCAxkFBARGJgMuAQEBAQEBAQEBAQEBAQEBARoCDSIPAyoBAgIBIyswCwsLNwICIQEPAwEFARwGCAcEAQcTAgSJRwMNCAWcYT+MA4ImhzsNgwQBAQEBBgEBAQEBIxKLK4JRgVUQAgGDIYJAHwWJJIc5izY6AYZ4hxiEMoF7VIELjVGIUIIUhywUH4EVDxCBBDEIGgs5UBcFhlsgNQeHfYFnAQEB
+X-IronPort-AV: E=Sophos;i="5.36,195,1486454400"; 
+   d="scan'208,217";a="68112677"
+Received: from mail-yw0-f200.google.com ([209.85.161.200])
+  by fe4.lbl.gov with ESMTP; 20 Mar 2017 12:26:19 -0700
+Received: by mail-yw0-f200.google.com with SMTP id 204so470285668ywo.6
+        for <singu...@lbl.gov>; Mon, 20 Mar 2017 12:26:19 -0700 (PDT)
+X-Gm-Message-State: AFeK/H24pA/PHv3ghRja1V/rlKUKCEzarzAmUckdGEouZ0zwc0+8FLe3nSeJ9yRhxGBhizJS6lus1ZptCsnr/6DAKEjxRmMSkivkHqxQmeuz460xgYOyZfbTYrI1ADguHT0KJLdgmuQIAAlGZWCWutTWM5g=
+X-Received: by 10.13.201.1 with SMTP id l1mr16025641ywd.282.1490037978779;
+        Mon, 20 Mar 2017 12:26:18 -0700 (PDT)
+X-Received: by 10.13.201.1 with SMTP id l1mr16025617ywd.282.1490037978397;
+ Mon, 20 Mar 2017 12:26:18 -0700 (PDT)
+MIME-Version: 1.0
+Received: by 10.129.110.69 with HTTP; Mon, 20 Mar 2017 12:26:17 -0700 (PDT)
+In-Reply-To: <e78d8091-ae21-41b8-b889-ac1e788a19b4@lbl.gov>
+References: <e78d8091-ae21-41b8-b889-ac1e788a19b4@lbl.gov>
+From: "Gregory M. Kurtzer" <gmku...@lbl.gov>
+Date: Mon, 20 Mar 2017 12:26:17 -0700
+Message-ID: <CAN7etTxcwG_ntJjmY4Yw4WeOfKNCDVroBgQRX5GAatrVxEM3Hg@mail.gmail.com>
+Subject: Re: [Singularity] Binding system files from the host OS
+To: singularity <singu...@lbl.gov>
+Content-Type: multipart/alternative; boundary=001a114e6c0e67a165054b2e80de
+
+--001a114e6c0e67a165054b2e80de
+Content-Type: text/plain; charset=UTF-8
+
+The problem with exploding the libraries into the container is exactly as
+you describe... It is very difficult to manage the kernel to userspace
+compatibility if you have the libraries statically part of the container.
+
+I think using bind points of the libraries themselves actually ends up
+being the best solution for this (as it sounds like you concur on). At
+present today, this can be done statically via the config file, but it is
+my intention to have a Singularity component module that can do this
+automatically and internally.
+
+Greg
+
+On Mon, Mar 20, 2017 at 11:27 AM, Martin Cuma <mart...@gmail.com> wrote:
+
+> Hello,
+>
+> I am wondering if it's possible, or if anyone has done this. I.e. not bind
+> mount points, but rather just separate files (libraries in this case).
+>
+> The case is getting GPUs supported in a container. There has been a
+> discussion that I found useful on this mail list earlier on NVidia GPU
+> support that essentially boils down to unpacking certain libraries (e.g.
+> libcuda.so) from the NVidia driver package and then adjusting
+> LD_LIBRARY_PATH in the container so it can see it. And making sure that the
+> dropped in libraries are the same version as the driver package on the host.
+>
+> This has made it a bit more complicated on our CentOS7 host with the
+> NVidia driver being pulled from NVidia provided RPMs, which have driver
+> version that is not being supplied in the distro-agnostic binary form
+> (367.48). We ended up pulling the CentOS 7 rpm and unpacking it in the
+> container (Ubuntu 14.04), which is binary compatible with the CentOS7, like:
+> apt-get -y --force-yes install rpm2cpio
+> mkdir /usr/local/NVidia-$driver_version
+> cd /usr/local/NVidia-$driver_version
+> rpm2cpio /mnt/xorg-x11-drv-nvidia-libs-$driver_version-1.el7.x86_64.rpm
+> | cpio -idmv
+>
+> So, that is all good, until we run updates on the host which updates the
+> NVidia driver. With the current setup we'll need to also update the
+> container (or just build it again with the new driver RPM).
+>
+> It would be easier if we could bring those few libraries from the host OS
+> at the launch of the container - so, binding them comes to mind. If I could
+> bring /usr/lib64/libcuda.so and its one dependency, we could have a NVidia
+> driver version agnostic container.
+>
+> I'd appreciate any thoughts on this.
+>
+> Thanks,
+> MC
+>
+>
+> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+>
+
+
+
+-- 
+Gregory M. Kurtzer
+HPC Systems Architect and Technology Developer
+Lawrence Berkeley National Laboratory HPCS
+University of California Berkeley Research IT
+Singularity Linux Containers (http://singularity.lbl.gov/)
+Warewulf Cluster Management (http://warewulf.lbl.gov/)
+GitHub: https://github.com/gmkurtzer, Twitter: https://twitter.com/gmkurtzer
+
+--001a114e6c0e67a165054b2e80de
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">The problem with exploding the libraries into the containe=
+r is exactly as you describe... It is very difficult to manage the kernel t=
+o userspace compatibility if you have the libraries statically part of the =
+container.<div><br></div><div>I think using bind points of the libraries th=
+emselves actually ends up being the best solution for this (as it sounds li=
+ke you concur on). At present today, this can be done statically via the co=
+nfig file, but it is my intention to have a Singularity component module th=
+at can do this automatically and internally.</div><div><div><br></div><div>=
+Greg</div></div></div><div class=3D"gmail_extra"><br><div class=3D"gmail_qu=
+ote">On Mon, Mar 20, 2017 at 11:27 AM, Martin Cuma <span dir=3D"ltr">&lt;<a=
+ href=3D"mailto:mart...@gmail.com" target=3D"_blank">mart...@gmail.com</a>&=
+gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 =
+0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Hello,=
+<br><br>I am wondering if it&#39;s possible, or if anyone has done this. I.=
+e. not bind mount points, but rather just separate files (libraries in this=
+ case).<br><br>The case is getting GPUs supported in a container. There has=
+ been a discussion that I found useful on this mail list earlier on NVidia =
+GPU support that essentially boils down to unpacking certain libraries (e.g=
+. libcuda.so) from the NVidia driver package and then adjusting LD_LIBRARY_=
+PATH in the container so it can see it. And making sure that the dropped in=
+ libraries are the same version as the driver package on the host.<br><br>T=
+his has made it a bit more complicated on our CentOS7 host with the NVidia =
+driver being pulled from NVidia provided RPMs, which have driver version th=
+at is not being supplied in the distro-agnostic binary form (367.48). We en=
+ded up pulling the CentOS 7 rpm and unpacking it in the container (Ubuntu 1=
+4.04), which is binary compatible with the CentOS7, like:<br>apt-get -y --f=
+orce-yes install rpm2cpio<br>mkdir /usr/local/NVidia-$driver_<wbr>version<b=
+r>cd /usr/local/NVidia-$driver_<wbr>version<br>rpm2cpio /mnt/xorg-x11-drv-n=
+vidia-libs-<wbr>$driver_version-1.el7.x86_64.<wbr>rpm=C2=A0 | cpio -idmv<br=
+><br>So, that is all good, until we run updates on the host which updates t=
+he NVidia driver. With the current setup we&#39;ll need to also update the =
+container (or just build it again with the new driver RPM).<br><br>It would=
+ be easier if we could bring those few libraries from the host OS at the la=
+unch of the container - so, binding them comes to mind. If I could bring /u=
+sr/lib64/libcuda.so and its one dependency, we could have a NVidia driver v=
+ersion agnostic container.<br><br>I&#39;d appreciate any thoughts on this.<=
+br><br>Thanks,<br>MC<span class=3D"HOEnZb"><font color=3D"#888888"><br><br>=
+<br></font></span></div><span class=3D"HOEnZb"><font color=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singularity+u=
+nsubscribe@lbl.<wbr>gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div class=3D"gmail_signature" data-smartmail=3D"gmail_signature"><div di=
+r=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"=
+><div dir=3D"ltr"><div dir=3D"ltr"><div>Gregory M. Kurtzer</div><div>HPC Sy=
+stems Architect and Technology Developer</div><div>Lawrence Berkeley Nation=
+al Laboratory HPCS<br>University of California Berkeley Research IT<br>Sing=
+ularity Linux Containers=C2=A0(<a href=3D"http://singularity.lbl.gov/" targ=
+et=3D"_blank">http://singularity.lbl.gov/</a>)</div><div>Warewulf Cluster M=
+anagement=C2=A0(<a href=3D"http://warewulf.lbl.gov/" target=3D"_blank">http=
+://warewulf.lbl.gov/</a>)</div><div>GitHub:=C2=A0<a href=3D"https://github.=
+com/gmkurtzer" target=3D"_blank">https://github.com/gmkurtzer</a>,=C2=A0<sp=
+an style=3D"font-size:12.8px">Twitter:=C2=A0</span><a href=3D"https://twitt=
+er.com/gmkurtzer" style=3D"font-size:12.8px" target=3D"_blank">https://twit=
+ter.com/gmkurtzer</a></div></div></div></div></div></div></div></div></div>=
+</div></div>
+</div>
+
+--001a114e6c0e67a165054b2e80de--

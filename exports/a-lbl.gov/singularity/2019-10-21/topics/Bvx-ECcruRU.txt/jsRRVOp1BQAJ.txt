@@ -1,0 +1,235 @@
+Date: Mon, 13 May 2019 08:33:17 -0700 (PDT)
+From: TrialUser <ankit...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <8e6c146e-0372-43a9-bb0c-73bfca4ad0e3@lbl.gov>
+In-Reply-To: <b87adb5b-91ea-3bd2-ce5b-7d312e5973f6@sylabs.io>
+References: <9d077253-e341-46d7-a222-574e697b078b@lbl.gov>
+ <b87adb5b-91ea-3bd2-ce5b-7d312e5973f6@sylabs.io>
+Subject: Re: [Singularity] Singularity writable container without sudo 2.6.1
+ to 3.x
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_147_1056847055.1557761597154"
+
+------=_Part_147_1056847055.1557761597154
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_148_1150522632.1557761597155"
+
+------=_Part_148_1150522632.1557761597155
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Thanks a lot for the reply Cedric. This was very helpful.
+After digging some more, i think --writable-tmpfs can help me out too.=20
+However, It looks like there is a limit of 1MB on it right now.
+Am I correct?
+How can I increase that limit?
+
+On Friday, April 26, 2019 at 7:00:42 AM UTC-4, Cedric Clerget wrote:
+>
+> Hi Ankit,
+>
+> I don't clearly understand what you means by "not expose" because=20
+> everything put in overlay image is exposed to user.
+> Yes v3 doesn't provide a way to generate/manipulate ext3 image.
+>
+> But you can easily produce an ext3 overlay image with something like :
+>
+> ----------------------------------------
+> #!/bin/sh
+>
+> umask 0022
+> image=3D$1
+> tmproot=3D`mktemp -d`
+> dd if=3D/dev/zero of=3D$image bs=3D1M count=3D$2
+> # create ext3 root directory layer
+> mkdir $tmproot/upper
+> mkdir $tmproot/work
+> mkfs.ext3 -d $tmproot $image
+> rm -rf $tmproot
+> ----------------------------------------
+>
+> Now everything you want to be in final container need to be stored in=20
+> $tmproot/upper/, by example to add /etc/foo in container:
+>
+> mkdir -p $tmproot/upper/etc
+> echo "foo" > $tmproot/upper/etc/foo
+>
+> Created files/directories will be owned by user executing the script, to=
+=20
+> set different owner you still need root privileges.
+>
+> Hope that helps.
+>
+> C=C3=A9dric
+>
+> Le 25/04/2019 =C3=A0 18:21, TrialUser a =C3=A9crit :
+>
+> Hi All,
+>
+> We have been supporting docker and singularity containerization to delive=
+r=20
+> our software. We were using persistent overlay on an ext3 img format to=
+=20
+> create some scratch space needed by our software that we did not want to=
+=20
+> expose to the user. A wrapper script would take care of mounting user=20
+> volumes and overlaying the ext3 img over the simg in version 2.6.1. No su=
+do=20
+> was required for creating the writable scratch space.
+>
+> With singularity 3.x I could not figure out a way to create a scratch=20
+> space (such as ext3 or even a directory) and overlay without root=20
+> permissions. Is there any possibility to use --overlay without sudo or ho=
+w=20
+> can I create some scratch space that is not easily visible as directories=
+=20
+> and files to the user of our software?
+>
+> Thank you for all your help and please let me know if something is not=20
+> clear. I understand that this is not aligned with singularity principles =
+of=20
+> immutable container images, but as a software vendor, I need to make sure=
+=20
+> that some parts of the software which are generated at runtime are as har=
+d=20
+> to access as possible.
+> --=20
+> You received this message because you are subscribed to the Google Groups=
+=20
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an=
+=20
+> email to si...@lbl.gov <javascript:>.
+>
+>
+>
+> --=20
+>
+> C=C3=A9dric Clerget
+> Software Engineer, Sylabs, Inchttps://www.sylabs.io
+>
+>
+------=_Part_148_1150522632.1557761597155
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Thanks a lot for the reply Cedric. This was very help=
+ful.</div><div>After digging some more, i think --writable-tmpfs can help m=
+e out too. However, It looks like there is a limit of 1MB on it right now.<=
+/div><div> Am I correct?</div><div>How can I increase that limit?<br></div>=
+<br>On Friday, April 26, 2019 at 7:00:42 AM UTC-4, Cedric Clerget wrote:<bl=
+ockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border=
+-left: 1px #ccc solid;padding-left: 1ex;">
+ =20
+   =20
+ =20
+  <div text=3D"#000000" bgcolor=3D"#FFFFFF">
+    <div>Hi Ankit,<br>
+      <br>
+      I don&#39;t clearly understand what you means by &quot;not expose&quo=
+t; because
+      everything put in overlay image is exposed to user.<br>
+      Yes v3 doesn&#39;t provide a way to generate/manipulate ext3 image.<b=
+r>
+      <br>
+      But you can easily produce an ext3 overlay image with something
+      like :<br>
+      <br>
+      <font face=3D"Courier New, Courier, monospace">----------------------=
+--------<wbr>----------</font><br>
+      <font face=3D"Courier New, Courier, monospace">#!/bin/sh<br>
+        <br>
+        umask 0022<br>
+        image=3D$1<br>
+        tmproot=3D`mktemp -d`<br>
+        dd if=3D/dev/zero of=3D$image bs=3D1M count=3D$2<br>
+        # create ext3 root directory layer<br>
+        mkdir $tmproot/upper<br>
+        mkdir $tmproot/work<br>
+        mkfs.ext3 -d $tmproot $image<br>
+        rm -rf $tmproot</font><br>
+      <font face=3D"Courier New, Courier, monospace">----------------------=
+--------<wbr>----------</font><br>
+      <br>
+      Now everything you want to be in final container need to be stored
+      in <font face=3D"Courier New, Courier, monospace">$tmproot/upper/</fo=
+nt>,
+      by example to add <font face=3D"Courier New, Courier, monospace">/etc=
+/foo</font>
+      in container:<br>
+      <br>
+      <font face=3D"Courier New, Courier, monospace">mkdir -p
+        $tmproot/upper/etc<br>
+        echo &quot;foo&quot; &gt; $tmproot/upper/etc/foo</font><br>
+      <br>
+      Created files/directories will be owned by user executing the
+      script, to set different owner you still need root privileges.<br>
+      <br>
+      Hope that helps.<br>
+      <br>
+      C=C3=A9dric<br>
+      <br>
+      Le 25/04/2019 =C3=A0 18:21, TrialUser a =C3=A9crit=C2=A0:<br>
+    </div>
+    <blockquote type=3D"cite">
+     =20
+      <div dir=3D"ltr">
+        <div>Hi All,</div>
+        <div><br>
+        </div>
+        <div>We have been supporting docker and singularity
+          containerization to deliver our software. We were using
+          persistent overlay on an ext3 img format to create some
+          scratch space needed by our software that we did not want to
+          expose to the user. A wrapper script would take care of
+          mounting user volumes and overlaying the ext3 img over the
+          simg in version 2.6.1. No sudo was required for creating the
+          writable scratch space.<br>
+        </div>
+        <div><br>
+        </div>
+        <div>With singularity 3.x I could not figure out a way to create
+          a scratch space (such as ext3 or even a directory) and overlay
+          without root permissions. Is there any possibility to use
+          --overlay without sudo or how can I create some scratch space
+          that is not easily visible as directories and files to the
+          user of our software?</div>
+        <div><br>
+        </div>
+        <div>Thank you for all your help and please let me know if
+          something is not clear. I understand that this is not aligned
+          with singularity principles of immutable container images, but
+          as a software vendor, I need to make sure that some parts of
+          the software which are generated at runtime are as hard to
+          access as possible.<br>
+        </div>
+      </div>
+      -- <br>
+      You received this message because you are subscribed to the Google
+      Groups &quot;singularity&quot; group.<br>
+      To unsubscribe from this group and stop receiving emails from it,
+      send an email to <a href=3D"javascript:" target=3D"_blank" gdf-obfusc=
+ated-mailto=3D"Omjt-aDxBwAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#=
+39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#=
+39;;return true;">singu...@lbl.<wbr>gov</a>.<br>
+    </blockquote>
+    <br>
+    <br>
+    <div>-- <br>
+      <pre>C=C3=A9dric Clerget
+Software Engineer, Sylabs, Inc
+<a href=3D"https://www.sylabs.io" target=3D"_blank" rel=3D"nofollow" onmous=
+edown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fwww=
+.sylabs.io\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHH7Fwv0h1Cz2CwdgQyJO0qm9=
+TpfA&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.com/=
+url?q\x3dhttps%3A%2F%2Fwww.sylabs.io\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQj=
+CNHH7Fwv0h1Cz2CwdgQyJO0qm9TpfA&#39;;return true;">https://www.sylabs.io</a>=
+</pre>
+    </div>
+  </div>
+
+</blockquote></div>
+------=_Part_148_1150522632.1557761597155--
+
+------=_Part_147_1056847055.1557761597154--

@@ -1,0 +1,796 @@
+X-Received: by 2002:a17:90a:1785:: with SMTP id q5mr3852310pja.106.1564591303461;
+        Wed, 31 Jul 2019 09:41:43 -0700 (PDT)
+X-BeenThere: singularity@lbl.gov
+Received: by 2002:aa7:800d:: with SMTP id j13ls14907764pfi.12.gmail; Wed, 31
+ Jul 2019 09:41:42 -0700 (PDT)
+X-Received: by 2002:a63:2004:: with SMTP id g4mr109653671pgg.97.1564591301702;
+        Wed, 31 Jul 2019 09:41:41 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1564591301; cv=none;
+        d=google.com; s=arc-20160816;
+        b=Flk98/goX/ih336Q9vEqnbxc3kEnx8fVFH7TskuJH4nRpR3Y199Fm3JbZhfScEux3Y
+         B8IMIb3PeYcCCcNceFydvJeBFRaA8feYAda4Clp/migk/7WJ884OHdHqCKQNpZk1dCX0
+         ywuudnt+a0PTI+/0eSPd65fcaenX1GS0/XpqFyHNEWi48iWcI/D+BfuUPmecu6fPeaVg
+         7k3Xk00MojzOtBw+N+fLY4PQCbT5TcisZExI/F8iHfdf+Xs/sD9AwfTfztVpMMRpcr5/
+         x5Uh613QafnRAWQ0Mw/7gISD68VdwN1RZ8CW+O9Uv9HmqqWTf4hfzowekTOcyLFXFs6k
+         ip6g==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816;
+        h=to:subject:message-id:date:from:in-reply-to:references:mime-version
+         :dkim-signature;
+        bh=59wR8Kq7jsir6Jsbowhki15sNFaF6fYmEGLL90dstmE=;
+        b=GtyHEiBNCtyPuY/t1Od7xrsSFJKUmy16WbqfRaw40H2sM1Tr6TlhQdoXegMjWrvxyT
+         iTCmMeZzESbMJ6ZQOpKSctVB8mLH/1J/HTJaZbshkmvUGr8C4zEq4LVeyXXHmt3gzIfv
+         6mlx9A/jpqBSacik3j8apcbRjEFc+iJHoucrNOPRLE9PQ9Z2sybhENbi8VFWzzB0ztGP
+         vj0zv+OcHedHQJsT6mTVddaOgJ0oxLQZUZ0lYFwkvZlukNUetLdoWHejyaFUMkE8HZy6
+         lEbnNQEGop1U9pcCMW3LOnBmGfrr9PGVLU1sun34PFgWpsgz8cFrLy8wvr3I1HHjNAuD
+         BFFg==
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=pass head...@redlineperf-com.20150623.gappssmtp.com header.s=20150623 header.b=03btjbnC;
+       spf=neutral (google.com: 209.85.221.173 is neither permitted nor denied by best guess record for domain of kb...@redlineperf.com) smtp.mailfrom=kb...@redlineperf.com
+Return-Path: <kb...@redlineperf.com>
+Received: from fe4.lbl.gov (fe4.lbl.gov. [131.243.228.53])
+        by mx.google.com with ESMTP id 65si26799115pgj.19.2019.07.31.09.41.41
+        for <singu...@lbl.gov>;
+        Wed, 31 Jul 2019 09:41:41 -0700 (PDT)
+Received-SPF: neutral (google.com: 209.85.221.173 is neither permitted nor denied by best guess record for domain of kb...@redlineperf.com) client-ip=209.85.221.173;
+Authentication-Results: mx.google.com;
+       dkim=pass head...@redlineperf-com.20150623.gappssmtp.com header.s=20150623 header.b=03btjbnC;
+       spf=neutral (google.com: 209.85.221.173 is neither permitted nor denied by best guess record for domain of kb...@redlineperf.com) smtp.mailfrom=kb...@redlineperf.com
+X-Ironport-SBRS: 3.5
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: =?us-ascii?q?A2FcBAB8xEFdh63dVdFiAx4BBgcGgWeBb?=
+ =?us-ascii?q?oEXUTMqhBcHgR2CLYtxgg+JVI9DgRADGDgECQEBAQEBAQEBASABBREBAQKBAke?=
+ =?us-ascii?q?CdQKCTyM4EwEDAQEFAQEBAQYCAhABAQEIDQkIKYUlDIJ0BE1qAQEBAQEBAQEBA?=
+ =?us-ascii?q?QEBAQEcAgwnPQEBAQECARoBCB0BAQwmBgQLCQIHBA0gAQIHAgIhAQ8DAQUBHA4?=
+ =?us-ascii?q?HBAEHEwIEgwEBJgGBQwMODwUKkRGQDzyKMHGBMoJ6AQEFdYQLDV+BPwkSgSKLY?=
+ =?us-ascii?q?BeBQD+EIz6CGkcCAhUDgQsJARIBCTcMGoJEgjYijAsaihGUHUAJghyGXIlGg3c?=
+ =?us-ascii?q?bgi6CKYkMhiqECZRfMYF3ii2ECTCBRlkwcTMaCBsVOzEGgjUJgjkMDgkUgzqKb?=
+ =?us-ascii?q?yYwAQEBDYxugkMBAQ?=
+X-IronPort-AV: E=Sophos;i="5.64,330,1559545200"; 
+   d="scan'208,217";a="71165214"
+Received: from mail-vk1-f173.google.com ([209.85.221.173])
+  by fe4.lbl.gov with ESMTP; 31 Jul 2019 09:41:08 -0700
+Received: by mail-vk1-f173.google.com with SMTP id m17so13781833vkl.2
+        for <singu...@lbl.gov>; Wed, 31 Jul 2019 09:41:08 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=redlineperf-com.20150623.gappssmtp.com; s=20150623;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to;
+        bh=59wR8Kq7jsir6Jsbowhki15sNFaF6fYmEGLL90dstmE=;
+        b=03btjbnCyLApDoq2ENrhcfwuu/ai93yH3QS+A9tbbhYxaHTbfA1AXencq9DHNVxyui
+         M7KgTnO69H55sJBdvlV8FnMLkSMCiqy+TD+RuJHRQjHUaHtq08yV/E3BtYF98yuHwFgq
+         /eXDyd+9l6NLlG4xOU98QHrcll7oTIc5hKWCMxWibajzp9kDz4ZE9AGBnw38hqeTm/G/
+         ZxA0EcBP6P3K0Ds2BSCX3g0G58SoEyYdBpMXaNje7FIIeM7w2zS9QVNMS57JUveJRjnc
+         kS46f8KGCMNpqihhGmJvz5tTT8tZE1tvpaVxE2CHO8vvlmKzy1eSwyg/jjgtST7r+W+d
+         KdCA==
+X-Gm-Message-State: APjAAAWnf4KqVqcJdYSaYjImbV+BFCylE/5KmbE2UJYVU1ck+eujCDsr
+	HxPtT0C1t+Q41ubCv9fMPsHkDibJZf3nTCUCpUzFfbMk
+X-Received: by 2002:a1f:9012:: with SMTP id s18mr47535450vkd.5.1564591267271;
+ Wed, 31 Jul 2019 09:41:07 -0700 (PDT)
+MIME-Version: 1.0
+References: <CABJnLg0J2P-QWG4a3ggLByaV80YVA=-rY-yDqRvKR59GkxQd2w@mail.gmail.com>
+ <CAM=pu++UToT3bfe9gj1tW2-LTj43MZjVh=QDFUYZtwXrdf6Xqg@mail.gmail.com>
+In-Reply-To: <CAM=pu++UToT3bfe9gj1tW2-LTj43MZjVh=QDFUYZtwXrdf6Xqg@mail.gmail.com>
+From: Keith Ball <kb...@redlineperf.com>
+Date: Wed, 31 Jul 2019 12:40:56 -0400
+Message-ID: <CABJnLg2nbNx_+PkmL4a6wdeqQ1itFROQ9gNtMVgkbzKX6ohVsw@mail.gmail.com>
+Subject: Re: [Singularity] singularity shell gives "exec /.singularity.d/actions/shell
+ failed: no such file or directory"
+To: singularity@lbl.gov
+Content-Type: multipart/alternative; boundary="000000000000b46f16058efcca6e"
+
+--000000000000b46f16058efcca6e
+Content-Type: text/plain; charset="UTF-8"
+
+Yes, a recipe would be nice; however, I had tried the software build as a
+monolithic recipe file, and found that I would invariably have some problem
+or failure, wasting 30-90 minutes of build time. Also, the application
+build process uses environment modules, and I have never been able to get
+modules to work in the %post section of a recipe (using the same sourcing
+of /etc/profile.d/modules.sh, setting MODULEPATH, etc that one would
+normally do). I was hoping someone would have some clue as to what the
+error might actually mean, given that the file that singularity claims
+doesn't exist, is actually there. Perhaps there is some file manifest of
+what is supposed to be in the sandbox directory, and that got corrupted?
+
+- Keith
+
+On Wed, Jul 31, 2019 at 12:21 PM v <vso...@gmail.com> wrote:
+
+> What commands did you issue? Without a history of what you did, it would
+> be hard to try and reproduce, other than guessing. If I were in your shoes
+> I would start with a recipe file, and then write the commands that you need
+> to issue (to compile, etc.) and then build the container. Then if you run
+> into trouble, it's a matter of sharing the recipe and easy to help! Your
+> future self will thank you when you need to rebuild, and perhaps don't
+> remember.
+>
+>
+> On Wed, Jul 31, 2019 at 12:12 PM Keith Ball <kb...@redlineperf.com> wrote:
+>
+>> Hi All,
+>>
+>> I have created a sandbox using singularity version 3.2.1-1.1.el7 on
+>> CentOS 7.6.
+>> I have used shell to go into the container a few times in --writable
+>> mode, to compile code, etc. Now when I go to shell back in, I am getting
+>> the following error:
+>>
+>>    exec /.singularity.d/actions/shell failed: no such file or directory
+>>
+>> The "shell" file is in fact inside the sandbox directory and is
+>> executable:
+>> -rwxr-xr-x 1 kball kball 613 Jul 26 21:07
+>> mycontainer/.singularity.d/actions/shell
+>>
+>> What am I missing? Is there some wat to get around this error to get into
+>> the container?
+>>
+>> Full debug output follows:
+>> --
+>> singularity --debug shell -B /applocal:/applocal:ro -B
+>> /fsx/home/kball/singularity:/extmount --writable mycontainer
+>>
+>> VERBOSE [U=0,P=21418]      print()                       Set messagelevel
+>> to: 5
+>> DEBUG   [U=0,P=21418]      init()                        PIPE_EXEC_FD
+>> value: 7
+>> VERBOSE [U=0,P=21418]      init()                        Container runtime
+>> VERBOSE [U=0,P=21418]      is_suid()                     Check if we are
+>> running as setuid
+>> DEBUG   [U=0,P=21418]      init()                        Overlay seems
+>> supported by kernel
+>> DEBUG   [U=0,P=21418]      init()                        Drop privileges
+>> DEBUG   [U=1004,P=21418]   init()                        Read json
+>> configuration from pipe
+>> DEBUG   [U=1004,P=21418]   init()                        Set child signal
+>> mask
+>> DEBUG   [U=1004,P=21418]   init()                        Wait completion
+>> of stage1
+>> VERBOSE [U=1004,P=21430]   priv_escalate()               Get root
+>> privileges
+>> DEBUG   [U=0,P=21430]      set_parent_death_signal()     Set parent death
+>> signal to 9
+>> DEBUG   [U=0,P=21430]      prepare_stage()               Entering in
+>> stage 1
+>> DEBUG   [U=1004,P=21430]   set_parent_death_signal()     Set parent death
+>> signal to 9
+>> VERBOSE [U=1004,P=21430]   init()                        Spawn stage 1
+>> VERBOSE [U=1004,P=21430]   startup()                     Execute stage 1
+>> DEBUG   [U=1004,P=21430]   Stage()                       Entering stage 1
+>> DEBUG   [U=1004,P=21430]   prepareFd()                   Open file
+>> descriptor for /applocal
+>> DEBUG   [U=1004,P=21430]   prepareFd()                   Open file
+>> descriptor for /fsx/home/kball/singularity
+>> DEBUG   [U=1004,P=21430]   Init()                        Entering image
+>> format intializer
+>> DEBUG   [U=1004,P=21430]   Init()                        Check for image
+>> format sif
+>> DEBUG   [U=1004,P=21430]   Init()                        Check for image
+>> format sandbox
+>> DEBUG   [U=1004,P=21418]   init()                        Create
+>> socketpair for master communication channel
+>> DEBUG   [U=1004,P=21418]   cleanup_fd()                  Check file
+>> descriptor /proc/self/fd/3 pointing to /applocal
+>> DEBUG   [U=1004,P=21418]   cleanup_fd()                  Check file
+>> descriptor /proc/self/fd/4 pointing to anon_inode:[eventpoll]
+>> DEBUG   [U=1004,P=21418]   cleanup_fd()                  Closing
+>> /proc/self/fd/4
+>> DEBUG   [U=1004,P=21418]   cleanup_fd()                  Check file
+>> descriptor /proc/self/fd/5 pointing to /fsx/home/kball/singularity
+>> DEBUG   [U=1004,P=21418]   cleanup_fd()                  Check file
+>> descriptor /proc/self/fd/6 pointing to
+>> /fsx/home/kball/singularity/centos7-fv3+upp-intel2019u4
+>> VERBOSE [U=1004,P=21418]   priv_escalate()               Get root
+>> privileges
+>> VERBOSE [U=0,P=21418]      create_namespace()            Create mount
+>> namespace
+>> DEBUG   [U=0,P=21418]      init()                        Create RPC
+>> socketpair for communication between stage 2 and RPC server
+>> VERBOSE [U=0,P=21418]      init()                        Spawn master
+>> process
+>> DEBUG   [U=0,P=21438]      set_parent_death_signal()     Set parent death
+>> signal to 9
+>> VERBOSE [U=0,P=21438]      create_namespace()            Create mount
+>> namespace
+>> DEBUG   [U=0,P=21438]      set_parent_death_signal()     Set parent death
+>> signal to 9
+>> DEBUG   [U=0,P=21438]      prepare_stage()               Entering in
+>> stage 2
+>> DEBUG   [U=1004,P=21438]   set_parent_death_signal()     Set parent death
+>> signal to 9
+>> VERBOSE [U=0,P=21439]      init()                        Spawn RPC server
+>> VERBOSE [U=0,P=21439]      startup()                     Serve RPC
+>> requests
+>> VERBOSE [U=1004,P=21418]   startup()                     Execute master
+>> process
+>> DEBUG   [U=1004,P=21418]   setupSessionLayout()          Image is
+>> writable, not attempting to use overlay or underlay
+>> DEBUG   [U=1004,P=21418]   setupDefaultLayout()          Creating default
+>> SESSIONDIR layout
+>> DEBUG   [U=1004,P=21418]   addRootfsMount()              Mount rootfs in
+>> read-write mode
+>> DEBUG   [U=1004,P=21418]   addRootfsMount()              Mounting
+>> directory rootfs: /fsx/home/kball/singularity/centos7-fv3+upp-intel2019u4
+>> DEBUG   [U=1004,P=21418]   addKernelMount()              Checking
+>> configuration file for 'mount proc'
+>> DEBUG   [U=1004,P=21418]   addKernelMount()              Adding proc to
+>> mount list
+>> VERBOSE [U=1004,P=21418]   addKernelMount()              Default mount:
+>> /proc:/proc
+>> DEBUG   [U=1004,P=21418]   addKernelMount()              Checking
+>> configuration file for 'mount sys'
+>> DEBUG   [U=1004,P=21418]   addKernelMount()              Adding sysfs to
+>> mount list
+>> VERBOSE [U=1004,P=21418]   addKernelMount()              Default mount:
+>> /sys:/sys
+>> DEBUG   [U=1004,P=21418]   addDevMount()                 Checking
+>> configuration file for 'mount dev'
+>> DEBUG   [U=1004,P=21418]   addDevMount()                 Adding dev to
+>> mount list
+>> VERBOSE [U=1004,P=21418]   addDevMount()                 Default mount:
+>> /dev:/dev
+>> DEBUG   [U=1004,P=21418]   addHostMount()                Not mounting
+>> host file systems per configuration
+>> VERBOSE [U=1004,P=21418]   addBindsMount()               Found 'bind
+>> path' = /etc/localtime, /etc/localtime
+>> VERBOSE [U=1004,P=21418]   addBindsMount()               Found 'bind
+>> path' = /etc/hosts, /etc/hosts
+>> DEBUG   [U=1004,P=21418]   addHomeStagingDir()           Staging home
+>> directory (/fsx/home/kball) at /var/singularity/mnt/session/fsx/home/kball
+>> DEBUG   [U=1004,P=21418]   addHomeMount()                Adding home
+>> directory mount
+>> [/var/singularity/mnt/session/fsx/home/kball:/fsx/home/kball] to list using
+>> layer: none
+>> DEBUG   [U=1004,P=21418]   isLayerEnabled()              Using Layer
+>> system: none
+>> VERBOSE [U=1004,P=21418]   addHomeNoLayer()              Mounting staged
+>> home directory base (/var/singularity/mnt/session/fsx) into container at
+>> /var/singularity/mnt/session/rootfs/fsx
+>> DEBUG   [U=1004,P=21418]   addUserbindsMount()           Adding /applocal
+>> to mount list
+>> DEBUG   [U=1004,P=21418]   addUserbindsMount()           Adding
+>> /fsx/home/kball/singularity to mount list
+>> DEBUG   [U=1004,P=21418]   addUserbindsMount()           Checking for
+>> 'user bind control' in configuration file
+>> DEBUG   [U=1004,P=21418]   addTmpMount()                 Checking for
+>> 'mount tmp' in configuration file
+>> VERBOSE [U=1004,P=21418]   addTmpMount()                 Default mount:
+>> /tmp:/tmp
+>> VERBOSE [U=1004,P=21418]   addTmpMount()                 Default mount:
+>> /var/tmp:/var/tmp
+>> DEBUG   [U=1004,P=21418]   addScratchMount()             Not mounting
+>> scratch directory: Not requested
+>> VERBOSE [U=1004,P=21418]   addCwdMount()                 Default mount:
+>> /fsx/home/kball/singularity: to the container
+>> DEBUG   [U=1004,P=21418]   addLibsMount()                Checking for
+>> 'user bind control' in configuration file
+>> DEBUG   [U=1004,P=21418]   addResolvConfMount()          Adding
+>> /etc/resolv.conf to mount list
+>> VERBOSE [U=1004,P=21418]   addResolvConfMount()          Default mount:
+>> /etc/resolv.conf:/etc/resolv.conf
+>> DEBUG   [U=1004,P=21418]   addHostnameMount()            Skipping
+>> hostname mount, not virtualizing UTS namespace on user request
+>> DEBUG   [U=1004,P=21418]   create()                      Mount all
+>> DEBUG   [U=1004,P=21418]   mountGeneric()                Mounting tmpfs
+>> to /var/singularity/mnt/session
+>> DEBUG   [U=1004,P=21418]   mountGeneric()                Mounting
+>> /fsx/home/kball/singularity/centos7-fv3+upp-intel2019u4 to
+>> /var/singularity/mnt/session/rootfs
+>> DEBUG   [U=1004,P=21418]   mountGeneric()                Remounting
+>> /var/singularity/mnt/session/rootfs
+>> DEBUG   [U=1004,P=21418]   setPropagationMount()         Set RPC mount
+>> propagation flag to SLAVE
+>> VERBOSE [U=1004,P=21418]   Passwd()                      Checking for
+>> template passwd file: /var/singularity/mnt/session/rootfs/etc/passwd
+>> VERBOSE [U=1004,P=21418]   Passwd()                      Creating passwd
+>> content
+>> VERBOSE [U=1004,P=21418]   Passwd()                      Creating
+>> template passwd file and appending user data:
+>> /var/singularity/mnt/session/rootfs/etc/passwd
+>> DEBUG   [U=1004,P=21418]   addIdentityMount()            Adding
+>> /etc/passwd to mount list
+>> VERBOSE [U=1004,P=21418]   addIdentityMount()            Default mount:
+>> /etc/passwd:/etc/passwd
+>> VERBOSE [U=1004,P=21418]   Group()                       Checking for
+>> template group file: /var/singularity/mnt/session/rootfs/etc/group
+>> VERBOSE [U=1004,P=21418]   Group()                       Creating group
+>> content
+>> DEBUG   [U=1004,P=21418]   addIdentityMount()            Adding
+>> /etc/group to mount list
+>> VERBOSE [U=1004,P=21418]   addIdentityMount()            Default mount:
+>> /etc/group:/etc/group
+>> DEBUG   [U=1004,P=21418]   mountGeneric()                Skipping mount,
+>> /var/singularity/mnt/session/rootfs/dev doesn't exist in container
+>> DEBUG   [U=1004,P=21418]   mountGeneric()                Skipping mount,
+>> /var/singularity/mnt/session/rootfs/etc/localtime doesn't exist in container
+>> DEBUG   [U=1004,P=21418]   mountGeneric()                Mounting
+>> /etc/hosts to /var/singularity/mnt/session/rootfs/etc/hosts
+>> DEBUG   [U=1004,P=21418]   mountGeneric()                Mounting
+>> /etc/singularity/actions to
+>> /var/singularity/mnt/session/rootfs/.singularity.d/actions
+>> DEBUG   [U=1004,P=21418]   mountGeneric()                Remounting
+>> /var/singularity/mnt/session/rootfs/.singularity.d/actions
+>> DEBUG   [U=1004,P=21418]   mountGeneric()                Skipping mount,
+>> /var/singularity/mnt/session/rootfs/proc doesn't exist in container
+>> DEBUG   [U=1004,P=21418]   mountGeneric()                Skipping mount,
+>> /var/singularity/mnt/session/rootfs/proc doesn't exist in container
+>> DEBUG   [U=1004,P=21418]   mountGeneric()                Skipping mount,
+>> /var/singularity/mnt/session/rootfs/sys doesn't exist in container
+>> DEBUG   [U=1004,P=21418]   mountGeneric()                Mounting
+>> /fsx/home/kball to /var/singularity/mnt/session/fsx/home/kball
+>> DEBUG   [U=1004,P=21418]   mountGeneric()                Remounting
+>> /var/singularity/mnt/session/fsx/home/kball
+>> DEBUG   [U=1004,P=21418]   mountGeneric()                Mounting /tmp to
+>> /var/singularity/mnt/session/rootfs/tmp
+>> DEBUG   [U=1004,P=21418]   mountGeneric()                Remounting
+>> /var/singularity/mnt/session/rootfs/tmp
+>> DEBUG   [U=1004,P=21418]   mountGeneric()                Skipping mount,
+>> /var/singularity/mnt/session/rootfs/var/tmp doesn't exist in container
+>> DEBUG   [U=1004,P=21418]   mountGeneric()                Skipping mount,
+>> /var/singularity/mnt/session/rootfs/var/tmp doesn't exist in container
+>> DEBUG   [U=1004,P=21418]   mountGeneric()                Skipping mount,
+>> /var/singularity/mnt/session/rootfs/fsx/home/kball/singularity doesn't
+>> exist in container
+>> DEBUG   [U=1004,P=21418]   mountGeneric()                Skipping mount,
+>> /var/singularity/mnt/session/rootfs/fsx/home/kball/singularity doesn't
+>> exist in container
+>> DEBUG   [U=1004,P=21418]   mountGeneric()                Mounting
+>> /var/singularity/mnt/session/etc/resolv.conf to
+>> /var/singularity/mnt/session/rootfs/etc/resolv.conf
+>> DEBUG   [U=1004,P=21418]   mountGeneric()                Mounting
+>> /var/singularity/mnt/session/etc/passwd to
+>> /var/singularity/mnt/session/rootfs/etc/passwd
+>> DEBUG   [U=1004,P=21418]   mountGeneric()                Mounting
+>> /var/singularity/mnt/session/etc/group to
+>> /var/singularity/mnt/session/rootfs/etc/group
+>> DEBUG   [U=1004,P=21418]   mountGeneric()                Skipping mount,
+>> /var/singularity/mnt/session/rootfs/applocal doesn't exist in container
+>> DEBUG   [U=1004,P=21418]   mountGeneric()                Skipping mount,
+>> /var/singularity/mnt/session/rootfs/applocal doesn't exist in container
+>> DEBUG   [U=1004,P=21418]   mountGeneric()                Skipping mount,
+>> /var/singularity/mnt/session/rootfs/extmount doesn't exist in container
+>> DEBUG   [U=1004,P=21418]   mountGeneric()                Skipping mount,
+>> /var/singularity/mnt/session/rootfs/extmount doesn't exist in container
+>> DEBUG   [U=1004,P=21418]   mountGeneric()                Skipping mount,
+>> /var/singularity/mnt/session/rootfs/fsx doesn't exist in container
+>> DEBUG   [U=1004,P=21418]   create()                      Chroot into
+>> /var/singularity/mnt/session/rootfs
+>> DEBUG   [U=0,P=21439]      Chroot()                      Change current
+>> directory to /var/singularity/mnt/session/rootfs
+>> DEBUG   [U=0,P=21439]      Chroot()                      Hold reference
+>> to host / directory
+>> DEBUG   [U=0,P=21439]      Chroot()                      Called
+>> pivot_root on /var/singularity/mnt/session/rootfs
+>> DEBUG   [U=0,P=21439]      Chroot()                      Change current
+>> directory to host / directory
+>> DEBUG   [U=0,P=21439]      Chroot()                      Apply slave
+>> mount propagation for host / directory
+>> DEBUG   [U=0,P=21439]      Chroot()                      Called
+>> unmount(/, syscall.MNT_DETACH)
+>> DEBUG   [U=0,P=21439]      Chroot()                      Changing
+>> directory to / to avoid getpwd issues
+>> DEBUG   [U=1004,P=21418]   create()                      Chdir into / to
+>> avoid errors
+>> VERBOSE [U=1004,P=21438]   startup()                     Execute stage 2
+>> DEBUG   [U=1004,P=21438]   Stage()                       Entering stage 2
+>> FATAL   [U=1004,P=21438]   Stage()                       exec
+>> /.singularity.d/actions/shell failed: no such file or directory
+>> DEBUG   [U=1004,P=21418]   CleanupContainer()            Cleanup container
+>> DEBUG   [U=1004,P=21418]   Master()                      Child exited
+>> with exit status 255
+>>
+>> --
+>> Keith D. Ball, PhD
+>> RedLine Performance Solutions, LLC
+>> web:  http://www.redlineperf.com/
+>> email: kb...@redlineperf.com <aqualk...@redlineperf.com>
+>> cell: 540-557-7851
+>>
+>> --
+>> You received this message because you are subscribed to the Google Groups
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an
+>> email to singu...@lbl.gov.
+>> To view this discussion on the web visit
+>> https://groups.google.com/a/lbl.gov/d/msgid/singularity/CABJnLg0J2P-QWG4a3ggLByaV80YVA%3D-rY-yDqRvKR59GkxQd2w%40mail.gmail.com
+>> <https://groups.google.com/a/lbl.gov/d/msgid/singularity/CABJnLg0J2P-QWG4a3ggLByaV80YVA%3D-rY-yDqRvKR59GkxQd2w%40mail.gmail.com?utm_medium=email&utm_source=footer>
+>> .
+>>
+>
+>
+> --
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+> To view this discussion on the web visit
+> https://groups.google.com/a/lbl.gov/d/msgid/singularity/CAM%3Dpu%2B%2BUToT3bfe9gj1tW2-LTj43MZjVh%3DQDFUYZtwXrdf6Xqg%40mail.gmail.com
+> <https://groups.google.com/a/lbl.gov/d/msgid/singularity/CAM%3Dpu%2B%2BUToT3bfe9gj1tW2-LTj43MZjVh%3DQDFUYZtwXrdf6Xqg%40mail.gmail.com?utm_medium=email&utm_source=footer>
+> .
+>
+
+
+-- 
+Keith D. Ball, PhD
+RedLine Performance Solutions, LLC
+web:  http://www.redlineperf.com/
+email: kb...@redlineperf.com <aqualk...@redlineperf.com>
+cell: 540-557-7851
+
+--000000000000b46f16058efcca6e
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Yes, a recipe would be nice; however, I had tried the=
+ software build as a monolithic recipe file, and found that I would invaria=
+bly have some problem or failure, wasting 30-90 minutes of build time. Also=
+, the application build process uses environment modules, and I have never =
+been able to get modules to work in the %post section of a recipe (using th=
+e same sourcing of /etc/profile.d/modules.sh, setting MODULEPATH, etc that =
+one would normally do). I was hoping someone would have some clue as to wha=
+t the error might actually mean, given that the file that singularity claim=
+s doesn&#39;t exist, is actually there. Perhaps there is some file manifest=
+ of what is supposed to be in the sandbox directory, and that got corrupted=
+? <br></div><div><br></div><div>- Keith<br></div><br><div class=3D"gmail_qu=
+ote"><div dir=3D"ltr" class=3D"gmail_attr">On Wed, Jul 31, 2019 at 12:21 PM=
+ v &lt;<a href=3D"mailto:vso...@gmail.com">vso...@gmail.com</a>&gt; wrote:<=
+br></div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8e=
+x;border-left:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr"=
+>What commands did you issue? Without a history of what you did, it would b=
+e hard to try and reproduce, other than guessing. If I were in your shoes I=
+ would start with a recipe file, and then write the commands that you need =
+to issue (to compile, etc.) and then build the container. Then if you run i=
+nto trouble, it&#39;s a matter of sharing the recipe and easy to help! Your=
+ future self will thank you when you need to rebuild, and perhaps don&#39;t=
+ remember.=C2=A0<div><br></div></div><br><div class=3D"gmail_quote"><div di=
+r=3D"ltr" class=3D"gmail_attr">On Wed, Jul 31, 2019 at 12:12 PM Keith Ball =
+&lt;<a href=3D"mailto:kb...@redlineperf.com" target=3D"_blank">kb...@redlin=
+eperf.com</a>&gt; wrote:<br></div><blockquote class=3D"gmail_quote" style=
+=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding=
+-left:1ex"><div dir=3D"ltr"><div>Hi All,</div><div><br></div><div>I have cr=
+eated a sandbox using singularity version 3.2.1-1.1.el7 on CentOS 7.6. <br>=
+</div><div>I have used shell to go into the container a few times in --writ=
+able mode, to compile code, etc. Now when I go to shell back in, I am getti=
+ng the following error: <br></div><div><br></div><div>=C2=A0=C2=A0 exec /.s=
+ingularity.d/actions/shell failed: no such file or directory</div><div><br>=
+</div><div>The &quot;shell&quot; file is in fact inside the sandbox directo=
+ry and is executable:<br></div><div>-rwxr-xr-x 1 kball kball 613 Jul 26 21:=
+07 mycontainer/.singularity.d/actions/shell</div><div><br></div><div>What a=
+m I missing? Is there some wat to get around this error to get into the con=
+tainer?</div><div><br></div><div>Full debug output follows:<br></div><div>-=
+-<br></div><div><span class=3D"gmail-m_-5254771385439879560gmail-m_60289934=
+43584046860gmail-gI"><span>singularity --debug shell -B /applocal:/applocal=
+:ro -B /fsx/home/kball/singularity:/extmount --writable mycontainer<br></sp=
+an></span></div><div><br></div><div>VERBOSE [U=3D0,P=3D21418] =C2=A0 =C2=A0=
+ =C2=A0print() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 Set messagelevel to: 5<br>DEBUG =C2=A0 [U=3D0,P=3D21418] =
+=C2=A0 =C2=A0 =C2=A0init() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0PIPE_EXEC_FD value: 7<br>VERBOSE [U=3D0,=
+P=3D21418] =C2=A0 =C2=A0 =C2=A0init() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Container runtime<br>VERBOS=
+E [U=3D0,P=3D21418] =C2=A0 =C2=A0 =C2=A0is_suid() =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Check if we are running as se=
+tuid<br>DEBUG =C2=A0 [U=3D0,P=3D21418] =C2=A0 =C2=A0 =C2=A0init() =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0Overlay seems supported by kernel<br>DEBUG =C2=A0 [U=3D0,P=3D21418] =C2=
+=A0 =C2=A0 =C2=A0init() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Drop privileges<br>DEBUG =C2=A0 [U=3D1004=
+,P=3D21418] =C2=A0 init() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Read json configuration from pipe<br>DEBU=
+G =C2=A0 [U=3D1004,P=3D21418] =C2=A0 init() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Set child signal mask<b=
+r>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 init() =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Wait completion =
+of stage1<br>VERBOSE [U=3D1004,P=3D21430] =C2=A0 priv_escalate() =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Get root privileges<br>DEBUG =C2=A0 =
+[U=3D0,P=3D21430] =C2=A0 =C2=A0 =C2=A0set_parent_death_signal() =C2=A0 =C2=
+=A0 Set parent death signal to 9<br>DEBUG =C2=A0 [U=3D0,P=3D21430] =C2=A0 =
+=C2=A0 =C2=A0prepare_stage() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 Entering in stage 1<br>DEBUG =C2=A0 [U=3D1004,P=3D21430] =C2=A0 set_par=
+ent_death_signal() =C2=A0 =C2=A0 Set parent death signal to 9<br>VERBOSE [U=
+=3D1004,P=3D21430] =C2=A0 init() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Spawn stage 1<br>VERBOSE [U=3D1004=
+,P=3D21430] =C2=A0 startup() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 Execute stage 1<br>DEBUG =C2=A0 [U=3D1004,P=3D2143=
+0] =C2=A0 Stage() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 Entering stage 1<br>DEBUG =C2=A0 [U=3D1004,P=3D21430] =
+=C2=A0 prepareFd() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 Open file descriptor for /applocal<br>DEBUG =C2=A0 [U=3D1004,P=3D214=
+30] =C2=A0 prepareFd() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 Open file descriptor for /fsx/home/kball/singularity<br>DEBUG =
+=C2=A0 [U=3D1004,P=3D21430] =C2=A0 Init() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Entering image format i=
+ntializer<br>DEBUG =C2=A0 [U=3D1004,P=3D21430] =C2=A0 Init() =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Check =
+for image format sif<br>DEBUG =C2=A0 [U=3D1004,P=3D21430] =C2=A0 Init() =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0Check for image format sandbox<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =
+=C2=A0 init() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0Create socketpair for master communication channel<=
+br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 cleanup_fd() =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Check file descriptor /proc/se=
+lf/fd/3 pointing to /applocal<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 c=
+leanup_fd() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0C=
+heck file descriptor /proc/self/fd/4 pointing to anon_inode:[eventpoll]<br>=
+DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 cleanup_fd() =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Closing /proc/self/fd/4<br>DEBUG =
+=C2=A0 [U=3D1004,P=3D21418] =C2=A0 cleanup_fd() =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Check file descriptor /proc/self/fd/5 po=
+inting to /fsx/home/kball/singularity<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =
+=C2=A0 cleanup_fd() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0Check file descriptor /proc/self/fd/6 pointing to /fsx/home/kball/si=
+ngularity/centos7-fv3+upp-intel2019u4<br>VERBOSE [U=3D1004,P=3D21418] =C2=
+=A0 priv_escalate() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Get ro=
+ot privileges<br>VERBOSE [U=3D0,P=3D21418] =C2=A0 =C2=A0 =C2=A0create_names=
+pace() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Create mount namespace<br>D=
+EBUG =C2=A0 [U=3D0,P=3D21418] =C2=A0 =C2=A0 =C2=A0init() =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Create RP=
+C socketpair for communication between stage 2 and RPC server<br>VERBOSE [U=
+=3D0,P=3D21418] =C2=A0 =C2=A0 =C2=A0init() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Spawn master process<br=
+>DEBUG =C2=A0 [U=3D0,P=3D21438] =C2=A0 =C2=A0 =C2=A0set_parent_death_signal=
+() =C2=A0 =C2=A0 Set parent death signal to 9<br>VERBOSE [U=3D0,P=3D21438] =
+=C2=A0 =C2=A0 =C2=A0create_namespace() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0Create mount namespace<br>DEBUG =C2=A0 [U=3D0,P=3D21438] =C2=A0 =C2=
+=A0 =C2=A0set_parent_death_signal() =C2=A0 =C2=A0 Set parent death signal t=
+o 9<br>DEBUG =C2=A0 [U=3D0,P=3D21438] =C2=A0 =C2=A0 =C2=A0prepare_stage() =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Entering in stage 2<br>DEB=
+UG =C2=A0 [U=3D1004,P=3D21438] =C2=A0 set_parent_death_signal() =C2=A0 =C2=
+=A0 Set parent death signal to 9<br>VERBOSE [U=3D0,P=3D21439] =C2=A0 =C2=A0=
+ =C2=A0init() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0Spawn RPC server<br>VERBOSE [U=3D0,P=3D21439] =C2=
+=A0 =C2=A0 =C2=A0startup() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 Serve RPC requests<br>VERBOSE [U=3D1004,P=3D21418] =
+=C2=A0 startup() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 Execute master process<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =
+=C2=A0 setupSessionLayout() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Image is writ=
+able, not attempting to use overlay or underlay<br>DEBUG =C2=A0 [U=3D1004,P=
+=3D21418] =C2=A0 setupDefaultLayout() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Cre=
+ating default SESSIONDIR layout<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0=
+ addRootfsMount() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Mount roo=
+tfs in read-write mode<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 addRootf=
+sMount() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Mounting directory=
+ rootfs: /fsx/home/kball/singularity/centos7-fv3+upp-intel2019u4<br>DEBUG =
+=C2=A0 [U=3D1004,P=3D21418] =C2=A0 addKernelMount() =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0Checking configuration file for &#39;mount proc&=
+#39;<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 addKernelMount() =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Adding proc to mount list<br>VERBO=
+SE [U=3D1004,P=3D21418] =C2=A0 addKernelMount() =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0Default mount: /proc:/proc<br>DEBUG =C2=A0 [U=3D1004,P=
+=3D21418] =C2=A0 addKernelMount() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0Checking configuration file for &#39;mount sys&#39;<br>DEBUG =C2=A0 =
+[U=3D1004,P=3D21418] =C2=A0 addKernelMount() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0Adding sysfs to mount list<br>VERBOSE [U=3D1004,P=3D214=
+18] =C2=A0 addKernelMount() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0Default mount: /sys:/sys<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 add=
+DevMount() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Checking=
+ configuration file for &#39;mount dev&#39;<br>DEBUG =C2=A0 [U=3D1004,P=3D2=
+1418] =C2=A0 addDevMount() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 Adding dev to mount list<br>VERBOSE [U=3D1004,P=3D21418] =C2=A0 add=
+DevMount() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Default =
+mount: /dev:/dev<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 addHostMount()=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Not mounting host f=
+ile systems per configuration<br>VERBOSE [U=3D1004,P=3D21418] =C2=A0 addBin=
+dsMount() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Found &#39;bind =
+path&#39; =3D /etc/localtime, /etc/localtime<br>VERBOSE [U=3D1004,P=3D21418=
+] =C2=A0 addBindsMount() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 F=
+ound &#39;bind path&#39; =3D /etc/hosts, /etc/hosts<br>DEBUG =C2=A0 [U=3D10=
+04,P=3D21418] =C2=A0 addHomeStagingDir() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ Staging home directory (/fsx/home/kball) at /var/singularity/mnt/session/f=
+sx/home/kball<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 addHomeMount() =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Adding home director=
+y mount [/var/singularity/mnt/session/fsx/home/kball:/fsx/home/kball] to li=
+st using layer: none<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 isLayerEna=
+bled() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Using Layer system: =
+none<br>VERBOSE [U=3D1004,P=3D21418] =C2=A0 addHomeNoLayer() =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Mounting staged home directory base (/var=
+/singularity/mnt/session/fsx) into container at /var/singularity/mnt/sessio=
+n/rootfs/fsx<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 addUserbindsMount(=
+) =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Adding /applocal to mount list<br>DEBU=
+G =C2=A0 [U=3D1004,P=3D21418] =C2=A0 addUserbindsMount() =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 Adding /fsx/home/kball/singularity to mount list<br>DEBUG=
+ =C2=A0 [U=3D1004,P=3D21418] =C2=A0 addUserbindsMount() =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 Checking for &#39;user bind control&#39; in configuration=
+ file<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 addTmpMount() =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Checking for &#39;mount tmp&#=
+39; in configuration file<br>VERBOSE [U=3D1004,P=3D21418] =C2=A0 addTmpMoun=
+t() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Default mount: =
+/tmp:/tmp<br>VERBOSE [U=3D1004,P=3D21418] =C2=A0 addTmpMount() =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Default mount: /var/tmp:/var/=
+tmp<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 addScratchMount() =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Not mounting scratch directory: Not requ=
+ested<br>VERBOSE [U=3D1004,P=3D21418] =C2=A0 addCwdMount() =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Default mount: /fsx/home/kball/si=
+ngularity: to the container<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 add=
+LibsMount() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Checking=
+ for &#39;user bind control&#39; in configuration file<br>DEBUG =C2=A0 [U=
+=3D1004,P=3D21418] =C2=A0 addResolvConfMount() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0Adding /etc/resolv.conf to mount list<br>VERBOSE [U=3D1004,P=3D21418]=
+ =C2=A0 addResolvConfMount() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Default moun=
+t: /etc/resolv.conf:/etc/resolv.conf<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =
+=C2=A0 addHostnameMount() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Skipping=
+ hostname mount, not virtualizing UTS namespace on user request<br>DEBUG =
+=C2=A0 [U=3D1004,P=3D21418] =C2=A0 create() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Mount all<br>DEBUG =C2=A0 [U=
+=3D1004,P=3D21418] =C2=A0 mountGeneric() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0Mounting tmpfs to /var/singularity/mnt/session<br>DEBU=
+G =C2=A0 [U=3D1004,P=3D21418] =C2=A0 mountGeneric() =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Mounting /fsx/home/kball/singularity/cent=
+os7-fv3+upp-intel2019u4 to /var/singularity/mnt/session/rootfs<br>DEBUG =C2=
+=A0 [U=3D1004,P=3D21418] =C2=A0 mountGeneric() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0Remounting /var/singularity/mnt/session/rootfs<b=
+r>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 setPropagationMount() =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 Set RPC mount propagation flag to SLAVE<br>VERBOSE [U=3D1=
+004,P=3D21418] =C2=A0 Passwd() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Checking for template passwd file: /var/s=
+ingularity/mnt/session/rootfs/etc/passwd<br>VERBOSE [U=3D1004,P=3D21418] =
+=C2=A0 Passwd() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0Creating passwd content<br>VERBOSE [U=3D1004,P=3D21418] =
+=C2=A0 Passwd() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0Creating template passwd file and appending user data: /va=
+r/singularity/mnt/session/rootfs/etc/passwd<br>DEBUG =C2=A0 [U=3D1004,P=3D2=
+1418] =C2=A0 addIdentityMount() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Ad=
+ding /etc/passwd to mount list<br>VERBOSE [U=3D1004,P=3D21418] =C2=A0 addId=
+entityMount() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Default mount: /etc/=
+passwd:/etc/passwd<br>VERBOSE [U=3D1004,P=3D21418] =C2=A0 Group() =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Check=
+ing for template group file: /var/singularity/mnt/session/rootfs/etc/group<=
+br>VERBOSE [U=3D1004,P=3D21418] =C2=A0 Group() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Creating group content<br>=
+DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 addIdentityMount() =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0Adding /etc/group to mount list<br>VERBOSE [U=3D=
+1004,P=3D21418] =C2=A0 addIdentityMount() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0Default mount: /etc/group:/etc/group<br>DEBUG =C2=A0 [U=3D1004,P=
+=3D21418] =C2=A0 mountGeneric() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0Skipping mount, /var/singularity/mnt/session/rootfs/dev doesn&=
+#39;t exist in container<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 mountG=
+eneric() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Skipping mo=
+unt, /var/singularity/mnt/session/rootfs/etc/localtime doesn&#39;t exist in=
+ container<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 mountGeneric() =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Mounting /etc/hosts to =
+/var/singularity/mnt/session/rootfs/etc/hosts<br>DEBUG =C2=A0 [U=3D1004,P=
+=3D21418] =C2=A0 mountGeneric() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0Mounting /etc/singularity/actions to /var/singularity/mnt/sess=
+ion/rootfs/.singularity.d/actions<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=
+=A0 mountGeneric() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0R=
+emounting /var/singularity/mnt/session/rootfs/.singularity.d/actions<br>DEB=
+UG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 mountGeneric() =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Skipping mount, /var/singularity/mnt/sess=
+ion/rootfs/proc doesn&#39;t exist in container<br>DEBUG =C2=A0 [U=3D1004,P=
+=3D21418] =C2=A0 mountGeneric() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0Skipping mount, /var/singularity/mnt/session/rootfs/proc doesn=
+&#39;t exist in container<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 mount=
+Generic() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Skipping m=
+ount, /var/singularity/mnt/session/rootfs/sys doesn&#39;t exist in containe=
+r<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 mountGeneric() =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Mounting /fsx/home/kball to /var/s=
+ingularity/mnt/session/fsx/home/kball<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =
+=C2=A0 mountGeneric() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0Remounting /var/singularity/mnt/session/fsx/home/kball<br>DEBUG =C2=A0 [=
+U=3D1004,P=3D21418] =C2=A0 mountGeneric() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0Mounting /tmp to /var/singularity/mnt/session/rootf=
+s/tmp<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 mountGeneric() =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Remounting /var/singularity/mn=
+t/session/rootfs/tmp<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 mountGener=
+ic() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Skipping mount,=
+ /var/singularity/mnt/session/rootfs/var/tmp doesn&#39;t exist in container=
+<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 mountGeneric() =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Skipping mount, /var/singularity/m=
+nt/session/rootfs/var/tmp doesn&#39;t exist in container<br>DEBUG =C2=A0 [U=
+=3D1004,P=3D21418] =C2=A0 mountGeneric() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0Skipping mount, /var/singularity/mnt/session/rootfs/fs=
+x/home/kball/singularity doesn&#39;t exist in container<br>DEBUG =C2=A0 [U=
+=3D1004,P=3D21418] =C2=A0 mountGeneric() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0Skipping mount, /var/singularity/mnt/session/rootfs/fs=
+x/home/kball/singularity doesn&#39;t exist in container<br>DEBUG =C2=A0 [U=
+=3D1004,P=3D21418] =C2=A0 mountGeneric() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0Mounting /var/singularity/mnt/session/etc/resolv.conf =
+to /var/singularity/mnt/session/rootfs/etc/resolv.conf<br>DEBUG =C2=A0 [U=
+=3D1004,P=3D21418] =C2=A0 mountGeneric() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0Mounting /var/singularity/mnt/session/etc/passwd to /v=
+ar/singularity/mnt/session/rootfs/etc/passwd<br>DEBUG =C2=A0 [U=3D1004,P=3D=
+21418] =C2=A0 mountGeneric() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0Mounting /var/singularity/mnt/session/etc/group to /var/singulari=
+ty/mnt/session/rootfs/etc/group<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0=
+ mountGeneric() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Skip=
+ping mount, /var/singularity/mnt/session/rootfs/applocal doesn&#39;t exist =
+in container<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 mountGeneric() =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Skipping mount, /var/si=
+ngularity/mnt/session/rootfs/applocal doesn&#39;t exist in container<br>DEB=
+UG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 mountGeneric() =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Skipping mount, /var/singularity/mnt/sess=
+ion/rootfs/extmount doesn&#39;t exist in container<br>DEBUG =C2=A0 [U=3D100=
+4,P=3D21418] =C2=A0 mountGeneric() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0Skipping mount, /var/singularity/mnt/session/rootfs/extmou=
+nt doesn&#39;t exist in container<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=
+=A0 mountGeneric() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0S=
+kipping mount, /var/singularity/mnt/session/rootfs/fsx doesn&#39;t exist in=
+ container<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 create() =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Chroot in=
+to /var/singularity/mnt/session/rootfs<br>DEBUG =C2=A0 [U=3D0,P=3D21439] =
+=C2=A0 =C2=A0 =C2=A0Chroot() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Change current directory to /var/singularity=
+/mnt/session/rootfs<br>DEBUG =C2=A0 [U=3D0,P=3D21439] =C2=A0 =C2=A0 =C2=A0C=
+hroot() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0Hold reference to host / directory<br>DEBUG =C2=A0 [U=3D0,P=3D214=
+39] =C2=A0 =C2=A0 =C2=A0Chroot() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Called pivot_root on /var/singularity/mnt=
+/session/rootfs<br>DEBUG =C2=A0 [U=3D0,P=3D21439] =C2=A0 =C2=A0 =C2=A0Chroo=
+t() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0Change current directory to host / directory<br>DEBUG =C2=A0 [U=3D0,P=
+=3D21439] =C2=A0 =C2=A0 =C2=A0Chroot() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Apply slave mount propagation for =
+host / directory<br>DEBUG =C2=A0 [U=3D0,P=3D21439] =C2=A0 =C2=A0 =C2=A0Chro=
+ot() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0Called unmount(/, syscall.MNT_DETACH)<br>DEBUG =C2=A0 [U=3D0,P=3D2143=
+9] =C2=A0 =C2=A0 =C2=A0Chroot() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Changing directory to / to avoid getpwd i=
+ssues<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 create() =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Chdir into / =
+to avoid errors<br>VERBOSE [U=3D1004,P=3D21438] =C2=A0 startup() =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Execute stage 2=
+<br>DEBUG =C2=A0 [U=3D1004,P=3D21438] =C2=A0 Stage() =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Entering stage 2<br=
+>FATAL =C2=A0 [U=3D1004,P=3D21438] =C2=A0 Stage() =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 exec /.singularity.d/a=
+ctions/shell failed: no such file or directory<br>DEBUG =C2=A0 [U=3D1004,P=
+=3D21418] =C2=A0 CleanupContainer() =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0Cleanup container<br>DEBUG =C2=A0 [U=3D1004,P=3D21418] =C2=A0 Master() =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0Child exited with exit status 255</div><div><br></div>-- <br><div dir=3D=
+"ltr" class=3D"gmail-m_-5254771385439879560gmail-m_6028993443584046860gmail=
+_signature"><div dir=3D"ltr"><div><div dir=3D"ltr"><div>Keith D. Ball, PhD<=
+br><div dir=3D"ltr"><div><div><div>RedLine Performance Solutions, LLC</div>=
+<div>web: =C2=A0<a href=3D"http://www.redlineperf.com/" target=3D"_blank">h=
+ttp://www.redlineperf.com/</a><br><div>email: <a href=3D"mailto:aqualk...@r=
+edlineperf.com" target=3D"_blank">kb...@redlineperf.com</a></div></div></di=
+v><div>cell: 540-557-7851<br></div></div></div></div></div></div></div></di=
+v></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singu...@lbl.=
+gov</a>.<br>
+To view this discussion on the web visit <a href=3D"https://groups.google.c=
+om/a/lbl.gov/d/msgid/singularity/CABJnLg0J2P-QWG4a3ggLByaV80YVA%3D-rY-yDqRv=
+KR59GkxQd2w%40mail.gmail.com?utm_medium=3Demail&amp;utm_source=3Dfooter" ta=
+rget=3D"_blank">https://groups.google.com/a/lbl.gov/d/msgid/singularity/CAB=
+JnLg0J2P-QWG4a3ggLByaV80YVA%3D-rY-yDqRvKR59GkxQd2w%40mail.gmail.com</a>.<br=
+>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+ class=3D"gmail-m_-5254771385439879560gmail_signature">Vanessa Villamia Soc=
+hat<br>Stanford University &#39;16<br><div><div><div>(603) 321-0676</div></=
+div></div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singu...@lbl.=
+gov</a>.<br>
+To view this discussion on the web visit <a href=3D"https://groups.google.c=
+om/a/lbl.gov/d/msgid/singularity/CAM%3Dpu%2B%2BUToT3bfe9gj1tW2-LTj43MZjVh%3=
+DQDFUYZtwXrdf6Xqg%40mail.gmail.com?utm_medium=3Demail&amp;utm_source=3Dfoot=
+er" target=3D"_blank">https://groups.google.com/a/lbl.gov/d/msgid/singulari=
+ty/CAM%3Dpu%2B%2BUToT3bfe9gj1tW2-LTj43MZjVh%3DQDFUYZtwXrdf6Xqg%40mail.gmail=
+.com</a>.<br>
+</blockquote></div><br clear=3D"all"><br>-- <br><div dir=3D"ltr" class=3D"g=
+mail_signature"><div dir=3D"ltr"><div><div dir=3D"ltr"><div>Keith D. Ball, =
+PhD<br><div dir=3D"ltr"><div><div><div>RedLine Performance Solutions, LLC</=
+div><div>web: =C2=A0<a href=3D"http://www.redlineperf.com/" target=3D"_blan=
+k">http://www.redlineperf.com/</a><br><div>email: <a href=3D"mailto:aqualk.=
+..@redlineperf.com" target=3D"_blank">kb...@redlineperf.com</a></div></div>=
+</div><div>cell: 540-557-7851<br></div></div></div></div></div></div></div>=
+</div></div>
+
+--000000000000b46f16058efcca6e--

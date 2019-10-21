@@ -1,0 +1,306 @@
+Date: Tue, 2 Jan 2018 02:29:41 -0800 (PST)
+From: =?UTF-8?Q?C=C3=A9dric_Clerget?= <cedric...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <fa6feae1-799e-4812-990a-9451f3b7710b@lbl.gov>
+In-Reply-To: <CACWK6kMSS0aScNTVZJp=4F=1f2WQY1kSDumdMPgTNB9dZqeqYQ@mail.gmail.com>
+References: <CACWK6kMXt-3=+CyG0Vp93u2iL2-KKvpPQHvYJp6atY27y1uijA@mail.gmail.com>
+ <15d6759b-d7c3-4ff9-9057-571462576fa9@lbl.gov>
+ <CACWK6kMSS0aScNTVZJp=4F=1f2WQY1kSDumdMPgTNB9dZqeqYQ@mail.gmail.com>
+Subject: Re: [Singularity] Re: "cpio: cap_set_file" when building sandbox on
+ NFS
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_39636_1282489284.1514888981811"
+
+------=_Part_39636_1282489284.1514888981811
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_39637_1056669158.1514888981812"
+
+------=_Part_39637_1056669158.1514888981812
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Hi Yong,
+
+Sorry for delayed response. After comparing bootstrap/build code, I don't=
+=20
+see major changes between bootstrap/build when creating container into=20
+directory,
+so this bug should appear even with bootstrap command, does the following=
+=20
+bootstrap fail ? :
+
+$ sudo mkdir /nfs/sandbox
+$ sudo singularity bootstrap /nfs/sandbox centos7.def
+
+Best,
+C=C3=A9dric
+
+Le samedi 23 d=C3=A9cembre 2017 23:09:29 UTC+1, Yong Qin a =C3=A9crit :
+>
+> Hi C=C3=A9dric,=20
+>
+> Thanks for the explanation and that's exactly what I thought. The=20
+> reason why I wanted to raise it as an issue is,=20
+>
+> 1. The old "bootstrap" command is fine and doesn't generate an error.=20
+> Although I do lose the capabilities on ping but that's fine and I know=20
+> it and know how to fix it at a later time, which is not a big deal.=20
+> But "build" command failed really hard on this made me think it could=20
+> be somehow related to Singularity, or at least the differences between=20
+> "bootstrap" and "build" on NFS.=20
+>
+> 2. I don't think this is a plain cpio's fault as if you try to=20
+> manually extract files then they are fine (capabilities aside). But=20
+> the "build" command would extract a file with wrong filename which is=20
+> beyond me,=20
+>
+> >> [root@nfs0 bin]# ls -l ping\;5a39b947=20
+> >> -rwxr-xr-x 1 root root 66176 Aug  4 01:01 ping;5a39b947=20
+>
+> Note that little tail "\;5a39b947" was appended after the extraction.=20
+> This is the exact reason that caused the "build" process to fail I=20
+> think since "bootstrap" extracts the correct filename.=20
+>
+> Thanks,=20
+>
+> --=20
+> Yong Qin, Ph.D. <yo...@lbl.gov <javascript:>>=20
+> Lawrence Berkeley National Laboratory=20
+> One Cyclotron Road, Berkeley, CA 94720=20
+>
+>
+> On Sat, Dec 23, 2017 at 2:04 AM, C=C3=A9dric Clerget=20
+> <ced...@gmail.com <javascript:>> wrote:=20
+> > Hello,=20
+> >=20
+> > This error is caused by file capabilities (cap_set_file), CentOS 7 use=
+=20
+> file=20
+> > capabilities rather than setuid for /usr/bin/ping.=20
+> > Since file capabilities use extended attributes which are not supported=
+=20
+> on=20
+> > NFS, you encounter this error when sandbox directory is on a NFS=20
+> mountpoint.=20
+> > Unfortunately, there is nothing that can be done to fix that since cpio=
+=20
+> is=20
+> > controlled by CentOS package extractor.=20
+> > And plan to support extended attributes with NFS just started :=20
+> > https://tools.ietf.org/html/draft-ietf-nfsv4-xattrs-07=20
+> >=20
+> > Best,=20
+> > Cedric=20
+> >=20
+> > Le mercredi 20 d=C3=A9cembre 2017 02:19:10 UTC+1, Yong Qin a =C3=A9crit=
+ :=20
+> >>=20
+> >> Hi,=20
+> >>=20
+> >> I'm running into a problem that I need some help with.=20
+> >>=20
+> >> I'm trying to build a sandbox directory with Singularity 2.4.2 on NFS=
+=20
+> >> and am getting the following error. The command is,=20
+> >>=20
+> >> singularity build -s /nfs/sandbox centos-7.def=20
+> >>=20
+> >> ...=20
+> >> Error unpacking rpm package iputils-20160308-10.el7.x86_64=20
+> >> error: unpacking of archive failed on file /usr/bin/ping;5a39b5f7:=20
+> >> cpio: cap_set_file=20
+> >>   Installing : crontabs-1.11-6.20121102git.el7.noarch=20
+> >> error: iputils-20160308-10.el7.x86_64: install failed=20
+> >> ...=20
+> >>=20
+> >> If I switch back to the old "bootstrap" command it's fine. If I change=
+=20
+> >> the target location to a local directory it is fine as well. This has=
+=20
+> >> to do with setting the capability. However to my surprise is, if I=20
+> >> check the actual file that's in question "/usr/bin/ping", it was=20
+> >> actually created as "ping;5a39b947" rather than simple "ping",=20
+> >>=20
+> >> [root@nfs0 bin]# ls -l ping\;5a39b947=20
+> >> -rwxr-xr-x 1 root root 66176 Aug  4 01:01 ping;5a39b947=20
+> >>=20
+> >> Is this a cpio bug, or there's something to do with Singularity as=20
+> >> well? NFS is v4.=20
+> >>=20
+> >> Thanks,=20
+> >>=20
+> >> --=20
+> >> Yong Qin, Ph.D. <yo...@lbl.gov>=20
+> >> Lawrence Berkeley National Laboratory=20
+> >> One Cyclotron Road, Berkeley, CA 94720=20
+> >=20
+> > --=20
+> > You received this message because you are subscribed to the Google=20
+> Groups=20
+> > "singularity" group.=20
+> > To unsubscribe from this group and stop receiving emails from it, send=
+=20
+> an=20
+> > email to singu...@lbl.gov <javascript:>.=20
+>
+
+------=_Part_39637_1056669158.1514888981812
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Yong,<br><br>Sorry for delayed response. After comparin=
+g bootstrap/build code, I don&#39;t see major changes between bootstrap/bui=
+ld when creating container into directory,<br>so this bug should appear eve=
+n with bootstrap command, does the following bootstrap fail ? :<br><br><div=
+ style=3D"background-color: rgb(250, 250, 250); border-color: rgb(187, 187,=
+ 187); border-style: solid; border-width: 1px; overflow-wrap: break-word;" =
+class=3D"prettyprint"><code class=3D"prettyprint"><div class=3D"subprettypr=
+int"><span style=3D"color: #000;" class=3D"styled-by-prettify">$ sudo mkdir=
+ </span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify">nfs</span><span st=
+yle=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D"co=
+lor: #000;" class=3D"styled-by-prettify">sandbox<br>$ sudo singularity boot=
+strap </span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</s=
+pan><span style=3D"color: #000;" class=3D"styled-by-prettify">nfs</span><sp=
+an style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify">sandbox centos7</span><span =
+style=3D"color: #660;" class=3D"styled-by-prettify">.</span><span style=3D"=
+color: #008;" class=3D"styled-by-prettify">def</span></div></code></div><br=
+>Best,<br>C=C3=A9dric<br><br>Le samedi 23 d=C3=A9cembre 2017 23:09:29 UTC+1=
+, Yong Qin a =C3=A9crit=C2=A0:<blockquote class=3D"gmail_quote" style=3D"ma=
+rgin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;">=
+Hi C=C3=A9dric,
+<br>
+<br>Thanks for the explanation and that&#39;s exactly what I thought. The
+<br>reason why I wanted to raise it as an issue is,
+<br>
+<br>1. The old &quot;bootstrap&quot; command is fine and doesn&#39;t genera=
+te an error.
+<br>Although I do lose the capabilities on ping but that&#39;s fine and I k=
+now
+<br>it and know how to fix it at a later time, which is not a big deal.
+<br>But &quot;build&quot; command failed really hard on this made me think =
+it could
+<br>be somehow related to Singularity, or at least the differences between
+<br>&quot;bootstrap&quot; and &quot;build&quot; on NFS.
+<br>
+<br>2. I don&#39;t think this is a plain cpio&#39;s fault as if you try to
+<br>manually extract files then they are fine (capabilities aside). But
+<br>the &quot;build&quot; command would extract a file with wrong filename =
+which is
+<br>beyond me,
+<br>
+<br>&gt;&gt; [root@nfs0 bin]# ls -l ping\;5a39b947
+<br>&gt;&gt; -rwxr-xr-x 1 root root 66176 Aug =C2=A04 01:01 ping;5a39b947
+<br>
+<br>Note that little tail &quot;\;5a39b947&quot; was appended after the ext=
+raction.
+<br>This is the exact reason that caused the &quot;build&quot; process to f=
+ail I
+<br>think since &quot;bootstrap&quot; extracts the correct filename.
+<br>
+<br>Thanks,
+<br>
+<br>--
+<br>Yong Qin, Ph.D. &lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfus=
+cated-mailto=3D"X71q18NoBgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&=
+#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&=
+#39;;return true;">yo...@lbl.gov</a>&gt;
+<br>Lawrence Berkeley National Laboratory
+<br>One Cyclotron Road, Berkeley, CA 94720
+<br>
+<br>
+<br>On Sat, Dec 23, 2017 at 2:04 AM, C=C3=A9dric Clerget
+<br>&lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+X71q18NoBgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">ced...@gmail.com</a>&gt; wrote:
+<br>&gt; Hello,
+<br>&gt;
+<br>&gt; This error is caused by file capabilities (cap_set_file), CentOS 7=
+ use file
+<br>&gt; capabilities rather than setuid for /usr/bin/ping.
+<br>&gt; Since file capabilities use extended attributes which are not supp=
+orted on
+<br>&gt; NFS, you encounter this error when sandbox directory is on a NFS m=
+ountpoint.
+<br>&gt; Unfortunately, there is nothing that can be done to fix that since=
+ cpio is
+<br>&gt; controlled by CentOS package extractor.
+<br>&gt; And plan to support extended attributes with NFS just started :
+<br>&gt; <a href=3D"https://tools.ietf.org/html/draft-ietf-nfsv4-xattrs-07"=
+ target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;https:/=
+/www.google.com/url?q\x3dhttps%3A%2F%2Ftools.ietf.org%2Fhtml%2Fdraft-ietf-n=
+fsv4-xattrs-07\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGV1dTEWdKL4qs93Txnbd=
+uSTkZ5yw&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.=
+com/url?q\x3dhttps%3A%2F%2Ftools.ietf.org%2Fhtml%2Fdraft-ietf-nfsv4-xattrs-=
+07\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGV1dTEWdKL4qs93TxnbduSTkZ5yw&#39=
+;;return true;">https://tools.ietf.org/html/<wbr>draft-ietf-nfsv4-xattrs-07=
+</a>
+<br>&gt;
+<br>&gt; Best,
+<br>&gt; Cedric
+<br>&gt;
+<br>&gt; Le mercredi 20 d=C3=A9cembre 2017 02:19:10 UTC+1, Yong Qin a =C3=
+=A9crit :
+<br>&gt;&gt;
+<br>&gt;&gt; Hi,
+<br>&gt;&gt;
+<br>&gt;&gt; I&#39;m running into a problem that I need some help with.
+<br>&gt;&gt;
+<br>&gt;&gt; I&#39;m trying to build a sandbox directory with Singularity 2=
+.4.2 on NFS
+<br>&gt;&gt; and am getting the following error. The command is,
+<br>&gt;&gt;
+<br>&gt;&gt; singularity build -s /nfs/sandbox centos-7.def
+<br>&gt;&gt;
+<br>&gt;&gt; ...
+<br>&gt;&gt; Error unpacking rpm package iputils-20160308-10.el7.x86_64
+<br>&gt;&gt; error: unpacking of archive failed on file /usr/bin/ping;5a39b=
+5f7:
+<br>&gt;&gt; cpio: cap_set_file
+<br>&gt;&gt; =C2=A0 Installing : crontabs-1.11-6.20121102git.<wbr>el7.noarc=
+h
+<br>&gt;&gt; error: iputils-20160308-10.el7.x86_<wbr>64: install failed
+<br>&gt;&gt; ...
+<br>&gt;&gt;
+<br>&gt;&gt; If I switch back to the old &quot;bootstrap&quot; command it&#=
+39;s fine. If I change
+<br>&gt;&gt; the target location to a local directory it is fine as well. T=
+his has
+<br>&gt;&gt; to do with setting the capability. However to my surprise is, =
+if I
+<br>&gt;&gt; check the actual file that&#39;s in question &quot;/usr/bin/pi=
+ng&quot;, it was
+<br>&gt;&gt; actually created as &quot;ping;5a39b947&quot; rather than simp=
+le &quot;ping&quot;,
+<br>&gt;&gt;
+<br>&gt;&gt; [root@nfs0 bin]# ls -l ping\;5a39b947
+<br>&gt;&gt; -rwxr-xr-x 1 root root 66176 Aug =C2=A04 01:01 ping;5a39b947
+<br>&gt;&gt;
+<br>&gt;&gt; Is this a cpio bug, or there&#39;s something to do with Singul=
+arity as
+<br>&gt;&gt; well? NFS is v4.
+<br>&gt;&gt;
+<br>&gt;&gt; Thanks,
+<br>&gt;&gt;
+<br>&gt;&gt; --
+<br>&gt;&gt; Yong Qin, Ph.D. &lt;<a>yo...@lbl.gov</a>&gt;
+<br>&gt;&gt; Lawrence Berkeley National Laboratory
+<br>&gt;&gt; One Cyclotron Road, Berkeley, CA 94720
+<br>&gt;
+<br>&gt; --
+<br>&gt; You received this message because you are subscribed to the Google=
+ Groups
+<br>&gt; &quot;singularity&quot; group.
+<br>&gt; To unsubscribe from this group and stop receiving emails from it, =
+send an
+<br>&gt; email to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-=
+mailto=3D"X71q18NoBgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;ja=
+vascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;r=
+eturn true;">singularity...@lbl.<wbr>gov</a>.
+<br></blockquote></div>
+------=_Part_39637_1056669158.1514888981812--
+
+------=_Part_39636_1282489284.1514888981811--

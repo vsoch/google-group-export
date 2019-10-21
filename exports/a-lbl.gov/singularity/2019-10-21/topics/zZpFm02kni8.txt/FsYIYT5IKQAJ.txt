@@ -1,0 +1,322 @@
+X-Received: by 10.157.41.164 with SMTP id n33mr24305348otb.11.1462825543988;
+        Mon, 09 May 2016 13:25:43 -0700 (PDT)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.107.133.223 with SMTP id p92ls2004308ioi.99.gmail; Mon, 09 May
+ 2016 13:25:43 -0700 (PDT)
+X-Received: by 10.98.96.130 with SMTP id u124mr26008303pfb.28.1462825543457;
+        Mon, 09 May 2016 13:25:43 -0700 (PDT)
+Return-Path: <gmku...@lbl.gov>
+Received: from fe3.lbl.gov (fe3.lbl.gov. [128.3.41.68])
+        by mx.google.com with ESMTPS id a124si29862218pfb.99.2016.05.09.13.25.43
+        for <singu...@lbl.gov>
+        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Mon, 09 May 2016 13:25:43 -0700 (PDT)
+Received-SPF: pass (google.com: domain of gmku...@lbl.gov designates 74.125.82.71 as permitted sender) client-ip=74.125.82.71;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of gmku...@lbl.gov designates 74.125.82.71 as permitted sender) smtp.mailfrom=gmku...@lbl.gov
+X-Ironport-SBRS: 3.6
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2FdAQCv8TBXiEdSfUpdgmyCDw8GgzOpe4ZuhQKBdhcBhXgCgTQHORMBAQEBAQEBAw8BAQEICwsJHzGEQgEBAwESESswCwsLNwICIQEPAwEFARwGCAcEARwEAYdzAwsIBaBogTE+MYs7jDYNhCkBAQEBBgEBAQEBGwqKYoJDgU4RAYMcgj0cBY1dAXSEWoRFMQGMIoF5jxeHWIYlEh6BDiIDgkIRCoFrHDIHh0qBNQEBAQ
+X-IronPort-AV: E=Sophos;i="5.24,601,1455004800"; 
+   d="scan'208,217";a="23388093"
+Received: from mail-wm0-f71.google.com ([74.125.82.71])
+  by fe3.lbl.gov with ESMTP; 09 May 2016 13:25:41 -0700
+Received: by mail-wm0-f71.google.com with SMTP id s63so108620981wme.2
+        for <singu...@lbl.gov>; Mon, 09 May 2016 13:25:41 -0700 (PDT)
+X-Gm-Message-State: AOPr4FWVQ9U87vg46qMXA+Gby+/Q8NzbEu0rn0/uerraCNryp2LWxidiVjJzJnY12UGb++6THeueWRLfbQdEO636UUWcTxS7V4Wm/zmXKiSMcs4OZbOEhqNZUftC6l9QRDnMR1UhBr+JFWP8NoD9PpPLH5E=
+X-Received: by 10.194.121.8 with SMTP id lg8mr35568186wjb.16.1462825541398;
+        Mon, 09 May 2016 13:25:41 -0700 (PDT)
+MIME-Version: 1.0
+X-Received: by 10.194.121.8 with SMTP id lg8mr35568174wjb.16.1462825541244;
+ Mon, 09 May 2016 13:25:41 -0700 (PDT)
+Received: by 10.28.144.200 with HTTP; Mon, 9 May 2016 13:25:41 -0700 (PDT)
+In-Reply-To: <7839dcf8-f476-4dff-82e5-ab6159128201@lbl.gov>
+References: <7839dcf8-f476-4dff-82e5-ab6159128201@lbl.gov>
+Date: Mon, 9 May 2016 13:25:41 -0700
+Message-ID: <CAN7etTz9TJq4Y2Xu78AhvATXdcZWS+ceiEZhgVF=RBMjy-VpSQ@mail.gmail.com>
+Subject: Re: [Singularity] Could use some help with a spec file...
+From: "Gregory M. Kurtzer" <gmku...@lbl.gov>
+To: singularity <singu...@lbl.gov>
+Content-Type: multipart/alternative; boundary=089e01228b8cc12c5805326e9cf4
+
+--089e01228b8cc12c5805326e9cf4
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Hi Thomas,
+
+I totally understand, I'm a biologist by degree! lol
+
+The runscript and the Exec are technically mutually exclusive as they both
+define what happens when the container is executed. I see a few problems
+with your specfile:
+
+1. It seems as though you are trying to package files from your home
+directory. The problem with that, is that it will land in your home
+directory within the container.... And that is a problem because when
+Singularity binds your real home directory to the container, those files
+will be over mounted (e.g. replaced with the contents of your real home
+directory. This means that it *might* work for you on that host, but it
+might not work on other hosts.
+2. %runscript usage isn't correct. Specify the %runscript with no
+arguments, and then the following lines will be used for the runscript
+until either end of file is reached or another section name (e.g. %files).
+
+If I can make a suggestion... This type of situation has been raised with
+me in another email thread (I think it might have been private, but I'm a
+bit lost in email right now) and it was one of the motivators for adopting
+a more "typical" container build and management paradigm which you will see
+in Singularity version 2.x. I am going to be branching 2.x very soon, are
+you open to testing it?
+
+Thanks!
+
+On Mon, May 9, 2016 at 11:32 AM, Thomas Hoeffel <thoe...@gmail.com> wrote:
+
+> Hi Greg and team.
+>
+>
+>
+> I=E2=80=99m super excited to get singularity up and running as I see huge
+> potential for running =E2=80=9Cnon-native=E2=80=9D application stacks on =
+our clusters.
+>
+> Caveat;I'm a former comp. chemist now in an HPC group. If a little
+> knowledge is a dangerous thing, I'm a walking time bomb...
+>
+>
+>
+> What I=E2=80=99m trying to do seems like 3rd grade stuff at the moment bu=
+t I hope
+> you can help.
+>
+>
+>
+> I'm trying to set up a spec file to run a python script (which requires
+> anaconda python) on a cluster node which does not support anaconda ( we
+> maintain a more generic python).
+>
+>
+>
+> as a 1st =E2=80=9CPOC=E2=80=9D I did the following:
+>
+>
+>
+> -Installed singularity and anaconda2 on my local worksation. I also have
+> it installed on a dev cluster node for later testing.
+>
+>
+>
+> - installed a few additioinal python packages e.g.
+>
+>
+>
+> conda install numpy
+>
+> conda install scipy
+>
+> conda install ~/code/python/boost-1.55.0-py27_3.tar.bz2
+>
+> conda install=E2=80=A6..etc.
+>
+>
+>
+> I tested the pythogn script and all was copacetic.
+>
+>
+>
+> I then tried to create an equivalent spec file  I=E2=80=99m not clear on =
+how to
+> incorporate everything I need. I've attached my sad attempt at a spec fil=
+e.
+>
+> Can you help?
+>
+>
+>
+> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+>
+
+
+
+--=20
+Gregory M. Kurtzer
+High Performance Computing Services (HPCS)
+University of California
+Lawrence Berkeley National Laboratory
+One Cyclotron Road, Berkeley, CA 94720
+
+--089e01228b8cc12c5805326e9cf4
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Thomas,<div><br></div><div>I totally understand, I&#39;=
+m a biologist by degree! lol</div><div><br></div><div>The runscript and the=
+ Exec are technically mutually exclusive as they both define what happens w=
+hen the container is executed. I see a few problems with your specfile:</di=
+v><div><br></div><div>1. It seems as though you are trying to package files=
+ from your home directory. The problem with that, is that it will land in y=
+our home directory within the container.... And that is a problem because w=
+hen Singularity binds your real home directory to the container, those file=
+s will be over mounted (e.g. replaced with the contents of your real home d=
+irectory. This means that it *might* work for you on that host, but it migh=
+t not work on other hosts.</div><div>2. %runscript usage isn&#39;t correct.=
+ Specify the %runscript with no arguments, and then the following lines wil=
+l be used for the runscript until either end of file is reached or another =
+section name (e.g. %files).</div><div><br></div><div>If I can make a sugges=
+tion... This type of situation has been raised with me in another email thr=
+ead (I think it might have been private, but I&#39;m a bit lost in email ri=
+ght now) and it was one of the motivators for adopting a more &quot;typical=
+&quot; container build and management paradigm which you will see in Singul=
+arity version 2.x. I am going to be branching 2.x very soon, are you open t=
+o testing it?</div><div><br></div><div>Thanks!</div></div><div class=3D"gma=
+il_extra"><br><div class=3D"gmail_quote">On Mon, May 9, 2016 at 11:32 AM, T=
+homas Hoeffel <span dir=3D"ltr">&lt;<a href=3D"mailto:thoe...@gmail.com" ta=
+rget=3D"_blank">thoe...@gmail.com</a>&gt;</span> wrote:<br><blockquote clas=
+s=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;pad=
+ding-left:1ex"><div dir=3D"ltr"><p class=3D"MsoNormal"><span style=3D"font-=
+size:9.5pt;font-family:Arial,sans-serif;background-image:initial;background=
+-position:initial;background-repeat:initial">Hi Greg and team.<u></u><u></u=
+></span></p>
+
+<p class=3D"MsoNormal"><span style=3D"font-size:9.5pt;font-family:Arial,san=
+s-serif;background-image:initial;background-position:initial;background-rep=
+eat:initial"><u></u>=C2=A0<u></u></span></p>
+
+<p class=3D"MsoNormal" style=3D"background-image:initial;background-positio=
+n:initial;background-repeat:initial"><span style=3D"font-size:9.5pt;font-fa=
+mily:Arial,sans-serif">I=E2=80=99m super excited to get
+singularity up and running as I see huge potential for running =E2=80=9Cnon=
+-native=E2=80=9D application
+stacks on our clusters.=C2=A0</span></p><p class=3D"MsoNormal" style=3D"bac=
+kground-image:initial;background-position:initial;background-repeat:initial=
+"><span style=3D"font-size:9.5pt;font-family:Arial,sans-serif">Caveat;I&#39=
+;m a former comp. chemist now in an HPC group. If a little knowledge is a d=
+angerous thing, I&#39;m a walking time bomb...<u></u><u></u></span></p>
+
+<p class=3D"MsoNormal" style=3D"background-image:initial;background-positio=
+n:initial;background-repeat:initial"><br></p>
+
+<p class=3D"MsoNormal" style=3D"background-image:initial;background-positio=
+n:initial;background-repeat:initial"><br></p>
+
+<p class=3D"MsoNormal" style=3D"background-image:initial;background-positio=
+n:initial;background-repeat:initial"><span style=3D"font-size:9.5pt;font-fa=
+mily:Arial,sans-serif">What I=E2=80=99m trying to do seems
+like 3<sup>rd</sup> grade stuff at the moment but I hope you can help.<u></=
+u><u></u></span></p>
+
+<p class=3D"MsoNormal" style=3D"background-image:initial;background-positio=
+n:initial;background-repeat:initial"><span style=3D"font-size:9.5pt;font-fa=
+mily:Arial,sans-serif"><u></u>=C2=A0<u></u></span></p>
+
+<p class=3D"MsoNormal" style=3D"background-image:initial;background-positio=
+n:initial;background-repeat:initial"><span style=3D"font-size:9.5pt;font-fa=
+mily:Arial,sans-serif">I&#39;m trying to set up a spec
+file to run a python script (which requires anaconda python) on a cluster n=
+ode
+which does not support anaconda ( we maintain a more generic python).<u></u=
+><u></u></span></p>
+
+<p class=3D"MsoNormal" style=3D"background-image:initial;background-positio=
+n:initial;background-repeat:initial"><span style=3D"font-size:9.5pt;font-fa=
+mily:Arial,sans-serif"><u></u>=C2=A0<u></u></span></p>
+
+<p class=3D"MsoNormal" style=3D"background-image:initial;background-positio=
+n:initial;background-repeat:initial"><span style=3D"font-size:9.5pt;font-fa=
+mily:Arial,sans-serif">as a 1st =E2=80=9CPOC=E2=80=9D I did the
+following:<u></u><u></u></span></p>
+
+<p class=3D"MsoNormal" style=3D"background-image:initial;background-positio=
+n:initial;background-repeat:initial"><span style=3D"font-size:9.5pt;font-fa=
+mily:Arial,sans-serif"><u></u>=C2=A0<u></u></span></p>
+
+<p class=3D"MsoNormal" style=3D"background-image:initial;background-positio=
+n:initial;background-repeat:initial"><span style=3D"font-size:9.5pt;font-fa=
+mily:Arial,sans-serif">-Installed singularity and
+anaconda2 on my local worksation. I also have it installed on a dev cluster
+node for later testing.<u></u><u></u></span></p>
+
+<p class=3D"MsoNormal" style=3D"background-image:initial;background-positio=
+n:initial;background-repeat:initial"><span style=3D"font-size:9.5pt;font-fa=
+mily:Arial,sans-serif"><u></u>=C2=A0<u></u></span></p>
+
+<p class=3D"MsoNormal" style=3D"background-image:initial;background-positio=
+n:initial;background-repeat:initial"><span style=3D"font-size:9.5pt;font-fa=
+mily:Arial,sans-serif">- installed a few additioinal
+python packages e.g.<u></u><u></u></span></p>
+
+<p class=3D"MsoNormal" style=3D"background-image:initial;background-positio=
+n:initial;background-repeat:initial"><span style=3D"font-size:9.5pt;font-fa=
+mily:Arial,sans-serif"><u></u>=C2=A0<u></u></span></p>
+
+<p class=3D"MsoNormal" style=3D"background-image:initial;background-positio=
+n:initial;background-repeat:initial"><span style=3D"font-size:9.5pt;font-fa=
+mily:Arial,sans-serif">conda install numpy<u></u><u></u></span></p>
+
+<p class=3D"MsoNormal" style=3D"background-image:initial;background-positio=
+n:initial;background-repeat:initial"><span style=3D"font-size:9.5pt;font-fa=
+mily:Arial,sans-serif">conda install scipy<u></u><u></u></span></p>
+
+<p class=3D"MsoNormal" style=3D"background-image:initial;background-positio=
+n:initial;background-repeat:initial"><span style=3D"font-size:9.5pt;font-fa=
+mily:Arial,sans-serif">conda install
+~/code/python/boost-1.55.0-py27_3.tar.bz2<u></u><u></u></span></p>
+
+<p class=3D"MsoNormal" style=3D"background-image:initial;background-positio=
+n:initial;background-repeat:initial"><span style=3D"font-size:9.5pt;font-fa=
+mily:Arial,sans-serif">conda install=E2=80=A6..etc.<u></u><u></u></span></p=
+>
+
+<p class=3D"MsoNormal" style=3D"background-image:initial;background-positio=
+n:initial;background-repeat:initial"><span style=3D"font-size:9.5pt;font-fa=
+mily:Arial,sans-serif"><u></u>=C2=A0<u></u></span></p>
+
+<p class=3D"MsoNormal" style=3D"background-image:initial;background-positio=
+n:initial;background-repeat:initial"><span style=3D"font-size:9.5pt;font-fa=
+mily:Arial,sans-serif">I tested the pythogn script and
+all was copacetic.<u></u><u></u></span></p>
+
+<p class=3D"MsoNormal" style=3D"background-image:initial;background-positio=
+n:initial;background-repeat:initial"><span style=3D"font-size:9.5pt;font-fa=
+mily:Arial,sans-serif"><u></u>=C2=A0<u></u></span></p>
+
+<p class=3D"MsoNormal" style=3D"background-image:initial;background-positio=
+n:initial;background-repeat:initial"><span style=3D"font-size:9.5pt;font-fa=
+mily:Arial,sans-serif">I then tried to create an
+equivalent spec file =C2=A0I=E2=80=99m not clear on how to incorporate ever=
+ything I
+need. I&#39;ve attached my sad attempt at a spec file. <u></u><u></u></span=
+></p>
+
+<p class=3D"MsoNormal" style=3D"background-image:initial;background-positio=
+n:initial;background-repeat:initial"><span style=3D"font-size:9.5pt;font-fa=
+mily:Arial,sans-serif">Can you help?<span class=3D"HOEnZb"><font color=3D"#=
+888888"><u></u><u></u></font></span></span></p><span class=3D"HOEnZb"><font=
+ color=3D"#888888">
+
+<p class=3D"MsoNormal" style=3D"background-image:initial;background-positio=
+n:initial;background-repeat:initial"><span style=3D"font-size:9.5pt;font-fa=
+mily:Arial,sans-serif"><u></u>=C2=A0<u></u></span></p></font></span></div><=
+span class=3D"HOEnZb"><font color=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singu...@lbl.=
+gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div class=3D"gmail_signature"><div dir=3D"ltr"><div>Gregory M. Kurtzer<b=
+r>High Performance Computing Services (HPCS)<br>University of California<br=
+>Lawrence Berkeley National Laboratory<br>One Cyclotron Road, Berkeley, CA =
+94720</div></div></div>
+</div>
+
+--089e01228b8cc12c5805326e9cf4--

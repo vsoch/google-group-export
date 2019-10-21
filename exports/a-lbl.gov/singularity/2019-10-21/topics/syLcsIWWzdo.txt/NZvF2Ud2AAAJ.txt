@@ -1,0 +1,474 @@
+Date: Sat, 24 Feb 2018 07:15:56 -0800 (PST)
+From: Brian Puchala <bpuc...@umich.edu>
+To: singularity <singu...@lbl.gov>
+Message-Id: <b3d63350-6dfc-40d0-ae67-0bc2ec2c07c2@lbl.gov>
+In-Reply-To: <ec5ef056-5ce2-4956-9ffe-2d1939e3864d@lbl.gov>
+References: <43b84047-926f-4ecd-a8da-fd7bbe3470ff@lbl.gov> <CADgKzdw9kpwwD46N0eKOqj=3mvf-_HqGqNeybem9ia0EZvNs1Q@mail.gmail.com>
+ <CAFgQtxFN2+MTqcBqcu9M8qT4tvZfS2etgXpAN-diWNVUTEV0VA@mail.gmail.com>
+ <b8ff849b-fdb7-4315-a28d-ebaa862ad671@lbl.gov> <044760f5-d18a-4090-88a3-0602ec7cc675@lbl.gov>
+ <CAB2ovovPA--7NBTKbw6QpY22jAz9=sb8nB5XkQT5pDQcp2ARXQ@mail.gmail.com> <4b2b1672-7c5f-49b7-ab6f-3084eac067a7@lbl.gov>
+ <CAGfAqt_JKaveudDCOrCBupc95jH_9kxVua2zhwh1pRg+SoV11w@mail.gmail.com>
+ <ec5ef056-5ce2-4956-9ffe-2d1939e3864d@lbl.gov>
+Subject: Re: [Singularity] Submit additional jobs from within a container
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_9395_1720849945.1519485356451"
+
+------=_Part_9395_1720849945.1519485356451
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_9396_902430082.1519485356452"
+
+------=_Part_9396_902430082.1519485356452
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+With Bennet's help I was able to submit jobs from inside a test container.=
+=20
+So in case it's helpful here's how I did it. The main difference is that=20
+it's not modifying the image.
+
+On our cluster singularity is configured to mount our home directory by=20
+default (in singularity.conf: mount home =3D yes), so starting from there:
+
+# get a CentOS 7 image (because that's what our cluster is running it=20
+minimizes the number of libs that differ):
+
+singularity pull docker://centos:7
+
+
+# create a place for the host programs I need and copy them over
+
+# because our home directories are always bound no additional
+
+# bind commands are needed when starting the container
+
+mkdir -p ~/.local/host/bin
+
+cp /usr/local/bin/qstat ~/.local/host/bin
+
+# etc.
+
+
+# ends up with:
+
+$ tree /home/bpuchala/.local/host/bin
+> /home/bpuchala/.local/host/bin
+> =E2=94=9C=E2=94=80=E2=94=80 qalter
+> =E2=94=9C=E2=94=80=E2=94=80 qdel
+> =E2=94=9C=E2=94=80=E2=94=80 qhold
+> =E2=94=9C=E2=94=80=E2=94=80 qrls
+> =E2=94=9C=E2=94=80=E2=94=80 qselect
+> =E2=94=9C=E2=94=80=E2=94=80 qstat
+> =E2=94=94=E2=94=80=E2=94=80 qsub
+
+
+# create a place for the host libs I need:
+
+mkdir -p ~/.local/host/lib
+
+
+# use ldd on the programs inside and outside the container to=20
+
+# find which libraries need to be copied.=20
+
+
+# inside container
+
+singularity shell centos-7.img
+
+> ldd /home/bpuchala/.local/host/bin/qstat
+
+> > ldd /home/bpuchala/.local/host/bin/qstat
+> linux-vdso.so.1 =3D>  (0x00007ffc5cf42000)
+> libtorque.so.2 =3D> not found
+> libtcl8.5.so =3D> not found
+
+...=20
+
+
+# outside container:
+
+> $ ldd /usr/local/bin/qstat
+> linux-vdso.so.1 =3D>  (0x00007fff90391000)
+> libtorque.so.2 =3D> /usr/local/lib/libtorque.so.2 (0x00002b2567edb000)
+> libtcl8.5.so =3D> /lib64/libtcl8.5.so (0x00002b2568808000)
+> ...
+
+cp   /usr/local/lib/libtorque.so.2 ~/.local/host/lib
+# etc.
+
+
+# Ends up with:
+
+$ tree /home/bpuchala/.local/host/lib
+> /home/bpuchala/.local/host/lib
+> =E2=94=9C=E2=94=80=E2=94=80 libhwloc.so.5
+> =E2=94=9C=E2=94=80=E2=94=80 libltdl.so.7
+> =E2=94=9C=E2=94=80=E2=94=80 libnuma.so.1
+> =E2=94=9C=E2=94=80=E2=94=80 libtcl8.5.so
+> =E2=94=94=E2=94=80=E2=94=80 libtorque.so.2
+
+
+# test job submission and management from inside container:
+
+singularity shell centos-7.img
+
+
+# set PATH inside the container to find host programs we copied
+
+export PATH=3D$HOME/.local/host/bin:$PATH
+
+
+# set LD_LIBRARY_PATH inside the container find host libs we copied
+
+export LD_LIBRARY_PATH=3D$LD_LIBRARY_PATH:$HOME/.local/host/lib
+
+
+# test
+qstat
+
+qsub ~/submit_scripts/hello_world.sh
+
+------=_Part_9396_902430082.1519485356452
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><font face=3D"arial, sans-serif" size=3D"2">With Bennet&#3=
+9;s help I was able to submit jobs from inside a test container. So in case=
+ it&#39;s helpful here&#39;s how I did it. The main difference is that it&#=
+39;s not modifying the image.</font><div><span style=3D"font-size: small; f=
+ont-family: arial, sans-serif;"><br></span></div><div><span style=3D"font-s=
+ize: small; font-family: arial, sans-serif;">On our cluster singularity is =
+configured to mount our home directory by default </span><span style=3D"fon=
+t-size: small; font-family: arial, sans-serif;">(in singularity.conf:=C2=A0=
+</span><span style=3D"font-size: small; font-family: arial, sans-serif; fon=
+t-variant-ligatures: no-common-ligatures; color: rgb(0, 0, 0);">mount home =
+=3D yes), so starting from there:</span><div><div><span style=3D"font-varia=
+nt-ligatures: no-common-ligatures; color: rgb(0, 0, 0);"><font face=3D"aria=
+l, sans-serif" size=3D"2"><br></font></span></div><div><div style=3D""><fon=
+t face=3D"arial, sans-serif" size=3D"2"># get a CentOS 7 image (because tha=
+t&#39;s what our cluster is running it minimizes the number of libs that di=
+ffer):</font></div><div style=3D""><p class=3D"m_5929137434972061130gmail-p=
+1" style=3D"font-variant-numeric: normal; font-variant-east-asian: normal; =
+font-stretch: normal; line-height: normal; color: rgb(0, 0, 0);"><span clas=
+s=3D"m_5929137434972061130gmail-s1" style=3D"font-variant-ligatures: no-com=
+mon-ligatures;"><font face=3D"arial, sans-serif" size=3D"2">singularity pul=
+l docker://centos:7</font></span></p><p class=3D"m_5929137434972061130gmail=
+-p1" style=3D"font-variant-numeric: normal; font-variant-east-asian: normal=
+; font-stretch: normal; line-height: normal; color: rgb(0, 0, 0);"><span cl=
+ass=3D"m_5929137434972061130gmail-s1" style=3D"font-variant-ligatures: no-c=
+ommon-ligatures;"><font face=3D"arial, sans-serif" size=3D"2"><br></font></=
+span></p><p class=3D"m_5929137434972061130gmail-p1" style=3D"font-variant-n=
+umeric: normal; font-variant-east-asian: normal; font-stretch: normal; line=
+-height: normal; color: rgb(0, 0, 0);"><span class=3D"m_5929137434972061130=
+gmail-s1" style=3D"font-variant-ligatures: no-common-ligatures;"><font face=
+=3D"arial, sans-serif" size=3D"2"># create a place for the host programs I =
+need and copy them over</font></span></p><p class=3D"m_5929137434972061130g=
+mail-p1" style=3D"font-variant-numeric: normal; font-variant-east-asian: no=
+rmal; font-stretch: normal; line-height: normal; color: rgb(0, 0, 0);"><spa=
+n class=3D"m_5929137434972061130gmail-s1" style=3D"font-variant-ligatures: =
+no-common-ligatures;"><font face=3D"arial, sans-serif" size=3D"2"># because=
+ our home directories are always bound no additional</font></span></p><p cl=
+ass=3D"m_5929137434972061130gmail-p1" style=3D"font-variant-numeric: normal=
+; font-variant-east-asian: normal; font-stretch: normal; line-height: norma=
+l; color: rgb(0, 0, 0);"><span class=3D"m_5929137434972061130gmail-s1" styl=
+e=3D"font-variant-ligatures: no-common-ligatures;"><font face=3D"arial, san=
+s-serif" size=3D"2"># bind commands are needed when starting the container<=
+/font></span></p><p class=3D"m_5929137434972061130gmail-p1" style=3D"font-v=
+ariant-numeric: normal; font-variant-east-asian: normal; font-stretch: norm=
+al; line-height: normal; color: rgb(0, 0, 0);"><span class=3D"m_59291374349=
+72061130gmail-s1" style=3D"font-variant-ligatures: no-common-ligatures;"><f=
+ont face=3D"arial, sans-serif" size=3D"2">mkdir -p ~/.local/host/bin</font>=
+</span></p><p class=3D"m_5929137434972061130gmail-p1" style=3D"font-variant=
+-numeric: normal; font-variant-east-asian: normal; font-stretch: normal; li=
+ne-height: normal; color: rgb(0, 0, 0);"><font face=3D"arial, sans-serif" s=
+ize=3D"2"><span class=3D"m_5929137434972061130gmail-s1" style=3D"font-varia=
+nt-ligatures: no-common-ligatures;">cp=C2=A0</span><span style=3D"font-vari=
+ant-ligatures: no-common-ligatures;">/usr/local/bin/qstat=C2=A0</span><span=
+ style=3D"font-variant-ligatures: no-common-ligatures;">~/.local/host/</spa=
+n><span style=3D"font-variant-ligatures: no-common-ligatures;">bin</span></=
+font></p><p class=3D"m_5929137434972061130gmail-p1" style=3D"font-variant-n=
+umeric: normal; font-variant-east-asian: normal; font-stretch: normal; line=
+-height: normal; color: rgb(0, 0, 0);"><span style=3D"font-variant-ligature=
+s: no-common-ligatures;"><font face=3D"arial, sans-serif" size=3D"2"># etc.=
+</font></span></p><p class=3D"m_5929137434972061130gmail-p1" style=3D"font-=
+variant-numeric: normal; font-variant-east-asian: normal; font-stretch: nor=
+mal; line-height: normal; color: rgb(0, 0, 0);"><span style=3D"font-variant=
+-ligatures: no-common-ligatures;"><font face=3D"arial, sans-serif" size=3D"=
+2"><br></font></span></p>
+
+
+
+
+<style type=3D"text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 14.0px Menlo; color: #000000; =
+background-color: #ffffff}
+span.s1 {font-variant-ligatures: no-common-ligatures}
+</style>
+
+
+<p class=3D"m_5929137434972061130gmail-p1" style=3D"font-variant-numeric: n=
+ormal; font-variant-east-asian: normal; font-stretch: normal; line-height: =
+normal; color: rgb(0, 0, 0);"><font face=3D"arial, sans-serif" size=3D"2"><=
+span class=3D"m_5929137434972061130gmail-s1" style=3D"font-variant-ligature=
+s: no-common-ligatures;"></span></font></p><p class=3D"m_592913743497206113=
+0gmail-p1" style=3D"font-variant-numeric: normal; font-variant-east-asian: =
+normal; font-stretch: normal; line-height: normal; color: rgb(0, 0, 0);"><s=
+pan class=3D"m_5929137434972061130gmail-s1" style=3D"font-variant-ligatures=
+: no-common-ligatures;"><font face=3D"arial, sans-serif" size=3D"2"># ends =
+up with:</font></span></p><p class=3D"m_5929137434972061130gmail-p1" style=
+=3D"font-variant-numeric: normal; font-variant-east-asian: normal; font-str=
+etch: normal; line-height: normal; color: rgb(0, 0, 0);"><font face=3D"aria=
+l, sans-serif" size=3D"2"><span class=3D"m_5929137434972061130gmail-s1" sty=
+le=3D"font-variant-ligatures: no-common-ligatures;"></span></font></p><bloc=
+kquote class=3D"gmail_quote" style=3D"border-left: 1px solid rgb(204, 204, =
+204); padding-left: 1ex;"><font face=3D"arial, sans-serif" size=3D"2"><span=
+ class=3D"m_5929137434972061130gmail-s1" style=3D"font-variant-ligatures: n=
+o-common-ligatures;">$ tree /home/bpuchala/.local/host/bin<br></span><span =
+class=3D"m_5929137434972061130gmail-s1" style=3D"font-variant-ligatures: no=
+-common-ligatures;">/home/bpuchala/.local/host/bin<br></span><span class=3D=
+"m_5929137434972061130gmail-s1" style=3D"font-variant-ligatures: no-common-=
+ligatures;">=E2=94=9C=E2=94=80=E2=94=80 qalter<br></span><span class=3D"m_5=
+929137434972061130gmail-s1" style=3D"font-variant-ligatures: no-common-liga=
+tures;">=E2=94=9C=E2=94=80=E2=94=80 qdel<br></span><span class=3D"m_5929137=
+434972061130gmail-s1" style=3D"font-variant-ligatures: no-common-ligatures;=
+">=E2=94=9C=E2=94=80=E2=94=80 qhold<br></span><span class=3D"m_592913743497=
+2061130gmail-s1" style=3D"font-variant-ligatures: no-common-ligatures;">=E2=
+=94=9C=E2=94=80=E2=94=80 qrls<br></span><span class=3D"m_592913743497206113=
+0gmail-s1" style=3D"font-variant-ligatures: no-common-ligatures;">=E2=94=9C=
+=E2=94=80=E2=94=80 qselect<br></span><span class=3D"m_5929137434972061130gm=
+ail-s1" style=3D"font-variant-ligatures: no-common-ligatures;">=E2=94=9C=E2=
+=94=80=E2=94=80 qstat<br></span><span class=3D"m_5929137434972061130gmail-s=
+1" style=3D"font-variant-ligatures: no-common-ligatures;">=E2=94=94=E2=94=
+=80=E2=94=80 qsub</span></font></blockquote><p class=3D"m_59291374349720611=
+30gmail-p1" style=3D"font-variant-numeric: normal; font-variant-east-asian:=
+ normal; font-stretch: normal; line-height: normal; color: rgb(0, 0, 0);"><=
+span class=3D"m_5929137434972061130gmail-s1" style=3D"font-variant-ligature=
+s: no-common-ligatures;"><font face=3D"arial, sans-serif" size=3D"2"><br></=
+font></span></p><p class=3D"m_5929137434972061130gmail-p1" style=3D"font-va=
+riant-numeric: normal; font-variant-east-asian: normal; font-stretch: norma=
+l; line-height: normal; color: rgb(0, 0, 0);"><span class=3D"m_592913743497=
+2061130gmail-s1" style=3D"font-variant-ligatures: no-common-ligatures;"><fo=
+nt face=3D"arial, sans-serif" size=3D"2"># create a place for the host libs=
+ I need:</font></span></p><p class=3D"m_5929137434972061130gmail-p1" style=
+=3D"font-variant-numeric: normal; font-variant-east-asian: normal; font-str=
+etch: normal; line-height: normal; color: rgb(0, 0, 0);"><span class=3D"m_5=
+929137434972061130gmail-s1" style=3D"font-variant-ligatures: no-common-liga=
+tures;"><font face=3D"arial, sans-serif" size=3D"2">mkdir -p ~/.local/host/=
+lib<br></font></span></p><p class=3D"m_5929137434972061130gmail-p1" style=
+=3D"font-variant-numeric: normal; font-variant-east-asian: normal; font-str=
+etch: normal; line-height: normal; color: rgb(0, 0, 0);"><span class=3D"m_5=
+929137434972061130gmail-s1" style=3D"font-variant-ligatures: no-common-liga=
+tures;"><font face=3D"arial, sans-serif" size=3D"2"><br></font></span></p><=
+p class=3D"m_5929137434972061130gmail-p1" style=3D"font-variant-numeric: no=
+rmal; font-variant-east-asian: normal; font-stretch: normal; line-height: n=
+ormal; color: rgb(0, 0, 0);"><span class=3D"m_5929137434972061130gmail-s1" =
+style=3D"font-variant-ligatures: no-common-ligatures;"><font face=3D"arial,=
+ sans-serif" size=3D"2"># use ldd on the programs inside and outside the co=
+ntainer to=C2=A0</font></span></p><p class=3D"m_5929137434972061130gmail-p1=
+" style=3D"font-variant-numeric: normal; font-variant-east-asian: normal; f=
+ont-stretch: normal; line-height: normal; color: rgb(0, 0, 0);"><span class=
+=3D"m_5929137434972061130gmail-s1" style=3D"font-variant-ligatures: no-comm=
+on-ligatures;"><font face=3D"arial, sans-serif" size=3D"2"># find which lib=
+raries need to be copied.=C2=A0</font></span></p><p class=3D"m_592913743497=
+2061130gmail-p1" style=3D"font-variant-numeric: normal; font-variant-east-a=
+sian: normal; font-stretch: normal; line-height: normal; color: rgb(0, 0, 0=
+);">
+
+
+
+
+<style type=3D"text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 14.0px Menlo; color: #000000; =
+background-color: #ffffff}
+span.s1 {font-variant-ligatures: no-common-ligatures}
+</style>
+
+
+</p><p class=3D"p1" style=3D""><br></p><p class=3D"p1"><span class=3D"s1"><=
+font face=3D"arial, sans-serif" size=3D"2"># inside container</font></span>=
+</p><p class=3D"p1"><span class=3D"s1"></span></p><p class=3D"p1"><span sty=
+le=3D"font-family: arial, sans-serif; font-size: small; font-variant-ligatu=
+res: no-common-ligatures;">singularity shell centos-7.img</span></p><p clas=
+s=3D"p1" style=3D""><span class=3D"s1"><font face=3D"arial, sans-serif" siz=
+e=3D"2">&gt; ldd /home/bpuchala/.local/host/bin/qstat</font></span></p><blo=
+ckquote class=3D"gmail_quote" style=3D"margin: 0px 0px 0px 0.8ex; border-le=
+ft: 1px solid rgb(204, 204, 204); padding-left: 1ex;"><font face=3D"arial, =
+sans-serif" size=3D"2"><span class=3D"s1">&gt; ldd /home/bpuchala/.local/ho=
+st/bin/qstat<br></span><span class=3D"s1"><span class=3D"Apple-tab-span">=
+=09</span>linux-vdso.so.1 =3D&gt;<span class=3D"Apple-converted-space">=C2=
+=A0 </span>(0x00007ffc5cf42000)<br></span><span class=3D"s1"><span class=3D=
+"Apple-tab-span">=09</span>libtorque.so.2 =3D&gt; not found<br></span><span=
+ class=3D"s1"><span class=3D"Apple-tab-span">=09</span>libtcl8.5.so =3D&gt;=
+ not found</span></font></blockquote><blockquote class=3D"gmail_quote" styl=
+e=3D"margin: 0px 0px 0px 0.8ex; border-left: 1px solid rgb(204, 204, 204); =
+padding-left: 1ex;"><font face=3D"arial, sans-serif" size=3D"2">...=C2=A0</=
+font></blockquote><div style=3D""><font face=3D"arial, sans-serif" size=3D"=
+2"><br></font></div><div style=3D""><font face=3D"arial, sans-serif" size=
+=3D"2"># outside container:</font></div><div style=3D"">
+
+
+
+
+<style type=3D"text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 14.0px Menlo; color: #000000; =
+background-color: #ffffff}
+span.s1 {font-variant-ligatures: no-common-ligatures}
+span.Apple-tab-span {white-space:pre}
+</style>
+
+
+<blockquote class=3D"gmail_quote" style=3D"margin: 0px 0px 0px 0.8ex; borde=
+r-left: 1px solid rgb(204, 204, 204); padding-left: 1ex;"><font face=3D"ari=
+al, sans-serif" size=3D"2"><span class=3D"s1">$ ldd /usr/local/bin/qstat<br=
+></span><span class=3D"s1"><span class=3D"Apple-tab-span">=09</span>linux-v=
+dso.so.1 =3D&gt;<span class=3D"Apple-converted-space">=C2=A0 </span>(0x0000=
+7fff90391000)<br></span><span class=3D"s1"><span class=3D"Apple-tab-span">=
+=09</span>libtorque.so.2 =3D&gt; /usr/local/lib/libtorque.so.2 (0x00002b256=
+7edb000)<br></span><span class=3D"s1"><span class=3D"Apple-tab-span">=09</s=
+pan>libtcl8.5.so =3D&gt; /lib64/libtcl8.5.so (0x00002b2568808000)<br></span=
+><span class=3D"s1">...</span></font></blockquote><div><font face=3D"arial,=
+ sans-serif" size=3D"2">cp=C2=A0=C2=A0<span style=3D"font-variant-ligatures=
+: no-common-ligatures;">=C2=A0</span><span style=3D"font-variant-ligatures:=
+ no-common-ligatures;">/usr/local/lib/libtorque.so.2 ~/.local/host/lib</spa=
+n></font></div><div><span style=3D"font-variant-ligatures: no-common-ligatu=
+res;"><font face=3D"arial, sans-serif" size=3D"2"># etc.</font></span></div=
+>
+
+
+</div><p class=3D"p1" style=3D""><span class=3D"s1"><font face=3D"arial, sa=
+ns-serif" size=3D"2">
+
+
+
+
+<style type=3D"text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 14.0px Menlo; color: #000000; =
+background-color: #ffffff}
+span.s1 {font-variant-ligatures: no-common-ligatures}
+span.Apple-tab-span {white-space:pre}
+</style>
+
+
+
+
+
+</font></span></p><p class=3D"m_5929137434972061130gmail-p1" style=3D"font-=
+variant-numeric: normal; font-variant-east-asian: normal; font-stretch: nor=
+mal; line-height: normal; color: rgb(0, 0, 0);"><span class=3D"m_5929137434=
+972061130gmail-s1" style=3D"font-variant-ligatures: no-common-ligatures;"><=
+font face=3D"arial, sans-serif" size=3D"2"><br></font></span></p><p class=
+=3D"m_5929137434972061130gmail-p1" style=3D"font-variant-numeric: normal; f=
+ont-variant-east-asian: normal; font-stretch: normal; line-height: normal; =
+color: rgb(0, 0, 0);"><font face=3D"arial, sans-serif" size=3D"2"><span cla=
+ss=3D"m_5929137434972061130gmail-s1" style=3D"font-variant-ligatures: no-co=
+mmon-ligatures;"># E</span><span style=3D"font-variant-ligatures: no-common=
+-ligatures;">nds up with:</span></font></p><p class=3D"m_592913743497206113=
+0gmail-p1" style=3D"font-variant-numeric: normal; font-variant-east-asian: =
+normal; font-stretch: normal; line-height: normal; color: rgb(0, 0, 0);"><f=
+ont face=3D"arial, sans-serif" size=3D"2"><span class=3D"m_5929137434972061=
+130gmail-s1" style=3D"font-variant-ligatures: no-common-ligatures;"></span>=
+</font></p><blockquote class=3D"gmail_quote" style=3D"border-left: 1px soli=
+d rgb(204, 204, 204); padding-left: 1ex;"><font face=3D"arial, sans-serif" =
+size=3D"2"><span class=3D"m_5929137434972061130gmail-s1" style=3D"font-vari=
+ant-ligatures: no-common-ligatures;">$ tree /home/bpuchala/.local/host/lib<=
+br></span><span class=3D"m_5929137434972061130gmail-s1" style=3D"font-varia=
+nt-ligatures: no-common-ligatures;">/home/bpuchala/.local/host/lib<br></spa=
+n><span class=3D"m_5929137434972061130gmail-s1" style=3D"font-variant-ligat=
+ures: no-common-ligatures;">=E2=94=9C=E2=94=80=E2=94=80 libhwloc.so.5<br></=
+span><span class=3D"m_5929137434972061130gmail-s1" style=3D"font-variant-li=
+gatures: no-common-ligatures;">=E2=94=9C=E2=94=80=E2=94=80 libltdl.so.7<br>=
+</span><span class=3D"m_5929137434972061130gmail-s1" style=3D"font-variant-=
+ligatures: no-common-ligatures;">=E2=94=9C=E2=94=80=E2=94=80 libnuma.so.1<b=
+r></span><span class=3D"m_5929137434972061130gmail-s1" style=3D"font-varian=
+t-ligatures: no-common-ligatures;">=E2=94=9C=E2=94=80=E2=94=80=C2=A0<a href=
+=3D"http://libtcl8.5.so/" target=3D"_blank" data-saferedirecturl=3D"https:/=
+/www.google.com/url?hl=3Den&amp;q=3Dhttp://libtcl8.5.so&amp;source=3Dgmail&=
+amp;ust=3D1519570470441000&amp;usg=3DAFQjCNHYZdesiytm0Ve1ZM5kb1wto-iqWg" st=
+yle=3D"color: rgb(17, 85, 204);">libtcl8.5.so</a><br></span><span class=3D"=
+m_5929137434972061130gmail-s1" style=3D"font-variant-ligatures: no-common-l=
+igatures;">=E2=94=94=E2=94=80=E2=94=80 libtorque.so.2</span></font></blockq=
+uote><font face=3D"arial, sans-serif" style=3D"" size=3D"2"><br></font><p s=
+tyle=3D""></p><p class=3D"m_5929137434972061130gmail-p1" style=3D"font-vari=
+ant-numeric: normal; font-variant-east-asian: normal; font-stretch: normal;=
+ line-height: normal; color: rgb(0, 0, 0);"><span class=3D"m_59291374349720=
+61130gmail-s1" style=3D"font-variant-ligatures: no-common-ligatures;"><font=
+ face=3D"arial, sans-serif" size=3D"2"># test job submission and management=
+ from inside container:</font></span></p><p class=3D"m_5929137434972061130g=
+mail-p1" style=3D"font-variant-numeric: normal; font-variant-east-asian: no=
+rmal; font-stretch: normal; line-height: normal; color: rgb(0, 0, 0);"><spa=
+n class=3D"m_5929137434972061130gmail-s1" style=3D"font-variant-ligatures: =
+no-common-ligatures;"><font face=3D"arial, sans-serif" size=3D"2">singulari=
+ty shell centos-7.img</font></span></p><p class=3D"m_5929137434972061130gma=
+il-p1" style=3D"font-variant-numeric: normal; font-variant-east-asian: norm=
+al; font-stretch: normal; line-height: normal; color: rgb(0, 0, 0);"><span =
+class=3D"m_5929137434972061130gmail-s1" style=3D"font-variant-ligatures: no=
+-common-ligatures;"><font face=3D"arial, sans-serif" size=3D"2"><br></font>=
+</span></p><p class=3D"m_5929137434972061130gmail-p1" style=3D"font-variant=
+-numeric: normal; font-variant-east-asian: normal; font-stretch: normal; li=
+ne-height: normal; color: rgb(0, 0, 0);"><span class=3D"m_59291374349720611=
+30gmail-s1" style=3D"font-variant-ligatures: no-common-ligatures;"><font fa=
+ce=3D"arial, sans-serif" size=3D"2"># set PATH inside the container to find=
+ host programs we copied</font></span></p><p class=3D"m_5929137434972061130=
+gmail-p1" style=3D"font-variant-numeric: normal; font-variant-east-asian: n=
+ormal; font-stretch: normal; line-height: normal; color: rgb(0, 0, 0);"><fo=
+nt face=3D"arial, sans-serif" size=3D"2"><span class=3D"m_59291374349720611=
+30gmail-s1" style=3D"font-variant-ligatures: no-common-ligatures;"></span><=
+/font></p><p class=3D"m_5929137434972061130gmail-p1" style=3D"font-variant-=
+numeric: normal; font-variant-east-asian: normal; font-stretch: normal; lin=
+e-height: normal; color: rgb(0, 0, 0);"><span class=3D"m_592913743497206113=
+0gmail-s1" style=3D"font-variant-ligatures: no-common-ligatures;"><font fac=
+e=3D"arial, sans-serif" size=3D"2">export PATH=3D$HOME/.local/host/bin:$<wb=
+r>PATH</font></span></p><p class=3D"m_5929137434972061130gmail-p1" style=3D=
+"font-variant-numeric: normal; font-variant-east-asian: normal; font-stretc=
+h: normal; line-height: normal; color: rgb(0, 0, 0);"><span class=3D"m_5929=
+137434972061130gmail-s1" style=3D"font-variant-ligatures: no-common-ligatur=
+es;"><font face=3D"arial, sans-serif" size=3D"2"><br></font></span></p><p c=
+lass=3D"m_5929137434972061130gmail-p1" style=3D"font-variant-numeric: norma=
+l; font-variant-east-asian: normal; font-stretch: normal; line-height: norm=
+al; color: rgb(0, 0, 0);"><span class=3D"m_5929137434972061130gmail-s1" sty=
+le=3D"font-variant-ligatures: no-common-ligatures;"><font face=3D"arial, sa=
+ns-serif" size=3D"2"># set LD_LIBRARY_PATH inside the container find host l=
+ibs we copied</font></span></p><p class=3D"m_5929137434972061130gmail-p1" s=
+tyle=3D"font-variant-numeric: normal; font-variant-east-asian: normal; font=
+-stretch: normal; line-height: normal; color: rgb(0, 0, 0);"><font face=3D"=
+arial, sans-serif" size=3D"2"><span class=3D"m_5929137434972061130gmail-s1"=
+ style=3D"font-variant-ligatures: no-common-ligatures;"></span></font></p><=
+p class=3D"m_5929137434972061130gmail-p1" style=3D"font-variant-numeric: no=
+rmal; font-variant-east-asian: normal; font-stretch: normal; line-height: n=
+ormal; color: rgb(0, 0, 0);"><span class=3D"m_5929137434972061130gmail-s1" =
+style=3D"font-variant-ligatures: no-common-ligatures;"><font face=3D"arial,=
+ sans-serif" size=3D"2">export LD_LIBRARY_PATH=3D$LD_LIBRARY_<wbr>PATH:$HOM=
+E/.local/host/lib</font></span></p><p class=3D"m_5929137434972061130gmail-p=
+1" style=3D"font-variant-numeric: normal; font-variant-east-asian: normal; =
+font-stretch: normal; line-height: normal; color: rgb(0, 0, 0);"><span clas=
+s=3D"m_5929137434972061130gmail-s1" style=3D"font-variant-ligatures: no-com=
+mon-ligatures;"><font face=3D"arial, sans-serif" size=3D"2"><br></font></sp=
+an></p><p class=3D"m_5929137434972061130gmail-p1" style=3D"font-variant-num=
+eric: normal; font-variant-east-asian: normal; font-stretch: normal; line-h=
+eight: normal; color: rgb(0, 0, 0);"><span style=3D"font-variant-ligatures:=
+ no-common-ligatures;"><font face=3D"arial, sans-serif" size=3D"2"># test</=
+font></span></p><font face=3D"arial, sans-serif" style=3D"" size=3D"2"><spa=
+n style=3D"color: rgb(0, 0, 0); font-variant-ligatures: no-common-ligatures=
+;">qstat</span><br></font><p style=3D""></p><p class=3D"m_59291374349720611=
+30gmail-p1" style=3D"font-variant-numeric: normal; font-variant-east-asian:=
+ normal; font-stretch: normal; line-height: normal; color: rgb(0, 0, 0);"><=
+span class=3D"m_5929137434972061130gmail-s1" style=3D"font-variant-ligature=
+s: no-common-ligatures;"><font face=3D"arial, sans-serif" style=3D"" size=
+=3D"2">qsub ~/submit_scripts/hello_world.<wbr>sh</font></span></p></div></d=
+iv>
+
+
+
+
+<style type=3D"text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 14.0px Menlo; color: #000000; =
+background-color: #ffffff}
+span.s1 {font-variant-ligatures: no-common-ligatures}
+</style>
+
+
+</div></div></div>
+------=_Part_9396_902430082.1519485356452--
+
+------=_Part_9395_1720849945.1519485356451--

@@ -1,0 +1,214 @@
+Date: Wed, 10 Apr 2019 08:14:07 -0700 (PDT)
+From: Mike <mgj...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <3156921a-c713-4554-9b2e-4626fd3b9eb1@lbl.gov>
+Subject: Singularity instances for running multiple container processes per
+ host
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2246_214861535.1554909247229"
+
+------=_Part_2246_214861535.1554909247229
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2247_430274300.1554909247229"
+
+------=_Part_2247_430274300.1554909247229
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi,
+
+I believe I have discovered an interesting use case for Singularity 
+instances.
+
+If you run multiple "singularity exec *xxx*.sif *cmd*" on the same host 
+(typical e.g. for single-threaded MPI jobs on multi-CPU systems), each 
+invocation will get its own mount, and file system contents will be 
+buffered separately for each mount. If processes are accessing essentially 
+the same data in the container, they will compete for buffer cache space to 
+hold multiple copies of identical data, possibly amounting to a significant 
+portion of the entire memory, thus detracting from memory effectively 
+available to processes' address space.
+
+One can easily demonstrate this behavior by preparing e.g. a ubuntu:latest 
+container which has e.g. a 1GB file in its /data directory and then 
+starting two or more containers on the same host. I could reproduce this 
+for Singularity 2.6 and 3.1, and with kernels 3.10, 4.18, and 5.0.7.
+
+
+*Demonstration of multiple buffer cache allocation*
+
+For the example given below, I used Singularity 3.1.1 on a virtual host 
+running Ubuntu 18.04 LTS; kernel = 4.18. I monitored buffer cache usage 
+with top(1).
+
+Start two separate shell sessions:   singularity shell xxx.sif
+
+From another window, empty the buffer cache:   sync; echo 3 | sudo tee 
+/proc/sys/vm/drop_caches 
+
+While monitoring buffer cache usage, issue in each Singularity session:
+cp /data/file1GB /dev/null
+
+Buffer cache usage (MiB):
+before:               209.363 buff/cache         (a)
+after first cp:      3393.145 buff/cache   delta (a,1) = 3184
+after second cp:     5458.289 buff/cache   delta (1,2) = 2065
+after termination:   1236.008 buff/cache   delta (a,b) = 1027
+
+Noteworthy observations:
+It appears that we need approx 1GB to cache the relevant portion of the SIF 
+file in the host context, and roughly another 2GB of cache per invocation 
+for buffering the data within the conainer.
+
+*Reducing buffer cache usage by Singularity instances*
+
+Repeating the same experiment with Singularity instances...
+
+singularity instance start xxx.sif c.i
+
+In both sessions:
+singularity shell instance://c.i
+
+Drop buffer cache
+sync; echo 3 | sudo tee /proc/sys/vm/drop_caches 
+
+In each session as above:
+cp /data/file1GB /dev/null
+
+before:               199.441 buff/cache         (a)
+after first cp:      3386.508 buff/cache   delta (a,1) = 3187
+after second cp:     3386.965 buff/cache   delta (1,2) <    1
+after termination:   1246.730 buff/cache   delta (a,b) = 1047
+
+As expected, the buffer cache is shared between all Singularity processes 
+because they are running in the same name space.
+
+Still, I wonder why reading a 1GB file uses 2GB to cache file system 
+contents inside the container.
+
+*Practical considerations*
+
+To take advantage of buffer cache sharing in MPI jobs, one needs to set up 
+and terminate the Singularity instances before and after running your 
+actual MPI program. I have set up a proof-of-concept using SGE:
+
+module load singularity/2.x openmpi/1.8.5
+singularity=$(which singularity)
+cwd=$(/bin/pwd)
+
+# start one instance on each host
+awk '{print $1}' $PE_HOSTFILE |  ###    sort | uniq |
+   parallel -k -j0 "qrsh -inherit -nostdin -V {} \
+   $singularity instance.start $cwd/insttest.simg it.$JOB_ID"
+
+mpirun -np $NSLOTS $singularity run instance://it.$JOB_ID  myprogram myargs
+
+awk '{print $1}' $PE_HOSTFILE |  ###   sort | uniq |
+   parallel -k -j0 "qrsh -inherit -nostdin -V {} \
+   $singularity instance.stop it.$JOB_ID"
+
+
+For SGE+OpenMPI, each host occurs only once in the host file; for other 
+implementations, add the "sort|uniq" portion which is commented out above.
+
+This appears to work fine, but is not exactly what you want to explain to 
+nontechnical users, so this needs to be scripted.
+
+I am still looking for a solution for job arrays when multiple executions 
+on individual nodes may overlap in time. To avoid race conditions, some 
+type of counting semaphores to coordinate creation and destruction of 
+Singularity instances between independently running shell scripts is 
+required.
+
+Any comments / suggestions? Is this considered to be best practice?
+
+Best regards,  Michael
+
+
+------=_Part_2247_430274300.1554909247229
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi,<br><br>I believe I have discovered an interesting use =
+case for Singularity instances.<br><br>If you run multiple &quot;<span styl=
+e=3D"font-family: courier new, monospace;">singularity exec <i>xxx</i>.sif =
+<i>cmd</i></span>&quot; on the same host (typical e.g. for single-threaded =
+MPI jobs on multi-CPU systems), each invocation will get its own mount, and=
+ file system contents will be buffered separately for each mount. If proces=
+ses are accessing essentially the same data in the container, they will com=
+pete for buffer cache space to hold multiple copies of identical data, poss=
+ibly amounting to a significant portion of the entire memory, thus detracti=
+ng from memory effectively available to processes&#39; address space.<br><b=
+r>One can easily demonstrate this behavior by preparing e.g. a ubuntu:lates=
+t container which has e.g. a 1GB file in its <span style=3D"font-family: co=
+urier new, monospace;">/data</span> directory and then starting two or more=
+ containers on the same host. I could reproduce this for Singularity 2.6 an=
+d 3.1, and with kernels 3.10, 4.18, and 5.0.7.<br><div><br></div><div><b>De=
+monstration of multiple buffer cache allocation<br></b></div><div><br></div=
+>For the example given below, I used Singularity 3.1.1 on a virtual host ru=
+nning Ubuntu 18.04 LTS; kernel =3D 4.18. I monitored buffer cache usage wit=
+h top(1).<br><br>Start two separate shell sessions:=C2=A0=C2=A0 <span style=
+=3D"font-family: courier new, monospace;">singularity shell xxx.sif</span><=
+br><br>From another window, empty the buffer cache:=C2=A0=C2=A0 <span style=
+=3D"font-family: courier new, monospace;">sync; echo 3 | sudo tee /proc/sys=
+/vm/drop_caches</span> <br><br>While monitoring buffer cache usage, issue i=
+n each Singularity session:<br><span style=3D"font-family: courier new, mon=
+ospace;">cp /data/file1GB /dev/null</span><br><br><span style=3D"font-famil=
+y: courier new, monospace;">Buffer cache usage (MiB):<br>before:=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+ 209.363 buff/cache=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 (a)<br>=
+after first cp:=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 3393.145 buff/cache=C2=A0=C2=
+=A0 delta (a,1) =3D 3184<br>after second cp:=C2=A0=C2=A0=C2=A0=C2=A0 5458.2=
+89 buff/cache=C2=A0=C2=A0 delta (1,2) =3D 2065<br>after termination:=C2=A0=
+=C2=A0 1236.008 buff/cache=C2=A0=C2=A0 delta (a,b) =3D 1027</span><br><br>N=
+oteworthy observations:<br>It appears that we need approx 1GB to cache the =
+relevant portion of the SIF file in the host context, and roughly another 2=
+GB of cache per invocation for buffering the data within the conainer.<br><=
+br><div><b>Reducing buffer cache usage by Singularity instances</b><br></di=
+v><div><br></div>Repeating the same experiment with Singularity instances..=
+.<br><br><span style=3D"font-family: courier new, monospace;">singularity i=
+nstance start xxx.sif c.i</span><br><br>In both sessions:<br><span style=3D=
+"font-family: courier new, monospace;">singularity shell instance://c.i</sp=
+an><br><br>Drop buffer cache<br><span style=3D"font-family: courier new, mo=
+nospace;">sync; echo 3 | sudo tee /proc/sys/vm/drop_caches</span> <br><br>I=
+n each session as above:<br><span style=3D"font-family: courier new, monosp=
+ace;">cp /data/file1GB /dev/null</span><br><br><span style=3D"font-family: =
+courier new, monospace;">before:=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 199.441 buff/cache=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 (a)<br>after first cp:=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0 3386.508 buff/cache=C2=A0=C2=A0 delta (a,1) =3D 3187<br>aft=
+er second cp:=C2=A0=C2=A0=C2=A0=C2=A0 3386.965 buff/cache=C2=A0=C2=A0 delta=
+ (1,2) &lt;=C2=A0=C2=A0=C2=A0 1<br>after termination:=C2=A0=C2=A0 1246.730 =
+buff/cache=C2=A0=C2=A0 delta (a,b) =3D 1047</span><br><br>As expected, the =
+buffer cache is shared between all Singularity processes because they are r=
+unning in the same name space.<br><br>Still, I wonder why reading a 1GB fil=
+e uses 2GB to cache file system contents inside the container.<br><div><br>=
+</div><div><b>Practical considerations</b><br></div><div><br></div>To take =
+advantage of buffer cache sharing in MPI jobs, one needs to set up and term=
+inate the Singularity instances before and after running your actual MPI pr=
+ogram. I have set up a proof-of-concept using SGE:<br><br><span style=3D"fo=
+nt-family: courier new, monospace;">module load singularity/2.x openmpi/1.8=
+.5<br>singularity=3D$(which singularity)<br>cwd=3D$(/bin/pwd)<br><br># star=
+t one instance on each host<br>awk &#39;{print $1}&#39; $PE_HOSTFILE |=C2=
+=A0 ###=C2=A0=C2=A0=C2=A0 sort | uniq |<br>=C2=A0=C2=A0 parallel -k -j0 &qu=
+ot;qrsh -inherit -nostdin -V {} \<br>=C2=A0=C2=A0 $singularity instance.sta=
+rt $cwd/insttest.simg it.$JOB_ID&quot;<br><br>mpirun -np $NSLOTS $singulari=
+ty run instance://it.$JOB_ID=C2=A0 myprogram myargs<br><br>awk &#39;{print =
+$1}&#39; $PE_HOSTFILE |=C2=A0 ###=C2=A0=C2=A0 sort | uniq |<br>=C2=A0=C2=A0=
+ parallel -k -j0 &quot;qrsh -inherit -nostdin -V {} \<br>=C2=A0=C2=A0 $sing=
+ularity instance.stop it.$JOB_ID&quot;</span><br><br><br>For SGE+OpenMPI, e=
+ach host occurs only once in the host file; for other implementations, add =
+the &quot;<span style=3D"font-family: courier new, monospace;">sort|uniq</s=
+pan>&quot; portion which is commented out above.<br><br>This appears to wor=
+k fine, but is not exactly what you want to explain to nontechnical users, =
+so this needs to be scripted.<br><br>I am still looking for a solution for =
+job arrays when multiple executions on individual nodes may overlap in time=
+. To avoid race conditions, some type of counting semaphores to coordinate =
+creation and destruction of Singularity instances between independently run=
+ning shell scripts is required.<br><div><br></div><div>Any comments / sugge=
+stions? Is this considered to be best practice?</div><div><br></div><div>Be=
+st regards,=C2=A0 Michael</div><div><br></div></div>
+------=_Part_2247_430274300.1554909247229--
+
+------=_Part_2246_214861535.1554909247229--

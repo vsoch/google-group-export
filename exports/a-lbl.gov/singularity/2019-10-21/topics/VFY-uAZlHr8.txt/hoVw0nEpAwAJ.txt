@@ -1,0 +1,275 @@
+Date: Thu, 17 Nov 2016 03:03:33 -0800 (PST)
+From: Benjamin Blundell <onid...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <d45f8a8b-7784-4189-a68e-d4cf65316f8c@lbl.gov>
+Subject: Error with CUDA under singularity.
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_5000_1324123479.1479380613893"
+
+------=_Part_5000_1324123479.1479380613893
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_5001_1616754259.1479380613894"
+
+------=_Part_5001_1616754259.1479380613894
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hello all
+
+I have a very strange error trying to use CUDA inside singularity. Yes, it 
+revolves around Tensorflow (that old chestnut) but also just CUDA generally.
+
+The error in tensorflow looks like this:
+
+E tensorflow/stream_executor/cuda/cuda_driver.cc:491] failed call to 
+cuInit: CUDA_ERROR_UNKNOWN
+I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:153] retrieving CUDA 
+diagnostic information for host: azuma
+I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:160] hostname: azuma
+I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:185] libcuda reported 
+version is: 367.57.0
+I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:356] driver version 
+file contents: """NVRM version: NVIDIA UNIX x86_64 Kernel Module  367.57  
+Mon Oct  3 20:37:01 PDT 2016
+GCC version:  gcc version 4.9.3 (Ubuntu 4.9.3-13ubuntu2) 
+"""
+I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:189] kernel reported 
+version is: 367.57.0
+I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:293] kernel version 
+seems to match DSO: 367.57.0
+
+Now, this is perhaps not helpful. I decided that the thing to do was try a 
+simple CUDA example like 0_simple/clock or 0_simple/matrixMul
+
+If I run singularity as root and get myself a shell, we have this:
+
+CUDA Clock sample
+modprobe: ERROR: ../libkmod/libkmod.c:556 kmod_search_moddep() could not 
+open moddep file '/lib/modules/4.4.0-47-generic/modules.dep.bin'
+CUDA error at ../../common/inc/helper_cuda.h:1133 code=30(cudaErrorUnknown) 
+"cudaGetDeviceCount(&device_count)" 
+
+Running as a non root user I get this
+
+CUDA Clock sample
+CUDA error at ../../common/inc/helper_cuda.h:1133 code=30(cudaErrorUnknown) 
+"cudaGetDeviceCount(&device_count)" 
+
+nvidia-modeset, nvidia0, and nvidiactl all appear in /dev when I run 
+singularity shell.
+
+I run the shell like this:
+
+singularity shell -B /home/oni/Projects/WackyVec/build:/data wackyvec.img
+
+
+Now I did *SOMETHING* yesterday and it started working. I have no idea what 
+I did. What I do know, however, is when I restarted my computer this 
+morning, I had to reinstall my stock nvidia driver as it wasnt loading 
+automatically as it normally does.
+
+Something weird is definitely going on here with either the nvidia driver 
+or singularity. It seems like I've gotten close to making this work but 
+I've no idea where I'm going wrong.
+
+My def file looks like this:
+
+DistType: debian
+MirrorURL: http://archive.ubuntu.com/ubuntu/
+OSVersion: trusty
+BootStrap: debootstrap
+
+%runscript
+    export 
+LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+    export CUDA_HOME=/usr/local/cuda
+    export PATH=/usr/lib/x86_64-linux-gnu:$PATH
+    echo $LD_LIBRARY_PATH
+    echo "Running Ubuntu Trusty WackyVec"
+    cd /wacky
+    python3 ukwac.py /data
+
+%setup
+    mkdir -p $SINGULARITY_ROOTFS/data
+    mkdir -p $SINGULARITY_ROOTFS/wacky
+    mkdir -p $SINGULARITY_ROOTFS/cuda
+    cp ukwac.py $SINGULARITY_ROOTFS/wacky
+    cp data_buffer.py $SINGULARITY_ROOTFS/wacky
+    cp visualize.py $SINGULARITY_ROOTFS/wacky
+    cp /usr/lib/x86_64-linux-gnu/libcuda.so.367.57 
+$SINGULARITY_ROOTFS/usr/lib/x86_64-linux-gnu/.
+    cp /usr/lib/x86_64-linux-gnu/libcudnn.so.5 
+$SINGULARITY_ROOTFS/usr/lib/x86_64-linux-gnu/.
+    cp -r /usr/local/cuda-8.0 $SINGULARITY_ROOTFS/usr/local/    
+    cp /usr/bin/nvidia-smi $SINGULARITY_ROOTFS/usr/bin/.
+    cp /usr/lib/x86_64-linux-gnu/libnvidia-ml.so.367.57 
+$SINGULARITY_ROOTFS/usr/lib/x86_64-linux-gnu/.
+    cp /usr/lib/x86_64-linux-gnu/libnvidia-fatbinaryloader.so.367.57 
+$SINGULARITY_ROOTFS/usr/lib/x86_64-linux-gnu/libnvidia-fatbinaryloader.so.367.57
+    cp /usr/lib/x86_64-linux-gnu/libnvidia-cfg.so.367.57 
+$SINGULARITY_ROOTFS/usr/lib/x86_64-linux-gnu/.
+    cp /usr/lib/x86_64-linux-gnu/libnvidia-encode.so.367.57 
+$SINGULARITY_ROOTFS/usr/lib/x86_64-linux-gnu/.
+    cp /usr/lib/x86_64-linux-gnu/libnvcuvid.so.367.57 
+$SINGULARITY_ROOTFS/usr/lib/x86_64-linux-gnu/.
+
+%post
+    echo "Hello from inside WackyVec"
+    
+    echo "deb http://archive.ubuntu.com/ubuntu trusty main universe 
+multiverse" >> /etc/apt/sources.list
+    echo "deb http://archive.ubuntu.com/ubuntu trusty-backports main 
+universe multiverse" >> /etc/apt/sources.list
+    apt-get update
+    apt-get -y install vim
+    apt-get -y install python3-tk pkg-config libfreetype6-dev libpng12-dev 
+gfortran liblapack3 liblapack-dev libatlas-base-dev libblas3 libblas-dev 
+python-pip python-dev python3-dev python-setuptools python3-setuptools 
+python3-pip
+    
+    apt-get install -y libxi-dev libxmu-dev freeglut3-dev build-essential 
+binutils-gold nvidia-modprobe
+    cd /cuda
+
+    ln -sf /usr/local/cuda-8.0 /usr/local/cuda
+    ln -sf /usr/lib/x86_64-linux-gnu/libcuda.so.367.57 
+/usr/lib/x86_64-linux-gnu/libcuda.so.1
+    ln -sf /usr/lib/x86_64-linux-gnu/libcuda.so.1 
+/usr/lib/x86_64-linux-gnu/libcuda.so
+    ln -sf /usr/lib/x86_64-linux-gnu/libnvidia-ml.so.367.57 
+/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1
+    ln -sf /usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1 
+/usr/lib/x86_64-linux-gnu/libnvidia-ml.so
+    ln -sf /usr/lib/x86_64-linux-gnu/libnvidia-cfg.so.367.57 
+/usr/lib/x86_64-linux-gnu/libnvidia-cfg.so.1
+    ln -sf /usr/lib/x86_64-linux-gnu/libnvidia-cfg.so.1 
+/usr/lib/x86_64-linux-gnu/libnvidia-cfg.so
+    ln -sf /usr/lib/x86_64-linux-gnu/libnvidia-encode.so.367.57 
+/usr/lib/x86_64-linux-gnu/libnvidia-encode.so.1
+    ln -sf /usr/lib/x86_64-linux-gnu/libnvidia-encode.so.1 
+/usr/lib/x86_64-linux-gnu/libnvidia-encode.so
+    ln -sf /usr/lib/x86_64-linux-gnu/libnvcuvid.so.367.57 
+/usr/lib/x86_64-linux-gnu/libnvcuvid.so.1
+    ln -sf /usr/lib/x86_64-linux-gnu/libnvcuvid.so.1 
+/usr/lib/x86_64-linux-gnu/libnvcuvid.so
+
+
+    export 
+LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+    export 
+TF_BINARY_URL=https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow-0.11.0rc2-cp34-cp34m-linux_x86_64.whl
+    pip3 install --upgrade $TF_BINARY_URL
+    pip3 install scipy scikit-learn numpy matplotlib
+
+    cd /usr/local/cuda/samples/0_Simple/clock/
+    make
+    cd /usr/local/cuda/samples/0_Simple/matrixMul/
+    make 
+
+
+------=_Part_5001_1616754259.1479380613894
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hello all<br><br>I have a very strange error trying to use=
+ CUDA inside singularity. Yes, it revolves around Tensorflow (that old ches=
+tnut) but also just CUDA generally.<br><br>The error in tensorflow looks li=
+ke this:<br><br>E tensorflow/stream_executor/cuda/cuda_driver.cc:491] faile=
+d call to cuInit: CUDA_ERROR_UNKNOWN<br>I tensorflow/stream_executor/cuda/c=
+uda_diagnostics.cc:153] retrieving CUDA diagnostic information for host: az=
+uma<br>I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:160] hostname:=
+ azuma<br>I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:185] libcud=
+a reported version is: 367.57.0<br>I tensorflow/stream_executor/cuda/cuda_d=
+iagnostics.cc:356] driver version file contents: &quot;&quot;&quot;NVRM ver=
+sion: NVIDIA UNIX x86_64 Kernel Module=C2=A0 367.57=C2=A0 Mon Oct=C2=A0 3 2=
+0:37:01 PDT 2016<br>GCC version:=C2=A0 gcc version 4.9.3 (Ubuntu 4.9.3-13ub=
+untu2) <br>&quot;&quot;&quot;<br>I tensorflow/stream_executor/cuda/cuda_dia=
+gnostics.cc:189] kernel reported version is: 367.57.0<br>I tensorflow/strea=
+m_executor/cuda/cuda_diagnostics.cc:293] kernel version seems to match DSO:=
+ 367.57.0<br><br>Now, this is perhaps not helpful. I decided that the thing=
+ to do was try a simple CUDA example like 0_simple/clock or 0_simple/matrix=
+Mul<br><br>If I run singularity as root and get myself a shell, we have thi=
+s:<br><br>CUDA Clock sample<br>modprobe: ERROR: ../libkmod/libkmod.c:556 km=
+od_search_moddep() could not open moddep file &#39;/lib/modules/4.4.0-47-ge=
+neric/modules.dep.bin&#39;<br>CUDA error at ../../common/inc/helper_cuda.h:=
+1133 code=3D30(cudaErrorUnknown) &quot;cudaGetDeviceCount(&amp;device_count=
+)&quot; <br><br>Running as a non root user I get this<br><br>CUDA Clock sam=
+ple<br>CUDA error at ../../common/inc/helper_cuda.h:1133 code=3D30(cudaErro=
+rUnknown) &quot;cudaGetDeviceCount(&amp;device_count)&quot; <br><br>nvidia-=
+modeset, nvidia0, and nvidiactl all appear in /dev when I run singularity s=
+hell.<br><br>I run the shell like this:<br><br>singularity shell -B /home/o=
+ni/Projects/WackyVec/build:/data wackyvec.img<br><br><br>Now I did *SOMETHI=
+NG* yesterday and it started working. I have no idea what I did. What I do =
+know, however, is when I restarted my computer this morning, I had to reins=
+tall my stock nvidia driver as it wasnt loading automatically as it normall=
+y does.<br><br>Something weird is definitely going on here with either the =
+nvidia driver or singularity. It seems like I&#39;ve gotten close to making=
+ this work but I&#39;ve no idea where I&#39;m going wrong.<br><br>My def fi=
+le looks like this:<br><br>DistType: debian<br>MirrorURL: http://archive.ub=
+untu.com/ubuntu/<br>OSVersion: trusty<br>BootStrap: debootstrap<br><br>%run=
+script<br>=C2=A0=C2=A0=C2=A0 export LD_LIBRARY_PATH=3D/usr/lib/x86_64-linux=
+-gnu:/usr/local/cuda/lib64:$LD_LIBRARY_PATH<br>=C2=A0=C2=A0=C2=A0 export CU=
+DA_HOME=3D/usr/local/cuda<br>=C2=A0=C2=A0=C2=A0 export PATH=3D/usr/lib/x86_=
+64-linux-gnu:$PATH<br>=C2=A0=C2=A0=C2=A0 echo $LD_LIBRARY_PATH<br>=C2=A0=C2=
+=A0=C2=A0 echo &quot;Running Ubuntu Trusty WackyVec&quot;<br>=C2=A0=C2=A0=
+=C2=A0 cd /wacky<br>=C2=A0=C2=A0=C2=A0 python3 ukwac.py /data<br><br>%setup=
+<br>=C2=A0=C2=A0=C2=A0 mkdir -p $SINGULARITY_ROOTFS/data<br>=C2=A0=C2=A0=C2=
+=A0 mkdir -p $SINGULARITY_ROOTFS/wacky<br>=C2=A0=C2=A0=C2=A0 mkdir -p $SING=
+ULARITY_ROOTFS/cuda<br>=C2=A0=C2=A0=C2=A0 cp ukwac.py $SINGULARITY_ROOTFS/w=
+acky<br>=C2=A0=C2=A0=C2=A0 cp data_buffer.py $SINGULARITY_ROOTFS/wacky<br>=
+=C2=A0=C2=A0=C2=A0 cp visualize.py $SINGULARITY_ROOTFS/wacky<br>=C2=A0=C2=
+=A0=C2=A0 cp /usr/lib/x86_64-linux-gnu/libcuda.so.367.57 $SINGULARITY_ROOTF=
+S/usr/lib/x86_64-linux-gnu/.<br>=C2=A0=C2=A0=C2=A0 cp /usr/lib/x86_64-linux=
+-gnu/libcudnn.so.5 $SINGULARITY_ROOTFS/usr/lib/x86_64-linux-gnu/.<br>=C2=A0=
+=C2=A0=C2=A0 cp -r /usr/local/cuda-8.0 $SINGULARITY_ROOTFS/usr/local/=C2=A0=
+=C2=A0=C2=A0 <br>=C2=A0=C2=A0=C2=A0 cp /usr/bin/nvidia-smi $SINGULARITY_ROO=
+TFS/usr/bin/.<br>=C2=A0=C2=A0=C2=A0 cp /usr/lib/x86_64-linux-gnu/libnvidia-=
+ml.so.367.57 $SINGULARITY_ROOTFS/usr/lib/x86_64-linux-gnu/.<br>=C2=A0=C2=A0=
+=C2=A0 cp /usr/lib/x86_64-linux-gnu/libnvidia-fatbinaryloader.so.367.57 $SI=
+NGULARITY_ROOTFS/usr/lib/x86_64-linux-gnu/libnvidia-fatbinaryloader.so.367.=
+57<br>=C2=A0=C2=A0=C2=A0 cp /usr/lib/x86_64-linux-gnu/libnvidia-cfg.so.367.=
+57 $SINGULARITY_ROOTFS/usr/lib/x86_64-linux-gnu/.<br>=C2=A0=C2=A0=C2=A0 cp =
+/usr/lib/x86_64-linux-gnu/libnvidia-encode.so.367.57 $SINGULARITY_ROOTFS/us=
+r/lib/x86_64-linux-gnu/.<br>=C2=A0=C2=A0=C2=A0 cp /usr/lib/x86_64-linux-gnu=
+/libnvcuvid.so.367.57 $SINGULARITY_ROOTFS/usr/lib/x86_64-linux-gnu/.<br><br=
+>%post<br>=C2=A0=C2=A0=C2=A0 echo &quot;Hello from inside WackyVec&quot;<br=
+>=C2=A0=C2=A0=C2=A0 <br>=C2=A0=C2=A0=C2=A0 echo &quot;deb http://archive.ub=
+untu.com/ubuntu trusty main universe multiverse&quot; &gt;&gt; /etc/apt/sou=
+rces.list<br>=C2=A0=C2=A0=C2=A0 echo &quot;deb http://archive.ubuntu.com/ub=
+untu trusty-backports main universe multiverse&quot; &gt;&gt; /etc/apt/sour=
+ces.list<br>=C2=A0=C2=A0=C2=A0 apt-get update<br>=C2=A0=C2=A0=C2=A0 apt-get=
+ -y install vim<br>=C2=A0=C2=A0=C2=A0 apt-get -y install python3-tk pkg-con=
+fig libfreetype6-dev libpng12-dev gfortran liblapack3 liblapack-dev libatla=
+s-base-dev libblas3 libblas-dev python-pip python-dev python3-dev python-se=
+tuptools python3-setuptools python3-pip<br>=C2=A0=C2=A0=C2=A0 <br>=C2=A0=C2=
+=A0=C2=A0 apt-get install -y libxi-dev libxmu-dev freeglut3-dev build-essen=
+tial binutils-gold nvidia-modprobe<br>=C2=A0=C2=A0=C2=A0 cd /cuda<br><br>=
+=C2=A0=C2=A0=C2=A0 ln -sf /usr/local/cuda-8.0 /usr/local/cuda<br>=C2=A0=C2=
+=A0=C2=A0 ln -sf /usr/lib/x86_64-linux-gnu/libcuda.so.367.57 /usr/lib/x86_6=
+4-linux-gnu/libcuda.so.1<br>=C2=A0=C2=A0=C2=A0 ln -sf /usr/lib/x86_64-linux=
+-gnu/libcuda.so.1 /usr/lib/x86_64-linux-gnu/libcuda.so<br>=C2=A0=C2=A0=C2=
+=A0 ln -sf /usr/lib/x86_64-linux-gnu/libnvidia-ml.so.367.57 /usr/lib/x86_64=
+-linux-gnu/libnvidia-ml.so.1<br>=C2=A0=C2=A0=C2=A0 ln -sf /usr/lib/x86_64-l=
+inux-gnu/libnvidia-ml.so.1 /usr/lib/x86_64-linux-gnu/libnvidia-ml.so<br>=C2=
+=A0=C2=A0=C2=A0 ln -sf /usr/lib/x86_64-linux-gnu/libnvidia-cfg.so.367.57 /u=
+sr/lib/x86_64-linux-gnu/libnvidia-cfg.so.1<br>=C2=A0=C2=A0=C2=A0 ln -sf /us=
+r/lib/x86_64-linux-gnu/libnvidia-cfg.so.1 /usr/lib/x86_64-linux-gnu/libnvid=
+ia-cfg.so<br>=C2=A0=C2=A0=C2=A0 ln -sf /usr/lib/x86_64-linux-gnu/libnvidia-=
+encode.so.367.57 /usr/lib/x86_64-linux-gnu/libnvidia-encode.so.1<br>=C2=A0=
+=C2=A0=C2=A0 ln -sf /usr/lib/x86_64-linux-gnu/libnvidia-encode.so.1 /usr/li=
+b/x86_64-linux-gnu/libnvidia-encode.so<br>=C2=A0=C2=A0=C2=A0 ln -sf /usr/li=
+b/x86_64-linux-gnu/libnvcuvid.so.367.57 /usr/lib/x86_64-linux-gnu/libnvcuvi=
+d.so.1<br>=C2=A0=C2=A0=C2=A0 ln -sf /usr/lib/x86_64-linux-gnu/libnvcuvid.so=
+.1 /usr/lib/x86_64-linux-gnu/libnvcuvid.so<br><br><br>=C2=A0=C2=A0=C2=A0 ex=
+port LD_LIBRARY_PATH=3D/usr/lib/x86_64-linux-gnu:/usr/local/cuda/lib64:$LD_=
+LIBRARY_PATH<br>=C2=A0=C2=A0=C2=A0 export TF_BINARY_URL=3Dhttps://storage.g=
+oogleapis.com/tensorflow/linux/gpu/tensorflow-0.11.0rc2-cp34-cp34m-linux_x8=
+6_64.whl<br>=C2=A0=C2=A0=C2=A0 pip3 install --upgrade $TF_BINARY_URL<br>=C2=
+=A0=C2=A0=C2=A0 pip3 install scipy scikit-learn numpy matplotlib<br><br>=C2=
+=A0=C2=A0=C2=A0 cd /usr/local/cuda/samples/0_Simple/clock/<br>=C2=A0=C2=A0=
+=C2=A0 make<br>=C2=A0=C2=A0=C2=A0 cd /usr/local/cuda/samples/0_Simple/matri=
+xMul/<br>=C2=A0=C2=A0=C2=A0 make <br><br></div>
+------=_Part_5001_1616754259.1479380613894--
+
+------=_Part_5000_1324123479.1479380613893--

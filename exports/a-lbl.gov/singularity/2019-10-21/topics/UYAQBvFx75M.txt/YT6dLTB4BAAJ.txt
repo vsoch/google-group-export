@@ -1,0 +1,165 @@
+Date: Sun, 11 Feb 2018 14:26:05 -0800 (PST)
+From: Michael Yourshaw <myou...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <82be990b-2f7e-4d37-a0ac-f4c9d89f0ac4@lbl.gov>
+Subject: singularity not changing to current working directory
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_7347_1621992888.1518387965481"
+
+------=_Part_7347_1621992888.1518387965481
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_7348_1700242819.1518387965481"
+
+------=_Part_7348_1700242819.1518387965481
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+I'm running a singularity image that contains java and other genetics 
+applications. I use the Broad Institute Cromwell workflow engine running on 
+a virtual machine to submit jobs to a Slurm-managed compute cluster.
+
+My version of Singularity is a December 2017 patched version of 2.4.2 that 
+fixed problems binding to our file system. We have named this patch 2.4.2c 
+on our system. See Unable to bind directories on NFS filesystem, 
+"permission denied" error even though I have permission #1205 
+<https://github.com/singularityware/singularity/issues/1205> for details.
+
+Cromwell submits a job with a script that essentially:
+    - sets the current working directory to an 'execution' directory
+    - invokes singularity exec to execute a java application whose outputs 
+are expected to go to the current working directory that was previously set.
+
+Instead, output is going to the home directory of the user that is running 
+the job.
+
+The home directories have non-standard names, like 
+`/homelink/cmoco_sys_dev` and actually are are symbloic links like 
+`cmoco_sys_dev -> /cmoco_sys_dev/share/cmoco_sys_dev/nfs/cmoco_sys_dev`.
+
+I have a `/storage` bind point in the image, which I bind to the top level 
+directory with `-B /gpfs/share/cmoco_sys_dev/nfs/storage:/storage`, and the 
+current working directory actually is mounted.
+
+Here is a transcript of a manual replication of this problem:
+
+```
+cubipmcmp001:~$ cd 
+/gpfs/share/cmoco_sys_dev/nfs/storage/cromwell/cromwell-executions/PairedEndSingleSampleWorkflow/8ae5051e-2950-42f8-bd07-6ad251077e06/call-CollectQualityYieldMetrics/shard-0/execution
+cubipmcmp001:execution$ pwd
+/gpfs/share/cmoco_sys_dev/nfs/storage/cromwell/cromwell-executions/PairedEndSingleSampleWorkflow/8ae5051e-2950-42f8-bd07-6ad251077e06/call-CollectQualityYieldMetrics/shard-0/execution
+cubipmcmp001:execution$ 
+/gpfs/software/singularity/singularity2.4.2c/bin/singularity shell -B 
+/gpfs/share/cmoco_sys_dev/nfs/storage:/storage 
+/gpfs/share/cmoco_sys_dev/nfs/storage/germline/applications/singularity/GATK.simg
+Singularity: Invoking an interactive shell within container...
+
+Singularity 
+singularity_GATK_3.8-0_4.0.1.0_picard2.17.6_samtools1.7_jre8u162_python3.6.4_2018-02-10.simg:~> 
+pwd
+/homelink/yoursham
+Singularity 
+singularity_GATK_3.8-0_4.0.1.0_picard2.17.6_samtools1.7_jre8u162_python3.6.4_2018-02-10.simg:~> 
+ls -l 
+/storage/cromwell/cromwell-executions/PairedEndSingleSampleWorkflow/8ae5051e-2950-42f8-bd07-6ad251077e06/call-CollectQualityYieldMetrics/shard-0/execution/
+total 32
+-rw-rw---- 1 2001912691 ticr_cmoco_sys_dev     2 Feb 10 16:45 rc
+-rw-r--r-- 1 2001912691 ticr_cmoco_sys_dev  2243 Feb 10 16:43 script
+-rw-r--r-- 1 2001912691 ticr_cmoco_sys_dev  1045 Feb 10 16:43 script.submit
+-rw-rw---- 1 2001912691 ticr_cmoco_sys_dev 13156 Feb 10 16:45 stderr
+-rw-r--r-- 1 2001912691 ticr_cmoco_sys_dev   972 Feb 10 16:43 stderr.submit
+-rw-rw---- 1 2001912691 ticr_cmoco_sys_dev     0 Feb 10 16:43 stdout
+-rw-r--r-- 1 2001912691 ticr_cmoco_sys_dev    27 Feb 10 16:43 stdout.submit
+drwxrwxrwx 2 2001912691 ticr_cmoco_sys_dev  4096 Feb 10 16:43 tmp.LToYy9
+Singularity 
+singularity_GATK_3.8-0_4.0.1.0_picard2.17.6_samtools1.7_jre8u162_python3.6.4_2018-02-10.simg:~> 
+cd 
+/storage/cromwell/cromwell-executions/PairedEndSingleSampleWorkflow/8ae5051e-2950-42f8-bd07-6ad251077e06/call-CollectQualityYieldMetrics/shard-0/execution/
+Singularity 
+singularity_GATK_3.8-0_4.0.1.0_picard2.17.6_samtools1.7_jre8u162_python3.6.4_2018-02-10.simg:/storage/cromwell/cromwell-executions/PairedEndSingleSampleWorkflow/8ae5051e-2950-42f8-bd07-6ad251077e06/call-CollectQualityYieldMetrics/shard-0/execution> 
+ls -l
+total 32
+-rw-rw---- 1 2001912691 ticr_cmoco_sys_dev     2 Feb 10 16:45 rc
+-rw-r--r-- 1 2001912691 ticr_cmoco_sys_dev  2243 Feb 10 16:43 script
+-rw-r--r-- 1 2001912691 ticr_cmoco_sys_dev  1045 Feb 10 16:43 script.submit
+-rw-rw---- 1 2001912691 ticr_cmoco_sys_dev 13156 Feb 10 16:45 stderr
+-rw-r--r-- 1 2001912691 ticr_cmoco_sys_dev   972 Feb 10 16:43 stderr.submit
+-rw-rw---- 1 2001912691 ticr_cmoco_sys_dev     0 Feb 10 16:43 stdout
+-rw-r--r-- 1 2001912691 ticr_cmoco_sys_dev    27 Feb 10 16:43 stdout.submit
+drwxrwxrwx 2 2001912691 ticr_cmoco_sys_dev  4096 Feb 10 16:43 tmp.LToYy9
+```
+
+
+------=_Part_7348_1700242819.1518387965481
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">I&#39;m running a singularity image that contains java and=
+ other genetics applications. I use the Broad Institute Cromwell workflow e=
+ngine running on a virtual machine to submit jobs to a Slurm-managed comput=
+e cluster.<div><br></div><div>My version of Singularity is a December 2017 =
+patched version of 2.4.2 that fixed problems binding to our file system. We=
+ have named this patch 2.4.2c on our system. See=C2=A0<a href=3D"https://gi=
+thub.com/singularityware/singularity/issues/1205">Unable to bind directorie=
+s on NFS filesystem, &quot;permission denied&quot; error even though I have=
+ permission #1205</a> for details.</div><div><br></div><div>Cromwell submit=
+s a job with a script that essentially:</div><div>=C2=A0 =C2=A0 - sets the =
+current working directory to an &#39;execution&#39; directory</div><div>=C2=
+=A0 =C2=A0 - invokes singularity exec to execute a java application whose o=
+utputs are expected to go to the current working directory that was previou=
+sly set.</div><div><br></div><div>Instead, output is going to the home dire=
+ctory of the user that is running the job.</div><div><br></div><div>The hom=
+e directories have non-standard names, like `/homelink/cmoco_sys_dev` and a=
+ctually are are symbloic links like `cmoco_sys_dev=C2=A0-&gt; /cmoco_sys_de=
+v/share/cmoco_sys_dev/nfs/cmoco_sys_dev`.</div><div><br></div><div>I have a=
+ `/storage` bind point in the image, which I bind to the top level director=
+y with `-B /gpfs/share/cmoco_sys_dev/nfs/storage:/storage`, and the current=
+ working directory actually is mounted.</div><div><br></div><div>Here is a =
+transcript of a manual replication of this problem:</div><div><br><div>```<=
+/div><div><div>cubipmcmp001:~$ cd /gpfs/share/cmoco_sys_dev/nfs/storage/cro=
+mwell/cromwell-executions/PairedEndSingleSampleWorkflow/8ae5051e-2950-42f8-=
+bd07-6ad251077e06/call-CollectQualityYieldMetrics/shard-0/execution</div><d=
+iv>cubipmcmp001:execution$ pwd</div><div>/gpfs/share/cmoco_sys_dev/nfs/stor=
+age/cromwell/cromwell-executions/PairedEndSingleSampleWorkflow/8ae5051e-295=
+0-42f8-bd07-6ad251077e06/call-CollectQualityYieldMetrics/shard-0/execution<=
+/div><div>cubipmcmp001:execution$ /gpfs/software/singularity/singularity2.4=
+.2c/bin/singularity shell -B /gpfs/share/cmoco_sys_dev/nfs/storage:/storage=
+ /gpfs/share/cmoco_sys_dev/nfs/storage/germline/applications/singularity/GA=
+TK.simg</div><div>Singularity: Invoking an interactive shell within contain=
+er...</div><div><br></div><div>Singularity singularity_GATK_3.8-0_4.0.1.0_p=
+icard2.17.6_samtools1.7_jre8u162_python3.6.4_2018-02-10.simg:~&gt; pwd</div=
+><div>/homelink/yoursham</div><div>Singularity singularity_GATK_3.8-0_4.0.1=
+.0_picard2.17.6_samtools1.7_jre8u162_python3.6.4_2018-02-10.simg:~&gt; ls -=
+l /storage/cromwell/cromwell-executions/PairedEndSingleSampleWorkflow/8ae50=
+51e-2950-42f8-bd07-6ad251077e06/call-CollectQualityYieldMetrics/shard-0/exe=
+cution/</div><div>total 32</div><div>-rw-rw---- 1 2001912691 ticr_cmoco_sys=
+_dev=C2=A0 =C2=A0 =C2=A02 Feb 10 16:45 rc</div><div>-rw-r--r-- 1 2001912691=
+ ticr_cmoco_sys_dev=C2=A0 2243 Feb 10 16:43 script</div><div>-rw-r--r-- 1 2=
+001912691 ticr_cmoco_sys_dev=C2=A0 1045 Feb 10 16:43 script.submit</div><di=
+v>-rw-rw---- 1 2001912691 ticr_cmoco_sys_dev 13156 Feb 10 16:45 stderr</div=
+><div>-rw-r--r-- 1 2001912691 ticr_cmoco_sys_dev=C2=A0 =C2=A0972 Feb 10 16:=
+43 stderr.submit</div><div>-rw-rw---- 1 2001912691 ticr_cmoco_sys_dev=C2=A0=
+ =C2=A0 =C2=A00 Feb 10 16:43 stdout</div><div>-rw-r--r-- 1 2001912691 ticr_=
+cmoco_sys_dev=C2=A0 =C2=A0 27 Feb 10 16:43 stdout.submit</div><div>drwxrwxr=
+wx 2 2001912691 ticr_cmoco_sys_dev=C2=A0 4096 Feb 10 16:43 tmp.LToYy9</div>=
+<div>Singularity singularity_GATK_3.8-0_4.0.1.0_picard2.17.6_samtools1.7_jr=
+e8u162_python3.6.4_2018-02-10.simg:~&gt; cd /storage/cromwell/cromwell-exec=
+utions/PairedEndSingleSampleWorkflow/8ae5051e-2950-42f8-bd07-6ad251077e06/c=
+all-CollectQualityYieldMetrics/shard-0/execution/</div><div>Singularity sin=
+gularity_GATK_3.8-0_4.0.1.0_picard2.17.6_samtools1.7_jre8u162_python3.6.4_2=
+018-02-10.simg:/storage/cromwell/cromwell-executions/PairedEndSingleSampleW=
+orkflow/8ae5051e-2950-42f8-bd07-6ad251077e06/call-CollectQualityYieldMetric=
+s/shard-0/execution&gt; ls -l</div><div>total 32</div><div>-rw-rw---- 1 200=
+1912691 ticr_cmoco_sys_dev=C2=A0 =C2=A0 =C2=A02 Feb 10 16:45 rc</div><div>-=
+rw-r--r-- 1 2001912691 ticr_cmoco_sys_dev=C2=A0 2243 Feb 10 16:43 script</d=
+iv><div>-rw-r--r-- 1 2001912691 ticr_cmoco_sys_dev=C2=A0 1045 Feb 10 16:43 =
+script.submit</div><div>-rw-rw---- 1 2001912691 ticr_cmoco_sys_dev 13156 Fe=
+b 10 16:45 stderr</div><div>-rw-r--r-- 1 2001912691 ticr_cmoco_sys_dev=C2=
+=A0 =C2=A0972 Feb 10 16:43 stderr.submit</div><div>-rw-rw---- 1 2001912691 =
+ticr_cmoco_sys_dev=C2=A0 =C2=A0 =C2=A00 Feb 10 16:43 stdout</div><div>-rw-r=
+--r-- 1 2001912691 ticr_cmoco_sys_dev=C2=A0 =C2=A0 27 Feb 10 16:43 stdout.s=
+ubmit</div><div>drwxrwxrwx 2 2001912691 ticr_cmoco_sys_dev=C2=A0 4096 Feb 1=
+0 16:43 tmp.LToYy9</div><div>```<br></div></div><div><br></div></div></div>
+------=_Part_7348_1700242819.1518387965481--
+
+------=_Part_7347_1621992888.1518387965481--

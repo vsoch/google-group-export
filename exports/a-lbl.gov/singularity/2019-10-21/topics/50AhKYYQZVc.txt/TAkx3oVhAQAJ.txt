@@ -1,0 +1,100 @@
+Date: Thu, 12 Oct 2017 09:33:39 -0700 (PDT)
+From: Martin Cuma <mart...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <1c7fdbbb-2f44-4088-9e43-929f9fbbb6ed@lbl.gov>
+In-Reply-To: <42a43eb6-8dea-45b5-9776-4e9ae7195f78@lbl.gov>
+References: <42a43eb6-8dea-45b5-9776-4e9ae7195f78@lbl.gov>
+Subject: Re: Best practice with MPI and singularity
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_722_268148283.1507826019826"
+
+------=_Part_722_268148283.1507826019826
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_723_1471311353.1507826019826"
+
+------=_Part_723_1471311353.1507826019826
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Steven,
+
+IMO the main issue is the container portability (be able to run on any 
+host) vs. ability to run in parallel on multiple hosts.
+
+If you run just on one host, you package into the container whatever MPI 
+you want and run MPI program inside any single host inside the container: 
+singularity exec my.img mpirun -np 4 myprog.
+
+When running in parallel on multiple hosts, the container needs to be 
+launched with the host based MPI so there has to be some level of 
+compatibility between the host and container MPI. They don't necessarily 
+need to be exactly the same, but binary compatible. 
+
+I have tested various recent MPICH derivatives (MPICH, MVAPICH2, Intel MPI) 
+- though not exhaustively, and since they share common ABI 
+(https://wiki.mpich.org/mpich/index.php/ABI_Compatibility_Initiative), most 
+of the time, they work with each other (the exception being one MPI is 
+built with an option which the other MPI build does not have - example of 
+that is an Ubuntu stock MPICH which uses BLCR checkpointing which Intel MPI 
+does not package - see a container we did that revealed this at 
+https://github.com/CHPC-UofU/Singularity-meep-mpi).
+
+What we also did was to simply bring in our clusters LMod modules, and then 
+use the MPI binaries from the host in the container. If the MPI is built 
+with old enough glibc (e.g. Intel MPI), it works on many Linux distros. 
+Though, this obviously is not very portable. 
+
+My choice for an as portable as possible container would be basic MPICH 
+build inside the container (no IB, BLCR, etc), with the container user 
+having the choice to use MPICH ABI compatible MPIs like MVAPICH2, IMPI, or 
+Cray MPI. To bring in IB, one would have to LD_PRELOAD or prepend 
+LD_LIBRARY_PATH with the libmpi.so from the host that has the IB support 
+built in.
+
+OpenMPI has its own ABI and seems to be more aware of the container vs. 
+host binary compatibility 
+(https://github.com/open-mpi/ompi/wiki/Container-Versioning), but perhaps 
+that's just because its ABI is more fluid than that of MPICH.
+
+HTH,
+MC 
+
+
+
+------=_Part_723_1471311353.1507826019826
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Steven,<br><br>IMO the main issue is the container portabi=
+lity (be able to run on any host) vs. ability to run in parallel on multipl=
+e hosts.<br><br>If you run just on one host, you package into the container=
+ whatever MPI you want and run MPI program inside any single host inside th=
+e container: singularity exec my.img mpirun -np 4 myprog.<br><br>When runni=
+ng in parallel on multiple hosts, the container needs to be launched with t=
+he host based MPI so there has to be some level of compatibility between th=
+e host and container MPI. They don&#39;t necessarily need to be exactly the=
+ same, but binary compatible. <br><br>I have tested various recent MPICH de=
+rivatives (MPICH, MVAPICH2, Intel MPI) - though not exhaustively, and since=
+ they share common ABI (https://wiki.mpich.org/mpich/index.php/ABI_Compatib=
+ility_Initiative), most of the time, they work with each other (the excepti=
+on being one MPI is built with an option which the other MPI build does not=
+ have - example of that is an Ubuntu stock MPICH which uses BLCR checkpoint=
+ing which Intel MPI does not package - see a container we did that revealed=
+ this at https://github.com/CHPC-UofU/Singularity-meep-mpi).<br><br>What we=
+ also did was to simply bring in our clusters LMod modules, and then use th=
+e MPI binaries from the host in the container. If the MPI is built with old=
+ enough glibc (e.g. Intel MPI), it works on many Linux distros. Though, thi=
+s obviously is not very portable. <br><br>My choice for an as portable as p=
+ossible container would be basic MPICH build inside the container (no IB, B=
+LCR, etc), with the container user having the choice to use MPICH ABI compa=
+tible MPIs like MVAPICH2, IMPI, or Cray MPI. To bring in IB, one would have=
+ to LD_PRELOAD or prepend LD_LIBRARY_PATH with the libmpi.so from the host =
+that has the IB support built in.<br><br>OpenMPI has its own ABI and seems =
+to be more aware of the container vs. host binary compatibility (https://gi=
+thub.com/open-mpi/ompi/wiki/Container-Versioning), but perhaps that&#39;s j=
+ust because its ABI is more fluid than that of MPICH.<br><br>HTH,<br>MC <br=
+><br><br></div>
+------=_Part_723_1471311353.1507826019826--
+
+------=_Part_722_268148283.1507826019826--

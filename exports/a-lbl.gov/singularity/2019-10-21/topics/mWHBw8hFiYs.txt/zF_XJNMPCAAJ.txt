@@ -1,0 +1,269 @@
+Date: Mon, 9 Apr 2018 18:12:44 -0700 (PDT)
+From: Andrew McKay <andrew...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <44537886-c613-4fe1-80bf-fc69af7edb3e@lbl.gov>
+In-Reply-To: <5ea85658-34e6-494a-bbd7-2588f8708706@lbl.gov>
+References: <3f25d995-bdbc-4e11-90ac-e279709a641a@lbl.gov>
+ <CAM=pu++1chEiYy=QKvYq+=JUZwkjpDPjSQQfYmuzjNxsxyoTSw@mail.gmail.com>
+ <5ea85658-34e6-494a-bbd7-2588f8708706@lbl.gov>
+Subject: Re: [Singularity] Same image, different versions of software
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_23381_1620957927.1523322764256"
+
+------=_Part_23381_1620957927.1523322764256
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_23382_1129847256.1523322764256"
+
+------=_Part_23382_1129847256.1523322764256
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Along these lines, how would one best incorporate Julia packages into a 
+singularity container? I've been trying a few things but to no avail. Is 
+the best approach not to expose files? How would one do this?
+
+I think I need to create a directory in the container during the build that 
+is only within the container and I can access on the slurm cluster. To 
+these ends, I'm trying to export the JULIA_PKGDIR environmental variable 
+during the build, but on the cluster this isn't retained. For reference, 
+I'm pulling the official julia image from the docker site 
+(https://hub.docker.com/_/julia/).
+
+Any help would be appreciated, and for reference, I'm working on the 
+stanford sherlock 2.0 cluster. I'm running vagrant on my mac with sudo and 
+singularity 2.4-dist, and 2.4.6 on the slurm cluster. My recipe for 
+troubleshooting is attached below.
+
+Thank you for your help!
+Andrew
+
+
+Bootstrap: docker
+From: julia:0.6.2
+
+%runscript
+exec echo "The runscript is the containers default runtime command!"
+
+%files
+img_proc_3.29.18.jl   # copied to root of container
+load_packages.jl
+
+%environment
+
+%labels
+
+%post
+
+echo 'Pkg.init(); Pkg.update(); Pkg.add("Flux");  using Flux;' > script.jl
+/usr/local/julia/bin/julia script.jl
+
+
+
+On Tuesday, December 26, 2017 at 1:00:55 PM UTC-8, Tyler Benster wrote:
+>
+> Indeed, that was the problem! For now I've fixed by updating the git repo 
+> in ~/.julia on the HPC. For future reference, how can I build without 
+> exposing the files?
+>
+> Thanks, Vanessa!
+>
+> On Tuesday, December 26, 2017 at 7:06:31 AM UTC-8, vanessa wrote:
+>>
+>> Hey Tyler,
+>>
+>> When you do package update, aren't there some files in your home 
+>> directory that are used for the action? Eg, something like 
+>> $HOME/.julia/v4.0/REQUIRE. Then I would wonder about any settings that 
+>> might be triggering this difference on the host. For reference I'm reading 
+>> here --> 
+>> https://docs.julialang.org/en/release-0.4/manual/packages/#updating-packages. 
+>> You could try checking those locations, and then perhaps doing the build 
+>> without exposing those files.
+>>
+>> Best,
+>>
+>> Vanessa
+>>
+>> On Tue, Dec 26, 2017 at 2:28 AM, Tyler Benster <t...@stanford.edu> 
+>> wrote:
+>>
+>>> Hi all,
+>>>
+>>> I'm a new Singularity user and seem to be missing something basic, as I 
+>>> see two different versions of software when I run the same image on two 
+>>> different machines. When I run `sudo singularity build jl.simg Singularity 
+>>> && singularity exec jl.simg julia` followed by `julia> 
+>>> Pkg.installed("ClusterManagers")` on my local machine, I see that the 
+>>> version of ClusterManagers is "0.1.2+" as expected per the install by 
+>>> Pkg.clone(). But when I run on an HPC cluster using the same .simg file, 
+>>> the version is "0.1.2". What am I missing? Many thanks! 
+>>>
+>>> Singularity:
+>>> BootStrap: docker
+>>> From: julia:0.6.2
+>>>
+>>> %help
+>>>     Pass script to run as argument.
+>>>
+>>> %setup
+>>>     mkdir ${SINGULARITY_ROOTFS}/script
+>>> %files
+>>>     install_packages.jl /tmp
+>>>     main.jl /script
+>>>
+>>> %post
+>>>     /usr/local/julia/bin/julia /tmp/install_packages.jl
+>>>
+>>> %runscript
+>>>     if ["$*" = ""]; then
+>>>         julia ${SINGULARITY_ROOTFS}/script/main.jl
+>>>     else
+>>>         julia $*
+>>>     fi
+>>>
+>>> install_packages.jl:
+>>> Pkg.update()
+>>> Pkg.clone("https://github.com/JuliaParallel/ClusterManagers.jl
+>>> ","ClusterManagers")
+>>>
+>>> main.jl:
+>>> using ClusterManagers
+>>> println("hello, world")
+>>>
+>>>
+>>>
+>>> -- 
+>>> You received this message because you are subscribed to the Google 
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>> an email to singu...@lbl.gov.
+>>>
+>>
+>>
+>>
+>> -- 
+>> Vanessa Villamia Sochat
+>> Stanford University '16
+>> (603) 321-0676
+>>
+>
+------=_Part_23382_1129847256.1523322764256
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Along these lines, how would one best incorporate Jul=
+ia packages into a singularity container? I&#39;ve been trying a few things=
+ but to no avail. Is the best approach not to expose files? How would one d=
+o this?</div><div><br></div><div>I think I need to create a directory in th=
+e container during the build that is only within the container and I can ac=
+cess on the slurm cluster. To these ends, I&#39;m trying to export the JULI=
+A_PKGDIR environmental variable during the build, but on the cluster this i=
+sn&#39;t retained. For reference, I&#39;m pulling the official julia image =
+from the docker site (https://hub.docker.com/_/julia/).</div><div><br></div=
+><div>Any help would be appreciated, and for reference, I&#39;m working on =
+the stanford sherlock 2.0 cluster. I&#39;m running vagrant on my mac with s=
+udo and singularity 2.4-dist, and 2.4.6 on the slurm cluster. My recipe for=
+ troubleshooting is attached below.</div><div><br></div><div>Thank you for =
+your help!</div><div>Andrew</div><div><br></div><div><br></div><div><div>Bo=
+otstrap: docker</div><div>From: julia:0.6.2</div><div><br></div><div>%runsc=
+ript</div><div>exec echo &quot;The runscript is the containers default runt=
+ime command!&quot;</div><div><br></div><div>%files</div><div>img_proc_3.29.=
+18.jl=C2=A0 =C2=A0# copied to root of container</div><div>load_packages.jl<=
+/div><div><br></div><div>%environment</div><div><br></div><div>%labels</div=
+><div><br></div><div>%post</div><div><br></div><div>echo &#39;Pkg.init(); P=
+kg.update(); Pkg.add(&quot;Flux&quot;);=C2=A0 using Flux;&#39; &gt; script.=
+jl</div><div>/usr/local/julia/bin/julia script.jl</div></div><div><br></div=
+><br><br>On Tuesday, December 26, 2017 at 1:00:55 PM UTC-8, Tyler Benster w=
+rote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8e=
+x;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">Indeed, =
+that was the problem! For now I&#39;ve fixed by updating the git repo in ~/=
+.julia on the HPC. For future reference, how can I build without exposing t=
+he files?<div><br></div><div>Thanks, Vanessa!<br><br>On Tuesday, December 2=
+6, 2017 at 7:06:31 AM UTC-8, vanessa wrote:<blockquote class=3D"gmail_quote=
+" style=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-le=
+ft:1ex"><div dir=3D"ltr">Hey Tyler,<div><br></div><div>When you do package =
+update, aren&#39;t there some files in your home directory that are used fo=
+r the action? Eg, something like $HOME/.julia/v4.0/REQUIRE. Then I would wo=
+nder about any settings that might be triggering this difference on the hos=
+t. For reference I&#39;m reading here --&gt;=C2=A0<a href=3D"https://docs.j=
+ulialang.org/en/release-0.4/manual/packages/#updating-packages" rel=3D"nofo=
+llow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.google.=
+com/url?q\x3dhttps%3A%2F%2Fdocs.julialang.org%2Fen%2Frelease-0.4%2Fmanual%2=
+Fpackages%2F%23updating-packages\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGm=
+p0hLbos74Jj6cLPL1p4p40VA3A&#39;;return true;" onclick=3D"this.href=3D&#39;h=
+ttps://www.google.com/url?q\x3dhttps%3A%2F%2Fdocs.julialang.org%2Fen%2Frele=
+ase-0.4%2Fmanual%2Fpackages%2F%23updating-packages\x26sa\x3dD\x26sntz\x3d1\=
+x26usg\x3dAFQjCNGmp0hLbos74Jj6cLPL1p4p40VA3A&#39;;return true;">https://doc=
+s.julialang.<wbr>org/en/release-0.4/manual/<wbr>packages/#updating-packages=
+</a>. You could try checking those locations, and then perhaps doing the bu=
+ild without exposing those files.</div><div><br></div><div>Best,</div><div>=
+<br></div><div>Vanessa</div></div><div><br><div class=3D"gmail_quote">On Tu=
+e, Dec 26, 2017 at 2:28 AM, Tyler Benster <span dir=3D"ltr">&lt;<a rel=3D"n=
+ofollow">t...@stanford.edu</a>&gt;</span> wrote:<br><blockquote class=3D"gm=
+ail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-le=
+ft:1ex"><div dir=3D"ltr">Hi all,<div><br></div><div>I&#39;m a new Singulari=
+ty user and seem to be missing something basic, as I see two different vers=
+ions of software when I run the same image on two different machines. When =
+I run `sudo singularity build jl.simg Singularity &amp;&amp; singularity ex=
+ec jl.simg julia` followed by `julia&gt; Pkg.installed(&quot;<wbr>ClusterMa=
+nagers&quot;)` on my local machine, I see that the version of=C2=A0<span st=
+yle=3D"background-color:rgb(250,250,250);font-family:monospace">ClusterMana=
+gers</span>=C2=A0is &quot;0.1.2+&quot; as expected per the install by Pkg.c=
+lone(). But when I run on an HPC cluster using the same .simg file, the ver=
+sion is &quot;0.1.2&quot;. What am I missing? Many thanks!=C2=A0</div><div>=
+<br></div><div>Singularity:</div><div><div style=3D"background-color:rgb(25=
+0,250,250);border-color:rgb(187,187,187);border-style:solid;border-width:1p=
+x;word-wrap:break-word"><code><div><div><font color=3D"#660066">BootStrap: =
+docker</font></div><div><font color=3D"#660066">From: julia:0.6.2</font></d=
+iv><div><font color=3D"#660066"><br></font></div><div><font color=3D"#66006=
+6">%help</font></div><div><font color=3D"#660066">=C2=A0 =C2=A0 Pass script=
+ to run as argument.</font></div><div><font color=3D"#660066"><br></font></=
+div><div><font color=3D"#660066">%setup</font></div><div><font color=3D"#66=
+0066">=C2=A0 =C2=A0 mkdir ${SINGULARITY_ROOTFS}/script</font></div><div><fo=
+nt color=3D"#660066">%files</font></div><div><font color=3D"#660066">=C2=A0=
+ =C2=A0 install_packages.jl /tmp</font></div><div><font color=3D"#660066">=
+=C2=A0 =C2=A0 main.jl /script</font></div><div><font color=3D"#660066"><br>=
+</font></div><div><font color=3D"#660066">%post</font></div><div><font colo=
+r=3D"#660066">=C2=A0 =C2=A0 /usr/local/julia/bin/julia /tmp/install_package=
+s.jl</font></div><div><font color=3D"#660066"><br></font></div><div><font c=
+olor=3D"#660066">%runscript</font></div><div><font color=3D"#660066">=C2=A0=
+ =C2=A0 if [&quot;$*&quot; =3D &quot;&quot;]; then</font></div><div><font c=
+olor=3D"#660066">=C2=A0 =C2=A0 =C2=A0 =C2=A0 julia ${SINGULARITY_ROOTFS}/sc=
+ript/<wbr>main.jl</font></div><div><font color=3D"#660066">=C2=A0 =C2=A0 el=
+se</font></div><div><font color=3D"#660066">=C2=A0 =C2=A0 =C2=A0 =C2=A0 jul=
+ia $*</font></div><div><font color=3D"#660066">=C2=A0 =C2=A0 fi</font></div=
+></div></code></div><br>install_packages.jl:</div><div><div style=3D"backgr=
+ound-color:rgb(250,250,250);border-color:rgb(187,187,187);border-style:soli=
+d;border-width:1px;word-wrap:break-word"><code><div><div>Pkg.update()</div>=
+<div>Pkg.clone(&quot;<a href=3D"https://github.com/JuliaParallel/ClusterMan=
+agers.jl" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#3=
+9;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2FJuliaParallel%=
+2FClusterManagers.jl\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFkICx2rq__wjnW=
+mdOZVILZiXWhBQ&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.g=
+oogle.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2FJuliaParallel%2FClusterManage=
+rs.jl\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFkICx2rq__wjnWmdOZVILZiXWhBQ&=
+#39;;return true;">https://github.com/<wbr>JuliaParallel/ClusterManagers.<w=
+br>jl</a>&quot;,&quot;ClusterManagers&quot;)</div></div></code></div><div><=
+br></div>main.jl:<br><div style=3D"background-color:rgb(250,250,250);border=
+-color:rgb(187,187,187);border-style:solid;border-width:1px;word-wrap:break=
+-word"><code><div><div>using ClusterManagers</div><div>println(&quot;hello,=
+ world&quot;)</div><span><font color=3D"#888888"><div><br></div></font></sp=
+an></div></code></div><span><font color=3D"#888888"><br><br></font></span><=
+/div></div><span><font color=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div>=
+<div>(603) 321-0676</div></div></div></div>
+</div>
+</blockquote></div></div></blockquote></div>
+------=_Part_23382_1129847256.1523322764256--
+
+------=_Part_23381_1620957927.1523322764256--

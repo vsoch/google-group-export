@@ -1,0 +1,283 @@
+X-Received: by 10.107.6.105 with SMTP id 102mr2808057iog.77.1489677679079;
+        Thu, 16 Mar 2017 08:21:19 -0700 (PDT)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.107.47.96 with SMTP id j93ls814834ioo.54.gmail; Thu, 16 Mar
+ 2017 08:21:18 -0700 (PDT)
+X-Received: by 10.98.193.69 with SMTP id i66mr10924633pfg.35.1489677678212;
+        Thu, 16 Mar 2017 08:21:18 -0700 (PDT)
+Return-Path: <gmku...@lbl.gov>
+Received: from fe4.lbl.gov (fe4.lbl.gov. [128.3.41.71])
+        by mx.google.com with ESMTP id n6si5626878pla.76.2017.03.16.08.21.18
+        for <singu...@lbl.gov>;
+        Thu, 16 Mar 2017 08:21:18 -0700 (PDT)
+Received-SPF: pass (google.com: domain of gmku...@lbl.gov designates 209.85.220.200 as permitted sender) client-ip=209.85.220.200;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of gmku...@lbl.gov designates 209.85.220.200 as permitted sender) smtp.mailfrom=gmku...@lbl.gov
+X-Ironport-SBRS: 2.7
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2F1AADIrMpYf8jcVdFeHAEBBAEBCgEBFwEBBAEBCgEBgkOBRHgSB4NSCIoPkViCZI0thS6BSxsoHwEGgXOCL4FaAoJ/Bz8YAQEBAQEBAQEBAQECEAEBCQsLCCYxgjMEAgMZBQQERiYDLgEBAQEBAQEBAQEBAQEBAQEaAg0iDwMpAQEBAQIBIyswCwsLDSoCAiIPAwEFARwGCAcEARwEiH1aCAWkSD+MA4ImilEBAQEBBgEBAQEBIxKLK4QmEQGDIoJAHwWQWoUmhkUBhnaLR4JPjlqSBRQfgRUPEIEEMQgaCzlnBYQCglkgNQeHE0eBZwEBAQ
+X-IronPort-AV: E=Sophos;i="5.36,173,1486454400"; 
+   d="scan'208,217";a="67679261"
+Received: from mail-qk0-f200.google.com ([209.85.220.200])
+  by fe4.lbl.gov with ESMTP; 16 Mar 2017 08:21:15 -0700
+Received: by mail-qk0-f200.google.com with SMTP id a189so43031875qkc.4
+        for <singu...@lbl.gov>; Thu, 16 Mar 2017 08:21:15 -0700 (PDT)
+X-Gm-Message-State: AFeK/H2ihRLmERj+AF/m+0O21S1DBJed3XpY4MM+3FIC0X7JIzpczqM8GxQt5NNLkQ6QcfjBuWFWE27o7j6fd2fWAcJ6cIjS4xFNfo8yATzkQ+J40X0fpr3MEkNR10hC3NVAdcUVGN5Gb5Y9ZGDzglOTASI=
+X-Received: by 10.37.203.9 with SMTP id b9mr3211908ybg.13.1489677675067;
+        Thu, 16 Mar 2017 08:21:15 -0700 (PDT)
+X-Received: by 10.37.203.9 with SMTP id b9mr3211888ybg.13.1489677674770; Thu,
+ 16 Mar 2017 08:21:14 -0700 (PDT)
+MIME-Version: 1.0
+Received: by 10.129.110.69 with HTTP; Thu, 16 Mar 2017 08:21:14 -0700 (PDT)
+In-Reply-To: <CAPVZOdEXiTNMOM_9wL=1ad4zmrutgbrq8vMctObJXJ+18Uef9Q@mail.gmail.com>
+References: <CAPVZOdEGqvMd6Z0i5LdecozqdjonJjA2LQ83H6KswNyUW8NV4Q@mail.gmail.com>
+ <CAN7etTzN78QTncEZ0n0yxwkcVLehDgGEd_xpSN9qGv2CM5yH0g@mail.gmail.com> <CAPVZOdEXiTNMOM_9wL=1ad4zmrutgbrq8vMctObJXJ+18Uef9Q@mail.gmail.com>
+From: "Gregory M. Kurtzer" <gmku...@lbl.gov>
+Date: Thu, 16 Mar 2017 08:21:14 -0700
+Message-ID: <CAN7etTw90doZQ+nW1gWihribJ+KZb6k4OJmwycTxik9CDazQMQ@mail.gmail.com>
+Subject: Re: [Singularity] forrtl: severe (29): file not found in container
+To: singularity <singu...@lbl.gov>
+Content-Type: multipart/alternative; boundary=94eb2c05bddea28978054ada9ce7
+
+--94eb2c05bddea28978054ada9ce7
+Content-Type: text/plain; charset=UTF-8
+
+Hi Balazs,
+
+Were you in the same directory (/tmp) when you executed the container? Can
+you come up with a simple reproducer?
+
+Thanks!
+
+On Wed, Mar 15, 2017 at 10:43 PM, Balazs Gerofi <bge...@riken.jp> wrote:
+
+> Hi Greg,
+>
+> thanks! strace revealed that the execution didn't know about the working
+> directory, it was marked as "unreachable".
+> I wrote a wrapper around the binary to explicitly cd into the working dir
+> first and then call exec(). With these steps it seems to work fine.
+>
+> Perhaps this is an issue with the bind mount.. ? My setup is a little
+> weird because I have the binary in /tmp, but I wonder how is that different
+> than having it under /home..
+>
+> Best,
+> Balazs
+>
+>
+>
+> On Thu, Mar 16, 2017 at 12:59 AM, Gregory M. Kurtzer <gmku...@lbl.gov>
+> wrote:
+>
+>> Heya Balazs,
+>>
+>> Hrmmmmm, can you strace the process from within the container?
+>>
+>> Greg
+>>
+>>
+>> On Wed, Mar 15, 2017 at 8:07 AM Balazs Gerofi <bge...@riken.jp> wrote:
+>>
+>>> Hello Everyone,
+>>>
+>>> I'm trying to run a Fortan mpi code in Singularity and I am getting a
+>>> weird error message that it can't find the input file.
+>>> The file is in the proper directory and if I run the mpi app natively it
+>>> finds it.
+>>> It's in /tmp which is bind mounted in the container.
+>>>
+>>> The error msg is:
+>>> forrtl: severe (29): file not found, unit 22,
+>>> file(//tmp/apps/CCS_QCD_Solver/run/solver_residual.log)
+>>>
+>>> Any idea what might be wrong?
+>>> The container sees the file, I mean if I go in and look at it from a
+>>> bash shell the file is there.
+>>>
+>>> Thanks,
+>>> Balazs
+>>>
+>>> --
+>>> You received this message because you are subscribed to the Google
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send
+>>> an email to singu...@lbl.gov.
+>>>
+>> --
+>> Gregory M. Kurtzer
+>> HPC Systems Architect and Technology Developer
+>> Lawrence Berkeley National Laboratory HPCS
+>> University of California Berkeley Research IT
+>> Singularity Linux Containers (http://singularity.lbl.gov/)
+>> Warewulf Cluster Management (http://warewulf.lbl.gov/)
+>> GitHub: https://github.com/gmkurtzer, Twitter: https://twitt
+>> er.com/gmkurtzer
+>>
+>> --
+>> You received this message because you are subscribed to the Google Groups
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an
+>> email to singu...@lbl.gov.
+>>
+>
+> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+>
+
+
+
+-- 
+Gregory M. Kurtzer
+HPC Systems Architect and Technology Developer
+Lawrence Berkeley National Laboratory HPCS
+University of California Berkeley Research IT
+Singularity Linux Containers (http://singularity.lbl.gov/)
+Warewulf Cluster Management (http://warewulf.lbl.gov/)
+GitHub: https://github.com/gmkurtzer, Twitter: https://twitter.com/gmkurtzer
+
+--94eb2c05bddea28978054ada9ce7
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Balazs,<div><br></div><div>Were you in the same directo=
+ry (/tmp) when you executed the container? Can you come up with a simple re=
+producer?</div><div><br></div><div>Thanks!</div></div><div class=3D"gmail_e=
+xtra"><br><div class=3D"gmail_quote">On Wed, Mar 15, 2017 at 10:43 PM, Bala=
+zs Gerofi <span dir=3D"ltr">&lt;<a href=3D"mailto:bge...@riken.jp" target=
+=3D"_blank">bge...@riken.jp</a>&gt;</span> wrote:<br><blockquote class=3D"g=
+mail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-l=
+eft:1ex"><div dir=3D"ltr">Hi Greg,<div><br></div><div>thanks! strace reveal=
+ed that the execution didn&#39;t know about the working directory, it was m=
+arked as &quot;unreachable&quot;.=C2=A0</div><div>I wrote a wrapper around =
+the binary to explicitly cd into the working dir first and then call exec()=
+. With these steps it seems to work fine.</div><div><br></div><div>Perhaps =
+this is an issue with the bind mount.. ? My setup is a little weird because=
+ I have the binary in /tmp, but I wonder how is that different than having =
+it under /home..=C2=A0</div><div><br></div><div>Best,</div><div>Balazs</div=
+><div><br></div><div><br></div></div><div class=3D"HOEnZb"><div class=3D"h5=
+"><div class=3D"gmail_extra"><br><div class=3D"gmail_quote">On Thu, Mar 16,=
+ 2017 at 12:59 AM, Gregory M. Kurtzer <span dir=3D"ltr">&lt;<a href=3D"mail=
+to:gmku...@lbl.gov" target=3D"_blank">gmku...@lbl.gov</a>&gt;</span> wrote:=
+<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-lef=
+t:1px #ccc solid;padding-left:1ex"><div>Heya Balazs,</div><div><br></div><d=
+iv>Hrmmmmm, can you strace the process from within the container?</div><div=
+><br></div><div>Greg</div><div><br></div><div><br><div class=3D"gmail_quote=
+"><div><div class=3D"m_4886686605918836943h5"><div>On Wed, Mar 15, 2017 at =
+8:07 AM Balazs Gerofi &lt;<a href=3D"mailto:bge...@riken.jp" target=3D"_bla=
+nk">bge...@riken.jp</a>&gt; wrote:<br></div></div></div><blockquote class=
+=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padd=
+ing-left:1ex"><div><div class=3D"m_4886686605918836943h5"><div class=3D"m_4=
+886686605918836943m_3933462335114990687gmail_msg"><span style=3D"color:rgb(=
+49,49,49);word-spacing:1px;background-color:rgb(255,255,255)" class=3D"m_48=
+86686605918836943m_3933462335114990687gmail_msg">Hello Everyone,</span></di=
+v><div class=3D"m_4886686605918836943m_3933462335114990687gmail_msg"><span =
+style=3D"color:rgb(49,49,49);word-spacing:1px;background-color:rgb(255,255,=
+255)" class=3D"m_4886686605918836943m_3933462335114990687gmail_msg"><br cla=
+ss=3D"m_4886686605918836943m_3933462335114990687gmail_msg"></span></div><di=
+v class=3D"m_4886686605918836943m_3933462335114990687gmail_msg"><span style=
+=3D"color:rgb(49,49,49);word-spacing:1px;background-color:rgb(255,255,255)"=
+ class=3D"m_4886686605918836943m_3933462335114990687gmail_msg">I&#39;m tryi=
+ng to run a Fortan mpi code in Singularity and I am getting a weird error m=
+essage that it can&#39;t find the input file.</span></div><div class=3D"m_4=
+886686605918836943m_3933462335114990687gmail_msg"><span style=3D"color:rgb(=
+49,49,49);word-spacing:1px;background-color:rgb(255,255,255)" class=3D"m_48=
+86686605918836943m_3933462335114990687gmail_msg">The file is in the proper =
+directory and if I run the mpi app natively it finds it.</span></div><div c=
+lass=3D"m_4886686605918836943m_3933462335114990687gmail_msg"><font color=3D=
+"#313131" class=3D"m_4886686605918836943m_3933462335114990687gmail_msg"><sp=
+an style=3D"word-spacing:1px;background-color:rgb(255,255,255)" class=3D"m_=
+4886686605918836943m_3933462335114990687gmail_msg">It&#39;s in /tmp which i=
+s bind mounted in the container.</span></font></div><span style=3D"color:rg=
+b(49,49,49);word-spacing:1px;background-color:rgb(255,255,255)" class=3D"m_=
+4886686605918836943m_3933462335114990687gmail_msg"><div class=3D"m_48866866=
+05918836943m_3933462335114990687gmail_msg"><span style=3D"color:rgb(49,49,4=
+9);word-spacing:1px;background-color:rgb(255,255,255)" class=3D"m_488668660=
+5918836943m_3933462335114990687gmail_msg"><br class=3D"m_488668660591883694=
+3m_3933462335114990687gmail_msg"></span></div>The error msg is:<br class=3D=
+"m_4886686605918836943m_3933462335114990687gmail_msg"></span><div class=3D"=
+m_4886686605918836943m_3933462335114990687gmail_msg" style=3D"color:rgb(49,=
+49,49);word-spacing:1px">forrtl: severe (29): file not found, unit 22, file=
+(//tmp/apps/CCS_QCD_Solver<wbr>/run/solver_residual.log)</div><div class=3D=
+"m_4886686605918836943m_3933462335114990687gmail_msg" style=3D"color:rgb(49=
+,49,49);word-spacing:1px"><br class=3D"m_4886686605918836943m_3933462335114=
+990687gmail_msg"></div><div class=3D"m_4886686605918836943m_393346233511499=
+0687gmail_msg" style=3D"color:rgb(49,49,49);word-spacing:1px">Any idea what=
+ might be wrong?</div><div class=3D"m_4886686605918836943m_3933462335114990=
+687gmail_msg" style=3D"color:rgb(49,49,49);word-spacing:1px">The container =
+sees the file, I mean if I go in and look at it from a bash shell the file =
+is there.</div><div class=3D"m_4886686605918836943m_3933462335114990687gmai=
+l_msg" style=3D"color:rgb(49,49,49);word-spacing:1px"><br class=3D"m_488668=
+6605918836943m_3933462335114990687gmail_msg"></div><div class=3D"m_48866866=
+05918836943m_3933462335114990687gmail_msg" style=3D"color:rgb(49,49,49);wor=
+d-spacing:1px">Thanks,</div><div class=3D"m_4886686605918836943m_3933462335=
+114990687gmail_msg" style=3D"color:rgb(49,49,49);word-spacing:1px">Balazs</=
+div>
+
+<p class=3D"m_4886686605918836943m_3933462335114990687gmail_msg"></p></div>=
+</div>
+
+-- <br class=3D"m_4886686605918836943m_3933462335114990687gmail_msg">
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br class=3D"m_4886686605918836943m_3933462335=
+114990687gmail_msg">
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" class=3D"m_4886686605918836943m=
+_3933462335114990687gmail_msg" target=3D"_blank">singularity+unsubscribe@lb=
+l.go<wbr>v</a>.<span class=3D"m_4886686605918836943HOEnZb"><font color=3D"#=
+888888"><br class=3D"m_4886686605918836943m_3933462335114990687gmail_msg">
+</font></span></blockquote></div></div><span class=3D"m_4886686605918836943=
+HOEnZb"><font color=3D"#888888"><div dir=3D"ltr">-- <br></div><div data-sma=
+rtmail=3D"gmail_signature"><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div=
+ dir=3D"ltr"><div><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div>G=
+regory M. Kurtzer</div><div>HPC Systems Architect and Technology Developer<=
+/div><div>Lawrence Berkeley National Laboratory HPCS<br>University of Calif=
+ornia Berkeley Research IT<br>Singularity Linux Containers=C2=A0(<a href=3D=
+"http://singularity.lbl.gov/" target=3D"_blank">http://singularity<wbr>.lbl=
+.gov/</a>)</div><div>Warewulf Cluster Management=C2=A0(<a href=3D"http://wa=
+rewulf.lbl.gov/" target=3D"_blank">http://warewulf.lb<wbr>l.gov/</a>)</div>=
+<div>GitHub:=C2=A0<a href=3D"https://github.com/gmkurtzer" target=3D"_blank=
+">https://github.com/gmk<wbr>urtzer</a>,=C2=A0<span style=3D"font-size:12.8=
+px">Twitter:=C2=A0</span><a href=3D"https://twitter.com/gmkurtzer" style=3D=
+"font-size:12.8px" target=3D"_blank">https://twitt<wbr>er.com/gmkurtzer</a>=
+</div></div></div></div></div></div></div></div></div></div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singularity+u=
+nsubscribe@lbl.go<wbr>v</a>.<br>
+</font></span></blockquote></div><br></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singularity+u=
+nsubscribe@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div class=3D"gmail_signature" data-smartmail=3D"gmail_signature"><div dir=
+=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr">=
+<div dir=3D"ltr"><div dir=3D"ltr"><div>Gregory M. Kurtzer</div><div>HPC Sys=
+tems Architect and Technology Developer</div><div>Lawrence Berkeley Nationa=
+l Laboratory HPCS<br>University of California Berkeley Research IT<br>Singu=
+larity Linux Containers=C2=A0(<a href=3D"http://singularity.lbl.gov/" targe=
+t=3D"_blank">http://singularity.lbl.gov/</a>)</div><div>Warewulf Cluster Ma=
+nagement=C2=A0(<a href=3D"http://warewulf.lbl.gov/" target=3D"_blank">http:=
+//warewulf.lbl.gov/</a>)</div><div>GitHub:=C2=A0<a href=3D"https://github.c=
+om/gmkurtzer" target=3D"_blank">https://github.com/gmkurtzer</a>,=C2=A0<spa=
+n style=3D"font-size:12.8px">Twitter:=C2=A0</span><a href=3D"https://twitte=
+r.com/gmkurtzer" style=3D"font-size:12.8px" target=3D"_blank">https://twitt=
+er.com/gmkurtzer</a></div></div></div></div></div></div></div></div></div><=
+/div></div>
+</div>
+
+--94eb2c05bddea28978054ada9ce7--

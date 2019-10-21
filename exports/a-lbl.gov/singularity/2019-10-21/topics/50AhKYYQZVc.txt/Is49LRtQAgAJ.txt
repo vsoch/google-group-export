@@ -1,0 +1,110 @@
+Date: Fri, 27 Oct 2017 08:46:39 -0700 (PDT)
+From: Steven Brandt <steven...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <abd4df33-d97c-46e5-8efa-2ae5fb05d647@lbl.gov>
+In-Reply-To: <42a43eb6-8dea-45b5-9776-4e9ae7195f78@lbl.gov>
+References: <42a43eb6-8dea-45b5-9776-4e9ae7195f78@lbl.gov>
+Subject: Re: Best practice with MPI and singularity
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1578_1591851639.1509119199831"
+
+------=_Part_1578_1591851639.1509119199831
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1579_1570286155.1509119199831"
+
+------=_Part_1579_1570286155.1509119199831
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+So I came up with an answer to my own question which may be of interest to 
+others. I inserted the code below into my bashrc. Once in place, I can edit 
+~/sing.txt to contain the path name of a valid singularity image. In this 
+way, I can use the same container to launch the jobs as to run them and 
+I don't have to worry about what choices in MPI I have available on the 
+machine I want to run on. To revert to my normal environment, I can delete 
+sing.txt, logout and login.
+
+I think this hack might be of interest to others.
+
+if [ -r $HOME/sing.txt ]
+then
+    IMAGE=$(cat $HOME/sing.txt)
+fi
+if [ "$IMAGE" != "" ]
+then
+    if [ -r "$IMAGE" ]
+    then
+        if [ "$SINGULARITY_CONTAINER" = "" ]
+        then
+            exec singularity exec $IMAGE bash --login
+        fi
+    else
+        echo Could not read image file $IMAGE
+    fi  
+fi
+
+On Wednesday, October 11, 2017 at 10:39:04 AM UTC-5, Steven Brandt wrote:
+>
+> From everything I've read, the way to use MPI and Singularity seems to be 
+> to have the same MPI inside and outside the container (where "the same" 
+> includes configuration options), and that MPI should probably be OpenMPI 
+> 2.0 or greater. The run command looks like this:
+>
+>   mpirun -np 4 -hosts file singularity exec my.img myprog
+>
+> Is that the best practice?
+>
+> Or is there a way to use the same MPI that's inside the container while on 
+> the outside?
+>
+> What I wish I could do is this:
+>
+>   singularity exec my.img mpirun -np 4 -hosts file singularity exec 
+> my.img myprog
+>
+> Then I could have one MPI to rule them all. Obviously, the above doesn't 
+> work due to permission issues. Thanks.
+>
+>
+>
+------=_Part_1579_1570286155.1509119199831
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">So I came up with an answer to my own question which may b=
+e of interest to others. I inserted the code below into my bashrc. Once in =
+place, I can edit ~/sing.txt to contain the path name of a valid singularit=
+y image. In this way, I can use the same container to launch the jobs as to=
+ run them and I=C2=A0don&#39;t have to worry about what choices in MPI I ha=
+ve available on the machine I want to run on. To revert to my normal enviro=
+nment, I can delete sing.txt, logout and login.<div><br></div><div>I think =
+this hack might be of interest to others.<div><br></div><div><div>if [ -r $=
+HOME/sing.txt ]</div><div>then</div><div>=C2=A0 =C2=A0 IMAGE=3D$(cat $HOME/=
+sing.txt)</div><div>fi</div><div>if [ &quot;$IMAGE&quot; !=3D &quot;&quot; =
+]</div><div>then</div><div>=C2=A0 =C2=A0 if [ -r &quot;$IMAGE&quot; ]</div>=
+<div>=C2=A0 =C2=A0 then</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 if [ &quot;$S=
+INGULARITY_CONTAINER&quot; =3D &quot;&quot; ]</div><div>=C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 then</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 exec si=
+ngularity exec $IMAGE bash --login</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 fi=
+</div><div>=C2=A0 =C2=A0 else</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 echo Co=
+uld not read image file $IMAGE</div><div>=C2=A0 =C2=A0 fi=C2=A0=C2=A0</div>=
+<div>fi</div><br>On Wednesday, October 11, 2017 at 10:39:04 AM UTC-5, Steve=
+n Brandt wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-=
+left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr=
+">From everything I&#39;ve read, the way to use MPI and Singularity seems t=
+o be to have the same MPI inside and outside the container (where &quot;the=
+ same&quot; includes configuration options), and that MPI should probably b=
+e OpenMPI 2.0 or greater. The run command looks like this:<div><br></div><d=
+iv>=C2=A0 mpirun -np 4 -hosts file singularity exec my.img=C2=A0myprog<br><=
+div><br></div><div>Is that the best practice?</div><div><br></div><div>Or i=
+s there a way to use the same MPI that&#39;s inside the container while on =
+the outside?</div></div><div><br></div><div>What I wish I could do is this:=
+</div><div><br></div><div>=C2=A0 singularity exec my.img=C2=A0mpirun=C2=A0-=
+np 4 -hosts file singularity exec my.img=C2=A0myprog</div><div><br></div><d=
+iv>Then I could have one MPI to rule them all. Obviously, the above doesn&#=
+39;t work due to permission issues. Thanks.</div><div><br></div><div><br></=
+div></div></blockquote></div></div></div>
+------=_Part_1579_1570286155.1509119199831--
+
+------=_Part_1578_1591851639.1509119199831--

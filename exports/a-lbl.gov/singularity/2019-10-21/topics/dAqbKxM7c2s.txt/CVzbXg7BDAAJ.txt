@@ -1,0 +1,351 @@
+Date: Tue, 31 Jan 2017 08:43:12 -0800 (PST)
+From: Xiaoyi Lu <cheri...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <3d1f4bbd-5f5c-44d2-989d-32c899f7a432@lbl.gov>
+In-Reply-To: <23dd4099-4149-4296-b9f7-a3e90cb21840@lbl.gov>
+References: <CAJm6r9-oXj4pPnoDY48u1Sf58dHtavBCF25Ca3QuxegqiHOkog@mail.gmail.com>
+ <23dd4099-4149-4296-b9f7-a3e90cb21840@lbl.gov>
+Subject: Re: [Singularity] Not able to return with MVAPICH2
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_7247_1150198618.1485880992580"
+
+------=_Part_7247_1150198618.1485880992580
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_7248_1609392226.1485880992581"
+
+------=_Part_7248_1609392226.1485880992581
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi, Krishna,
+
+Jie is traveling internationally. Here is the new update from us.
+
+We found that with mpirun_rsh, the parent process did not get back from 
+singularity_fork() in `singularity_sessiondir_init'.
+
+It seems that it keeps on waiting on signal from watchdog (poll(fds, 
+watchdog_rpipe == -1 ? 2 : 3, -1)).
+
+
+We are pretty sure this difference, compared to the case without 
+mpirun_rsh. 
+
+
+Any thoughts here?
+
+
+Thanks,
+
+Xiaoyi
+
+On Friday, January 27, 2017 at 11:18:59 AM UTC-5, Jie Zhang wrote:
+>
+> Thanks, Krishna,
+>
+> I corrected the way to run strace. 
+> 1. singularity exec singularity-centos7.img strace date
+> 2. mpirun_rsh -np 1  host1  singularity exec singularity-centos7.img 
+> strace date
+>
+> I see both of them show `+++exited with 0+++' at the end, even though it's 
+> stuck after that for #2.
+> The log files are attached below.
+>
+>  
+>
+> On Friday, January 27, 2017 at 3:47:30 AM UTC-5, Krishna Muriki wrote:
+>>
+>> Jie,
+>>
+>> What we should do is to run strace on the date command inside the 
+>> singularity container not on the singularity command itself. Mount this 
+>> singularity container singularity-centos7.img in read/write mode on your 
+>> endpoint, install strace package into it. After then when you invoke 
+>> mpirun_rsh run it like this:
+>>
+>> mpirun_rsh -np 1  host1  singularity exec singularity-centos7.img strace 
+>> date
+>>
+>> Thanks,
+>> Krishna.
+>>
+>> On Thu, Jan 26, 2017 at 10:55 PM, Jie Zhang <jes...@gmail.com> wrote:
+>>
+>>> Hi, Krishna,
+>>>
+>>> I tried adding strace to the plain singularity case (strace 
+>>> /usr/local/bin/singularity exec singularity-centos7.img date), what I found 
+>>> is that it actually exited with error (255) at the end 
+>>> (non-root-strace.log).
+>>> If trying with root (sudo strace /usr/local/bin/singularity exec 
+>>> singularity-centos7.img date), there's no error. (root-strace.log)
+>>> Trying with mpirun_rsh, it looks hanging on futex system call. 
+>>> (non-root-mpirun_rsh-strace.log)
+>>>
+>>> Please take a look at the log files attached below to see if you have 
+>>> any insight.
+>>>
+>>>
+>>>
+>>> On Thursday, January 26, 2017 at 8:10:22 PM UTC-5, Krishna Muriki wrote:
+>>>>
+>>>> Jie,
+>>>>
+>>>> Could you add strace to the container and run strace date to see why 
+>>>> the date process is going defunct ? Also first try running with -np 1 host1 
+>>>> and then scale to -np 2 and multiple nodes. 
+>>>>
+>>>> Thanks,
+>>>> Krishna.
+>>>>
+>>>> On Thu, Jan 26, 2017 at 5:07 PM, Jie Zhang <jes...@gmail.com> 
+>>>> wrote:
+>>>>
+>>>>> Hi, Krishna,
+>>>>>
+>>>>>
+>>>>> Without mpirun_rsh, all other tests work fine.
+>>>>>
+>>>>> ssh host1  singularity exec singularity-centos7.img date
+>>>>> singularity exec singularity-centos7.img date
+>>>>>
+>>>>>
+>>>>>
+>>>>> On Thursday, January 26, 2017 at 7:58:21 PM UTC-5, Krishna Muriki 
+>>>>> wrote:
+>>>>>>
+>>>>>> Jie,
+>>>>>>
+>>>>>> Can you do a couple of tests, see if directly running  'singularity 
+>>>>>> exec singularity-centos7.img date' without mpirun_rsh returns the prompt 
+>>>>>> back to you properly. If that also gets struck, add strace to your 
+>>>>>> container and run strace date.  
+>>>>>>
+>>>>>> If that does return properly try running with 'ssh host1  singularity 
+>>>>>> exec singularity-centos7.img date' without mpirun_rsh and see if that works.
+>>>>>>
+>>>>>> --Krishna.
+>>>>>>
+>>>>>> On Thu, Jan 26, 2017 at 1:51 PM, Jie Zhang <zh...@osu.edu> wrote:
+>>>>>>
+>>>>>>> Hello,
+>>>>>>>
+>>>>>>> I'm trying singularity with MVAPICH2. I found a small issue here. 
+>>>>>>> When running `mpirun_rsh -np 2  host1 host1  singularity exec 
+>>>>>>> singularity-centos7.img date', the routine (date) got executed 
+>>>>>>> successfully, but the mpi command is not able to return.
+>>>>>>>
+>>>>>>> [runbot@host1:singularity]$mpirun_rsh -np 2  host1 host1 
+>>>>>>>  singularity exec singularity-centos7.img date
+>>>>>>> Thu Jan 26 16:38:35 EST 2017
+>>>>>>> Thu Jan 26 16:38:35 EST 2017
+>>>>>>> (stuck here...., can Not return)
+>>>>>>>
+>>>>>>> And I can see the `date' command does not return properly.
+>>>>>>> [runbot@host1:singularity]$ps -Af | grep runbot
+>>>>>>> .........
+>>>>>>> runbot   7347  7345  0 16:45 pts/1    00:00:00 
+>>>>>>> /home/runbot/singularity/master.install/bin/mpispawn 0
+>>>>>>> runbot  7349  7347  0 16:45 pts/1    00:00:00 
+>>>>>>> /usr/local/libexec/singularity/sexec date
+>>>>>>> runbot  7350  7347  0 16:45 pts/1    00:00:00 
+>>>>>>> /usr/local/libexec/singularity/sexec date
+>>>>>>> runbot  7355  7349  0 16:45 pts/1    00:00:00 [date] <defunct>
+>>>>>>> runbot  7356  7350  0 16:45 pts/1    00:00:00 [date] <defunct> 
+>>>>>>>
+>>>>>>> I'm not sure whether the issue is from either mpi launcher, 
+>>>>>>> singularity or the interaction between both. Do you have any idea?
+>>>>>>>
+>>>>>>>
+>>>>>>> Thanks,
+>>>>>>> -Jie
+>>>>>>>
+>>>>>>> --------------------------------------------
+>>>>>>> Department of Computer Science & Engineering
+>>>>>>> Erwin E. Dreese Laboratories, 2015 Neil Avenue
+>>>>>>> Ohio State University
+>>>>>>>
+>>>>>>> -- 
+>>>>>>> You received this message because you are subscribed to the Google 
+>>>>>>> Groups "singularity" group.
+>>>>>>> To unsubscribe from this group and stop receiving emails from it, 
+>>>>>>> send an email to singu...@lbl.gov.
+>>>>>>>
+>>>>>>
+>>>>>> -- 
+>>>>> You received this message because you are subscribed to the Google 
+>>>>> Groups "singularity" group.
+>>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>>> an email to singu...@lbl.gov.
+>>>>>
+>>>>
+>>>> -- 
+>>> You received this message because you are subscribed to the Google 
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>> an email to singu...@lbl.gov.
+>>>
+>>
+>>
+------=_Part_7248_1609392226.1485880992581
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi, Krishna,<div><br></div><div>Jie is traveling internati=
+onally. Here is the new update from us.</div><div><br></div><div>
+<p class=3D"p1"><span class=3D"s1">We found that with mpirun_rsh, the paren=
+t process did not get back from singularity_fork() in `singularity_sessiond=
+ir_init&#39;.</span></p>
+<p class=3D"p1"><span class=3D"s1">It seems that it keeps on waiting on sig=
+nal from watchdog (poll(fds, watchdog_rpipe =3D=3D -1 ? 2 : 3, -1)).</span>=
+</p>
+<p class=3D"p2"><span class=3D"s1"></span><br></p>
+<p class=3D"p1"><span class=3D"s1">We are pretty sure this difference, comp=
+ared to the case without mpirun_rsh.=C2=A0</span></p><p class=3D"p1"><span =
+class=3D"s1"><br></span></p><p class=3D"p1"><span class=3D"s1">Any thoughts=
+ here?</span></p><p class=3D"p1"><span class=3D"s1"><br></span></p><p class=
+=3D"p1"><span class=3D"s1">Thanks,</span></p><p class=3D"p1"><span class=3D=
+"s1">Xiaoyi</span></p><br>On Friday, January 27, 2017 at 11:18:59 AM UTC-5,=
+ Jie Zhang wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margi=
+n-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"l=
+tr">Thanks, Krishna,<div><br></div><div>I corrected the way to run strace.=
+=C2=A0</div><div><span style=3D"font-size:12.8px">1. singularity exec singu=
+larity-centos7.img=C2=A0</span>strace<span style=3D"font-size:12.8px"><wbr>=
+=C2=A0date</span><br></div><div><span style=3D"font-size:12.8px">2. mpirun_=
+rsh -np 1 =C2=A0host1 =C2=A0singularity exec singularity-centos7.img strace=
+ date</span><br></div><div><br></div><div>I see both of them show `+++exite=
+d with 0+++&#39; at the end, even though it&#39;s stuck after that for #2.<=
+/div><div>The log files are attached below.</div><div><br></div><div>=C2=A0=
+<br><br>On Friday, January 27, 2017 at 3:47:30 AM UTC-5, Krishna Muriki wro=
+te:<blockquote class=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;bo=
+rder-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Jie,<div><br></=
+div><div>What we should do is to run strace on the date command inside the =
+singularity container not on the singularity command itself. Mount this sin=
+gularity container=C2=A0<span style=3D"font-size:12.8px">singularity-centos=
+7.<wbr>img in read/write mode on your endpoint, install strace package into=
+ it. After then when you invoke mpirun_rsh run it like this:</span></div><d=
+iv><span style=3D"font-size:12.8px"><br></span></div><div><span style=3D"fo=
+nt-size:12.8px">mpirun_rsh -np 1 =C2=A0host1 =C2=A0singularity exec singula=
+rity-centos7.img strace date</span><span style=3D"font-size:12.8px"><br></s=
+pan><div><br></div><div>Thanks,</div><div>Krishna.</div><div><br><div class=
+=3D"gmail_quote">On Thu, Jan 26, 2017 at 10:55 PM, Jie Zhang <span dir=3D"l=
+tr">&lt;<a rel=3D"nofollow">jes...@gmail.com</a>&gt;</span> wrote:<br><bloc=
+kquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:=
+1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr">Hi, Krishna,<=
+div><br></div><div>I tried=C2=A0adding strace=C2=A0to the plain singularity=
+ case (strace /usr/local/bin/singularity exec singularity-centos7.img date)=
+, what I found is that it actually exited with error (255) at the end (non-=
+root-strace.log).</div><div>If trying with root (sudo strace=C2=A0/usr/loca=
+l/bin/<wbr>singularity exec singularity-centos7.img date), there&#39;s no e=
+rror. (root-strace.log)</div><div>Trying with mpirun_rsh, it looks hanging =
+on futex=C2=A0system call. (non-root-mpirun_rsh-strace.<wbr>log)</div><div>=
+<br></div><div>Please take a look at the log files attached below to see if=
+ you have any insight.</div><div><br></div><div><span><br><br>On Thursday, =
+January 26, 2017 at 8:10:22 PM UTC-5, Krishna Muriki wrote:</span><blockquo=
+te class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px =
+solid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr">Jie,<div><br></di=
+v><span><div>Could you add strace to the container and run strace date to s=
+ee why the date process is going defunct ? Also first try running with -np =
+1 host1 and then scale to -np 2 and multiple nodes.=C2=A0</div><div><br></d=
+iv><div>Thanks,</div><div>Krishna.</div></span></div><div><div><div><br><di=
+v class=3D"gmail_quote">On Thu, Jan 26, 2017 at 5:07 PM, Jie Zhang <span di=
+r=3D"ltr">&lt;<a rel=3D"nofollow">jes...@gmail.com</a>&gt;</span> wrote:<br=
+><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border=
+-left:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr">Hi, Kri=
+shna,<div><br></div><div><br></div><div>Without mpirun_rsh, all other tests=
+ work fine.</div><span><div><span style=3D"font-size:12.8px"><br></span></d=
+iv><div><span style=3D"font-size:12.8px">ssh host1=C2=A0</span><span style=
+=3D"font-size:12.8px">=C2=A0singularity exec singularity-centos7.img date</=
+span><br></div></span><div><span style=3D"font-size:12.8px">singularity exe=
+c singularity-centos7.img date</span><span style=3D"font-size:12.8px"><br><=
+/span></div><div><span style=3D"font-size:12.8px"><br></span></div><div><sp=
+an><br><br>On Thursday, January 26, 2017 at 7:58:21 PM UTC-5, Krishna Murik=
+i wrote:</span><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0p=
+x 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"><span><div=
+ dir=3D"ltr">Jie,<div><br></div><div>Can you do a couple of tests, see if d=
+irectly running=C2=A0<span style=3D"font-size:12.8px">=C2=A0&#39;singularit=
+y exec singularity-centos7.img date&#39; without mpirun_rsh returns the pro=
+mpt back to you properly.=C2=A0</span><span style=3D"font-size:12.8px">If t=
+hat also gets struck, add strace to your container and run strace date. =C2=
+=A0</span></div><div><span style=3D"font-size:12.8px"><br></span></div><div=
+><span style=3D"font-size:12.8px">If that does return properly t</span><spa=
+n style=3D"font-size:12.8px">ry running with &#39;ssh host1=C2=A0</span><sp=
+an style=3D"font-size:12.8px">=C2=A0singularity exec singularity-centos7.im=
+g date&#39; without mpirun_rsh and see if that works.</span></div><div><spa=
+n style=3D"font-size:12.8px"><br></span></div><div><span style=3D"font-size=
+:12.8px">--Krishna.<br></span></div></div></span><div><br><div class=3D"gma=
+il_quote"><div><div>On Thu, Jan 26, 2017 at 1:51 PM, Jie Zhang <span dir=3D=
+"ltr">&lt;<a rel=3D"nofollow">zh...@osu.edu</a>&gt;</span> wrote:<br></div>=
+</div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;b=
+order-left:1px solid rgb(204,204,204);padding-left:1ex"><div><div><div dir=
+=3D"ltr">Hello,<div><br></div><div><div>I&#39;m trying singularity with MVA=
+PICH2. I found a small issue here.=C2=A0</div><div>When running `mpirun_rsh=
+ -np 2 =C2=A0host1 host1 =C2=A0singularity exec singularity-centos7.img dat=
+e&#39;, the routine (date) got executed successfully, but the mpi command i=
+s not able to return.</div></div><div><br></div><div>[runbot@host1:singular=
+ity]$<wbr>mpirun_rsh -np 2 =C2=A0host1 host1 =C2=A0singularity exec singula=
+rity-centos7.img date<br></div><div>Thu Jan 26 16:38:35 EST 2017<br></div><=
+div>Thu Jan 26 16:38:35 EST 2017<br></div><div>(stuck here...., can Not ret=
+urn)</div><div><br></div><div>And I can see the `date&#39; command does not=
+ return properly.</div><div>[runbot@host1:singularity]$ps -Af | grep runbot=
+</div><div>.........</div><div>runbot =C2=A0 7347 =C2=A07345 =C2=A00 16:45 =
+pts/1 =C2=A0 =C2=A000:00:00 /home/runbot/singularity/<wbr>master.install/bi=
+n/mpispawn 0</div><div>runbot =C2=A07349 =C2=A07347 =C2=A00 16:45 pts/1 =C2=
+=A0 =C2=A000:00:00 /usr/local/libexec/<wbr>singularity/sexec date</div><div=
+>runbot =C2=A07350 =C2=A07347 =C2=A00 16:45 pts/1 =C2=A0 =C2=A000:00:00 /us=
+r/local/libexec/<wbr>singularity/sexec date</div><div>runbot =C2=A07355 =C2=
+=A07349 =C2=A00 16:45 pts/1 =C2=A0 =C2=A000:00:00 [date] &lt;defunct&gt;</d=
+iv><div>runbot =C2=A07356 =C2=A07350 =C2=A00 16:45 pts/1 =C2=A0 =C2=A000:00=
+:00 [date] &lt;defunct&gt;=C2=A0</div><div><br></div><div>I&#39;m not sure =
+whether the issue is from either mpi=C2=A0launcher, singularity or the inte=
+raction between both. Do you have any idea?</div><div><br></div><div><br cl=
+ear=3D"all"><div><div><div dir=3D"ltr"><div><font size=3D"2" face=3D"tahoma=
+, sans-serif" color=3D"#000000">Thanks,</font></div><font size=3D"2" face=
+=3D"tahoma, sans-serif" color=3D"#000000">-Jie<br><br>---------------------=
+---------<wbr>--------------<br>Department of Computer Science &amp; Engine=
+ering<br>Erwin E. Dreese Laboratories, 2015 Neil Avenue<br>Ohio State Unive=
+rsity</font><span><font color=3D"#888888"><br></font></span></div></div></d=
+iv><span><font color=3D"#888888">
+</font></span></div></div></div></div><span><font color=3D"#888888"><div><d=
+iv>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br></div></div>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</font></span></blockquote></div><br></div>
+</blockquote></div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</div></div></blockquote></div><br></div>
+</div></div></blockquote></div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</div></div></blockquote></div><br></div></div></div>
+</blockquote></div></div></blockquote></div><style type=3D"text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 16.0px Calibri; -webkit-text-s=
+troke: #000000}
+p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 16.0px Calibri; -webkit-text-s=
+troke: #000000; min-height: 19.0px}
+span.s1 {font-kerning: none}
+</style></div>
+------=_Part_7248_1609392226.1485880992581--
+
+------=_Part_7247_1150198618.1485880992580--

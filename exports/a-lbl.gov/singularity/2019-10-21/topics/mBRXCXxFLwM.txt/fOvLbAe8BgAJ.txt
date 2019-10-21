@@ -1,0 +1,185 @@
+Date: Wed, 16 May 2018 12:40:30 -0700 (PDT)
+From: =?UTF-8?Q?C=C3=A9dric_Clerget?= <cedric...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <fb28bb4e-5b22-4cf4-85d8-2fb0bac608b9@lbl.gov>
+In-Reply-To: <e845e8af-9dad-42c8-b2eb-83125e9131e9@lbl.gov>
+References: <bfd62bcd-8878-42cd-a8b0-67522694c6cd@lbl.gov>
+ <e845e8af-9dad-42c8-b2eb-83125e9131e9@lbl.gov>
+Subject: Re: Failed to obtain user identity information (as non-root user)
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_309_563484787.1526499630164"
+
+------=_Part_309_563484787.1526499630164
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_310_1664930773.1526499630165"
+
+------=_Part_310_1664930773.1526499630165
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Hey Robert,
+
+Maybe you can try to install pam module for nlscd from the same author :=20
+https://arthurdejong.org/nss-pam-ldapd/
+And try to rebuild with NIX/CVMFS environment
+
+C=C3=A9dric
+
+Le mercredi 16 mai 2018 17:14:34 UTC+2, Robert Wagner a =C3=A9crit :
+>
+> I have found at least one combination that works, it requires a two-step=
+=20
+> approach:
+>
+> 1) Ensure that my NIX/CVMFS environment is disabled at compile time. This=
+=20
+> still has a couple libraries being pulled from CVMFS at runtime (due to=
+=20
+> LD_LIBRARY_PATH setting), but most are from local OS.
+>
+> 2) Switch from nlscd to sssd.  Honestly, not sure why this system was=20
+> defaulted to use nlscd.
+>
+> If either condition is not met, ID resolution continues to fail.
+>
+> Regards,
+>
+> Rob
+>
+>
+> On Tuesday, May 15, 2018 at 11:03:43 AM UTC-6, Robert Wagner wrote:
+>>
+>> Hi all,
+>>
+>> Having some troubles with fresh install of 2.5.1, built from source, on=
+=20
+>> RHEL 7.4 cluster using LDAP (Bright Cluster).  Installing with software =
+on=20
+>> shared filesystem, local state directory on each node, but is not operat=
+ing=20
+>> on any. I had similar issues with 2.5.0, though it would simply segfault=
+ at=20
+>> the same point.
+>>
+>> If run as root, I can execute containers.  If I execute as a user, I hav=
+e=20
+>> two issues (one minor, one show-stopper) - listing both in the case they=
+=20
+>> are related.  singularity.conf is completely default.
+>>
+>> 1) Home directory not owned by calling user: /  - If I specify --home=20
+>> $HOME, this isn't an issue. My /home mount is an NFS filesystem, but no=
+=20
+>> symlinks involved.
+>>
+>> Config file: https://pastebin.com/gnKgBc3C
+>> Debug output: https://pastebin.com/w1gWytv1
+>>
+>> 2) Failed to obtain user identity information.   I'm not sure if this is=
+=20
+>> tied to my use of LDAP for user information, but this one is stumping me=
+.=20
+>> Again, this does not occur if run as root. (I have not tried with users=
+=20
+>> that have been manually added to /etc/passwd, but I will try that=20
+>> shortly).   Singularity dies at step "singularity_file_passwd_create()".=
+ =20
+>>  Using v2.5.0, I disabled passwd creation in the config file, and that=
+=20
+>> allowed execution to continue. Using 2.5.1, it dies whether the setting =
+is=20
+>> on or off. (as if the option is being ignored)
+>>
+>> Debug output:
+>>
+>> https://pastebin.com/fsbAkCZJ
+>>
+>> Debug output with config option for passwd creation disabled:
+>>
+>> https://pastebin.com/W0R83kbb
+>>
+>>
+>> Thanks for any insights.
+>>
+>> Cheers,
+>>
+>> Rob
+>>
+>>
+------=_Part_310_1664930773.1526499630165
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Hey Robert,</div><div><br></div><div>Maybe you can tr=
+y to install pam module for nlscd from the same author : https://arthurdejo=
+ng.org/nss-pam-ldapd/</div><div>And try to rebuild with NIX/CVMFS environme=
+nt</div><div><br></div><div>C=C3=A9dric<br></div><br>Le mercredi 16 mai 201=
+8 17:14:34 UTC+2, Robert Wagner a =C3=A9crit=C2=A0:<blockquote class=3D"gma=
+il_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid=
+;padding-left: 1ex;"><div dir=3D"ltr"><div>I have found at least one combin=
+ation that works, it requires a two-step approach:</div><div><br></div><div=
+>1) Ensure that my NIX/CVMFS environment is disabled at compile time. This =
+still has a couple libraries being pulled from CVMFS at runtime (due to LD_=
+LIBRARY_PATH setting), but most are from local OS.</div><div><br></div><div=
+>2) Switch from nlscd to sssd.=C2=A0 Honestly, not sure why this system was=
+ defaulted to use nlscd.</div><div><br></div><div>If either condition is no=
+t met, ID resolution continues to fail.</div><div><br></div><div>Regards,</=
+div><div><br></div><div>Rob</div><br><br>On Tuesday, May 15, 2018 at 11:03:=
+43 AM UTC-6, Robert Wagner wrote:<blockquote class=3D"gmail_quote" style=3D=
+"margin:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><d=
+iv dir=3D"ltr"><div>Hi all,</div><div><br></div>Having some troubles with f=
+resh install of 2.5.1, built from source, on RHEL 7.4 cluster using LDAP (B=
+right Cluster).=C2=A0 Installing with software on shared filesystem, local =
+state directory on each node, but is not operating on any. I had similar is=
+sues with 2.5.0, though it would simply segfault at the same point.<div><br=
+></div><div>If run as root, I can execute containers.=C2=A0 If I execute as=
+ a user, I have two issues (one minor, one show-stopper) - listing both in =
+the case they are related.=C2=A0 singularity.conf is completely default.</d=
+iv><div><br></div><div>1) Home directory not owned by calling user: /=C2=A0=
+ - If I specify --home $HOME, this isn&#39;t an issue. My /home mount is an=
+ NFS filesystem, but no symlinks involved.</div><div><br></div><div>Config =
+file:=C2=A0<a href=3D"https://pastebin.com/gnKgBc3C" rel=3D"nofollow" targe=
+t=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x=
+3dhttps%3A%2F%2Fpastebin.com%2FgnKgBc3C\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dA=
+FQjCNEfBO_-dDbie23fv-STKDWO-esF9A&#39;;return true;" onclick=3D"this.href=
+=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fpastebin.com%2FgnKgBc=
+3C\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEfBO_-dDbie23fv-STKDWO-esF9A&#39=
+;;return true;">https://pastebin.com/<wbr>gnKgBc3C</a></div><div>Debug outp=
+ut:=C2=A0<a href=3D"https://pastebin.com/w1gWytv1" rel=3D"nofollow" target=
+=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3=
+dhttps%3A%2F%2Fpastebin.com%2Fw1gWytv1\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAF=
+QjCNHqKPpV4iMG7C4H4j0I7QHGZeDZ6A&#39;;return true;" onclick=3D"this.href=3D=
+&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fpastebin.com%2Fw1gWytv1\=
+x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHqKPpV4iMG7C4H4j0I7QHGZeDZ6A&#39;;r=
+eturn true;">https://pastebin.com/<wbr>w1gWytv1</a></div><div><br></div><di=
+v>2) Failed to obtain user identity information.=C2=A0 =C2=A0I&#39;m not su=
+re if this is tied to my use of LDAP for user information, but this one is =
+stumping me. Again, this does not occur if run as root. (I have not tried w=
+ith users that have been manually added to /etc/passwd, but I will try that=
+ shortly).=C2=A0 =C2=A0Singularity dies at step &quot;singularity_file_pass=
+wd_<wbr>create()&quot;.=C2=A0 =C2=A0Using v2.5.0, I disabled passwd creatio=
+n in the config file, and that allowed execution to continue. Using 2.5.1, =
+it dies whether the setting is on or off. (as if the option is being ignore=
+d)</div><div><br></div><div>Debug output:</div><div><br></div><div><a href=
+=3D"https://pastebin.com/fsbAkCZJ" rel=3D"nofollow" target=3D"_blank" onmou=
+sedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fpa=
+stebin.com%2FfsbAkCZJ\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNH8jN4HgdmmJ2Y=
+Si3VjBAikM7gEQw&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.=
+google.com/url?q\x3dhttps%3A%2F%2Fpastebin.com%2FfsbAkCZJ\x26sa\x3dD\x26snt=
+z\x3d1\x26usg\x3dAFQjCNH8jN4HgdmmJ2YSi3VjBAikM7gEQw&#39;;return true;">http=
+s://pastebin.com/fsbAkCZJ</a><br></div><div><br></div><div>Debug output wit=
+h config option for passwd creation disabled:</div><div><br></div><div><a h=
+ref=3D"https://pastebin.com/W0R83kbb" rel=3D"nofollow" target=3D"_blank" on=
+mousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2=
+Fpastebin.com%2FW0R83kbb\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFWs9LS3xYC=
+ic6ejI-2G1sSVAXhrg&#39;;return true;" onclick=3D"this.href=3D&#39;https://w=
+ww.google.com/url?q\x3dhttps%3A%2F%2Fpastebin.com%2FW0R83kbb\x26sa\x3dD\x26=
+sntz\x3d1\x26usg\x3dAFQjCNFWs9LS3xYCic6ejI-2G1sSVAXhrg&#39;;return true;">h=
+ttps://pastebin.com/W0R83kbb</a><br></div><div><br></div><div><br></div><di=
+v>Thanks for any insights.</div><div><br></div><div>Cheers,</div><div><br><=
+/div><div>Rob</div><div><br></div></div></blockquote></div></blockquote></d=
+iv>
+------=_Part_310_1664930773.1526499630165--
+
+------=_Part_309_563484787.1526499630164--

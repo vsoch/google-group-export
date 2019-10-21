@@ -1,0 +1,366 @@
+Date: Mon, 15 Jan 2018 01:13:13 -0800 (PST)
+From: Arpit Agarwal <arpit...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <144b1885-cb8c-4c06-9c0f-e2824ec2f7d2@lbl.gov>
+Subject: headless OpenGL rendering using nvidia gpus and EGL libs
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_4080_73026834.1516007593122"
+
+------=_Part_4080_73026834.1516007593122
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_4081_1669830233.1516007593122"
+
+------=_Part_4081_1669830233.1516007593122
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+I am trying to do headless rendering using Nvidia EGL and OpenGL libs in a 
+singularity container. 
+
+I use *Singularity_raw*(file attached to create the container) and then 
+install Nvidia driver Version 375.26 to libOpenGL.so libEGL.so
+The program which I am trying to run is in file(eglinfo.c) 
+
+$singularity shell ubuntu.img
+I compiled the eglinfo.c using the following command
+$g++ -I. eglinfo.c /usr/lib/x86_64-linux-gnu/libEGL.so 
+/usr/lib/x86_64-linux-gnu/libOpenGL.so -DMESA_EGL_NO_X11_HEADERS
+
+
+I am able to use the libs on my lab computer without singularity. However 
+when I install everything in singularity and try to compile and run the 
+same file I get the following error. 
+
+ERROR: Could not initialize EGL, error 0x3003
+
+The *successful output* I get on my lab computer without singularity is in 
+file eglinfo_output.txt
+
+I don't know the source of error as the message from EGL is very sparse. 
+Kindly let me know if you need anything else to debug this problem.
+
+Singularity version: 2.4.2-master.g91881f7
+Host: Ubuntu 14.04 
+Nvidia driver version 375.26
+Guest: Ubuntu 16.04
+
+
+
+------=_Part_4081_1669830233.1516007593122
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">I am trying to do headless rendering using Nvidia EGL and =
+OpenGL libs in a singularity container.=C2=A0<div><br></div><div><div>I use=
+ <b>Singularity_raw</b>(file attached to create the container) and then ins=
+tall Nvidia driver Version 375.26 to libOpenGL.so libEGL.so</div><div>The p=
+rogram which I am trying to run is in file(eglinfo.c)=C2=A0</div></div><div=
+><br></div><div>$singularity shell ubuntu.img</div><div><div>I compiled the=
+ eglinfo.c using the following command</div><div>$g++ -I. eglinfo.c /usr/li=
+b/x86_64-linux-gnu/libEGL.so /usr/lib/x86_64-linux-gnu/libOpenGL.so -DMESA_=
+EGL_NO_X11_HEADERS</div></div><div><br></div><div><br></div><div>I am able =
+to use the libs on my lab computer without singularity. However when I inst=
+all everything in singularity and try to compile and run the same file I ge=
+t the following error.=C2=A0<div><br></div><div>ERROR: Could not initialize=
+ EGL, error 0x3003<br></div><div><br></div><div>The <b>successful output</b=
+> I get on my lab computer without singularity is in file eglinfo_output.tx=
+t</div><div><br></div><div>I don&#39;t know the source of error as the mess=
+age from EGL is very sparse. Kindly let me know if you need anything else t=
+o debug this problem.</div><div><br></div><div>Singularity version:=C2=A02.=
+4.2-master.g91881f7</div><div>Host: Ubuntu 14.04=C2=A0</div><div>Nvidia dri=
+ver version 375.26</div><div>Guest: Ubuntu 16.04</div><div><br></div><div><=
+br></div></div></div>
+------=_Part_4081_1669830233.1516007593122--
+
+------=_Part_4080_73026834.1516007593122
+Content-Type: text/x-csrc; charset=US-ASCII; name=eglinfo.c
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename=eglinfo.c
+X-Attachment-Id: d12b99b0-8727-495e-9ea6-5dc4aa87305b
+Content-ID: <d12b99b0-8727-495e-9ea6-5dc4aa87305b>
+
+/*
+ * eglinfo - like glxinfo but for EGL
+ *
+ * Brian Paul
+ * 11 March 2005
+ *
+ * Copyright (C) 2005  Brian Paul   All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+#define EGL_EGLEXT_PROTOTYPES
+
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_CONFIGS 1000
+#define MAX_MODES 1000
+#define MAX_SCREENS 10
+
+/* These are X visual types, so if you're running eglinfo under
+ * something not X, they probably don't make sense. */
+static const char *vnames[] = { "SG", "GS", "SC", "PC", "TC", "DC" };
+
+/**
+ * Print table of all available configurations.
+ */
+static void
+PrintConfigs(EGLDisplay d)
+{
+   EGLConfig configs[MAX_CONFIGS];
+   EGLint numConfigs, i;
+
+   eglGetConfigs(d, configs, MAX_CONFIGS, &numConfigs);
+
+   printf("Configurations:\n");
+   printf("     bf lv colorbuffer dp st  ms    vis   cav bi  renderable  supported\n");
+   printf("  id sz  l  r  g  b  a th cl ns b    id   eat nd gl es es2 vg surfaces \n");
+   printf("---------------------------------------------------------------------\n");
+   for (i = 0; i < numConfigs; i++) {
+      EGLint id, size, level;
+      EGLint red, green, blue, alpha;
+      EGLint depth, stencil;
+      EGLint renderable, surfaces;
+      EGLint vid, vtype, caveat, bindRgb, bindRgba;
+      EGLint samples, sampleBuffers;
+      char surfString[100] = "";
+
+      eglGetConfigAttrib(d, configs[i], EGL_CONFIG_ID, &id);
+      eglGetConfigAttrib(d, configs[i], EGL_BUFFER_SIZE, &size);
+      eglGetConfigAttrib(d, configs[i], EGL_LEVEL, &level);
+
+      eglGetConfigAttrib(d, configs[i], EGL_RED_SIZE, &red);
+      eglGetConfigAttrib(d, configs[i], EGL_GREEN_SIZE, &green);
+      eglGetConfigAttrib(d, configs[i], EGL_BLUE_SIZE, &blue);
+      eglGetConfigAttrib(d, configs[i], EGL_ALPHA_SIZE, &alpha);
+      eglGetConfigAttrib(d, configs[i], EGL_DEPTH_SIZE, &depth);
+      eglGetConfigAttrib(d, configs[i], EGL_STENCIL_SIZE, &stencil);
+      eglGetConfigAttrib(d, configs[i], EGL_NATIVE_VISUAL_ID, &vid);
+      eglGetConfigAttrib(d, configs[i], EGL_NATIVE_VISUAL_TYPE, &vtype);
+
+      eglGetConfigAttrib(d, configs[i], EGL_CONFIG_CAVEAT, &caveat);
+      eglGetConfigAttrib(d, configs[i], EGL_BIND_TO_TEXTURE_RGB, &bindRgb);
+      eglGetConfigAttrib(d, configs[i], EGL_BIND_TO_TEXTURE_RGBA, &bindRgba);
+      eglGetConfigAttrib(d, configs[i], EGL_RENDERABLE_TYPE, &renderable);
+      eglGetConfigAttrib(d, configs[i], EGL_SURFACE_TYPE, &surfaces);
+
+      eglGetConfigAttrib(d, configs[i], EGL_SAMPLES, &samples);
+      eglGetConfigAttrib(d, configs[i], EGL_SAMPLE_BUFFERS, &sampleBuffers);
+
+      if (surfaces & EGL_WINDOW_BIT)
+         strcat(surfString, "win,");
+      if (surfaces & EGL_PBUFFER_BIT)
+         strcat(surfString, "pb,");
+      if (surfaces & EGL_PIXMAP_BIT)
+         strcat(surfString, "pix,");
+      if (strlen(surfString) > 0)
+         surfString[strlen(surfString) - 1] = 0;
+
+      printf("0x%02x %2d %2d %2d %2d %2d %2d %2d %2d %2d%2d 0x%02x%s ",
+             id, size, level,
+             red, green, blue, alpha,
+             depth, stencil,
+             samples, sampleBuffers, vid, vtype < 6 ? vnames[vtype] : "--");
+      printf("  %c  %c  %c  %c  %c   %c %s\n",
+             (caveat != EGL_NONE) ? 'y' : ' ',
+             (bindRgba) ? 'a' : (bindRgb) ? 'y' : ' ',
+             (renderable & EGL_OPENGL_BIT) ? 'y' : ' ',
+             (renderable & EGL_OPENGL_ES_BIT) ? 'y' : ' ',
+             (renderable & EGL_OPENGL_ES2_BIT) ? 'y' : ' ',
+             (renderable & EGL_OPENVG_BIT) ? 'y' : ' ',
+             surfString);
+   }
+}
+
+
+static void
+PrintExtensions(EGLDisplay d)
+{
+   const char *extensions, *p, *end, *next;
+   int column;
+
+   puts(d == EGL_NO_DISPLAY ? "EGL client extensions string:" :
+                              "EGL extensions string:");
+
+   extensions = eglQueryString(d, EGL_EXTENSIONS);
+   if (!extensions)
+      return;
+
+   column = 0;
+   end = extensions + strlen(extensions);
+
+   for (p = extensions; p < end; p = next + 1) {
+      next = strchr(p, ' ');
+      if (next == NULL)
+         next = end;
+
+      if (column > 0 && column + next - p + 1 > 70) {
+	 printf("\n");
+	 column = 0;
+      }
+      if (column == 0)
+	 printf("    ");
+      else
+	 printf(" ");
+      column += next - p + 1;
+
+      printf("%.*s", (int) (next - p), p);
+
+      p = next + 1;
+   }
+
+   if (column > 0)
+      printf("\n");
+}
+
+int
+main(int argc, char *argv[])
+{
+   int maj, min;
+   EGLDisplay d = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+
+   if (!eglInitialize(d, &maj, &min)) {
+      printf("eglinfo: eglInitialize failed\n");
+      exit(1);
+   }
+
+   printf("EGL API version: %d.%d\n", maj, min);
+   printf("EGL vendor string: %s\n", eglQueryString(d, EGL_VENDOR));
+   printf("EGL version string: %s\n", eglQueryString(d, EGL_VERSION));
+#ifdef EGL_VERSION_1_2
+   printf("EGL client APIs: %s\n", eglQueryString(d, EGL_CLIENT_APIS));
+#endif
+
+   PrintExtensions(d);
+   PrintExtensions(EGL_NO_DISPLAY);
+
+   PrintConfigs(d);
+
+   eglTerminate(d);
+
+   return 0;
+}
+
+------=_Part_4080_73026834.1516007593122
+Content-Type: application/octet-stream; name=Singularity_raw
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename=Singularity_raw
+X-Attachment-Id: 5b60f3cf-dc5f-4561-8f86-d6eb1f544973
+Content-ID: <5b60f3cf-dc5f-4561-8f86-d6eb1f544973>
+
+Bootstrap: debootstrap
+OSVersion: xenial
+MirrorURL:  http://us.archive.ubuntu.com/ubuntu/
+Include: apt
+%post
+    apt-get update
+    apt-get -y install wget vim git
+     
+------=_Part_4080_73026834.1516007593122
+Content-Type: text/plain; charset=US-ASCII; name=eglinfo_output.txt
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename=eglinfo_output.txt
+X-Attachment-Id: ee0f38d2-494e-4bf6-ba1e-bbf47c2f0659
+Content-ID: <ee0f38d2-494e-4bf6-ba1e-bbf47c2f0659>
+
+EGL API version: 1.4
+EGL vendor string: NVIDIA
+EGL version string: 1.4
+EGL client APIs: OpenGL_ES OpenGL
+EGL extensions string:
+    EGL_EXT_create_context_robustness EGL_EXT_output_base
+    EGL_EXT_output_drm EGL_EXT_stream_consumer_egloutput
+    EGL_EXT_stream_acquire_mode EGL_IMG_context_priority
+    EGL_KHR_config_attribs EGL_KHR_create_context_no_error
+    EGL_KHR_create_context EGL_KHR_fence_sync
+    EGL_KHR_get_all_proc_addresses EGL_KHR_swap_buffers_with_damage
+    EGL_KHR_gl_renderbuffer_image EGL_KHR_gl_texture_2D_image
+    EGL_KHR_gl_texture_cubemap_image EGL_KHR_image EGL_KHR_image_base
+    EGL_KHR_reusable_sync EGL_KHR_stream
+    EGL_KHR_stream_consumer_gltexture EGL_KHR_stream_cross_process_fd
+    EGL_KHR_stream_fifo EGL_KHR_stream_producer_eglsurface
+    EGL_KHR_surfaceless_context EGL_NV_stream_metadata EGL_NV_stream_sync
+    EGL_NV_stream_consumer_gltexture_yuv EGL_NV_sync EGL_NV_system_time
+    EGL_NV_output_drm_flip_event EGL_WL_bind_wayland_display
+EGL client extensions string:
+    EGL_KHR_client_get_all_proc_addresses EGL_EXT_client_extensions
+    EGL_EXT_platform_base EGL_EXT_platform_x11 EGL_EXT_platform_wayland
+    EGL_EXT_platform_device EGL_EXT_device_base
+Configurations:
+     bf lv colorbuffer dp st  ms    vis   cav bi  renderable  supported
+  id sz  l  r  g  b  a th cl ns b    id   eat nd gl es es2 vg surfaces 
+---------------------------------------------------------------------
+0x01 32  0  8  8  8  8 24  8  0 0 0x00--         y  y  y     pb
+0x02 32  0  8  8  8  8 24  0  0 0 0x00--         y  y  y     pb
+0x03 32  0  8  8  8  8  0  0  0 0 0x00--         y  y  y     pb
+0x04 32  0  8  8  8  8 24  8  2 1 0x00--         y  y  y     pb
+0x05 32  0  8  8  8  8 24  0  2 1 0x00--         y  y  y     pb
+0x06 32  0  8  8  8  8  0  0  2 1 0x00--         y  y  y     pb
+0x07 32  0  8  8  8  8 24  8  4 1 0x00--         y  y  y     pb
+0x08 32  0  8  8  8  8 24  8  4 1 0x00--         y  y  y     pb
+0x09 32  0  8  8  8  8 24  0  4 1 0x00--         y  y  y     pb
+0x0a 32  0  8  8  8  8 24  0  4 1 0x00--         y  y  y     pb
+0x0b 32  0  8  8  8  8  0  0  4 1 0x00--         y  y  y     pb
+0x0c 32  0  8  8  8  8  0  0  4 1 0x00--         y  y  y     pb
+0x0d 32  0  8  8  8  8 24  8  8 1 0x00--         y  y  y     pb
+0x0e 32  0  8  8  8  8 24  0  8 1 0x00--         y  y  y     pb
+0x0f 32  0  8  8  8  8  0  0  8 1 0x00--         y  y  y     pb
+0x10 24  0  8  8  8  0 24  8  0 0 0x00--         y  y  y     pb
+0x11 24  0  8  8  8  0 24  0  0 0 0x00--         y  y  y     pb
+0x12 24  0  8  8  8  0  0  0  0 0 0x00--         y  y  y     pb
+0x13 24  0  8  8  8  0 24  8  2 1 0x00--         y  y  y     pb
+0x14 24  0  8  8  8  0 24  0  2 1 0x00--         y  y  y     pb
+0x15 24  0  8  8  8  0  0  0  2 1 0x00--         y  y  y     pb
+0x16 24  0  8  8  8  0 24  8  4 1 0x00--         y  y  y     pb
+0x17 24  0  8  8  8  0 24  8  4 1 0x00--         y  y  y     pb
+0x18 24  0  8  8  8  0 24  0  4 1 0x00--         y  y  y     pb
+0x19 24  0  8  8  8  0 24  0  4 1 0x00--         y  y  y     pb
+0x1a 24  0  8  8  8  0  0  0  4 1 0x00--         y  y  y     pb
+0x1b 24  0  8  8  8  0  0  0  4 1 0x00--         y  y  y     pb
+0x1c 24  0  8  8  8  0 24  8  8 1 0x00--         y  y  y     pb
+0x1d 24  0  8  8  8  0 24  0  8 1 0x00--         y  y  y     pb
+0x1e 24  0  8  8  8  0  0  0  8 1 0x00--         y  y  y     pb
+0x1f 16  0  5  6  5  0 24  8  0 0 0x00--         y  y  y     pb
+0x20 16  0  5  6  5  0 24  0  0 0 0x00--         y  y  y     pb
+0x21 16  0  5  6  5  0 16  0  0 0 0x00--         y  y  y     pb
+0x22 16  0  5  6  5  0  0  0  0 0 0x00--         y  y  y     pb
+0x23 16  0  5  6  5  0 24  8  2 1 0x00--         y  y  y     pb
+0x24 16  0  5  6  5  0 24  0  2 1 0x00--         y  y  y     pb
+0x25 16  0  5  6  5  0 16  0  2 1 0x00--         y  y  y     pb
+0x26 16  0  5  6  5  0  0  0  2 1 0x00--         y  y  y     pb
+0x27 16  0  5  6  5  0 24  8  4 1 0x00--         y  y  y     pb
+0x28 16  0  5  6  5  0 24  8  4 1 0x00--         y  y  y     pb
+0x29 16  0  5  6  5  0 24  0  4 1 0x00--         y  y  y     pb
+0x2a 16  0  5  6  5  0 24  0  4 1 0x00--         y  y  y     pb
+0x2b 16  0  5  6  5  0 16  0  4 1 0x00--         y  y  y     pb
+0x2c 16  0  5  6  5  0 16  0  4 1 0x00--         y  y  y     pb
+0x2d 16  0  5  6  5  0  0  0  4 1 0x00--         y  y  y     pb
+0x2e 16  0  5  6  5  0  0  0  4 1 0x00--         y  y  y     pb
+0x2f 16  0  5  6  5  0 24  8  8 1 0x00--         y  y  y     pb
+0x30 16  0  5  6  5  0 24  0  8 1 0x00--         y  y  y     pb
+0x31 16  0  5  6  5  0 16  0  8 1 0x00--         y  y  y     pb
+0x32 16  0  5  6  5  0  0  0  8 1 0x00--         y  y  y     pb
+
+------=_Part_4080_73026834.1516007593122--

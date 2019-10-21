@@ -1,0 +1,732 @@
+Date: Tue, 3 Apr 2018 11:43:04 -0700 (PDT)
+From: Steve <skbi...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <414c2f29-9ef6-4212-a950-9b21600c1215@lbl.gov>
+Subject: Error on HPC compute nodes, but not head node
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2733_1487031771.1522780984756"
+
+------=_Part_2733_1487031771.1522780984756
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2734_619590978.1522780984758"
+
+------=_Part_2734_619590978.1522780984758
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+When I try to use Singluarity (version 2.4.2) on the head node of our HPC 
+(running CentOS 6.8), it works fine:
+
+$ module load singularity/2.4.2; singularity shell stevekm_ngs580-nf_base-
+2018-03-15-ea494a9472a4.img
+
+
+However, when I try to run the same thing on our compute nodes, it fails:
+
+$ module load singularity/2.4.2; singularity shell stevekm_ngs580-nf_base-
+2018-03-15-ea494a9472a4.img
+ERROR  : Singularity is not running with appropriate privileges!
+ERROR  : Check installation path is not mounted with 'nosuid', and/or 
+consult manual.
+ABORT  : Retval = 255
+
+
+The compute nodes are supposed to be running with the exact same software 
+configuration as the head node, so we are kinda stumped as to what might be 
+causing this. 
+
+I saw there are details about the config here:
+http://singularity.lbl.gov/docs-config#parameters
+
+And I checked the contents of our config file but it all looks like the 
+default values:
+
+$ cat /local/apps/singularity/2.4.2/etc/singularity/singularity.conf
+# SINGULARITY.CONF
+# This is the global configuration file for Singularity. This file controls
+# what the container is allowed to do on a particular host, and as a result
+# this file must be owned by root.
+
+
+# ALLOW SETUID: [BOOL]
+# DEFAULT: yes
+# Should we allow users to utilize the setuid program flow within 
+Singularity?
+# note1: This is the default mode, and to utilize all features, this option
+# will need to be enabled.
+# note2: If this option is disabled, it will rely on the user namespace
+# exclusively which has not been integrated equally between the different
+# Linux distributions.
+allow setuid = yes
+
+
+# MAX LOOP DEVICES: [INT]
+# DEFAULT: 256
+# Set the maximum number of loop devices that Singularity should ever 
+attempt
+# to utilize.
+max loop devices = 256
+
+
+# ALLOW PID NS: [BOOL]
+# DEFAULT: yes
+# Should we allow users to request the PID namespace? Note that for some HPC
+# resources, the PID namespace may confuse the resource manager and break 
+how
+# some MPI implementations utilize shared memory. (note, on some older
+# systems, the PID namespace is always used)
+allow pid ns = yes
+
+
+# CONFIG PASSWD: [BOOL]
+# DEFAULT: yes
+# If /etc/passwd exists within the container, this will automatically append
+# an entry for the calling user.
+config passwd = yes
+
+
+# CONFIG GROUP: [BOOL]
+# DEFAULT: yes
+# If /etc/group exists within the container, this will automatically append
+# group entries for the calling user.
+config group = yes
+
+
+# CONFIG RESOLV_CONF: [BOOL]
+# DEFAULT: yes
+# If there is a bind point within the container, use the host's
+# /etc/resolv.conf.
+config resolv_conf = yes
+
+
+# MOUNT PROC: [BOOL]
+# DEFAULT: yes
+# Should we automatically bind mount /proc within the container?
+mount proc = yes
+
+
+# MOUNT SYS: [BOOL]
+# DEFAULT: yes
+# Should we automatically bind mount /sys within the container?
+mount sys = yes
+
+
+# MOUNT DEV: [yes/no/minimal]
+# DEFAULT: yes
+# Should we automatically bind mount /dev within the container? If 'minimal'
+# is chosen, then only 'null', 'zero', 'random', 'urandom', and 'shm' will
+# be included (the same effect as the --contain options)
+mount dev = yes
+
+
+# MOUNT DEVPTS: [BOOL]
+# DEFAULT: yes
+# Should we mount a new instance of devpts if there is a 'minimal'
+# /dev, or -C is passed?  Note, this requires that your kernel was
+# configured with CONFIG_DEVPTS_MULTIPLE_INSTANCES=y, or that you're
+# running kernel 4.7 or newer.
+mount devpts = yes
+
+
+# MOUNT HOME: [BOOL]
+# DEFAULT: yes
+# Should we automatically determine the calling user's home directory and
+# attempt to mount it's base path into the container? If the --contain 
+option
+# is used, the home directory will be created within the session directory 
+or
+# can be overridden with the SINGULARITY_HOME or SINGULARITY_WORKDIR
+# environment variables (or their corresponding command line options).
+mount home = yes
+
+
+# MOUNT TMP: [BOOL]
+# DEFAULT: yes
+# Should we automatically bind mount /tmp and /var/tmp into the container? 
+If
+# the --contain option is used, both tmp locations will be created in the
+# session directory or can be specified via the  SINGULARITY_WORKDIR
+# environment variable (or the --workingdir command line option).
+mount tmp = yes
+
+
+# MOUNT HOSTFS: [BOOL]
+# DEFAULT: no
+# Probe for all mounted file systems that are mounted on the host, and bind
+# those into the container?
+mount hostfs = no
+
+
+# BIND PATH: [STRING]
+# DEFAULT: Undefined
+# Define a list of files/directories that should be made available from 
+within
+# the container. The file or directory must exist within the container on
+# which to attach to. you can specify a different source and destination
+# path (respectively) with a colon; otherwise source and dest are the same.
+#bind path = /etc/singularity/default-nsswitch.conf:/etc/nsswitch.conf
+#bind path = /opt
+#bind path = /scratch
+bind path = /etc/localtime
+bind path = /etc/hosts
+
+
+# USER BIND CONTROL: [BOOL]
+# DEFAULT: yes
+# Allow users to influence and/or define bind points at runtime? This will 
+allow
+# users to specify bind points, scratch and tmp locations. (note: User bind
+# control is only allowed if the host also supports PR_SET_NO_NEW_PRIVS)
+user bind control = yes
+
+
+# ENABLE OVERLAY: [yes/no/try]
+# DEFAULT: try
+# Enabling this option will make it possible to specify bind paths to 
+locations
+# that do not currently exist within the container.  If 'try' is chosen,
+# overlayfs will be tried but if it is unavailable it will be silently 
+ignored.
+enable overlay = try
+
+
+# MOUNT SLAVE: [BOOL]
+# DEFAULT: yes
+# Should we automatically propagate file-system changes from the host?
+# This should be set to 'yes' when autofs mounts in the system should
+# show up in the container.
+mount slave = yes
+
+
+# SESSIONDIR MAXSIZE: [STRING]
+# DEFAULT: 16
+# This specifies how large the default sessiondir should be (in MB) and it 
+will
+# only affect users who use the "--contain" options and don't also specify a
+# location to do default read/writes to (e.g. "--workdir" or "--home").
+sessiondir max size = 16
+
+
+# LIMIT CONTAINER OWNERS: [STRING]
+# DEFAULT: NULL
+# Only allow containers to be used that are owned by a given user. If this
+# configuration is undefined (commented or set to NULL), all containers are
+# allowed to be used. This feature only applies when Singularity is running 
+in
+# SUID mode and the user is non-root.
+#limit container owners = gmk, singularity, nobody
+
+
+# LIMIT CONTAINER PATHS: [STRING]
+# DEFAULT: NULL
+# Only allow containers to be used that are located within an allowed path
+# prefix. If this configuration is undefined (commented or set to NULL),
+# containers will be allowed to run from anywhere on the file system. This
+# feature only applies when Singularity is running in SUID mode and the 
+user is
+# non-root.
+#limit container paths = /scratch, /tmp, /global
+
+
+# ALLOW CONTAINER ${TYPE}: [BOOL]
+# DEFAULT: yes
+# This feature limits what kind of containers that Singularity will allow
+# users to use (note this does not apply for root).
+allow container squashfs = yes
+allow container extfs = yes
+allow container dir = yes
+
+
+# AUTOFS BUG PATH: [STRING]
+# DEFAULT: Undefined
+# Define list of autofs directories which produces "Too many levels of 
+symbolink links"
+# errors when accessed from container (typically bind mounts)
+#autofs bug path = /nfs
+#autofs bug path = /cifs-share
+
+
+
+Any ideas what might be happening? 
+
+
+
+
+------=_Part_2734_619590978.1522780984758
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">When I try to use Singluarity (version 2.4.2) on the head =
+node of our HPC (running CentOS 6.8), it works fine:<br><br><div style=3D"b=
+ackground-color: rgb(250, 250, 250); border-color: rgb(187, 187, 187); bord=
+er-style: solid; border-width: 1px; overflow-wrap: break-word;" class=3D"pr=
+ettyprint"><code class=3D"prettyprint"><div class=3D"subprettyprint"><span =
+style=3D"color: #000;" class=3D"styled-by-prettify">$ </span><span style=3D=
+"color: #008;" class=3D"styled-by-prettify">module</span><span style=3D"col=
+or: #000;" class=3D"styled-by-prettify"> load singularity</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color=
+: #066;" class=3D"styled-by-prettify">2.4</span><span style=3D"color: #660;=
+" class=3D"styled-by-prettify">.</span><span style=3D"color: #066;" class=
+=3D"styled-by-prettify">2</span><span style=3D"color: #660;" class=3D"style=
+d-by-prettify">;</span><span style=3D"color: #000;" class=3D"styled-by-pret=
+tify"> singularity shell stevekm_ngs580</span><span style=3D"color: #660;" =
+class=3D"styled-by-prettify">-</span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify">nf_base</span><span style=3D"color: #660;" class=3D"sty=
+led-by-prettify">-</span><span style=3D"color: #066;" class=3D"styled-by-pr=
+ettify">2018</span><span style=3D"color: #660;" class=3D"styled-by-prettify=
+">-</span><span style=3D"color: #066;" class=3D"styled-by-prettify">03</spa=
+n><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span s=
+tyle=3D"color: #066;" class=3D"styled-by-prettify">15</span><span style=3D"=
+color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #0=
+00;" class=3D"styled-by-prettify">ea494a9472a4</span><span style=3D"color: =
+#660;" class=3D"styled-by-prettify">.</span><span style=3D"color: #000;" cl=
+ass=3D"styled-by-prettify">img<br><br></span></div></code></div><br>However=
+, when I try to run the same thing on our compute nodes, it fails:<br><br><=
+div style=3D"background-color: rgb(250, 250, 250); border-color: rgb(187, 1=
+87, 187); border-style: solid; border-width: 1px; overflow-wrap: break-word=
+;" class=3D"prettyprint"><code class=3D"prettyprint"><div class=3D"subprett=
+yprint"><span style=3D"color: #000;" class=3D"styled-by-prettify">$ </span>=
+<span style=3D"color: #008;" class=3D"styled-by-prettify">module</span><spa=
+n style=3D"color: #000;" class=3D"styled-by-prettify"> load singularity</sp=
+an><span style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span =
+style=3D"color: #066;" class=3D"styled-by-prettify">2.4</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">.</span><span style=3D"color=
+: #066;" class=3D"styled-by-prettify">2</span><span style=3D"color: #660;" =
+class=3D"styled-by-prettify">;</span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify"> singularity shell stevekm_ngs580</span><span style=3D"=
+color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #0=
+00;" class=3D"styled-by-prettify">nf_base</span><span style=3D"color: #660;=
+" class=3D"styled-by-prettify">-</span><span style=3D"color: #066;" class=
+=3D"styled-by-prettify">2018</span><span style=3D"color: #660;" class=3D"st=
+yled-by-prettify">-</span><span style=3D"color: #066;" class=3D"styled-by-p=
+rettify">03</span><span style=3D"color: #660;" class=3D"styled-by-prettify"=
+>-</span><span style=3D"color: #066;" class=3D"styled-by-prettify">15</span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span st=
+yle=3D"color: #000;" class=3D"styled-by-prettify">ea494a9472a4</span><span =
+style=3D"color: #660;" class=3D"styled-by-prettify">.</span><span style=3D"=
+color: #000;" class=3D"styled-by-prettify">img<br>ERROR =C2=A0</span><span =
+style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D"=
+color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #6=
+06;" class=3D"styled-by-prettify">Singularity</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #008;" cla=
+ss=3D"styled-by-prettify">is</span><span style=3D"color: #000;" class=3D"st=
+yled-by-prettify"> </span><span style=3D"color: #008;" class=3D"styled-by-p=
+rettify">not</span><span style=3D"color: #000;" class=3D"styled-by-prettify=
+"> running </span><span style=3D"color: #008;" class=3D"styled-by-prettify"=
+>with</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> appr=
+opriate privileges</span><span style=3D"color: #660;" class=3D"styled-by-pr=
+ettify">!</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><=
+br>ERROR =C2=A0</span><span style=3D"color: #660;" class=3D"styled-by-prett=
+ify">:</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> </s=
+pan><span style=3D"color: #606;" class=3D"styled-by-prettify">Check</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify"> installation path=
+ </span><span style=3D"color: #008;" class=3D"styled-by-prettify">is</span>=
+<span style=3D"color: #000;" class=3D"styled-by-prettify"> </span><span sty=
+le=3D"color: #008;" class=3D"styled-by-prettify">not</span><span style=3D"c=
+olor: #000;" class=3D"styled-by-prettify"> mounted </span><span style=3D"co=
+lor: #008;" class=3D"styled-by-prettify">with</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #080;" cla=
+ss=3D"styled-by-prettify">&#39;nosuid&#39;</span><span style=3D"color: #660=
+;" class=3D"styled-by-prettify">,</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> </span><span style=3D"color: #008;" class=3D"style=
+d-by-prettify">and</span><span style=3D"color: #660;" class=3D"styled-by-pr=
+ettify">/</span><span style=3D"color: #008;" class=3D"styled-by-prettify">o=
+r</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> consult =
+manual</span><span style=3D"color: #660;" class=3D"styled-by-prettify">.</s=
+pan><span style=3D"color: #000;" class=3D"styled-by-prettify"><br>ABORT =C2=
+=A0</span><span style=3D"color: #660;" class=3D"styled-by-prettify">:</span=
+><span style=3D"color: #000;" class=3D"styled-by-prettify"> </span><span st=
+yle=3D"color: #606;" class=3D"styled-by-prettify">Retval</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color=
+: #660;" class=3D"styled-by-prettify">=3D</span><span style=3D"color: #000;=
+" class=3D"styled-by-prettify"> </span><span style=3D"color: #066;" class=
+=3D"styled-by-prettify">255</span><span style=3D"color: #000;" class=3D"sty=
+led-by-prettify"><br><br></span></div></code></div><br>The compute nodes ar=
+e supposed to be running with the exact same software configuration as the =
+head node, so we are kinda stumped as to what might be causing this. <br><b=
+r>I saw there are details about the config here:<br><a href=3D"http://singu=
+larity.lbl.gov/docs-config#parameters">http://singularity.lbl.gov/docs-conf=
+ig#parameters</a><br><br>And I checked the contents of our config file but =
+it all looks like the default values:<br><div style=3D"background-color: rg=
+b(250, 250, 250); border-color: rgb(187, 187, 187); border-style: solid; bo=
+rder-width: 1px; overflow-wrap: break-word;" class=3D"prettyprint"><code cl=
+ass=3D"prettyprint"><div class=3D"subprettyprint"><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify"><br>$ cat </span><span style=3D"color: #66=
+0;" class=3D"styled-by-prettify">/</span><span style=3D"color: #008;" class=
+=3D"styled-by-prettify">local</span><span style=3D"color: #660;" class=3D"s=
+tyled-by-prettify">/</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify">apps</span><span style=3D"color: #660;" class=3D"styled-by-pretti=
+fy">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">singu=
+larity</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</s=
+pan><span style=3D"color: #066;" class=3D"styled-by-prettify">2.4</span><sp=
+an style=3D"color: #660;" class=3D"styled-by-prettify">.</span><span style=
+=3D"color: #066;" class=3D"styled-by-prettify">2</span><span style=3D"color=
+: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" =
+class=3D"styled-by-prettify">etc</span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify">singularity</span><span style=3D"color: #660;" class=3D"styl=
+ed-by-prettify">/</span><span style=3D"color: #000;" class=3D"styled-by-pre=
+ttify">singularity</span><span style=3D"color: #660;" class=3D"styled-by-pr=
+ettify">.</span><span style=3D"color: #000;" class=3D"styled-by-prettify">c=
+onf<br></span><span style=3D"color: #800;" class=3D"styled-by-prettify"># S=
+INGULARITY.CONF</span><span style=3D"color: #000;" class=3D"styled-by-prett=
+ify"><br></span><span style=3D"color: #800;" class=3D"styled-by-prettify">#=
+ This is the global configuration file for Singularity. This file controls<=
+/span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br></span>=
+<span style=3D"color: #800;" class=3D"styled-by-prettify"># what the contai=
+ner is allowed to do on a particular host, and as a result</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span style=3D"c=
+olor: #800;" class=3D"styled-by-prettify"># this file must be owned by root=
+.</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br><br><=
+br></span><span style=3D"color: #800;" class=3D"styled-by-prettify"># ALLOW=
+ SETUID: [BOOL]</span><span style=3D"color: #000;" class=3D"styled-by-prett=
+ify"><br></span><span style=3D"color: #800;" class=3D"styled-by-prettify">#=
+ DEFAULT: yes</span><span style=3D"color: #000;" class=3D"styled-by-prettif=
+y"><br></span><span style=3D"color: #800;" class=3D"styled-by-prettify"># S=
+hould we allow users to utilize the setuid program flow within Singularity?=
+</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br></span=
+><span style=3D"color: #800;" class=3D"styled-by-prettify"># note1: This is=
+ the default mode, and to utilize all features, this option</span><span sty=
+le=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span style=3D"=
+color: #800;" class=3D"styled-by-prettify"># will need to be enabled.</span=
+><span style=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span=
+ style=3D"color: #800;" class=3D"styled-by-prettify"># note2: If this optio=
+n is disabled, it will rely on the user namespace</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify"><br></span><span style=3D"color: #80=
+0;" class=3D"styled-by-prettify"># exclusively which has not been integrate=
+d equally between the different</span><span style=3D"color: #000;" class=3D=
+"styled-by-prettify"><br></span><span style=3D"color: #800;" class=3D"style=
+d-by-prettify"># Linux distributions.</span><span style=3D"color: #000;" cl=
+ass=3D"styled-by-prettify"><br>allow setuid </span><span style=3D"color: #6=
+60;" class=3D"styled-by-prettify">=3D</span><span style=3D"color: #000;" cl=
+ass=3D"styled-by-prettify"> yes<br><br><br></span><span style=3D"color: #80=
+0;" class=3D"styled-by-prettify"># MAX LOOP DEVICES: [INT]</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span style=3D"c=
+olor: #800;" class=3D"styled-by-prettify"># DEFAULT: 256</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span style=3D"co=
+lor: #800;" class=3D"styled-by-prettify"># Set the maximum number of loop d=
+evices that Singularity should ever attempt</span><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify"><br></span><span style=3D"color: #800;" cl=
+ass=3D"styled-by-prettify"># to utilize.</span><span style=3D"color: #000;"=
+ class=3D"styled-by-prettify"><br>max loop devices </span><span style=3D"co=
+lor: #660;" class=3D"styled-by-prettify">=3D</span><span style=3D"color: #0=
+00;" class=3D"styled-by-prettify"> </span><span style=3D"color: #066;" clas=
+s=3D"styled-by-prettify">256</span><span style=3D"color: #000;" class=3D"st=
+yled-by-prettify"><br><br><br></span><span style=3D"color: #800;" class=3D"=
+styled-by-prettify"># ALLOW PID NS: [BOOL]</span><span style=3D"color: #000=
+;" class=3D"styled-by-prettify"><br></span><span style=3D"color: #800;" cla=
+ss=3D"styled-by-prettify"># DEFAULT: yes</span><span style=3D"color: #000;"=
+ class=3D"styled-by-prettify"><br></span><span style=3D"color: #800;" class=
+=3D"styled-by-prettify"># Should we allow users to request the PID namespac=
+e? Note that for some HPC</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify"><br></span><span style=3D"color: #800;" class=3D"styled-by-p=
+rettify"># resources, the PID namespace may confuse the resource manager an=
+d break how</span><span style=3D"color: #000;" class=3D"styled-by-prettify"=
+><br></span><span style=3D"color: #800;" class=3D"styled-by-prettify"># som=
+e MPI implementations utilize shared memory. (note, on some older</span><sp=
+an style=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span sty=
+le=3D"color: #800;" class=3D"styled-by-prettify"># systems, the PID namespa=
+ce is always used)</span><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify"><br>allow pid ns </span><span style=3D"color: #660;" class=3D"style=
+d-by-prettify">=3D</span><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify"> yes<br><br><br></span><span style=3D"color: #800;" class=3D"styled=
+-by-prettify"># CONFIG PASSWD: [BOOL]</span><span style=3D"color: #000;" cl=
+ass=3D"styled-by-prettify"><br></span><span style=3D"color: #800;" class=3D=
+"styled-by-prettify"># DEFAULT: yes</span><span style=3D"color: #000;" clas=
+s=3D"styled-by-prettify"><br></span><span style=3D"color: #800;" class=3D"s=
+tyled-by-prettify"># If /etc/passwd exists within the container, this will =
+automatically append</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify"><br></span><span style=3D"color: #800;" class=3D"styled-by-pretti=
+fy"># an entry for the calling user.</span><span style=3D"color: #000;" cla=
+ss=3D"styled-by-prettify"><br>config passwd </span><span style=3D"color: #6=
+60;" class=3D"styled-by-prettify">=3D</span><span style=3D"color: #000;" cl=
+ass=3D"styled-by-prettify"> yes<br><br><br></span><span style=3D"color: #80=
+0;" class=3D"styled-by-prettify"># CONFIG GROUP: [BOOL]</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span style=3D"co=
+lor: #800;" class=3D"styled-by-prettify"># DEFAULT: yes</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span style=3D"co=
+lor: #800;" class=3D"styled-by-prettify"># If /etc/group exists within the =
+container, this will automatically append</span><span style=3D"color: #000;=
+" class=3D"styled-by-prettify"><br></span><span style=3D"color: #800;" clas=
+s=3D"styled-by-prettify"># group entries for the calling user.</span><span =
+style=3D"color: #000;" class=3D"styled-by-prettify"><br>config </span><span=
+ style=3D"color: #008;" class=3D"styled-by-prettify">group</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"colo=
+r: #660;" class=3D"styled-by-prettify">=3D</span><span style=3D"color: #000=
+;" class=3D"styled-by-prettify"> yes<br><br><br></span><span style=3D"color=
+: #800;" class=3D"styled-by-prettify"># CONFIG RESOLV_CONF: [BOOL]</span><s=
+pan style=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span st=
+yle=3D"color: #800;" class=3D"styled-by-prettify"># DEFAULT: yes</span><spa=
+n style=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span styl=
+e=3D"color: #800;" class=3D"styled-by-prettify"># If there is a bind point =
+within the container, use the host&#39;s</span><span style=3D"color: #000;"=
+ class=3D"styled-by-prettify"><br></span><span style=3D"color: #800;" class=
+=3D"styled-by-prettify"># /etc/resolv.conf.</span><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify"><br>config resolv_conf </span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">=3D</span><span style=3D"col=
+or: #000;" class=3D"styled-by-prettify"> yes<br><br><br></span><span style=
+=3D"color: #800;" class=3D"styled-by-prettify"># MOUNT PROC: [BOOL]</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span s=
+tyle=3D"color: #800;" class=3D"styled-by-prettify"># DEFAULT: yes</span><sp=
+an style=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span sty=
+le=3D"color: #800;" class=3D"styled-by-prettify"># Should we automatically =
+bind mount /proc within the container?</span><span style=3D"color: #000;" c=
+lass=3D"styled-by-prettify"><br>mount proc </span><span style=3D"color: #66=
+0;" class=3D"styled-by-prettify">=3D</span><span style=3D"color: #000;" cla=
+ss=3D"styled-by-prettify"> yes<br><br><br></span><span style=3D"color: #800=
+;" class=3D"styled-by-prettify"># MOUNT SYS: [BOOL]</span><span style=3D"co=
+lor: #000;" class=3D"styled-by-prettify"><br></span><span style=3D"color: #=
+800;" class=3D"styled-by-prettify"># DEFAULT: yes</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify"><br></span><span style=3D"color: #80=
+0;" class=3D"styled-by-prettify"># Should we automatically bind mount /sys =
+within the container?</span><span style=3D"color: #000;" class=3D"styled-by=
+-prettify"><br>mount sys </span><span style=3D"color: #660;" class=3D"style=
+d-by-prettify">=3D</span><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify"> yes<br><br><br></span><span style=3D"color: #800;" class=3D"styled=
+-by-prettify"># MOUNT DEV: [yes/no/minimal]</span><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify"><br></span><span style=3D"color: #800;" cl=
+ass=3D"styled-by-prettify"># DEFAULT: yes</span><span style=3D"color: #000;=
+" class=3D"styled-by-prettify"><br></span><span style=3D"color: #800;" clas=
+s=3D"styled-by-prettify"># Should we automatically bind mount /dev within t=
+he container? If &#39;minimal&#39;</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"><br></span><span style=3D"color: #800;" class=3D"st=
+yled-by-prettify"># is chosen, then only &#39;null&#39;, &#39;zero&#39;, &#=
+39;random&#39;, &#39;urandom&#39;, and &#39;shm&#39; will</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span style=3D"co=
+lor: #800;" class=3D"styled-by-prettify"># be included (the same effect as =
+the --contain options)</span><span style=3D"color: #000;" class=3D"styled-b=
+y-prettify"><br>mount dev </span><span style=3D"color: #660;" class=3D"styl=
+ed-by-prettify">=3D</span><span style=3D"color: #000;" class=3D"styled-by-p=
+rettify"> yes<br><br><br></span><span style=3D"color: #800;" class=3D"style=
+d-by-prettify"># MOUNT DEVPTS: [BOOL]</span><span style=3D"color: #000;" cl=
+ass=3D"styled-by-prettify"><br></span><span style=3D"color: #800;" class=3D=
+"styled-by-prettify"># DEFAULT: yes</span><span style=3D"color: #000;" clas=
+s=3D"styled-by-prettify"><br></span><span style=3D"color: #800;" class=3D"s=
+tyled-by-prettify"># Should we mount a new instance of devpts if there is a=
+ &#39;minimal&#39;</span><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify"><br></span><span style=3D"color: #800;" class=3D"styled-by-prettify=
+"># /dev, or -C is passed? =C2=A0Note, this requires that your kernel was</=
+span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br></span><=
+span style=3D"color: #800;" class=3D"styled-by-prettify"># configured with =
+CONFIG_DEVPTS_MULTIPLE_INSTANCES=3Dy, or that you&#39;re</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span style=3D"co=
+lor: #800;" class=3D"styled-by-prettify"># running kernel 4.7 or newer.</sp=
+an><span style=3D"color: #000;" class=3D"styled-by-prettify"><br>mount devp=
+ts </span><span style=3D"color: #660;" class=3D"styled-by-prettify">=3D</sp=
+an><span style=3D"color: #000;" class=3D"styled-by-prettify"> yes<br><br><b=
+r></span><span style=3D"color: #800;" class=3D"styled-by-prettify"># MOUNT =
+HOME: [BOOL]</span><span style=3D"color: #000;" class=3D"styled-by-prettify=
+"><br></span><span style=3D"color: #800;" class=3D"styled-by-prettify"># DE=
+FAULT: yes</span><span style=3D"color: #000;" class=3D"styled-by-prettify">=
+<br></span><span style=3D"color: #800;" class=3D"styled-by-prettify"># Shou=
+ld we automatically determine the calling user&#39;s home directory and</sp=
+an><span style=3D"color: #000;" class=3D"styled-by-prettify"><br></span><sp=
+an style=3D"color: #800;" class=3D"styled-by-prettify"># attempt to mount i=
+t&#39;s base path into the container? If the --contain option</span><span s=
+tyle=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span style=
+=3D"color: #800;" class=3D"styled-by-prettify"># is used, the home director=
+y will be created within the session directory or</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify"><br></span><span style=3D"color: #80=
+0;" class=3D"styled-by-prettify"># can be overridden with the SINGULARITY_H=
+OME or SINGULARITY_WORKDIR</span><span style=3D"color: #000;" class=3D"styl=
+ed-by-prettify"><br></span><span style=3D"color: #800;" class=3D"styled-by-=
+prettify"># environment variables (or their corresponding command line opti=
+ons).</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br>m=
+ount home </span><span style=3D"color: #660;" class=3D"styled-by-prettify">=
+=3D</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> yes<br=
+><br><br></span><span style=3D"color: #800;" class=3D"styled-by-prettify">#=
+ MOUNT TMP: [BOOL]</span><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify"><br></span><span style=3D"color: #800;" class=3D"styled-by-prettify=
+"># DEFAULT: yes</span><span style=3D"color: #000;" class=3D"styled-by-pret=
+tify"><br></span><span style=3D"color: #800;" class=3D"styled-by-prettify">=
+# Should we automatically bind mount /tmp and /var/tmp into the container? =
+If</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br></sp=
+an><span style=3D"color: #800;" class=3D"styled-by-prettify"># the --contai=
+n option is used, both tmp locations will be created in the</span><span sty=
+le=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span style=3D"=
+color: #800;" class=3D"styled-by-prettify"># session directory or can be sp=
+ecified via the =C2=A0SINGULARITY_WORKDIR</span><span style=3D"color: #000;=
+" class=3D"styled-by-prettify"><br></span><span style=3D"color: #800;" clas=
+s=3D"styled-by-prettify"># environment variable (or the --workingdir comman=
+d line option).</span><span style=3D"color: #000;" class=3D"styled-by-prett=
+ify"><br>mount tmp </span><span style=3D"color: #660;" class=3D"styled-by-p=
+rettify">=3D</span><span style=3D"color: #000;" class=3D"styled-by-prettify=
+"> yes<br><br><br></span><span style=3D"color: #800;" class=3D"styled-by-pr=
+ettify"># MOUNT HOSTFS: [BOOL]</span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify"><br></span><span style=3D"color: #800;" class=3D"styled=
+-by-prettify"># DEFAULT: no</span><span style=3D"color: #000;" class=3D"sty=
+led-by-prettify"><br></span><span style=3D"color: #800;" class=3D"styled-by=
+-prettify"># Probe for all mounted file systems that are mounted on the hos=
+t, and bind</span><span style=3D"color: #000;" class=3D"styled-by-prettify"=
+><br></span><span style=3D"color: #800;" class=3D"styled-by-prettify"># tho=
+se into the container?</span><span style=3D"color: #000;" class=3D"styled-b=
+y-prettify"><br>mount hostfs </span><span style=3D"color: #660;" class=3D"s=
+tyled-by-prettify">=3D</span><span style=3D"color: #000;" class=3D"styled-b=
+y-prettify"> </span><span style=3D"color: #008;" class=3D"styled-by-prettif=
+y">no</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br><=
+br><br></span><span style=3D"color: #800;" class=3D"styled-by-prettify"># B=
+IND PATH: [STRING]</span><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify"><br></span><span style=3D"color: #800;" class=3D"styled-by-prettify=
+"># DEFAULT: Undefined</span><span style=3D"color: #000;" class=3D"styled-b=
+y-prettify"><br></span><span style=3D"color: #800;" class=3D"styled-by-pret=
+tify"># Define a list of files/directories that should be made available fr=
+om within</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><=
+br></span><span style=3D"color: #800;" class=3D"styled-by-prettify"># the c=
+ontainer. The file or directory must exist within the container on</span><s=
+pan style=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span st=
+yle=3D"color: #800;" class=3D"styled-by-prettify"># which to attach to. you=
+ can specify a different source and destination</span><span style=3D"color:=
+ #000;" class=3D"styled-by-prettify"><br></span><span style=3D"color: #800;=
+" class=3D"styled-by-prettify"># path (respectively) with a colon; otherwis=
+e source and dest are the same.</span><span style=3D"color: #000;" class=3D=
+"styled-by-prettify"><br></span><span style=3D"color: #800;" class=3D"style=
+d-by-prettify">#bind path =3D /etc/singularity/default-nsswitch.conf:/etc/n=
+sswitch.conf</span><span style=3D"color: #000;" class=3D"styled-by-prettify=
+"><br></span><span style=3D"color: #800;" class=3D"styled-by-prettify">#bin=
+d path =3D /opt</span><span style=3D"color: #000;" class=3D"styled-by-prett=
+ify"><br></span><span style=3D"color: #800;" class=3D"styled-by-prettify">#=
+bind path =3D /scratch</span><span style=3D"color: #000;" class=3D"styled-b=
+y-prettify"><br>bind path </span><span style=3D"color: #660;" class=3D"styl=
+ed-by-prettify">=3D</span><span style=3D"color: #000;" class=3D"styled-by-p=
+rettify"> </span><span style=3D"color: #080;" class=3D"styled-by-prettify">=
+/etc/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">local=
+time<br>bind path </span><span style=3D"color: #660;" class=3D"styled-by-pr=
+ettify">=3D</span><span style=3D"color: #000;" class=3D"styled-by-prettify"=
+> </span><span style=3D"color: #080;" class=3D"styled-by-prettify">/etc/</s=
+pan><span style=3D"color: #000;" class=3D"styled-by-prettify">hosts<br><br>=
+<br></span><span style=3D"color: #800;" class=3D"styled-by-prettify"># USER=
+ BIND CONTROL: [BOOL]</span><span style=3D"color: #000;" class=3D"styled-by=
+-prettify"><br></span><span style=3D"color: #800;" class=3D"styled-by-prett=
+ify"># DEFAULT: yes</span><span style=3D"color: #000;" class=3D"styled-by-p=
+rettify"><br></span><span style=3D"color: #800;" class=3D"styled-by-prettif=
+y"># Allow users to influence and/or define bind points at runtime? This wi=
+ll allow</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><b=
+r></span><span style=3D"color: #800;" class=3D"styled-by-prettify"># users =
+to specify bind points, scratch and tmp locations. (note: User bind</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span s=
+tyle=3D"color: #800;" class=3D"styled-by-prettify"># control is only allowe=
+d if the host also supports PR_SET_NO_NEW_PRIVS)</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify"><br>user bind control </span><span st=
+yle=3D"color: #660;" class=3D"styled-by-prettify">=3D</span><span style=3D"=
+color: #000;" class=3D"styled-by-prettify"> yes<br><br><br></span><span sty=
+le=3D"color: #800;" class=3D"styled-by-prettify"># ENABLE OVERLAY: [yes/no/=
+try]</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br></=
+span><span style=3D"color: #800;" class=3D"styled-by-prettify"># DEFAULT: t=
+ry</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br></sp=
+an><span style=3D"color: #800;" class=3D"styled-by-prettify"># Enabling thi=
+s option will make it possible to specify bind paths to locations</span><sp=
+an style=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span sty=
+le=3D"color: #800;" class=3D"styled-by-prettify"># that do not currently ex=
+ist within the container. =C2=A0If &#39;try&#39; is chosen,</span><span sty=
+le=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span style=3D"=
+color: #800;" class=3D"styled-by-prettify"># overlayfs will be tried but if=
+ it is unavailable it will be silently ignored.</span><span style=3D"color:=
+ #000;" class=3D"styled-by-prettify"><br>enable overlay </span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">=3D</span><span style=3D"col=
+or: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #008;=
+" class=3D"styled-by-prettify">try</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"><br><br><br></span><span style=3D"color: #800;" cla=
+ss=3D"styled-by-prettify"># MOUNT SLAVE: [BOOL]</span><span style=3D"color:=
+ #000;" class=3D"styled-by-prettify"><br></span><span style=3D"color: #800;=
+" class=3D"styled-by-prettify"># DEFAULT: yes</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify"><br></span><span style=3D"color: #800;" =
+class=3D"styled-by-prettify"># Should we automatically propagate file-syste=
+m changes from the host?</span><span style=3D"color: #000;" class=3D"styled=
+-by-prettify"><br></span><span style=3D"color: #800;" class=3D"styled-by-pr=
+ettify"># This should be set to &#39;yes&#39; when autofs mounts in the sys=
+tem should</span><span style=3D"color: #000;" class=3D"styled-by-prettify">=
+<br></span><span style=3D"color: #800;" class=3D"styled-by-prettify"># show=
+ up in the container.</span><span style=3D"color: #000;" class=3D"styled-by=
+-prettify"><br>mount slave </span><span style=3D"color: #660;" class=3D"sty=
+led-by-prettify">=3D</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify"> yes<br><br><br></span><span style=3D"color: #800;" class=3D"styl=
+ed-by-prettify"># SESSIONDIR MAXSIZE: [STRING]</span><span style=3D"color: =
+#000;" class=3D"styled-by-prettify"><br></span><span style=3D"color: #800;"=
+ class=3D"styled-by-prettify"># DEFAULT: 16</span><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify"><br></span><span style=3D"color: #800;" cl=
+ass=3D"styled-by-prettify"># This specifies how large the default sessiondi=
+r should be (in MB) and it will</span><span style=3D"color: #000;" class=3D=
+"styled-by-prettify"><br></span><span style=3D"color: #800;" class=3D"style=
+d-by-prettify"># only affect users who use the &quot;--contain&quot; option=
+s and don&#39;t also specify a</span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify"><br></span><span style=3D"color: #800;" class=3D"styled=
+-by-prettify"># location to do default read/writes to (e.g. &quot;--workdir=
+&quot; or &quot;--home&quot;).</span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify"><br>sessiondir max size </span><span style=3D"color: #6=
+60;" class=3D"styled-by-prettify">=3D</span><span style=3D"color: #000;" cl=
+ass=3D"styled-by-prettify"> </span><span style=3D"color: #066;" class=3D"st=
+yled-by-prettify">16</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify"><br><br><br></span><span style=3D"color: #800;" class=3D"styled-b=
+y-prettify"># LIMIT CONTAINER OWNERS: [STRING]</span><span style=3D"color: =
+#000;" class=3D"styled-by-prettify"><br></span><span style=3D"color: #800;"=
+ class=3D"styled-by-prettify"># DEFAULT: NULL</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify"><br></span><span style=3D"color: #800;" =
+class=3D"styled-by-prettify"># Only allow containers to be used that are ow=
+ned by a given user. If this</span><span style=3D"color: #000;" class=3D"st=
+yled-by-prettify"><br></span><span style=3D"color: #800;" class=3D"styled-b=
+y-prettify"># configuration is undefined (commented or set to NULL), all co=
+ntainers are</span><span style=3D"color: #000;" class=3D"styled-by-prettify=
+"><br></span><span style=3D"color: #800;" class=3D"styled-by-prettify"># al=
+lowed to be used. This feature only applies when Singularity is running in<=
+/span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br></span>=
+<span style=3D"color: #800;" class=3D"styled-by-prettify"># SUID mode and t=
+he user is non-root.</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify"><br></span><span style=3D"color: #800;" class=3D"styled-by-pretti=
+fy">#limit container owners =3D gmk, singularity, nobody</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"><br><br><br></span><span sty=
+le=3D"color: #800;" class=3D"styled-by-prettify"># LIMIT CONTAINER PATHS: [=
+STRING]</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br=
+></span><span style=3D"color: #800;" class=3D"styled-by-prettify"># DEFAULT=
+: NULL</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br>=
+</span><span style=3D"color: #800;" class=3D"styled-by-prettify"># Only all=
+ow containers to be used that are located within an allowed path</span><spa=
+n style=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span styl=
+e=3D"color: #800;" class=3D"styled-by-prettify"># prefix. If this configura=
+tion is undefined (commented or set to NULL),</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify"><br></span><span style=3D"color: #800;" =
+class=3D"styled-by-prettify"># containers will be allowed to run from anywh=
+ere on the file system. This</span><span style=3D"color: #000;" class=3D"st=
+yled-by-prettify"><br></span><span style=3D"color: #800;" class=3D"styled-b=
+y-prettify"># feature only applies when Singularity is running in SUID mode=
+ and the user is</span><span style=3D"color: #000;" class=3D"styled-by-pret=
+tify"><br></span><span style=3D"color: #800;" class=3D"styled-by-prettify">=
+# non-root.</span><span style=3D"color: #000;" class=3D"styled-by-prettify"=
+><br></span><span style=3D"color: #800;" class=3D"styled-by-prettify">#limi=
+t container paths =3D /scratch, /tmp, /global</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify"><br><br><br></span><span style=3D"color:=
+ #800;" class=3D"styled-by-prettify"># ALLOW CONTAINER ${TYPE}: [BOOL]</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify"><br></span><spa=
+n style=3D"color: #800;" class=3D"styled-by-prettify"># DEFAULT: yes</span>=
+<span style=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span =
+style=3D"color: #800;" class=3D"styled-by-prettify"># This feature limits w=
+hat kind of containers that Singularity will allow</span><span style=3D"col=
+or: #000;" class=3D"styled-by-prettify"><br></span><span style=3D"color: #8=
+00;" class=3D"styled-by-prettify"># users to use (note this does not apply =
+for root).</span><span style=3D"color: #000;" class=3D"styled-by-prettify">=
+<br>allow container squashfs </span><span style=3D"color: #660;" class=3D"s=
+tyled-by-prettify">=3D</span><span style=3D"color: #000;" class=3D"styled-b=
+y-prettify"> yes<br>allow container extfs </span><span style=3D"color: #660=
+;" class=3D"styled-by-prettify">=3D</span><span style=3D"color: #000;" clas=
+s=3D"styled-by-prettify"> yes<br>allow container dir </span><span style=3D"=
+color: #660;" class=3D"styled-by-prettify">=3D</span><span style=3D"color: =
+#000;" class=3D"styled-by-prettify"> yes<br><br><br></span><span style=3D"c=
+olor: #800;" class=3D"styled-by-prettify"># AUTOFS BUG PATH: [STRING]</span=
+><span style=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span=
+ style=3D"color: #800;" class=3D"styled-by-prettify"># DEFAULT: Undefined</=
+span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br></span><=
+span style=3D"color: #800;" class=3D"styled-by-prettify"># Define list of a=
+utofs directories which produces &quot;Too many levels of symbolink links&q=
+uot;</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br></=
+span><span style=3D"color: #800;" class=3D"styled-by-prettify"># errors whe=
+n accessed from container (typically bind mounts)</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify"><br></span><span style=3D"color: #80=
+0;" class=3D"styled-by-prettify">#autofs bug path =3D /nfs</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span style=3D"c=
+olor: #800;" class=3D"styled-by-prettify">#autofs bug path =3D /cifs-share<=
+/span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br><br></s=
+pan></div></code></div><br><br>Any ideas what might be happening? <br><br><=
+br><br></div>
+------=_Part_2734_619590978.1522780984758--
+
+------=_Part_2733_1487031771.1522780984756--

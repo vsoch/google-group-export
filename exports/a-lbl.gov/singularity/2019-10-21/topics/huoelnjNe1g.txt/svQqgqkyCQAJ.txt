@@ -1,0 +1,231 @@
+Date: Thu, 7 Mar 2019 10:39:06 -0800 (PST)
+From: Gerard Weatherby <gerard....@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <158630e7-a401-4d1a-9052-3c76d17fa78d@lbl.gov>
+In-Reply-To: <CAM=pu+JA9E6cajvEiZCtjPdc8tVys+XWdU52XAQHsyqBcQPUDQ@mail.gmail.com>
+References: <d9215f88-fb95-49d3-8495-35af7d321949@lbl.gov> <49a9e926-db68-4ce7-aa60-8669964f6cd6@lbl.gov>
+ <CAM=pu+LF46iCPsSePBH8+dtwbeCqyhF1VHfumOprUCLzsi+GOA@mail.gmail.com> <b01bb768-462e-4793-a2b6-f58548f7f7cc@lbl.gov>
+ <CAM=pu+JA9E6cajvEiZCtjPdc8tVys+XWdU52XAQHsyqBcQPUDQ@mail.gmail.com>
+Subject: Re: [Singularity] Re: run service as root and process as user
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_907_191814499.1551983946365"
+
+------=_Part_907_191814499.1551983946365
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_908_560985240.1551983946365"
+
+------=_Part_908_560985240.1551983946365
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+I'm trying to set up a scenario with each application process has its own 
+dedicated license server. 
+If I'm understanding the documentation correctly, a given container can be 
+started *either *as an instance or simply run, so I'd have one container 
+invocation with the daemon and another invocation running the user process, 
+which isn't exaclty what I"m looking for.
+
+On Thursday, March 7, 2019 at 12:19:51 PM UTC-5, vanessa wrote:
+>
+> For some master container serving the manager, you could add the command 
+> to start the services to the %startscript, and then start the container 
+> with root (sudo). This would be running the container as an instance, e.g.,
+>
+> sudo singularity instance start <container.sif> license-manager
+>
+> I'm not fully understanding the "user A license" and "user B" license 
+> scenario, but maybe pointing you in the direction of instances might get 
+> you on a better start? Note that when you start/stop/list, having sudo (or 
+> not) will only show those that were started with/without. The other thing 
+> to point out above is that the %startscript is what is run when the 
+> instance starts. The %runscript is still what's run when the container is 
+> run.
+>
+> On Thu, Mar 7, 2019 at 12:12 PM Gerard Weatherby <ger...@gmail.com 
+> <javascript:>> wrote:
+>
+>> Declared victory too early, I didn't understand the mapping of /proc 
+>> means *ps *shows processes running outside the container as well as 
+>> in :( 
+>>
+>> (I understand we can execute commands during build using the %setup 
+>> and/or the %post sections of the recipe file.)
+>>
+>> Here's what I'm trying to do:
+>>
+>> I need to install an application which runs as a non-root user which 
+>> requires a license manager. Unfortunately the license manager will serve a 
+>> given license to any client on the same host, so we hope to containerize 
+>> the license manager and application so the manager has a single license 
+>> installed which the application can use. The goal is to allow user "A" to 
+>> run a container with their license, and another user "B" on the same host 
+>> run another copy of the container with their ("B") license which is 
+>> different than A's.
+>>
+>> The license manager should run as a root daemon inside the container. 
+>> From open feature request 735 
+>> <https://github.com/sylabs/singularity/issues/735>, I'm thinking maybe 
+>> singularity doesn't do this yet?
+>>
+>> On Wednesday, March 6, 2019 at 3:21:09 PM UTC-5, vanessa wrote:
+>>>
+>>> Yes, during build you have root! You said in your first question *run* a 
+>>> service as root, so I assumed you meant after build. If that works, glad 
+>>> you figured it out! :)
+>>>
+>>> On Wed, Mar 6, 2019 at 3:08 PM Gerard Weatherby <ger...@gmail.com> 
+>>> wrote:
+>>>
+>>>> Solved, I think. I was able to create a supervisor file and have that 
+>>>> execute the root process:
+>>>>
+>>>> *%setup*
+>>>> *    mkdir -p ${SINGULARITY_ROOTFS}/etc/supervisor/conf.d*
+>>>>
+>>>>
+>>>> *%files*
+>>>> *    files/supervisord.conf /etc/supervisor/*
+>>>> *    files/codemeter.conf /etc/supervisor/conf.d*
+>>>>
+>>>>
+>>>> On Wednesday, March 6, 2019 at 2:26:49 PM UTC-5, Gerard Weatherby wrote:
+>>>>>
+>>>>> New to singularity, trying to figure out if / how I can, inside a 
+>>>>> container:
+>>>>> * run one process / service as root
+>>>>> * run another as a non-root user
+>>>>> It's a debootstrap / xenial container, if that matters.
+>>>>>
+>>>>> -- 
+>>>> You received this message because you are subscribed to the Google 
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>> an email to singu...@lbl.gov.
+>>>>
+>>>
+>>>
+>>> -- 
+>>> Vanessa Villamia Sochat
+>>> Stanford University '16
+>>> (603) 321-0676
+>>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_908_560985240.1551983946365
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>I&#39;m trying to set up a scenario with each applica=
+tion process has its own dedicated license server.=C2=A0</div>If I&#39;m un=
+derstanding the documentation correctly, a given container can be started=
+=C2=A0<i>either </i>as an instance or simply run, so I&#39;d have one conta=
+iner invocation with the daemon and another invocation running the user pro=
+cess, which isn&#39;t exaclty what I&quot;m looking for.<br><br>On Thursday=
+, March 7, 2019 at 12:19:51 PM UTC-5, vanessa wrote:<blockquote class=3D"gm=
+ail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc soli=
+d;padding-left: 1ex;"><div dir=3D"ltr">For some master container serving th=
+e manager, you could add the command to start the services to the %startscr=
+ipt, and then start the container with root (sudo). This would be running t=
+he container as an instance, e.g.,<div><br></div><div>sudo singularity inst=
+ance start &lt;container.sif&gt; license-manager</div><div><br></div><div>I=
+&#39;m not fully understanding the &quot;user A license&quot; and &quot;use=
+r B&quot; license scenario, but maybe pointing you in the direction of inst=
+ances might get you on a better start? Note that when you start/stop/list, =
+having sudo (or not) will only show those that were started with/without. T=
+he other thing to point out above is that the %startscript is what is run w=
+hen the instance starts. The %runscript is still what&#39;s run when the co=
+ntainer is run.</div></div><br><div class=3D"gmail_quote"><div dir=3D"ltr">=
+On Thu, Mar 7, 2019 at 12:12 PM Gerard Weatherby &lt;<a href=3D"javascript:=
+" target=3D"_blank" gdf-obfuscated-mailto=3D"OYzglkQNBgAJ" rel=3D"nofollow"=
+ onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"=
+this.href=3D&#39;javascript:&#39;;return true;">ger...@gmail.com</a>&gt; wr=
+ote:<br></div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px=
+ 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D=
+"ltr">Declared victory too early, I didn&#39;t understand the mapping of /p=
+roc means <i>ps </i>shows processes running outside the container as well a=
+s in=C2=A0:(=C2=A0<div><br></div><div>(I understand we can execute commands=
+ during build using the %setup and/or the %post sections of the recipe file=
+.)<div><br></div><div>Here&#39;s what I&#39;m trying to do:</div><div><br><=
+/div><div>I need to install an application which runs as a non-root user wh=
+ich requires a license manager. Unfortunately the license manager will serv=
+e a given license to any client on the same host, so we hope to containeriz=
+e the license manager and application so the manager has a single license i=
+nstalled which the application can use. The goal is to allow user &quot;A&q=
+uot; to run a container with their license, and another user &quot;B&quot; =
+on the same host run another copy of the container with their (&quot;B&quot=
+;) license which is different than A&#39;s.</div><div><br></div><div>The li=
+cense manager should run as a root daemon inside the container. From <a hre=
+f=3D"https://github.com/sylabs/singularity/issues/735" target=3D"_blank" re=
+l=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q=
+\x3dhttps%3A%2F%2Fgithub.com%2Fsylabs%2Fsingularity%2Fissues%2F735\x26sa\x3=
+dD\x26sntz\x3d1\x26usg\x3dAFQjCNFjUiXTTJcfy3yJJWiB4_5aTlWY1A&#39;;return tr=
+ue;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2=
+F%2Fgithub.com%2Fsylabs%2Fsingularity%2Fissues%2F735\x26sa\x3dD\x26sntz\x3d=
+1\x26usg\x3dAFQjCNFjUiXTTJcfy3yJJWiB4_5aTlWY1A&#39;;return true;">open feat=
+ure request 735</a>, I&#39;m thinking maybe singularity doesn&#39;t do this=
+ yet?<br><br>On Wednesday, March 6, 2019 at 3:21:09 PM UTC-5, vanessa wrote=
+:<blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border=
+-left:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr">Yes, du=
+ring build you have root! You said in your first question *run* a service a=
+s root, so I assumed you meant after build. If that works, glad you figured=
+ it out! :)</div><br><div class=3D"gmail_quote"><div dir=3D"ltr">On Wed, Ma=
+r 6, 2019 at 3:08 PM Gerard Weatherby &lt;<a rel=3D"nofollow">ger...@gmail.=
+com</a>&gt; wrote:<br></div><blockquote class=3D"gmail_quote" style=3D"marg=
+in:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1e=
+x"><div dir=3D"ltr">Solved, I think. I was able to create a supervisor file=
+ and have that execute the root process:<div><br><div><div><i>%setup</i></d=
+iv><div><i>=C2=A0 =C2=A0 mkdir -p ${SINGULARITY_ROOTFS}/etc/<wbr>supervisor=
+/conf.d</i></div><div><i><br></i></div><div><i><br></i></div><div><i>%files=
+</i></div><div><i>=C2=A0 =C2=A0 files/supervisord.conf /etc/supervisor/</i>=
+</div><div><i>=C2=A0 =C2=A0 files/codemeter.conf /etc/supervisor/conf.d</i>=
+</div><div><br></div><br>On Wednesday, March 6, 2019 at 2:26:49 PM UTC-5, G=
+erard Weatherby wrote:<blockquote class=3D"gmail_quote" style=3D"margin:0px=
+ 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"><di=
+v dir=3D"ltr">New to singularity, trying to figure out if / how I can, insi=
+de a container:<div>* run one process / service as root</div><div>* run ano=
+ther as a non-root user</div><div>It&#39;s a debootstrap / xenial container=
+, if that matters.</div><div><br></div></div></blockquote></div></div></div=
+>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><div>(=
+603) 321-0676</div></div></div></div>
+</blockquote></div></div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+OYzglkQNBgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><div>(=
+603) 321-0676</div></div></div></div>
+</blockquote></div>
+------=_Part_908_560985240.1551983946365--
+
+------=_Part_907_191814499.1551983946365--

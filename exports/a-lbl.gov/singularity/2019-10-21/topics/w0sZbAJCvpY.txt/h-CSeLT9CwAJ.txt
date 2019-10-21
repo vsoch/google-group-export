@@ -1,0 +1,267 @@
+X-Received: by 10.31.172.10 with SMTP id v10mr22668327vke.14.1465422635156;
+        Wed, 08 Jun 2016 14:50:35 -0700 (PDT)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.107.4.209 with SMTP id 200ls240117ioe.23.gmail; Wed, 08 Jun
+ 2016 14:50:34 -0700 (PDT)
+X-Received: by 10.98.95.197 with SMTP id t188mr633451pfb.162.1465422634722;
+        Wed, 08 Jun 2016 14:50:34 -0700 (PDT)
+Return-Path: <gmku...@lbl.gov>
+Received: from fe4.lbl.gov (fe4.lbl.gov. [128.3.41.71])
+        by mx.google.com with ESMTPS id w74si3415687pfa.169.2016.06.08.14.50.34
+        for <singu...@lbl.gov>
+        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Wed, 08 Jun 2016 14:50:34 -0700 (PDT)
+Received-SPF: pass (google.com: domain of gmku...@lbl.gov designates 209.85.213.70 as permitted sender) client-ip=209.85.213.70;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of gmku...@lbl.gov designates 209.85.213.70 as permitted sender) smtp.mailfrom=gmku...@lbl.gov
+X-Ironport-SBRS: 1.9
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2EUBQAmklhXd0bVVdFehREGgzayWoR/gXoXAYV7AoE/BzkTAQEBAQEBAQMPAQoLCwkfMYRFAQEBAwESESseCggLCQILDSoCAiIPAwEFARwGCAcEARoCBAGIBQgFj1ePQoExPjGLO5EZAQEIAQEBAQEiEIpkhBIRAYMdglkFjl2EXoUUAYtpgjyCAI0fjiISHoEPHwGCOxyBaxwyB4hTgTUBAQE
+X-IronPort-AV: E=Sophos;i="5.26,441,1459839600"; 
+   d="scan'208,217";a="25858907"
+Received: from mail-vk0-f70.google.com ([209.85.213.70])
+  by fe4.lbl.gov with ESMTP; 08 Jun 2016 14:50:34 -0700
+Received: by mail-vk0-f70.google.com with SMTP id w185so48491269vkf.3
+        for <singu...@lbl.gov>; Wed, 08 Jun 2016 14:50:33 -0700 (PDT)
+X-Gm-Message-State: ALyK8tLC1C/4w23E4dSPYs8pj+5IOloJpbhHZU1ScVN42EEqBBPMqpS0Uagypp5+HsUe54PU94+V/JXRE2rIEyh9Xe8mMe2XIyNx6tEU2w0FfbaSPxKfksRcFmysPYEfc/SsCqxebm75BcM890rmNlYeh6w=
+X-Received: by 10.37.31.69 with SMTP id f66mr4072666ybf.110.1465422633264;
+        Wed, 08 Jun 2016 14:50:33 -0700 (PDT)
+X-Received: by 10.37.31.69 with SMTP id f66mr4072663ybf.110.1465422633078;
+ Wed, 08 Jun 2016 14:50:33 -0700 (PDT)
+MIME-Version: 1.0
+Received: by 10.13.240.194 with HTTP; Wed, 8 Jun 2016 14:50:32 -0700 (PDT)
+In-Reply-To: <9C983A30-0A1C-444F-B995-355DCBBE01A2@open-mpi.org>
+References: <CAN7etTx5jY=zZeL-BmiONV1Dq9khCXBSj3VaN=UiHGG_r6DwXA@mail.gmail.com>
+ <9C983A30-0A1C-444F-B995-355DCBBE01A2@open-mpi.org>
+From: "Gregory M. Kurtzer" <gmku...@lbl.gov>
+Date: Wed, 8 Jun 2016 14:50:32 -0700
+Message-ID: <CAN7etTyer5e5e72E4NXkA9VBCR_+HTAuFZMJPMMrzsr6H9L_ng@mail.gmail.com>
+Subject: Re: [Singularity] Joining existing namespace support
+To: singularity <singu...@lbl.gov>
+Content-Type: multipart/alternative; boundary=001a1143e93c7dc0640534cb4b96
+
+--001a1143e93c7dc0640534cb4b96
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+On Wed, Jun 8, 2016 at 2:43 PM, Ralph Castain <r...@open-mpi.org> wrote:
+
+> I can live with either method, and I imagine it wouldn=E2=80=99t hurt to =
+retain
+> both?
+>
+
+<shrugs> ... that probably makes sense! I'll keep playing with it then.
+
+
+>
+> For OMPI integration, I suspect I would just inject the processes using
+> "singularity start=E2=80=9D
+>
+
+We wouldn't want to for OMPI I don't think. Just keep with the current
+model of not separating out the PID namespace for proper SM support. The
+namespace creation overhead is trivial, so we don't gain much by not
+replicating as needed.
+
+
+Thanks!
+
+
+
+
+>
+> On Jun 8, 2016, at 2:22 PM, Gregory M. Kurtzer <gmku...@lbl.gov> wrote:
+>
+> Hi all!
+>
+> So I've been playing around with allowing one to do something like:
+>
+> $ singularity start /path/to/container.img
+>
+> Such that subsequent calls to that particular container.img rejoin the
+> same namespace(s) even when they conclude:
+>
+> [root@centos7-x64 ~]# singularity exec /tmp/Demo-1.img ps aux
+> USER        PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+> root          1  0.0  0.0   6444   128 pts/2    S+   15:03   0:00
+> /usr/libexec/singularity/sexec
+> root          2  0.0  0.3 151024  1788 pts/2    R+   15:04   0:00 ps aux
+> [root@centos7-x64 ~]# singularity exec /tmp/Demo-1.img ps aux
+> USER        PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+> root          1  0.0  0.0   6444   128 pts/2    S+   15:03   0:00
+> /usr/libexec/singularity/sexec
+> root          3  0.0  0.3 151024  1788 pts/2    R+   15:04   0:00 ps aux
+> [root@centos7-x64 ~]# singularity exec /tmp/Demo-1.img ps aux
+> USER        PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+> root          1  0.0  0.0   6444   128 pts/2    S+   15:03   0:00
+> /usr/libexec/singularity/sexec
+> root          4  0.0  0.3 151024  1788 pts/2    R+   15:04   0:00 ps aux
+> [root@centos7-x64 ~]# singularity exec /tmp/Demo-1.img ps aux
+> USER        PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+> root          1  0.0  0.0   6444   128 pts/2    S+   15:03   0:00
+> /usr/libexec/singularity/sexec
+> root          5  0.0  0.3 151024  1788 pts/2    R+   15:04   0:00 ps aux
+>
+> (notice the PID of the ps process is increasing,... This is because sexec
+> is holding the namespace)
+>
+> But keeping in mind that the goal of Singularity is not complete isolatio=
+n
+> from the host there are only a few namespaces that I'm utilizing in
+> Singularity and out of them the only real one that makes sense to rejoin =
+is
+> the PID namespace. So here is my question...
+>
+> There are two options if you want to run subsequent container commands
+> that relate to each other, or invoke a daemon... One is you disable the
+> separation of the PID namespace and the other is the start/stop Singulari=
+ty
+> method. The first already exists and is very easy to deal with, but will
+> require dealing with an environment variable. The second is a clean
+> solution but I am not sure it is necessary.
+>
+> note: If you do not run 'singularity start' all commands operate as they
+> do presently in that they do not share namespaces.
+>
+> Does anyone have thoughts about this?
+>
+> Thanks!
+>
+> --
+> Gregory M. Kurtzer
+> High Performance Computing Services (HPCS)
+> University of California
+> Lawrence Berkeley National Laboratory
+> One Cyclotron Road, Berkeley, CA 94720
+>
+> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+>
+>
+> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+>
+
+
+
+--=20
+Gregory M. Kurtzer
+High Performance Computing Services (HPCS)
+University of California
+Lawrence Berkeley National Laboratory
+One Cyclotron Road, Berkeley, CA 94720
+
+--001a1143e93c7dc0640534cb4b96
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><br><div class=3D"gmail_extra"><br><div class=3D"gmail_quo=
+te">On Wed, Jun 8, 2016 at 2:43 PM, Ralph Castain <span dir=3D"ltr">&lt;<a =
+href=3D"mailto:r...@open-mpi.org" target=3D"_blank">r...@open-mpi.org</a>&g=
+t;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0=
+ .8ex;border-left:1px #ccc solid;padding-left:1ex"><div style=3D"word-wrap:=
+break-word">I can live with either method, and I imagine it wouldn=E2=80=99=
+t hurt to retain both?</div></blockquote><div><br></div><div>&lt;shrugs&gt;=
+ ... that probably makes sense! I&#39;ll keep playing with it then.</div><d=
+iv>=C2=A0</div><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex=
+;border-left:1px #ccc solid;padding-left:1ex"><div style=3D"word-wrap:break=
+-word"><div><br></div><div>For OMPI integration, I suspect I would just inj=
+ect the processes using &quot;singularity start=E2=80=9D</div></div></block=
+quote><div><br></div><div>We wouldn&#39;t want to for OMPI I don&#39;t thin=
+k. Just keep with the current model of not separating out the PID namespace=
+ for proper SM support. The namespace creation overhead is trivial, so we d=
+on&#39;t gain much by not replicating as needed.</div><div><br></div><div><=
+br></div><div>Thanks!</div><div><br></div><div><br></div><div>=C2=A0</div><=
+blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px=
+ #ccc solid;padding-left:1ex"><div style=3D"word-wrap:break-word"><div><br>=
+<div><blockquote type=3D"cite"><div><div class=3D"h5"><div>On Jun 8, 2016, =
+at 2:22 PM, Gregory M. Kurtzer &lt;<a href=3D"mailto:gmku...@lbl.gov" targe=
+t=3D"_blank">gmku...@lbl.gov</a>&gt; wrote:</div><br></div></div><div><div>=
+<div class=3D"h5"><div dir=3D"ltr">Hi all!<div><br></div><div>So I&#39;ve b=
+een playing around with allowing one to do something like:</div><div><br></=
+div><div>$ singularity start /path/to/container.img</div><div><br></div><di=
+v>Such that subsequent calls to that particular container.img rejoin the sa=
+me namespace(s) even when they conclude:</div><div><br></div><div><div>[roo=
+t@centos7-x64 ~]# singularity exec /tmp/Demo-1.img ps aux</div><div>USER =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0PID %CPU %MEM =C2=A0 =C2=A0VSZ =C2=A0 RSS TTY =
+=C2=A0 =C2=A0 =C2=A0STAT START =C2=A0 TIME COMMAND<br></div><div>root =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A01 =C2=A00.0 =C2=A00.0 =C2=A0 6444 =C2=A0 128=
+ pts/2 =C2=A0 =C2=A0S+ =C2=A0 15:03 =C2=A0 0:00 /usr/libexec/singularity/se=
+xec</div><div>root =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A02 =C2=A00.0 =C2=A00.3 =
+151024 =C2=A01788 pts/2 =C2=A0 =C2=A0R+ =C2=A0 15:04 =C2=A0 0:00 ps aux</di=
+v><div>[root@centos7-x64 ~]# singularity exec /tmp/Demo-1.img ps aux</div><=
+div>USER =C2=A0 =C2=A0 =C2=A0 =C2=A0PID %CPU %MEM =C2=A0 =C2=A0VSZ =C2=A0 R=
+SS TTY =C2=A0 =C2=A0 =C2=A0STAT START =C2=A0 TIME COMMAND<br></div><div>roo=
+t =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A01 =C2=A00.0 =C2=A00.0 =C2=A0 6444 =C2=
+=A0 128 pts/2 =C2=A0 =C2=A0S+ =C2=A0 15:03 =C2=A0 0:00 /usr/libexec/singula=
+rity/sexec</div><div>root =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A03 =C2=A00.0 =C2=
+=A00.3 151024 =C2=A01788 pts/2 =C2=A0 =C2=A0R+ =C2=A0 15:04 =C2=A0 0:00 ps =
+aux</div><div>[root@centos7-x64 ~]# singularity exec /tmp/Demo-1.img ps aux=
+</div><div>USER =C2=A0 =C2=A0 =C2=A0 =C2=A0PID %CPU %MEM =C2=A0 =C2=A0VSZ =
+=C2=A0 RSS TTY =C2=A0 =C2=A0 =C2=A0STAT START =C2=A0 TIME COMMAND<br></div>=
+<div>root =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A01 =C2=A00.0 =C2=A00.0 =C2=A0 64=
+44 =C2=A0 128 pts/2 =C2=A0 =C2=A0S+ =C2=A0 15:03 =C2=A0 0:00 /usr/libexec/s=
+ingularity/sexec</div><div>root =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A04 =C2=A00=
+.0 =C2=A00.3 151024 =C2=A01788 pts/2 =C2=A0 =C2=A0R+ =C2=A0 15:04 =C2=A0 0:=
+00 ps aux</div><div>[root@centos7-x64 ~]# singularity exec /tmp/Demo-1.img =
+ps aux</div><div>USER =C2=A0 =C2=A0 =C2=A0 =C2=A0PID %CPU %MEM =C2=A0 =C2=
+=A0VSZ =C2=A0 RSS TTY =C2=A0 =C2=A0 =C2=A0STAT START =C2=A0 TIME COMMAND<br=
+></div><div>root =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A01 =C2=A00.0 =C2=A00.0 =
+=C2=A0 6444 =C2=A0 128 pts/2 =C2=A0 =C2=A0S+ =C2=A0 15:03 =C2=A0 0:00 /usr/=
+libexec/singularity/sexec</div><div>root =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+5 =C2=A00.0 =C2=A00.3 151024 =C2=A01788 pts/2 =C2=A0 =C2=A0R+ =C2=A0 15:04 =
+=C2=A0 0:00 ps aux</div><div><br></div><div>(notice the PID of the ps proce=
+ss is increasing,... This is because sexec is holding the namespace)</div><=
+div><br></div><div><div>But keeping in mind that the goal of Singularity is=
+ not complete isolation from the host there are only a few namespaces that =
+I&#39;m utilizing in Singularity and out of them the only real one that mak=
+es sense to rejoin is the PID namespace. So here is my question...<br></div=
+><div><br></div><div>There are two options if you want to run subsequent co=
+ntainer commands that relate to each other, or invoke a daemon... One is yo=
+u disable the separation of the PID namespace and the other is the start/st=
+op Singularity method. The first already exists and is very easy to deal wi=
+th, but will require dealing with an environment variable. The second is a =
+clean solution but I am not sure it is necessary.</div><div><br></div><div>=
+note: If you do not run &#39;singularity start&#39; all commands operate as=
+ they do presently in that they do not share namespaces.</div><div><br></di=
+v><div>Does anyone have thoughts about this?</div><div><br></div><div>Thank=
+s!</div><div><br></div>-- <br><div data-smartmail=3D"gmail_signature"><div =
+dir=3D"ltr"><div>Gregory M. Kurtzer<br>High Performance Computing Services =
+(HPCS)<br>University of California<br>Lawrence Berkeley National Laboratory=
+<br>One Cyclotron Road, Berkeley, CA 94720</div></div></div>
+</div></div></div><div><br></div></div></div><span class=3D"HOEnZb"><font c=
+olor=3D"#888888">
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singu...@lbl.=
+gov</a>.<br>
+</font></span></div></blockquote></div><span class=3D"HOEnZb"><font color=
+=3D"#888888"><br></font></span></div></div><span class=3D"HOEnZb"><font col=
+or=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singu...@lbl.=
+gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div class=3D"gmail_signature" data-smartmail=3D"gmail_signature"><div di=
+r=3D"ltr"><div>Gregory M. Kurtzer<br>High Performance Computing Services (H=
+PCS)<br>University of California<br>Lawrence Berkeley National Laboratory<b=
+r>One Cyclotron Road, Berkeley, CA 94720</div></div></div>
+</div></div>
+
+--001a1143e93c7dc0640534cb4b96--

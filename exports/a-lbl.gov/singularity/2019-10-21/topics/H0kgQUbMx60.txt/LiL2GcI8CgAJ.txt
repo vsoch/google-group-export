@@ -1,0 +1,876 @@
+Date: Thu, 1 Jun 2017 09:56:40 -0700 (PDT)
+From: Michael Yourshaw <myou...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <8d2a7f42-2ef0-436f-88e4-edf43347004c@lbl.gov>
+Subject: v 2.3 bootstrap fails if "Include" used
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_524_239293345.1496336200034"
+
+------=_Part_524_239293345.1496336200034
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_525_753600816.1496336200036"
+
+------=_Part_525_753600816.1496336200036
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+I'm having a problem bootstraping with the new version 2.3. The presence of 
+an `Include:` line seems to result in the error `/bin/sh: line 3: yum: 
+command not found` when executing `yum install` in the %post section. This 
+was not a problem with 2.2.1.
+
+Here is an example test def file (note that the same problem happens 
+whether or not I put `Include: yum` in line 4):
+
+BootStrap: yum
+OSVersion: 7
+MirrorURL: http:
+//mirror.centos.org/centos-%{OSVERSION}/%{OSVERSION}/os/$basearch/
+Include: yum
+
+UpdateURL: http:
+//mirror.centos.org/centos-%{OSVERSION}/%{OSVERSION}/updates/$basearch/
+
+# additional packages
+Include: bzip2
+
+
+%post
+
+  echo "Installing EPEL"
+  yum -y install epel-release
+
+The output looks like:
+
+sudo ${SINGULARITY} bootstrap singularity-2.3_centos_test.img singularity-
+2.3_test.def
+Sanitizing environment
+Building from bootstrap definition recipe
+Adding base Singularity environment to container
+Found YUM at: /bin/yum
+'UpdateURL' or 'UpdateMetaLink' defined in bootstrap definition
+Skipping GPG key import.
+base                                                                       
+                                  | 3.6 kB  00:00:00     
+updates                                                                     
+                                 | 3.4 kB  00:00:00     
+(1/3): base/x86_64/group_gz                                                 
+                                 | 155 kB  00:00:00     
+(2/3): base/x86_64/primary_db                                               
+                                 | 5.6 MB  00:00:01     
+(3/3): updates/x86_64/primary_db                                           
+                                  | 5.6 MB  00:00:01     
+Resolving Dependencies
+--> Running transaction check
+---> Package bzip2.x86_64 0:1.0.6-13.el7 will be installed
+--> Processing Dependency: bzip2-libs = 1.0.6-13.el7 for package: bzip2-1.0.
+6-13.el7.x86_64
+
+...
+
+Installed:
+  bzip2.x86_64 0:1.0.6-13.el7          centos-release.x86_64 0:7-3.1611.el7.centos 
+         coreutils.x86_64 0:8.22-18.el7         
+
+Dependency Installed:
+  basesystem.noarch 0:10.0-7.el7.centos                            bash.x86_64 
+0:4.2.46-21.el7_3                                   
+  bzip2-libs.x86_64 0:1.0.6-13.el7                                 ca-
+certificates.noarch 0:2017.2.11-70.1.el7_3                   
+  chkconfig.x86_64 0:1.7.2-1.el7                                   
+filesystem.x86_64 0:3.2-21.el7                                  
+  gawk.x86_64 0:4.0.2-4.el7                                        glibc.x86_64 
+0:2.17-157.el7_3.2                                 
+  glibc-common.x86_64 0:2.17-157.el7_3.2                           gmp.x86_64 
+1:6.0.0-12.el7_1                                     
+  grep.x86_64 0:2.20-2.el7                                         info.x86_64 
+0:5.1-4.el7                                         
+  keyutils-libs.x86_64 0:1.5.8-3.el7                               krb5-libs
+.x86_64 0:1.14.1-27.el7_3                              
+  libacl.x86_64 0:2.2.51-12.el7                                    libattr.x86_64 
+0:2.4.46-12.el7                                  
+  libcap.x86_64 0:2.22-8.el7                                       
+libcom_err.x86_64 0:1.42.9-9.el7                                
+  libffi.x86_64 0:3.0.13-18.el7                                    libgcc.x86_64 
+0:4.8.5-11.el7                                    
+  libselinux.x86_64 0:2.5-6.el7                                    libsepol.x86_64 
+0:2.5-6.el7                                     
+  libstdc++.x86_64 0:4.8.5-11.el7                                  libtasn1.x86_64 
+0:3.8-3.el7                                     
+  libverto.x86_64 0:0.2.5-4.el7                                    ncurses.x86_64 
+0:5.9-13.20130511.el7                            
+  ncurses-base.noarch 0:5.9-13.20130511.el7                        ncurses-
+libs.x86_64 0:5.9-13.20130511.el7                       
+  nss-softokn-freebl.x86_64 0:3.16.2.3-14.4.el7                    openssl-
+libs.x86_64 1:1.0.1e-60.el7_3.1                         
+  p11-kit.x86_64 0:0.20.7-3.el7                                    p11-kit-
+trust.x86_64 0:0.20.7-3.el7                             
+  pcre.x86_64 0:8.32-15.el7_2.1                                    popt.x86_64 
+0:1.13-16.el7                                       
+  sed.x86_64 0:4.2.2-5.el7                                         setup.noarch 
+0:2.8.71-7.el7                                     
+  tzdata.noarch 0:2017b-1.el7                                      zlib.x86_64 
+0:1.2.7-17.el7                                      
+
+Complete!
+Running post scriptlet
++ echo 'Installing EPEL'
+Installing EPEL
++ yum -y install epel-release
+/bin/sh: line 3: yum: command not found
+ABORT: Aborting with RETVAL=255
+
+
+If I omit the `Include: bzip` line, the bootstrap process completes 
+successfully.
+
+------=_Part_525_753600816.1496336200036
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">I&#39;m having a problem bootstraping with the new version=
+ 2.3. The presence of an `Include:` line seems to result in the error `<cod=
+e class=3D"prettyprint"><span style=3D"color: #660;" class=3D"styled-by-pre=
+ttify">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">bi=
+n</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify">sh</span><span sty=
+le=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D"col=
+or: #000;" class=3D"styled-by-prettify"> line </span><span style=3D"color: =
+#066;" class=3D"styled-by-prettify">3</span><span style=3D"color: #660;" cl=
+ass=3D"styled-by-prettify">:</span><span style=3D"color: #000;" class=3D"st=
+yled-by-prettify"> yum</span><span style=3D"color: #660;" class=3D"styled-b=
+y-prettify">:</span><span style=3D"color: #000;" class=3D"styled-by-prettif=
+y"> command </span><span style=3D"color: #008;" class=3D"styled-by-prettify=
+">not</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> foun=
+d</span><span style=3D"color: #000;" class=3D"styled-by-prettify">` <span s=
+tyle=3D"font-family: arial,sans-serif;">when executing `yum install` in the=
+</span> %post <span style=3D"font-family: arial,sans-serif;">section. This =
+was not a problem with 2.2.1</span>.</span></code><br><br>Here is an exampl=
+e test def file (note that the same problem happens whether or not I put `I=
+nclude: yum` in line 4):<br><br><div style=3D"background-color: rgb(250, 25=
+0, 250); border-color: rgb(187, 187, 187); border-style: solid; border-widt=
+h: 1px; overflow-wrap: break-word;" class=3D"prettyprint"><code class=3D"pr=
+ettyprint"><div class=3D"subprettyprint"><span style=3D"color: #606;" class=
+=3D"styled-by-prettify">BootStrap</span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">:</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify"> yum<br></span><span style=3D"color: #606;" class=3D"styled-=
+by-prettify">OSVersion</span><span style=3D"color: #660;" class=3D"styled-b=
+y-prettify">:</span><span style=3D"color: #000;" class=3D"styled-by-prettif=
+y"> </span><span style=3D"color: #066;" class=3D"styled-by-prettify">7</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify"><br></span><spa=
+n style=3D"color: #606;" class=3D"styled-by-prettify">MirrorURL</span><span=
+ style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D=
+"color: #000;" class=3D"styled-by-prettify"> http</span><span style=3D"colo=
+r: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color: #800;"=
+ class=3D"styled-by-prettify">//mirror.centos.org/centos-%{OSVERSION}/%{OSV=
+ERSION}/os/$basearch/</span><span style=3D"color: #000;" class=3D"styled-by=
+-prettify"><br></span><span style=3D"color: #606;" class=3D"styled-by-prett=
+ify">Include</span><span style=3D"color: #660;" class=3D"styled-by-prettify=
+">:</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> yum<br=
+><br></span><span style=3D"color: #606;" class=3D"styled-by-prettify">Updat=
+eURL</span><span style=3D"color: #660;" class=3D"styled-by-prettify">:</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify"> http</span><sp=
+an style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=
+=3D"color: #800;" class=3D"styled-by-prettify">//mirror.centos.org/centos-%=
+{OSVERSION}/%{OSVERSION}/updates/$basearch/</span><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify"><br><br></span><span style=3D"color: #800;=
+" class=3D"styled-by-prettify"># additional packages</span><span style=3D"c=
+olor: #000;" class=3D"styled-by-prettify"><br></span><span style=3D"color: =
+#606;" class=3D"styled-by-prettify">Include</span><span style=3D"color: #66=
+0;" class=3D"styled-by-prettify">:</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> bzip2<br><br><br></span><span style=3D"color: #660=
+;" class=3D"styled-by-prettify">%</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">post<br><br>=C2=A0 echo </span><span style=3D"color=
+: #080;" class=3D"styled-by-prettify">&quot;Installing EPEL&quot;</span><sp=
+an style=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 yum </spa=
+n><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span s=
+tyle=3D"color: #000;" class=3D"styled-by-prettify">y install epel</span><sp=
+an style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify">release<br></span></div></co=
+de></div><br>The output looks like:<br><br><div style=3D"background-color: =
+rgb(250, 250, 250); border-color: rgb(187, 187, 187); border-style: solid; =
+border-width: 1px; overflow-wrap: break-word;" class=3D"prettyprint"><code =
+class=3D"prettyprint"><div class=3D"subprettyprint"><span style=3D"color: #=
+000;" class=3D"styled-by-prettify">sudo $</span><span style=3D"color: #660;=
+" class=3D"styled-by-prettify">{</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">SINGULARITY</span><span style=3D"color: #660;" clas=
+s=3D"styled-by-prettify">}</span><span style=3D"color: #000;" class=3D"styl=
+ed-by-prettify"> bootstrap singularity</span><span style=3D"color: #660;" c=
+lass=3D"styled-by-prettify">-</span><span style=3D"color: #066;" class=3D"s=
+tyled-by-prettify">2.3</span><span style=3D"color: #000;" class=3D"styled-b=
+y-prettify">_centos_test</span><span style=3D"color: #660;" class=3D"styled=
+-by-prettify">.</span><span style=3D"color: #000;" class=3D"styled-by-prett=
+ify">img singularity</span><span style=3D"color: #660;" class=3D"styled-by-=
+prettify">-</span><span style=3D"color: #066;" class=3D"styled-by-prettify"=
+>2.3</span><span style=3D"color: #000;" class=3D"styled-by-prettify">_test<=
+/span><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><sp=
+an style=3D"color: #008;" class=3D"styled-by-prettify">def</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span style=3D"c=
+olor: #606;" class=3D"styled-by-prettify">Sanitizing</span><span style=3D"c=
+olor: #000;" class=3D"styled-by-prettify"> environment<br></span><span styl=
+e=3D"color: #606;" class=3D"styled-by-prettify">Building</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color=
+: #008;" class=3D"styled-by-prettify">from</span><span style=3D"color: #000=
+;" class=3D"styled-by-prettify"> bootstrap definition recipe<br></span><spa=
+n style=3D"color: #606;" class=3D"styled-by-prettify">Adding</span><span st=
+yle=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"co=
+lor: #008;" class=3D"styled-by-prettify">base</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #606;" cla=
+ss=3D"styled-by-prettify">Singularity</span><span style=3D"color: #000;" cl=
+ass=3D"styled-by-prettify"> environment to container<br></span><span style=
+=3D"color: #606;" class=3D"styled-by-prettify">Found</span><span style=3D"c=
+olor: #000;" class=3D"styled-by-prettify"> YUM at</span><span style=3D"colo=
+r: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color: #000;"=
+ class=3D"styled-by-prettify"> </span><span style=3D"color: #080;" class=3D=
+"styled-by-prettify">/bin/</span><span style=3D"color: #000;" class=3D"styl=
+ed-by-prettify">yum<br></span><span style=3D"color: #080;" class=3D"styled-=
+by-prettify">&#39;UpdateURL&#39;</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> </span><span style=3D"color: #008;" class=3D"style=
+d-by-prettify">or</span><span style=3D"color: #000;" class=3D"styled-by-pre=
+ttify"> </span><span style=3D"color: #080;" class=3D"styled-by-prettify">&#=
+39;UpdateMetaLink&#39;</span><span style=3D"color: #000;" class=3D"styled-b=
+y-prettify"> </span><span style=3D"color: #008;" class=3D"styled-by-prettif=
+y">defined</span><span style=3D"color: #000;" class=3D"styled-by-prettify">=
+ </span><span style=3D"color: #008;" class=3D"styled-by-prettify">in</span>=
+<span style=3D"color: #000;" class=3D"styled-by-prettify"> bootstrap defini=
+tion<br></span><span style=3D"color: #606;" class=3D"styled-by-prettify">Sk=
+ipping</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> GPG=
+ key </span><span style=3D"color: #008;" class=3D"styled-by-prettify">impor=
+t</span><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span s=
+tyle=3D"color: #008;" class=3D"styled-by-prettify">base</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 </span><span style=3D"color: #660=
+;" class=3D"styled-by-prettify">|</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> </span><span style=3D"color: #066;" class=3D"style=
+d-by-prettify">3.6</span><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify"> kB =C2=A0</span><span style=3D"color: #066;" class=3D"styled-by-pr=
+ettify">00</span><span style=3D"color: #660;" class=3D"styled-by-prettify">=
+:</span><span style=3D"color: #066;" class=3D"styled-by-prettify">00</span>=
+<span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span sty=
+le=3D"color: #066;" class=3D"styled-by-prettify">00</span><span style=3D"co=
+lor: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 <br>updates =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">|</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #066;" =
+class=3D"styled-by-prettify">3.4</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> kB =C2=A0</span><span style=3D"color: #066;" class=
+=3D"styled-by-prettify">00</span><span style=3D"color: #660;" class=3D"styl=
+ed-by-prettify">:</span><span style=3D"color: #066;" class=3D"styled-by-pre=
+ttify">00</span><span style=3D"color: #660;" class=3D"styled-by-prettify">:=
+</span><span style=3D"color: #066;" class=3D"styled-by-prettify">00</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 <br=
+></span><span style=3D"color: #660;" class=3D"styled-by-prettify">(</span><=
+span style=3D"color: #066;" class=3D"styled-by-prettify">1</span><span styl=
+e=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D"colo=
+r: #066;" class=3D"styled-by-prettify">3</span><span style=3D"color: #660;"=
+ class=3D"styled-by-prettify">):</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> </span><span style=3D"color: #008;" class=3D"style=
+d-by-prettify">base</span><span style=3D"color: #660;" class=3D"styled-by-p=
+rettify">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">=
+x86_64</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</s=
+pan><span style=3D"color: #000;" class=3D"styled-by-prettify">group_gz =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0</span><span =
+style=3D"color: #660;" class=3D"styled-by-prettify">|</span><span style=3D"=
+color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #0=
+66;" class=3D"styled-by-prettify">155</span><span style=3D"color: #000;" cl=
+ass=3D"styled-by-prettify"> kB =C2=A0</span><span style=3D"color: #066;" cl=
+ass=3D"styled-by-prettify">00</span><span style=3D"color: #660;" class=3D"s=
+tyled-by-prettify">:</span><span style=3D"color: #066;" class=3D"styled-by-=
+prettify">00</span><span style=3D"color: #660;" class=3D"styled-by-prettify=
+">:</span><span style=3D"color: #066;" class=3D"styled-by-prettify">00</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =
+<br></span><span style=3D"color: #660;" class=3D"styled-by-prettify">(</spa=
+n><span style=3D"color: #066;" class=3D"styled-by-prettify">2</span><span s=
+tyle=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D"c=
+olor: #066;" class=3D"styled-by-prettify">3</span><span style=3D"color: #66=
+0;" class=3D"styled-by-prettify">):</span><span style=3D"color: #000;" clas=
+s=3D"styled-by-prettify"> </span><span style=3D"color: #008;" class=3D"styl=
+ed-by-prettify">base</span><span style=3D"color: #660;" class=3D"styled-by-=
+prettify">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify"=
+>x86_64</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</=
+span><span style=3D"color: #000;" class=3D"styled-by-prettify">primary_db =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0</span><span sty=
+le=3D"color: #660;" class=3D"styled-by-prettify">|</span><span style=3D"col=
+or: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #066;=
+" class=3D"styled-by-prettify">5.6</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> MB =C2=A0</span><span style=3D"color: #066;" class=
+=3D"styled-by-prettify">00</span><span style=3D"color: #660;" class=3D"styl=
+ed-by-prettify">:</span><span style=3D"color: #066;" class=3D"styled-by-pre=
+ttify">00</span><span style=3D"color: #660;" class=3D"styled-by-prettify">:=
+</span><span style=3D"color: #066;" class=3D"styled-by-prettify">01</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 <br=
+></span><span style=3D"color: #660;" class=3D"styled-by-prettify">(</span><=
+span style=3D"color: #066;" class=3D"styled-by-prettify">3</span><span styl=
+e=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D"colo=
+r: #066;" class=3D"styled-by-prettify">3</span><span style=3D"color: #660;"=
+ class=3D"styled-by-prettify">):</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> updates</span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify">x86_64</span><span style=3D"color: #660;" class=3D"styled-by=
+-prettify">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify=
+">primary_db =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 </span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">|</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #066;" =
+class=3D"styled-by-prettify">5.6</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> MB =C2=A0</span><span style=3D"color: #066;" class=
+=3D"styled-by-prettify">00</span><span style=3D"color: #660;" class=3D"styl=
+ed-by-prettify">:</span><span style=3D"color: #066;" class=3D"styled-by-pre=
+ttify">00</span><span style=3D"color: #660;" class=3D"styled-by-prettify">:=
+</span><span style=3D"color: #066;" class=3D"styled-by-prettify">01</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 <br=
+></span><span style=3D"color: #606;" class=3D"styled-by-prettify">Resolving=
+</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> </span><s=
+pan style=3D"color: #606;" class=3D"styled-by-prettify">Dependencies</span>=
+<span style=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span =
+style=3D"color: #660;" class=3D"styled-by-prettify">--&gt;</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"colo=
+r: #606;" class=3D"styled-by-prettify">Running</span><span style=3D"color: =
+#000;" class=3D"styled-by-prettify"> transaction check<br></span><span styl=
+e=3D"color: #660;" class=3D"styled-by-prettify">---&gt;</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color=
+: #606;" class=3D"styled-by-prettify">Package</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify"> bzip2</span><span style=3D"color: #660;=
+" class=3D"styled-by-prettify">.</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">x86_64 </span><span style=3D"color: #066;" class=3D=
+"styled-by-prettify">0</span><span style=3D"color: #660;" class=3D"styled-b=
+y-prettify">:</span><span style=3D"color: #066;" class=3D"styled-by-prettif=
+y">1.0</span><span style=3D"color: #660;" class=3D"styled-by-prettify">.</s=
+pan><span style=3D"color: #066;" class=3D"styled-by-prettify">6</span><span=
+ style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D=
+"color: #066;" class=3D"styled-by-prettify">13.el7</span><span style=3D"col=
+or: #000;" class=3D"styled-by-prettify"> will be installed<br></span><span =
+style=3D"color: #660;" class=3D"styled-by-prettify">--&gt;</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"colo=
+r: #606;" class=3D"styled-by-prettify">Processing</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #606;"=
+ class=3D"styled-by-prettify">Dependency</span><span style=3D"color: #660;"=
+ class=3D"styled-by-prettify">:</span><span style=3D"color: #000;" class=3D=
+"styled-by-prettify"> bzip2</span><span style=3D"color: #660;" class=3D"sty=
+led-by-prettify">-</span><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify">libs </span><span style=3D"color: #660;" class=3D"styled-by-prettif=
+y">=3D</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> </s=
+pan><span style=3D"color: #066;" class=3D"styled-by-prettify">1.0</span><sp=
+an style=3D"color: #660;" class=3D"styled-by-prettify">.</span><span style=
+=3D"color: #066;" class=3D"styled-by-prettify">6</span><span style=3D"color=
+: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #066;" =
+class=3D"styled-by-prettify">13.el7</span><span style=3D"color: #000;" clas=
+s=3D"styled-by-prettify"> </span><span style=3D"color: #008;" class=3D"styl=
+ed-by-prettify">for</span><span style=3D"color: #000;" class=3D"styled-by-p=
+rettify"> </span><span style=3D"color: #008;" class=3D"styled-by-prettify">=
+package</span><span style=3D"color: #660;" class=3D"styled-by-prettify">:</=
+span><span style=3D"color: #000;" class=3D"styled-by-prettify"> bzip2</span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span st=
+yle=3D"color: #066;" class=3D"styled-by-prettify">1.0</span><span style=3D"=
+color: #660;" class=3D"styled-by-prettify">.</span><span style=3D"color: #0=
+66;" class=3D"styled-by-prettify">6</span><span style=3D"color: #660;" clas=
+s=3D"styled-by-prettify">-</span><span style=3D"color: #066;" class=3D"styl=
+ed-by-prettify">13.el7.x86</span><span style=3D"color: #000;" class=3D"styl=
+ed-by-prettify">_64<br><br></span><span style=3D"color: #660;" class=3D"sty=
+led-by-prettify">...</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify"><br><br></span><span style=3D"color: #606;" class=3D"styled-by-pr=
+ettify">Installed</span><span style=3D"color: #660;" class=3D"styled-by-pre=
+ttify">:</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><b=
+r>=C2=A0 bzip2</span><span style=3D"color: #660;" class=3D"styled-by-pretti=
+fy">.</span><span style=3D"color: #000;" class=3D"styled-by-prettify">x86_6=
+4 </span><span style=3D"color: #066;" class=3D"styled-by-prettify">0</span>=
+<span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span sty=
+le=3D"color: #066;" class=3D"styled-by-prettify">1.0</span><span style=3D"c=
+olor: #660;" class=3D"styled-by-prettify">.</span><span style=3D"color: #06=
+6;" class=3D"styled-by-prettify">6</span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">-</span><span style=3D"color: #066;" class=3D"style=
+d-by-prettify">13.el7</span><span style=3D"color: #000;" class=3D"styled-by=
+-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0centos</span><span style=3D"c=
+olor: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify">release</span><span style=3D"color: #660;"=
+ class=3D"styled-by-prettify">.</span><span style=3D"color: #000;" class=3D=
+"styled-by-prettify">x86_64 </span><span style=3D"color: #066;" class=3D"st=
+yled-by-prettify">0</span><span style=3D"color: #660;" class=3D"styled-by-p=
+rettify">:</span><span style=3D"color: #066;" class=3D"styled-by-prettify">=
+7</span><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><=
+span style=3D"color: #066;" class=3D"styled-by-prettify">3.1611</span><span=
+ style=3D"color: #660;" class=3D"styled-by-prettify">.</span><span style=3D=
+"color: #000;" class=3D"styled-by-prettify">el7</span><span style=3D"color:=
+ #660;" class=3D"styled-by-prettify">.</span><span style=3D"color: #000;" c=
+lass=3D"styled-by-prettify">centos =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0coreut=
+ils</span><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span=
+><span style=3D"color: #000;" class=3D"styled-by-prettify">x86_64 </span><s=
+pan style=3D"color: #066;" class=3D"styled-by-prettify">0</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color=
+: #066;" class=3D"styled-by-prettify">8.22</span><span style=3D"color: #660=
+;" class=3D"styled-by-prettify">-</span><span style=3D"color: #066;" class=
+=3D"styled-by-prettify">18.el7</span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 <br><br></span><span style=
+=3D"color: #606;" class=3D"styled-by-prettify">Dependency</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color=
+: #606;" class=3D"styled-by-prettify">Installed</span><span style=3D"color:=
+ #660;" class=3D"styled-by-prettify">:</span><span style=3D"color: #000;" c=
+lass=3D"styled-by-prettify"><br>=C2=A0 basesystem</span><span style=3D"colo=
+r: #660;" class=3D"styled-by-prettify">.</span><span style=3D"color: #000;"=
+ class=3D"styled-by-prettify">noarch </span><span style=3D"color: #066;" cl=
+ass=3D"styled-by-prettify">0</span><span style=3D"color: #660;" class=3D"st=
+yled-by-prettify">:</span><span style=3D"color: #066;" class=3D"styled-by-p=
+rettify">10.0</span><span style=3D"color: #660;" class=3D"styled-by-prettif=
+y">-</span><span style=3D"color: #066;" class=3D"styled-by-prettify">7.el7.=
+centos</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0bash</span><span style=3D"color: #660;" class=3D"styled=
+-by-prettify">.</span><span style=3D"color: #000;" class=3D"styled-by-prett=
+ify">x86_64 </span><span style=3D"color: #066;" class=3D"styled-by-prettify=
+">0</span><span style=3D"color: #660;" class=3D"styled-by-prettify">:</span=
+><span style=3D"color: #066;" class=3D"styled-by-prettify">4.2</span><span =
+style=3D"color: #660;" class=3D"styled-by-prettify">.</span><span style=3D"=
+color: #066;" class=3D"styled-by-prettify">46</span><span style=3D"color: #=
+660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #066;" cla=
+ss=3D"styled-by-prettify">21.el7_3</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 <br>=
+=C2=A0 bzip2</span><span style=3D"color: #660;" class=3D"styled-by-prettify=
+">-</span><span style=3D"color: #000;" class=3D"styled-by-prettify">libs</s=
+pan><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><span=
+ style=3D"color: #000;" class=3D"styled-by-prettify">x86_64 </span><span st=
+yle=3D"color: #066;" class=3D"styled-by-prettify">0</span><span style=3D"co=
+lor: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color: #066=
+;" class=3D"styled-by-prettify">1.0</span><span style=3D"color: #660;" clas=
+s=3D"styled-by-prettify">.</span><span style=3D"color: #066;" class=3D"styl=
+ed-by-prettify">6</span><span style=3D"color: #660;" class=3D"styled-by-pre=
+ttify">-</span><span style=3D"color: #066;" class=3D"styled-by-prettify">13=
+.el7</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 ca</span><span style=3D"color: #660;" cl=
+ass=3D"styled-by-prettify">-</span><span style=3D"color: #000;" class=3D"st=
+yled-by-prettify">certificates</span><span style=3D"color: #660;" class=3D"=
+styled-by-prettify">.</span><span style=3D"color: #000;" class=3D"styled-by=
+-prettify">noarch </span><span style=3D"color: #066;" class=3D"styled-by-pr=
+ettify">0</span><span style=3D"color: #660;" class=3D"styled-by-prettify">:=
+</span><span style=3D"color: #066;" class=3D"styled-by-prettify">2017.2</sp=
+an><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><span =
+style=3D"color: #066;" class=3D"styled-by-prettify">11</span><span style=3D=
+"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #=
+066;" class=3D"styled-by-prettify">70.1</span><span style=3D"color: #660;" =
+class=3D"styled-by-prettify">.</span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify">el7_3 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 <br>=C2=A0 chkconfig</span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">.</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify">x86_64 </span><span style=3D"color: #066;" class=3D"styled-b=
+y-prettify">0</span><span style=3D"color: #660;" class=3D"styled-by-prettif=
+y">:</span><span style=3D"color: #066;" class=3D"styled-by-prettify">1.7</s=
+pan><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><span=
+ style=3D"color: #066;" class=3D"styled-by-prettify">2</span><span style=3D=
+"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #=
+066;" class=3D"styled-by-prettify">1.el7</span><span style=3D"color: #000;"=
+ class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 filesystem</span><span style=3D"color: #660;" class=3D"styled-by-pretti=
+fy">.</span><span style=3D"color: #000;" class=3D"styled-by-prettify">x86_6=
+4 </span><span style=3D"color: #066;" class=3D"styled-by-prettify">0</span>=
+<span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span sty=
+le=3D"color: #066;" class=3D"styled-by-prettify">3.2</span><span style=3D"c=
+olor: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #06=
+6;" class=3D"styled-by-prettify">21.el7</span><span style=3D"color: #000;" =
+class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0<b=
+r>=C2=A0 gawk</span><span style=3D"color: #660;" class=3D"styled-by-prettif=
+y">.</span><span style=3D"color: #000;" class=3D"styled-by-prettify">x86_64=
+ </span><span style=3D"color: #066;" class=3D"styled-by-prettify">0</span><=
+span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span styl=
+e=3D"color: #066;" class=3D"styled-by-prettify">4.0</span><span style=3D"co=
+lor: #660;" class=3D"styled-by-prettify">.</span><span style=3D"color: #066=
+;" class=3D"styled-by-prettify">2</span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">-</span><span style=3D"color: #066;" class=3D"style=
+d-by-prettify">4.el7</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0glibc</span><span style=3D"color: #660;" class=3D"styled-by-prettify">.<=
+/span><span style=3D"color: #000;" class=3D"styled-by-prettify">x86_64 </sp=
+an><span style=3D"color: #066;" class=3D"styled-by-prettify">0</span><span =
+style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D"=
+color: #066;" class=3D"styled-by-prettify">2.17</span><span style=3D"color:=
+ #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #066;" c=
+lass=3D"styled-by-prettify">157.el7_3.2</span><span style=3D"color: #000;" =
+class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 <br>=C2=
+=A0 glibc</span><span style=3D"color: #660;" class=3D"styled-by-prettify">-=
+</span><span style=3D"color: #000;" class=3D"styled-by-prettify">common</sp=
+an><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><span =
+style=3D"color: #000;" class=3D"styled-by-prettify">x86_64 </span><span sty=
+le=3D"color: #066;" class=3D"styled-by-prettify">0</span><span style=3D"col=
+or: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color: #066;=
+" class=3D"styled-by-prettify">2.17</span><span style=3D"color: #660;" clas=
+s=3D"styled-by-prettify">-</span><span style=3D"color: #066;" class=3D"styl=
+ed-by-prettify">157.el7_3.2</span><span style=3D"color: #000;" class=3D"sty=
+led-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 gmp</span><span style=3D"color: #660;" c=
+lass=3D"styled-by-prettify">.</span><span style=3D"color: #000;" class=3D"s=
+tyled-by-prettify">x86_64 </span><span style=3D"color: #066;" class=3D"styl=
+ed-by-prettify">1</span><span style=3D"color: #660;" class=3D"styled-by-pre=
+ttify">:</span><span style=3D"color: #066;" class=3D"styled-by-prettify">6.=
+0</span><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><=
+span style=3D"color: #066;" class=3D"styled-by-prettify">0</span><span styl=
+e=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"colo=
+r: #066;" class=3D"styled-by-prettify">12.el7_1</span><span style=3D"color:=
+ #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 <br>=C2=A0 grep</span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">.</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify">x86_64 </span><span style=3D"color: #066;" class=3D"styled-b=
+y-prettify">0</span><span style=3D"color: #660;" class=3D"styled-by-prettif=
+y">:</span><span style=3D"color: #066;" class=3D"styled-by-prettify">2.20</=
+span><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><spa=
+n style=3D"color: #066;" class=3D"styled-by-prettify">2.el7</span><span sty=
+le=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 info</span><span style=3D"color: =
+#660;" class=3D"styled-by-prettify">.</span><span style=3D"color: #000;" cl=
+ass=3D"styled-by-prettify">x86_64 </span><span style=3D"color: #066;" class=
+=3D"styled-by-prettify">0</span><span style=3D"color: #660;" class=3D"style=
+d-by-prettify">:</span><span style=3D"color: #066;" class=3D"styled-by-pret=
+tify">5.1</span><span style=3D"color: #660;" class=3D"styled-by-prettify">-=
+</span><span style=3D"color: #066;" class=3D"styled-by-prettify">4.el7</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 <br>=C2=A0 keyutils</s=
+pan><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span=
+ style=3D"color: #000;" class=3D"styled-by-prettify">libs</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">.</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify">x86_64 </span><span style=3D"color: #=
+066;" class=3D"styled-by-prettify">0</span><span style=3D"color: #660;" cla=
+ss=3D"styled-by-prettify">:</span><span style=3D"color: #066;" class=3D"sty=
+led-by-prettify">1.5</span><span style=3D"color: #660;" class=3D"styled-by-=
+prettify">.</span><span style=3D"color: #066;" class=3D"styled-by-prettify"=
+>8</span><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span>=
+<span style=3D"color: #066;" class=3D"styled-by-prettify">3.el7</span><span=
+ style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 krb5</span><span style=3D"color: #660;" class=3D"styled-by-prett=
+ify">-</span><span style=3D"color: #000;" class=3D"styled-by-prettify">libs=
+</span><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><s=
+pan style=3D"color: #000;" class=3D"styled-by-prettify">x86_64 </span><span=
+ style=3D"color: #066;" class=3D"styled-by-prettify">0</span><span style=3D=
+"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color: #=
+066;" class=3D"styled-by-prettify">1.14</span><span style=3D"color: #660;" =
+class=3D"styled-by-prettify">.</span><span style=3D"color: #066;" class=3D"=
+styled-by-prettify">1</span><span style=3D"color: #660;" class=3D"styled-by=
+-prettify">-</span><span style=3D"color: #066;" class=3D"styled-by-prettify=
+">27.el7_3</span><span style=3D"color: #000;" class=3D"styled-by-prettify">=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0<br>=C2=A0 libacl</span><span style=3D"color=
+: #660;" class=3D"styled-by-prettify">.</span><span style=3D"color: #000;" =
+class=3D"styled-by-prettify">x86_64 </span><span style=3D"color: #066;" cla=
+ss=3D"styled-by-prettify">0</span><span style=3D"color: #660;" class=3D"sty=
+led-by-prettify">:</span><span style=3D"color: #066;" class=3D"styled-by-pr=
+ettify">2.2</span><span style=3D"color: #660;" class=3D"styled-by-prettify"=
+>.</span><span style=3D"color: #066;" class=3D"styled-by-prettify">51</span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span st=
+yle=3D"color: #066;" class=3D"styled-by-prettify">12.el7</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0libattr</span><span style=3D"color: #660;" class=3D=
+"styled-by-prettify">.</span><span style=3D"color: #000;" class=3D"styled-b=
+y-prettify">x86_64 </span><span style=3D"color: #066;" class=3D"styled-by-p=
+rettify">0</span><span style=3D"color: #660;" class=3D"styled-by-prettify">=
+:</span><span style=3D"color: #066;" class=3D"styled-by-prettify">2.4</span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><span st=
+yle=3D"color: #066;" class=3D"styled-by-prettify">46</span><span style=3D"c=
+olor: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #06=
+6;" class=3D"styled-by-prettify">12.el7</span><span style=3D"color: #000;" =
+class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0<b=
+r>=C2=A0 libcap</span><span style=3D"color: #660;" class=3D"styled-by-prett=
+ify">.</span><span style=3D"color: #000;" class=3D"styled-by-prettify">x86_=
+64 </span><span style=3D"color: #066;" class=3D"styled-by-prettify">0</span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span st=
+yle=3D"color: #066;" class=3D"styled-by-prettify">2.22</span><span style=3D=
+"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #=
+066;" class=3D"styled-by-prettify">8.el7</span><span style=3D"color: #000;"=
+ class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 libcom_err</span><span style=3D"color: #660;" class=3D"st=
+yled-by-prettify">.</span><span style=3D"color: #000;" class=3D"styled-by-p=
+rettify">x86_64 </span><span style=3D"color: #066;" class=3D"styled-by-pret=
+tify">0</span><span style=3D"color: #660;" class=3D"styled-by-prettify">:</=
+span><span style=3D"color: #066;" class=3D"styled-by-prettify">1.42</span><=
+span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><span styl=
+e=3D"color: #066;" class=3D"styled-by-prettify">9</span><span style=3D"colo=
+r: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #066;"=
+ class=3D"styled-by-prettify">9.el7</span><span style=3D"color: #000;" clas=
+s=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0<br>=C2=A0 li=
+bffi</span><span style=3D"color: #660;" class=3D"styled-by-prettify">.</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify">x86_64 </span><=
+span style=3D"color: #066;" class=3D"styled-by-prettify">0</span><span styl=
+e=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D"colo=
+r: #066;" class=3D"styled-by-prettify">3.0</span><span style=3D"color: #660=
+;" class=3D"styled-by-prettify">.</span><span style=3D"color: #066;" class=
+=3D"styled-by-prettify">13</span><span style=3D"color: #660;" class=3D"styl=
+ed-by-prettify">-</span><span style=3D"color: #066;" class=3D"styled-by-pre=
+ttify">18.el7</span><span style=3D"color: #000;" class=3D"styled-by-prettif=
+y"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0libgcc</span><span s=
+tyle=3D"color: #660;" class=3D"styled-by-prettify">.</span><span style=3D"c=
+olor: #000;" class=3D"styled-by-prettify">x86_64 </span><span style=3D"colo=
+r: #066;" class=3D"styled-by-prettify">0</span><span style=3D"color: #660;"=
+ class=3D"styled-by-prettify">:</span><span style=3D"color: #066;" class=3D=
+"styled-by-prettify">4.8</span><span style=3D"color: #660;" class=3D"styled=
+-by-prettify">.</span><span style=3D"color: #066;" class=3D"styled-by-prett=
+ify">5</span><span style=3D"color: #660;" class=3D"styled-by-prettify">-</s=
+pan><span style=3D"color: #066;" class=3D"styled-by-prettify">11.el7</span>=
+<span style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0<br>=C2=A0 libselinux</span><span sty=
+le=3D"color: #660;" class=3D"styled-by-prettify">.</span><span style=3D"col=
+or: #000;" class=3D"styled-by-prettify">x86_64 </span><span style=3D"color:=
+ #066;" class=3D"styled-by-prettify">0</span><span style=3D"color: #660;" c=
+lass=3D"styled-by-prettify">:</span><span style=3D"color: #066;" class=3D"s=
+tyled-by-prettify">2.5</span><span style=3D"color: #660;" class=3D"styled-b=
+y-prettify">-</span><span style=3D"color: #066;" class=3D"styled-by-prettif=
+y">6.el7</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0libsepol</span><span st=
+yle=3D"color: #660;" class=3D"styled-by-prettify">.</span><span style=3D"co=
+lor: #000;" class=3D"styled-by-prettify">x86_64 </span><span style=3D"color=
+: #066;" class=3D"styled-by-prettify">0</span><span style=3D"color: #660;" =
+class=3D"styled-by-prettify">:</span><span style=3D"color: #066;" class=3D"=
+styled-by-prettify">2.5</span><span style=3D"color: #660;" class=3D"styled-=
+by-prettify">-</span><span style=3D"color: #066;" class=3D"styled-by-pretti=
+fy">6.el7</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 <br>=C2=A0 libstdc</sp=
+an><span style=3D"color: #660;" class=3D"styled-by-prettify">++.</span><spa=
+n style=3D"color: #000;" class=3D"styled-by-prettify">x86_64 </span><span s=
+tyle=3D"color: #066;" class=3D"styled-by-prettify">0</span><span style=3D"c=
+olor: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color: #06=
+6;" class=3D"styled-by-prettify">4.8</span><span style=3D"color: #660;" cla=
+ss=3D"styled-by-prettify">.</span><span style=3D"color: #066;" class=3D"sty=
+led-by-prettify">5</span><span style=3D"color: #660;" class=3D"styled-by-pr=
+ettify">-</span><span style=3D"color: #066;" class=3D"styled-by-prettify">1=
+1.el7</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0libtasn1</span><span style=3D"colo=
+r: #660;" class=3D"styled-by-prettify">.</span><span style=3D"color: #000;"=
+ class=3D"styled-by-prettify">x86_64 </span><span style=3D"color: #066;" cl=
+ass=3D"styled-by-prettify">0</span><span style=3D"color: #660;" class=3D"st=
+yled-by-prettify">:</span><span style=3D"color: #066;" class=3D"styled-by-p=
+rettify">3.8</span><span style=3D"color: #660;" class=3D"styled-by-prettify=
+">-</span><span style=3D"color: #066;" class=3D"styled-by-prettify">3.el7</=
+span><span style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 <br>=C2=A0 libverto</span><span s=
+tyle=3D"color: #660;" class=3D"styled-by-prettify">.</span><span style=3D"c=
+olor: #000;" class=3D"styled-by-prettify">x86_64 </span><span style=3D"colo=
+r: #066;" class=3D"styled-by-prettify">0</span><span style=3D"color: #660;"=
+ class=3D"styled-by-prettify">:</span><span style=3D"color: #066;" class=3D=
+"styled-by-prettify">0.2</span><span style=3D"color: #660;" class=3D"styled=
+-by-prettify">.</span><span style=3D"color: #066;" class=3D"styled-by-prett=
+ify">5</span><span style=3D"color: #660;" class=3D"styled-by-prettify">-</s=
+pan><span style=3D"color: #066;" class=3D"styled-by-prettify">4.el7</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0ncurses</span><span style=3D"color: #660;=
+" class=3D"styled-by-prettify">.</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">x86_64 </span><span style=3D"color: #066;" class=3D=
+"styled-by-prettify">0</span><span style=3D"color: #660;" class=3D"styled-b=
+y-prettify">:</span><span style=3D"color: #066;" class=3D"styled-by-prettif=
+y">5.9</span><span style=3D"color: #660;" class=3D"styled-by-prettify">-</s=
+pan><span style=3D"color: #066;" class=3D"styled-by-prettify">13.20130511</=
+span><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><spa=
+n style=3D"color: #000;" class=3D"styled-by-prettify">el7 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0<br>=C2=A0 ncurses</span><span style=3D"color: #660;" class=3D"styled=
+-by-prettify">-</span><span style=3D"color: #008;" class=3D"styled-by-prett=
+ify">base</span><span style=3D"color: #660;" class=3D"styled-by-prettify">.=
+</span><span style=3D"color: #000;" class=3D"styled-by-prettify">noarch </s=
+pan><span style=3D"color: #066;" class=3D"styled-by-prettify">0</span><span=
+ style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D=
+"color: #066;" class=3D"styled-by-prettify">5.9</span><span style=3D"color:=
+ #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #066;" c=
+lass=3D"styled-by-prettify">13.20130511</span><span style=3D"color: #660;" =
+class=3D"styled-by-prettify">.</span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify">el7 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0ncurses</span><span style=3D"color: #660;=
+" class=3D"styled-by-prettify">-</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">libs</span><span style=3D"color: #660;" class=3D"st=
+yled-by-prettify">.</span><span style=3D"color: #000;" class=3D"styled-by-p=
+rettify">x86_64 </span><span style=3D"color: #066;" class=3D"styled-by-pret=
+tify">0</span><span style=3D"color: #660;" class=3D"styled-by-prettify">:</=
+span><span style=3D"color: #066;" class=3D"styled-by-prettify">5.9</span><s=
+pan style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=
+=3D"color: #066;" class=3D"styled-by-prettify">13.20130511</span><span styl=
+e=3D"color: #660;" class=3D"styled-by-prettify">.</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify">el7 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 <br>=C2=A0 nss</span><span st=
+yle=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"co=
+lor: #000;" class=3D"styled-by-prettify">softokn</span><span style=3D"color=
+: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #000;" =
+class=3D"styled-by-prettify">freebl</span><span style=3D"color: #660;" clas=
+s=3D"styled-by-prettify">.</span><span style=3D"color: #000;" class=3D"styl=
+ed-by-prettify">x86_64 </span><span style=3D"color: #066;" class=3D"styled-=
+by-prettify">0</span><span style=3D"color: #660;" class=3D"styled-by-pretti=
+fy">:</span><span style=3D"color: #066;" class=3D"styled-by-prettify">3.16<=
+/span><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><sp=
+an style=3D"color: #066;" class=3D"styled-by-prettify">2.3</span><span styl=
+e=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"colo=
+r: #066;" class=3D"styled-by-prettify">14.4</span><span style=3D"color: #66=
+0;" class=3D"styled-by-prettify">.</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">el7 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0openssl</span><span style=3D"color: #660;" class=3D=
+"styled-by-prettify">-</span><span style=3D"color: #000;" class=3D"styled-b=
+y-prettify">libs</span><span style=3D"color: #660;" class=3D"styled-by-pret=
+tify">.</span><span style=3D"color: #000;" class=3D"styled-by-prettify">x86=
+_64 </span><span style=3D"color: #066;" class=3D"styled-by-prettify">1</spa=
+n><span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span s=
+tyle=3D"color: #066;" class=3D"styled-by-prettify">1.0</span><span style=3D=
+"color: #660;" class=3D"styled-by-prettify">.</span><span style=3D"color: #=
+066;" class=3D"styled-by-prettify">1e-60</span><span style=3D"color: #660;"=
+ class=3D"styled-by-prettify">.</span><span style=3D"color: #000;" class=3D=
+"styled-by-prettify">el7_3</span><span style=3D"color: #660;" class=3D"styl=
+ed-by-prettify">.</span><span style=3D"color: #066;" class=3D"styled-by-pre=
+ttify">1</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 <br>=C2=A0 p11</span><span style=3D"color: #660;" class=3D"style=
+d-by-prettify">-</span><span style=3D"color: #000;" class=3D"styled-by-pret=
+tify">kit</span><span style=3D"color: #660;" class=3D"styled-by-prettify">.=
+</span><span style=3D"color: #000;" class=3D"styled-by-prettify">x86_64 </s=
+pan><span style=3D"color: #066;" class=3D"styled-by-prettify">0</span><span=
+ style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D=
+"color: #066;" class=3D"styled-by-prettify">0.20</span><span style=3D"color=
+: #660;" class=3D"styled-by-prettify">.</span><span style=3D"color: #066;" =
+class=3D"styled-by-prettify">7</span><span style=3D"color: #660;" class=3D"=
+styled-by-prettify">-</span><span style=3D"color: #066;" class=3D"styled-by=
+-prettify">3.el7</span><span style=3D"color: #000;" class=3D"styled-by-pret=
+tify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0p11</span><span =
+style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"=
+color: #000;" class=3D"styled-by-prettify">kit</span><span style=3D"color: =
+#660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #000;" cl=
+ass=3D"styled-by-prettify">trust</span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">.</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify">x86_64 </span><span style=3D"color: #066;" class=3D"styled-b=
+y-prettify">0</span><span style=3D"color: #660;" class=3D"styled-by-prettif=
+y">:</span><span style=3D"color: #066;" class=3D"styled-by-prettify">0.20</=
+span><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><spa=
+n style=3D"color: #066;" class=3D"styled-by-prettify">7</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color=
+: #066;" class=3D"styled-by-prettify">3.el7</span><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 <br>=C2=A0 pcre</s=
+pan><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><span=
+ style=3D"color: #000;" class=3D"styled-by-prettify">x86_64 </span><span st=
+yle=3D"color: #066;" class=3D"styled-by-prettify">0</span><span style=3D"co=
+lor: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color: #066=
+;" class=3D"styled-by-prettify">8.32</span><span style=3D"color: #660;" cla=
+ss=3D"styled-by-prettify">-</span><span style=3D"color: #066;" class=3D"sty=
+led-by-prettify">15.el7_2.1</span><span style=3D"color: #000;" class=3D"sty=
+led-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0popt</=
+span><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><spa=
+n style=3D"color: #000;" class=3D"styled-by-prettify">x86_64 </span><span s=
+tyle=3D"color: #066;" class=3D"styled-by-prettify">0</span><span style=3D"c=
+olor: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color: #06=
+6;" class=3D"styled-by-prettify">1.13</span><span style=3D"color: #660;" cl=
+ass=3D"styled-by-prettify">-</span><span style=3D"color: #066;" class=3D"st=
+yled-by-prettify">16.el7</span><span style=3D"color: #000;" class=3D"styled=
+-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 <=
+br>=C2=A0 sed</span><span style=3D"color: #660;" class=3D"styled-by-prettif=
+y">.</span><span style=3D"color: #000;" class=3D"styled-by-prettify">x86_64=
+ </span><span style=3D"color: #066;" class=3D"styled-by-prettify">0</span><=
+span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span styl=
+e=3D"color: #066;" class=3D"styled-by-prettify">4.2</span><span style=3D"co=
+lor: #660;" class=3D"styled-by-prettify">.</span><span style=3D"color: #066=
+;" class=3D"styled-by-prettify">2</span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">-</span><span style=3D"color: #066;" class=3D"style=
+d-by-prettify">5.el7</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 setup</span><span style=3D"color: #660;" class=3D"styled-by-prettify">.=
+</span><span style=3D"color: #000;" class=3D"styled-by-prettify">noarch </s=
+pan><span style=3D"color: #066;" class=3D"styled-by-prettify">0</span><span=
+ style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D=
+"color: #066;" class=3D"styled-by-prettify">2.8</span><span style=3D"color:=
+ #660;" class=3D"styled-by-prettify">.</span><span style=3D"color: #066;" c=
+lass=3D"styled-by-prettify">71</span><span style=3D"color: #660;" class=3D"=
+styled-by-prettify">-</span><span style=3D"color: #066;" class=3D"styled-by=
+-prettify">7.el7</span><span style=3D"color: #000;" class=3D"styled-by-pret=
+tify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 <br>=C2=A0 tzda=
+ta</span><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span>=
+<span style=3D"color: #000;" class=3D"styled-by-prettify">noarch </span><sp=
+an style=3D"color: #066;" class=3D"styled-by-prettify">0</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color=
+: #066;" class=3D"styled-by-prettify">2017b</span><span style=3D"color: #66=
+0;" class=3D"styled-by-prettify">-</span><span style=3D"color: #066;" class=
+=3D"styled-by-prettify">1.el7</span><span style=3D"color: #000;" class=3D"s=
+tyled-by-prettify"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0zlib</span><span style=3D"color: #660;" class=3D"styled-by-prettify">.</=
+span><span style=3D"color: #000;" class=3D"styled-by-prettify">x86_64 </spa=
+n><span style=3D"color: #066;" class=3D"styled-by-prettify">0</span><span s=
+tyle=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D"c=
+olor: #066;" class=3D"styled-by-prettify">1.2</span><span style=3D"color: #=
+660;" class=3D"styled-by-prettify">.</span><span style=3D"color: #066;" cla=
+ss=3D"styled-by-prettify">7</span><span style=3D"color: #660;" class=3D"sty=
+led-by-prettify">-</span><span style=3D"color: #066;" class=3D"styled-by-pr=
+ettify">17.el7</span><span style=3D"color: #000;" class=3D"styled-by-pretti=
+fy"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0<br><br></spa=
+n><span style=3D"color: #606;" class=3D"styled-by-prettify">Complete</span>=
+<span style=3D"color: #660;" class=3D"styled-by-prettify">!</span><span sty=
+le=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span style=3D"=
+color: #606;" class=3D"styled-by-prettify">Running</span><span style=3D"col=
+or: #000;" class=3D"styled-by-prettify"> post scriptlet<br></span><span sty=
+le=3D"color: #660;" class=3D"styled-by-prettify">+</span><span style=3D"col=
+or: #000;" class=3D"styled-by-prettify"> echo </span><span style=3D"color: =
+#080;" class=3D"styled-by-prettify">&#39;Installing EPEL&#39;</span><span s=
+tyle=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span style=
+=3D"color: #606;" class=3D"styled-by-prettify">Installing</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"> EPEL<br></span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">+</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify"> yum </span><span style=3D"color: #66=
+0;" class=3D"styled-by-prettify">-</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">y install epel</span><span style=3D"color: #660;" c=
+lass=3D"styled-by-prettify">-</span><span style=3D"color: #000;" class=3D"s=
+tyled-by-prettify">release<br></span><span style=3D"color: #660;" class=3D"=
+styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"styled-by=
+-prettify">bin</span><span style=3D"color: #660;" class=3D"styled-by-pretti=
+fy">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">sh</s=
+pan><span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span=
+ style=3D"color: #000;" class=3D"styled-by-prettify"> line </span><span sty=
+le=3D"color: #066;" class=3D"styled-by-prettify">3</span><span style=3D"col=
+or: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color: #000;=
+" class=3D"styled-by-prettify"> yum</span><span style=3D"color: #660;" clas=
+s=3D"styled-by-prettify">:</span><span style=3D"color: #000;" class=3D"styl=
+ed-by-prettify"> command </span><span style=3D"color: #008;" class=3D"style=
+d-by-prettify">not</span><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify"> found<br>ABORT</span><span style=3D"color: #660;" class=3D"styled-=
+by-prettify">:</span><span style=3D"color: #000;" class=3D"styled-by-pretti=
+fy"> </span><span style=3D"color: #606;" class=3D"styled-by-prettify">Abort=
+ing</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> </span=
+><span style=3D"color: #008;" class=3D"styled-by-prettify">with</span><span=
+ style=3D"color: #000;" class=3D"styled-by-prettify"> RETVAL</span><span st=
+yle=3D"color: #660;" class=3D"styled-by-prettify">=3D</span><span style=3D"=
+color: #066;" class=3D"styled-by-prettify">255</span><span style=3D"color: =
+#000;" class=3D"styled-by-prettify"><br><br></span></div></code></div><br>I=
+f I omit the `Include: bzip` line, the bootstrap process completes successf=
+ully.<br></div>
+------=_Part_525_753600816.1496336200036--
+
+------=_Part_524_239293345.1496336200034--

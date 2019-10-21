@@ -1,0 +1,329 @@
+Date: Thu, 30 Nov 2017 23:56:59 -0800 (PST)
+From: Laurent Fournier <ma...@laurent-fournier.be>
+To: singularity <singu...@lbl.gov>
+Message-Id: <3d89338b-fa9d-4b6e-97ea-96dca56b7822@lbl.gov>
+In-Reply-To: <CAA6Bz=d8gxvL8B2ZoTsxmc2WYXjUQ-6aPkvJZ-_AytmtkRhkuw@mail.gmail.com>
+References: <d2ffa56d-e0d4-46fa-b1f1-f3cf0437a710@lbl.gov>
+ <CAA6Bz=d8gxvL8B2ZoTsxmc2WYXjUQ-6aPkvJZ-_AytmtkRhkuw@mail.gmail.com>
+Subject: Re: [Singularity] Using conda envs as modules on a cluster
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_297_1330614321.1512115019977"
+
+------=_Part_297_1330614321.1512115019977
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_298_832033775.1512115019978"
+
+------=_Part_298_832033775.1512115019978
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Hi R=C3=A9mi,
+
+The thing is... i'm working on a cluster.=20
+
+The singularity container can't be accessed directly from our users=20
+therefore the reason i use the modules system (module load avail etc.). In=
+=20
+that regard, i have to use this..weird technique with the shell scripts=20
+(they act as binaries, which i need to make those modules).
+
+It seems that everything executed with the conda binary works because it=20
+writes outside of the container (cf. ~/.conda for each user) but when it=20
+comes to de/activate i *think* that it tries to apply to the inside of the=
+=20
+container (where nothing is present because the environments are created=20
+into the user homes).
+
+I've seen workaround for that kind of things on Dockers but...here we are=
+=20
+singularity powered ;-)
+
+
+Le vendredi 1 d=C3=A9cembre 2017 07:25:17 UTC+1, R=C3=A9my Dernat a =C3=A9c=
+rit :
+>
+> Hi Laurent.=20
+>
+> I would try to debug it inside the container with :
+> singularity shell /path/to/your/singularity/image
+>
+> Then you will be able to check what is missing to get it work. Maybe your=
+=20
+> issue is related to a problem with your env in your container.
+>
+> BTW you can replace your small shell script :
+> #!/bin/sh
+> singularity exec my/path/to/pytools27.img conda $@
+> By adding a %runscript section in your singularity definition file.
+>
+> Best regards,
+> R=C3=A9my.
+>
+> Le 30 nov. 2017 11:39, "Laurent Fournier" <m...@laurent-fournier.be=20
+> <javascript:>> a =C3=A9crit :
+>
+> Hi,
+>
+>
+> I am using Singularity 2.4.1.
+>
+> laurent@NanoStation:~/atWork/Singularity$ cat Tool27=20
+>
+> BootStrap: docker
+> From: continuumio/miniconda:latest
+>
+> %post
+>     echo "nameserver 1.1.1.1" | tee /etc/resolv.conf > /dev/null
+>     export PATH=3D/opt/conda/bin
+>     conda config --add channels bioconda
+>     conda config --add channels conda-forge
+>     conda clean --index-cache --tarballs --packages --yes
+>    =20
+> %environment
+>     export PATH=3D"/opt/conda/bin:/usr/local/bin:/usr/bin:/bin:"
+>     unset CONDA_DEFAULT_ENV
+>     export ANACONDA_HOME=3D/opt/conda
+>
+>
+> To use the tools inside, i created small shell scripts like that :
+>
+> laurent@NanoStation:~/atWork/Singularity$ cat conda
+>
+> #!/bin/sh
+> singularity exec my/path/to/pytools27.img conda $@
+>
+>
+> That works just fine. But when it comes to using conda envs...it don't=20
+> work anymore.
+> First i had to gain access to bash instead of sh (which is working).=20
+> Then i "conda create -n myenv" which work as well :
+>
+> laurent@NanoStation:~/atWork/Singularity$ ./conda create -n py27 python=
+=3D
+> 2.7
+>
+> Fetching package metadata ...............
+> Solving package specifications: .
+>
+> Package plan for installation in environment /home/laurent/.conda/envs/
+> py27:
+>
+>
+> But from that point, whenever i try "source activate" or even modify the=
+=20
+> calling script as follows :
+>
+> laurent@NanoStation:~/atWork/Singularity$ cat activate=20
+>
+> #!/bin/sh
+> singularity exec my/path/to/pytools27.img bash -c 'source activate $@'
+>
+>
+> Nothing happens :
+>
+> laurent@NanoStation:~/atWork/Singularity$ source activate py27
+> laurent@NanoStation:~/atWork/Singularity$ ./activate py27
+> laurent@NanoStation:~/atWork/Singularity$
+>
+>
+> Any ideas ?
+>
+> --=20
+> You received this message because you are subscribed to the Google Groups=
+=20
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an=
+=20
+> email to singu...@lbl.gov <javascript:>.
+>
+>
+>
+------=_Part_298_832033775.1512115019978
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi R=C3=A9mi,<div><br></div><div>The thing is... i&#39;m w=
+orking on a cluster.=C2=A0</div><div><br></div><div>The singularity contain=
+er can&#39;t be accessed directly from our users therefore the reason i use=
+ the modules system (module load avail etc.). In that regard, i have to use=
+ this..weird technique with the shell scripts (they act as binaries, which =
+i need to make those modules).<br></div><div><br></div><div>It seems that e=
+verything executed with the conda binary works because it writes outside of=
+ the container (cf. ~/.conda for each user) but when it comes to de/activat=
+e i *think* that it tries to apply to the inside of the container (where no=
+thing is present because the environments are created into the user homes).=
+</div><div><br></div><div>I&#39;ve seen workaround for that kind of things =
+on Dockers but...here we are singularity powered ;-)</div><div><br></div><d=
+iv><br>Le vendredi 1 d=C3=A9cembre 2017 07:25:17 UTC+1, R=C3=A9my Dernat a =
+=C3=A9crit=C2=A0:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margi=
+n-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"a=
+uto"><div>Hi Laurent.=C2=A0<div dir=3D"auto"><br></div><div dir=3D"auto">I =
+would try to debug it inside the container with :</div><div dir=3D"auto">si=
+ngularity shell /path/to/your/singularity/<wbr>image</div><div dir=3D"auto"=
+><br></div><div dir=3D"auto">Then you will be able to check what is missing=
+ to get it work. Maybe your issue is related to a problem with your env in =
+your container.</div><div dir=3D"auto"><br></div><div dir=3D"auto">BTW you =
+can replace your small shell script :</div><div dir=3D"auto"><span style=3D=
+"font-family:monospace;background-color:rgb(250,250,250);color:rgb(136,0,0)=
+">#!/bin/sh</span><span style=3D"font-family:monospace;background-color:rgb=
+(250,250,250)"><br>singularity=C2=A0</span><span style=3D"font-family:monos=
+pace;background-color:rgb(250,250,250);color:rgb(0,0,136)">exec</span><span=
+ style=3D"font-family:monospace;background-color:rgb(250,250,250)">=C2=A0</=
+span><span style=3D"font-family:monospace;background-color:rgb(250,250,250)=
+;color:rgb(0,0,136)">my</span><span style=3D"font-family:monospace;backgrou=
+nd-color:rgb(250,250,250);color:rgb(102,102,0)">/</span><span style=3D"font=
+-family:monospace;background-color:rgb(250,250,250)">path</span><span style=
+=3D"font-family:monospace;background-color:rgb(250,250,250);color:rgb(102,1=
+02,0)">/</span><span style=3D"font-family:monospace;background-color:rgb(25=
+0,250,250)">to</span><span style=3D"font-family:monospace;background-color:=
+rgb(250,250,250);color:rgb(102,102,0)">/</span><span style=3D"font-family:m=
+onospace;background-color:rgb(250,250,250)">py<wbr>tools27</span><span styl=
+e=3D"font-family:monospace;background-color:rgb(250,250,250);color:rgb(102,=
+102,0)">.</span><span style=3D"font-family:monospace;background-color:rgb(2=
+50,250,250)">img conda $@</span></div><div>By adding a %runscript section i=
+n your singularity definition file.</div><div dir=3D"auto"><br></div><div d=
+ir=3D"auto">Best regards,</div><div dir=3D"auto">R=C3=A9my.</div><div dir=
+=3D"auto"><br><div class=3D"gmail_quote" dir=3D"auto">Le=C2=A030 nov. 2017 =
+11:39, &quot;Laurent Fournier&quot; &lt;<a href=3D"javascript:" target=3D"_=
+blank" gdf-obfuscated-mailto=3D"IE58GaFOBgAJ" rel=3D"nofollow" onmousedown=
+=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D=
+&#39;javascript:&#39;;return true;">m...@laurent-fournier.be</a>&gt; a =C3=
+=A9crit=C2=A0:<br type=3D"attribution"><blockquote style=3D"margin:0 0 0 .8=
+ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Hi,<div><b=
+r></div><div><br></div><div>I am using Singularity 2.4.1.</div><div><br></d=
+iv><div><div style=3D"background-color:rgb(250,250,250);border-color:rgb(18=
+7,187,187);border-style:solid;border-width:1px;word-wrap:break-word"><code>=
+<div><span style=3D"color:#000">laurent@NanoStation</span><span style=3D"co=
+lor:#660">:~/</span><span style=3D"color:#000">atWork</span><span style=3D"=
+color:#660">/</span><span style=3D"color:#606">S<wbr>ingularity$</span><spa=
+n style=3D"color:#000"> cat </span><span style=3D"color:#606">Tool27</span>=
+<span style=3D"color:#000"> <br><br></span><span style=3D"color:#606">BootS=
+trap</span><span style=3D"color:#660">:</span><span style=3D"color:#000"> d=
+ocker<br></span><span style=3D"color:#606">From</span><span style=3D"color:=
+#660">:</span><span style=3D"color:#000"> continuumio</span><span style=3D"=
+color:#660">/</span><span style=3D"color:#000">miniconda</span><span style=
+=3D"color:#660">:</span><span style=3D"color:#000">latest</span><span style=
+=3D"color:#000"><br><br></span><span style=3D"color:#660">%</span><span sty=
+le=3D"color:#000">post<br>=C2=A0 =C2=A0 echo </span><span style=3D"color:#0=
+80">&quot;nameserver 1.1.1.1&quot;</span><span style=3D"color:#000"> </span=
+><span style=3D"color:#660">|</span><span style=3D"color:#000"> tee </span>=
+<span style=3D"color:#660">/</span><span style=3D"color:#000">etc</span><sp=
+an style=3D"color:#660">/</span><span style=3D"color:#000">resolv</span><sp=
+an style=3D"color:#660">.</span><span style=3D"color:#000">conf </span><spa=
+n style=3D"color:#660">&gt;</span><span style=3D"color:#000"> </span><span =
+style=3D"color:#080">/dev/</span><span style=3D"color:#008">null</span><spa=
+n style=3D"color:#000"><br>=C2=A0 =C2=A0 </span><span style=3D"color:#008">=
+export</span><span style=3D"color:#000"> PATH</span><span style=3D"color:#6=
+60">=3D</span><span style=3D"color:#080">/opt/</span><span style=3D"color:#=
+000">conda</span><span style=3D"color:#660">/</span><span style=3D"color:#0=
+00">bin<br>=C2=A0 =C2=A0 conda config </span><span style=3D"color:#660">--<=
+/span><span style=3D"color:#000">add channels bioconda<br>=C2=A0 =C2=A0 con=
+da config </span><span style=3D"color:#660">--</span><span style=3D"color:#=
+000">add channels conda</span><span style=3D"color:#660">-</span><span styl=
+e=3D"color:#000">forge<br>=C2=A0 =C2=A0 conda clean </span><span style=3D"c=
+olor:#660">--</span><span style=3D"color:#000">index</span><span style=3D"c=
+olor:#660">-</span><span style=3D"color:#000">cache </span><span style=3D"c=
+olor:#660">--</span><span style=3D"color:#000">tarballs </span><span style=
+=3D"color:#660">--</span><span style=3D"color:#000">packages </span><span s=
+tyle=3D"color:#660">--</span><span style=3D"color:#000">yes<br>=C2=A0 =C2=
+=A0 <br></span><span style=3D"color:#660">%</span><span style=3D"color:#000=
+">environment<br>=C2=A0 =C2=A0 </span><span style=3D"color:#008">export</sp=
+an><span style=3D"color:#000"> PATH</span><span style=3D"color:#660">=3D</s=
+pan><span style=3D"color:#080">&quot;/opt/conda/bin:/usr/<wbr>local/bin:/us=
+r/bin:/bin:&quot;</span><span style=3D"color:#000"><br>=C2=A0 =C2=A0 unset =
+CONDA_DEFAULT_ENV<br>=C2=A0 =C2=A0 </span><span style=3D"color:#008">export=
+</span><span style=3D"color:#000"> ANACONDA_HOME</span><span style=3D"color=
+:#660">=3D</span><span style=3D"color:#080">/opt/</span><span style=3D"colo=
+r:#000">conda</span></div></code></div><div><br></div></div><div><br></div>=
+<div>To use the tools inside, i created small shell scripts like that :</di=
+v><div><br></div><div><div style=3D"background-color:rgb(250,250,250);borde=
+r-color:rgb(187,187,187);border-style:solid;border-width:1px;word-wrap:brea=
+k-word"><code><div><span style=3D"color:#000">laurent@NanoStation</span><sp=
+an style=3D"color:#660">:~/</span><span style=3D"color:#000">atWork</span><=
+span style=3D"color:#660">/</span><span style=3D"color:#606">S<wbr>ingulari=
+ty$</span><span style=3D"color:#000"> cat conda<br><br></span><span style=
+=3D"color:#800">#!/bin/sh</span><span style=3D"color:#000"><br>singularity =
+</span><span style=3D"color:#008">exec</span><span style=3D"color:#000"> </=
+span><span style=3D"color:#008">my</span><span style=3D"color:#660">/</span=
+><span style=3D"color:#000">path</span><span style=3D"color:#660">/</span><=
+span style=3D"color:#000">to</span><span style=3D"color:#660">/</span><span=
+ style=3D"color:#000">pytools27</span><span style=3D"color:#660">.</span><s=
+pan style=3D"color:#000">img conda $@</span></div></code></div><div><br></d=
+iv><div><br></div><div>That works just fine. But when it comes to using con=
+da envs...it don&#39;t work anymore.</div><div>First i had to gain access t=
+o bash instead of sh (which is working).=C2=A0</div><div>Then i &quot;conda=
+ create -n myenv&quot; which work as well :</div><div><br></div><div><div s=
+tyle=3D"background-color:rgb(250,250,250);border-color:rgb(187,187,187);bor=
+der-style:solid;border-width:1px;word-wrap:break-word"><code><div><span sty=
+le=3D"color:#000">laurent@NanoStation</span><span style=3D"color:#660">:~/<=
+/span><span style=3D"color:#000">atWork</span><span style=3D"color:#660">/<=
+/span><span style=3D"color:#606">S<wbr>ingularity$</span><span style=3D"col=
+or:#000"> </span><span style=3D"color:#660">./</span><span style=3D"color:#=
+000">conda create </span><span style=3D"color:#660">-</span><span style=3D"=
+color:#000">n py27 python</span><span style=3D"color:#660">=3D</span><span =
+style=3D"color:#066">2.7</span><span style=3D"color:#000"><br><br></span><s=
+pan style=3D"color:#606">Fetching</span><span style=3D"color:#000"> </span>=
+<span style=3D"color:#008">package</span><span style=3D"color:#000"> metada=
+ta </span><span style=3D"color:#660">...............</span><span style=3D"c=
+olor:#000"><br></span><span style=3D"color:#606">Solving</span><span style=
+=3D"color:#000"> </span><span style=3D"color:#008">package</span><span styl=
+e=3D"color:#000"> specifications</span><span style=3D"color:#660">:</span><=
+span style=3D"color:#000"> </span><span style=3D"color:#660">.</span><span =
+style=3D"color:#000"><br><br></span><span style=3D"color:#606">Package</spa=
+n><span style=3D"color:#000"> plan </span><span style=3D"color:#008">for</s=
+pan><span style=3D"color:#000"> installation </span><span style=3D"color:#0=
+08">in</span><span style=3D"color:#000"> environment </span><span style=3D"=
+color:#660">/</span><span style=3D"color:#000">home</span><span style=3D"co=
+lor:#660">/</span><span style=3D"color:#000">laurent</span><span style=3D"c=
+olor:#660">/.</span><span style=3D"color:#000">conda</span><span style=3D"c=
+olor:#660">/</span><span style=3D"color:#000">envs</span><span style=3D"col=
+or:#660">/</span><span style=3D"color:#000">py27</span><span style=3D"color=
+:#660"><wbr>:</span></div></code></div><div><br></div></div><div><br></div>=
+<div>But from that point, whenever i try &quot;source activate&quot; or eve=
+n modify the calling script as follows :</div><div><br></div><div style=3D"=
+background-color:rgb(250,250,250);border-color:rgb(187,187,187);border-styl=
+e:solid;border-width:1px;word-wrap:break-word"><code><div><span style=3D"co=
+lor:#000">laurent@NanoStation</span><span style=3D"color:#660">:~/</span><s=
+pan style=3D"color:#000">atWork</span><span style=3D"color:#660">/</span><s=
+pan style=3D"color:#606">S<wbr>ingularity$</span><span style=3D"color:#000"=
+> cat activate <br><br></span><span style=3D"color:#800">#!/bin/sh</span><s=
+pan style=3D"color:#000"><br>singularity </span><span style=3D"color:#008">=
+exec</span><span style=3D"color:#000"> </span><span style=3D"color:#008">my=
+</span><span style=3D"color:#660">/</span><span style=3D"color:#000">path</=
+span><span style=3D"color:#660">/</span><span style=3D"color:#000">to</span=
+><span style=3D"color:#660">/</span><span style=3D"color:#000">pytools27</s=
+pan><span style=3D"color:#660">.</span><span style=3D"color:#000">img bash =
+</span><span style=3D"color:#660">-</span><span style=3D"color:#000">c </sp=
+an><span style=3D"color:#080">&#39;source activate $@&#39;</span></div></co=
+de></div><div><br></div></div><div><br></div><div>Nothing happens :</div><d=
+iv><br></div><div><div style=3D"background-color:rgb(250,250,250);border-co=
+lor:rgb(187,187,187);border-style:solid;border-width:1px;word-wrap:break-wo=
+rd"><code><div><span style=3D"color:#000">laurent@NanoStation</span><span s=
+tyle=3D"color:#660">:~/</span><span style=3D"color:#000">atWork</span><span=
+ style=3D"color:#660">/</span><span style=3D"color:#606">S<wbr>ingularity$<=
+/span><span style=3D"color:#000"> source activate py27<br>laurent@NanoStati=
+on</span><span style=3D"color:#660">:~/</span><span style=3D"color:#000">at=
+Work</span><span style=3D"color:#660">/</span><span style=3D"color:#606">S<=
+wbr>ingularity$</span><span style=3D"color:#000"> </span><span style=3D"col=
+or:#660">./</span><span style=3D"color:#000">activate py27<br>laurent@NanoS=
+tation</span><span style=3D"color:#660">:~/</span><span style=3D"color:#000=
+">atWork</span><span style=3D"color:#660">/</span><span style=3D"color:#606=
+">S<wbr>ingularity$</span></div></code></div><div><br></div></div><div><br>=
+</div><div>Any ideas ?</div></div><font color=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+IE58GaFOBgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</font></blockquote></div><br></div></div></div>
+</blockquote></div></div>
+------=_Part_298_832033775.1512115019978--
+
+------=_Part_297_1330614321.1512115019977--

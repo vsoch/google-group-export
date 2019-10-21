@@ -1,0 +1,496 @@
+Date: Tue, 9 May 2017 13:11:03 -0700 (PDT)
+From: M Noon <saad...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <f4d3b4a0-12e4-4d8a-9e71-00d671f3b093@lbl.gov>
+In-Reply-To: <9c275bb2-1dd9-49ee-b7b3-25d6ff146607@lbl.gov>
+References: <9c275bb2-1dd9-49ee-b7b3-25d6ff146607@lbl.gov>
+Subject: Re: Cant find or run installed APP from within the container
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1047_1304920836.1494360663972"
+
+------=_Part_1047_1304920836.1494360663972
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1048_827185262.1494360664025"
+
+------=_Part_1048_827185262.1494360664025
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi Vanessa, 
+
+I followed your instructions. I get this error:
+
+g++ -c  -O3 -pipe -Wall -Wextra  bam_cat.c
+
+g++ -o STAR  -O3 -pipe -std=c++11 -Wall -Wextra -fopenmp 
+-D'COMPILATION_TIME_PLACE="Tue May 9 05:03:20 UTC 2017 :/STAR/source"'  
+SharedMemory.o PackedArray.o SuffixArrayFuns.o STAR.o Parameters.o 
+InOutStreams.o SequenceFuns.o Genome.o Chain.o Stats.o Transcript.o 
+Transcript_alignScore.o ReadAlign.o ReadAlign_storeAligns.o 
+ReadAlign_stitchPieces.o ReadAlign_multMapSelect.o ReadAlign_mapOneRead.o 
+readLoad.o ReadAlignChunk.o ReadAlignChunk_processChunks.o 
+ReadAlignChunk_mapChunk.o OutSJ.o outputSJ.o blocksOverlap.o 
+ThreadControl.o sysRemoveDir.o ReadAlign_maxMappableLength2strands.o 
+binarySearch2.o ReadAlign_outputAlignments.o 
+ReadAlign_outputTranscriptSAM.o ReadAlign_outputTranscriptSJ.o 
+ReadAlign_outputTranscriptCIGARp.o ReadAlign_createExtendWindowsWithAlign.o 
+ReadAlign_assignAlignToWindow.o ReadAlign_oneRead.o 
+ReadAlign_stitchWindowSeeds.o ReadAlign_chimericDetection.o 
+stitchWindowAligns.o extendAlign.o stitchAlignToTranscript.o 
+alignSmithWaterman.o genomeGenerate.o genomeParametersWrite.o 
+genomeScanFastaFiles.o genomeSAindex.o Genome_insertSequences.o 
+insertSeqSA.o funCompareUintAndSuffixes.o sortSuffixesBucket.o 
+funCompareUintAndSuffixesMemcmp.o TimeFunctions.o ErrorWarning.o loadGTF.o 
+streamFuns.o stringSubstituteAll.o Transcriptome.o 
+Transcriptome_quantAlign.o ReadAlign_quantTranscriptome.o Quantifications.o 
+Transcriptome_geneCountsAddAlign.o sjdbLoadFromFiles.o sjdbLoadFromStream.o 
+sjdbPrepare.o sjdbBuildIndex.o sjdbInsertJunctions.o mapThreadsSpawn.o 
+Parameters_openReadsFiles.cpp Parameters_closeReadsFiles.cpp BAMoutput.o 
+BAMfunctions.o ReadAlign_alignBAM.o BAMbinSortByCoordinate.o 
+signalFromBAM.o bamRemoveDuplicates.o BAMbinSortUnmapped.o bam_cat.o 
+GlobalVariables.cpp  -pthread -Lhtslib -Bstatic -lhts -Bdynamic -lz -lrt 
+
+Parameters_openReadsFiles.cpp: In member function 'void 
+Parameters::openReadsFiles()':
+
+Parameters_openReadsFiles.cpp:30:20: warning: variable 'imate' might be 
+clobbered by 'longjmp' or 'vfork' [-Wclobbered]
+
+          for (uint imate=0;imate<readNmates;imate++) {//open readIn files
+
+                    ^
+
++ mkdir - p /extra/mnoon
+
+mkdir: cannot create directory '/extra/mnoon': No such file or directory
+
+ERROR: Aborting with RETVAL=255
+
+
+
+
+
+
+On Monday, May 8, 2017 at 5:05:07 PM UTC-7, M Noon wrote:
+>
+> Hi team, 
+>
+> I am in the stage of getting familiarized with Singularity and don't know 
+> many details about it. I am trying to build a container with MPI libraries 
+> and genome aligner (STAR) that could be tested on HPC.
+> After facing many errors, I succeeded to install both MPI libraries and 
+> STAR. I am using Centos7. I am git-cloning both tools within %POST. 
+> Logically, both programs/executables should be at "/usr/local/bin". Well, 
+> I do see mpi and it can be invoked when I am in shell mode. Despite great 
+> deal of efforts I couldn't find STAR executable or any folder that 
+> was/should have been cloned within the container. I may be missing 
+> something very trivial but I can't seem to work it out yet.
+> Here is my Definition file:
+>
+>
+> BootStrap: yum
+>
+> OSVersion: 7
+>
+> MirrorURL: 
+> http://mirror.centos.org/centos-%{OSVERSION}/%{OSVERSION}/os/$basearch/
+>
+> Include: yum wget
+>
+> # best to build up container using kickstart mentality.  
+>
+> # ie, to add more packages to image, 
+>
+> # re-run bootstrap command again.  
+>
+> # bootstrap on existing image will build on top of it, not overwriting 
+> it/restarting from scratch
+>
+> # singularity .def file is like kickstart file
+>
+> # unix commands can be run, but if there is any error, the bootstrap 
+> process ends
+>
+>
+>
+> %setup
+>
+>    # commands to be executed on host outside container during bootstrap
+>
+>
+>
+> %post
+>
+>     # commands to be executed inside container during bootstrap
+>
+>     yum -y groupinstall "Development Tools"
+>
+>
+>
+> #    # Clone the OpenMPI GitHub master branch in current directory (on 
+> host)
+>
+>     git clone https://github.com/open-mpi/ompi.git
+>
+>     cd ompi
+>
+>
+>     # Build OpenMPI in the working directory
+>
+>     ./autogen.pl
+>
+>     ./configure --prefix=/usr/local
+>
+>     make
+>
+>     make install
+>
+> #    
+>
+>      
+>
+>     # Instal "zlib1g" to aviod installation error
+>
+>     yum -y install zlib-devel
+>
+>      
+>
+>     # Install STAR -  get STAR source using git
+>
+>     git clone https://github.com/alexdobin/STAR.git
+>
+>     cd STAR/source
+>
+>
+>     echo "Within STAR"
+>
+>     echo "pwd" 
+>
+>
+>     # Build STAR
+>
+>     make STAR
+>
+>
+>     echo $PATH
+>
+>     STAR --version
+>
+>
+>     echo "OUT of Star Dir" 
+>
+>     STAR --version
+>
+>
+>     /usr/bin/STAR --help    
+>
+>  
+>
+>     # create bind points for storage.  Replace netid as appropriate
+>
+>     mkdir /extra/mnoon /rsgrps/zarnescu/
+>
+>     exit 0
+>
+>
+>
+>
+>  %runscript
+>
+>    # commands to be executed when the container runs
+>
+>    echo "Arguments received: $*"
+>
+>    exec /usr/bin/python "$@"
+>
+>
+>
+>
+>  %test
+>
+>    # commands to be executed within container at close of bootstrap process
+>
+>    python --version
+>
+>    STAR --version
+>
+>
+>
+>
+> I also tried to install (git clone) STAR using this alternative method, 
+> below:
+>
+> sudo singularity exec -w centosMPI_star.img
+>
+> git clone https://github.com/alexdobin/STAR.git
+>
+> cd STAR/source/
+>
+> singularity exec ../../centosMPI_star.img make STAR
+>
+>
+> When I do 
+>
+> singularity shell centosMPI_star.img
+>
+>
+> I can't find STAR in any possible directory other than the clonned version 
+> on /home/mnoon
+>
+>
+> Can you please tell me what am I doing wrong? Also, Where should the 
+> installed tool/executable be located with the container?
+>
+>
+> Regards,
+>
+> M
+>
+>
+>
+------=_Part_1048_827185262.1494360664025
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+Hi Vanessa,=C2=A0<div><br></div><div>I followed your instructions. I get th=
+is error:</div><div><br></div><div>
+
+
+
+
+<style type=3D"text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo}
+p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo; color: #c33720}
+span.s1 {font-variant-ligatures: no-common-ligatures}
+</style>
+
+
+<p class=3D"p1"><span class=3D"s1">g++ -c=C2=A0 -O3 -pipe -Wall -Wextra=C2=
+=A0 bam_cat.c</span></p>
+<p class=3D"p1"><span class=3D"s1">g++ -o STAR=C2=A0 -O3 -pipe -std=3Dc++11=
+ -Wall -Wextra -fopenmp -D&#39;COMPILATION_TIME_PLACE=3D&quot;Tue May 9 05:=
+03:20 UTC 2017 :/STAR/source&quot;&#39;=C2=A0 SharedMemory.o PackedArray.o =
+SuffixArrayFuns.o STAR.o Parameters.o InOutStreams.o SequenceFuns.o Genome.=
+o Chain.o Stats.o Transcript.o Transcript_alignScore.o ReadAlign.o ReadAlig=
+n_storeAligns.o ReadAlign_stitchPieces.o ReadAlign_multMapSelect.o ReadAlig=
+n_mapOneRead.o readLoad.o ReadAlignChunk.o ReadAlignChunk_processChunks.o R=
+eadAlignChunk_mapChunk.o OutSJ.o outputSJ.o blocksOverlap.o ThreadControl.o=
+ sysRemoveDir.o ReadAlign_maxMappableLength2strands.o binarySearch2.o ReadA=
+lign_outputAlignments.o ReadAlign_outputTranscriptSAM.o ReadAlign_outputTra=
+nscriptSJ.o ReadAlign_outputTranscriptCIGARp.o ReadAlign_createExtendWindow=
+sWithAlign.o ReadAlign_assignAlignToWindow.o ReadAlign_oneRead.o ReadAlign_=
+stitchWindowSeeds.o ReadAlign_chimericDetection.o stitchWindowAligns.o exte=
+ndAlign.o stitchAlignToTranscript.o alignSmithWaterman.o genomeGenerate.o g=
+enomeParametersWrite.o genomeScanFastaFiles.o genomeSAindex.o Genome_insert=
+Sequences.o insertSeqSA.o funCompareUintAndSuffixes.o sortSuffixesBucket.o =
+funCompareUintAndSuffixesMemcmp.o TimeFunctions.o ErrorWarning.o loadGTF.o =
+streamFuns.o stringSubstituteAll.o Transcriptome.o Transcriptome_quantAlign=
+.o ReadAlign_quantTranscriptome.o Quantifications.o Transcriptome_geneCount=
+sAddAlign.o sjdbLoadFromFiles.o sjdbLoadFromStream.o sjdbPrepare.o sjdbBuil=
+dIndex.o sjdbInsertJunctions.o mapThreadsSpawn.o Parameters_openReadsFiles.=
+cpp Parameters_closeReadsFiles.cpp BAMoutput.o BAMfunctions.o ReadAlign_ali=
+gnBAM.o BAMbinSortByCoordinate.o signalFromBAM.o bamRemoveDuplicates.o BAMb=
+inSortUnmapped.o bam_cat.o GlobalVariables.cpp=C2=A0 -pthread -Lhtslib -Bst=
+atic -lhts -Bdynamic -lz -lrt=C2=A0</span></p>
+<p class=3D"p1"><span class=3D"s1">Parameters_openReadsFiles.cpp: In member=
+ function &#39;void Parameters::openReadsFiles()&#39;:</span></p>
+<p class=3D"p1"><span class=3D"s1">Parameters_openReadsFiles.cpp:30:20: war=
+ning: variable &#39;imate&#39; might be clobbered by &#39;longjmp&#39; or &=
+#39;vfork&#39; [-Wclobbered]</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 for (=
+uint imate=3D0;imate&lt;readNmates;imate++) {//open readIn files</span></p>
+<p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 ^</span></p>
+<p class=3D"p1"><span class=3D"s1">+ mkdir - p /extra/mnoon</span></p>
+<p class=3D"p1"><span class=3D"s1">mkdir: cannot create directory &#39;/ext=
+ra/mnoon&#39;: No such file or directory</span></p>
+<p class=3D"p2"><span class=3D"s1">ERROR: Aborting with RETVAL=3D255</span>=
+</p><p class=3D"p2"><span class=3D"s1"><br></span></p><p class=3D"p2"><span=
+ class=3D"s1"><br></span></p><p class=3D"p2"><span class=3D"s1"><br></span>=
+</p><p class=3D"p2"><span class=3D"s1"><br></span></p><br>On Monday, May 8,=
+ 2017 at 5:05:07 PM UTC-7, M Noon wrote:<blockquote class=3D"gmail_quote" s=
+tyle=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-le=
+ft: 1ex;"><div dir=3D"ltr">Hi team,=C2=A0<div><br></div><div>I am in the st=
+age of getting familiarized with Singularity and don&#39;t know many detail=
+s about it. I am trying to build a container with MPI libraries and genome =
+aligner (STAR) that could be tested on HPC.</div><div>After facing many err=
+ors, I succeeded to install both MPI libraries and STAR. I am using Centos7=
+. I am git-cloning both tools within %POST.=C2=A0</div><div>Logically, both=
+ programs/executables should be at &quot;/usr/local/bin&quot;. Well, I do s=
+ee mpi and it can be invoked when I am in shell mode. Despite great deal of=
+ efforts I couldn&#39;t find STAR executable or any folder that was/should =
+have been cloned within the container. I may be missing something very triv=
+ial but I can&#39;t seem to work it out yet.</div><div>Here is my Definitio=
+n file:</div><div><br></div><div><br></div><div>
+
+
+
+
+
+
+
+<p><span>BootStrap: yum</span></p>
+<p><span>OSVersion: 7</span></p>
+<p><span>MirrorURL: <a href=3D"http://mirror.centos.org/centos-%%7BOSVERSIO=
+N%7D/%%7BOSVERSION%7D/os/$basearch/" target=3D"_blank" rel=3D"nofollow" onm=
+ousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fmi=
+rror.centos.org%2Fcentos-%25%257BOSVERSION%257D%2F%25%257BOSVERSION%257D%2F=
+os%2F%24basearch%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHfH2HjUXZK-hJjm=
+03wlVLzlhIsAw&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.goo=
+gle.com/url?q\x3dhttp%3A%2F%2Fmirror.centos.org%2Fcentos-%25%257BOSVERSION%=
+257D%2F%25%257BOSVERSION%257D%2Fos%2F%24basearch%2F\x26sa\x3dD\x26sntz\x3d1=
+\x26usg\x3dAFQjCNHfH2HjUXZK-hJjm03wlVLzlhIsAw&#39;;return true;">http://mir=
+ror.centos.org/<wbr>centos-%{OSVERSION}/%{<wbr>OSVERSION}/os/$basearch/</a>=
+</span></p>
+<p><span>Include: yum wget</span></p>
+<p><span># best to build up container using kickstart mentality. =C2=A0</sp=
+an></p>
+<p><span># ie, to add more packages to image,=C2=A0</span></p>
+<p><span># re-run bootstrap command again. =C2=A0</span></p>
+<p><span># bootstrap on existing image will build on top of it, not overwri=
+ting it/restarting from scratch</span></p>
+<p><span># singularity .def file is like kickstart file</span></p>
+<p><span># unix commands can be run, but if there is any error, the bootstr=
+ap process ends</span></p>
+<p><span></span><br></p>
+<p><span></span><br></p>
+<p><span>%setup</span></p>
+<p><span>=C2=A0=C2=A0 # commands to be executed on host outside container d=
+uring bootstrap</span></p>
+<p><span></span><br></p>
+<p><span></span><br></p>
+<p><span>%post</span></p>
+<p><span>=C2=A0 =C2=A0 # commands to be executed inside container during bo=
+otstrap</span></p>
+<p><span>=C2=A0 =C2=A0 yum -y groupinstall &quot;Development Tools&quot;</s=
+pan></p>
+<p><span></span><br></p>
+<p><span></span><br></p>
+<p><span>#=C2=A0 =C2=A0 # Clone the OpenMPI GitHub master branch in current=
+ directory (on host)</span></p>
+<p><span>=C2=A0 =C2=A0 git clone <a href=3D"https://github.com/open-mpi/omp=
+i.git" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;h=
+ttps://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fopen-mpi%2Fompi.g=
+it\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHkJkIiHe57PQPH8fjCJd0WODJBdw&#39=
+;;return true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3=
+dhttps%3A%2F%2Fgithub.com%2Fopen-mpi%2Fompi.git\x26sa\x3dD\x26sntz\x3d1\x26=
+usg\x3dAFQjCNHkJkIiHe57PQPH8fjCJd0WODJBdw&#39;;return true;">https://github=
+.com/open-mpi/<wbr>ompi.git</a></span></p>
+<p><span>=C2=A0 =C2=A0 cd ompi</span></p>
+<p><span></span><br></p>
+<p><span>=C2=A0 =C2=A0 # Build OpenMPI in the working directory</span></p>
+<p><span>=C2=A0 =C2=A0 ./<a href=3D"http://autogen.pl" target=3D"_blank" re=
+l=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\=
+x3dhttp%3A%2F%2Fautogen.pl\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGEYzu34e=
+vgRVViE--Qmz6RqdG5Lw&#39;;return true;" onclick=3D"this.href=3D&#39;http://=
+www.google.com/url?q\x3dhttp%3A%2F%2Fautogen.pl\x26sa\x3dD\x26sntz\x3d1\x26=
+usg\x3dAFQjCNGEYzu34evgRVViE--Qmz6RqdG5Lw&#39;;return true;">autogen.pl</a>=
+</span></p>
+<p><span>=C2=A0 =C2=A0 ./configure --prefix=3D/usr/local</span></p>
+<p><span>=C2=A0 =C2=A0 make</span></p>
+<p><span>=C2=A0 =C2=A0 make install</span></p>
+<p><span># =C2=A0 =C2=A0</span></p>
+<p><span>=C2=A0 =C2=A0 =C2=A0</span></p>
+<p><span>=C2=A0 =C2=A0 # Instal &quot;zlib1g&quot; to aviod installation er=
+ror</span></p>
+<p><span>=C2=A0 =C2=A0 yum -y install zlib-devel</span></p>
+<p><span>=C2=A0 =C2=A0 =C2=A0</span></p>
+<p><span>=C2=A0 =C2=A0 # Install STAR -=C2=A0 get STAR source using git</sp=
+an></p>
+<p><span>=C2=A0 =C2=A0 git clone <a href=3D"https://github.com/alexdobin/ST=
+AR.git" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;=
+https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Falexdobin%2FSTAR=
+.git\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFSIcANP_fuVBCs3obg1KggJVxIKw&#=
+39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\=
+x3dhttps%3A%2F%2Fgithub.com%2Falexdobin%2FSTAR.git\x26sa\x3dD\x26sntz\x3d1\=
+x26usg\x3dAFQjCNFSIcANP_fuVBCs3obg1KggJVxIKw&#39;;return true;">https://git=
+hub.com/alexdobin/<wbr>STAR.git</a></span></p>
+<p><span>=C2=A0 =C2=A0 cd STAR/source</span></p>
+<p><span></span><br></p>
+<p><span>=C2=A0 =C2=A0 echo &quot;Within STAR&quot;</span></p>
+<p><span>=C2=A0 =C2=A0 echo &quot;pwd&quot;=C2=A0</span></p>
+<p><span></span><br></p>
+<p><span>=C2=A0 =C2=A0 # Build STAR</span></p>
+<p><span>=C2=A0 =C2=A0 make STAR</span></p>
+<p><span></span><br></p>
+<p><span>=C2=A0 =C2=A0 echo $PATH</span></p>
+<p><span>=C2=A0 =C2=A0 STAR --version</span></p>
+<p><span></span><br></p>
+<p><span>=C2=A0 =C2=A0 echo &quot;OUT of Star Dir&quot;=C2=A0</span></p>
+<p><span>=C2=A0 =C2=A0 STAR --version</span></p>
+<p><span></span><br></p>
+<p><span>=C2=A0 =C2=A0 /usr/bin/STAR --help =C2=A0 =C2=A0</span></p>
+<p><span>=C2=A0</span></p>
+<p><span>=C2=A0 =C2=A0 # create bind points for storage.=C2=A0 Replace neti=
+d as appropriate</span></p>
+<p><span>=C2=A0 =C2=A0 mkdir /extra/mnoon /rsgrps/zarnescu/</span></p>
+<p><span>=C2=A0 =C2=A0 exit 0</span></p>
+<p><span></span><br></p>
+<p><span></span><br></p>
+<p><span></span><br></p>
+<p><span>=C2=A0%runscript</span></p>
+<p><span>=C2=A0=C2=A0 # commands to be executed when the container runs</sp=
+an></p>
+<p><span>=C2=A0=C2=A0 echo &quot;Arguments received: $*&quot;</span></p>
+<p><span>=C2=A0=C2=A0 exec /usr/bin/python &quot;$@&quot;</span></p>
+<p><span></span><br></p>
+<p><span></span><br></p>
+<p><span></span><br></p>
+<p><span>=C2=A0%test</span></p>
+<p><span>=C2=A0=C2=A0 # commands to be executed within container at close o=
+f bootstrap process</span></p>
+<p><span>=C2=A0=C2=A0 python --version</span></p>
+<p><span>=C2=A0=C2=A0 STAR --version</span></p></div><div><br></div><div><b=
+r></div><div><br></div><div><br></div><div>I also tried to install (git clo=
+ne) STAR using this alternative method, below:</div><div><br></div><div>
+
+
+
+
+
+
+
+<p><span>sudo singularity exec -w centosMPI_star.img</span></p><p><span>
+
+
+
+
+
+
+
+</span></p><p><span>git clone <a href=3D"https://github.com/alexdobin/STAR.=
+git" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;htt=
+ps://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Falexdobin%2FSTAR.gi=
+t\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFSIcANP_fuVBCs3obg1KggJVxIKw&#39;=
+;return true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3d=
+https%3A%2F%2Fgithub.com%2Falexdobin%2FSTAR.git\x26sa\x3dD\x26sntz\x3d1\x26=
+usg\x3dAFQjCNFSIcANP_fuVBCs3obg1KggJVxIKw&#39;;return true;">https://github=
+.com/alexdobin/<wbr>STAR.git</a></span></p><p><span>
+
+
+
+
+
+
+
+</span></p><p><span>cd STAR/source/</span></p><p><span>
+
+
+
+
+
+
+
+</span></p><p><span>singularity exec ../../centosMPI_star.img make STAR</sp=
+an></p><p><br></p><p>When I do=C2=A0</p><p><span>singularity shell centosMP=
+I_star.img</span><br></p><p><span><br></span></p><p><span>I can&#39;t find =
+STAR in any possible directory other than the clonned version on /home/mnoo=
+n</span></p><p><span><br></span></p><p><span>Can you please tell me what am=
+ I doing wrong? Also, Where should the installed tool/executable be located=
+ with the container?</span></p><p><span><br></span></p><p><span>Regards,</s=
+pan></p><p><span>M</span></p><p><span><br></span></p></div></div></blockquo=
+te></div>
+------=_Part_1048_827185262.1494360664025--
+
+------=_Part_1047_1304920836.1494360663972--

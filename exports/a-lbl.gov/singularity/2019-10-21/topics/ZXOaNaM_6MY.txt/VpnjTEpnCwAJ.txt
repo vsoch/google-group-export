@@ -1,0 +1,360 @@
+Date: Wed, 10 Jul 2019 04:57:21 -0700 (PDT)
+From: haris zaf <hari...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Cc: dtr...@sylabs.io
+Message-Id: <1255d8ce-b7a9-4cf6-ba05-11bcf2cb8a4f@lbl.gov>
+In-Reply-To: <cd576e1a-8f48-49f0-badd-f7389eb29176@lbl.gov>
+References: <2D04FD6A-B3BD-4586-AB89-1891E89CAC47@nrel.gov>
+ <cd576e1a-8f48-49f0-badd-f7389eb29176@lbl.gov>
+Subject: Re: Build singularity image from local docker image
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_253_1477967324.1562759841885"
+
+------=_Part_253_1477967324.1562759841885
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_254_1139434712.1562759841886"
+
+------=_Part_254_1139434712.1562759841886
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi Dave, 
+
+
+I tried to do as you said but I got this error:
+
+
+FATAL:   While performing build: conveyor failed to get: Error reading 
+manifest v1 in localhost:5000/hariszaf/pema: manifest unknown: manifest 
+unknown
+
+
+
+
+Do you have any idea what this is about?
+
+
+On Tuesday, 26 June 2018 23:02:46 UTC+3, David Trudgian wrote:
+>
+> Hi Noel,
+>
+> Here's a general pattern for doing this... pushing the image into a local 
+> docker registry, and then pulling out to singularity:
+>
+> # Start a docker registry
+> $ docker run -d -p 5000:5000 --restart=always --name registry registry:2
+> # Push local docker container to it
+> $ docker tag alpine localhost:5000/alpine
+> $ docker push localhost:5000/alpine
+>
+> # Create def file for singularity like this..
+> # (add your modifications)
+>
+> Bootstrap: docker
+> Registry: http://localhost:5000
+> Namespace:
+> From: alpine:latest
+>
+> # Build singularity container
+> $ sudo SINGULARITY_NOHTTPS=1 singularity build alpine.simg def
+>
+> You'll be glad to know that this will improve a lot with Singularity 3.0, 
+> our rewrite in Golang. We've just merged functionality into the development 
+> branch for 3.0 that allows direct import of docker save archives, oci 
+> archives and layouts, and even direct imports pulling images from the 
+> docker daemon itself with no intermediary. Leveraging the excellent 
+> container libraries available for Go is letting us streamline a lot of 
+> things.
+>
+> Cheers,
+>
+> Dave T
+>
+>
+> On Tuesday, June 26, 2018 at 1:46:25 PM UTC-5, Noel Merket wrote:
+>>
+>> I'm trying to convert a docker image to a singularity image, but I'd 
+>> prefer to do it all locally, rather than uploading it all to docker hub or 
+>> another repository. I've had limited success with running the image and 
+>> using the docker export command on the container and then building a 
+>> singularity image from that, but it seems that environment variables set it 
+>> the Dockerfile get lost in that kind of conversion. I think it's because 
+>> docker export only exports the container's file system 
+>> <https://docs.docker.com/engine/reference/commandline/export/>.
+>>
+>>  
+>>
+>> docker build -t my-image .
+>> docker run -it --name for_export my-image /bin/true
+>> docker export for_export > my-image.tar
+>> singularity build my-image.simg my-image.tar
+>>
+>> singularity shell my-image.simg
+>> echo $ENVVAR_SET_IN_DOCKERFILE
+>> (nothing returned)
+>>
+>>  
+>>
+>>  
+>>
+>> When I push the docker image to docker hub and build from there, it works 
+>> as expected:
+>>
+>>  
+>>
+>> singularity build my-image.simg docker://nmerket/my-image
+>>
+>> singularity shell my-image.simg
+>> echo $ENVVAR_SET_IN_DOCKERFILE
+>> (expected value returned)
+>>
+>>  
+>>
+>> I'd like to not have to upload and then download my image to Docker Hub 
+>> to get this to work. Is there any way I can take a local docker image and 
+>> convert it into a singularity image using the same mechanisms it uses to 
+>> build a singularity image from layers on Docker Hub? I tried using the docker 
+>> image save 
+>> <https://docs.docker.com/engine/reference/commandline/image_save/> 
+>> command and using the resulting tar file to build a singularity image, but 
+>> that didn't work at all. 
+>>
+>>  
+>>
+>> Thanks for your help,
+>>
+>> Noel
+>>
+>>  
+>>
+>
+------=_Part_254_1139434712.1562759841886
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Dave,=C2=A0<div><br></div><div><br></div><div>I tried t=
+o do as you said but I got this error:</div><div><br></div><div><br></div><=
+div class=3D"prettyprint" style=3D"background-color: rgb(250, 250, 250); bo=
+rder-color: rgb(187, 187, 187); border-style: solid; border-width: 1px; wor=
+d-wrap: break-word;"><code class=3D"prettyprint"><div class=3D"subprettypri=
+nt"><span style=3D"color: #000;" class=3D"styled-by-prettify">FATAL</span><=
+span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 </span><span style=
+=3D"color: #606;" class=3D"styled-by-prettify">While</span><span style=3D"c=
+olor: #000;" class=3D"styled-by-prettify"> performing build</span><span sty=
+le=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D"col=
+or: #000;" class=3D"styled-by-prettify"> conveyor failed to </span><span st=
+yle=3D"color: #008;" class=3D"styled-by-prettify">get</span><span style=3D"=
+color: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color: #0=
+00;" class=3D"styled-by-prettify"> </span><span style=3D"color: #606;" clas=
+s=3D"styled-by-prettify">Error</span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify"> reading manifest v1 </span><span style=3D"color: #008;=
+" class=3D"styled-by-prettify">in</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> localhost</span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">:</span><span style=3D"color: #066;" class=3D"style=
+d-by-prettify">5000</span><span style=3D"color: #660;" class=3D"styled-by-p=
+rettify">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">=
+hariszaf</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/<=
+/span><span style=3D"color: #000;" class=3D"styled-by-prettify">pema</span>=
+<span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span sty=
+le=3D"color: #000;" class=3D"styled-by-prettify"> manifest unknown</span><s=
+pan style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"> manifest unknown<br><br><br=
+></span></div></code></div><div><br><br>Do you have any idea what this is a=
+bout?<br><br><br>On Tuesday, 26 June 2018 23:02:46 UTC+3, David Trudgian  w=
+rote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8e=
+x;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">Hi Noel,=
+<div><br></div><div>Here&#39;s a general pattern for doing this... pushing =
+the image into a local docker registry, and then pulling out to singularity=
+:<br><br><div># Start a docker registry</div><div>$ docker run -d -p 5000:5=
+000 --restart=3Dalways --name registry registry:2<br></div><div># Push loca=
+l docker container to it<br></div><div>$ docker tag alpine localhost:5000/a=
+lpine<br></div><div>$ docker push localhost:5000/alpine<br></div><div><br><=
+/div><div># Create def file for singularity like this..</div><div># (add yo=
+ur modifications)<br></div><div><br></div><div>Bootstrap: docker</div><div>=
+Registry: <a href=3D"http://localhost:5000" target=3D"_blank" rel=3D"nofoll=
+ow" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%=
+2F%2Flocalhost%3A5000\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNET7_H2ciBQV-7=
+KQ_I_7sQxkQHyoQ&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.g=
+oogle.com/url?q\x3dhttp%3A%2F%2Flocalhost%3A5000\x26sa\x3dD\x26sntz\x3d1\x2=
+6usg\x3dAFQjCNET7_H2ciBQV-7KQ_I_7sQxkQHyoQ&#39;;return true;">http://localh=
+ost:5000</a><br></div><div>Namespace:<br></div><div>From: alpine:latest<br>=
+</div><div><br></div><div># Build singularity container</div><div>$ sudo SI=
+NGULARITY_NOHTTPS=3D1 singularity build alpine.simg def<br></div><br>You&#3=
+9;ll be glad to know that this will improve a lot with Singularity 3.0, our=
+ rewrite in Golang. We&#39;ve just merged functionality into the developmen=
+t branch for 3.0 that allows direct import of docker save archives, oci arc=
+hives and layouts, and even direct imports pulling images from the docker d=
+aemon itself with no intermediary. Leveraging the excellent container libra=
+ries available for Go is letting us streamline a lot of things.</div><div><=
+br></div><div>Cheers,</div><div><br></div><div>Dave T<br><br><br>On Tuesday=
+, June 26, 2018 at 1:46:25 PM UTC-5, Noel Merket wrote:<blockquote class=3D=
+"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc soli=
+d;padding-left:1ex">
+
+
+
+
+
+<div lang=3D"EN-US" link=3D"#0563C1" vlink=3D"#954F72">
+<div>
+<p class=3D"MsoNormal">I&#39;m trying to convert a docker image to a singul=
+arity image, but I&#39;d prefer to do it all locally, rather than uploading=
+ it all to docker hub or another repository. I&#39;ve had limited success w=
+ith running the image and using the docker export
+ command on the container and then building a singularity image from that, =
+but it seems that environment variables set it the Dockerfile get lost in t=
+hat kind of conversion. I think it&#39;s because docker export
+<a href=3D"https://docs.docker.com/engine/reference/commandline/export/" re=
+l=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;https://ww=
+w.google.com/url?q\x3dhttps%3A%2F%2Fdocs.docker.com%2Fengine%2Freference%2F=
+commandline%2Fexport%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEYkq0wQ0oHU=
+SKBzlGQhDTbd2V1tA&#39;;return true;" onclick=3D"this.href=3D&#39;https://ww=
+w.google.com/url?q\x3dhttps%3A%2F%2Fdocs.docker.com%2Fengine%2Freference%2F=
+commandline%2Fexport%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEYkq0wQ0oHU=
+SKBzlGQhDTbd2V1tA&#39;;return true;">only exports the container&#39;s file =
+system</a>.</p>
+<p class=3D"MsoNormal">=C2=A0</p>
+<p class=3D"MsoNormal" style=3D"background:#fafafa"><span><span style=3D"fo=
+nt-size:10.0pt;font-family:&quot;Courier New&quot;;color:black">docker buil=
+d
+</span></span><span><span style=3D"font-size:10.0pt;font-family:&quot;Couri=
+er New&quot;;color:#666600">-</span></span><span><span style=3D"font-size:1=
+0.0pt;font-family:&quot;Courier New&quot;;color:black">t
+</span></span><span><span style=3D"font-size:10.0pt;font-family:&quot;Couri=
+er New&quot;;color:#000088">my</span></span><span><span style=3D"font-size:=
+10.0pt;font-family:&quot;Courier New&quot;;color:#666600">-</span></span><s=
+pan><span style=3D"font-size:10.0pt;font-family:&quot;Courier New&quot;;col=
+or:black">image
+</span></span><span><span style=3D"font-size:10.0pt;font-family:&quot;Couri=
+er New&quot;;color:#666600">.</span></span><span style=3D"font-size:10.0pt;=
+font-family:&quot;Courier New&quot;;color:black"><br>
+<span>docker run </span></span><span><span style=3D"font-size:10.0pt;font-f=
+amily:&quot;Courier New&quot;;color:#666600">-</span></span><span><span sty=
+le=3D"font-size:10.0pt;font-family:&quot;Courier New&quot;;color:black">it
+</span></span><span><span style=3D"font-size:10.0pt;font-family:&quot;Couri=
+er New&quot;;color:#666600">--</span></span><span><span style=3D"font-size:=
+10.0pt;font-family:&quot;Courier New&quot;;color:black">name for_export
+</span></span><span><span style=3D"font-size:10.0pt;font-family:&quot;Couri=
+er New&quot;;color:#000088">my</span></span><span><span style=3D"font-size:=
+10.0pt;font-family:&quot;Courier New&quot;;color:#666600">-</span></span><s=
+pan><span style=3D"font-size:10.0pt;font-family:&quot;Courier New&quot;;col=
+or:black">image
+</span></span><span><span style=3D"font-size:10.0pt;font-family:&quot;Couri=
+er New&quot;;color:#666600">/</span></span><span><span style=3D"font-size:1=
+0.0pt;font-family:&quot;Courier New&quot;;color:black">bin</span></span><sp=
+an><span style=3D"font-size:10.0pt;font-family:&quot;Courier New&quot;;colo=
+r:#666600">/</span></span><span><span style=3D"font-size:10.0pt;font-family=
+:&quot;Courier New&quot;;color:#000088">true</span></span><span style=3D"fo=
+nt-size:10.0pt;font-family:&quot;Courier New&quot;;color:black"><br>
+<span>docker </span></span><span><span style=3D"font-size:10.0pt;font-famil=
+y:&quot;Courier New&quot;;color:#000088">export</span></span><span><span st=
+yle=3D"font-size:10.0pt;font-family:&quot;Courier New&quot;;color:black">
+ for_export </span></span><span><span style=3D"font-size:10.0pt;font-family=
+:&quot;Courier New&quot;;color:#666600">&gt;</span></span><span><span style=
+=3D"font-size:10.0pt;font-family:&quot;Courier New&quot;;color:black">
+</span></span><span><span style=3D"font-size:10.0pt;font-family:&quot;Couri=
+er New&quot;;color:#000088">my</span></span><span><span style=3D"font-size:=
+10.0pt;font-family:&quot;Courier New&quot;;color:#666600">-</span></span><s=
+pan><span style=3D"font-size:10.0pt;font-family:&quot;Courier New&quot;;col=
+or:black">image</span></span><span><span style=3D"font-size:10.0pt;font-fam=
+ily:&quot;Courier New&quot;;color:#666600">.</span></span><span><span style=
+=3D"font-size:10.0pt;font-family:&quot;Courier New&quot;;color:black">tar</=
+span></span><span style=3D"font-size:10.0pt;font-family:&quot;Courier New&q=
+uot;;color:black"><br>
+<span>singularity build </span></span><span><span style=3D"font-size:10.0pt=
+;font-family:&quot;Courier New&quot;;color:#000088">my</span></span><span><=
+span style=3D"font-size:10.0pt;font-family:&quot;Courier New&quot;;color:#6=
+66600">-</span></span><span><span style=3D"font-size:10.0pt;font-family:&qu=
+ot;Courier New&quot;;color:black">image</span></span><span><span style=3D"f=
+ont-size:10.0pt;font-family:&quot;Courier New&quot;;color:#666600">.</span>=
+</span><span><span style=3D"font-size:10.0pt;font-family:&quot;Courier New&=
+quot;;color:black">simg
+</span></span><span><span style=3D"font-size:10.0pt;font-family:&quot;Couri=
+er New&quot;;color:#000088">my</span></span><span><span style=3D"font-size:=
+10.0pt;font-family:&quot;Courier New&quot;;color:#666600">-</span></span><s=
+pan><span style=3D"font-size:10.0pt;font-family:&quot;Courier New&quot;;col=
+or:black">image</span></span><span><span style=3D"font-size:10.0pt;font-fam=
+ily:&quot;Courier New&quot;;color:#666600">.</span></span><span><span style=
+=3D"font-size:10.0pt;font-family:&quot;Courier New&quot;;color:black">tar</=
+span></span><span style=3D"font-size:10.0pt;font-family:&quot;Courier New&q=
+uot;;color:black"><br>
+<br>
+<span>singularity shell </span></span><span><span style=3D"font-size:10.0pt=
+;font-family:&quot;Courier New&quot;;color:#000088">my</span></span><span><=
+span style=3D"font-size:10.0pt;font-family:&quot;Courier New&quot;;color:#6=
+66600">-</span></span><span><span style=3D"font-size:10.0pt;font-family:&qu=
+ot;Courier New&quot;;color:black">image</span></span><span><span style=3D"f=
+ont-size:10.0pt;font-family:&quot;Courier New&quot;;color:#666600">.</span>=
+</span><span><span style=3D"font-size:10.0pt;font-family:&quot;Courier New&=
+quot;;color:black">simg</span></span><span style=3D"font-size:10.0pt;font-f=
+amily:&quot;Courier New&quot;;color:black"><br>
+<span>echo $ENVVAR_SET_IN_DOCKERFILE</span><br>
+</span><span><span style=3D"font-size:10.0pt;font-family:&quot;Courier New&=
+quot;;color:#666600">(</span></span><span><span style=3D"font-size:10.0pt;f=
+ont-family:&quot;Courier New&quot;;color:black">nothing returned</span></sp=
+an><span><span style=3D"font-size:10.0pt;font-family:&quot;Courier New&quot=
+;;color:#666600">)</span></span><span style=3D"font-size:10.0pt;font-family=
+:&quot;Courier New&quot;"></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:11.0pt">=C2=A0</span></p>
+<p class=3D"MsoNormal">=C2=A0</p>
+<p class=3D"MsoNormal">When I push the docker image to docker hub and build=
+ from there, it works as expected:</p>
+<p class=3D"MsoNormal">=C2=A0</p>
+<p class=3D"MsoNormal" style=3D"background:#fafafa"><span><span style=3D"fo=
+nt-size:10.0pt;font-family:&quot;Courier New&quot;;color:black">singularity=
+ build
+</span></span><span><span style=3D"font-size:10.0pt;font-family:&quot;Couri=
+er New&quot;;color:#000088">my</span></span><span><span style=3D"font-size:=
+10.0pt;font-family:&quot;Courier New&quot;;color:#666600">-</span></span><s=
+pan><span style=3D"font-size:10.0pt;font-family:&quot;Courier New&quot;;col=
+or:black">image</span></span><span><span style=3D"font-size:10.0pt;font-fam=
+ily:&quot;Courier New&quot;;color:#666600">.</span></span><span><span style=
+=3D"font-size:10.0pt;font-family:&quot;Courier New&quot;;color:black">simg
+ docker</span></span><span><span style=3D"font-size:10.0pt;font-family:&quo=
+t;Courier New&quot;;color:#666600">:</span></span><span><span style=3D"font=
+-size:10.0pt;font-family:&quot;Courier New&quot;;color:#880000">//nmerket/m=
+y-image</span></span><span style=3D"font-size:10.0pt;font-family:&quot;Cour=
+ier New&quot;;color:black"><br>
+<br>
+<span>singularity shell </span></span><span><span style=3D"font-size:10.0pt=
+;font-family:&quot;Courier New&quot;;color:#000088">my</span></span><span><=
+span style=3D"font-size:10.0pt;font-family:&quot;Courier New&quot;;color:#6=
+66600">-</span></span><span><span style=3D"font-size:10.0pt;font-family:&qu=
+ot;Courier New&quot;;color:black">image</span></span><span><span style=3D"f=
+ont-size:10.0pt;font-family:&quot;Courier New&quot;;color:#666600">.</span>=
+</span><span><span style=3D"font-size:10.0pt;font-family:&quot;Courier New&=
+quot;;color:black">simg</span></span><span style=3D"font-size:10.0pt;font-f=
+amily:&quot;Courier New&quot;;color:black"><br>
+<span>echo $ENVVAR_SET_IN_DOCKERFILE</span><br>
+<span>(expected value returned)</span></span><span style=3D"font-size:10.0p=
+t;font-family:&quot;Courier New&quot;"></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:11.0pt">=C2=A0</span></p>
+<p class=3D"MsoNormal">I&#39;d like to not have to upload and then download=
+ my image to Docker Hub to get this to work. Is there any way I can take a =
+local docker image and convert it into a singularity image using the same m=
+echanisms it uses to build a singularity
+ image from layers on Docker Hub? I tried using the <a href=3D"https://docs=
+.docker.com/engine/reference/commandline/image_save/" rel=3D"nofollow" targ=
+et=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\=
+x3dhttps%3A%2F%2Fdocs.docker.com%2Fengine%2Freference%2Fcommandline%2Fimage=
+_save%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFYnEk6WO6a-ecKzEU9aVdNnmK8=
+lw&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.com/ur=
+l?q\x3dhttps%3A%2F%2Fdocs.docker.com%2Fengine%2Freference%2Fcommandline%2Fi=
+mage_save%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFYnEk6WO6a-ecKzEU9aVdN=
+nmK8lw&#39;;return true;">
+docker image save</a> command and using the resulting tar file to build a s=
+ingularity image, but that didn&#39;t work at all.
+</p>
+<p class=3D"MsoNormal">=C2=A0</p>
+<p class=3D"MsoNormal">Thanks for your help,</p>
+<p class=3D"MsoNormal">Noel</p>
+<p class=3D"MsoNormal"><span style=3D"font-size:11.0pt">=C2=A0</span></p>
+</div>
+</div>
+
+</blockquote></div></div></blockquote></div></div>
+------=_Part_254_1139434712.1562759841886--
+
+------=_Part_253_1477967324.1562759841885--

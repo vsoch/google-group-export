@@ -1,0 +1,288 @@
+X-Received: by 10.237.43.225 with SMTP id e88mr5946853qtd.56.1484320603289;
+        Fri, 13 Jan 2017 07:16:43 -0800 (PST)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.107.34.211 with SMTP id i202ls2795705ioi.4.gmail; Fri, 13 Jan
+ 2017 07:16:42 -0800 (PST)
+X-Received: by 10.84.254.15 with SMTP id b15mr30954490plm.114.1484320602607;
+        Fri, 13 Jan 2017 07:16:42 -0800 (PST)
+Return-Path: <gmku...@lbl.gov>
+Received: from fe4.lbl.gov (fe4.lbl.gov. [128.3.41.71])
+        by mx.google.com with ESMTP id 134si13006652pgh.30.2017.01.13.07.16.42
+        for <singu...@lbl.gov>;
+        Fri, 13 Jan 2017 07:16:42 -0800 (PST)
+Received-SPF: pass (google.com: domain of gmku...@lbl.gov designates 209.85.213.199 as permitted sender) client-ip=209.85.213.199;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of gmku...@lbl.gov designates 209.85.213.199 as permitted sender) smtp.mailfrom=gmku...@lbl.gov
+X-Ironport-SBRS: 3.4
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2EFAAAo7nhYhsfVVdFdHAEBBAEBCgEBFwEFAQsBgxUBAQEBAYF2EYNJig+SFogCh32FK4INHwGGAgKCEj8UAQEBAQEBAQEBAQECEAEBAQgLCwodMIIzBAIDEgWCFgEBAQMBIyswCwkCCw0qAgIhAQ8DAQUBHA4HBAEcBIhHAxAIBZMOkQw/jAOCJYcvDYJJAQEIAgElEooOgQaCToFKEQGDIoJeBZUqhVA4AY1VhAOBd4UOiWiKEYcOMoEUH3wuHggzXQWELYFqPjUHhjFHgWcBAQE
+X-IronPort-AV: E=Sophos;i="5.33,222,1477983600"; 
+   d="scan'208,217";a="60202156"
+Received: from mail-yb0-f199.google.com ([209.85.213.199])
+  by fe4.lbl.gov with ESMTP; 13 Jan 2017 07:16:41 -0800
+Received: by mail-yb0-f199.google.com with SMTP id 123so66971839ybe.1
+        for <singu...@lbl.gov>; Fri, 13 Jan 2017 07:16:41 -0800 (PST)
+X-Gm-Message-State: AIkVDXI/zc+E0NiZMgMLwJA6T+bzfPvj3SF1ZoSkllpV+kIrtZoLnACbyPpYJWLNLatzdvQGuIyQ9Ir+nP67cZzSxxJNBdujr8vyTsyjTHp3S/9yuYxZUnMECKGYbL24b26BDjgNjS4+u32kUZsA0d92ozA=
+X-Received: by 10.37.217.81 with SMTP id q78mr12590406ybg.13.1484320600997;
+        Fri, 13 Jan 2017 07:16:40 -0800 (PST)
+X-Received: by 10.37.217.81 with SMTP id q78mr12590390ybg.13.1484320600751;
+ Fri, 13 Jan 2017 07:16:40 -0800 (PST)
+MIME-Version: 1.0
+References: <CALa-s5ZbVz0-jAK5L-_7aa6R_RpsedV7CdP22_cbb5YUADxibg@mail.gmail.com>
+ <CALa-s5ajEPyeLDSoGQUQ03+ndXdb=2zXgkk5iNpjZ0DmZHMCZg@mail.gmail.com>
+ <CAGfAqt9nAXQY0r1D-9V06JG_hSKV4-XV5D5wBZtPGQfR1c0J_g@mail.gmail.com> <CALa-s5aFuEf7YnDz7wqXK2_6GRD0m9JCyyHNiLaAw1W9JWUJAA@mail.gmail.com>
+In-Reply-To: <CALa-s5aFuEf7YnDz7wqXK2_6GRD0m9JCyyHNiLaAw1W9JWUJAA@mail.gmail.com>
+From: "Gregory M. Kurtzer" <gmku...@lbl.gov>
+Date: Fri, 13 Jan 2017 15:16:30 +0000
+Message-ID: <CAN7etTziY-PY7kXt=mOCSXv7+eTKveG_qmjD-BkJ7+3nMhe11A@mail.gmail.com>
+Subject: Re: [Singularity] Re: date and timezone quickness
+To: singularity@lbl.gov
+Content-Type: multipart/alternative; boundary=94eb2c06c15c2468720545fb52dc
+
+--94eb2c06c15c2468720545fb52dc
+Content-Type: text/plain; charset=UTF-8
+
+Great work on digging through this! Yes, please submit a PR if you can
+figure out a generalized way to solve this (e.g. For all time zones).
+
+Thanks!
+
+
+On Thu, Jan 12, 2017 at 5:34 PM tin h <tin...@gmail.com> wrote:
+
+> Thanks for the pointers in deciphering the timezone data.
+> I found a fix to the problem.
+>
+> Singularity's etc/init has this:
+>     # Set the timezone if it is not already set
+>     if [ -z "${TZ:-}" ]; then
+>         TZ=`date +%Z`
+>     fi
+>
+> My host does not have TZ set (likely Red Hat default), and:
+>     > tail -1 /etc/localtime
+>     PST8PDT,M3.2.0,M11.1.0
+>
+>
+> In this condition, date +%Z returns PST.
+>
+> However, as pointed out, PST is not defined in /usr/share/zoneinfo.
+> A Red Hat engineer explained that any TZ not defined in zoneinfo would be
+> treated as a user defined timezone, and without further specification,
+> would be treated to have an offset of 0 from GMT.
+> This resulted in perceived incorrect time when I ran the date command
+> inside the container.
+>
+> I am arguing with Red Hat that any time zone info returnable by date +%Z
+> should have a corresponding timezone file from the OS, though I am not sure
+> if they would act on it.
+>
+>
+> In the mean time, I updated the init script with the following checks
+>
+>         if [[ "${TZ}"  = "PST" ]] || [[ "${TZ}" = "PDT" ]]; then
+> TZ="PST8PDT"; fi
+>         if [[ "${TZ}"  = "CST" ]] || [[ "${TZ}" = "CDT" ]]; then
+> TZ="CST6CDT"; fi
+>
+> and the container returns the correct time now.
+>
+> I can generate a PR and submit it to github if others would find this
+> useful.
+>
+> Best,
+> Tin
+>
+>
+> On Sun, Jan 8, 2017 at 1:52 PM, Jason Stover <jason...@gmail.com>
+> wrote:
+>
+> On Sun, Jan 8, 2017 at 3:24 PM, tin h <tin...@gmail.com> wrote:
+>
+>
+> >
+>
+>
+> > # PST8PDT works as well.
+>
+>
+> > sn@backbay:/opt/singularity_repo$ export TZ=PST8PDT;
+>
+>
+> > /opt/tmp/bin/singularity exec centos7c.img date
+>
+>
+> > Sun Jan  8 12:41:04 PST 2017
+>
+>
+> >
+>
+>
+>
+>
+>
+> Poking around on the servers here, it looks like the separate PST/PDT
+>
+>
+> timezone files no longer exist. If you look at America/Los_Angeles
+>
+>
+> it's doing:
+>
+>
+>
+>
+>
+>     $ strings /usr/share/zoneinfo/America/Los_Angeles | tail -n1
+>
+>
+>     PST8PDT,M3.2.0,M11.1.0
+>
+>
+>
+>
+>
+> So the PST8PDT entry wins:
+>
+>
+>     $ strings /usr/share/zoneinfo/PST8PDT | tail -n1
+>
+>
+>     PST8PDT,M3.2.0,M11.1.0
+>
+>
+>
+>
+>
+> -J
+>
+>
+>
+>
+>
+> --
+>
+>
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+>
+>
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+> --
+>
+>
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+>
+>
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+>
+>
+>
+
+--94eb2c06c15c2468720545fb52dc
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div>Great work on digging through this! Yes, please submit a PR if you can=
+ figure out a generalized way to solve this (e.g. For all time zones).=C2=
+=A0</div><div><br></div><div>Thanks!</div><div><br></div><div><br><div clas=
+s=3D"gmail_quote"><div>On Thu, Jan 12, 2017 at 5:34 PM tin h &lt;<a href=3D=
+"mailto:tin...@gmail.com">tin...@gmail.com</a>&gt; wrote:<br></div><blockqu=
+ote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc s=
+olid;padding-left:1ex"><div class=3D"gmail_msg">Thanks for the pointers in =
+deciphering the timezone data.<div class=3D"gmail_msg">I found a fix to the=
+ problem.<br class=3D"gmail_msg"><div class=3D"gmail_msg"><br class=3D"gmai=
+l_msg"></div><div class=3D"gmail_msg">Singularity&#39;s etc/init has this:<=
+/div><div class=3D"gmail_msg"><div class=3D"gmail_msg">=C2=A0 =C2=A0 # Set =
+the timezone if it is not already set</div><div class=3D"gmail_msg">=C2=A0 =
+=C2=A0 if [ -z &quot;${TZ:-}&quot; ]; then</div><div class=3D"gmail_msg">=
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 TZ=3D`date +%Z`</div><div class=3D"gmail_msg">=
+=C2=A0 =C2=A0 fi<br class=3D"gmail_msg"></div></div><div class=3D"gmail_msg=
+"><br class=3D"gmail_msg"></div><div class=3D"gmail_msg">My host does not h=
+ave TZ set (likely Red Hat default), and:</div><div class=3D"gmail_msg"><di=
+v class=3D"gmail_msg">=C2=A0 =C2=A0 &gt; tail -1 /etc/localtime</div><div c=
+lass=3D"gmail_msg">=C2=A0 =C2=A0 PST8PDT,M3.2.0,M11.1.0</div></div><div cla=
+ss=3D"gmail_msg">=C2=A0 =C2=A0=C2=A0</div><div class=3D"gmail_msg"><br clas=
+s=3D"gmail_msg"></div><div class=3D"gmail_msg">In this condition, date +%Z =
+returns PST.</div><div class=3D"gmail_msg"><br class=3D"gmail_msg"></div><d=
+iv class=3D"gmail_msg">However, as pointed out, PST is not defined in /usr/=
+share/zoneinfo.</div><div class=3D"gmail_msg">A Red Hat engineer explained =
+that any TZ not defined in zoneinfo would be treated as a user defined time=
+zone, and without further specification, would be treated to have an offset=
+ of 0 from GMT.</div><div class=3D"gmail_msg">This resulted in perceived in=
+correct time when I ran the date command inside the container.<br class=3D"=
+gmail_msg"></div><div class=3D"gmail_msg"><br class=3D"gmail_msg"></div><di=
+v class=3D"gmail_msg">I am arguing with Red Hat that any time zone info ret=
+urnable by date +%Z should have a corresponding timezone file from the OS, =
+though I am not sure if they would act on it.<br class=3D"gmail_msg"></div>=
+<div class=3D"gmail_msg"><br class=3D"gmail_msg"></div><div class=3D"gmail_=
+msg"><br class=3D"gmail_msg"></div><div class=3D"gmail_msg">In the mean tim=
+e, I updated the init script with the following checks</div><div class=3D"g=
+mail_msg"><br class=3D"gmail_msg"></div><div class=3D"gmail_msg"><div class=
+=3D"gmail_msg">=C2=A0 =C2=A0 =C2=A0 =C2=A0 if [[ &quot;${TZ}&quot; =C2=A0=
+=3D &quot;PST&quot; ]] || [[ &quot;${TZ}&quot; =3D &quot;PDT&quot; ]]; then=
+ TZ=3D&quot;PST8PDT&quot;; fi<br class=3D"gmail_msg"></div><div class=3D"gm=
+ail_msg">=C2=A0 =C2=A0 =C2=A0 =C2=A0 if [[ &quot;${TZ}&quot; =C2=A0=3D &quo=
+t;CST&quot; ]] || [[ &quot;${TZ}&quot; =3D &quot;CDT&quot; ]]; then TZ=3D&q=
+uot;CST6CDT&quot;; fi</div></div><div class=3D"gmail_msg"><br class=3D"gmai=
+l_msg"></div><div class=3D"gmail_msg">and the container returns the correct=
+ time now.</div><div class=3D"gmail_msg"><br class=3D"gmail_msg"></div><div=
+ class=3D"gmail_msg">I can generate a PR and submit it to github if others =
+would find this useful.</div><div class=3D"gmail_msg"><br class=3D"gmail_ms=
+g"></div><div class=3D"gmail_msg">Best,</div><div class=3D"gmail_msg">Tin</=
+div><div class=3D"gmail_msg"><br class=3D"gmail_msg"></div></div></div><div=
+ class=3D"gmail_extra gmail_msg"><br class=3D"gmail_msg"><div class=3D"gmai=
+l_quote gmail_msg">On Sun, Jan 8, 2017 at 1:52 PM, Jason Stover <span class=
+=3D"gmail_msg">&lt;<a href=3D"mailto:jason...@gmail.com" class=3D"gmail_msg=
+" target=3D"_blank">jason...@gmail.com</a>&gt;</span> wrote:<br class=3D"gm=
+ail_msg"><blockquote class=3D"gmail_quote gmail_msg" style=3D"margin:0 0 0 =
+.8ex;border-left:1px #ccc solid;padding-left:1ex"><span class=3D"gmail_msg"=
+>On Sun, Jan 8, 2017 at 3:24 PM, tin h &lt;<a href=3D"mailto:tin...@gmail.c=
+om" class=3D"gmail_msg" target=3D"_blank">tin...@gmail.com</a>&gt; wrote:<b=
+r class=3D"gmail_msg"><br><br>&gt;<br class=3D"gmail_msg"><br><br>&gt; # PS=
+T8PDT works as well.<br class=3D"gmail_msg"><br><br>&gt; sn@backbay:/opt/si=
+ngularity_repo$ export TZ=3DPST8PDT;<br class=3D"gmail_msg"><br><br>&gt; /o=
+pt/tmp/bin/singularity exec centos7c.img date<br class=3D"gmail_msg"><br><b=
+r>&gt; Sun Jan=C2=A0 8 12:41:04 PST 2017<br class=3D"gmail_msg"><br><br>&gt=
+;<br class=3D"gmail_msg"><br><br><br class=3D"gmail_msg"><br><br></span>Pok=
+ing around on the servers here, it looks like the separate PST/PDT<br class=
+=3D"gmail_msg"><br><br>timezone files no longer exist. If you look at Ameri=
+ca/Los_Angeles<br class=3D"gmail_msg"><br><br>it&#39;s doing:<br class=3D"g=
+mail_msg"><br><br><br class=3D"gmail_msg"><br><br>=C2=A0 =C2=A0 $ strings /=
+usr/share/zoneinfo/America/Los_Angeles | tail -n1<br class=3D"gmail_msg"><b=
+r><br>=C2=A0 =C2=A0 PST8PDT,M3.2.0,M11.1.0<br class=3D"gmail_msg"><br><br><=
+br class=3D"gmail_msg"><br><br>So the PST8PDT entry wins:<br class=3D"gmail=
+_msg"><br><br>=C2=A0 =C2=A0 $ strings /usr/share/zoneinfo/PST8PDT | tail -n=
+1<br class=3D"gmail_msg"><br><br>=C2=A0 =C2=A0 PST8PDT,M3.2.0,M11.1.0<br cl=
+ass=3D"gmail_msg"><br><br><br class=3D"gmail_msg"><br><br>-J<br class=3D"gm=
+ail_msg"><br><br><div class=3D"m_2606007499443452800HOEnZb gmail_msg"><div =
+class=3D"m_2606007499443452800h5 gmail_msg"><br class=3D"gmail_msg"><br><br=
+>--<br class=3D"gmail_msg"><br><br>You received this message because you ar=
+e subscribed to the Google Groups &quot;singularity&quot; group.<br class=
+=3D"gmail_msg"><br><br>To unsubscribe from this group and stop receiving em=
+ails from it, send an email to <a href=3D"mailto:singularity%...@lbl.gov" c=
+lass=3D"gmail_msg" target=3D"_blank">singu...@lbl.gov</a>.<br class=3D"gmai=
+l_msg"><br><br></div></div></blockquote></div><br class=3D"gmail_msg"></div=
+><br><br><br><br><p class=3D"gmail_msg"></p><br><br><br><br>-- <br class=3D=
+"gmail_msg"><br><br>You received this message because you are subscribed to=
+ the Google Groups &quot;singularity&quot; group.<br class=3D"gmail_msg"><b=
+r><br>To unsubscribe from this group and stop receiving emails from it, sen=
+d an email to <a href=3D"mailto:singu...@lbl.gov" class=3D"gmail_msg" targe=
+t=3D"_blank">singu...@lbl.gov</a>.<br class=3D"gmail_msg"><br><br></blockqu=
+ote></div></div>
+
+--94eb2c06c15c2468720545fb52dc--

@@ -1,0 +1,856 @@
+Date: Wed, 7 Jun 2017 12:44:05 -0700 (PDT)
+From: =?UTF-8?Q?C=C3=A9dric_Clerget?= <cedric...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <389d200c-bfca-4fc3-a87e-2ae66adffe32@lbl.gov>
+In-Reply-To: <8f8d2636-6fd8-4c2f-8fc5-bd52e8f628f7@lbl.gov>
+References: <D94ED8FC-5F26-448A-ABCB-6D9391B5A05E@llnl.gov>
+ <a8f9f7d6-69d6-40e8-9e04-1c66677ec63a@lbl.gov>
+ <C90D3F81-8E77-4849-B9E4-4B4D38855746@llnl.gov>
+ <6bba2549-da61-4e46-b601-428c11693797@lbl.gov>
+ <CAMuRc6Aa-coi+hQDd695NQCK4Dm9dnir7TXj_d1N7gzFBLy9qg@mail.gmail.com>
+ <a9cf7f23-52be-4d08-944f-1886edee6180@lbl.gov>
+ <CAMuRc6AgUzay+FO=6uHv50gn4fhX0-ga0M2586Djp3iQai5EGw@mail.gmail.com>
+ <EB3CECA0-D783-40DF-B7EE-21F635D828CA@llnl.gov>
+ <8f8d2636-6fd8-4c2f-8fc5-bd52e8f628f7@lbl.gov>
+Subject: Re: [Singularity] Re: daemons started in container run forever
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_3441_1071855184.1496864645307"
+
+------=_Part_3441_1071855184.1496864645307
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_3442_209950330.1496864645308"
+
+------=_Part_3442_209950330.1496864645308
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+sorry miss the root work for you
+singularity binary has setuid bit set or allow setuid in singularity.conf=
+=20
+is set to no ?
+
+Le mercredi 7 juin 2017 21:38:24 UTC+2, C=C3=A9dric Clerget a =C3=A9crit :
+>
+> if you run this command : cat /boot/config-$(uname -r)|grep CONFIG_PID
+> should give CONFIG_PID_NS=3Dy, if nothing so the kernel don't support=20
+> namespace
+>
+> Le mercredi 7 juin 2017 21:31:35 UTC+2, Robin Goldstone a =C3=A9crit :
+>>
+>> My singularity.conf has:
+>>
+>> # ALLOW PID NS: [BOOL]
+>>
+>> # DEFAULT: yes
+>>
+>> # Should we allow users to request the PID namespace?
+>>
+>> allow pid ns =3D yes
+>>
+>> =20
+>>
+>> As Tom suggested, it appears there is something about our system=20
+>> configuration that is preventing Singularity from establishing a PID=20
+>> namespace when running as a regular user.  If I run the container as roo=
+t=20
+>> it works fine. =20
+>>
+>> =20
+>>
+>> I=E2=80=99m checking with our kernel guys to see if they can confirm thi=
+s.  It=20
+>> seems like this is a bit orthogonal to the discussion about having a=20
+>> singularity start/stop command so don=E2=80=99t let me stop you from con=
+tinuing the=20
+>> conversation!
+>>
+>> =20
+>>
+>> *From: *CARLOS EDUARDO ARANGO GUTIERREZ <
+>> carlo...@correounivalle.edu.co>
+>> *Reply-To: *"si...@lbl.gov" <si...@lbl.gov>
+>> *Date: *Wednesday, June 7, 2017 at 12:22 PM
+>> *To: *"si...@lbl.gov" <si...@lbl.gov>
+>> *Subject: *Re: [Singularity] Re: daemons started in container run foreve=
+r
+>>
+>> =20
+>>
+>> Like the idea of a /var/run/singularity/{image-name}.{pid}=20
+>>
+>> Stop will also $rm /var/run/singularity/{image-name}.{pid} (hopefully)
+>>
+>> =20
+>>
+>> The other thing that must be considered is how to launch the same daemon=
+=20
+>> multiple times, as we are thinking on a production environment (Shared=
+=20
+>> cluster) where multiple users are working on...=20
+>>
+>> =20
+>>
+>> On 7 June 2017 at 14:13, C=C3=A9dric Clerget <ced...@gmail.com> wrote:
+>>
+>> Basic idea, something based on image/file name, the start command store=
+=20
+>> /var/run/singularity/image-name.pid and stop read the corresponding pid=
+=20
+>> file based on image name to kill it, as we rarely launch the same daemon=
+=20
+>> twice it should be handle most cases, no ?
+>>
+>> Le mercredi 7 juin 2017 20:50:30 UTC+2, CARLOS EDUARDO ARANGO GUTIERREZ =
+a=20
+>> =C3=A9crit :=20
+>>
+>> C=C3=A9dric, any ideas on how you would implement this without the need =
+of a=20
+>> containerd to keep track of "Started" containers.=20
+>>
+>> =20
+>>
+>> +1 on this topic.
+>>
+>> =20
+>>
+>> On 7 June 2017 at 13:47, C=C3=A9dric Clerget <ced...@gmail.com> wrote:
+>>
+>> Hi Robin,
+>>
+>> Singularity implement PID namespace but don't offer to run a daemon=20
+>> inside container in background, the purpose of start/stop command would=
+=20
+>> allow to run something like this:
+>> $ singularity start image.img service apache start
+>>
+>> And stop it later like this
+>> $ singularity stop image.img
+>>
+>> As workaround for your problem, you could use singularity shell with -p=
+=20
+>> option to create a new PID namespace :
+>> $ singularity shell -p image.img
+>> > service apache start
+>> > exit
+>> so apache daemon will be killed once shell exit
+>>
+>> The start/stop command would open other possibilities
+>>
+>> Best regards,
+>> Cedric Clerget
+>>
+>> Le mercredi 7 juin 2017 20:00:27 UTC+2, Robin Goldstone a =C3=A9crit :=
+=20
+>>
+>> Hi Cedric,
+>>
+>>
+>> You wrote: =E2=80=9CIn order to work, Singularity should implement PID=
+=20
+>> namespsaces with start/stop commands. PID namespaces will allow Singular=
+ity=20
+>> to become the init process in order to own daemon processes running insi=
+de=20
+>> container and make a clean exit with stop command.=E2=80=9D
+>>
+>> =20
+>>
+>> Are you saying Singularity does implement this or should?  Also when you=
+=20
+>> refer to start/stop commands, are you referring to my =E2=80=9Cservice a=
+pache2=20
+>> start=E2=80=9D command in the container or are you saying Singularity sh=
+ould have a=20
+>> command to stop (cleanly shut down) a container?
+>>
+>> =20
+>>
+>> Thanks,
+>>
+>> Robin
+>>
+>> =20
+>>
+>> *From: *C=C3=A9dric Clerget <ced...@gmail.com>
+>> *Reply-To: *"si...@lbl.gov" <si...@lbl.gov>
+>> *Date: *Wednesday, June 7, 2017 at 12:43 AM
+>> *To: *singularity <si...@lbl.gov>
+>> *Subject: *[Singularity] Re: daemons started in container run forever
+>>
+>> =20
+>>
+>> It's normal, daemon processes uses double fork to be attached to the ini=
+t=20
+>> process and avoid zombie processes, that's why singularity process don't=
+=20
+>> own your apache process even if you logout from container, between=20
+>> singularity shouldn't be able to unmount the bind partitions because apa=
+che=20
+>> process uses files in container resulting in a no clean state.
+>>
+>> In order to work, Singularity should implement PID namespsaces with=20
+>> start/stop commands. PID namespaces will allow Singularity to become the=
+=20
+>> init process in order to own daemon processes running inside container a=
+nd=20
+>> make a clean exit with stop command
+>>
+>> Best regards,
+>> Cedric Clerget
+>>
+>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s=20
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n=20
+>> email to singu...@lbl.gov.
+>>
+>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s=20
+>> "singularity" group.
+>>
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n=20
+>> email to singu...@lbl.gov.
+>>
+>>
+>>
+>> =20
+>>
+>> --=20
+>>
+>>
+>>
+>> ------------------------------------------------------------------------=
+------------------------------------------------
+>>
+>> CARLOS EDUARDO ARANGO GUTIERREZ. =20
+>>
+>> Cel : +57 3182545671
+>>
+>> Computer Science PhD Student
+>>
+>> UNIVERSIDAD DEL VALLE <http://www.univalle.edu.co/>
+>>
+>> Laboratorio de redes y sistemas distribuidos - LASCILAB=20
+>> <http://lascilab.univalle.edu.co/>
+>>
+>> Tecnolog=C3=ADa, Informaci=C3=B3n y Complejidad Cu=C3=A1ntica - QuanTIC =
+(GrupLAC=20
+>> <http://secure-web.cisco.com/1YnCmFu2EmyLV3KtcdG7MhcbZWuqIoT0ts6YjNH3sTy=
+LaOzBcYm2hBXmGSJgHXY39ISfBk-ZU2pc3n8PZDMhzUd7-MgtS0rKTe0qre6NfLmcwhfZ21elmR=
+eOYn37VRqilvsZqJVEcYHuPwKGITh2vKdENpIV2_7zQ7mdVmPTOHxGF8EcYv-L5VIeH73Tg-Ymd=
+e96qj2Ijyq6UGF3sR4wcqEecWejgHPOCbhfTA6O9MpPNrBVMHoT0WtMi2rFlmMCZGP8iM6PrD8_=
+KmxKz1wb3S1eMJji51aEfdq05ZZj2Ns5QETHkd7MNG1I2PaK09LItZF7uGgl0oe1ZD1XySOpDcF=
+Fv5ROyWhiVKMmzXecWHhYBHqiwSGzY95wNjxgYEAP6/http%3A%2F%2F201.234.78.173%3A80=
+80%2Fgruplac%2Fjsp%2Fvisualiza%2Fvisualizagr.jsp%3Fnro%3D00000000010436>
+>> )=20
+>>
+>> Centro de Investigaci=C3=B3n e Innovaci=C3=B3n en Bioinform=C3=A1tica y =
+Fot=C3=B3nica=20
+>> (CIBioFi) <http://cibiofi.univalle.edu.co/>
+>>
+>>
+>>                                                              =20
+>>
+>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s=20
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n=20
+>> email to singu...@lbl.gov.
+>>
+>>
+>>
+>> =20
+>>
+>> --=20
+>>
+>>
+>>
+>> ------------------------------------------------------------------------=
+------------------------------------------------
+>>
+>> CARLOS EDUARDO ARANGO GUTIERREZ. =20
+>>
+>> Cel : +57 3182545671
+>>
+>> Computer Science PhD Student
+>>
+>> UNIVERSIDAD DEL VALLE <http://www.univalle.edu.co/>
+>>
+>> Laboratorio de redes y sistemas distribuidos - LASCILAB=20
+>> <http://lascilab.univalle.edu.co/>
+>>
+>> Tecnolog=C3=ADa, Informaci=C3=B3n y Complejidad Cu=C3=A1ntica - QuanTIC =
+(GrupLAC=20
+>> <http://secure-web.cisco.com/1YnCmFu2EmyLV3KtcdG7MhcbZWuqIoT0ts6YjNH3sTy=
+LaOzBcYm2hBXmGSJgHXY39ISfBk-ZU2pc3n8PZDMhzUd7-MgtS0rKTe0qre6NfLmcwhfZ21elmR=
+eOYn37VRqilvsZqJVEcYHuPwKGITh2vKdENpIV2_7zQ7mdVmPTOHxGF8EcYv-L5VIeH73Tg-Ymd=
+e96qj2Ijyq6UGF3sR4wcqEecWejgHPOCbhfTA6O9MpPNrBVMHoT0WtMi2rFlmMCZGP8iM6PrD8_=
+KmxKz1wb3S1eMJji51aEfdq05ZZj2Ns5QETHkd7MNG1I2PaK09LItZF7uGgl0oe1ZD1XySOpDcF=
+Fv5ROyWhiVKMmzXecWHhYBHqiwSGzY95wNjxgYEAP6/http%3A%2F%2F201.234.78.173%3A80=
+80%2Fgruplac%2Fjsp%2Fvisualiza%2Fvisualizagr.jsp%3Fnro%3D00000000010436>
+>> )=20
+>>
+>> Centro de Investigaci=C3=B3n e Innovaci=C3=B3n en Bioinform=C3=A1tica y =
+Fot=C3=B3nica=20
+>> (CIBioFi) <http://cibiofi.univalle.edu.co/>
+>>
+>>
+>>                                                              =20
+>>
+>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s=20
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n=20
+>> email to singu...@lbl.gov.
+>>
+>>
+------=_Part_3442_209950330.1496864645308
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">sorry miss the root work for you<br>singularity binary has=
+ setuid bit set or allow setuid in singularity.conf is set to no ?<br><br>L=
+e mercredi 7 juin 2017 21:38:24 UTC+2, C=C3=A9dric Clerget a =C3=A9crit=C2=
+=A0:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex=
+;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">if you ru=
+n this command : cat /boot/config-$(uname -r)|grep CONFIG_PID<br>should giv=
+e CONFIG_PID_NS=3Dy, if nothing so the kernel don&#39;t support namespace<b=
+r><br>Le mercredi 7 juin 2017 21:31:35 UTC+2, Robin Goldstone a =C3=A9crit=
+=C2=A0:<blockquote class=3D"gmail_quote" style=3D"margin:0;margin-left:0.8e=
+x;border-left:1px #ccc solid;padding-left:1ex">
+
+
+
+
+
+
+
+<div bgcolor=3D"white" link=3D"blue" vlink=3D"purple" lang=3D"EN-US">
+<div>
+<p class=3D"MsoNormal"><span style=3D"font-size:14.0pt;font-family:&quot;Ca=
+libri&quot;,sans-serif">My singularity.conf has:</span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:14.0pt;font-family:&quot;Ca=
+libri&quot;,sans-serif"># ALLOW PID NS: [BOOL]</span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:14.0pt;font-family:&quot;Ca=
+libri&quot;,sans-serif"># DEFAULT: yes</span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:14.0pt;font-family:&quot;Ca=
+libri&quot;,sans-serif"># Should we allow users to request the PID namespac=
+e?</span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:14.0pt;font-family:&quot;Ca=
+libri&quot;,sans-serif">allow pid ns =3D yes</span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:14.0pt;font-family:&quot;Ca=
+libri&quot;,sans-serif">=C2=A0</span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:14.0pt;font-family:&quot;Ca=
+libri&quot;,sans-serif">As Tom suggested, it appears there is something abo=
+ut our system configuration that is preventing Singularity from establishin=
+g a PID namespace when running as a regular user.=C2=A0
+ If I run the container as root it works fine.=C2=A0 </span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:14.0pt;font-family:&quot;Ca=
+libri&quot;,sans-serif">=C2=A0</span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:14.0pt;font-family:&quot;Ca=
+libri&quot;,sans-serif">I=E2=80=99m checking with our kernel guys to see if=
+ they can confirm this.=C2=A0 It seems like this is a bit orthogonal to the=
+ discussion about having a singularity start/stop command so
+ don=E2=80=99t let me stop you from continuing the conversation!</span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:14.0pt;font-family:&quot;Ca=
+libri&quot;,sans-serif"></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:14.0pt;font-family:&quot;Ca=
+libri&quot;,sans-serif">=C2=A0</span></p>
+<div style=3D"border:none;border-top:solid #b5c4df 1.0pt;padding:3.0pt 0in =
+0in 0in">
+<p class=3D"MsoNormal" style=3D"margin-left:.5in"><b><span style=3D"font-fa=
+mily:&quot;Calibri&quot;,sans-serif;color:black">From:
+</span></b><span style=3D"font-family:&quot;Calibri&quot;,sans-serif;color:=
+black">CARLOS EDUARDO ARANGO GUTIERREZ &lt;<a rel=3D"nofollow">carlos.aran.=
+..@<wbr>correounivalle.edu.co</a>&gt;<br>
+<b>Reply-To: </b>&quot;<a rel=3D"nofollow">si...@lbl.gov</a>&quot; &lt;<a r=
+el=3D"nofollow">si...@lbl.gov</a>&gt;<br>
+<b>Date: </b>Wednesday, June 7, 2017 at 12:22 PM<br>
+<b>To: </b>&quot;<a rel=3D"nofollow">si...@lbl.gov</a>&quot; &lt;<a rel=3D"=
+nofollow">si...@lbl.gov</a>&gt;<br>
+<b>Subject: </b>Re: [Singularity] Re: daemons started in container run fore=
+ver</span></p>
+</div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">=C2=A0</p>
+</div>
+<div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">Like the idea of a=C2=A0<=
+span style=3D"font-size:9.5pt">/var/run/singularity/{image-<wbr>name}.{pid}=
+=C2=A0</span></p>
+</div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in"><span style=3D"font-size:=
+9.5pt">Stop will also $rm=C2=A0/var/run/singularity/{<wbr>image-name}.{pid}=
+ (hopefully)</span></p>
+</div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">=C2=A0</p>
+</div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">The other thing that must=
+ be considered
+<span style=3D"font-size:9.5pt">is how to launch the same daemon multiple t=
+imes, as we are thinking on a production environment (Shared cluster) where=
+ multiple users are working on...=C2=A0</span></p>
+</div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">=C2=A0</p>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">On 7 June 2017 at 14:13, =
+C=C3=A9dric Clerget &lt;<a rel=3D"nofollow">ced...@gmail.com</a>&gt; wrote:=
+</p>
+<blockquote style=3D"border:none;border-left:solid #cccccc 1.0pt;padding:0i=
+n 0in 0in 6.0pt;margin-left:4.8pt;margin-right:0in">
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">Basic idea, something bas=
+ed on image/file name, the start command store /var/run/singularity/image-<=
+wbr>name.pid and stop read the corresponding pid file based on image name t=
+o kill it, as we rarely launch the same daemon
+ twice it should be handle most cases, no ?<br>
+<br>
+Le mercredi 7 juin 2017 20:50:30 UTC+2, CARLOS EDUARDO ARANGO GUTIERREZ a =
+=C3=A9crit=C2=A0:
+</p>
+<blockquote style=3D"border:none;border-left:solid #cccccc 1.0pt;padding:0i=
+n 0in 0in 6.0pt;margin-left:4.8pt;margin-right:0in">
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">C=C3=A9dric, any ideas on=
+ how you would implement this without the need of a containerd to keep trac=
+k of &quot;Started&quot; containers.
+</p>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">=C2=A0</p>
+</div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">+1 on this topic.</p>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">=C2=A0</p>
+<div>
+<div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">On 7 June 2017 at 13:47, =
+C=C3=A9dric Clerget &lt;<a>ced...@gmail.com</a>&gt; wrote:</p>
+</div>
+</div>
+<blockquote style=3D"border:none;border-left:solid #cccccc 1.0pt;padding:0i=
+n 0in 0in 6.0pt;margin-left:4.8pt;margin-right:0in">
+<div>
+<div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">Hi Robin,<br>
+<br>
+Singularity implement PID namespace but don&#39;t offer to run a daemon ins=
+ide container in background, the purpose of start/stop command would allow =
+to run something like this:<br>
+$ singularity start image.img service apache start<br>
+<br>
+And stop it later like this<br>
+$ singularity stop image.img<br>
+<br>
+As workaround for your problem, you could use singularity shell with -p opt=
+ion to create a new PID namespace :<br>
+$ singularity shell -p image.img<br>
+&gt; service apache start<br>
+&gt; exit<br>
+so apache daemon will be killed once shell exit<br>
+<br>
+The start/stop command would open other possibilities<br>
+<br>
+Best regards,<br>
+Cedric Clerget<br>
+<br>
+Le mercredi 7 juin 2017 20:00:27 UTC+2, Robin Goldstone a =C3=A9crit=C2=A0:=
+ </p>
+<blockquote style=3D"border:none;border-left:solid #cccccc 1.0pt;padding:0i=
+n 0in 0in 6.0pt;margin-left:4.8pt;margin-right:0in">
+<div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">
+<span style=3D"font-size:14.0pt;font-family:&quot;Calibri&quot;,sans-serif"=
+>Hi Cedric,</span></p>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">
+<span style=3D"font-size:14.0pt;font-family:&quot;Calibri&quot;,sans-serif"=
+><br>
+You wrote: =E2=80=9CIn order to work, Singularity should implement PID name=
+spsaces with start/stop commands. PID namespaces will allow Singularity to =
+become the init process in order to own daemon processes running inside con=
+tainer and make a clean exit with stop command.=E2=80=9D</span></p>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">
+<span style=3D"font-size:14.0pt;font-family:&quot;Calibri&quot;,sans-serif"=
+>=C2=A0</span></p>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">
+<span style=3D"font-size:14.0pt;font-family:&quot;Calibri&quot;,sans-serif"=
+>Are you saying Singularity does implement this or should?=C2=A0 Also when =
+you refer to start/stop commands, are you referring to my =E2=80=9Cservice =
+apache2 start=E2=80=9D command in the container or are you saying
+ Singularity should have a command to stop (cleanly shut down) a container?=
+</span></p>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">
+<span style=3D"font-size:14.0pt;font-family:&quot;Calibri&quot;,sans-serif"=
+>=C2=A0</span></p>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">
+<span style=3D"font-size:14.0pt;font-family:&quot;Calibri&quot;,sans-serif"=
+>Thanks,</span></p>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">
+<span style=3D"font-size:14.0pt;font-family:&quot;Calibri&quot;,sans-serif"=
+>Robin</span></p>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">
+<span style=3D"font-size:14.0pt;font-family:&quot;Calibri&quot;,sans-serif"=
+>=C2=A0</span></p>
+<div style=3D"border:none;border-top:solid #b5c4df 1.0pt;padding:3.0pt 0in =
+0in 0in">
+<p class=3D"MsoNormal" style=3D"margin-left:1.0in">
+<b><span style=3D"font-family:&quot;Calibri&quot;,sans-serif;color:black">F=
+rom: </span></b><span style=3D"font-family:&quot;Calibri&quot;,sans-serif;c=
+olor:black">C=C3=A9dric Clerget &lt;<a>ced...@gmail.com</a>&gt;</span><span=
+ style=3D"font-family:&quot;PMingLiU&quot;,serif;color:black"><br>
+</span><b><span style=3D"font-family:&quot;Calibri&quot;,sans-serif;color:b=
+lack">Reply-To: </span>
+</b><span style=3D"font-family:&quot;Calibri&quot;,sans-serif;color:black">=
+&quot;<a>si...@lbl.gov</a>&quot; &lt;<a>si...@lbl.gov</a>&gt;<br>
+<b>Date: </b>Wednesday, June 7, 2017 at 12:43 AM<br>
+<b>To: </b>singularity &lt;<a>si...@lbl.gov</a>&gt;<br>
+<b>Subject: </b>[Singularity] Re: daemons started in container run forever<=
+/span></p>
+</div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:1.0in">
+=C2=A0</p>
+</div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:1.0in">
+It&#39;s normal, daemon processes uses double fork to be attached to the in=
+it process and avoid zombie processes, that&#39;s why singularity process d=
+on&#39;t own your apache process even if you logout from container, between=
+ singularity shouldn&#39;t be able to unmount the
+ bind partitions because apache process uses files in container resulting i=
+n a no clean state.<br>
+<br>
+In order to work, Singularity should implement PID namespsaces with start/s=
+top commands. PID namespaces will allow Singularity to become the init proc=
+ess in order to own daemon processes running inside container and make a cl=
+ean exit with stop command<br>
+<br>
+Best regards,<br>
+Cedric Clerget</p>
+</div>
+<p class=3D"MsoNormal" style=3D"margin-bottom:12.0pt;margin-left:1.0in">
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a>singu...@lbl.gov</a>.</p>
+</div>
+</div>
+</blockquote>
+</div>
+</div>
+</div>
+<div>
+<div>
+<div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.</p>
+</div>
+</div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">To unsubscribe from this =
+group and stop receiving emails from it, send an email to <a>singu...@lbl.g=
+ov</a>.</p>
+</div>
+</div>
+</blockquote>
+</div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in"><br>
+<br clear=3D"all">
+</p>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">=C2=A0</p>
+</div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">-- </p>
+<div>
+<div>
+<div>
+<div>
+<div>
+<div>
+<div>
+<div>
+<div>
+<div>
+<div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in"><br>
+------------------------------<wbr>------------------------------<wbr>-----=
+-------------------------<wbr>------------------------------</p>
+</div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in"><span style=3D"font-size:=
+7.5pt;font-family:&quot;monospace&quot;,serif;color:black">CARLOS EDUARDO A=
+RANGO GUTIERREZ. =C2=A0</span></p>
+</div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in"><span style=3D"font-size:=
+7.5pt;font-family:&quot;monospace&quot;,serif;color:black">Cel :
+<a>+57 3182545671</a></span></p>
+</div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in"><span style=3D"font-size:=
+7.5pt;font-family:&quot;monospace&quot;,serif;color:black">Computer Science=
+ PhD Student</span></p>
+</div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in"><span style=3D"font-size:=
+10.0pt;font-family:&quot;Courier&quot;,serif;color:black"><a href=3D"http:/=
+/www.univalle.edu.co/" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"th=
+is.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwww.univalle.edu=
+.co%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFOqCB9AEJRizFmrJK9SsjtmsfUJA=
+&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q=
+\x3dhttp%3A%2F%2Fwww.univalle.edu.co%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dA=
+FQjCNFOqCB9AEJRizFmrJK9SsjtmsfUJA&#39;;return true;">UNIVERSIDAD DEL VALLE<=
+/a></span></p>
+</div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in"><span style=3D"font-size:=
+7.5pt;font-family:&quot;monospace&quot;,serif;color:black">Laboratorio de r=
+edes y sistemas distribuidos -
+<a href=3D"http://lascilab.univalle.edu.co/" rel=3D"nofollow" target=3D"_bl=
+ank" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A=
+%2F%2Flascilab.univalle.edu.co%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNF=
+NMFlM_kTHWuEdJrQVC5wmU1a5sg&#39;;return true;" onclick=3D"this.href=3D&#39;=
+http://www.google.com/url?q\x3dhttp%3A%2F%2Flascilab.univalle.edu.co%2F\x26=
+sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFNMFlM_kTHWuEdJrQVC5wmU1a5sg&#39;;retu=
+rn true;">LASCILAB</a></span></p>
+</div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in"><span style=3D"font-size:=
+7.5pt;font-family:&quot;monospace&quot;,serif;color:black">Tecnolog=C3=ADa,=
+ Informaci=C3=B3n y Complejidad Cu=C3=A1ntica - QuanTIC (<a href=3D"http://=
+secure-web.cisco.com/1YnCmFu2EmyLV3KtcdG7MhcbZWuqIoT0ts6YjNH3sTyLaOzBcYm2hB=
+XmGSJgHXY39ISfBk-ZU2pc3n8PZDMhzUd7-MgtS0rKTe0qre6NfLmcwhfZ21elmReOYn37VRqil=
+vsZqJVEcYHuPwKGITh2vKdENpIV2_7zQ7mdVmPTOHxGF8EcYv-L5VIeH73Tg-Ymde96qj2Ijyq6=
+UGF3sR4wcqEecWejgHPOCbhfTA6O9MpPNrBVMHoT0WtMi2rFlmMCZGP8iM6PrD8_KmxKz1wb3S1=
+eMJji51aEfdq05ZZj2Ns5QETHkd7MNG1I2PaK09LItZF7uGgl0oe1ZD1XySOpDcFFv5ROyWhiVK=
+MmzXecWHhYBHqiwSGzY95wNjxgYEAP6/http%3A%2F%2F201.234.78.173%3A8080%2Fgrupla=
+c%2Fjsp%2Fvisualiza%2Fvisualizagr.jsp%3Fnro%3D00000000010436" rel=3D"nofoll=
+ow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;http://www.google.com=
+/url?q\x3dhttp%3A%2F%2Fsecure-web.cisco.com%2F1YnCmFu2EmyLV3KtcdG7MhcbZWuqI=
+oT0ts6YjNH3sTyLaOzBcYm2hBXmGSJgHXY39ISfBk-ZU2pc3n8PZDMhzUd7-MgtS0rKTe0qre6N=
+fLmcwhfZ21elmReOYn37VRqilvsZqJVEcYHuPwKGITh2vKdENpIV2_7zQ7mdVmPTOHxGF8EcYv-=
+L5VIeH73Tg-Ymde96qj2Ijyq6UGF3sR4wcqEecWejgHPOCbhfTA6O9MpPNrBVMHoT0WtMi2rFlm=
+MCZGP8iM6PrD8_KmxKz1wb3S1eMJji51aEfdq05ZZj2Ns5QETHkd7MNG1I2PaK09LItZF7uGgl0=
+oe1ZD1XySOpDcFFv5ROyWhiVKMmzXecWHhYBHqiwSGzY95wNjxgYEAP6%2Fhttp%253A%252F%2=
+52F201.234.78.173%253A8080%252Fgruplac%252Fjsp%252Fvisualiza%252Fvisualizag=
+r.jsp%253Fnro%253D00000000010436\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNF-=
+EHBqTIxxkrH-l2av3cUXgTesfg&#39;;return true;" onclick=3D"this.href=3D&#39;h=
+ttp://www.google.com/url?q\x3dhttp%3A%2F%2Fsecure-web.cisco.com%2F1YnCmFu2E=
+myLV3KtcdG7MhcbZWuqIoT0ts6YjNH3sTyLaOzBcYm2hBXmGSJgHXY39ISfBk-ZU2pc3n8PZDMh=
+zUd7-MgtS0rKTe0qre6NfLmcwhfZ21elmReOYn37VRqilvsZqJVEcYHuPwKGITh2vKdENpIV2_7=
+zQ7mdVmPTOHxGF8EcYv-L5VIeH73Tg-Ymde96qj2Ijyq6UGF3sR4wcqEecWejgHPOCbhfTA6O9M=
+pPNrBVMHoT0WtMi2rFlmMCZGP8iM6PrD8_KmxKz1wb3S1eMJji51aEfdq05ZZj2Ns5QETHkd7MN=
+G1I2PaK09LItZF7uGgl0oe1ZD1XySOpDcFFv5ROyWhiVKMmzXecWHhYBHqiwSGzY95wNjxgYEAP=
+6%2Fhttp%253A%252F%252F201.234.78.173%253A8080%252Fgruplac%252Fjsp%252Fvisu=
+aliza%252Fvisualizagr.jsp%253Fnro%253D00000000010436\x26sa\x3dD\x26sntz\x3d=
+1\x26usg\x3dAFQjCNF-EHBqTIxxkrH-l2av3cUXgTesfg&#39;;return true;"><span sty=
+le=3D"text-decoration:none">GrupLAC</span></a>)<b>=C2=A0</b></span></p>
+</div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in"><a href=3D"http://cibiofi=
+.univalle.edu.co/" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.h=
+ref=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fcibiofi.univalle.edu=
+.co%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFSkU1rIacjqN3oE9dmA9Qwp5SOmw=
+&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q=
+\x3dhttp%3A%2F%2Fcibiofi.univalle.edu.co%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\=
+x3dAFQjCNFSkU1rIacjqN3oE9dmA9Qwp5SOmw&#39;;return true;"><span style=3D"fon=
+t-size:7.5pt;font-family:&quot;monospace&quot;,serif;color:black">Centro de=
+ Investigaci=C3=B3n e Innovaci=C3=B3n en Bioinform=C3=A1tica y Fot=C3=B3nic=
+a (CIBioFi)</span></a></p>
+</div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in"><br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=C2=A0=
+<img src=3D"https://lh6.googleusercontent.com/proxy/JfpuKH3goU2fQPIxIdXZPgv=
+xFoR1GgenKNtNoEys8U5I0pSIBUu5wtJeuG6YqZ-6T6XzlWi1IGZnUt908PEFWEcmZKrxlBVvr3=
+UPi1Gyn-cOx1GnOO12A9-wNMjEUfDvd9HHYp8I6IO69gwndVtdlnTHQHjYaIqfKOU=3Dw5000-h=
+5000" width=3D"69" height=3D"96" border=3D"0"></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</blockquote>
+</div>
+<div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to
+<a rel=3D"nofollow">singu...@lbl.gov</a>.</p>
+</div>
+</div>
+</blockquote>
+</div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in"><br>
+<br clear=3D"all">
+</p>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">=C2=A0</p>
+</div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">-- </p>
+<div>
+<div>
+<div>
+<div>
+<div>
+<div>
+<div>
+<div>
+<div>
+<div>
+<div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in"><br>
+------------------------------<wbr>------------------------------<wbr>-----=
+-------------------------<wbr>------------------------------</p>
+</div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in"><span style=3D"font-size:=
+7.5pt;font-family:&quot;monospace&quot;,serif;color:black">CARLOS EDUARDO A=
+RANGO GUTIERREZ. =C2=A0</span></p>
+</div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in"><span style=3D"font-size:=
+7.5pt;font-family:&quot;monospace&quot;,serif;color:black">Cel : +57 318254=
+5671</span></p>
+</div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in"><span style=3D"font-size:=
+7.5pt;font-family:&quot;monospace&quot;,serif;color:black">Computer Science=
+ PhD Student</span></p>
+</div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in"><span style=3D"font-size:=
+10.0pt;font-family:&quot;Courier&quot;,serif;color:black"><a href=3D"http:/=
+/www.univalle.edu.co/" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"th=
+is.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwww.univalle.edu=
+.co%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFOqCB9AEJRizFmrJK9SsjtmsfUJA=
+&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q=
+\x3dhttp%3A%2F%2Fwww.univalle.edu.co%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dA=
+FQjCNFOqCB9AEJRizFmrJK9SsjtmsfUJA&#39;;return true;">UNIVERSIDAD DEL VALLE<=
+/a></span></p>
+</div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in"><span style=3D"font-size:=
+7.5pt;font-family:&quot;monospace&quot;,serif;color:black">Laboratorio de r=
+edes y sistemas distribuidos -
+<a href=3D"http://lascilab.univalle.edu.co/" rel=3D"nofollow" target=3D"_bl=
+ank" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A=
+%2F%2Flascilab.univalle.edu.co%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNF=
+NMFlM_kTHWuEdJrQVC5wmU1a5sg&#39;;return true;" onclick=3D"this.href=3D&#39;=
+http://www.google.com/url?q\x3dhttp%3A%2F%2Flascilab.univalle.edu.co%2F\x26=
+sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFNMFlM_kTHWuEdJrQVC5wmU1a5sg&#39;;retu=
+rn true;">LASCILAB</a></span></p>
+</div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in"><span style=3D"font-size:=
+7.5pt;font-family:&quot;monospace&quot;,serif;color:black">Tecnolog=C3=ADa,=
+ Informaci=C3=B3n y Complejidad Cu=C3=A1ntica - QuanTIC (<a href=3D"http://=
+secure-web.cisco.com/1YnCmFu2EmyLV3KtcdG7MhcbZWuqIoT0ts6YjNH3sTyLaOzBcYm2hB=
+XmGSJgHXY39ISfBk-ZU2pc3n8PZDMhzUd7-MgtS0rKTe0qre6NfLmcwhfZ21elmReOYn37VRqil=
+vsZqJVEcYHuPwKGITh2vKdENpIV2_7zQ7mdVmPTOHxGF8EcYv-L5VIeH73Tg-Ymde96qj2Ijyq6=
+UGF3sR4wcqEecWejgHPOCbhfTA6O9MpPNrBVMHoT0WtMi2rFlmMCZGP8iM6PrD8_KmxKz1wb3S1=
+eMJji51aEfdq05ZZj2Ns5QETHkd7MNG1I2PaK09LItZF7uGgl0oe1ZD1XySOpDcFFv5ROyWhiVK=
+MmzXecWHhYBHqiwSGzY95wNjxgYEAP6/http%3A%2F%2F201.234.78.173%3A8080%2Fgrupla=
+c%2Fjsp%2Fvisualiza%2Fvisualizagr.jsp%3Fnro%3D00000000010436" rel=3D"nofoll=
+ow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;http://www.google.com=
+/url?q\x3dhttp%3A%2F%2Fsecure-web.cisco.com%2F1YnCmFu2EmyLV3KtcdG7MhcbZWuqI=
+oT0ts6YjNH3sTyLaOzBcYm2hBXmGSJgHXY39ISfBk-ZU2pc3n8PZDMhzUd7-MgtS0rKTe0qre6N=
+fLmcwhfZ21elmReOYn37VRqilvsZqJVEcYHuPwKGITh2vKdENpIV2_7zQ7mdVmPTOHxGF8EcYv-=
+L5VIeH73Tg-Ymde96qj2Ijyq6UGF3sR4wcqEecWejgHPOCbhfTA6O9MpPNrBVMHoT0WtMi2rFlm=
+MCZGP8iM6PrD8_KmxKz1wb3S1eMJji51aEfdq05ZZj2Ns5QETHkd7MNG1I2PaK09LItZF7uGgl0=
+oe1ZD1XySOpDcFFv5ROyWhiVKMmzXecWHhYBHqiwSGzY95wNjxgYEAP6%2Fhttp%253A%252F%2=
+52F201.234.78.173%253A8080%252Fgruplac%252Fjsp%252Fvisualiza%252Fvisualizag=
+r.jsp%253Fnro%253D00000000010436\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNF-=
+EHBqTIxxkrH-l2av3cUXgTesfg&#39;;return true;" onclick=3D"this.href=3D&#39;h=
+ttp://www.google.com/url?q\x3dhttp%3A%2F%2Fsecure-web.cisco.com%2F1YnCmFu2E=
+myLV3KtcdG7MhcbZWuqIoT0ts6YjNH3sTyLaOzBcYm2hBXmGSJgHXY39ISfBk-ZU2pc3n8PZDMh=
+zUd7-MgtS0rKTe0qre6NfLmcwhfZ21elmReOYn37VRqilvsZqJVEcYHuPwKGITh2vKdENpIV2_7=
+zQ7mdVmPTOHxGF8EcYv-L5VIeH73Tg-Ymde96qj2Ijyq6UGF3sR4wcqEecWejgHPOCbhfTA6O9M=
+pPNrBVMHoT0WtMi2rFlmMCZGP8iM6PrD8_KmxKz1wb3S1eMJji51aEfdq05ZZj2Ns5QETHkd7MN=
+G1I2PaK09LItZF7uGgl0oe1ZD1XySOpDcFFv5ROyWhiVKMmzXecWHhYBHqiwSGzY95wNjxgYEAP=
+6%2Fhttp%253A%252F%252F201.234.78.173%253A8080%252Fgruplac%252Fjsp%252Fvisu=
+aliza%252Fvisualizagr.jsp%253Fnro%253D00000000010436\x26sa\x3dD\x26sntz\x3d=
+1\x26usg\x3dAFQjCNF-EHBqTIxxkrH-l2av3cUXgTesfg&#39;;return true;"><span sty=
+le=3D"text-decoration:none">GrupLAC</span></a>)<b>=C2=A0</b></span></p>
+</div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in"><a href=3D"http://cibiofi=
+.univalle.edu.co/" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.h=
+ref=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fcibiofi.univalle.edu=
+.co%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFSkU1rIacjqN3oE9dmA9Qwp5SOmw=
+&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q=
+\x3dhttp%3A%2F%2Fcibiofi.univalle.edu.co%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\=
+x3dAFQjCNFSkU1rIacjqN3oE9dmA9Qwp5SOmw&#39;;return true;"><span style=3D"fon=
+t-size:7.5pt;font-family:&quot;monospace&quot;,serif;color:black">Centro de=
+ Investigaci=C3=B3n e Innovaci=C3=B3n en Bioinform=C3=A1tica y Fot=C3=B3nic=
+a (CIBioFi)</span></a></p>
+</div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in"><br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=C2=A0=
+<img src=3D"https://lh6.googleusercontent.com/proxy/JfpuKH3goU2fQPIxIdXZPgv=
+xFoR1GgenKNtNoEys8U5I0pSIBUu5wtJeuG6YqZ-6T6XzlWi1IGZnUt908PEFWEcmZKrxlBVvr3=
+UPi1Gyn-cOx1GnOO12A9-wNMjEUfDvd9HHYp8I6IO69gwndVtdlnTHQHjYaIqfKOU=3Dw5000-h=
+5000" width=3D"69" height=3D"96" border=3D"0"></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<p class=3D"MsoNormal" style=3D"margin-left:.5in">-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to
+<a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+<br>
+</p>
+</div>
+</div>
+
+</blockquote></div></blockquote></div>
+------=_Part_3442_209950330.1496864645308--
+
+------=_Part_3441_1071855184.1496864645307--

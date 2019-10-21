@@ -1,0 +1,119 @@
+Date: Tue, 13 Mar 2018 21:00:12 -0700 (PDT)
+From: Keith Ball <kb...@redlineperf.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <5cfaf17b-3f1a-438d-879d-8a56409542da@lbl.gov>
+Subject: "nvidia-smi not found" and SINGULARITYENV_PATH having no effect
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_549_300673634.1521000012096"
+
+------=_Part_549_300673634.1521000012096
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_550_1528338008.1521000012096"
+
+------=_Part_550_1528338008.1521000012096
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi All,
+
+We have a Bright Computing cluster running RHEL 7.4. We are running 
+Bright-packaged singularity 2.4.2 and CUDA 9.0 Toolkit (from which our 
+nvidia-smi comes).
+This binary lives in a nonstandard location: 
+/cm/local/apps/cuda-driver/lib/current/bin  (likewise, CUDA libs liver 
+under /cm/local/apps/ as well). 
+
+When we try to run using "singularity run --nv", either by first building a 
+Singularity image then running it, or running the Docker image "on the 
+fly", we get a "no nvidia-smi" error as shown below:
+
+$ singularity build tensorflow_xxx.img 
+docker://reg.xxxx.com:5000/tensorflow_xxx:1cedc37_2018-01-13 
+
+pbt $ singularity run --nv tensorflow_xxx.img 
+which: no nvidia-smi in 
+(/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin) 
+WARNING: Could not find the Nvidia SMI binary to bind into container 
+...
+
+We do bind the path "/cm/local/apps/cuda-driver" into the container using 
+/etc/singularity/singularity.conf. Also, we set SINGULARITYENV_PATH in 
+/etc/singularity/init to be set to include the path to nvidia-smi. 
+
+One can see from debug output (singularity --debug run --nv), that:
+ - the 'nvidia-smi not found' occurs very early in the output.
+ - later in the debug output, one sees:
+
+      DEBUG   [U=35035,P=18620]  singularity_runtime_environment()         
+Evaluating envar to clean: 
+SINGULARITYENV_PATH=/cm/local/apps/cuda/libs/current/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+
+...
+     DEBUG   [U=35035,P=18620]  singularity_runtime_
+
+environment()         Converting envar 'SINGULARITYENV_PATH' to 'PATH' = 
+'/cm/local/apps/cuda/libs/current/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin'
+
+so it appears that singularity is "trying" to set PATH. However, one can 
+verify (once the container gets to a prompt) that PATH is just set to the 
+standard "/bin:/sbin:/usr/
+
+bin:/usr/sbin:/usr/local/bin:/usr/local/sbin".
+
+
+If I link or copy nvidia-smi to /usr/local/bin/nvidia-smi, then I don't see 
+the problem.  Any ideas what  to check here? Is there perhaps a bug in 
+singularity when it comes to setting PATH, at least when using the --nv 
+option?
+
+Thanks, 
+   Keith
+
+
+------=_Part_550_1528338008.1521000012096
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi All,<br><br>We have a Bright Computing cluster running =
+RHEL 7.4. We are running Bright-packaged singularity 2.4.2 and CUDA 9.0 Too=
+lkit (from which our nvidia-smi comes).<br>This binary lives in a nonstanda=
+rd location: /cm/local/apps/cuda-driver/lib/current/bin=C2=A0 (likewise, CU=
+DA libs liver under /cm/local/apps/ as well). <br><br>When we try to run us=
+ing &quot;singularity run --nv&quot;, either by first building a Singularit=
+y image then running it, or running the Docker image &quot;on the fly&quot;=
+, we get a &quot;no nvidia-smi&quot; error as shown below:<br><br>$ singula=
+rity build tensorflow_xxx.img docker://reg.xxxx.com:5000/tensorflow_xxx:1ce=
+dc37_2018-01-13
+<br><br>pbt $ singularity run --nv tensorflow_xxx.img
+<br>which: no nvidia-smi in (/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/=
+usr/local/sbin)
+<br>WARNING: Could not find the Nvidia SMI binary to bind into container
+<br>...<br><br>We do bind the path &quot;/cm/local/apps/cuda-driver&quot; i=
+nto the container using /etc/singularity/singularity.conf. Also, we set SIN=
+GULARITYENV_PATH in /etc/singularity/init to be set to include the path to =
+nvidia-smi. <br><br>One can see from debug output (singularity --debug run =
+--nv), that:<br>=C2=A0- the &#39;nvidia-smi not found&#39; occurs very earl=
+y in the output.<br>=C2=A0- later in the debug output, one sees:<br><p clas=
+s=3D"MsoNormal">=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 DEBUG=C2=A0=C2=A0 [U=3D35035=
+,P=3D18620]=C2=A0 singularity_runtime_<wbr>environment()=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 Evaluating envar to clean: SINGULARITYENV_PA=
+TH=3D/cm/local/<wbr>apps/cuda/libs/current/bin:/<wbr>bin:/sbin:/usr/bin:/us=
+r/sbin:/<wbr>usr/local/bin:/usr/local/sbin</p><p class=3D"MsoNormal">...<br=
+></p>=C2=A0=C2=A0=C2=A0=C2=A0
+DEBUG=C2=A0=C2=A0 [U=3D35035,P=3D18620]=C2=A0 singularity_runtime_<p class=
+=3D"MsoNormal"><wbr>environment()=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0 Converting envar &#39;SINGULARITYENV_PATH&#39; to &#39;PATH&#39; =3D=
+ &#39;/cm/local/apps/cuda/libs/<wbr>current/bin:/bin:/sbin:/usr/<wbr>bin:/u=
+sr/sbin:/usr/local/bin:/<wbr>usr/local/sbin&#39;</p><br>so it appears that =
+singularity is &quot;trying&quot; to set PATH. However, one can verify (onc=
+e the container gets to a prompt) that PATH is just set to the standard &qu=
+ot;/bin:/sbin:/usr/<p class=3D"MsoNormal"><wbr>bin:/usr/sbin:/usr/local/bin=
+:/<wbr>usr/local/sbin&quot;.</p><br><br>If I link or copy nvidia-smi to /us=
+r/local/bin/nvidia-smi, then I don&#39;t see the problem.=C2=A0 Any ideas w=
+hat=C2=A0 to check here? Is there perhaps a bug in singularity when it come=
+s to setting PATH, at least when using the --nv option?<br><br>Thanks, <br>=
+=C2=A0=C2=A0 Keith<br><br></div>
+------=_Part_550_1528338008.1521000012096--
+
+------=_Part_549_300673634.1521000012096--

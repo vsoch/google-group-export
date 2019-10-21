@@ -1,0 +1,283 @@
+Date: Thu, 30 Nov 2017 02:38:55 -0800 (PST)
+From: Laurent Fournier <ma...@laurent-fournier.be>
+To: singularity <singu...@lbl.gov>
+Message-Id: <d2ffa56d-e0d4-46fa-b1f1-f3cf0437a710@lbl.gov>
+Subject: Using conda envs as modules on a cluster
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_666_2103147655.1512038335676"
+
+------=_Part_666_2103147655.1512038335676
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_667_80869286.1512038335677"
+
+------=_Part_667_80869286.1512038335677
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi,
+
+
+I am using Singularity 2.4.1.
+
+laurent@NanoStation:~/atWork/Singularity$ cat Tool27 
+
+BootStrap: docker
+From: continuumio/miniconda:latest
+
+%post
+    echo "nameserver 1.1.1.1" | tee /etc/resolv.conf > /dev/null
+    export PATH=/opt/conda/bin
+    conda config --add channels bioconda
+    conda config --add channels conda-forge
+    conda clean --index-cache --tarballs --packages --yes
+    
+%environment
+    export PATH="/opt/conda/bin:/usr/local/bin:/usr/bin:/bin:"
+    unset CONDA_DEFAULT_ENV
+    export ANACONDA_HOME=/opt/conda
+
+
+To use the tools inside, i created small shell scripts like that :
+
+laurent@NanoStation:~/atWork/Singularity$ cat conda
+
+#!/bin/sh
+singularity exec my/path/to/pytools27.img conda $@
+
+
+That works just fine. But when it comes to using conda envs...it don't work 
+anymore.
+First i had to gain access to bash instead of sh (which is working). 
+Then i "conda create -n myenv" which work as well :
+
+laurent@NanoStation:~/atWork/Singularity$ ./conda create -n py27 python=2.7
+
+Fetching package metadata ...............
+Solving package specifications: .
+
+Package plan for installation in environment /home/laurent/.conda/envs/py27:
+
+
+But from that point, whenever i try "source activate" or even modify the 
+calling script as follows :
+
+laurent@NanoStation:~/atWork/Singularity$ cat activate 
+
+#!/bin/sh
+singularity exec my/path/to/pytools27.img bash -c 'source activate $@'
+
+
+Nothing happens :
+
+laurent@NanoStation:~/atWork/Singularity$ source activate py27
+laurent@NanoStation:~/atWork/Singularity$ ./activate py27
+laurent@NanoStation:~/atWork/Singularity$
+
+
+Any ideas ?
+
+------=_Part_667_80869286.1512038335677
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi,<div><br></div><div><br></div><div>I am using Singulari=
+ty 2.4.1.</div><div><br></div><div><div class=3D"prettyprint" style=3D"back=
+ground-color: rgb(250, 250, 250); border-color: rgb(187, 187, 187); border-=
+style: solid; border-width: 1px; word-wrap: break-word;"><code class=3D"pre=
+ttyprint"><div class=3D"subprettyprint"><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">laurent@NanoStation</span><span style=3D"color: #66=
+0;" class=3D"styled-by-prettify">:~/</span><span style=3D"color: #000;" cla=
+ss=3D"styled-by-prettify">atWork</span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">/</span><span style=3D"color: #606;" class=3D"style=
+d-by-prettify">Singularity$</span><span style=3D"color: #000;" class=3D"sty=
+led-by-prettify"> cat </span><span style=3D"color: #606;" class=3D"styled-b=
+y-prettify">Tool27</span><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify"> <br><br></span><span style=3D"color: #606;" class=3D"styled-by-pre=
+ttify">BootStrap</span><span style=3D"color: #660;" class=3D"styled-by-pret=
+tify">:</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> do=
+cker<br></span><span style=3D"color: #606;" class=3D"styled-by-prettify">Fr=
+om</span><span style=3D"color: #660;" class=3D"styled-by-prettify">:</span>=
+<span style=3D"color: #000;" class=3D"styled-by-prettify"> continuumio</spa=
+n><span style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span s=
+tyle=3D"color: #000;" class=3D"styled-by-prettify">miniconda</span><span st=
+yle=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D"co=
+lor: #000;" class=3D"styled-by-prettify">latest</span><span style=3D"color:=
+ #000;" class=3D"styled-by-prettify"><br><br></span><span style=3D"color: #=
+660;" class=3D"styled-by-prettify">%</span><span style=3D"color: #000;" cla=
+ss=3D"styled-by-prettify">post<br>=C2=A0 =C2=A0 echo </span><span style=3D"=
+color: #080;" class=3D"styled-by-prettify">&quot;nameserver 1.1.1.1&quot;</=
+span><span style=3D"color: #000;" class=3D"styled-by-prettify"> </span><spa=
+n style=3D"color: #660;" class=3D"styled-by-prettify">|</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"> tee </span><span style=3D"c=
+olor: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify">etc</span><span style=3D"color: #660;" cla=
+ss=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"sty=
+led-by-prettify">resolv</span><span style=3D"color: #660;" class=3D"styled-=
+by-prettify">.</span><span style=3D"color: #000;" class=3D"styled-by-pretti=
+fy">conf </span><span style=3D"color: #660;" class=3D"styled-by-prettify">&=
+gt;</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> </span=
+><span style=3D"color: #080;" class=3D"styled-by-prettify">/dev/</span><spa=
+n style=3D"color: #008;" class=3D"styled-by-prettify">null</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 </span><s=
+pan style=3D"color: #008;" class=3D"styled-by-prettify">export</span><span =
+style=3D"color: #000;" class=3D"styled-by-prettify"> PATH</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">=3D</span><span style=3D"col=
+or: #080;" class=3D"styled-by-prettify">/opt/</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify">conda</span><span style=3D"color: #660;"=
+ class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D=
+"styled-by-prettify">bin<br>=C2=A0 =C2=A0 conda config </span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">--</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify">add channels bioconda<br>=C2=A0 =C2=
+=A0 conda config </span><span style=3D"color: #660;" class=3D"styled-by-pre=
+ttify">--</span><span style=3D"color: #000;" class=3D"styled-by-prettify">a=
+dd channels conda</span><span style=3D"color: #660;" class=3D"styled-by-pre=
+ttify">-</span><span style=3D"color: #000;" class=3D"styled-by-prettify">fo=
+rge<br>=C2=A0 =C2=A0 conda clean </span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">--</span><span style=3D"color: #000;" class=3D"styl=
+ed-by-prettify">index</span><span style=3D"color: #660;" class=3D"styled-by=
+-prettify">-</span><span style=3D"color: #000;" class=3D"styled-by-prettify=
+">cache </span><span style=3D"color: #660;" class=3D"styled-by-prettify">--=
+</span><span style=3D"color: #000;" class=3D"styled-by-prettify">tarballs <=
+/span><span style=3D"color: #660;" class=3D"styled-by-prettify">--</span><s=
+pan style=3D"color: #000;" class=3D"styled-by-prettify">packages </span><sp=
+an style=3D"color: #660;" class=3D"styled-by-prettify">--</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify">yes<br>=C2=A0 =C2=A0 <br></s=
+pan><span style=3D"color: #660;" class=3D"styled-by-prettify">%</span><span=
+ style=3D"color: #000;" class=3D"styled-by-prettify">environment<br>=C2=A0 =
+=C2=A0 </span><span style=3D"color: #008;" class=3D"styled-by-prettify">exp=
+ort</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> PATH</=
+span><span style=3D"color: #660;" class=3D"styled-by-prettify">=3D</span><s=
+pan style=3D"color: #080;" class=3D"styled-by-prettify">&quot;/opt/conda/bi=
+n:/usr/local/bin:/usr/bin:/bin:&quot;</span><span style=3D"color: #000;" cl=
+ass=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 unset CONDA_DEFAULT_ENV<br>=C2=
+=A0 =C2=A0 </span><span style=3D"color: #008;" class=3D"styled-by-prettify"=
+>export</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> AN=
+ACONDA_HOME</span><span style=3D"color: #660;" class=3D"styled-by-prettify"=
+>=3D</span><span style=3D"color: #080;" class=3D"styled-by-prettify">/opt/<=
+/span><span style=3D"color: #000;" class=3D"styled-by-prettify">conda</span=
+></div></code></div><div><br></div></div><div><br></div><div>To use the too=
+ls inside, i created small shell scripts like that :</div><div><br></div><d=
+iv><div class=3D"prettyprint" style=3D"background-color: rgb(250, 250, 250)=
+; border-color: rgb(187, 187, 187); border-style: solid; border-width: 1px;=
+ word-wrap: break-word;"><code class=3D"prettyprint"><div class=3D"subprett=
+yprint"><span style=3D"color: #000;" class=3D"styled-by-prettify">laurent@N=
+anoStation</span><span style=3D"color: #660;" class=3D"styled-by-prettify">=
+:~/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">atWork<=
+/span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</span><sp=
+an style=3D"color: #606;" class=3D"styled-by-prettify">Singularity$</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify"> cat conda<br><br>=
+</span><span style=3D"color: #800;" class=3D"styled-by-prettify">#!/bin/sh<=
+/span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br>singula=
+rity </span><span style=3D"color: #008;" class=3D"styled-by-prettify">exec<=
+/span><span style=3D"color: #000;" class=3D"styled-by-prettify"> </span><sp=
+an style=3D"color: #008;" class=3D"styled-by-prettify">my</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify">path</span><span style=3D"color: #660=
+;" class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">to</span><span style=3D"color: #660;" class=3D"styl=
+ed-by-prettify">/</span><span style=3D"color: #000;" class=3D"styled-by-pre=
+ttify">pytools27</span><span style=3D"color: #660;" class=3D"styled-by-pret=
+tify">.</span><span style=3D"color: #000;" class=3D"styled-by-prettify">img=
+ conda $@</span></div></code></div><div><br></div><div><br></div><div>That =
+works just fine. But when it comes to using conda envs...it don&#39;t work =
+anymore.</div><div>First i had to gain access to bash instead of sh (which =
+is working).=C2=A0</div><div>Then i &quot;conda create -n myenv&quot; which=
+ work as well :</div><div><br></div><div><div class=3D"prettyprint" style=
+=3D"background-color: rgb(250, 250, 250); border-color: rgb(187, 187, 187);=
+ border-style: solid; border-width: 1px; word-wrap: break-word;"><code clas=
+s=3D"prettyprint"><div class=3D"subprettyprint"><span style=3D"color: #000;=
+" class=3D"styled-by-prettify">laurent@NanoStation</span><span style=3D"col=
+or: #660;" class=3D"styled-by-prettify">:~/</span><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify">atWork</span><span style=3D"color: #660;" =
+class=3D"styled-by-prettify">/</span><span style=3D"color: #606;" class=3D"=
+styled-by-prettify">Singularity$</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> </span><span style=3D"color: #660;" class=3D"style=
+d-by-prettify">./</span><span style=3D"color: #000;" class=3D"styled-by-pre=
+ttify">conda create </span><span style=3D"color: #660;" class=3D"styled-by-=
+prettify">-</span><span style=3D"color: #000;" class=3D"styled-by-prettify"=
+>n py27 python</span><span style=3D"color: #660;" class=3D"styled-by-pretti=
+fy">=3D</span><span style=3D"color: #066;" class=3D"styled-by-prettify">2.7=
+</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br><br></=
+span><span style=3D"color: #606;" class=3D"styled-by-prettify">Fetching</sp=
+an><span style=3D"color: #000;" class=3D"styled-by-prettify"> </span><span =
+style=3D"color: #008;" class=3D"styled-by-prettify">package</span><span sty=
+le=3D"color: #000;" class=3D"styled-by-prettify"> metadata </span><span sty=
+le=3D"color: #660;" class=3D"styled-by-prettify">...............</span><spa=
+n style=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span styl=
+e=3D"color: #606;" class=3D"styled-by-prettify">Solving</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color=
+: #008;" class=3D"styled-by-prettify">package</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify"> specifications</span><span style=3D"col=
+or: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color: #000;=
+" class=3D"styled-by-prettify"> </span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">.</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify"><br><br></span><span style=3D"color: #606;" class=3D"styled-=
+by-prettify">Package</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify"> plan </span><span style=3D"color: #008;" class=3D"styled-by-pret=
+tify">for</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> =
+installation </span><span style=3D"color: #008;" class=3D"styled-by-prettif=
+y">in</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> envi=
+ronment </span><span style=3D"color: #660;" class=3D"styled-by-prettify">/<=
+/span><span style=3D"color: #000;" class=3D"styled-by-prettify">home</span>=
+<span style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span sty=
+le=3D"color: #000;" class=3D"styled-by-prettify">laurent</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">/.</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify">conda</span><span style=3D"color: #6=
+60;" class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" clas=
+s=3D"styled-by-prettify">envs</span><span style=3D"color: #660;" class=3D"s=
+tyled-by-prettify">/</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify">py27</span><span style=3D"color: #660;" class=3D"styled-by-pretti=
+fy">:</span></div></code></div><div><br></div></div><div><br></div><div>But=
+ from that point, whenever i try &quot;source activate&quot; or even modify=
+ the calling script as follows :</div><div><br></div><div class=3D"prettypr=
+int" style=3D"background-color: rgb(250, 250, 250); border-color: rgb(187, =
+187, 187); border-style: solid; border-width: 1px; word-wrap: break-word;">=
+<code class=3D"prettyprint"><div class=3D"subprettyprint"><span style=3D"co=
+lor: #000;" class=3D"styled-by-prettify">laurent@NanoStation</span><span st=
+yle=3D"color: #660;" class=3D"styled-by-prettify">:~/</span><span style=3D"=
+color: #000;" class=3D"styled-by-prettify">atWork</span><span style=3D"colo=
+r: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #606;"=
+ class=3D"styled-by-prettify">Singularity$</span><span style=3D"color: #000=
+;" class=3D"styled-by-prettify"> cat activate <br><br></span><span style=3D=
+"color: #800;" class=3D"styled-by-prettify">#!/bin/sh</span><span style=3D"=
+color: #000;" class=3D"styled-by-prettify"><br>singularity </span><span sty=
+le=3D"color: #008;" class=3D"styled-by-prettify">exec</span><span style=3D"=
+color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #0=
+08;" class=3D"styled-by-prettify">my</span><span style=3D"color: #660;" cla=
+ss=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"sty=
+led-by-prettify">path</span><span style=3D"color: #660;" class=3D"styled-by=
+-prettify">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify=
+">to</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify">pytools27</span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><span st=
+yle=3D"color: #000;" class=3D"styled-by-prettify">img bash </span><span sty=
+le=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"col=
+or: #000;" class=3D"styled-by-prettify">c </span><span style=3D"color: #080=
+;" class=3D"styled-by-prettify">&#39;source activate $@&#39;</span></div></=
+code></div><div><br></div></div><div><br></div><div>Nothing happens :</div>=
+<div><br></div><div><div class=3D"prettyprint" style=3D"background-color: r=
+gb(250, 250, 250); border-color: rgb(187, 187, 187); border-style: solid; b=
+order-width: 1px; word-wrap: break-word;"><code class=3D"prettyprint"><div =
+class=3D"subprettyprint"><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify">laurent@NanoStation</span><span style=3D"color: #660;" class=3D"sty=
+led-by-prettify">:~/</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify">atWork</span><span style=3D"color: #660;" class=3D"styled-by-pret=
+tify">/</span><span style=3D"color: #606;" class=3D"styled-by-prettify">Sin=
+gularity$</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> =
+source activate py27<br>laurent@NanoStation</span><span style=3D"color: #66=
+0;" class=3D"styled-by-prettify">:~/</span><span style=3D"color: #000;" cla=
+ss=3D"styled-by-prettify">atWork</span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">/</span><span style=3D"color: #606;" class=3D"style=
+d-by-prettify">Singularity$</span><span style=3D"color: #000;" class=3D"sty=
+led-by-prettify"> </span><span style=3D"color: #660;" class=3D"styled-by-pr=
+ettify">./</span><span style=3D"color: #000;" class=3D"styled-by-prettify">=
+activate py27<br>laurent@NanoStation</span><span style=3D"color: #660;" cla=
+ss=3D"styled-by-prettify">:~/</span><span style=3D"color: #000;" class=3D"s=
+tyled-by-prettify">atWork</span><span style=3D"color: #660;" class=3D"style=
+d-by-prettify">/</span><span style=3D"color: #606;" class=3D"styled-by-pret=
+tify">Singularity$</span></div></code></div><div><br></div></div><div><br><=
+/div><div>Any ideas ?</div></div>
+------=_Part_667_80869286.1512038335677--
+
+------=_Part_666_2103147655.1512038335676--

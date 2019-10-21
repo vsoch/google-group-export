@@ -1,0 +1,91 @@
+Date: Mon, 3 Jul 2017 15:28:25 -0700 (PDT)
+From: Martin Cuma <mart...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <c7815084-607b-4f12-a81e-efadc16850d6@lbl.gov>
+Subject: Singularity, Ubuntu and trusted keys
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2198_987648396.1499120905456"
+
+------=_Part_2198_987648396.1499120905456
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2199_701458247.1499120905456"
+
+------=_Part_2199_701458247.1499120905456
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+I have a strange thing that I'd appreciate someone to comment on.
+
+Trying to install R into an Ubuntu container, as described e.g. here:
+https://www.digitalocean.com/community/tutorials/how-to-install-r-on-ubuntu-16-04-2
+
+When the container is built, shelling into it, I get:
+$ singularity shell ubuntu_rpy2.img
+ERROR  : Failed to mount image in (read only): Invalid argument
+ABORT  : Retval = 255
+or
+$ sudo singularity shell ubuntu_rpy2.img
+ERROR  : Failed to mount image in (read only): Invalid argument
+
+If I then execute the shell in the container in the writeable mode:
+$ sudo singularity shell -w ubuntu_rpy2.img
+Singularity: Invoking an interactive shell within container...
+... all good
+
+and after this, again as user, the error is gone:
+$ singularity shell ubuntu_rpy2.img
+Singularity: Invoking an interactive shell within container...
+... all good
+
+I traced this to the gpg keys installation:
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 
+E298A3A825C0D65DFD57CBB651716619E084DAB9
+
+Anyone has any thoughts on this? I.e. may be happening in the root -w shell 
+execution in the container that makes the non-root container shell to run?
+
+Here's the definition file if someone wants to try it:
+----
+BootStrap: docker
+From: ubuntu:16.10
+
+%post
+    apt-get install -y software-properties-common apt-transport-https
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 
+E298A3A825C0D65DFD57CBB651716619E084DAB9
+----
+
+Thanks,
+MC
+
+------=_Part_2199_701458247.1499120905456
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">I have a strange thing that I&#39;d appreciate someone to =
+comment on.<br><br>Trying to install R into an Ubuntu container, as describ=
+ed e.g. here:<br>https://www.digitalocean.com/community/tutorials/how-to-in=
+stall-r-on-ubuntu-16-04-2<br><br>When the container is built, shelling into=
+ it, I get:<br>$ singularity shell ubuntu_rpy2.img<br>ERROR=C2=A0 : Failed =
+to mount image in (read only): Invalid argument<br>ABORT=C2=A0 : Retval =3D=
+ 255<br>or<br>$ sudo singularity shell ubuntu_rpy2.img<br>ERROR=C2=A0 : Fai=
+led to mount image in (read only): Invalid argument<br><br>If I then execut=
+e the shell in the container in the writeable mode:<br>$ sudo singularity s=
+hell -w ubuntu_rpy2.img<br>Singularity: Invoking an interactive shell withi=
+n container...<br>... all good<br><br>and after this, again as user, the er=
+ror is gone:<br>$ singularity shell ubuntu_rpy2.img<br>Singularity: Invokin=
+g an interactive shell within container...<br>... all good<br><br>I traced =
+this to the gpg keys installation:<br>=C2=A0=C2=A0=C2=A0 apt-key adv --keys=
+erver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084=
+DAB9<br><br>Anyone has any thoughts on this? I.e. may be happening in the r=
+oot -w shell execution in the container that makes the non-root container s=
+hell to run?<br><br>Here&#39;s the definition file if someone wants to try =
+it:<br>----<br>BootStrap: docker<br>From: ubuntu:16.10<br><br>%post<br>=C2=
+=A0=C2=A0=C2=A0 apt-get install -y software-properties-common apt-transport=
+-https<br>=C2=A0=C2=A0=C2=A0 apt-key adv --keyserver keyserver.ubuntu.com -=
+-recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9<br>----<br><br>Thanks,<=
+br>MC<br></div>
+------=_Part_2199_701458247.1499120905456--
+
+------=_Part_2198_987648396.1499120905456--

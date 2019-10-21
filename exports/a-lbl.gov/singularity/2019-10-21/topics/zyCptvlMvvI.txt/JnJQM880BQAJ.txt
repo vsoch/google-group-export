@@ -1,0 +1,296 @@
+Date: Thu, 27 Oct 2016 07:59:57 -0700 (PDT)
+From: Simon Butcher <s.bu...@qmul.ac.uk>
+To: singularity <singu...@lbl.gov>
+Message-Id: <a114f3d4-3f10-42c4-a923-8e1237a1295b@lbl.gov>
+In-Reply-To: <09c32568-afc3-4436-bace-8e7beb9bd558@lbl.gov>
+References: <609fdda0-637e-4938-99cd-e8f5fe601e9f@lbl.gov>
+ <09c32568-afc3-4436-bace-8e7beb9bd558@lbl.gov>
+Subject: Re: Bootstrapping a Centos 7 image fails on Ubuntu
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_103_1815094054.1477580397772"
+
+------=_Part_103_1815094054.1477580397772
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_104_1455453170.1477580397772"
+
+------=_Part_104_1455453170.1477580397772
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Thanks! Works for me. I think we're going to have to mandate bootstrapping 
+on Centos to avoid this ugliness. Shame that ubuntu builds don't work 
+exactly the same.
+
+On Thursday, 27 October 2016 15:17:38 UTC+1, David Godlove wrote:
+>
+> I had a similar problem.  Adding these lines to my .def file worked for 
+> me.  (Of course you will need to make sure wget is installed in the 
+> container beforehand with the Include: directive).
+>
+>     # yum needs some tlc to work properly in container
+>     RELEASEVER=7
+>     ARCH=x86_64
+>     echo $RELEASEVER > /etc/yum/vars/releasever
+>     echo $ARCH > /etc/yum/vars/arch
+>     wget http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-8.noarch.rpm
+>     rpm -ivh --nodeps epel-release-7-8.noarch.rpm
+>     yum -d 10 check-update
+>
+>
+> On Thursday, October 27, 2016 at 9:31:53 AM UTC-4, Simon Butcher wrote:
+>>
+>> Hello
+>>
+>> When I bootstrap an image on my laptop using Ubuntu, I get an error (i 
+>> already did apt-get install yum on the ubuntu system)
+>>
+>>
+>> BootStrap: yum
+>> OSVersion: 7
+>> MirrorURL: https://
+>> www.mirrorservice.org/sites/mirror.centos.org/%{OSVERSION}/os/$basearch/
+>> UpdateURL: https://
+>> www.mirrorservice.org/sites/mirror.centos.org/%{OSVERSION}/updates/$basearch/
+>> Include: yum
+>>
+>>
+>> %post
+>>     yum -y install epel-release
+>>     yum -y install python34
+>>
+>> %runscript
+>>     python3.4
+>>
+>>
+>>
+>> sudo singularity create  centos7-python-3.4.3-7.el7.img
+>> sudo singularity bootstrap centos7-python-3.4.3-7.el7.img 
+>> centos7-python-3.4.3-7.el7.def 
+>>
+>> after installing about 90 packages, it fails with:
+>> ...
+>> Complete!
+>> Executing Postbootstrap module
+>> + yum -y install epel-release
+>> Loaded plugins: fastestmirror
+>>
+>>
+>>  One of the configured repositories failed (Unknown),
+>>  and yum doesn't have enough cached data to continue. At this point the 
+>> only
+>>  safe thing yum can do is fail. There are a few ways to work "fix" this:
+>>
+>>      1. Contact the upstream for the repository and get them to fix the 
+>> problem.
+>>
+>>      2. Reconfigure the baseurl/etc. for the repository, to point to a 
+>> working
+>>         upstream. This is most often useful if you are using a newer
+>>         distribution release than is supported by the repository (and the
+>>         packages for the previous distribution release still work).
+>>
+>>      3. Disable the repository, so yum won't use it by default. Yum will 
+>> then
+>>         just ignore the repository until you permanently enable it again 
+>> or use
+>>         --enablerepo for temporary usage:
+>>
+>>             yum-config-manager --disable <repoid>
+>>
+>>      4. Configure the failing repository to be skipped, if it is 
+>> unavailable.
+>>         Note that yum will try to contact the repo. when it runs most 
+>> commands,
+>>         so will have to try and fail each time (and thus. yum will be be 
+>> much
+>>         slower). If it is a very temporary problem though, this is often 
+>> a nice
+>>         compromise:
+>>
+>>             yum-config-manager --save --setopt=<repoid>.
+>> skip_if_unavailable=true
+>>
+>> Cannot find a valid baseurl for repo: base/$releasever/x86_64
+>>
+>> It works on a Centos system, but fails on 2 Ubuntu ones. Something I'm 
+>> doing wrong?
+>>
+>> regards
+>> simon
+>>
+>
+------=_Part_104_1455453170.1477580397772
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Thanks! Works for me. I think we&#39;re going to have to m=
+andate bootstrapping on Centos to avoid this ugliness. Shame that ubuntu bu=
+ilds don&#39;t work exactly the same.<br><br>On Thursday, 27 October 2016 1=
+5:17:38 UTC+1, David Godlove  wrote:<blockquote class=3D"gmail_quote" style=
+=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: =
+1ex;"><div dir=3D"ltr">I had a similar problem. =C2=A0Adding these lines to=
+ my .def file worked for me. =C2=A0(Of course you will need to make sure wg=
+et is installed in the container beforehand with the Include: directive).<d=
+iv><pre style=3D"white-space:pre-wrap;word-wrap:break-word;font-size:12px;p=
+adding:5px;border-width:1px;border-style:solid;border-color:rgb(192,192,192=
+);background-color:rgb(219,223,219);color:rgb(0,0,0)">    # yum needs some =
+tlc to work properly in container
+    RELEASEVER=3D7
+    ARCH=3Dx86_64
+    echo $RELEASEVER &gt; /etc/yum/vars/releasever
+    echo $ARCH &gt; /etc/yum/vars/arch
+    wget <a href=3D"http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-re=
+lease-7-8.noarch.rpm" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"thi=
+s.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fdl.fedoraproject.=
+org%2Fpub%2Fepel%2F7%2Fx86_64%2Fe%2Fepel-release-7-8.noarch.rpm\x26sa\x3dD\=
+x26sntz\x3d1\x26usg\x3dAFQjCNE6bbBQ1jag4Hb3-NgamOo_8nw8sg&#39;;return true;=
+" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fd=
+l.fedoraproject.org%2Fpub%2Fepel%2F7%2Fx86_64%2Fe%2Fepel-release-7-8.noarch=
+.rpm\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNE6bbBQ1jag4Hb3-NgamOo_8nw8sg&#=
+39;;return true;">http://dl.fedoraproject.org/<wbr>pub/epel/7/x86_64/e/epel=
+-<wbr>release-7-8.noarch.rpm</a>
+    rpm -ivh --nodeps epel-release-7-8.noarch.rpm
+    yum -d 10 check-update</pre><br>On Thursday, October 27, 2016 at 9:31:5=
+3 AM UTC-4, Simon Butcher wrote:<blockquote class=3D"gmail_quote" style=3D"=
+margin:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><di=
+v dir=3D"ltr">Hello<br><br>When I bootstrap an image on my laptop using Ubu=
+ntu, I get an error (i already did apt-get install yum on the ubuntu system=
+)<br><br><div style=3D"background-color:rgb(250,250,250);border-color:rgb(1=
+87,187,187);border-style:solid;border-width:1px"><code><div><span style=3D"=
+color:#000"><br></span><span style=3D"color:#606">BootStrap</span><span sty=
+le=3D"color:#660">:</span><span style=3D"color:#000"> yum<br></span><span s=
+tyle=3D"color:#606">OSVersion</span><span style=3D"color:#660">:</span><spa=
+n style=3D"color:#000"> </span><span style=3D"color:#066">7</span><span sty=
+le=3D"color:#000"><br></span><span style=3D"color:#606">MirrorURL</span><sp=
+an style=3D"color:#660">:</span><span style=3D"color:#000"> https</span><sp=
+an style=3D"color:#660">:</span><span style=3D"color:#800">//<a href=3D"htt=
+p://www.mirrorservice.org/sites/mirror.centos.org/%%7BOSVERSION%7D/os/$base=
+arch/" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;h=
+ttp://www.google.com/url?q\x3dhttp%3A%2F%2Fwww.mirrorservice.org%2Fsites%2F=
+mirror.centos.org%2F%25%257BOSVERSION%257D%2Fos%2F%24basearch%2F\x26sa\x3dD=
+\x26sntz\x3d1\x26usg\x3dAFQjCNF0mxrHG54fCMJ2Pnkv3kLV-sSJNg&#39;;return true=
+;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2F=
+www.mirrorservice.org%2Fsites%2Fmirror.centos.org%2F%25%257BOSVERSION%257D%=
+2Fos%2F%24basearch%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNF0mxrHG54fCMJ=
+2Pnkv3kLV-sSJNg&#39;;return true;">www.mirrorservice.org/<wbr>sites/mirror.=
+centos.org/%{<wbr>OSVERSION}/os/$basearch/</a></span><span style=3D"color:#=
+000"><br></span><span style=3D"color:#606">UpdateURL</span><span style=3D"c=
+olor:#660">:</span><span style=3D"color:#000"> https</span><span style=3D"c=
+olor:#660">:</span><span style=3D"color:#800">//<a href=3D"http://www.mirro=
+rservice.org/sites/mirror.centos.org/%%7BOSVERSION%7D/updates/$basearch/" r=
+el=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;http://ww=
+w.google.com/url?q\x3dhttp%3A%2F%2Fwww.mirrorservice.org%2Fsites%2Fmirror.c=
+entos.org%2F%25%257BOSVERSION%257D%2Fupdates%2F%24basearch%2F\x26sa\x3dD\x2=
+6sntz\x3d1\x26usg\x3dAFQjCNGbxmZCS0-71lklPOBktcm36f0cSw&#39;;return true;" =
+onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwww=
+.mirrorservice.org%2Fsites%2Fmirror.centos.org%2F%25%257BOSVERSION%257D%2Fu=
+pdates%2F%24basearch%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGbxmZCS0-71=
+lklPOBktcm36f0cSw&#39;;return true;">www.mirrorservice.org/<wbr>sites/mirro=
+r.centos.org/%{<wbr>OSVERSION}/updates/$basearch/</a></span><span style=3D"=
+color:#000"><br></span><span style=3D"color:#606">Include</span><span style=
+=3D"color:#660">:</span><span style=3D"color:#000"> yum<br><br><br></span><=
+span style=3D"color:#660">%</span><span style=3D"color:#000">post<br>=C2=A0=
+ =C2=A0 yum </span><span style=3D"color:#660">-</span><span style=3D"color:=
+#000">y install epel</span><span style=3D"color:#660">-</span><span style=
+=3D"color:#000">release<br>=C2=A0 =C2=A0 yum </span><span style=3D"color:#6=
+60">-</span><span style=3D"color:#000">y install python34<br><br></span><sp=
+an style=3D"color:#660">%</span><span style=3D"color:#000">runscript<br>=C2=
+=A0 =C2=A0 python3</span><span style=3D"color:#660">.</span><span style=3D"=
+color:#066">4</span><span style=3D"color:#000"><br><br></span></div></code>=
+</div><br><br>sudo singularity create=C2=A0 centos7-python-3.4.3-7.el7.img<=
+br>sudo singularity bootstrap centos7-python-3.4.3-7.el7.img centos7-python=
+-3.4.3-7.el7.def <br><br>after installing about 90 packages, it fails with:=
+<br><div style=3D"background-color:rgb(250,250,250);border-color:rgb(187,18=
+7,187);border-style:solid;border-width:1px"><code><div><span style=3D"color=
+:#660">...</span><span style=3D"color:#000"><br></span><span style=3D"color=
+:#606">Complete</span><span style=3D"color:#660">!</span><span style=3D"col=
+or:#000"><br></span><span style=3D"color:#606">Executing</span><span style=
+=3D"color:#000"> </span><span style=3D"color:#606">Postbootstrap</span><spa=
+n style=3D"color:#000"> </span><span style=3D"color:#008">module</span><spa=
+n style=3D"color:#000"><br></span><span style=3D"color:#660">+</span><span =
+style=3D"color:#000"> yum </span><span style=3D"color:#660">-</span><span s=
+tyle=3D"color:#000">y install epel</span><span style=3D"color:#660">-</span=
+><span style=3D"color:#000">release<br></span><span style=3D"color:#606">Lo=
+aded</span><span style=3D"color:#000"> plugins</span><span style=3D"color:#=
+660">:</span><span style=3D"color:#000"> fastestmirror<br><br><br>=C2=A0</s=
+pan><span style=3D"color:#606">One</span><span style=3D"color:#000"> of the=
+ configured repositories failed </span><span style=3D"color:#660">(</span><=
+span style=3D"color:#606">Unknown</span><span style=3D"color:#660">),</span=
+><span style=3D"color:#000"><br>=C2=A0</span><span style=3D"color:#008">and=
+</span><span style=3D"color:#000"> yum doesn</span><span style=3D"color:#08=
+0">&#39;t have enough cached data to continue. At this point the only<br>=
+=C2=A0safe thing yum can do is fail. There are a few ways to work &quot;fix=
+&quot; this:<br><br>=C2=A0 =C2=A0 =C2=A01. Contact the upstream for the rep=
+ository and get them to fix the problem.<br><br>=C2=A0 =C2=A0 =C2=A02. Reco=
+nfigure the baseurl/etc. for the repository, to point to a working<br>=C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 upstream. This is most often useful if you are usi=
+ng a newer<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 distribution release than is supp=
+orted by the repository (and the<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 packages fo=
+r the previous distribution release still work).<br><br>=C2=A0 =C2=A0 =C2=
+=A03. Disable the repository, so yum won&#39;</span><span style=3D"color:#0=
+00">t </span><span style=3D"color:#008">use</span><span style=3D"color:#000=
+"> it </span><span style=3D"color:#008">by</span><span style=3D"color:#000"=
+> </span><span style=3D"color:#008">default</span><span style=3D"color:#660=
+">.</span><span style=3D"color:#000"> </span><span style=3D"color:#606">Yum=
+</span><span style=3D"color:#000"> will </span><span style=3D"color:#008">t=
+hen</span><span style=3D"color:#000"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 just i=
+gnore the repository </span><span style=3D"color:#008">until</span><span st=
+yle=3D"color:#000"> you permanently enable it again </span><span style=3D"c=
+olor:#008">or</span><span style=3D"color:#000"> </span><span style=3D"color=
+:#008">use</span><span style=3D"color:#000"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ </span><span style=3D"color:#660">--</span><span style=3D"color:#000">enab=
+lerepo </span><span style=3D"color:#008">for</span><span style=3D"color:#00=
+0"> temporary usage</span><span style=3D"color:#660">:</span><span style=3D=
+"color:#000"><br><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 yum</span><s=
+pan style=3D"color:#660">-</span><span style=3D"color:#000">config</span><s=
+pan style=3D"color:#660">-</span><span style=3D"color:#000">manager </span>=
+<span style=3D"color:#660">--</span><span style=3D"color:#000">disable </sp=
+an><span style=3D"color:#080">&lt;repoid&gt;</span><span style=3D"color:#00=
+0"><br><br>=C2=A0 =C2=A0 =C2=A0</span><span style=3D"color:#066">4.</span><=
+span style=3D"color:#000"> </span><span style=3D"color:#606">Configure</spa=
+n><span style=3D"color:#000"> the failing repository to be skipped</span><s=
+pan style=3D"color:#660">,</span><span style=3D"color:#000"> </span><span s=
+tyle=3D"color:#008">if</span><span style=3D"color:#000"> it </span><span st=
+yle=3D"color:#008">is</span><span style=3D"color:#000"> unavailable</span><=
+span style=3D"color:#660">.</span><span style=3D"color:#000"><br>=C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 </span><span style=3D"color:#606">Note</span><span style=
+=3D"color:#000"> that yum will </span><span style=3D"color:#008">try</span>=
+<span style=3D"color:#000"> to contact the repo</span><span style=3D"color:=
+#660">.</span><span style=3D"color:#000"> </span><span style=3D"color:#008"=
+>when</span><span style=3D"color:#000"> it runs most commands</span><span s=
+tyle=3D"color:#660">,</span><span style=3D"color:#000"><br>=C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 so will have to </span><span style=3D"color:#008">try</span><=
+span style=3D"color:#000"> </span><span style=3D"color:#008">and</span><spa=
+n style=3D"color:#000"> fail each time </span><span style=3D"color:#660">(<=
+/span><span style=3D"color:#008">and</span><span style=3D"color:#000"> thus=
+</span><span style=3D"color:#660">.</span><span style=3D"color:#000"> yum w=
+ill be be much<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 slower</span><span style=3D"c=
+olor:#660">).</span><span style=3D"color:#000"> </span><span style=3D"color=
+:#606">If</span><span style=3D"color:#000"> it </span><span style=3D"color:=
+#008">is</span><span style=3D"color:#000"> a very temporary problem though<=
+/span><span style=3D"color:#660">,</span><span style=3D"color:#000"> </span=
+><span style=3D"color:#008">this</span><span style=3D"color:#000"> </span><=
+span style=3D"color:#008">is</span><span style=3D"color:#000"> often a nice=
+<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 compromise</span><span style=3D"color:#660"=
+>:</span><span style=3D"color:#000"><br><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 yum</span><span style=3D"color:#660">-</span><span style=3D"colo=
+r:#000">config</span><span style=3D"color:#660">-</span><span style=3D"colo=
+r:#000">manager </span><span style=3D"color:#660">--</span><span style=3D"c=
+olor:#000">save </span><span style=3D"color:#660">--</span><span style=3D"c=
+olor:#000">setopt</span><span style=3D"color:#660">=3D&lt;</span><span styl=
+e=3D"color:#000">repoid</span><span style=3D"color:#660">&gt;.</span><span =
+style=3D"color:#000">skip_if_<wbr>unavailable</span><span style=3D"color:#6=
+60">=3D</span><span style=3D"color:#008">true</span><span style=3D"color:#0=
+00"><br><br></span><span style=3D"color:#606">Cannot</span><span style=3D"c=
+olor:#000"> find a valid baseurl </span><span style=3D"color:#008">for</spa=
+n><span style=3D"color:#000"> repo</span><span style=3D"color:#660">:</span=
+><span style=3D"color:#000"> </span><span style=3D"color:#008">base</span><=
+span style=3D"color:#660">/</span><span style=3D"color:#000">$releasever</s=
+pan><span style=3D"color:#660">/</span><span style=3D"color:#000">x86_64<br=
+></span></div></code></div><br>It works on a Centos system, but fails on 2 =
+Ubuntu ones. Something I&#39;m doing wrong?<br><br>regards<br>simon<br></di=
+v></blockquote></div></div></blockquote></div>
+------=_Part_104_1455453170.1477580397772--
+
+------=_Part_103_1815094054.1477580397772--

@@ -1,0 +1,455 @@
+Date: Fri, 2 Feb 2018 14:19:34 -0800 (PST)
+From: Steven Brandt <steven...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Cc: steven...@gmail.com
+Message-Id: <b2764460-cc5d-47fb-a19b-967653c6c77a@lbl.gov>
+In-Reply-To: <ce9d6184-939f-1070-b45b-d02acb2e6db5@googlemail.com>
+References: <a0d4a614-cd77-48cb-923a-32266bdcda67@lbl.gov>
+ <CAN9aCee-o7M5rW8VQRkpUYK1hnMWssODowLd3S_MSmEW=kv+Qw@mail.gmail.com>
+ <f1204394-1009-08b7-1fd8-e2b9a79e686b@googlemail.com>
+ <76df0803-486e-478f-ad5b-0b8e6c431b05@lbl.gov>
+ <416e363a-eaf5-b653-c9aa-9ddd66c92246@googlemail.com>
+ <ce9d6184-939f-1070-b45b-d02acb2e6db5@googlemail.com>
+Subject: Re: [Singularity] Can't build with singularity 2.4.2
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1025_2010669854.1517609974615"
+
+------=_Part_1025_2010669854.1517609974615
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1026_580866137.1517609974616"
+
+------=_Part_1026_580866137.1517609974616
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+OK, I moved to another machine and your dockerhub2oci command seems to 
+work, in that it downloaded a bunch of stuff.
+
+Now to figure out the singularity command that can make use of it.
+
+--Steve
+
+On Wednesday, January 17, 2018 at 11:13:59 AM UTC-6, Oliver Freyermuth 
+wrote:
+>
+> Hi Steven, 
+>
+> I gave it a try, and it appears to work for me: 
+> $ ./dockerhub2oci --repo stevenrbrandt --image phylanx.release --tag 
+> latest --writable-dirs 
+> [ some errors about not being able to overwrite etc/gshadow from a 
+> previous layer, which I still need to work around, 
+>   can be ignored for now ] 
+>
+> # Recreate crucial system dirs missing from the image: 
+> $ mkdir -p stevenrbrandt/phylanx.release/latest/{sys,proc,dev} 
+> Now you can do for example (with Charliecloud, or probably also 
+> Singularity in sandbox mode): 
+> $ ch-run --no-home -vv stevenrbrandt/phylanx.release/latest -- /bin/bash 
+>
+> My tool needed a small adaptation to be able to digest this docker image, 
+> though - 
+> it seems there are some recurrent layers which are not ordered 
+> consecutively, pretty unexpected. 
+>
+> Hence, I would be (personally) interested in the Dockerfile / series of 
+> Dockerfiles which produced such output, 
+> in case it is public / open source - would you mind sharing that? 
+>
+> Cheers, 
+> Oliver 
+>
+> Am 17.01.2018 um 17:08 schrieb Oliver Freyermuth: 
+> > Hi Steven, 
+> > 
+> > yes, the functionality that my tool works without root privs is just a 
+> "bonus". 
+> > The functionality that should fix your issue is the dedicated handling 
+> of whiteout files (those files which start with .wh.). 
+> > 
+> > Cheers, 
+> > Oliver 
+> > 
+> > Am 17.01.2018 um 16:49 schrieb Steven Brandt: 
+> >> Oliver, I don't think root privs are involved here. All the files are 
+> owned by me, and I can delete them if I run "chmod u+w" first. 
+> >> 
+> >> On Wednesday, January 17, 2018 at 9:36:46 AM UTC-6, Oliver Freyermuth 
+> wrote: 
+> >> 
+> >>     Hi Steven, 
+> >> 
+> >>     in case it is urgent, you may also consider: 
+> >>     https://github.com/olifre/dockerhub2oci <
+> https://github.com/olifre/dockerhub2oci> 
+> >>     This is my personal tool (which I still consider experimental - 
+> e.g. you may require the --writable-dirs flag) that can pull docker 
+> containers without root privileges, 
+> >>     and extracts them to a directory tree. It will not contain the 
+> special environment setup which singularity puts in there (the .singularity 
+> stuff) of course, 
+> >>     but should be executable by any rootless / unprivileged container 
+> runtime (runc, charliecloud etc.). 
+> >> 
+> >>     The tool has basic handling of whiteout files which are exactly the 
+> files causing problems in your case. 
+> >>     It depends on basic system tools (no python / perl / go or whatever 
+> interpreter, but bash, jq, some gnu tools and aria2c) so it should be very 
+> portable. 
+> >>     Contributions are very welcome, I'm just a bit limited on time 
+> right now, so development is a bit slow. 
+> >> 
+> >>     Cheers, 
+> >>             Oliver 
+> >> 
+> >>     Am 17.01.2018 um 15:10 schrieb David Godlove: 
+> >>     > Hi Steven, 
+> >>     > 
+> >>     > I think this issue is related to the following two PRs. 
+> >>     > 
+> >>     > https://github.com/singularityware/singularity/pull/1106 <
+> https://github.com/singularityware/singularity/pull/1106> 
+> >>     > https://github.com/singularityware/singularity/pull/1181 <
+> https://github.com/singularityware/singularity/pull/1181> 
+> >>     > 
+> >>     > The second PR is under review and should get merged fairly soon.  
+> Sorry for the trouble! 
+> >>     > 
+> >>     > Dave 
+> >>     > 
+> >>     > On Tue, Jan 16, 2018 at 5:37 PM, Steven Brandt <
+> ste...@gmail.com <javascript:> <mailto:ste...@gmail.com 
+> <javascript:>>> wrote: 
+> >>     > 
+> >>     >     I can't build with singularity 2.4.2 because it creates /tmp 
+> files that it cannot clean up. The /tmp files are, btw, all owned by me. I 
+> can delete them manually as follows: 
+> >>     > 
+> >>     >     $ find /tmp/.singularity-build.*|xargs chmod u+w 
+> >>     >     $ rm -fr /tmp/.singularity-build.* 
+> >>     > 
+> >>     >     I have no idea what I'm doing wrong. Thanks. 
+> >>     > 
+> >>     >     $ singularity build phylanx.simg 
+> docker://stevenrbrandt/phylanx.release 
+> >>     > 
+> >>     >     Docker image path: 
+> index.docker.io/stevenrbrandt/phylanx.release:latest <
+> http://index.docker.io/stevenrbrandt/phylanx.release:latest> <
+> http://index.docker.io/stevenrbrandt/phylanx.release:latest <
+> http://index.docker.io/stevenrbrandt/phylanx.release:latest>> 
+> >>     >     Cache folder set to /home/sbrandt/.singularity/docker 
+> >>     >     Importing: base Singularity environment 
+> >>     >     Importing: 
+> /home/sbrandt/.singularity/docker/sha256:a3248c2e4882d08afe45be9217e57a8d710bf629ec35c135de4c0a71d51bb718.tar.gz 
+>
+> >>     >     Importing: 
+> /home/sbrandt/.singularity/docker/sha256:911829ae4905198ea44c4cc77896e4758326701fc88caca06bfbdebd63171c7d.tar.gz 
+>
+> >>     >     tar: usr/bin/.wh.ex: Cannot open: Permission denied 
+> >>     >     tar: usr/bin/.wh.rvi: Cannot open: Permission denied 
+> >>     >     tar: usr/bin/.wh.rview: Cannot open: Permission denied 
+> >>     >     tar: usr/bin/.wh.vi <http://wh.vi> <http://wh.vi>: Cannot 
+> open: Permission denied 
+> >>     >     tar: usr/bin/.wh.view: Cannot open: Permission denied 
+> >>     > 
+> >>     >     -- 
+> >>     >     You received this message because you are subscribed to the 
+> Google Groups "singularity" group. 
+> >>     >     To unsubscribe from this group and stop receiving emails from 
+> it, send an email to singu...@lbl.gov <javascript:> <mailto:
+> singu...@lbl.gov <javascript:> <javascript:>>. 
+> >>     > 
+> >>     > 
+> >>     > -- 
+> >>     > You received this message because you are subscribed to the 
+> Google Groups "singularity" group. 
+> >>     > To unsubscribe from this group and stop receiving emails from it, 
+> send an email to singu...@lbl.gov <javascript:> <mailto:
+> singu...@lbl.gov <javascript:> <javascript:>>. 
+> >> 
+> >> -- 
+> >> You received this message because you are subscribed to the Google 
+> Groups "singularity" group. 
+> >> To unsubscribe from this group and stop receiving emails from it, send 
+> an email to singu...@lbl.gov <javascript:> <mailto:
+> singu...@lbl.gov <javascript:>>. 
+>
+>
+>
+------=_Part_1026_580866137.1517609974616
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">OK, I moved to another machine and your dockerhub2oci comm=
+and seems to work, in that it downloaded a bunch of stuff.<div><br></div><d=
+iv>Now to figure out the singularity command that can make use of it.</div>=
+<div><br></div><div>--Steve<br><br>On Wednesday, January 17, 2018 at 11:13:=
+59 AM UTC-6, Oliver Freyermuth wrote:<blockquote class=3D"gmail_quote" styl=
+e=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left:=
+ 1ex;">Hi Steven,
+<br>
+<br>I gave it a try, and it appears to work for me:
+<br>$ ./dockerhub2oci --repo stevenrbrandt --image phylanx.release --tag la=
+test --writable-dirs
+<br>[ some errors about not being able to overwrite etc/gshadow from a prev=
+ious layer, which I still need to work around,
+<br>=C2=A0 can be ignored for now ]
+<br>
+<br># Recreate crucial system dirs missing from the image:
+<br>$ mkdir -p stevenrbrandt/phylanx.release/<wbr>latest/{sys,proc,dev}
+<br>Now you can do for example (with Charliecloud, or probably also Singula=
+rity in sandbox mode):
+<br>$ ch-run --no-home -vv stevenrbrandt/phylanx.release/<wbr>latest -- /bi=
+n/bash
+<br>
+<br>My tool needed a small adaptation to be able to digest this docker imag=
+e, though -=20
+<br>it seems there are some recurrent layers which are not ordered consecut=
+ively, pretty unexpected.=20
+<br>
+<br>Hence, I would be (personally) interested in the Dockerfile / series of=
+ Dockerfiles which produced such output,
+<br>in case it is public / open source - would you mind sharing that?=20
+<br>
+<br>Cheers,
+<br>Oliver
+<br>
+<br>Am 17.01.2018 um 17:08 schrieb Oliver Freyermuth:
+<br>&gt; Hi Steven,
+<br>&gt;=20
+<br>&gt; yes, the functionality that my tool works without root privs is ju=
+st a &quot;bonus&quot;.=20
+<br>&gt; The functionality that should fix your issue is the dedicated hand=
+ling of whiteout files (those files which start with .wh.).=20
+<br>&gt;=20
+<br>&gt; Cheers,
+<br>&gt; Oliver
+<br>&gt;=20
+<br>&gt; Am 17.01.2018 um 16:49 schrieb Steven Brandt:
+<br>&gt;&gt; Oliver, I don&#39;t think root privs are involved here. All th=
+e files are owned by me, and I can delete them if I run &quot;chmod u+w&quo=
+t; first.
+<br>&gt;&gt;
+<br>&gt;&gt; On Wednesday, January 17, 2018 at 9:36:46 AM UTC-6, Oliver Fre=
+yermuth wrote:
+<br>&gt;&gt;
+<br>&gt;&gt; =C2=A0 =C2=A0 Hi Steven,
+<br>&gt;&gt;
+<br>&gt;&gt; =C2=A0 =C2=A0 in case it is urgent, you may also consider:
+<br>&gt;&gt; =C2=A0 =C2=A0 <a href=3D"https://github.com/olifre/dockerhub2o=
+ci" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http=
+s://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Folifre%2Fdockerhub2o=
+ci\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPkbSz1p-SIu07f8G-YeKEo-cnFw&#39=
+;;return true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3=
+dhttps%3A%2F%2Fgithub.com%2Folifre%2Fdockerhub2oci\x26sa\x3dD\x26sntz\x3d1\=
+x26usg\x3dAFQjCNFPkbSz1p-SIu07f8G-YeKEo-cnFw&#39;;return true;">https://git=
+hub.com/olifre/<wbr>dockerhub2oci</a> &lt;<a href=3D"https://github.com/oli=
+fre/dockerhub2oci" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.h=
+ref=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Folifr=
+e%2Fdockerhub2oci\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPkbSz1p-SIu07f8G=
+-YeKEo-cnFw&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.goog=
+le.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Folifre%2Fdockerhub2oci\x26sa\x3d=
+D\x26sntz\x3d1\x26usg\x3dAFQjCNFPkbSz1p-SIu07f8G-YeKEo-cnFw&#39;;return tru=
+e;">https://github.com/olifre/<wbr>dockerhub2oci</a>&gt;
+<br>&gt;&gt; =C2=A0 =C2=A0 This is my personal tool (which I still consider=
+ experimental - e.g. you may require the --writable-dirs flag) that can pul=
+l docker containers without root privileges,
+<br>&gt;&gt; =C2=A0 =C2=A0 and extracts them to a directory tree. It will n=
+ot contain the special environment setup which singularity puts in there (t=
+he .singularity stuff) of course,
+<br>&gt;&gt; =C2=A0 =C2=A0 but should be executable by any rootless / unpri=
+vileged container runtime (runc, charliecloud etc.).
+<br>&gt;&gt;
+<br>&gt;&gt; =C2=A0 =C2=A0 The tool has basic handling of whiteout files wh=
+ich are exactly the files causing problems in your case.
+<br>&gt;&gt; =C2=A0 =C2=A0 It depends on basic system tools (no python / pe=
+rl / go or whatever interpreter, but bash, jq, some gnu tools and aria2c) s=
+o it should be very portable.
+<br>&gt;&gt; =C2=A0 =C2=A0 Contributions are very welcome, I&#39;m just a b=
+it limited on time right now, so development is a bit slow.
+<br>&gt;&gt;
+<br>&gt;&gt; =C2=A0 =C2=A0 Cheers,
+<br>&gt;&gt; =C2=A0 =C2=A0 =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+Oliver
+<br>&gt;&gt;
+<br>&gt;&gt; =C2=A0 =C2=A0 Am 17.01.2018 um 15:10 schrieb David Godlove:
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; Hi Steven,
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt;
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; I think this issue is related to the follow=
+ing two PRs.
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt;
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; <a href=3D"https://github.com/singularitywa=
+re/singularity/pull/1106" target=3D"_blank" rel=3D"nofollow" onmousedown=3D=
+"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%=
+2Fsingularityware%2Fsingularity%2Fpull%2F1106\x26sa\x3dD\x26sntz\x3d1\x26us=
+g\x3dAFQjCNGMmtbAQiW_Kc6KdiPEwZmhAIrQzA&#39;;return true;" onclick=3D"this.=
+href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsing=
+ularityware%2Fsingularity%2Fpull%2F1106\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dA=
+FQjCNGMmtbAQiW_Kc6KdiPEwZmhAIrQzA&#39;;return true;">https://github.com/<wb=
+r>singularityware/singularity/<wbr>pull/1106</a> &lt;<a href=3D"https://git=
+hub.com/singularityware/singularity/pull/1106" target=3D"_blank" rel=3D"nof=
+ollow" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttp=
+s%3A%2F%2Fgithub.com%2Fsingularityware%2Fsingularity%2Fpull%2F1106\x26sa\x3=
+dD\x26sntz\x3d1\x26usg\x3dAFQjCNGMmtbAQiW_Kc6KdiPEwZmhAIrQzA&#39;;return tr=
+ue;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2=
+F%2Fgithub.com%2Fsingularityware%2Fsingularity%2Fpull%2F1106\x26sa\x3dD\x26=
+sntz\x3d1\x26usg\x3dAFQjCNGMmtbAQiW_Kc6KdiPEwZmhAIrQzA&#39;;return true;">h=
+ttps://github.com/<wbr>singularityware/singularity/<wbr>pull/1106</a>&gt;
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; <a href=3D"https://github.com/singularitywa=
+re/singularity/pull/1181" target=3D"_blank" rel=3D"nofollow" onmousedown=3D=
+"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%=
+2Fsingularityware%2Fsingularity%2Fpull%2F1181\x26sa\x3dD\x26sntz\x3d1\x26us=
+g\x3dAFQjCNG103eGtECSguN0C8KOno14suJNgA&#39;;return true;" onclick=3D"this.=
+href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsing=
+ularityware%2Fsingularity%2Fpull%2F1181\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dA=
+FQjCNG103eGtECSguN0C8KOno14suJNgA&#39;;return true;">https://github.com/<wb=
+r>singularityware/singularity/<wbr>pull/1181</a> &lt;<a href=3D"https://git=
+hub.com/singularityware/singularity/pull/1181" target=3D"_blank" rel=3D"nof=
+ollow" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttp=
+s%3A%2F%2Fgithub.com%2Fsingularityware%2Fsingularity%2Fpull%2F1181\x26sa\x3=
+dD\x26sntz\x3d1\x26usg\x3dAFQjCNG103eGtECSguN0C8KOno14suJNgA&#39;;return tr=
+ue;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2=
+F%2Fgithub.com%2Fsingularityware%2Fsingularity%2Fpull%2F1181\x26sa\x3dD\x26=
+sntz\x3d1\x26usg\x3dAFQjCNG103eGtECSguN0C8KOno14suJNgA&#39;;return true;">h=
+ttps://github.com/<wbr>singularityware/singularity/<wbr>pull/1181</a>&gt;
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt;
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; The second PR is under review and should ge=
+t merged fairly soon.=C2=A0 Sorry for the trouble!
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt;
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; Dave
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt;
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; On Tue, Jan 16, 2018 at 5:37 PM, Steven Bra=
+ndt &lt;<a>ste...@gmail.com</a> &lt;javascript:&gt; &lt;mailto:<a>ste...@gm=
+ail.com</a> &lt;javascript:&gt;&gt;&gt; wrote:
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt;
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; =C2=A0 =C2=A0 I can&#39;t build with singul=
+arity 2.4.2 because it creates /tmp files that it cannot clean up. The /tmp=
+=C2=A0files are, btw, all owned by me. I can delete them manually as follow=
+s:
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt;
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; =C2=A0 =C2=A0 $ find /tmp/.singularity-buil=
+d.*|<wbr>xargs chmod u+w
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; =C2=A0 =C2=A0 $ rm -fr /tmp/.singularity-bu=
+ild.*
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt;
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; =C2=A0 =C2=A0 I have no idea what I&#39;m d=
+oing wrong. Thanks.
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt;
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; =C2=A0 =C2=A0 $ singularity build phylanx.s=
+img docker://stevenrbrandt/<wbr>phylanx.release
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt;
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; =C2=A0 =C2=A0 Docker image path: <a href=3D=
+"http://index.docker.io/stevenrbrandt/phylanx.release:latest" target=3D"_bl=
+ank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://www.google.com=
+/url?q\x3dhttp%3A%2F%2Findex.docker.io%2Fstevenrbrandt%2Fphylanx.release%3A=
+latest\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHGiqEORE6KiSG0yx6Kj-6lIxJK7g=
+&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q=
+\x3dhttp%3A%2F%2Findex.docker.io%2Fstevenrbrandt%2Fphylanx.release%3Alatest=
+\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHGiqEORE6KiSG0yx6Kj-6lIxJK7g&#39;;=
+return true;">index.docker.io/stevenrbrandt/<wbr>phylanx.release:latest</a>=
+ &lt;<a href=3D"http://index.docker.io/stevenrbrandt/phylanx.release:latest=
+" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http:/=
+/www.google.com/url?q\x3dhttp%3A%2F%2Findex.docker.io%2Fstevenrbrandt%2Fphy=
+lanx.release%3Alatest\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHGiqEORE6KiSG=
+0yx6Kj-6lIxJK7g&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.g=
+oogle.com/url?q\x3dhttp%3A%2F%2Findex.docker.io%2Fstevenrbrandt%2Fphylanx.r=
+elease%3Alatest\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHGiqEORE6KiSG0yx6Kj=
+-6lIxJK7g&#39;;return true;">http://index.docker.io/<wbr>stevenrbrandt/phyl=
+anx.release:<wbr>latest</a>&gt; &lt;<a href=3D"http://index.docker.io/steve=
+nrbrandt/phylanx.release:latest" target=3D"_blank" rel=3D"nofollow" onmouse=
+down=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Findex.=
+docker.io%2Fstevenrbrandt%2Fphylanx.release%3Alatest\x26sa\x3dD\x26sntz\x3d=
+1\x26usg\x3dAFQjCNHGiqEORE6KiSG0yx6Kj-6lIxJK7g&#39;;return true;" onclick=
+=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Findex.dock=
+er.io%2Fstevenrbrandt%2Fphylanx.release%3Alatest\x26sa\x3dD\x26sntz\x3d1\x2=
+6usg\x3dAFQjCNHGiqEORE6KiSG0yx6Kj-6lIxJK7g&#39;;return true;">http://index.=
+docker.io/<wbr>stevenrbrandt/phylanx.release:<wbr>latest</a> &lt;<a href=3D=
+"http://index.docker.io/stevenrbrandt/phylanx.release:latest" target=3D"_bl=
+ank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://www.google.com=
+/url?q\x3dhttp%3A%2F%2Findex.docker.io%2Fstevenrbrandt%2Fphylanx.release%3A=
+latest\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHGiqEORE6KiSG0yx6Kj-6lIxJK7g=
+&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q=
+\x3dhttp%3A%2F%2Findex.docker.io%2Fstevenrbrandt%2Fphylanx.release%3Alatest=
+\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHGiqEORE6KiSG0yx6Kj-6lIxJK7g&#39;;=
+return true;">http://index.docker.io/<wbr>stevenrbrandt/phylanx.release:<wb=
+r>latest</a>&gt;&gt;
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; =C2=A0 =C2=A0 Cache folder set to /home/sbr=
+andt/.singularity/<wbr>docker
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; =C2=A0 =C2=A0 Importing: base Singularity e=
+nvironment
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; =C2=A0 =C2=A0 Importing: /home/sbrandt/.sin=
+gularity/<wbr>docker/sha256:<wbr>a3248c2e4882d08afe45be9217e57a<wbr>8d710bf=
+629ec35c135de4c0a71d51b<wbr>b718.tar.gz
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; =C2=A0 =C2=A0 Importing: /home/sbrandt/.sin=
+gularity/<wbr>docker/sha256:<wbr>911829ae4905198ea44c4cc77896e4<wbr>7583267=
+01fc88caca06bfbdebd6317<wbr>1c7d.tar.gz
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; =C2=A0 =C2=A0 tar: usr/bin/.wh.ex: Cannot o=
+pen: Permission denied
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; =C2=A0 =C2=A0 tar: usr/bin/.wh.rvi: Cannot =
+open: Permission denied
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; =C2=A0 =C2=A0 tar: usr/bin/.wh.rview: Canno=
+t open: Permission denied
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; =C2=A0 =C2=A0 tar: usr/bin/.<a href=3D"http=
+://wh.vi" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#3=
+9;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwh.vi\x26sa\x3dD\x26sntz\x3d1=
+\x26usg\x3dAFQjCNGp2HpCI0ZHsASmTZMGRcuRaTLoJg&#39;;return true;" onclick=3D=
+"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwh.vi\x26sa\x=
+3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGp2HpCI0ZHsASmTZMGRcuRaTLoJg&#39;;return t=
+rue;">wh.vi</a> &lt;<a href=3D"http://wh.vi" target=3D"_blank" rel=3D"nofol=
+low" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A=
+%2F%2Fwh.vi\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGp2HpCI0ZHsASmTZMGRcuRa=
+TLoJg&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.google.com/=
+url?q\x3dhttp%3A%2F%2Fwh.vi\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGp2HpCI=
+0ZHsASmTZMGRcuRaTLoJg&#39;;return true;">http://wh.vi</a>&gt; &lt;<a href=
+=3D"http://wh.vi" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.hr=
+ef=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwh.vi\x26sa\x3dD\x26s=
+ntz\x3d1\x26usg\x3dAFQjCNGp2HpCI0ZHsASmTZMGRcuRaTLoJg&#39;;return true;" on=
+click=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwh.vi=
+\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGp2HpCI0ZHsASmTZMGRcuRaTLoJg&#39;;=
+return true;">http://wh.vi</a>&gt;: Cannot open: Permission denied
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; =C2=A0 =C2=A0 tar: usr/bin/.wh.view: Cannot=
+ open: Permission denied
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt;
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; =C2=A0 =C2=A0 --
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; =C2=A0 =C2=A0 You received this message bec=
+ause you are subscribed to the Google Groups &quot;singularity&quot; group.
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; =C2=A0 =C2=A0 To unsubscribe from this grou=
+p and stop receiving emails from it, send an email to <a>singu...@lbl.gov</=
+a> &lt;javascript:&gt; &lt;mailto:<a href=3D"javascript:" target=3D"_blank"=
+ gdf-obfuscated-mailto=3D"zkj8_yFAAQAJ" rel=3D"nofollow" onmousedown=3D"thi=
+s.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;ja=
+vascript:&#39;;return true;">singularity+<wbr>unsub...@lbl.gov</a> &lt;java=
+script:&gt;&gt;.
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt;
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt;
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; --
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; You received this message because you are s=
+ubscribed to the Google Groups &quot;singularity&quot; group.
+<br>&gt;&gt; =C2=A0 =C2=A0 &gt; To unsubscribe from this group and stop rec=
+eiving emails from it, send an email to <a>singu...@lbl.gov</a> &lt;javascr=
+ipt:&gt; &lt;mailto:<a href=3D"javascript:" target=3D"_blank" gdf-obfuscate=
+d-mailto=3D"zkj8_yFAAQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;=
+javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;=
+;return true;">singularity+<wbr>unsub...@lbl.gov</a> &lt;javascript:&gt;&gt=
+;.
+<br>&gt;&gt;
+<br>&gt;&gt; --=20
+<br>&gt;&gt; You received this message because you are subscribed to the Go=
+ogle Groups &quot;singularity&quot; group.
+<br>&gt;&gt; To unsubscribe from this group and stop receiving emails from =
+it, send an email to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscat=
+ed-mailto=3D"zkj8_yFAAQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39=
+;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39=
+;;return true;">singularity...@lbl.<wbr>gov</a> &lt;mailto:<a href=3D"javas=
+cript:" target=3D"_blank" gdf-obfuscated-mailto=3D"zkj8_yFAAQAJ" rel=3D"nof=
+ollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" oncli=
+ck=3D"this.href=3D&#39;javascript:&#39;;return true;">singularity+<wbr>unsu=
+b...@lbl.gov</a>&gt;.
+<br>
+<br>
+<br></blockquote></div></div>
+------=_Part_1026_580866137.1517609974616--
+
+------=_Part_1025_2010669854.1517609974615--

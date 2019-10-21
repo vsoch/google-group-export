@@ -1,0 +1,396 @@
+Date: Wed, 26 Sep 2018 16:18:01 -0700 (PDT)
+From: =?UTF-8?Q?Micha=C5=82_T=2E_Lorenc?= <m.t....@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <a46914a3-2a95-49cb-b124-f13a83187e1f@lbl.gov>
+In-Reply-To: <CAOunvuNFLqOUOEcKyTtBLt987RpxkTAiWbdZbWqEt5D+yTaiig@mail.gmail.com>
+References: <3bd0d4b3-fc36-4ac0-ae1a-1495dcdecc70@lbl.gov> <CACbNy8HGGBNH=f4dHSgZFQQcQ-Mo84sPRdC8hmOcyR+U6b10PA@mail.gmail.com>
+ <fd7260cb-c1c0-4b69-8a28-20d81d0fad21@lbl.gov>
+ <CAOunvuNFLqOUOEcKyTtBLt987RpxkTAiWbdZbWqEt5D+yTaiig@mail.gmail.com>
+Subject: Re: [Singularity] Wrongly reported: No space left on device
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_18_1522750484.1538003881590"
+
+------=_Part_18_1522750484.1538003881590
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_19_1035907946.1538003881591"
+
+------=_Part_19_1035907946.1538003881591
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+I use docker because I am unsing a mac and I think singularity is not=20
+avaible for mac.
+Before using Singularity Hub I would prefere to do it locally because of=20
+testsing the container.=20
+
+How is it possible to check how much space the docker container has? The=20
+Singularity contaner get build on a docker volume which has 30 GB available=
+.
+
+Thank you in advance,
+
+Michal
+
+
+On Thursday, September 27, 2018 at 8:16:31 AM UTC+10, Jafaruddin Lie wrote:
+>
+> You might not have enough space in the docker container to build the=20
+> singularity container.
+> Maybe try setting the Singularity build environment to a local directory=
+=20
+> that you mount into Docker? (http://singularity.lbl.gov/build-environment=
+)
+>
+> Another thing, since you have the Singularity file, why not just build it=
+=20
+> using Singularity on your local PC?
+> If that's not possible, you can always try Singularity Hub (
+> https://singularity-hub.org/=20
+> <https://www.google.com/url?q=3Dhttps%3A%2F%2Fsingularity-hub.org%2F&sa=
+=3DD&sntz=3D1&usg=3DAFQjCNG0LeeRjREPcgyzkkeIZt9lMegKHw>)=20
+> to build.
+>
+>
+> On Thu, Sep 27, 2018 at 8:01 AM Micha=C5=82 T. Lorenc <m...@gmail.com=20
+> <javascript:>> wrote:
+>
+>> Hi Joana,
+>> I tried to use sandbox (*singularity build --sandbox 3d-dna-sandbox=20
+>> Singularity*) but now I got=20
+>>
+>>
+>>
+>>
+>>
+>> *Errors were encountered while=20
+>> processing: /tmp/apt-dpkg-install-gpR3vj/061-linux-libc-dev_4.9.110-3+de=
+b9u4_amd64.deb /tmp/apt-dpkg-install-gpR3vj/112-manpages-dev_4.10-2_all.deb=
+E:=20
+>> Sub-process /usr/bin/dpkg returned an error code (1)ABORT: Aborting with=
+=20
+>> RETVAL=3D255*
+>>
+>> with this Singularity file:
+>>
+>> BootStrap: docker
+>> From: debian:stretch-backports
+>>
+>> %help
+>>   A container with 3d-dna
+>>
+>> %environment
+>>   PATH=3D/opt/conda/bin:$PATH
+>>
+>>
+>> %post
+>>   apt-get update && apt-get -y upgrade
+>>   apt-get -y install \
+>>     build-essential \
+>>     wget \
+>>     bzip2 \
+>>     ca-certificates \
+>>     libglib2.0-0 \
+>>     libxext6 \
+>>     libsm6 \
+>>     libxrender1 \
+>>     git
+>>
+>>   rm -rf /var/lib/apt/lists/*
+>>   apt-get clean
+>>
+>>   # download and install Miniconda
+>>   echo 'export PATH=3D/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh
+>>   wget -c=20
+>> https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh
+>>     /bin/bash Miniconda2-latest-Linux-x86_64.sh -bfp /usr/local/
+>>
+>>   rm -rf Miniconda2-latest-Linux-x86_64.sh
+>>
+>>   # add bioconda channels
+>>   conda config --add channels defaults
+>>   conda config --add channels conda-forge
+>>   conda config --add channels bioconda
+>>   conda update conda
+>>  =20
+>>   # install 3d-dna dependecies
+>>   conda create -y --name 3d-dna lastz=3D1.0.4 openjdk=3D8.0.152 gawk=3D4=
+.2.1=20
+>> coreutils=3D8.30 parallel=3D20180522 python=3D2.7 numpy=3D1.15.1 scipy=
+=3D1.1.0=20
+>> matplotlib=3D2.2.3
+>>   conda clean --all --yes
+>>
+>>   # install 3d-dna
+>>   git clone https://github.com/theaidenlab/3d-dna.git
+>>
+>> %runscript
+>>    exec conda activate 3d-dna
+>>
+>> What did I miss?
+>>
+>> Thank you in advance,
+>>
+>> Michal
+>>
+>>
+>>
+>>
+>> On Wednesday, September 26, 2018 at 9:41:28 PM UTC+10, Joana Chavez wrot=
+e:
+>>
+>>> Hello Michal, is your container using a ext3 file system? I would=20
+>>> suggest running it with a sandbox if that's the case. Ext3 has an allot=
+ted=20
+>>> amount of space which you might be exceeding, whereas a sandbox has muc=
+h=20
+>>> space. Other possibility would be to expand your image using* image=20
+>>> expand* ( see this ->=20
+>>> https://www.sylabs.io/guides/2.6/user-guide/appendix.html?highlight=3Di=
+mage%20expand#image-expand
+>>>  )
+>>>
+>>> If you would like to run it with a sandbox instead you could do so: *su=
+do=20
+>>> singularity build --sandbox new_container old_container*
+>>>
+>>> Joana
+>>>
+>>>
+>>> On Wed, Sep 26, 2018 at 1:21 PM Micha=C5=82 T. Lorenc <m...@gmail.com>=
+=20
+>>> wrote:
+>>>
+>> Hi,
+>>>> Despite my laptop has more than 30 GB free I Singularity reported *No=
+=20
+>>>> space left on device*:=20
+>>>>
+>>>> Building Singularity image...
+>>>> tar: ./usr/local/envs/3d-dna/lib/libicui18n.a: Wrote only 2048 of 1024=
+0=20
+>>>> bytes
+>>>> tar: ./usr/local/envs/3d-dna/lib/lib: Cannot mkdir: No space left on=
+=20
+>>>> device
+>>>>
+>>>> I used the following commands:
+>>>>
+>>>>
+>>>>
+>>>> *docker run --rm -it --privileged -v $(pwd):/work=20
+>>>> deephorizons/singularity shcd worksingularity create 3d-dna.imgsingula=
+rity=20
+>>>> bootstrap 3d-dna.img Singularity*
+>>>>
+>>>> What did I miss?
+>>>>
+>>>> Thank you in advance.
+>>>>
+>>>> Michal
+>>>>
+>>>>
+>>>>
+>>>>
+>>>> --=20
+>>>> You received this message because you are subscribed to the Google=20
+>>>> Groups "singularity" group.
+>>>>
+>>> To unsubscribe from this group and stop receiving emails from it, send=
+=20
+>>>> an email to singu...@lbl.gov.
+>>>>
+>>>
+>>>
+>>> --=20
+>>> *Joana Chavez La Valle*
+>>> *Software Engineer*
+>>>
+>>> http://www.sylabs.io
+>>>
+>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s=20
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n=20
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+------=_Part_19_1035907946.1538003881591
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>I use docker because I am unsing a mac and I think si=
+ngularity is not avaible for mac.</div><div>Before using Singularity Hub I =
+would prefere to do it locally because of testsing the container. <br></div=
+><div><br></div><div>How is it possible to check how much space the docker =
+container has? The Singularity contaner get build on a docker volume which =
+has 30 GB available.</div><div><br></div><div>Thank you in advance,</div><d=
+iv><br></div><div>Michal<br></div><div><br> </div><br>On Thursday, Septembe=
+r 27, 2018 at 8:16:31 AM UTC+10, Jafaruddin Lie wrote:<blockquote class=3D"=
+gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc so=
+lid;padding-left: 1ex;"><div dir=3D"ltr">You might not have enough space in=
+ the docker container to build the singularity container.<div>Maybe try set=
+ting the Singularity build environment to a local directory that you mount =
+into Docker? (<a href=3D"http://singularity.lbl.gov/build-environment" targ=
+et=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://www.g=
+oogle.com/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.gov%2Fbuild-environment\x26=
+sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHWaayXwoeqkHcpQ8pKuLi1VwnYig&#39;;retu=
+rn true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3=
+A%2F%2Fsingularity.lbl.gov%2Fbuild-environment\x26sa\x3dD\x26sntz\x3d1\x26u=
+sg\x3dAFQjCNHWaayXwoeqkHcpQ8pKuLi1VwnYig&#39;;return true;">http://singular=
+ity.lbl.gov/<wbr>build-environment</a>)</div><div><br></div><div>Another th=
+ing, since you have the Singularity file, why not just build it using Singu=
+larity on your local PC?</div><div>If that&#39;s not possible, you can alwa=
+ys try Singularity Hub (<a href=3D"https://www.google.com/url?q=3Dhttps%3A%=
+2F%2Fsingularity-hub.org%2F&amp;sa=3DD&amp;sntz=3D1&amp;usg=3DAFQjCNG0LeeRj=
+REPcgyzkkeIZt9lMegKHw" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"th=
+is.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fsingularity-hu=
+b.org%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNG0LeeRjREPcgyzkkeIZt9lMegK=
+Hw&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.com/ur=
+l?q\x3dhttps%3A%2F%2Fsingularity-hub.org%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\=
+x3dAFQjCNG0LeeRjREPcgyzkkeIZt9lMegKHw&#39;;return true;">https://singularit=
+y-hub.org/</a>) to build.</div><div><br></div></div><br><div class=3D"gmail=
+_quote"><div dir=3D"ltr">On Thu, Sep 27, 2018 at 8:01 AM Micha=C5=82 T. Lor=
+enc &lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+bZ2rJYjTAAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">m...@gmail.com</a>&gt; wrote:<br></div><blockquote class=3D"gmail_quote"=
+ style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><d=
+iv dir=3D"ltr"><div>Hi Joana,</div><div>I tried to use sandbox (<i>singular=
+ity build --sandbox 3d-dna-sandbox Singularity</i>) but now I got <br></div=
+><div><i><br></i></div><div><i>Errors were encountered while processing:<br=
+>=C2=A0/tmp/apt-dpkg-install-gpR3vj/<wbr>061-linux-libc-dev_4.9.110-3+<wbr>=
+deb9u4_amd64.deb<br>=C2=A0/tmp/apt-dpkg-install-gpR3vj/<wbr>112-manpages-de=
+v_4.10-2_all.<wbr>deb<br>E: Sub-process /usr/bin/dpkg returned an error cod=
+e (1)<br>ABORT: Aborting with RETVAL=3D255</i></div><div><br></div><div>wit=
+h this Singularity file:</div><div><br></div><div>BootStrap: docker<br>From=
+: debian:stretch-backports<br><br>%help<br>=C2=A0 A container with 3d-dna<b=
+r><br>%environment<br>=C2=A0 PATH=3D/opt/conda/bin:$PATH<br><br><br>%post<b=
+r>=C2=A0 apt-get update &amp;&amp; apt-get -y upgrade<br>=C2=A0 apt-get -y =
+install \<br>=C2=A0=C2=A0=C2=A0 build-essential \<br>=C2=A0=C2=A0=C2=A0 wge=
+t \<br>=C2=A0=C2=A0=C2=A0 bzip2 \<br>=C2=A0=C2=A0=C2=A0 ca-certificates \<b=
+r>=C2=A0=C2=A0=C2=A0 libglib2.0-0 \<br>=C2=A0=C2=A0=C2=A0 libxext6 \<br>=C2=
+=A0=C2=A0=C2=A0 libsm6 \<br>=C2=A0=C2=A0=C2=A0 libxrender1 \<br>=C2=A0=C2=
+=A0=C2=A0 git<br><br>=C2=A0 rm -rf /var/lib/apt/lists/*<br>=C2=A0 apt-get c=
+lean<br><br>=C2=A0 # download and install Miniconda<br>=C2=A0 echo &#39;exp=
+ort PATH=3D/opt/conda/bin:$PATH&#39; &gt; /etc/profile.d/conda.sh<br>=C2=A0=
+ wget -c <a href=3D"https://repo.continuum.io/miniconda/Miniconda2-latest-L=
+inux-x86_64.sh" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=
+=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Frepo.continuum.io%2Fm=
+iniconda%2FMiniconda2-latest-Linux-x86_64.sh\x26sa\x3dD\x26sntz\x3d1\x26usg=
+\x3dAFQjCNHykH44v_akf8uZP4uROR3FcQ_Zvw&#39;;return true;" onclick=3D"this.h=
+ref=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Frepo.continuum.io%=
+2Fminiconda%2FMiniconda2-latest-Linux-x86_64.sh\x26sa\x3dD\x26sntz\x3d1\x26=
+usg\x3dAFQjCNHykH44v_akf8uZP4uROR3FcQ_Zvw&#39;;return true;">https://repo.c=
+ontinuum.io/<wbr>miniconda/Miniconda2-latest-<wbr>Linux-x86_64.sh</a><br>=
+=C2=A0=C2=A0=C2=A0 /bin/bash Miniconda2-latest-Linux-x86_<wbr>64.sh -bfp /u=
+sr/local/<br><br>=C2=A0 rm -rf Miniconda2-latest-Linux-x86_<wbr>64.sh<br><b=
+r>=C2=A0 # add bioconda channels<br>=C2=A0 conda config --add channels defa=
+ults<br>=C2=A0 conda config --add channels conda-forge<br>=C2=A0 conda conf=
+ig --add channels bioconda<br>=C2=A0 conda update conda<br>=C2=A0 <br>=C2=
+=A0 # install 3d-dna dependecies<br>=C2=A0 conda create -y --name 3d-dna la=
+stz=3D1.0.4 openjdk=3D8.0.152 gawk=3D4.2.1 coreutils=3D8.30 parallel=3D2018=
+0522 python=3D2.7 numpy=3D1.15.1 scipy=3D1.1.0 matplotlib=3D2.2.3<br>=C2=A0=
+ conda clean --all --yes<br><br>=C2=A0 # install 3d-dna<br>=C2=A0 git clone=
+ <a href=3D"https://github.com/theaidenlab/3d-dna.git" target=3D"_blank" re=
+l=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q=
+\x3dhttps%3A%2F%2Fgithub.com%2Ftheaidenlab%2F3d-dna.git\x26sa\x3dD\x26sntz\=
+x3d1\x26usg\x3dAFQjCNHV-QOfV3pg2GAI-W0oiYZPF1rxEA&#39;;return true;" onclic=
+k=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.=
+com%2Ftheaidenlab%2F3d-dna.git\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHV-Q=
+OfV3pg2GAI-W0oiYZPF1rxEA&#39;;return true;">https://github.com/<wbr>theaide=
+nlab/3d-dna.git</a><br><br>%runscript<br>=C2=A0=C2=A0 exec conda activate 3=
+d-dna<br></div><div><br></div><div>What did I miss?</div><div><br></div><di=
+v>Thank you in advance,</div><div><br></div><div>Michal</div></div><div dir=
+=3D"ltr"><div><br></div><div><br></div><div><br></div><br>On Wednesday, Sep=
+tember 26, 2018 at 9:41:28 PM UTC+10, Joana Chavez wrote:</div><div dir=3D"=
+ltr"><blockquote class=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;=
+border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr"><div dir=3D"l=
+tr">Hello Michal, is your container using a ext3 file system? I would sugge=
+st running it with a sandbox if that&#39;s the case. Ext3 has an allotted a=
+mount of space which you might be exceeding, whereas a sandbox has much spa=
+ce. Other possibility would be to expand your image using<b> image expand</=
+b> ( see this -&gt;=C2=A0<a href=3D"https://www.sylabs.io/guides/2.6/user-g=
+uide/appendix.html?highlight=3Dimage%20expand#image-expand" rel=3D"nofollow=
+" target=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/=
+url?q\x3dhttps%3A%2F%2Fwww.sylabs.io%2Fguides%2F2.6%2Fuser-guide%2Fappendix=
+.html%3Fhighlight%3Dimage%2520expand%23image-expand\x26sa\x3dD\x26sntz\x3d1=
+\x26usg\x3dAFQjCNERBnECMImtViWLXJVXBza0TkfugQ&#39;;return true;" onclick=3D=
+"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fwww.sylabs.=
+io%2Fguides%2F2.6%2Fuser-guide%2Fappendix.html%3Fhighlight%3Dimage%2520expa=
+nd%23image-expand\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNERBnECMImtViWLXJV=
+XBza0TkfugQ&#39;;return true;">https://www.sylabs.io/<wbr>guides/2.6/user-g=
+uide/<wbr>appendix.html?highlight=3Dimage%<wbr>20expand#image-expand</a>=C2=
+=A0)</div><div dir=3D"ltr"><br></div><div dir=3D"ltr">If you would like to =
+run it with a sandbox instead you could do so: <b>sudo singularity build --=
+sandbox new_container old_container</b><br><div><br></div><div>Joana<br><di=
+v><br></div></div></div></div><br></blockquote></div><div dir=3D"ltr"><bloc=
+kquote class=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-lef=
+t:1px #ccc solid;padding-left:1ex"><div class=3D"gmail_quote"><div dir=3D"l=
+tr">On Wed, Sep 26, 2018 at 1:21 PM Micha=C5=82 T. Lorenc &lt;<a rel=3D"nof=
+ollow">m...@gmail.com</a>&gt; wrote:<br></div></div></blockquote></div><div=
+ dir=3D"ltr"><blockquote class=3D"gmail_quote" style=3D"margin:0;margin-lef=
+t:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><div class=3D"gmail_qu=
+ote"><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-le=
+ft:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr"><div>Hi,</div><div>Des=
+pite my laptop has more than 30 GB free I Singularity reported <i>No space =
+left on device</i>: <br></div><div><br></div><div>Building Singularity imag=
+e...<br>tar: ./usr/local/envs/3d-dna/lib/<wbr>libicui18n.a: Wrote only 2048=
+ of 10240 bytes<br>tar: ./usr/local/envs/3d-dna/lib/<wbr>lib: Cannot mkdir:=
+ No space left on device<br></div><div><br></div><div>I used the following =
+commands:</div><div><i>docker run --rm -it --privileged -v $(pwd):/work dee=
+phorizons/singularity sh<br>cd work<br>singularity create 3d-dna.img<br>sin=
+gularity bootstrap 3d-dna.img Singularity</i><br></div><div><br></div><div>=
+What did I miss?</div><div><br></div><div>Thank you in advance.</div><div><=
+br></div><div>Michal<br></div><div><br></div><div><br></div><div><br></div>=
+<div><br></div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br></blockquote></div></blockquote></div><div=
+ dir=3D"ltr"><blockquote class=3D"gmail_quote" style=3D"margin:0;margin-lef=
+t:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><div class=3D"gmail_qu=
+ote"><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-le=
+ft:1px #ccc solid;padding-left:1ex">
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</blockquote></div></blockquote></div><div dir=3D"ltr"><blockquote class=3D=
+"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc soli=
+d;padding-left:1ex"><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr=
+"><div dir=3D"ltr"><div><b><font face=3D"trebuchet ms, sans-serif" color=3D=
+"#000000">Joana Chavez La Valle</font></b></div><div><b><font face=3D"trebu=
+chet ms, sans-serif" color=3D"#000000">Software Engineer</font></b></div><d=
+iv><b><font face=3D"trebuchet ms, sans-serif" color=3D"#000000"><img src=3D=
+"https://lh5.googleusercontent.com/proxy/SAgOev-DnLGm4Q4bqhQlDRhNfyxtO3foWz=
+wcYz4RJjE24w7zFgyWMR5RF8veWpSmGt5_krT4Yam-qzXQ8x1zCjlEU2A-c4Cdjxytx69Os8N8C=
+7yuJC36PKLepHstp93Figl8fMbMbykLPEDqBi1_pjhvTNqBcobW2DYETZ-Z2NsSH6TpgLtX8n5V=
+A5G_6nsb1IidN4MivLwCFdKr7Q=3Dw5000-h5000" width=3D"96" height=3D"96"><br></=
+font></b></div><div style=3D"color:rgb(80,0,80)"><font face=3D"trebuchet ms=
+, sans-serif"><a href=3D"http://www.sylabs.io" rel=3D"nofollow" target=3D"_=
+blank" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%=
+3A%2F%2Fwww.sylabs.io\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGUqI0Hm7SpiDd=
+x6jbRPkKUi9qUJg&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.g=
+oogle.com/url?q\x3dhttp%3A%2F%2Fwww.sylabs.io\x26sa\x3dD\x26sntz\x3d1\x26us=
+g\x3dAFQjCNGUqI0Hm7SpiDdx6jbRPkKUi9qUJg&#39;;return true;">http://www.sylab=
+s.io</a></font></div></div></div>
+</blockquote></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+bZ2rJYjTAAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</blockquote></div>
+</blockquote></div>
+------=_Part_19_1035907946.1538003881591--
+
+------=_Part_18_1522750484.1538003881590--

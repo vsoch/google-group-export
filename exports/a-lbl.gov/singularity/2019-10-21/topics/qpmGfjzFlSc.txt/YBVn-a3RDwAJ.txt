@@ -1,0 +1,883 @@
+Date: Thu, 16 Aug 2018 13:14:35 -0700 (PDT)
+From: Pedro <pedrol...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <c23f768e-b61a-4538-8f6d-6d947c06cb0c@lbl.gov>
+In-Reply-To: <20180816195405.GA16395@fnal.gov>
+References: <d79c6365-d22c-480d-a312-a3470a1cb0e3@lbl.gov>
+ <20180814144521.GB62261@fnal.gov>
+ <214e9a6a-b19c-4df3-8a36-352488e1a2df@lbl.gov>
+ <6a7bd5dc-8e91-4c9a-a745-06f946e4e933@lbl.gov>
+ <20180816144105.GA7480@fnal.gov>
+ <CAENAmG4T0ofDhicHh1BHQbM-dWSOjfVve0Ys7Kr9WWWug-smCw@mail.gmail.com>
+ <20180816195405.GA16395@fnal.gov>
+Subject: Re: [Singularity] How to make a local image behave as a Docker Hub
+ container?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_421_283623299.1534450475509"
+
+------=_Part_421_283623299.1534450475509
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_422_802003956.1534450475510"
+
+------=_Part_422_802003956.1534450475510
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Interesting. Thanks, Dave!
+
+The permission issue can be observed with a python script importing a=20
+module:
+source activate rl
+python -c "import tensorflow"
+
+Cheers.
+
+On Thursday, August 16, 2018 at 2:54:16 PM UTC-5, Dave Dykstra wrote:
+>
+> Pedro,=20
+>
+> I was able to reproduce the $PATH problem with singularity-2.6.0 if I=20
+> use docker://pfrancaalb/rl.  I think the problem is that /environment is=
+=20
+> old style and not supported anymore, although I don't know why it still=
+=20
+> works with execing directly from docker (maybe there's a backward=20
+> compatibility mode for docker).  If I make a copy of /environment on my=
+=20
+> host filesystem in /tmp/environment and exec local_file.img with an=20
+> option -B /tmp/environment:/.singularity.d/env/90-environment.sh then I=
+=20
+> get the expected $PATH.  Probably it should be fixed instead in the=20
+> original docker container.=20
+>
+> As for the permission problem, you haven't said what to run in order to=
+=20
+> reproduce that.=20
+>
+> Dave=20
+>
+> On Thu, Aug 16, 2018 at 09:48:39AM -0500, Pedro Lucas F. Albuquerque=20
+> wrote:=20
+> > Dave,=20
+> >=20
+> > I mentioned that image for the sake of the example.  I am actually=20
+> running=20
+> > "pfrancaalb/rl".=20
+> >=20
+> > Thanks for your help!=20
+> >=20
+> > On Thu, Aug 16, 2018 at 9:41 AM Dave Dykstra <d...@fnal.gov=20
+> <javascript:>> wrote:=20
+> >=20
+> > > Pedro,=20
+> > >=20
+> > > When I try running singularity exec docker://ubuntu:latest bash on=20
+> > > SL6.9 and singularity version 2.6.0, I get=20
+> > >     FATAL: kernel too old=20
+> > > However if instead of "latest" I use "16.04" that starts the shell.=
+=20
+> > >=20
+> > > Since you are directly running the image from docker, how is that=20
+> > > /environment getting created?  This is an area of singularity that I=
+=20
+> > > don't know much about.  When I run the above, inside the container=20
+> > > /environment is just one comment line.=20
+> > >=20
+> > > Dave=20
+> > >=20
+> > > On Wed, Aug 15, 2018 at 09:28:03AM -0700, Pedro wrote:=20
+> > > >=20
+> > > > My apologies for the bad formatting.=20
+> > > > Also, method 1 is mistyped. The correct command is:=20
+> > > > singularity exec docker://ubuntu:latest bash script.sh=20
+> > > >=20
+> > > > I would appreciate any insights!=20
+> > > > Cheers=20
+> > > >=20
+> > > > On Tuesday, August 14, 2018 at 4:46:04 PM UTC-5, Pedro wrote:=20
+> > > > >=20
+> > > > > Dave,=20
+> > > > >=20
+> > > > >=20
+> > > > > Thanks for pointing out. Here is some additional information:=20
+> > > > >=20
+> > > > >=20
+> > > > > Singularity version: 2.4.2=20
+> > > > >=20
+> > > > > Host machine OS: Scientific Linux release 6.9=20
+> > > > >=20
+> > > > >=20
+> > > > > As previously stated,=20
+> > > > >=20
+> > > > >=20
+> > > > > Method 1=20
+> > > > >=20
+> > > > > singularity exec local_file.img bash script.sh=20
+> > > > >=20
+> > > > >=20
+> > > > > Method 2=20
+> > > > > singularity pull --name local_image.img docker://ubuntu=20
+> > > > > singularity exec local_file.img bash script.sh=20
+> > > > >=20
+> > > > >=20
+> > > > >=20
+> > > > > The first difference between the two methods is that system=20
+> variables=20
+> > > are=20
+> > > > > correctly assigned only in the first one.=20
+> > > > >=20
+> > > > >=20
+> > > > > The variables are assigned according to the following /environmen=
+t=20
+> > > file:=20
+> > > > >=20
+> > > > >=20
+> > > > >=20
+> > > > > if test -z "$SINGULARITY_INIT"; then=20
+> > > > >=20
+> > > > >    =20
+> PATH=3D$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/=20
+> > > > > sbin:/util/opt/matlab/r2017a/bin=20
+> > > > >=20
+> > > > >     PS1=3D"Singularity.$SINGULARITY_CONTAINER> $PS1"=20
+> > > > >=20
+> > > > >     SINGULARITY_INIT=3D1=20
+> > > > >=20
+> > > > >     export PATH PS1 SINGULARITY_INIT=20
+> > > > >=20
+> > > > > fi=20
+> > > > >=20
+> > > > > . /docker_environment=20
+> > > > >=20
+> > > > >=20
+> > > > > I retrieve different results when displaying the path:=20
+> > > > >=20
+> > > > > echo $PATH=20
+> > > > >=20
+> > > > >=20
+> > > > > Method 1=20
+> > > > >=20
+> > > > >=20
+> > > > >=20
+> > >=20
+> /usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sb=
+in:/bin:/util/opt/matlab/r2017a/bin:/opt/conda/bin:/opt/conda/envs/test_env=
+/bin=20
+>
+> > > > >=20
+> > > > >=20
+> > > > > Method 2=20
+> > > > >=20
+> > > > >=20
+> > > > >=20
+> > >=20
+> /opt/conda/envs/rl/bin:/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr=
+/sbin:/usr/bin:/sbin:/bin=20
+>
+> > > > >=20
+> > > > >=20
+> > > > >=20
+> > > > > Even after fixing system variables (by assigning it in run-time),=
+=20
+> the=20
+> > > > > result of the two methods is distinct since I get permission=20
+> errors in=20
+> > > > > Method 2 that are absent in Method 1.=20
+> > > > >=20
+> > > > > e.g. this error when executing a python script:=20
+> > > > >=20
+> > > > >=20
+> > > > > File "simulation_interface.py", line 6, in <module>=20
+> > > > >=20
+> > > > >     from gym.spaces import Box=20
+> > > > >=20
+> > > > >   File=20
+> > > "/opt/conda/envs/rl/lib/python3.5/site-packages/gym/__init__.py",=20
+> > > > > line 11, in <module>=20
+> > > > >=20
+> > > > >     from gym.envs import make, spec=20
+> > > > >=20
+> > > > >   File=20
+> > > > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/gym/envs/__init__.py",=20
+> > > line=20
+> > > > > 1, in <module>=20
+> > > > >=20
+> > > > >     from gym.envs.registration import registry, register, make,=
+=20
+> spec=20
+> > > > >=20
+> > > > >   File=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/gym/envs/registration.py"=
+,=20
+> > > > > line 1, in <module>=20
+> > > > >=20
+> > > > >     import pkg_resources=20
+> > > > >=20
+> > > > >   File=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py=
+",=20
+> > > > > line 3074, in <module>=20
+> > > > >=20
+> > > > >     @_call_aside=20
+> > > > >=20
+> > > > >   File=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py=
+",=20
+> > > > > line 3058, in _call_aside=20
+> > > > >=20
+> > > > >     f(*args, **kwargs)=20
+> > > > >=20
+> > > > >   File=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py=
+",=20
+> > > > > line 3087, in _initialize_master_working_set=20
+> > > > >=20
+> > > > >     working_set =3D WorkingSet._build_master()=20
+> > > > >=20
+> > > > >   File=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py=
+",=20
+> > > > > line 655, in _build_master=20
+> > > > >=20
+> > > > >     ws =3D cls()=20
+> > > > >=20
+> > > > >   File=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py=
+",=20
+> > > > > line 648, in __init__=20
+> > > > >=20
+> > > > >     self.add_entry(entry)=20
+> > > > >=20
+> > > > >   File=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py=
+",=20
+> > > > > line 704, in add_entry=20
+> > > > >=20
+> > > > >     for dist in find_distributions(entry, True):=20
+> > > > >=20
+> > > > >   File=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py=
+",=20
+> > > > > line 2059, in find_on_path=20
+> > > > >=20
+> > > > >     path_item, entry, metadata, precedence=3DDEVELOP_DIST=20
+> > > > >=20
+> > > > >   File=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py=
+",=20
+> > > > > line 2488, in from_location=20
+> > > > >=20
+> > > > >     py_version=3Dpy_version, platform=3Dplatform, **kw=20
+> > > > >=20
+> > > > >   File=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py=
+",=20
+> > > > > line 2828, in _reload_version=20
+> > > > >=20
+> > > > >     md_version =3D=20
+> _version_from_file(self._get_metadata(self.PKG_INFO))=20
+> > > > >=20
+> > > > >   File=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py=
+",=20
+> > > > > line 2453, in _version_from_file=20
+> > > > >=20
+> > > > >     line =3D next(iter(version_lines), '')=20
+> > > > >=20
+> > > > >   File=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py=
+",=20
+> > > > > line 2621, in _get_metadata=20
+> > > > >=20
+> > > > >     for line in self.get_metadata_lines(name):=20
+> > > > >=20
+> > > > >   File=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py=
+",=20
+> > > > > line 1895, in get_metadata_lines=20
+> > > > >=20
+> > > > >     return yield_lines(self.get_metadata(name))=20
+> > > > >=20
+> > > > >   File=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py=
+",=20
+> > > > > line 1881, in get_metadata=20
+> > > > >=20
+> > > > >     with io.open(self.path, encoding=3D'utf-8', errors=3D"replace=
+") as=20
+> f:=20
+> > > > >=20
+> > > > > PermissionError: [Errno 13] Permission denied:=20
+> > > > >=20
+> > >=20
+> '/opt/conda/envs/rl/lib/python3.5/site-packages/.wh.six-1.10.0-py3.5.egg-=
+info'=20
+>
+> > > > >=20
+> > > > >=20
+> > > > > Cheers=20
+> > > > >=20
+> > > > > Em ter=C3=A7a-feira, 14 de agosto de 2018 09:45:28 UTC-5, Dave Dy=
+kstra=20
+> > > escreveu:=20
+> > > > >>=20
+> > > > >> Pedro,=20
+> > > > >>=20
+> > > > >> I think you need to be more specific and give exact error=20
+> messages,=20
+> > > > >> singularity version, host operating system, and instructions to=
+=20
+> > > > >> reproduce what you're seeing.=20
+> > > > >>=20
+> > > > >> Dave=20
+> > > > >>=20
+> > > > >> On Mon, Aug 13, 2018 at 05:37:21PM -0700, Pedro wrote:=20
+> > > > >> > How can I get the execution of a local copy of a docker=20
+> container=20
+> > > to=20
+> > > > >> behave=20
+> > > > >> > just like one hosted at Docker Hub?=20
+> > > > >> >=20
+> > > > >> > I'm trying to keep a local copy of a Docker container, so I go=
+t=20
+> one=20
+> > > as=20
+> > > > >> > follows:=20
+> > > > >> >=20
+> > > > >> > singularity pull --name local_image.img docker://ubuntu=20
+> > > > >> >=20
+> > > > >> > However, there are many differences between running this image=
+=20
+> > > instead=20
+> > > > >> of=20
+> > > > >> > the Docker Hub container directly, such as system variables no=
+t=20
+> set=20
+> > > and=20
+> > > > >> > many errors on permission.=20
+> > > > >> >=20
+> > > > >> > So, the question is: how can one get a local file in which=20
+> > > > >> > singularity exec local_file.img bash script.sh=20
+> > > > >> >=20
+> > > > >> > behaves exactly as=20
+> > > > >> > singularity exec docker://ubuntu:latest bash script.sh=20
+> > > > >> >=20
+> > > > >> > p.s.: I've also tried with singularity run, with no success.=
+=20
+> > > > >> >=20
+> > > > >> > Thanks!=20
+> > > > >> >=20
+> > > > >> > --=20
+> > > > >> > You received this message because you are subscribed to the=20
+> Google=20
+> > > > >> Groups "singularity" group.=20
+> > > > >> > To unsubscribe from this group and stop receiving emails from=
+=20
+> it,=20
+> > > send=20
+> > > > >> an email to singu...@lbl.gov.=20
+> > > > >>=20
+> > > > >>=20
+> > > >=20
+> > > > --=20
+> > > > You received this message because you are subscribed to the Google=
+=20
+> > > Groups "singularity" group.=20
+> > > > To unsubscribe from this group and stop receiving emails from it,=
+=20
+> send=20
+> > > an email to singu...@lbl.gov <javascript:>.=20
+> > >=20
+> > > --=20
+> > > You received this message because you are subscribed to a topic in th=
+e=20
+> > > Google Groups "singularity" group.=20
+> > > To unsubscribe from this topic, visit=20
+> > >=20
+> https://groups.google.com/a/lbl.gov/d/topic/singularity/qpmGfjzFlSc/unsub=
+scribe=20
+> > > .=20
+> > > To unsubscribe from this group and all its topics, send an email to=
+=20
+> > > singu...@lbl.gov <javascript:>.=20
+> > >=20
+> > --=20
+> > Pedro Albuquerque=20
+> > +55 (67) 8448-9298=20
+> >=20
+> > --=20
+> > You received this message because you are subscribed to the Google=20
+> Groups "singularity" group.=20
+> > To unsubscribe from this group and stop receiving emails from it, send=
+=20
+> an email to singu...@lbl.gov <javascript:>.=20
+>
+
+------=_Part_422_802003956.1534450475510
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Interesting. Thanks,=C2=A0Dave!<div><br><div><div>The perm=
+ission issue can be observed with a python script importing a module:</div>=
+<div class=3D"prettyprint" style=3D"background-color: rgb(250, 250, 250); b=
+order-color: rgb(187, 187, 187); border-style: solid; border-width: 1px; wo=
+rd-wrap: break-word;"><code class=3D"prettyprint"><div class=3D"subprettypr=
+int"><span style=3D"color: #000;" class=3D"styled-by-prettify">source activ=
+ate rl<br>python </span><span style=3D"color: #660;" class=3D"styled-by-pre=
+ttify">-</span><span style=3D"color: #000;" class=3D"styled-by-prettify">c =
+</span><span style=3D"color: #080;" class=3D"styled-by-prettify">&quot;impo=
+rt tensorflow</span><span style=3D"color: #080;" class=3D"styled-by-prettif=
+y">&quot;</span></div></code></div><div><br><div>Cheers.</div><div><br>On T=
+hursday, August 16, 2018 at 2:54:16 PM UTC-5, Dave Dykstra wrote:<blockquot=
+e class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: =
+1px #ccc solid;padding-left: 1ex;">Pedro,
+<br>
+<br>I was able to reproduce the $PATH problem with singularity-2.6.0 if I
+<br>use docker://pfrancaalb/rl. =C2=A0I think the problem is that /environm=
+ent is
+<br>old style and not supported anymore, although I don&#39;t know why it s=
+till
+<br>works with execing directly from docker (maybe there&#39;s a backward
+<br>compatibility mode for docker). =C2=A0If I make a copy of /environment =
+on my
+<br>host filesystem in /tmp/environment and exec local_file.img with an
+<br>option -B /tmp/environment:/.<wbr>singularity.d/env/90-<wbr>environment=
+.sh then I
+<br>get the expected $PATH. =C2=A0Probably it should be fixed instead in th=
+e
+<br>original docker container.
+<br>
+<br>As for the permission problem, you haven&#39;t said what to run in orde=
+r to
+<br>reproduce that.
+<br>
+<br>Dave
+<br>
+<br>On Thu, Aug 16, 2018 at 09:48:39AM -0500, Pedro Lucas F. Albuquerque wr=
+ote:
+<br>&gt; Dave,
+<br>&gt;=20
+<br>&gt; I mentioned that image for the sake of the example. =C2=A0I am act=
+ually running
+<br>&gt; &quot;pfrancaalb/rl&quot;.
+<br>&gt;=20
+<br>&gt; Thanks for your help!
+<br>&gt;=20
+<br>&gt; On Thu, Aug 16, 2018 at 9:41 AM Dave Dykstra &lt;<a href=3D"javasc=
+ript:" target=3D"_blank" gdf-obfuscated-mailto=3D"8YFx3z0YDQAJ" rel=3D"nofo=
+llow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclic=
+k=3D"this.href=3D&#39;javascript:&#39;;return true;">d...@fnal.gov</a>&gt; =
+wrote:
+<br>&gt;=20
+<br>&gt; &gt; Pedro,
+<br>&gt; &gt;
+<br>&gt; &gt; When I try running singularity exec docker://ubuntu:latest ba=
+sh on
+<br>&gt; &gt; SL6.9 and singularity version 2.6.0, I get
+<br>&gt; &gt; =C2=A0 =C2=A0 FATAL: kernel too old
+<br>&gt; &gt; However if instead of &quot;latest&quot; I use &quot;16.04&qu=
+ot; that starts the shell.
+<br>&gt; &gt;
+<br>&gt; &gt; Since you are directly running the image from docker, how is =
+that
+<br>&gt; &gt; /environment getting created? =C2=A0This is an area of singul=
+arity that I
+<br>&gt; &gt; don&#39;t know much about. =C2=A0When I run the above, inside=
+ the container
+<br>&gt; &gt; /environment is just one comment line.
+<br>&gt; &gt;
+<br>&gt; &gt; Dave
+<br>&gt; &gt;
+<br>&gt; &gt; On Wed, Aug 15, 2018 at 09:28:03AM -0700, Pedro wrote:
+<br>&gt; &gt; &gt;
+<br>&gt; &gt; &gt; My apologies for the bad formatting.
+<br>&gt; &gt; &gt; Also, method 1 is mistyped. The correct command is:
+<br>&gt; &gt; &gt; singularity exec docker://ubuntu:latest bash script.sh
+<br>&gt; &gt; &gt;
+<br>&gt; &gt; &gt; I would appreciate any insights!
+<br>&gt; &gt; &gt; Cheers
+<br>&gt; &gt; &gt;
+<br>&gt; &gt; &gt; On Tuesday, August 14, 2018 at 4:46:04 PM UTC-5, Pedro w=
+rote:
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; Dave,
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; Thanks for pointing out. Here is some additional in=
+formation:
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; Singularity version: 2.4.2
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; Host machine OS: Scientific Linux release 6.9
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; As previously stated,
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; Method 1
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; singularity exec local_file.img bash script.sh
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; Method 2
+<br>&gt; &gt; &gt; &gt; singularity pull --name local_image.img docker://ub=
+untu
+<br>&gt; &gt; &gt; &gt; singularity exec local_file.img bash script.sh
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; The first difference between the two methods is tha=
+t system variables
+<br>&gt; &gt; are
+<br>&gt; &gt; &gt; &gt; correctly assigned only in the first one.
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; The variables are assigned according to the followi=
+ng /environment
+<br>&gt; &gt; file:
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; if test -z &quot;$SINGULARITY_INIT&quot;; then
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 =C2=A0 PATH=3D$PATH:/bin:/sbin:/usr/<wbr>bin=
+:/usr/sbin:/usr/local/bin:/<wbr>usr/local/
+<br>&gt; &gt; &gt; &gt; sbin:/util/opt/matlab/r2017a/<wbr>bin
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 =C2=A0 PS1=3D&quot;Singularity.$SINGULARITY_=
+<wbr>CONTAINER&gt; $PS1&quot;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 =C2=A0 SINGULARITY_INIT=3D1
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 =C2=A0 export PATH PS1 SINGULARITY_INIT
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; fi
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; . /docker_environment
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; I retrieve different results when displaying the pa=
+th:
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; echo $PATH
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; Method 1
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; /usr/local/cuda/bin:/usr/<wbr>local/sbin:/usr/local/bin:/<wbr=
+>usr/sbin:/usr/bin:/sbin:/bin:/<wbr>util/opt/matlab/r2017a/bin:/<wbr>opt/co=
+nda/bin:/opt/conda/envs/<wbr>test_env/bin
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; Method 2
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; /opt/conda/envs/rl/bin:/opt/<wbr>conda/bin:/usr/local/sbin:/<=
+wbr>usr/local/bin:/usr/sbin:/usr/<wbr>bin:/sbin:/bin
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; Even after fixing system variables (by assigning it=
+ in run-time), the
+<br>&gt; &gt; &gt; &gt; result of the two methods is distinct since I get p=
+ermission errors in
+<br>&gt; &gt; &gt; &gt; Method 2 that are absent in Method 1.
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; e.g. this error when executing a python script:
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; File &quot;simulation_interface.py&quot;, line 6, i=
+n &lt;module&gt;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 =C2=A0 from gym.spaces import Box
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 File
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/gym=
+/__<wbr>init__.py&quot;,
+<br>&gt; &gt; &gt; &gt; line 11, in &lt;module&gt;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 =C2=A0 from gym.envs import make, spec
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 File
+<br>&gt; &gt; &gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-pa=
+ckages/gym/<wbr>envs/__init__.py&quot;,
+<br>&gt; &gt; line
+<br>&gt; &gt; &gt; &gt; 1, in &lt;module&gt;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 =C2=A0 from gym.envs.registration import reg=
+istry, register, make, spec
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 File
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/gym=
+/<wbr>envs/registration.py&quot;,
+<br>&gt; &gt; &gt; &gt; line 1, in &lt;module&gt;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 =C2=A0 import pkg_resources
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 File
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/pkg=
+_<wbr>resources/__init__.py&quot;,
+<br>&gt; &gt; &gt; &gt; line 3074, in &lt;module&gt;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 =C2=A0 @_call_aside
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 File
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/pkg=
+_<wbr>resources/__init__.py&quot;,
+<br>&gt; &gt; &gt; &gt; line 3058, in _call_aside
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 =C2=A0 f(*args, **kwargs)
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 File
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/pkg=
+_<wbr>resources/__init__.py&quot;,
+<br>&gt; &gt; &gt; &gt; line 3087, in _initialize_master_working_set
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 =C2=A0 working_set =3D WorkingSet._build_mas=
+ter()
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 File
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/pkg=
+_<wbr>resources/__init__.py&quot;,
+<br>&gt; &gt; &gt; &gt; line 655, in _build_master
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 =C2=A0 ws =3D cls()
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 File
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/pkg=
+_<wbr>resources/__init__.py&quot;,
+<br>&gt; &gt; &gt; &gt; line 648, in __init__
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 =C2=A0 self.add_entry(entry)
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 File
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/pkg=
+_<wbr>resources/__init__.py&quot;,
+<br>&gt; &gt; &gt; &gt; line 704, in add_entry
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 =C2=A0 for dist in find_distributions(entry,=
+ True):
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 File
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/pkg=
+_<wbr>resources/__init__.py&quot;,
+<br>&gt; &gt; &gt; &gt; line 2059, in find_on_path
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 =C2=A0 path_item, entry, metadata, precedenc=
+e=3DDEVELOP_DIST
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 File
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/pkg=
+_<wbr>resources/__init__.py&quot;,
+<br>&gt; &gt; &gt; &gt; line 2488, in from_location
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 =C2=A0 py_version=3Dpy_version, platform=3Dp=
+latform, **kw
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 File
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/pkg=
+_<wbr>resources/__init__.py&quot;,
+<br>&gt; &gt; &gt; &gt; line 2828, in _reload_version
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 =C2=A0 md_version =3D _version_from_file(sel=
+f._get_<wbr>metadata(self.PKG_INFO))
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 File
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/pkg=
+_<wbr>resources/__init__.py&quot;,
+<br>&gt; &gt; &gt; &gt; line 2453, in _version_from_file
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 =C2=A0 line =3D next(iter(version_lines), &#=
+39;&#39;)
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 File
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/pkg=
+_<wbr>resources/__init__.py&quot;,
+<br>&gt; &gt; &gt; &gt; line 2621, in _get_metadata
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 =C2=A0 for line in self.get_metadata_lines(n=
+ame):
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 File
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/pkg=
+_<wbr>resources/__init__.py&quot;,
+<br>&gt; &gt; &gt; &gt; line 1895, in get_metadata_lines
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 =C2=A0 return yield_lines(self.get_metadata(=
+<wbr>name))
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 File
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/pkg=
+_<wbr>resources/__init__.py&quot;,
+<br>&gt; &gt; &gt; &gt; line 1881, in get_metadata
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; =C2=A0 =C2=A0 with io.open(self.path, encoding=3D&#=
+39;utf-8&#39;, errors=3D&quot;replace&quot;) as f:
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; PermissionError: [Errno 13] Permission denied:
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &#39;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/.wh.=
+<wbr>six-1.10.0-py3.5.egg-info&#39;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; Cheers
+<br>&gt; &gt; &gt; &gt;
+<br>&gt; &gt; &gt; &gt; Em ter=C3=A7a-feira, 14 de agosto de 2018 09:45:28 =
+UTC-5, Dave Dykstra
+<br>&gt; &gt; escreveu:
+<br>&gt; &gt; &gt; &gt;&gt;
+<br>&gt; &gt; &gt; &gt;&gt; Pedro,
+<br>&gt; &gt; &gt; &gt;&gt;
+<br>&gt; &gt; &gt; &gt;&gt; I think you need to be more specific and give e=
+xact error messages,
+<br>&gt; &gt; &gt; &gt;&gt; singularity version, host operating system, and=
+ instructions to
+<br>&gt; &gt; &gt; &gt;&gt; reproduce what you&#39;re seeing.
+<br>&gt; &gt; &gt; &gt;&gt;
+<br>&gt; &gt; &gt; &gt;&gt; Dave
+<br>&gt; &gt; &gt; &gt;&gt;
+<br>&gt; &gt; &gt; &gt;&gt; On Mon, Aug 13, 2018 at 05:37:21PM -0700, Pedro=
+ wrote:
+<br>&gt; &gt; &gt; &gt;&gt; &gt; How can I get the execution of a local cop=
+y of a docker container
+<br>&gt; &gt; to
+<br>&gt; &gt; &gt; &gt;&gt; behave
+<br>&gt; &gt; &gt; &gt;&gt; &gt; just like one hosted at Docker Hub?
+<br>&gt; &gt; &gt; &gt;&gt; &gt;
+<br>&gt; &gt; &gt; &gt;&gt; &gt; I&#39;m trying to keep a local copy of a D=
+ocker container, so I got one
+<br>&gt; &gt; as
+<br>&gt; &gt; &gt; &gt;&gt; &gt; follows:
+<br>&gt; &gt; &gt; &gt;&gt; &gt;
+<br>&gt; &gt; &gt; &gt;&gt; &gt; singularity pull --name local_image.img do=
+cker://ubuntu
+<br>&gt; &gt; &gt; &gt;&gt; &gt;
+<br>&gt; &gt; &gt; &gt;&gt; &gt; However, there are many differences betwee=
+n running this image
+<br>&gt; &gt; instead
+<br>&gt; &gt; &gt; &gt;&gt; of
+<br>&gt; &gt; &gt; &gt;&gt; &gt; the Docker Hub container directly, such as=
+ system variables not set
+<br>&gt; &gt; and
+<br>&gt; &gt; &gt; &gt;&gt; &gt; many errors on permission.
+<br>&gt; &gt; &gt; &gt;&gt; &gt;
+<br>&gt; &gt; &gt; &gt;&gt; &gt; So, the question is: how can one get a loc=
+al file in which
+<br>&gt; &gt; &gt; &gt;&gt; &gt; singularity exec local_file.img bash scrip=
+t.sh
+<br>&gt; &gt; &gt; &gt;&gt; &gt;
+<br>&gt; &gt; &gt; &gt;&gt; &gt; behaves exactly as
+<br>&gt; &gt; &gt; &gt;&gt; &gt; singularity exec docker://ubuntu:latest ba=
+sh script.sh
+<br>&gt; &gt; &gt; &gt;&gt; &gt;
+<br>&gt; &gt; &gt; &gt;&gt; &gt; p.s.: I&#39;ve also tried with singularity=
+ run, with no success.
+<br>&gt; &gt; &gt; &gt;&gt; &gt;
+<br>&gt; &gt; &gt; &gt;&gt; &gt; Thanks!
+<br>&gt; &gt; &gt; &gt;&gt; &gt;
+<br>&gt; &gt; &gt; &gt;&gt; &gt; --
+<br>&gt; &gt; &gt; &gt;&gt; &gt; You received this message because you are =
+subscribed to the Google
+<br>&gt; &gt; &gt; &gt;&gt; Groups &quot;singularity&quot; group.
+<br>&gt; &gt; &gt; &gt;&gt; &gt; To unsubscribe from this group and stop re=
+ceiving emails from it,
+<br>&gt; &gt; send
+<br>&gt; &gt; &gt; &gt;&gt; an email to <a>singu...@lbl.gov</a>.
+<br>&gt; &gt; &gt; &gt;&gt;
+<br>&gt; &gt; &gt; &gt;&gt;
+<br>&gt; &gt; &gt;
+<br>&gt; &gt; &gt; --
+<br>&gt; &gt; &gt; You received this message because you are subscribed to =
+the Google
+<br>&gt; &gt; Groups &quot;singularity&quot; group.
+<br>&gt; &gt; &gt; To unsubscribe from this group and stop receiving emails=
+ from it, send
+<br>&gt; &gt; an email to <a href=3D"javascript:" target=3D"_blank" gdf-obf=
+uscated-mailto=3D"8YFx3z0YDQAJ" rel=3D"nofollow" onmousedown=3D"this.href=
+=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascri=
+pt:&#39;;return true;">singularity...@lbl.<wbr>gov</a>.
+<br>&gt; &gt;
+<br>&gt; &gt; --
+<br>&gt; &gt; You received this message because you are subscribed to a top=
+ic in the
+<br>&gt; &gt; Google Groups &quot;singularity&quot; group.
+<br>&gt; &gt; To unsubscribe from this topic, visit
+<br>&gt; &gt; <a href=3D"https://groups.google.com/a/lbl.gov/d/topic/singul=
+arity/qpmGfjzFlSc/unsubscribe" target=3D"_blank" rel=3D"nofollow" onmousedo=
+wn=3D"this.href=3D&#39;https://groups.google.com/a/lbl.gov/d/topic/singular=
+ity/qpmGfjzFlSc/unsubscribe&#39;;return true;" onclick=3D"this.href=3D&#39;=
+https://groups.google.com/a/lbl.gov/d/topic/singularity/qpmGfjzFlSc/unsubsc=
+ribe&#39;;return true;">https://groups.google.com/a/<wbr>lbl.gov/d/topic/si=
+ngularity/<wbr>qpmGfjzFlSc/unsubscribe</a>
+<br>&gt; &gt; .
+<br>&gt; &gt; To unsubscribe from this group and all its topics, send an em=
+ail to
+<br>&gt; &gt; <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mail=
+to=3D"8YFx3z0YDQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javasc=
+ript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;retur=
+n true;">singularity...@lbl.<wbr>gov</a>.
+<br>&gt; &gt;
+<br>&gt; --=20
+<br>&gt; Pedro Albuquerque
+<br>&gt; +55 (67) 8448-9298
+<br>&gt;=20
+<br>&gt; --=20
+<br>&gt; You received this message because you are subscribed to the Google=
+ Groups &quot;singularity&quot; group.
+<br>&gt; To unsubscribe from this group and stop receiving emails from it, =
+send an email to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-m=
+ailto=3D"8YFx3z0YDQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;jav=
+ascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;re=
+turn true;">singularity...@lbl.<wbr>gov</a>.
+<br></blockquote></div></div></div></div></div>
+------=_Part_422_802003956.1534450475510--
+
+------=_Part_421_283623299.1534450475509--

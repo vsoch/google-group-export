@@ -1,0 +1,194 @@
+Date: Fri, 18 Aug 2017 05:31:45 -0700 (PDT)
+From: Trey Dockendorf <tdock...@osc.edu>
+To: singularity <singu...@lbl.gov>
+Message-Id: <7981ca00-8f9d-4d53-99b7-873aeed40e40@lbl.gov>
+Subject: TMPDIR environment variable missing from container environment
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2309_1989753577.1503059505851"
+
+------=_Part_2309_1989753577.1503059505851
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2310_158008010.1503059505851"
+
+------=_Part_2310_158008010.1503059505851
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+I have noticed that the environment variable TMPDIR is not present when 
+using shell or exec subcommands.  This is running Singularity 2.3.1 on RHEL 
+7.3.  Is there some special treatment in Singularity with regard to the 
+TMPDIR environment variable?  The script we use to set TMPDIR also sets 
+PFSDIR and that environment variable is present.
+
+$ echo $TMPDIR
+/tmp/pbstmp.1586923
+$ singularity shell centos7.img 
+Singularity: Invoking an interactive shell within container...
+
+Singularity centos7.img:~> echo $TMPDIR
+
+Singularity centos7.img:~>
+
+$ echo $PFSDIR
+/fs/scratch/tdockendorf/1586923
+$ singularity shell centos7.img 
+Singularity: Invoking an interactive shell within container...
+
+Singularity centos7.img:~> echo $PFSDIR
+/fs/scratch/tdockendorf/1586923
+
+$ singularity exec  centos7.img env | grep TMPDIR
+$
+
+I did a diff between my host environment and the singularity container 
+environment and that is below.
+
+--- /tmp/host.env       2017-08-18 08:26:43.036541513 -0400
++++ /tmp/container.env  2017-08-18 08:26:35.040501156 -0400
+@@ -1,10 +1,3 @@
+-}
+-}
+- [ $? = 0 ] && eval $(${LMOD_SETTARG_CMD:-:} -s sh)
+-BASH_ENV=/usr/share/lmod/lmod/init/bash
+-BASH_FUNC_ml()=() {  eval $($LMOD_DIR/ml_cmd "$@")
+-BASH_FUNC_module()=() {  eval $($LMOD_CMD bash "$@");
+-_=/bin/env
+ CPATH=/opt/intel/compilers_and_libraries_2016.3.210/linux/mkl/include:/opt/intel/compilers_and_libraries_2016.3.210/linux/tbb/include
+ CVS_RSH=ssh
+ DAALROOT=/opt/intel/compilers_and_libraries_2016.3.210/linux/daal
+@@ -21,7 +14,7 @@
+ IPPROOT=/opt/intel/compilers_and_libraries_2016.3.210/linux/ipp
+ KDEDIRS=/usr
+ LANG=en_US.UTF-8
+-LD_LIBRARY_PATH=/opt/mvapich2/intel/16.0/2.2/lib:/opt/intel/debugger_2016/libipt/intel64/lib:/opt/intel/compilers_and_libraries_2016.3.210/linux/compiler/lib/intel64_lin:/opt/intel/compilers_and_libraries_2016.3.210/linux/daal/lib/intel64_lin:/opt/intel/compilers_and_libraries_2016.3.210/linux/ipp/lib/intel64_lin:/opt/intel/compilers_and_libraries_2016.3.210/linux/mkl/lib/intel64_lin:/opt/intel/compilers_and_libraries_2016.3.210/linux/tbb/lib/intel64_lin/gcc4.4:/opt/torque/lib64:/opt/torque/lib::
++LD_LIBRARY_PATH=/.singularity.d/libs
+ LESSOPEN=||/usr/bin/lesspipe.sh %s
+ LIBRARY_PATH=/opt/intel/compilers_and_libraries_2016.3.210/linux/compiler/lib/intel64_lin:/opt/intel/compilers_and_libraries_2016.3.210/linux/daal/lib/intel64_lin:/opt/intel/compilers_and_libraries_2016.3.210/linux/ipp/lib/intel64_lin:/opt/intel/compilers_and_libraries_2016.3.210/linux/mkl/lib/intel64_lin:/opt/intel/compilers_and_libraries_2016.3.210/linux/tbb/lib/intel64_lin/gcc4.4
+ _LMFILES_=/usr/local/share/lmodfiles/Core/intel/16.0.3.lua:/usr/local/share/lmodfiles/Compiler/intel/16.0/mvapich2/2.2.lua:/usr/local/share/lmodfiles/Core/modules/au2016.lua:/users/sysp/tdockendorf/modulefiles/singularity/2.3.1.lua
+@@ -67,12 +60,11 @@
+ MPI_LIBS=-L/opt/mvapich2/intel/16.0/2.2/lib -lmpich -libverbs -lpthread
+ MV2_ENABLE_AFFINITY=0
+ MV2_IBA_HCA=mlx5_0
+-NLSPATH=/opt/intel/debugger_2016/gdb/intel64/share/locale/%l_%t/%N:/opt/intel/compilers_and_libraries_2016.3.210/linux/compiler/lib/intel64_lin/locale/%l_%t/%N:/opt/intel/compilers_and_libraries_2016.3.210/linux/mkl/lib/intel64_lin/locale/%l_%t/%N
+ OSC_COMPILER=intel
+ OSC_COMPILER_MAJOR=16
+ OSC_COMPILER_MINOR=0
+ OSC_DEFAULT_ACCOUNT=PZS0090
+-PATH=/opt/singularity/bin:/opt/mvapich2/intel/16.0/2.2/bin:/opt/intel/itac_9.1/bin:/opt/intel/advisor_xe_2016/bin64:/opt/intel/vtune_amplifier_xe_2016/bin64:/opt/intel/inspector_xe_2016/bin64:/opt/intel/compilers_and_libraries_2016.3.210/linux/bin/intel64:/opt/torque/bin:/usr/lib64/qt-3.3/bin:/opt/osc/bin:/opt/moab/bin:/bin:/usr/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/opt/ibutils/bin:/opt/ddn/ime/bin:/users/sysp/tdockendorf/.rvm/bin
++PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ PBSCOREDUMP=""
+ PBS_DEFAULT=owens-batch.ten.osc.edu
+ PBS_ENVIRONMENT=PBS_INTERACTIVE
+@@ -107,6 +99,7 @@
+ PDSH_RCMD_TYPE=ssh
+ PDSH_SSH_ARGS_APPEND=-oStrictHostKeyChecking=no 
+-oUserKnownHostsFile=/dev/null -oLogLevel=ERROR
+ PFSDIR=/fs/scratch/tdockendorf/1586923.owens-batch.ten.osc.edu
++PS1=Singularity> 
+ PWD=/users/sysp/tdockendorf
+ QTDIR=/usr/lib64/qt-3.3
+ QT_GRAPHICSSYSTEM_CHECKED=1
+@@ -119,6 +112,8 @@
+ rvm_version=1.27.0 (latest)
+ SHELL=/bin/bash
+ SHLVL=1
++SINGULARITY_CONTAINER=centos7.img
++SINGULARITY_NAME=centos7.img
+ SSH_ASKPASS=/usr/libexec/openssh/gnome-ssh-askpass
+ _system_arch=x86_64
+ _system_name=RedHat
+@@ -128,5 +123,4 @@
+ TACC_FAMILY_MPI=mvapich2
+ TBBROOT=/opt/intel/compilers_and_libraries_2016.3.210/linux/tbb
+ TERM=screen
+-TMPDIR=/tmp/pbstmp.1586923
+ USER=tdockendorf
+
+
+------=_Part_2310_158008010.1503059505851
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">I have noticed that the environment variable TMPDIR is not=
+ present when using shell or exec subcommands. =C2=A0This is running Singul=
+arity 2.3.1 on RHEL 7.3. =C2=A0Is there some special treatment in Singulari=
+ty with regard to the TMPDIR environment variable? =C2=A0The script we use =
+to set TMPDIR also sets PFSDIR and that environment variable is present.<di=
+v><br></div><div><div>$ echo $TMPDIR</div><div>/tmp/pbstmp.1586923</div><di=
+v>$ singularity shell centos7.img=C2=A0</div><div>Singularity: Invoking an =
+interactive shell within container...</div><div><br></div><div>Singularity =
+centos7.img:~&gt; echo $TMPDIR</div><div><br></div><div>Singularity centos7=
+.img:~&gt;</div></div><div><br></div><div><div>$ echo $PFSDIR</div><div>/fs=
+/scratch/tdockendorf/1586923</div><div>$ singularity shell centos7.img=C2=
+=A0</div><div>Singularity: Invoking an interactive shell within container..=
+.</div><div><br></div><div>Singularity centos7.img:~&gt; echo $PFSDIR</div>=
+<div>/fs/scratch/tdockendorf/1586923</div></div><div><br></div><div>$ singu=
+larity exec =C2=A0centos7.img env | grep TMPDIR<br></div><div>$</div><div><=
+br></div><div>I did a diff between my host environment and the singularity =
+container environment and that is below.</div><div><br></div><div><div>--- =
+/tmp/host.env =C2=A0 =C2=A0 =C2=A0 2017-08-18 08:26:43.036541513 -0400</div=
+><div>+++ /tmp/container.env =C2=A02017-08-18 08:26:35.040501156 -0400</div=
+><div>@@ -1,10 +1,3 @@</div><div>-}</div><div>-}</div><div>- [ $? =3D 0 ] &=
+amp;&amp; eval $(${LMOD_SETTARG_CMD:-:} -s sh)</div><div>-BASH_ENV=3D/usr/s=
+hare/lmod/lmod/init/bash</div><div>-BASH_FUNC_ml()=3D() { =C2=A0eval $($LMO=
+D_DIR/ml_cmd &quot;$@&quot;)</div><div>-BASH_FUNC_module()=3D() { =C2=A0eva=
+l $($LMOD_CMD bash &quot;$@&quot;);</div><div>-_=3D/bin/env</div><div>=C2=
+=A0CPATH=3D/opt/intel/compilers_and_libraries_2016.3.210/linux/mkl/include:=
+/opt/intel/compilers_and_libraries_2016.3.210/linux/tbb/include</div><div>=
+=C2=A0CVS_RSH=3Dssh</div><div>=C2=A0DAALROOT=3D/opt/intel/compilers_and_lib=
+raries_2016.3.210/linux/daal</div><div>@@ -21,7 +14,7 @@</div><div>=C2=A0IP=
+PROOT=3D/opt/intel/compilers_and_libraries_2016.3.210/linux/ipp</div><div>=
+=C2=A0KDEDIRS=3D/usr</div><div>=C2=A0LANG=3Den_US.UTF-8</div><div>-LD_LIBRA=
+RY_PATH=3D/opt/mvapich2/intel/16.0/2.2/lib:/opt/intel/debugger_2016/libipt/=
+intel64/lib:/opt/intel/compilers_and_libraries_2016.3.210/linux/compiler/li=
+b/intel64_lin:/opt/intel/compilers_and_libraries_2016.3.210/linux/daal/lib/=
+intel64_lin:/opt/intel/compilers_and_libraries_2016.3.210/linux/ipp/lib/int=
+el64_lin:/opt/intel/compilers_and_libraries_2016.3.210/linux/mkl/lib/intel6=
+4_lin:/opt/intel/compilers_and_libraries_2016.3.210/linux/tbb/lib/intel64_l=
+in/gcc4.4:/opt/torque/lib64:/opt/torque/lib::</div><div>+LD_LIBRARY_PATH=3D=
+/.singularity.d/libs</div><div>=C2=A0LESSOPEN=3D||/usr/bin/lesspipe.sh %s</=
+div><div>=C2=A0LIBRARY_PATH=3D/opt/intel/compilers_and_libraries_2016.3.210=
+/linux/compiler/lib/intel64_lin:/opt/intel/compilers_and_libraries_2016.3.2=
+10/linux/daal/lib/intel64_lin:/opt/intel/compilers_and_libraries_2016.3.210=
+/linux/ipp/lib/intel64_lin:/opt/intel/compilers_and_libraries_2016.3.210/li=
+nux/mkl/lib/intel64_lin:/opt/intel/compilers_and_libraries_2016.3.210/linux=
+/tbb/lib/intel64_lin/gcc4.4</div><div>=C2=A0_LMFILES_=3D/usr/local/share/lm=
+odfiles/Core/intel/16.0.3.lua:/usr/local/share/lmodfiles/Compiler/intel/16.=
+0/mvapich2/2.2.lua:/usr/local/share/lmodfiles/Core/modules/au2016.lua:/user=
+s/sysp/tdockendorf/modulefiles/singularity/2.3.1.lua</div><div>@@ -67,12 +6=
+0,11 @@</div><div>=C2=A0MPI_LIBS=3D-L/opt/mvapich2/intel/16.0/2.2/lib -lmpi=
+ch -libverbs -lpthread</div><div>=C2=A0MV2_ENABLE_AFFINITY=3D0</div><div>=
+=C2=A0MV2_IBA_HCA=3Dmlx5_0</div><div>-NLSPATH=3D/opt/intel/debugger_2016/gd=
+b/intel64/share/locale/%l_%t/%N:/opt/intel/compilers_and_libraries_2016.3.2=
+10/linux/compiler/lib/intel64_lin/locale/%l_%t/%N:/opt/intel/compilers_and_=
+libraries_2016.3.210/linux/mkl/lib/intel64_lin/locale/%l_%t/%N</div><div>=
+=C2=A0OSC_COMPILER=3Dintel</div><div>=C2=A0OSC_COMPILER_MAJOR=3D16</div><di=
+v>=C2=A0OSC_COMPILER_MINOR=3D0</div><div>=C2=A0OSC_DEFAULT_ACCOUNT=3DPZS009=
+0</div><div>-PATH=3D/opt/singularity/bin:/opt/mvapich2/intel/16.0/2.2/bin:/=
+opt/intel/itac_9.1/bin:/opt/intel/advisor_xe_2016/bin64:/opt/intel/vtune_am=
+plifier_xe_2016/bin64:/opt/intel/inspector_xe_2016/bin64:/opt/intel/compile=
+rs_and_libraries_2016.3.210/linux/bin/intel64:/opt/torque/bin:/usr/lib64/qt=
+-3.3/bin:/opt/osc/bin:/opt/moab/bin:/bin:/usr/bin:/usr/local/bin:/usr/local=
+/sbin:/usr/sbin:/opt/ibutils/bin:/opt/ddn/ime/bin:/users/sysp/tdockendorf/.=
+rvm/bin</div><div>+PATH=3D/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin=
+:/sbin:/bin</div><div>=C2=A0PBSCOREDUMP=3D&quot;&quot;</div><div>=C2=A0PBS_=
+DEFAULT=3Dowens-batch.ten.osc.edu</div><div>=C2=A0PBS_ENVIRONMENT=3DPBS_INT=
+ERACTIVE</div><div>@@ -107,6 +99,7 @@</div><div>=C2=A0PDSH_RCMD_TYPE=3Dssh<=
+/div><div>=C2=A0PDSH_SSH_ARGS_APPEND=3D-oStrictHostKeyChecking=3Dno -oUserK=
+nownHostsFile=3D/dev/null -oLogLevel=3DERROR</div><div>=C2=A0PFSDIR=3D/fs/s=
+cratch/tdockendorf/1586923.owens-batch.ten.osc.edu</div><div>+PS1=3DSingula=
+rity&gt;=C2=A0</div><div>=C2=A0PWD=3D/users/sysp/tdockendorf</div><div>=C2=
+=A0QTDIR=3D/usr/lib64/qt-3.3</div><div>=C2=A0QT_GRAPHICSSYSTEM_CHECKED=3D1<=
+/div><div>@@ -119,6 +112,8 @@</div><div>=C2=A0rvm_version=3D1.27.0 (latest)=
+</div><div>=C2=A0SHELL=3D/bin/bash</div><div>=C2=A0SHLVL=3D1</div><div>+SIN=
+GULARITY_CONTAINER=3Dcentos7.img</div><div>+SINGULARITY_NAME=3Dcentos7.img<=
+/div><div>=C2=A0SSH_ASKPASS=3D/usr/libexec/openssh/gnome-ssh-askpass</div><=
+div>=C2=A0_system_arch=3Dx86_64</div><div>=C2=A0_system_name=3DRedHat</div>=
+<div>@@ -128,5 +123,4 @@</div><div>=C2=A0TACC_FAMILY_MPI=3Dmvapich2</div><d=
+iv>=C2=A0TBBROOT=3D/opt/intel/compilers_and_libraries_2016.3.210/linux/tbb<=
+/div><div>=C2=A0TERM=3Dscreen</div><div>-TMPDIR=3D/tmp/pbstmp.1586923</div>=
+<div>=C2=A0USER=3Dtdockendorf</div></div><div><br></div></div>
+------=_Part_2310_158008010.1503059505851--
+
+------=_Part_2309_1989753577.1503059505851--

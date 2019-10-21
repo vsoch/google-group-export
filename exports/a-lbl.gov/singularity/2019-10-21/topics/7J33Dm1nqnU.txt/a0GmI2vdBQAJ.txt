@@ -1,0 +1,195 @@
+Date: Mon, 22 May 2017 04:56:31 -0700 (PDT)
+From: Thomas Maier <thomas....@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <882443ad-8c53-437a-9af6-25bae0bc569d@lbl.gov>
+In-Reply-To: <61cd5f25-95b9-4f86-ac21-cb47726a249e@lbl.gov>
+References: <b2a59920-ded6-4db3-aa20-91fd2f249ed8@lbl.gov>
+ <6315aad9-76b0-46dd-a884-068188bc9306@lbl.gov>
+ <61cd5f25-95b9-4f86-ac21-cb47726a249e@lbl.gov>
+Subject: Re: How to know we are in a singularity shell?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2500_917151873.1495454191228"
+
+------=_Part_2500_917151873.1495454191228
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2501_1122032535.1495454191228"
+
+------=_Part_2501_1122032535.1495454191228
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi Oriol,
+
+generally bash is executing your .bashrc file only if it is executed in 
+interactive mode. If you execute 'singularity shell <image>' it is the same 
+as opening a new terminal window on your machine, i.e. bash is opened as an 
+interactive shell. In fact, it is the same as executing 'singularity exec 
+<image> /bin/bash', i.e. executing bash explicitly (without any additional 
+arguments) inside the image. If you execute 'singularity exec <image> 
+<whatever_command>', this is executed non-interactively, so generally your 
+.bashrc is ignored. In principle you can execute your .bashrc explicitly 
+also when running non-interactively, but usually this is not really desired 
+(often you make setups in .bashrc that require an interactive shell). There 
+are probably plenty of ways to approach this topic (setting env variables 
+for interactive and non-interactive shells). I'd advise that you have a 
+look at the bash documentation regarding this topic:
+
+https://www.gnu.org/software/bash/manual/bash.html#Bash-Startup-Files
+
+If there env variables you want to set every time you open bash 
+non-interactively (and not in login mode), you could probably make use of 
+$BASH_ENV as described in the documentation.
+
+Let me know if you have more questions.
+
+Cheers,
+
+Thomas
+
+Am Montag, 22. Mai 2017 12:33:53 UTC+2 schrieb Oriol Guitart:
+>
+> Hi Thomas,
+>
+> Thanks for your help. Your idea seems good. I actually tried and it could 
+> be a solution. However, first of all, I have realized my first assumption 
+> was wrong because even if singularity loads my bashrc it also uses the 
+> environment variables that were already set from the shell that I'm working 
+> on. This can be solved by unseting the variables from the bashrc if I 
+> detect I'm starting a singularity shell.  But apparently singularity exec 
+> does not load my bashrc before executing. Therefore, I still need to find a 
+> solution when I'm not working in the singularity shell but executing just 
+> an script through singularity. 
+> Do you know why singularity is not loading the bashrc when using the 
+> option 'exec' ? I thought singularity exec was a shortcut to avoid doing 
+> singularity shell and then the call to the script.
+> Regards,
+>
+> oriol
+>
+>
+> On Monday, May 22, 2017 at 11:20:46 AM UTC+2, Thomas Maier wrote:
+>>
+>> Hi Oriol,
+>>
+>> there are several in fact:
+>>
+>> (slc)Thomas.Maier@gar-ws-etp07:~>env | grep SINGULARITY
+>> SINGULARITY_libexecdir=/usr/local/libexec
+>> SINGULARITY_localstatedir=/usr/local/var
+>> SINGULARITY_INIT=1
+>> SINGULARITY_sysconfdir=/etc
+>> SINGULARITY_CONTAINER=cern-slc6-05.05.2017.img
+>>
+>> SINGULARITY_IMAGE=/project/etp3/ThomasMaier/Singularity/versions/cern-slc6-05.05.2017.img
+>>
+>>
+>> I'm still using version 2.2.1, so it might look a bit different for newer 
+>> version, but in general variables beginning with "SINGULARITY" are set by 
+>> singularity when opening a shell or executing a command within the 
+>> singularity image (assuming you haven't set it yourself, of course). You 
+>> might want to check yourself what you get when you're inside the 
+>> singularity image or running 'singularity exec'.
+>>
+>> If one of the devs has a good recommendation for what to use, they can 
+>> comment as well of course :).
+>>
+>> Cheers
+>>
+>> Thomas
+>>
+>> Am Montag, 22. Mai 2017 11:06:32 UTC+2 schrieb Oriol Guitart:
+>>>
+>>> Hi all,
+>>>
+>>> In our lab, we have our home directory mounted by nfs. That means, we 
+>>> have the same home for our desktop machines and for our the cluster. The 
+>>> problem is that we use the .bashrc to export some environment variables 
+>>> that are useful when is a normal shell. But these variables might not be 
+>>> useful and produce conflicts when we are in a singularity shell or when 
+>>> executing an script through singularity (singularity exec). I would like to 
+>>> find a way to know when we are in a singularity shell so I can modify my 
+>>> bashrc to export different variables depending on the case. Is there any 
+>>> environment variable specific to singularity that I could check inside my 
+>>> bashrc and make different exports according to that variable ?
+>>> Thanks in advance.
+>>> Regards,
+>>>
+>>> oriol
+>>>
+>>>
+------=_Part_2501_1122032535.1495454191228
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Oriol,<div><br></div><div>generally bash is executing y=
+our .bashrc file only if it is executed in interactive mode. If you execute=
+ &#39;singularity shell &lt;image&gt;&#39; it is the same as opening a new =
+terminal window on your machine, i.e. bash is opened as an interactive shel=
+l. In fact, it is the same as executing &#39;singularity exec &lt;image&gt;=
+ /bin/bash&#39;, i.e. executing bash explicitly (without any additional arg=
+uments) inside the image. If you execute &#39;singularity exec &lt;image&gt=
+; &lt;whatever_command&gt;&#39;, this is executed non-interactively, so gen=
+erally your .bashrc is ignored. In principle you can execute your .bashrc e=
+xplicitly also when running non-interactively, but usually this is not real=
+ly desired (often you make setups in .bashrc that require an interactive sh=
+ell). There are probably plenty of ways to approach this topic (setting env=
+ variables for interactive and non-interactive shells). I&#39;d advise that=
+ you have a look at the bash documentation regarding this topic:</div><div>=
+<br></div><div>https://www.gnu.org/software/bash/manual/bash.html#Bash-Star=
+tup-Files<br></div><div><br></div><div>If there env variables you want to s=
+et every time you open bash non-interactively (and not in login mode), you =
+could probably make use of $BASH_ENV as described in the documentation.</di=
+v><div><br></div><div>Let me know if you have more questions.</div><div><br=
+></div><div>Cheers,</div><div><br></div><div>Thomas</div><div><br>Am Montag=
+, 22. Mai 2017 12:33:53 UTC+2 schrieb Oriol Guitart:<blockquote class=3D"gm=
+ail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc soli=
+d;padding-left: 1ex;"><div dir=3D"ltr">Hi Thomas,<br><br>Thanks for your he=
+lp. Your idea seems good. I actually tried and it could be a solution. Howe=
+ver, first of all, I have realized my first assumption was wrong because ev=
+en if singularity loads my bashrc it also uses the environment variables th=
+at were already set from the shell that I&#39;m working on. This can be sol=
+ved by unseting the variables from the bashrc if I detect I&#39;m starting =
+a singularity shell.=C2=A0 But apparently singularity exec does not load my=
+ bashrc before executing. Therefore, I still need to find a solution when I=
+&#39;m not working in the singularity shell but executing just an script th=
+rough singularity. <br>Do you know why singularity is not loading the bashr=
+c when using the option &#39;exec&#39; ? I thought singularity exec was a s=
+hortcut to avoid doing singularity shell and then the call to the script.<b=
+r>Regards,<br><br>oriol<br><br><br>On Monday, May 22, 2017 at 11:20:46 AM U=
+TC+2, Thomas Maier wrote:<blockquote class=3D"gmail_quote" style=3D"margin:=
+0;margin-left:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=
+=3D"ltr">Hi Oriol,<div><br></div><div>there are several in fact:</div><div>=
+<br></div><div><div>(slc)Thomas.Maier@gar-ws-etp07<wbr>:~&gt;env | grep SIN=
+GULARITY</div><div>SINGULARITY_libexecdir=3D/usr/<wbr>local/libexec</div><d=
+iv>SINGULARITY_localstatedir=3D/<wbr>usr/local/var</div><div>SINGULARITY_IN=
+IT=3D1</div><div>SINGULARITY_sysconfdir=3D/etc</div><div>SINGULARITY_CONTAI=
+NER=3Dcern-<wbr>slc6-05.05.2017.img</div><div>SINGULARITY_IMAGE=3D/project/=
+<wbr>etp3/ThomasMaier/Singularity/<wbr>versions/cern-slc6-05.05.2017.<wbr>i=
+mg</div></div><div><br></div><div><br></div><div>I&#39;m still using versio=
+n 2.2.1, so it might look a bit different for newer version, but in general=
+ variables beginning with &quot;SINGULARITY&quot; are set by singularity wh=
+en opening a shell or executing a command within the singularity image (ass=
+uming you haven&#39;t set it yourself, of course). You might want to check =
+yourself what you get when you&#39;re inside the singularity image or runni=
+ng &#39;singularity exec&#39;.</div><div><br></div><div>If one of the devs =
+has a good recommendation for what to use, they can comment as well of cour=
+se :).</div><div><br></div><div>Cheers</div><div><br></div><div>Thomas</div=
+><div><br>Am Montag, 22. Mai 2017 11:06:32 UTC+2 schrieb Oriol Guitart:<blo=
+ckquote class=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-le=
+ft:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Hi all,<br><br>In our =
+lab, we have our home directory mounted by nfs. That means, we have the sam=
+e home for our desktop machines and for our the cluster. The problem is tha=
+t we use the .bashrc to export some environment variables that are useful w=
+hen is a normal shell. But these variables might not be useful and produce =
+conflicts when we are in a singularity shell or when executing an script th=
+rough singularity (singularity exec). I would like to find a way to know wh=
+en we are in a singularity shell so I can modify my bashrc to export differ=
+ent variables depending on the case. Is there any environment variable spec=
+ific to singularity that I could check inside my bashrc and make different =
+exports according to that variable ?<br>Thanks in advance.<br>Regards,<br><=
+br>oriol<br><br></div></blockquote></div></div></blockquote></div></blockqu=
+ote></div></div>
+------=_Part_2501_1122032535.1495454191228--
+
+------=_Part_2500_917151873.1495454191228--

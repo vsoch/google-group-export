@@ -1,0 +1,321 @@
+Date: Tue, 24 Apr 2018 13:37:23 -0700 (PDT)
+From: Erik Llorente <ellore...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <7b56c86d-3d3a-4b8a-bc38-c7a542cd63ad@lbl.gov>
+In-Reply-To: <CAHqiYpct7xPJaB9FdECMdG1WDSx8QBgDsgHm2nvKEGo0f-8dUQ@mail.gmail.com>
+References: <CAHqiYpct7xPJaB9FdECMdG1WDSx8QBgDsgHm2nvKEGo0f-8dUQ@mail.gmail.com>
+Subject: Re: create singularity image from docker file
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_18460_260889337.1524602243714"
+
+------=_Part_18460_260889337.1524602243714
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_18461_1435833248.1524602243714"
+
+------=_Part_18461_1435833248.1524602243714
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Does anyone have any additional information on how to perform this action, 
+the method of importing a docker image to singularity? I have tried these 
+methods:
+
+-- Created local repo in docker
+  1. docker run -d -p 5000:5000 --restart=always --name registry registry:2
+  2. docker tag app:0.3 localhost:5000/app
+  3. docker push localhost:5000/app
+  4. curl -X GET http://localhost:5000/v2/_catalog
+  I can see the image is in the local repo with the curl command.
+  Tried to import it, I received these errors:
+# singularity pull docker://localhost:5000/app:latest
+WARNING: pull for Docker Hub is not guaranteed to produce the
+WARNING: same image on repeated pull. Use Singularity Registry
+WARNING: (shub://) to pull exactly equivalent images.
+Traceback (most recent call last):
+  File "/home/apps/singularity/2.4.2/libexec/singularity/python/import.py", 
+line 109, in <module>
+    main()
+  File "/home/apps/singularity/2.4.2/libexec/singularity/python/import.py", 
+line 86, in main
+    layerfile=LAYERFILE)
+  File 
+"/home/apps/singularity/2.4.2/libexec/singularity/python/docker/main.py", 
+line 83, in IMPORT
+    client = DockerApiConnection(image=image, auth=auth)
+  File 
+"/home/apps/singularity/2.4.2/libexec/singularity/python/docker/api.py", 
+line 89, in __init__
+    self.load_image(kwargs['image'])
+  File 
+"/home/apps/singularity/2.4.2/libexec/singularity/python/docker/api.py", 
+line 143, in load_image
+    self.update_token()
+  File 
+"/home/apps/singularity/2.4.2/libexec/singularity/python/docker/api.py", 
+line 154, in update_token
+    response = self.get_tags(return_response=True)
+  File 
+"/home/apps/singularity/2.4.2/libexec/singularity/python/docker/api.py", 
+line 270, in get_tags
+    return_response=return_response)
+  File "/home/apps/singularity/2.4.2/libexec/singularity/python/base.py", 
+line 262, in get
+    return_response=return_response)
+  File "/home/apps/singularity/2.4.2/libexec/singularity/python/base.py", 
+line 278, in submit_request
+    response = urlopen(request)
+  File "/usr/lib64/python2.6/urllib2.py", line 126, in urlopen
+    return _opener.open(url, data, timeout)
+  File "/usr/lib64/python2.6/urllib2.py", line 391, in open
+    response = self._open(req, data)
+  File "/usr/lib64/python2.6/urllib2.py", line 409, in _open
+    '_open', req)
+  File "/usr/lib64/python2.6/urllib2.py", line 369, in _call_chain
+    result = func(*args)
+  File "/usr/lib64/python2.6/urllib2.py", line 1198, in https_open
+    return self.do_open(httplib.HTTPSConnection, req)
+  File "/usr/lib64/python2.6/urllib2.py", line 1165, in do_open
+    raise URLError(err)
+urllib2.URLError: <urlopen error [Errno 1] _ssl.c:492: error:140770FC:SSL 
+routines:SSL23_GET_SERVER_HELLO:unknown protocol>
+Cleaning up...
+ERROR: pulling container failed!
+
+-I then attempted it with shub and received pretty much the same error:
+Traceback (most recent call last):
+  File "/home/apps/singularity/2.4.2/libexec/singularity/python/pull.py", 
+line 74, in <module>
+    main()
+  File "/home/apps/singularity/2.4.2/libexec/singularity/python/pull.py", 
+line 66, in main
+    layerfile=LAYERFILE)
+  File 
+"/home/apps/singularity/2.4.2/libexec/singularity/python/shub/main.py", 
+line 77, in PULL
+    manifest = client.get_manifest()
+  File 
+"/home/apps/singularity/2.4.2/libexec/singularity/python/shub/api.py", line 
+113, in get_manifest
+    response = self.get(base, return_response=True)
+  File "/home/apps/singularity/2.4.2/libexec/singularity/python/base.py", 
+line 262, in get
+    return_response=return_response)
+  File "/home/apps/singularity/2.4.2/libexec/singularity/python/base.py", 
+line 278, in submit_request
+    response = urlopen(request)
+  File "/usr/lib64/python2.6/urllib2.py", line 126, in urlopen
+    return _opener.open(url, data, timeout)
+  File "/usr/lib64/python2.6/urllib2.py", line 391, in open
+    response = self._open(req, data)
+  File "/usr/lib64/python2.6/urllib2.py", line 409, in _open
+    '_open', req)
+  File "/usr/lib64/python2.6/urllib2.py", line 369, in _call_chain
+    result = func(*args)
+  File "/usr/lib64/python2.6/urllib2.py", line 1198, in https_open
+    return self.do_open(httplib.HTTPSConnection, req)
+  File "/usr/lib64/python2.6/urllib2.py", line 1165, in do_open
+    raise URLError(err)
+urllib2.URLError: <urlopen error [Errno 1] _ssl.c:492: error:140770FC:SSL 
+routines:SSL23_GET_SERVER_HELLO:unknown protocol>
+
+--I tried this method as well
+  1. singularity image.create app.img
+  2. singularity image.import app.img docker
+  3. singularity -d image.import app.img docker://localhost:5000/app, here 
+is part of the log where it just hangs:
+DEBUG   [U=0,P=25336]      singularity_priv_drop()                  
+ Running as root, not changing privileges
+DEBUG   [U=0,P=25336]      singularity_runtime_overlayfs()          
+ Checking if overlayfs should be used
+DEBUG   [U=0,P=25336]      singularity_config_get_value_impl()      
+ Returning configuration value enable overlay='try'
+DEBUG   [U=0,P=25336]      singularity_registry_get()                
+Returning NULL on 'DISABLE_OVERLAYFS'
+DEBUG   [U=0,P=25336]      singularity_registry_get()                
+Returning value from registry: 'WRITABLE' = '1'
+VERBOSE [U=0,P=25336]      singularity_runtime_overlayfs()           Not 
+enabling overlayFS, image mounted writable
+DEBUG   [U=0,P=25336]      singularity_priv_escalate()              
+ Running as root, not changing privileges
+DEBUG   [U=0,P=25336]      singularity_runtime_overlayfs()          
+ Binding container directory to final home 
+/home/apps/singularity/2.4.2/var/singularity/mnt/container->/home/apps/singularity/2.4.2/var/singularity/mnt/final
+DEBUG   [U=0,P=25336]      singularity_priv_drop()                  
+ Running as root, not changing privileges
+DEBUG   [U=0,P=25336]      singularity_priv_drop_perm()              Called 
+singularity_priv_drop_perm(void)
+VERBOSE [U=0,P=25336]      singularity_priv_drop_perm()              
+Calling user is root, no privileges to drop
+DEBUG   [U=0,P=25336]      envar_set()                              
+ Setting environment variable: 'SINGULARITY_MOUNTPOINT' = 
+'/home/apps/singularity/2.4.2/var/singularity/mnt/final'
+VERBOSE [U=0,P=25336]      main()                                    
+Running command: /bin/bash
+DEBUG   [U=0,P=25336]      main()                                    
+Calling exec...
+
+I can interactively run the image in docker:
+
+# docker run -i -t app:latest
+root@d3c8562c4c26:/# cat /etc/debian_version
+jessie/sid
+
+
+
+
+On Tuesday, April 17, 2018 at 11:44:47 AM UTC-5, airzinger wrote:
+>
+> Hello,
+>
+> I have a docker file retrieved from github, The docker image is not in 
+> docker hub. Can  someone point me in the direction to any documentation 
+> referring to how to convert my docker file to a singularity image?
+>
+> Regards,
+>
+> Haseeb Mahmud
+>
+
+------=_Part_18461_1435833248.1524602243714
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Does anyone have any additional information on how to perf=
+orm this action, the method of importing a docker image to singularity? I h=
+ave tried these methods:<div><br></div><div>-- Created local repo in docker=
+</div><div>=C2=A0 1. docker run -d -p 5000:5000 --restart=3Dalways --name r=
+egistry registry:2</div><div>=C2=A0 2.=C2=A0docker tag app:0.3 localhost:50=
+00/app</div><div>=C2=A0 3.=C2=A0docker push localhost:5000/app</div><div>=
+=C2=A0 4.=C2=A0curl -X GET http://localhost:5000/v2/_catalog</div><div>=C2=
+=A0 I can see the image is in the local repo with the curl command.</div><d=
+iv>=C2=A0 Tried to import it, I received these errors:</div><div><div># sin=
+gularity pull docker://localhost:5000/app:latest</div><div><div>WARNING: pu=
+ll for Docker Hub is not guaranteed to produce the</div><div>WARNING: same =
+image on repeated pull. Use Singularity Registry</div><div>WARNING: (shub:/=
+/) to pull exactly equivalent images.</div><div>Traceback (most recent call=
+ last):</div><div>=C2=A0 File &quot;/home/apps/singularity/2.4.2/libexec/si=
+ngularity/python/import.py&quot;, line 109, in &lt;module&gt;</div><div>=C2=
+=A0 =C2=A0 main()</div><div>=C2=A0 File &quot;/home/apps/singularity/2.4.2/=
+libexec/singularity/python/import.py&quot;, line 86, in main</div><div>=C2=
+=A0 =C2=A0 layerfile=3DLAYERFILE)</div><div>=C2=A0 File &quot;/home/apps/si=
+ngularity/2.4.2/libexec/singularity/python/docker/main.py&quot;, line 83, i=
+n IMPORT</div><div>=C2=A0 =C2=A0 client =3D DockerApiConnection(image=3Dima=
+ge, auth=3Dauth)</div><div>=C2=A0 File &quot;/home/apps/singularity/2.4.2/l=
+ibexec/singularity/python/docker/api.py&quot;, line 89, in __init__</div><d=
+iv>=C2=A0 =C2=A0 self.load_image(kwargs[&#39;image&#39;])</div><div>=C2=A0 =
+File &quot;/home/apps/singularity/2.4.2/libexec/singularity/python/docker/a=
+pi.py&quot;, line 143, in load_image</div><div>=C2=A0 =C2=A0 self.update_to=
+ken()</div><div>=C2=A0 File &quot;/home/apps/singularity/2.4.2/libexec/sing=
+ularity/python/docker/api.py&quot;, line 154, in update_token</div><div>=C2=
+=A0 =C2=A0 response =3D self.get_tags(return_response=3DTrue)</div><div>=C2=
+=A0 File &quot;/home/apps/singularity/2.4.2/libexec/singularity/python/dock=
+er/api.py&quot;, line 270, in get_tags</div><div>=C2=A0 =C2=A0 return_respo=
+nse=3Dreturn_response)</div><div>=C2=A0 File &quot;/home/apps/singularity/2=
+.4.2/libexec/singularity/python/base.py&quot;, line 262, in get</div><div>=
+=C2=A0 =C2=A0 return_response=3Dreturn_response)</div><div>=C2=A0 File &quo=
+t;/home/apps/singularity/2.4.2/libexec/singularity/python/base.py&quot;, li=
+ne 278, in submit_request</div><div>=C2=A0 =C2=A0 response =3D urlopen(requ=
+est)</div><div>=C2=A0 File &quot;/usr/lib64/python2.6/urllib2.py&quot;, lin=
+e 126, in urlopen</div><div>=C2=A0 =C2=A0 return _opener.open(url, data, ti=
+meout)</div><div>=C2=A0 File &quot;/usr/lib64/python2.6/urllib2.py&quot;, l=
+ine 391, in open</div><div>=C2=A0 =C2=A0 response =3D self._open(req, data)=
+</div><div>=C2=A0 File &quot;/usr/lib64/python2.6/urllib2.py&quot;, line 40=
+9, in _open</div><div>=C2=A0 =C2=A0 &#39;_open&#39;, req)</div><div>=C2=A0 =
+File &quot;/usr/lib64/python2.6/urllib2.py&quot;, line 369, in _call_chain<=
+/div><div>=C2=A0 =C2=A0 result =3D func(*args)</div><div>=C2=A0 File &quot;=
+/usr/lib64/python2.6/urllib2.py&quot;, line 1198, in https_open</div><div>=
+=C2=A0 =C2=A0 return self.do_open(httplib.HTTPSConnection, req)</div><div>=
+=C2=A0 File &quot;/usr/lib64/python2.6/urllib2.py&quot;, line 1165, in do_o=
+pen</div><div>=C2=A0 =C2=A0 raise URLError(err)</div><div>urllib2.URLError:=
+ &lt;urlopen error [Errno 1] _ssl.c:492: error:140770FC:SSL routines:SSL23_=
+GET_SERVER_HELLO:unknown protocol&gt;</div><div>Cleaning up...</div><div>ER=
+ROR: pulling container failed!</div></div><div><br></div><div>-I then attem=
+pted it with shub and received pretty much the same error:</div><div><div>T=
+raceback (most recent call last):</div><div>=C2=A0 File &quot;/home/apps/si=
+ngularity/2.4.2/libexec/singularity/python/pull.py&quot;, line 74, in &lt;m=
+odule&gt;</div><div>=C2=A0 =C2=A0 main()</div><div>=C2=A0 File &quot;/home/=
+apps/singularity/2.4.2/libexec/singularity/python/pull.py&quot;, line 66, i=
+n main</div><div>=C2=A0 =C2=A0 layerfile=3DLAYERFILE)</div><div>=C2=A0 File=
+ &quot;/home/apps/singularity/2.4.2/libexec/singularity/python/shub/main.py=
+&quot;, line 77, in PULL</div><div>=C2=A0 =C2=A0 manifest =3D client.get_ma=
+nifest()</div><div>=C2=A0 File &quot;/home/apps/singularity/2.4.2/libexec/s=
+ingularity/python/shub/api.py&quot;, line 113, in get_manifest</div><div>=
+=C2=A0 =C2=A0 response =3D self.get(base, return_response=3DTrue)</div><div=
+>=C2=A0 File &quot;/home/apps/singularity/2.4.2/libexec/singularity/python/=
+base.py&quot;, line 262, in get</div><div>=C2=A0 =C2=A0 return_response=3Dr=
+eturn_response)</div><div>=C2=A0 File &quot;/home/apps/singularity/2.4.2/li=
+bexec/singularity/python/base.py&quot;, line 278, in submit_request</div><d=
+iv>=C2=A0 =C2=A0 response =3D urlopen(request)</div><div>=C2=A0 File &quot;=
+/usr/lib64/python2.6/urllib2.py&quot;, line 126, in urlopen</div><div>=C2=
+=A0 =C2=A0 return _opener.open(url, data, timeout)</div><div>=C2=A0 File &q=
+uot;/usr/lib64/python2.6/urllib2.py&quot;, line 391, in open</div><div>=C2=
+=A0 =C2=A0 response =3D self._open(req, data)</div><div>=C2=A0 File &quot;/=
+usr/lib64/python2.6/urllib2.py&quot;, line 409, in _open</div><div>=C2=A0 =
+=C2=A0 &#39;_open&#39;, req)</div><div>=C2=A0 File &quot;/usr/lib64/python2=
+.6/urllib2.py&quot;, line 369, in _call_chain</div><div>=C2=A0 =C2=A0 resul=
+t =3D func(*args)</div><div>=C2=A0 File &quot;/usr/lib64/python2.6/urllib2.=
+py&quot;, line 1198, in https_open</div><div>=C2=A0 =C2=A0 return self.do_o=
+pen(httplib.HTTPSConnection, req)</div><div>=C2=A0 File &quot;/usr/lib64/py=
+thon2.6/urllib2.py&quot;, line 1165, in do_open</div><div>=C2=A0 =C2=A0 rai=
+se URLError(err)</div><div>urllib2.URLError: &lt;urlopen error [Errno 1] _s=
+sl.c:492: error:140770FC:SSL routines:SSL23_GET_SERVER_HELLO:unknown protoc=
+ol&gt;</div></div><div><br></div><div>--I tried this method as well</div><d=
+iv>=C2=A0 1.=C2=A0singularity image.create app.img</div><div>=C2=A0 2. sing=
+ularity image.import app.img docker</div><div>=C2=A0 3.=C2=A0singularity -d=
+ image.import app.img=C2=A0docker://localhost:5000/app, here is part of the=
+ log where it just hangs:</div><div><div>DEBUG=C2=A0 =C2=A0[U=3D0,P=3D25336=
+]=C2=A0 =C2=A0 =C2=A0 singularity_priv_drop()=C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Running as root, not changing priv=
+ileges</div><div>DEBUG=C2=A0 =C2=A0[U=3D0,P=3D25336]=C2=A0 =C2=A0 =C2=A0 si=
+ngularity_runtime_overlayfs()=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Check=
+ing if overlayfs should be used</div><div>DEBUG=C2=A0 =C2=A0[U=3D0,P=3D2533=
+6]=C2=A0 =C2=A0 =C2=A0 singularity_config_get_value_impl()=C2=A0 =C2=A0 =C2=
+=A0 =C2=A0Returning configuration value enable overlay=3D&#39;try&#39;</div=
+><div>DEBUG=C2=A0 =C2=A0[U=3D0,P=3D25336]=C2=A0 =C2=A0 =C2=A0 singularity_r=
+egistry_get()=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Return=
+ing NULL on &#39;DISABLE_OVERLAYFS&#39;</div><div>DEBUG=C2=A0 =C2=A0[U=3D0,=
+P=3D25336]=C2=A0 =C2=A0 =C2=A0 singularity_registry_get()=C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Returning value from registry: &#39;=
+WRITABLE&#39; =3D &#39;1&#39;</div><div>VERBOSE [U=3D0,P=3D25336]=C2=A0 =C2=
+=A0 =C2=A0 singularity_runtime_overlayfs()=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0Not enabling overlayFS, image mounted writable</div><div>DEBUG=C2=
+=A0 =C2=A0[U=3D0,P=3D25336]=C2=A0 =C2=A0 =C2=A0 singularity_priv_escalate()=
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Running as root, not=
+ changing privileges</div><div>DEBUG=C2=A0 =C2=A0[U=3D0,P=3D25336]=C2=A0 =
+=C2=A0 =C2=A0 singularity_runtime_overlayfs()=C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0Binding container directory to final home /home/apps/singulari=
+ty/2.4.2/var/singularity/mnt/container-&gt;/home/apps/singularity/2.4.2/var=
+/singularity/mnt/final</div><div>DEBUG=C2=A0 =C2=A0[U=3D0,P=3D25336]=C2=A0 =
+=C2=A0 =C2=A0 singularity_priv_drop()=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Running as root, not changing privileges</di=
+v><div>DEBUG=C2=A0 =C2=A0[U=3D0,P=3D25336]=C2=A0 =C2=A0 =C2=A0 singularity_=
+priv_drop_perm()=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Called sin=
+gularity_priv_drop_perm(void)</div><div>VERBOSE [U=3D0,P=3D25336]=C2=A0 =C2=
+=A0 =C2=A0 singularity_priv_drop_perm()=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 Calling user is root, no privileges to drop</div><div>DEBUG=
+=C2=A0 =C2=A0[U=3D0,P=3D25336]=C2=A0 =C2=A0 =C2=A0 envar_set()=C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0Setting environment variable: &#39;SINGULARITY_MOUN=
+TPOINT&#39; =3D &#39;/home/apps/singularity/2.4.2/var/singularity/mnt/final=
+&#39;</div><div>VERBOSE [U=3D0,P=3D25336]=C2=A0 =C2=A0 =C2=A0 main()=C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Running command: /bin/bash</d=
+iv><div>DEBUG=C2=A0 =C2=A0[U=3D0,P=3D25336]=C2=A0 =C2=A0 =C2=A0 main()=C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Calling exec...</div></div=
+><div><br></div><div>I can interactively run the image in docker:</div><div=
+><br></div><div># docker run -i -t app:latest<br></div><div><div>root@d3c85=
+62c4c26:/# cat /etc/debian_version</div><div>jessie/sid</div></div><div><br=
+></div><div><br></div><div><br></div><div><br>On Tuesday, April 17, 2018 at=
+ 11:44:47 AM UTC-5, airzinger wrote:<blockquote class=3D"gmail_quote" style=
+=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: =
+1ex;"><div dir=3D"ltr">Hello,<div><br></div><div>I have a docker file retri=
+eved from github, The docker image is not in docker hub. Can=C2=A0 someone =
+point me in the direction to any documentation referring to how to convert =
+my docker file to a singularity image?</div><div><br></div><div>Regards,</d=
+iv><div><br></div><div>Haseeb Mahmud</div></div>
+</blockquote></div></div></div>
+------=_Part_18461_1435833248.1524602243714--
+
+------=_Part_18460_260889337.1524602243714--

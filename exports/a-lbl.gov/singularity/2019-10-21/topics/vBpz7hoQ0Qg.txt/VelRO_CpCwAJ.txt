@@ -1,0 +1,113 @@
+X-Received: by 10.107.143.71 with SMTP id r68mr139657iod.34.1481773694019;
+        Wed, 14 Dec 2016 19:48:14 -0800 (PST)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.36.190.138 with SMTP id i132ls4201473itf.10.canary-gmail; Wed,
+ 14 Dec 2016 19:48:13 -0800 (PST)
+X-Received: by 10.84.148.134 with SMTP id k6mr490918pla.57.1481773693422;
+        Wed, 14 Dec 2016 19:48:13 -0800 (PST)
+Return-Path: <bock...@gmail.com>
+Received: from fe4.lbl.gov (fe4.lbl.gov. [128.3.41.71])
+        by mx.google.com with ESMTP id y19si5215pfj.264.2016.12.14.19.48.13
+        for <singu...@lbl.gov>;
+        Wed, 14 Dec 2016 19:48:13 -0800 (PST)
+Received-SPF: pass (google.com: domain of bock...@gmail.com designates 74.125.82.54 as permitted sender) client-ip=74.125.82.54;
+Authentication-Results: mx.google.com;
+       dkim=pass head...@gmail.com;
+       spf=pass (google.com: domain of bock...@gmail.com designates 74.125.82.54 as permitted sender) smtp.mailfrom=bock...@gmail.com
+X-Ironport-SBRS: 3.4
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2EXAQAYEVJYhjZSfUpaAxsBAQEDAQEBCQEBARcBAQQBAQoBAYMMAQEBAQE/OoEGB4M8iguXHIhmjCGBRhsoHweFfAKBcQc/FAEBAQEBAQEBAQEBAhABAQEICwsJHTCCMwQCAxEFBAQ9CgMvAQEBAQEBAQEBAQEBAQEBGgINHhMDDwIZAQUjHQENDh4DDAYFCw0CAiYCAiIBDgMBBQEcDgcEAQcVBIgvAQMXBZ1BP4wAggQFAR6DDQWDVwoZJw1UgngBAQEBBgEBAQEBAQEZAgYSeYoOhBoRAT0mBYI4gl0Fj36KbYZQil2CRYE3jE+OFIJJFB6BFB9pDSV6gy8PEQuBfB80B4V8R4FnAQEB
+X-IronPort-AV: E=Sophos;i="5.33,350,1477983600"; 
+   d="scan'208";a="58121301"
+Received: from mail-wm0-f54.google.com ([74.125.82.54])
+  by fe4.lbl.gov with ESMTP; 14 Dec 2016 19:48:12 -0800
+Received: by mail-wm0-f54.google.com with SMTP id a197so143943798wmd.0
+        for <singu...@lbl.gov>; Wed, 14 Dec 2016 19:48:12 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=mime-version:in-reply-to:references:from:date:message-id:subject:to;
+        bh=NTb0ph6L1FjPLyUuXv9GdbLGXWSwr0k+XpAbO4USO2k=;
+        b=dmCEjUtpSki1VG2p3KJk4ouDEIzB0EKB7DK9lHGdDB1zXGTO5n3lNs/C/cSW/ToAlB
+         z4VdQpsdelnpdn21oYvVOyjdPmDnmAEWUvfLdsXljvnmBaREbzQ//Kpcc6Yh517Rs+QH
+         FKHmy3xjISln5M7IN0J42DplY6HU+o+ip2Cm5lKR8XKbCf6H11DFlDcZzgnLL0epCz2d
+         lBQHTVc71CUsybduondMsF+hMfXDtIQEuLYsRli5GUpg8XFOf01RvEGxNwTAoVyWtgYD
+         jMhG59d6ORnAOLhqqvmEaeIbju/EpspbtMtpdFumZXLC6xRjTuSoYdXIb/TJv8EWXaMC
+         WfIQ==
+X-Gm-Message-State: AKaTC037NorUAWSLZSYrUU+Fyx49zDio+mWx7wcBDHvUlHMcRpaO60s3n7t/YbS0pwkmxtinmePaP2coMoF4VQ==
+X-Received: by 10.25.40.212 with SMTP id o203mr45557lfo.1.1481773690956; Wed,
+ 14 Dec 2016 19:48:10 -0800 (PST)
+MIME-Version: 1.0
+Received: by 10.114.79.133 with HTTP; Wed, 14 Dec 2016 19:48:10 -0800 (PST)
+In-Reply-To: <CAN7etTw2TVsrUi67faHD1f6wvzepBJxgE7mBqNdnuFQ7hdntLQ@mail.gmail.com>
+References: <D46D79D7.CFE3A%Grigory.Shamov@umanitoba.ca> <CAN7etTw2TVsrUi67faHD1f6wvzepBJxgE7mBqNdnuFQ7hdntLQ@mail.gmail.com>
+From: Brian Bockelman <bock...@gmail.com>
+Date: Wed, 14 Dec 2016 21:48:10 -0600
+Message-ID: <CAKswpQjbhwADkenZQqZ3fZP2DU4Mt_FoKJF4P_LXjTCAHtTL7w@mail.gmail.com>
+Subject: Re: [Singularity] stale sexec processes on compute nodes
+To: singularity@lbl.gov
+Content-Type: text/plain; charset=UTF-8
+
+Hi,
+
+One thought - are you using PID namespaces (or the "-C" flag)?  I
+recently fixed a bug that prevented signal propagation through
+namespaces.
+
+Torque is not well-known for being very good at cleaning up processes
+- maybe it's not getting a SIGKILL to all?
+
+Brian
+
+On Wed, Dec 14, 2016 at 4:46 PM, Gregory M. Kurtzer <gmku...@lbl.gov> wrote:
+> Hi Grigory,
+>
+> Are you still seeing this? Check the open file descriptors and IO locks on
+> those stale sexec PIDs. Is the parent process of those PIDs init? Also,
+> check the output of losetup -a and see if there are any stale loop devices
+> being held.
+>
+> Thanks!
+>
+> On Wed, Dec 7, 2016 at 6:33 AM, Grigory Shamov <Grigor...@umanitoba.ca>
+> wrote:
+>>
+>> Hi All,
+>>
+>> After running Singularity from Torque jobs, (and thats fairly old Torque,
+>> 2.5.13, using cpusets, scheduling per core) sometimes there are stale
+>> sexec processes left on the nodes. Have anyone experienced this; what
+>> would be the reason an how to combat it?
+>>
+>> --
+>> Grigory Shamov
+>>
+>> Westgrid/ComputeCanada Site Lead
+>> University of Manitoba
+>> E2-588 EITC Building,
+>> (204) 474-9625
+>>
+>>
+>>
+>> --
+>> You received this message because you are subscribed to the Google Groups
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an
+>> email to singu...@lbl.gov.
+>
+>
+>
+>
+> --
+> Gregory M. Kurtzer
+> HPC Systems Architect and Technology Developer
+> Lawrence Berkeley National Laboratory HPCS
+> University of California Berkeley Research IT
+> Singularity Linux Containers (http://singularity.lbl.gov/)
+> Warewulf Cluster Management (http://warewulf.lbl.gov/)
+> GitHub: https://github.com/gmkurtzer, Twitter: https://twitter.com/gmkurtzer
+>
+> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.

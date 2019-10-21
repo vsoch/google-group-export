@@ -1,0 +1,613 @@
+X-Received: by 10.101.74.145 with SMTP id b17mr4828324pgu.34.1522950295848;
+        Thu, 05 Apr 2018 10:44:55 -0700 (PDT)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.98.194.67 with SMTP id l64ls1401558pfg.9.gmail; Thu, 05 Apr
+ 2018 10:44:54 -0700 (PDT)
+X-Received: by 10.99.109.142 with SMTP id i136mr15379742pgc.306.1522950294742;
+        Thu, 05 Apr 2018 10:44:54 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1522950294; cv=none;
+        d=google.com; s=arc-20160816;
+        b=pySp1lZnQu1uNEQiKgEJ6pYW+F9hCO1/NL9vKN4kp6nzxS0yrLIW2/GXYCztuJJP0q
+         ngalUjYx0zW5337n3XGgaOHjbUkQpBCIiqZpjyNFhZb7gg0BmxuCf8XlNbZgh9Jsog1l
+         Jj30BwtAPaPQ4BZaCA1yyDqzSDPeIRBPZBpkstkKTKqbcckDtyxatF2WttocG44e7lWH
+         nqTMZu2xpcypOk5nt13eS2MBZqM68ZlP8SGojMAWh7tZUaMBn9tMeOGLroVCiKJKIEj9
+         lFV1FhAcxWnJe3zVaFfIcSTAnxv3uf16TulloAcD49zjEC05RpJZ2CueyI1tWirPZjNx
+         KmvQ==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816;
+        h=to:subject:message-id:date:from:references:in-reply-to:mime-version
+         :dkim-signature:arc-authentication-results;
+        bh=My2kr4G0/aKj/CdW4ER56tDsvmnTNh/WgnWNKFVTq8E=;
+        b=Mt4VjeVTC9FCK7a0m9u7sWYcPoB9k5DejKouYM7Hl8ZpgxBQVyJm9gjvpwTHeexhKn
+         3RsLkG+q4uQnY2h1rKRNAvV9InyVKj0CMB/5oqlNBRFMnGDJVlPwWuCSMQ4PlzGiaXap
+         1P+sOfaDoerP+LaRd4m8ymkvf9qhsvjT5AI6JXYrF37RoRTc+Utt/rEmwK8YSWEbFg7M
+         ZaghKQqpslXlTnqiVywdBLgu176dA8xY0b17VEYVCmIVtUFGAQd3fRvT5FZ5IIUI7Chf
+         dJS/fVkBD7s7CFg/imFBWVVHp5VDKCjAYpGIWr7haYAAwzrgWzVfq9090w4qrwWnj7JI
+         JLnQ==
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=pass head...@sylabs.io header.s=google header.b=DiJR5+iq;
+       spf=pass (google.com: domain of dtr...@sylabs.io designates 74.125.82.193 as permitted sender) smtp.mailfrom=dtr...@sylabs.io
+Return-Path: <dtr...@sylabs.io>
+Received: from fe4.lbl.gov (fe4.lbl.gov. [128.3.41.71])
+        by mx.google.com with ESMTP id n1-v6si6242442pld.280.2018.04.05.10.44.54
+        for <singu...@lbl.gov>;
+        Thu, 05 Apr 2018 10:44:54 -0700 (PDT)
+Received-SPF: pass (google.com: domain of dtr...@sylabs.io designates 74.125.82.193 as permitted sender) client-ip=74.125.82.193;
+Authentication-Results: mx.google.com;
+       dkim=pass head...@sylabs.io header.s=google header.b=DiJR5+iq;
+       spf=pass (google.com: domain of dtr...@sylabs.io designates 74.125.82.193 as permitted sender) smtp.mailfrom=dtr...@sylabs.io
+X-Ironport-SBRS: 2.7
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: =?us-ascii?q?A2HyAABBX8Zaf8FSfUpcHAEBAQQBAQoBA?=
+ =?us-ascii?q?YJNSk89byiDWQaBHYZjjQmBdIEPhmGJU4IhFIEsOAIjAQoIgQJNgwkCglYhNBg?=
+ =?us-ascii?q?BAgEBAQEBAQIBAQIQAQEJCwsIJiUMgjUFAgMaBgUESywDAQEBAQEBAQEBIgEBA?=
+ =?us-ascii?q?QEBAQEBAQEBAQEBAQEaAggFIjwBAgIBIx0BAQwsBAsLCy0BCQICIQEPAwEFARw?=
+ =?us-ascii?q?OBwQBHASDFYE/AwgFCAUKoFk8iVQRM22CHIJuAQEFhBUNgSuCHQgSh1iBVD+DY?=
+ =?us-ascii?q?i6CT0ICA4EmARIBTIJTgjQghwcZKYUPPIM4hkosCIVThWGCfYEyOopRhymBcTy?=
+ =?us-ascii?q?DNwGCZjCBBAwQbC5xTSwMawaCDAmBZySDaIJkgwFshB8hMAEPilVHgW8BAQ?=
+X-IronPort-AV: E=Sophos;i="5.48,411,1517904000"; 
+   d="scan'208,217";a="18916345"
+Received: from mail-ot0-f193.google.com ([74.125.82.193])
+  by fe4.lbl.gov with ESMTP; 05 Apr 2018 10:44:52 -0700
+Received: by mail-ot0-f193.google.com with SMTP id m7-v6so28256077otd.1
+        for <singu...@lbl.gov>; Thu, 05 Apr 2018 10:44:52 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=sylabs.io; s=google;
+        h=mime-version:in-reply-to:references:from:date:message-id:subject:to;
+        bh=My2kr4G0/aKj/CdW4ER56tDsvmnTNh/WgnWNKFVTq8E=;
+        b=DiJR5+iqZXJQlcaUyie29i0emejUCymkadHiaDR+g8/JYRzG17PMo/idtWuLYbJpHG
+         Qjy+OF7KrLdoQxUFwW00Ksfw5zMIzZoQVxIP8C8HyVjtXJ6xST7LhDDsvhaqMINAsDGY
+         +5bInpBAl9wbRBcEihDY/9zXxTkBDxxfX6no7hjFibHoUyc4SpIO4tut/sr5Kex53TNB
+         l3BrpN0OHE7DXRqCCf8yaKWwxtXievQ1dxYINSpRwwr/PgkmK/no2//4uB7b3RWCcbal
+         JhDVQp+4oeB1TnhR30Mu03c6EIzqJlVVzTos0Dh76AwVpxwPnx0ouluBMrmrRpOnXMZl
+         NZvg==
+X-Gm-Message-State: ALQs6tAbn5jnvPju80GPRJG5siPwlT3K7J657cJpBB9UiatlfThc8KtH
+	Io2rMpMI72iWXcHJIStjEkpCbf9UDq65CEulkYx6lAmtz5A=
+X-Received: by 2002:aca:49d6:: with SMTP id w205-v6mr12790976oia.202.1522950291486;
+ Thu, 05 Apr 2018 10:44:51 -0700 (PDT)
+MIME-Version: 1.0
+Received: by 2002:a9d:2a29:0:0:0:0:0 with HTTP; Thu, 5 Apr 2018 10:44:50 -0700 (PDT)
+In-Reply-To: <181b5c82-3e7c-46d4-bda6-34321ac2180f@lbl.gov>
+References: <181b5c82-3e7c-46d4-bda6-34321ac2180f@lbl.gov>
+From: David Trudgian <dtr...@sylabs.io>
+Date: Thu, 5 Apr 2018 12:44:50 -0500
+Message-ID: <CAMOYqY7z+UyA7NdFezu=M00N6_gmWarSHCkfCTj7OiutJeOr4A@mail.gmail.com>
+Subject: Re: [Singularity] Convert from docker container to singularity
+ introduces error
+To: singularity@lbl.gov
+Content-Type: multipart/alternative; boundary="000000000000228cfd05691d7f6a"
+
+--000000000000228cfd05691d7f6a
+Content-Type: text/plain; charset="UTF-8"
+
+Hi Maurice,
+
+I just tried to reproduce by pulling your docker image, but if I call the
+.sh I get something different:
+
+```
+$ singularity exec photoscan13-latest.simg
+/usr/local/photoscan-pro/photoscan.sh
+This application failed to start because it could not find or load the Qt
+platform plugin "xcb"
+in "".
+
+Reinstalling the application may fix this problem.
+```
+
+Is any part of this related to what you are binding in to /opt in your
+example?
+
+Thanks,
+
+DT
+
+
+On Thu, Apr 5, 2018 at 8:27 AM, Maurice Manning <maurice...@gmail.com>
+wrote:
+
+> Hello
+> Ran into an issue with converting a Docker container containing Photoscan
+> into a Singularity container. When I run the Docker container with a basic
+> Photoscan command it notifies me that I don't have a license (expected)
+> then exits. Then I push this build to docker hub and pull into a
+> Singularity container. When I run the same command on the Singularity
+> container I get local encoding errors.
+>
+> Working as expected with Docker:
+> vagrant@vagrant:~/photoscan13-containerized$ *docker run -v
+> /home/vagrant/:/opt  -it  photoscan13 /usr/local/photoscan-pro/photoscan.sh
+> -r /opt/ps.py*
+> No license found.
+> Details: No license for product (-1)
+> vagrant@vagrant:~/photoscan13-containerized$ docker tag
+> photoscan13:latest mmmanning/photoscan13:latest
+>
+> New errors when run as Singularity:
+> vagrant@vagrant:~/photoscan13-containerized$* singularity exec -B
+> /home/vagrant/:/opt/ photoscan13-latest.img
+> /usr/local/photoscan-pro/photoscan.sh -r /opt/ps.py*
+> No license found.
+> Details: No license for product (-1)
+> Can't load geoid: /usr/local/photoscan-pro/geoids/egm96-15.tif
+> Fatal Python error: Py_Initialize: Unable to get the locale encoding
+> ImportError: No module named 'encodings'
+>
+> Current thread 0x00007f407236b7c0 (most recent call first):
+>
+> (process:29277): Gtk-WARNING **: Locale not supported by C library.
+> Using the fallback 'C' locale.
+> Aborted (core dumped)
+> vagrant@vagrant:~/photoscan13-containerized$
+>
+>  My Dockerfile:
+>
+>
+> ##
+> ## Dockerfile for photoscan13
+> ##
+>
+>
+> FROM ubuntu:xenial
+> RUN apt-get update && \
+> apt-get -y upgrade && \
+> apt-get install -y software-properties-common libglib2.0 libqt5gui5
+> libgtk2.0-0 libglu1-mesa libgomp1 zlib1g && \
+> apt-get install -y language-pack-en language-pack-en-base wget vim
+> ## install Agisoft Photoscan 1.3
+> RUN wget --directory-prefix=/usr/local http://download.agisoft.com/
+> photoscan-pro_1_3_0_amd64.tar.gz ;\
+> (cd /usr/local && tar zxvf photoscan-pro_1_3_0_amd64.tar.gz) ;\
+> (cd /usr/local/bin && ln -s ../photoscan-pro/photoscan-pro.sh) ;\
+> rm -f /usr/local/photoscan-pro_1_3_0_amd64.tar.gz ;\
+> dpkg-reconfigure locales ;\
+> chmod 755 /usr/local//photoscan-pro/ ;\
+> chmod 755 /usr/local//photoscan-pro/*
+>
+> CMD ["bash"]
+>
+>
+> My build process:
+>
+> git clone https://github.com/mauricemanning/photoscan13-containerizedcd photoscan13-containerized
+> docker build --rm --tag photoscan13 .
+> docker tag photoscan13:latest mmmanning/photoscan13:latest
+> docker push mmmanning/photoscan13:latest
+> docker images
+> singularity pull docker://mmmanning/photoscan13:latest
+>
+>
+>
+> Thanks for an ideas.
+> Maurice
+>
+>
+> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+>
+
+--000000000000228cfd05691d7f6a
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div><div><div><div>Hi Maurice,<br><br></div>I just tried =
+to reproduce by pulling your docker image, but if I call the .sh I get some=
+thing different:<br><br>```<br>$ singularity exec photoscan13-latest.simg /=
+usr/local/photoscan-pro/photoscan.sh<br>This application failed to start be=
+cause it could not find or load the Qt platform plugin &quot;xcb&quot;<br>i=
+n &quot;&quot;.<br><br>Reinstalling the application may fix this problem.<b=
+r>```<br><br></div>Is any part of this related to what you are binding in t=
+o /opt in your example?<br><br></div>Thanks,<br><br></div>DT<br><div><div><=
+div><div><br></div></div></div></div></div><div class=3D"gmail_extra"><br><=
+div class=3D"gmail_quote">On Thu, Apr 5, 2018 at 8:27 AM, Maurice Manning <=
+span dir=3D"ltr">&lt;<a href=3D"mailto:maurice...@gmail.com" target=3D"_bla=
+nk">maurice...@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmai=
+l_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left=
+:1ex"><div dir=3D"ltr">Hello=C2=A0<div>Ran into an issue with converting a =
+Docker container containing Photoscan into a Singularity container. When I =
+run the Docker container with a basic Photoscan command it notifies me that=
+ I don&#39;t have a license (expected) then exits. Then I push this build t=
+o docker hub and pull into a Singularity container. When I run the same com=
+mand on the Singularity container I get local encoding errors.</div><div><b=
+r></div><div>Working as expected with Docker:</div><div><div style=3D"color=
+:rgb(38,40,42);font-family:&quot;times new roman&quot;,&quot;new york&quot;=
+,times,serif;font-size:16px;font-variant-ligatures:normal">vagrant@vagrant:=
+~/photoscan13-<wbr>containerized$=C2=A0<b>docker run -v /home/vagrant/:/opt=
+=C2=A0 -it=C2=A0 photoscan13 /usr/local/photoscan-pro/<wbr>photoscan.sh -r =
+/opt/ps.py</b></div><div style=3D"color:rgb(38,40,42);font-family:&quot;tim=
+es new roman&quot;,&quot;new york&quot;,times,serif;font-size:16px;font-var=
+iant-ligatures:normal">No license found.</div><div style=3D"color:rgb(38,40=
+,42);font-family:&quot;times new roman&quot;,&quot;new york&quot;,times,ser=
+if;font-size:16px;font-variant-ligatures:normal">Details: No license for pr=
+oduct (-1)</div><div style=3D"color:rgb(38,40,42);font-family:&quot;times n=
+ew roman&quot;,&quot;new york&quot;,times,serif;font-size:16px;font-variant=
+-ligatures:normal">vagrant@vagrant:~/photoscan13-<wbr>containerized$ docker=
+ tag photoscan13:latest mmmanning/photoscan13:latest</div></div><div style=
+=3D"color:rgb(38,40,42);font-family:&quot;times new roman&quot;,&quot;new y=
+ork&quot;,times,serif;font-size:16px;font-variant-ligatures:normal"><br></d=
+iv><div>New errors when run as Singularity:</div><div><div style=3D"color:r=
+gb(38,40,42);font-family:&quot;times new roman&quot;,&quot;new york&quot;,t=
+imes,serif;font-size:16px;font-variant-ligatures:normal">vagrant@vagrant:~/=
+photoscan13-<wbr>containerized$<b>=C2=A0singularity exec -B /home/vagrant/:=
+/opt/ photoscan13-latest.img /usr/local/photoscan-pro/<wbr>photoscan.sh -r =
+/opt/ps.py</b></div><div style=3D"color:rgb(38,40,42);font-family:&quot;tim=
+es new roman&quot;,&quot;new york&quot;,times,serif;font-size:16px;font-var=
+iant-ligatures:normal">No license found.</div><div style=3D"color:rgb(38,40=
+,42);font-family:&quot;times new roman&quot;,&quot;new york&quot;,times,ser=
+if;font-size:16px;font-variant-ligatures:normal">Details: No license for pr=
+oduct (-1)</div><div style=3D"color:rgb(38,40,42);font-family:&quot;times n=
+ew roman&quot;,&quot;new york&quot;,times,serif;font-size:16px;font-variant=
+-ligatures:normal">Can&#39;t load geoid: /usr/local/photoscan-pro/<wbr>geoi=
+ds/egm96-15.tif</div><div style=3D"color:rgb(38,40,42);font-family:&quot;ti=
+mes new roman&quot;,&quot;new york&quot;,times,serif;font-size:16px;font-va=
+riant-ligatures:normal">Fatal Python error: Py_Initialize: Unable to get th=
+e locale encoding</div><div style=3D"color:rgb(38,40,42);font-family:&quot;=
+times new roman&quot;,&quot;new york&quot;,times,serif;font-size:16px;font-=
+variant-ligatures:normal">ImportError: No module named &#39;encodings&#39;<=
+/div><div style=3D"color:rgb(38,40,42);font-family:&quot;times new roman&qu=
+ot;,&quot;new york&quot;,times,serif;font-size:16px;font-variant-ligatures:=
+normal"><br clear=3D"none"></div><div style=3D"color:rgb(38,40,42);font-fam=
+ily:&quot;times new roman&quot;,&quot;new york&quot;,times,serif;font-size:=
+16px;font-variant-ligatures:normal">Current thread 0x00007f407236b7c0 (most=
+ recent call first):</div><div style=3D"color:rgb(38,40,42);font-family:&qu=
+ot;times new roman&quot;,&quot;new york&quot;,times,serif;font-size:16px;fo=
+nt-variant-ligatures:normal"><br clear=3D"none"></div><div style=3D"color:r=
+gb(38,40,42);font-family:&quot;times new roman&quot;,&quot;new york&quot;,t=
+imes,serif;font-size:16px;font-variant-ligatures:normal">(process:29277): G=
+tk-WARNING **: Locale not supported by C library.</div><div style=3D"color:=
+rgb(38,40,42);font-family:&quot;times new roman&quot;,&quot;new york&quot;,=
+times,serif;font-size:16px;font-variant-ligatures:normal"><span style=3D"wh=
+ite-space:pre-wrap">=09</span>Using the fallback &#39;C&#39; locale.</div><=
+div style=3D"color:rgb(38,40,42);font-family:&quot;times new roman&quot;,&q=
+uot;new york&quot;,times,serif;font-size:16px;font-variant-ligatures:normal=
+">Aborted (core dumped)</div><div style=3D"color:rgb(38,40,42);font-family:=
+&quot;times new roman&quot;,&quot;new york&quot;,times,serif;font-size:16px=
+;font-variant-ligatures:normal">vagrant@vagrant:~/photoscan13-<wbr>containe=
+rized$</div></div><div style=3D"color:rgb(38,40,42);font-family:&quot;times=
+ new roman&quot;,&quot;new york&quot;,times,serif;font-size:16px;font-varia=
+nt-ligatures:normal"><br></div><div style=3D"color:rgb(38,40,42);font-famil=
+y:&quot;times new roman&quot;,&quot;new york&quot;,times,serif;font-size:16=
+px;font-variant-ligatures:normal">=C2=A0My Dockerfile:</div><div style=3D"c=
+olor:rgb(38,40,42);font-family:&quot;times new roman&quot;,&quot;new york&q=
+uot;,times,serif;font-size:16px;font-variant-ligatures:normal"><br><br><tab=
+le class=3D"m_1868596539894679774highlight m_1868596539894679774tab-size m_=
+1868596539894679774js-file-line-container" style=3D"box-sizing:border-box;b=
+order-collapse:collapse;color:rgb(36,41,46);font-family:-apple-system,syste=
+m-ui,&quot;Segoe UI&quot;,Helvetica,Arial,sans-serif,&quot;Apple Color Emoj=
+i&quot;,&quot;Segoe UI Emoji&quot;,&quot;Segoe UI Symbol&quot;;font-size:14=
+px;font-variant-ligatures:normal"><tbody style=3D"box-sizing:border-box"><t=
+r style=3D"box-sizing:border-box"><td id=3D"m_1868596539894679774LC3" class=
+=3D"m_1868596539894679774blob-code m_1868596539894679774blob-code-inner m_1=
+868596539894679774js-file-line" style=3D"box-sizing:border-box;padding-righ=
+t:10px;padding-left:10px;line-height:20px;vertical-align:top;overflow:visib=
+le;font-family:SFMono-Regular,Consolas,&quot;Liberation Mono&quot;,Menlo,Co=
+urier,monospace;font-size:12px;word-wrap:normal;white-space:pre-wrap"><span=
+ class=3D"m_1868596539894679774pl-c" style=3D"box-sizing:border-box;color:r=
+gb(106,115,125)"><span class=3D"m_1868596539894679774pl-c" style=3D"box-siz=
+ing:border-box">#</span>#</span></td></tr><tr style=3D"box-sizing:border-bo=
+x"><td id=3D"m_1868596539894679774L4" class=3D"m_1868596539894679774blob-nu=
+m m_1868596539894679774js-line-number" style=3D"box-sizing:border-box;paddi=
+ng-right:10px;padding-left:10px;width:50px;min-width:50px;font-family:SFMon=
+o-Regular,Consolas,&quot;Liberation Mono&quot;,Menlo,Courier,monospace;font=
+-size:12px;line-height:20px;color:rgba(27,31,35,0.298039);text-align:right;=
+white-space:nowrap;vertical-align:top"></td><td id=3D"m_1868596539894679774=
+LC4" class=3D"m_1868596539894679774blob-code m_1868596539894679774blob-code=
+-inner m_1868596539894679774js-file-line" style=3D"box-sizing:border-box;pa=
+dding-right:10px;padding-left:10px;line-height:20px;vertical-align:top;over=
+flow:visible;font-family:SFMono-Regular,Consolas,&quot;Liberation Mono&quot=
+;,Menlo,Courier,monospace;font-size:12px;word-wrap:normal;white-space:pre-w=
+rap"><span class=3D"m_1868596539894679774pl-c" style=3D"box-sizing:border-b=
+ox;color:rgb(106,115,125)"><span class=3D"m_1868596539894679774pl-c" style=
+=3D"box-sizing:border-box">#</span># Dockerfile for photoscan13</span></td>=
+</tr><tr style=3D"box-sizing:border-box"><td id=3D"m_1868596539894679774L5"=
+ class=3D"m_1868596539894679774blob-num m_1868596539894679774js-line-number=
+" style=3D"box-sizing:border-box;padding-right:10px;padding-left:10px;width=
+:50px;min-width:50px;font-family:SFMono-Regular,Consolas,&quot;Liberation M=
+ono&quot;,Menlo,Courier,monospace;font-size:12px;line-height:20px;color:rgb=
+a(27,31,35,0.298039);text-align:right;white-space:nowrap;vertical-align:top=
+"></td><td id=3D"m_1868596539894679774LC5" class=3D"m_1868596539894679774bl=
+ob-code m_1868596539894679774blob-code-inner m_1868596539894679774js-file-l=
+ine" style=3D"box-sizing:border-box;padding-right:10px;padding-left:10px;li=
+ne-height:20px;vertical-align:top;overflow:visible;font-family:SFMono-Regul=
+ar,Consolas,&quot;Liberation Mono&quot;,Menlo,Courier,monospace;font-size:1=
+2px;word-wrap:normal;white-space:pre-wrap"><span class=3D"m_186859653989467=
+9774pl-c" style=3D"box-sizing:border-box;color:rgb(106,115,125)"><span clas=
+s=3D"m_1868596539894679774pl-c" style=3D"box-sizing:border-box">#</span>#</=
+span></td></tr><tr style=3D"box-sizing:border-box"><td id=3D"m_186859653989=
+4679774L6" class=3D"m_1868596539894679774blob-num m_1868596539894679774js-l=
+ine-number" style=3D"box-sizing:border-box;padding-right:10px;padding-left:=
+10px;width:50px;min-width:50px;font-family:SFMono-Regular,Consolas,&quot;Li=
+beration Mono&quot;,Menlo,Courier,monospace;font-size:12px;line-height:20px=
+;color:rgba(27,31,35,0.298039);text-align:right;white-space:nowrap;vertical=
+-align:top"><br></td><td id=3D"m_1868596539894679774LC6" class=3D"m_1868596=
+539894679774blob-code m_1868596539894679774blob-code-inner m_18685965398946=
+79774js-file-line" style=3D"box-sizing:border-box;padding-right:10px;paddin=
+g-left:10px;line-height:20px;vertical-align:top;overflow:visible;font-famil=
+y:SFMono-Regular,Consolas,&quot;Liberation Mono&quot;,Menlo,Courier,monospa=
+ce;font-size:12px;word-wrap:normal;white-space:pre-wrap"><br></td></tr><tr =
+style=3D"box-sizing:border-box"><td id=3D"m_1868596539894679774L10" class=
+=3D"m_1868596539894679774blob-num m_1868596539894679774js-line-number" styl=
+e=3D"box-sizing:border-box;padding-right:10px;padding-left:10px;width:50px;=
+min-width:50px;font-family:SFMono-Regular,Consolas,&quot;Liberation Mono&qu=
+ot;,Menlo,Courier,monospace;font-size:12px;line-height:20px;color:rgba(27,3=
+1,35,0.298039);text-align:right;white-space:nowrap;vertical-align:top"></td=
+><td id=3D"m_1868596539894679774LC10" class=3D"m_1868596539894679774blob-co=
+de m_1868596539894679774blob-code-inner m_1868596539894679774js-file-line" =
+style=3D"box-sizing:border-box;padding-right:10px;padding-left:10px;line-he=
+ight:20px;vertical-align:top;overflow:visible;font-family:SFMono-Regular,Co=
+nsolas,&quot;Liberation Mono&quot;,Menlo,Courier,monospace;font-size:12px;w=
+ord-wrap:normal;white-space:pre-wrap">
+</td></tr><tr style=3D"box-sizing:border-box"><td id=3D"m_18685965398946797=
+74L11" class=3D"m_1868596539894679774blob-num m_1868596539894679774js-line-=
+number" style=3D"box-sizing:border-box;padding-right:10px;padding-left:10px=
+;width:50px;min-width:50px;font-family:SFMono-Regular,Consolas,&quot;Libera=
+tion Mono&quot;,Menlo,Courier,monospace;font-size:12px;line-height:20px;col=
+or:rgba(27,31,35,0.298039);text-align:right;white-space:nowrap;vertical-ali=
+gn:top"></td><td id=3D"m_1868596539894679774LC11" class=3D"m_18685965398946=
+79774blob-code m_1868596539894679774blob-code-inner m_1868596539894679774js=
+-file-line" style=3D"box-sizing:border-box;padding-right:10px;padding-left:=
+10px;line-height:20px;vertical-align:top;overflow:visible;font-family:SFMon=
+o-Regular,Consolas,&quot;Liberation Mono&quot;,Menlo,Courier,monospace;font=
+-size:12px;word-wrap:normal;white-space:pre-wrap"><span class=3D"m_18685965=
+39894679774pl-k" style=3D"box-sizing:border-box;color:rgb(215,58,73)">FROM<=
+/span> ubuntu:xenial</td></tr><tr style=3D"box-sizing:border-box"><td id=3D=
+"m_1868596539894679774L12" class=3D"m_1868596539894679774blob-num m_1868596=
+539894679774js-line-number" style=3D"box-sizing:border-box;padding-right:10=
+px;padding-left:10px;width:50px;min-width:50px;font-family:SFMono-Regular,C=
+onsolas,&quot;Liberation Mono&quot;,Menlo,Courier,monospace;font-size:12px;=
+line-height:20px;color:rgba(27,31,35,0.298039);text-align:right;white-space=
+:nowrap;vertical-align:top"></td><td id=3D"m_1868596539894679774LC12" class=
+=3D"m_1868596539894679774blob-code m_1868596539894679774blob-code-inner m_1=
+868596539894679774js-file-line" style=3D"box-sizing:border-box;padding-righ=
+t:10px;padding-left:10px;line-height:20px;vertical-align:top;overflow:visib=
+le;font-family:SFMono-Regular,Consolas,&quot;Liberation Mono&quot;,Menlo,Co=
+urier,monospace;font-size:12px;word-wrap:normal;white-space:pre-wrap">
+</td></tr><tr style=3D"box-sizing:border-box"><td id=3D"m_18685965398946797=
+74L13" class=3D"m_1868596539894679774blob-num m_1868596539894679774js-line-=
+number" style=3D"box-sizing:border-box;padding-right:10px;padding-left:10px=
+;width:50px;min-width:50px;font-family:SFMono-Regular,Consolas,&quot;Libera=
+tion Mono&quot;,Menlo,Courier,monospace;font-size:12px;line-height:20px;col=
+or:rgba(27,31,35,0.298039);text-align:right;white-space:nowrap;vertical-ali=
+gn:top"></td><td id=3D"m_1868596539894679774LC13" class=3D"m_18685965398946=
+79774blob-code m_1868596539894679774blob-code-inner m_1868596539894679774js=
+-file-line" style=3D"box-sizing:border-box;padding-right:10px;padding-left:=
+10px;line-height:20px;vertical-align:top;overflow:visible;font-family:SFMon=
+o-Regular,Consolas,&quot;Liberation Mono&quot;,Menlo,Courier,monospace;font=
+-size:12px;word-wrap:normal;white-space:pre-wrap"><span class=3D"m_18685965=
+39894679774pl-k" style=3D"box-sizing:border-box;color:rgb(215,58,73)">RUN</=
+span> apt-get update &amp;&amp; \</td></tr><tr style=3D"box-sizing:border-b=
+ox"><td id=3D"m_1868596539894679774L14" class=3D"m_1868596539894679774blob-=
+num m_1868596539894679774js-line-number" style=3D"box-sizing:border-box;pad=
+ding-right:10px;padding-left:10px;width:50px;min-width:50px;font-family:SFM=
+ono-Regular,Consolas,&quot;Liberation Mono&quot;,Menlo,Courier,monospace;fo=
+nt-size:12px;line-height:20px;color:rgba(27,31,35,0.298039);text-align:righ=
+t;white-space:nowrap;vertical-align:top"></td><td id=3D"m_18685965398946797=
+74LC14" class=3D"m_1868596539894679774blob-code m_1868596539894679774blob-c=
+ode-inner m_1868596539894679774js-file-line" style=3D"box-sizing:border-box=
+;padding-right:10px;padding-left:10px;line-height:20px;vertical-align:top;o=
+verflow:visible;font-family:SFMono-Regular,Consolas,&quot;Liberation Mono&q=
+uot;,Menlo,Courier,monospace;font-size:12px;word-wrap:normal;white-space:pr=
+e-wrap">    apt-get -y upgrade &amp;&amp; \</td></tr><tr style=3D"box-sizin=
+g:border-box"><td id=3D"m_1868596539894679774L15" class=3D"m_18685965398946=
+79774blob-num m_1868596539894679774js-line-number" style=3D"box-sizing:bord=
+er-box;padding-right:10px;padding-left:10px;width:50px;min-width:50px;font-=
+family:SFMono-Regular,Consolas,&quot;Liberation Mono&quot;,Menlo,Courier,mo=
+nospace;font-size:12px;line-height:20px;color:rgba(27,31,35,0.298039);text-=
+align:right;white-space:nowrap;vertical-align:top"></td><td id=3D"m_1868596=
+539894679774LC15" class=3D"m_1868596539894679774blob-code m_186859653989467=
+9774blob-code-inner m_1868596539894679774js-file-line" style=3D"box-sizing:=
+border-box;padding-right:10px;padding-left:10px;line-height:20px;vertical-a=
+lign:top;overflow:visible;font-family:SFMono-Regular,Consolas,&quot;Liberat=
+ion Mono&quot;,Menlo,Courier,monospace;font-size:12px;word-wrap:normal;whit=
+e-space:pre-wrap">    apt-get install -y software-properties-common libglib=
+2.0 libqt5gui5 libgtk2.0-0 libglu1-mesa libgomp1 zlib1g &amp;&amp; \</td></=
+tr><tr style=3D"box-sizing:border-box"><td id=3D"m_1868596539894679774L16" =
+class=3D"m_1868596539894679774blob-num m_1868596539894679774js-line-number"=
+ style=3D"box-sizing:border-box;padding-right:10px;padding-left:10px;width:=
+50px;min-width:50px;font-family:SFMono-Regular,Consolas,&quot;Liberation Mo=
+no&quot;,Menlo,Courier,monospace;font-size:12px;line-height:20px;color:rgba=
+(27,31,35,0.298039);text-align:right;white-space:nowrap;vertical-align:top"=
+></td><td id=3D"m_1868596539894679774LC16" class=3D"m_1868596539894679774bl=
+ob-code m_1868596539894679774blob-code-inner m_1868596539894679774js-file-l=
+ine" style=3D"box-sizing:border-box;padding-right:10px;padding-left:10px;li=
+ne-height:20px;vertical-align:top;overflow:visible;font-family:SFMono-Regul=
+ar,Consolas,&quot;Liberation Mono&quot;,Menlo,Courier,monospace;font-size:1=
+2px;word-wrap:normal;white-space:pre-wrap">    apt-get install -y language-=
+pack-en language-pack-en-base wget vim </td></tr><tr style=3D"box-sizing:bo=
+rder-box"><td id=3D"m_1868596539894679774L17" class=3D"m_186859653989467977=
+4blob-num m_1868596539894679774js-line-number" style=3D"box-sizing:border-b=
+ox;padding-right:10px;padding-left:10px;width:50px;min-width:50px;font-fami=
+ly:SFMono-Regular,Consolas,&quot;Liberation Mono&quot;,Menlo,Courier,monosp=
+ace;font-size:12px;line-height:20px;color:rgba(27,31,35,0.298039);text-alig=
+n:right;white-space:nowrap;vertical-align:top"></td><td id=3D"m_18685965398=
+94679774LC17" class=3D"m_1868596539894679774blob-code m_1868596539894679774=
+blob-code-inner m_1868596539894679774js-file-line" style=3D"box-sizing:bord=
+er-box;padding-right:10px;padding-left:10px;line-height:20px;vertical-align=
+:top;overflow:visible;font-family:SFMono-Regular,Consolas,&quot;Liberation =
+Mono&quot;,Menlo,Courier,monospace;font-size:12px;word-wrap:normal;white-sp=
+ace:pre-wrap">    </td></tr><tr style=3D"box-sizing:border-box"><td id=3D"m=
+_1868596539894679774L18" class=3D"m_1868596539894679774blob-num m_186859653=
+9894679774js-line-number" style=3D"box-sizing:border-box;padding-right:10px=
+;padding-left:10px;width:50px;min-width:50px;font-family:SFMono-Regular,Con=
+solas,&quot;Liberation Mono&quot;,Menlo,Courier,monospace;font-size:12px;li=
+ne-height:20px;color:rgba(27,31,35,0.298039);text-align:right;white-space:n=
+owrap;vertical-align:top"></td><td id=3D"m_1868596539894679774LC18" class=
+=3D"m_1868596539894679774blob-code m_1868596539894679774blob-code-inner m_1=
+868596539894679774js-file-line" style=3D"box-sizing:border-box;padding-righ=
+t:10px;padding-left:10px;line-height:20px;vertical-align:top;overflow:visib=
+le;font-family:SFMono-Regular,Consolas,&quot;Liberation Mono&quot;,Menlo,Co=
+urier,monospace;font-size:12px;word-wrap:normal;white-space:pre-wrap"><span=
+ class=3D"m_1868596539894679774pl-c" style=3D"box-sizing:border-box;color:r=
+gb(106,115,125)"><span class=3D"m_1868596539894679774pl-c" style=3D"box-siz=
+ing:border-box">#</span># install Agisoft Photoscan 1.3</span></td></tr><tr=
+ style=3D"box-sizing:border-box"><td id=3D"m_1868596539894679774L19" class=
+=3D"m_1868596539894679774blob-num m_1868596539894679774js-line-number" styl=
+e=3D"box-sizing:border-box;padding-right:10px;padding-left:10px;width:50px;=
+min-width:50px;font-family:SFMono-Regular,Consolas,&quot;Liberation Mono&qu=
+ot;,Menlo,Courier,monospace;font-size:12px;line-height:20px;color:rgba(27,3=
+1,35,0.298039);text-align:right;white-space:nowrap;vertical-align:top"></td=
+><td id=3D"m_1868596539894679774LC19" class=3D"m_1868596539894679774blob-co=
+de m_1868596539894679774blob-code-inner m_1868596539894679774js-file-line" =
+style=3D"box-sizing:border-box;padding-right:10px;padding-left:10px;line-he=
+ight:20px;vertical-align:top;overflow:visible;font-family:SFMono-Regular,Co=
+nsolas,&quot;Liberation Mono&quot;,Menlo,Courier,monospace;font-size:12px;w=
+ord-wrap:normal;white-space:pre-wrap"><span class=3D"m_1868596539894679774p=
+l-k" style=3D"box-sizing:border-box;color:rgb(215,58,73)">RUN</span> wget -=
+-directory-prefix=3D/usr/local <a href=3D"http://download.agisoft.com/photo=
+scan-pro_1_3_0_amd64.tar.gz" target=3D"_blank">http://download.agisoft.com/=
+<wbr>photoscan-pro_1_3_0_amd64.tar.<wbr>gz</a> ;\</td></tr><tr style=3D"box=
+-sizing:border-box"><td id=3D"m_1868596539894679774L20" class=3D"m_18685965=
+39894679774blob-num m_1868596539894679774js-line-number" style=3D"box-sizin=
+g:border-box;padding-right:10px;padding-left:10px;width:50px;min-width:50px=
+;font-family:SFMono-Regular,Consolas,&quot;Liberation Mono&quot;,Menlo,Cour=
+ier,monospace;font-size:12px;line-height:20px;color:rgba(27,31,35,0.298039)=
+;text-align:right;white-space:nowrap;vertical-align:top"></td><td id=3D"m_1=
+868596539894679774LC20" class=3D"m_1868596539894679774blob-code m_186859653=
+9894679774blob-code-inner m_1868596539894679774js-file-line" style=3D"box-s=
+izing:border-box;padding-right:10px;padding-left:10px;line-height:20px;vert=
+ical-align:top;overflow:visible;font-family:SFMono-Regular,Consolas,&quot;L=
+iberation Mono&quot;,Menlo,Courier,monospace;font-size:12px;word-wrap:norma=
+l;white-space:pre-wrap">(cd /usr/local &amp;&amp; tar zxvf photoscan-pro_1_=
+3_0_amd64.tar.<wbr>gz) ;\</td></tr><tr style=3D"box-sizing:border-box"><td =
+id=3D"m_1868596539894679774L21" class=3D"m_1868596539894679774blob-num m_18=
+68596539894679774js-line-number" style=3D"box-sizing:border-box;padding-rig=
+ht:10px;padding-left:10px;width:50px;min-width:50px;font-family:SFMono-Regu=
+lar,Consolas,&quot;Liberation Mono&quot;,Menlo,Courier,monospace;font-size:=
+12px;line-height:20px;color:rgba(27,31,35,0.298039);text-align:right;white-=
+space:nowrap;vertical-align:top"></td><td id=3D"m_1868596539894679774LC21" =
+class=3D"m_1868596539894679774blob-code m_1868596539894679774blob-code-inne=
+r m_1868596539894679774js-file-line" style=3D"box-sizing:border-box;padding=
+-right:10px;padding-left:10px;line-height:20px;vertical-align:top;overflow:=
+visible;font-family:SFMono-Regular,Consolas,&quot;Liberation Mono&quot;,Men=
+lo,Courier,monospace;font-size:12px;word-wrap:normal;white-space:pre-wrap">=
+(cd /usr/local/bin &amp;&amp; ln -s ../photoscan-pro/photoscan-<wbr>pro.sh)=
+ ;\</td></tr><tr style=3D"box-sizing:border-box"><td id=3D"m_18685965398946=
+79774L22" class=3D"m_1868596539894679774blob-num m_1868596539894679774js-li=
+ne-number" style=3D"box-sizing:border-box;padding-right:10px;padding-left:1=
+0px;width:50px;min-width:50px;font-family:SFMono-Regular,Consolas,&quot;Lib=
+eration Mono&quot;,Menlo,Courier,monospace;font-size:12px;line-height:20px;=
+color:rgba(27,31,35,0.298039);text-align:right;white-space:nowrap;vertical-=
+align:top"></td><td id=3D"m_1868596539894679774LC22" class=3D"m_18685965398=
+94679774blob-code m_1868596539894679774blob-code-inner m_186859653989467977=
+4js-file-line" style=3D"box-sizing:border-box;padding-right:10px;padding-le=
+ft:10px;line-height:20px;vertical-align:top;overflow:visible;font-family:SF=
+Mono-Regular,Consolas,&quot;Liberation Mono&quot;,Menlo,Courier,monospace;f=
+ont-size:12px;word-wrap:normal;white-space:pre-wrap">rm -f /usr/local/photo=
+scan-pro_1_3_<wbr>0_amd64.tar.gz ;\</td></tr><tr style=3D"box-sizing:border=
+-box"><td id=3D"m_1868596539894679774L23" class=3D"m_1868596539894679774blo=
+b-num m_1868596539894679774js-line-number" style=3D"box-sizing:border-box;p=
+adding-right:10px;padding-left:10px;width:50px;min-width:50px;font-family:S=
+FMono-Regular,Consolas,&quot;Liberation Mono&quot;,Menlo,Courier,monospace;=
+font-size:12px;line-height:20px;color:rgba(27,31,35,0.298039);text-align:ri=
+ght;white-space:nowrap;vertical-align:top"></td><td id=3D"m_186859653989467=
+9774LC23" class=3D"m_1868596539894679774blob-code m_1868596539894679774blob=
+-code-inner m_1868596539894679774js-file-line" style=3D"box-sizing:border-b=
+ox;padding-right:10px;padding-left:10px;line-height:20px;vertical-align:top=
+;overflow:visible;font-family:SFMono-Regular,Consolas,&quot;Liberation Mono=
+&quot;,Menlo,Courier,monospace;font-size:12px;word-wrap:normal;white-space:=
+pre-wrap">dpkg-reconfigure locales ;\</td></tr><tr style=3D"box-sizing:bord=
+er-box"><td id=3D"m_1868596539894679774L24" class=3D"m_1868596539894679774b=
+lob-num m_1868596539894679774js-line-number" style=3D"box-sizing:border-box=
+;padding-right:10px;padding-left:10px;width:50px;min-width:50px;font-family=
+:SFMono-Regular,Consolas,&quot;Liberation Mono&quot;,Menlo,Courier,monospac=
+e;font-size:12px;line-height:20px;color:rgba(27,31,35,0.298039);text-align:=
+right;white-space:nowrap;vertical-align:top"></td><td id=3D"m_1868596539894=
+679774LC24" class=3D"m_1868596539894679774blob-code m_1868596539894679774bl=
+ob-code-inner m_1868596539894679774js-file-line" style=3D"box-sizing:border=
+-box;padding-right:10px;padding-left:10px;line-height:20px;vertical-align:t=
+op;overflow:visible;font-family:SFMono-Regular,Consolas,&quot;Liberation Mo=
+no&quot;,Menlo,Courier,monospace;font-size:12px;word-wrap:normal;white-spac=
+e:pre-wrap">chmod 755 /usr/local//photoscan-pro/ ;\</td></tr><tr style=3D"b=
+ox-sizing:border-box"><td id=3D"m_1868596539894679774L25" class=3D"m_186859=
+6539894679774blob-num m_1868596539894679774js-line-number" style=3D"box-siz=
+ing:border-box;padding-right:10px;padding-left:10px;width:50px;min-width:50=
+px;font-family:SFMono-Regular,Consolas,&quot;Liberation Mono&quot;,Menlo,Co=
+urier,monospace;font-size:12px;line-height:20px;color:rgba(27,31,35,0.29803=
+9);text-align:right;white-space:nowrap;vertical-align:top"></td><td id=3D"m=
+_1868596539894679774LC25" class=3D"m_1868596539894679774blob-code m_1868596=
+539894679774blob-code-inner m_1868596539894679774js-file-line" style=3D"box=
+-sizing:border-box;padding-right:10px;padding-left:10px;line-height:20px;ve=
+rtical-align:top;overflow:visible;font-family:SFMono-Regular,Consolas,&quot=
+;Liberation Mono&quot;,Menlo,Courier,monospace;font-size:12px;word-wrap:nor=
+mal;white-space:pre-wrap">chmod 755 /usr/local//photoscan-pro/*</td></tr><t=
+r style=3D"box-sizing:border-box"><td id=3D"m_1868596539894679774L26" class=
+=3D"m_1868596539894679774blob-num m_1868596539894679774js-line-number" styl=
+e=3D"box-sizing:border-box;padding-right:10px;padding-left:10px;width:50px;=
+min-width:50px;font-family:SFMono-Regular,Consolas,&quot;Liberation Mono&qu=
+ot;,Menlo,Courier,monospace;font-size:12px;line-height:20px;color:rgba(27,3=
+1,35,0.298039);text-align:right;white-space:nowrap;vertical-align:top"></td=
+><td id=3D"m_1868596539894679774LC26" class=3D"m_1868596539894679774blob-co=
+de m_1868596539894679774blob-code-inner m_1868596539894679774js-file-line" =
+style=3D"box-sizing:border-box;padding-right:10px;padding-left:10px;line-he=
+ight:20px;vertical-align:top;overflow:visible;font-family:SFMono-Regular,Co=
+nsolas,&quot;Liberation Mono&quot;,Menlo,Courier,monospace;font-size:12px;w=
+ord-wrap:normal;white-space:pre-wrap"><br></td></tr><tr style=3D"box-sizing=
+:border-box"><td id=3D"m_1868596539894679774L30" class=3D"m_186859653989467=
+9774blob-num m_1868596539894679774js-line-number" style=3D"box-sizing:borde=
+r-box;padding-right:10px;padding-left:10px;width:50px;min-width:50px;font-f=
+amily:SFMono-Regular,Consolas,&quot;Liberation Mono&quot;,Menlo,Courier,mon=
+ospace;font-size:12px;line-height:20px;color:rgba(27,31,35,0.298039);text-a=
+lign:right;white-space:nowrap;vertical-align:top"></td><td id=3D"m_18685965=
+39894679774LC30" class=3D"m_1868596539894679774blob-code m_1868596539894679=
+774blob-code-inner m_1868596539894679774js-file-line" style=3D"box-sizing:b=
+order-box;padding-right:10px;padding-left:10px;line-height:20px;vertical-al=
+ign:top;overflow:visible;font-family:SFMono-Regular,Consolas,&quot;Liberati=
+on Mono&quot;,Menlo,Courier,monospace;font-size:12px;word-wrap:normal;white=
+-space:pre-wrap"><span class=3D"m_1868596539894679774pl-k" style=3D"box-siz=
+ing:border-box;color:rgb(215,58,73)">CMD</span> [<span class=3D"m_186859653=
+9894679774pl-s" style=3D"box-sizing:border-box;color:rgb(3,47,98)">&quot;ba=
+sh&quot;</span>]</td></tr></tbody></table></div><div style=3D"color:rgb(38,=
+40,42);font-family:&quot;times new roman&quot;,&quot;new york&quot;,times,s=
+erif;font-size:16px;font-variant-ligatures:normal"><br></div><div style=3D"=
+color:rgb(38,40,42);font-family:&quot;times new roman&quot;,&quot;new york&=
+quot;,times,serif;font-size:16px;font-variant-ligatures:normal"><br></div><=
+div style=3D"color:rgb(38,40,42);font-family:&quot;times new roman&quot;,&q=
+uot;new york&quot;,times,serif;font-size:16px;font-variant-ligatures:normal=
+">My build process:</div><div style=3D"color:rgb(38,40,42);font-family:&quo=
+t;times new roman&quot;,&quot;new york&quot;,times,serif;font-size:16px;fon=
+t-variant-ligatures:normal"><pre style=3D"box-sizing:border-box;font-family=
+:SFMono-Regular,Consolas,&quot;Liberation Mono&quot;,Menlo,Courier,monospac=
+e;font-size:13.6px;word-wrap:normal;padding:16px;overflow:auto;line-height:=
+1.45;background-color:rgb(246,248,250);border-top-left-radius:3px;border-to=
+p-right-radius:3px;border-bottom-right-radius:3px;border-bottom-left-radius=
+:3px;word-break:normal;color:rgb(36,41,46);font-variant-ligatures:normal">g=
+it clone <a href=3D"https://github.com/mauricemanning/photoscan13-container=
+ized" target=3D"_blank">https://github.com/<wbr>mauricemanning/photoscan13-=
+<wbr>containerized</a>
+<span class=3D"m_1868596539894679774pl-c1" style=3D"box-sizing:border-box;c=
+olor:rgb(0,92,197)">cd</span> photoscan13-containerized
+docker build --rm --tag photoscan13 <span class=3D"m_1868596539894679774pl-=
+c1" style=3D"box-sizing:border-box;color:rgb(0,92,197)">.</span>
+docker tag photoscan13:latest mmmanning/photoscan13:latest
+docker push mmmanning/photoscan13:latest
+docker images
+singularity pull docker://mmmanning/<wbr>photoscan13:latest</pre></div><div=
+ style=3D"color:rgb(38,40,42);font-family:&quot;times new roman&quot;,&quot=
+;new york&quot;,times,serif;font-size:16px;font-variant-ligatures:normal"><=
+br></div><div style=3D"color:rgb(38,40,42);font-family:&quot;times new roma=
+n&quot;,&quot;new york&quot;,times,serif;font-size:16px;font-variant-ligatu=
+res:normal"><br></div><div style=3D"color:rgb(38,40,42);font-family:&quot;t=
+imes new roman&quot;,&quot;new york&quot;,times,serif;font-size:16px;font-v=
+ariant-ligatures:normal">Thanks for an ideas.</div><span class=3D"HOEnZb"><=
+font color=3D"#888888"><div style=3D"color:rgb(38,40,42);font-family:&quot;=
+times new roman&quot;,&quot;new york&quot;,times,serif;font-size:16px;font-=
+variant-ligatures:normal">Maurice</div><div style=3D"color:rgb(38,40,42);fo=
+nt-family:&quot;times new roman&quot;,&quot;new york&quot;,times,serif;font=
+-size:16px;font-variant-ligatures:normal"><br></div><div style=3D"color:rgb=
+(38,40,42);font-family:&quot;times new roman&quot;,&quot;new york&quot;,tim=
+es,serif;font-size:16px;font-variant-ligatures:normal"><br></div></font></s=
+pan></div><span class=3D"HOEnZb"><font color=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singularity+u=
+nsubscribe@lbl.<wbr>gov</a>.<br>
+</font></span></blockquote></div><br></div>
+
+--000000000000228cfd05691d7f6a--

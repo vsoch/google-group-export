@@ -1,0 +1,364 @@
+Date: Tue, 10 Jan 2017 07:04:39 -0800 (PST)
+From: Matthew Dwyer <mdwyer.pr...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <91549d58-7ec6-43d2-978a-9c357e227f04@lbl.gov>
+In-Reply-To: <1a497544-c3e1-45c2-9e60-9de178912467@lbl.gov>
+References: <1a497544-c3e1-45c2-9e60-9de178912467@lbl.gov>
+Subject: Re: Failed to run openmpi program within the container by calling
+ mpirun on the host
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1324_1317316918.1484060679776"
+
+------=_Part_1324_1317316918.1484060679776
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1325_311668949.1484060679777"
+
+------=_Part_1325_311668949.1484060679777
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+
+I received the same error when the versions of openmpi differed on the host 
+and within the container. Particularly, I received the null communicator 
+error when the host's version of ompi was less than the ompi version within 
+the container. When the host's version is greater than that within the 
+container you will get a not found error. Run ompi_info from the host and 
+container and make sure they are the same. Make sure you are installing 
+ompi 2.0.1, installing 1.10.X will not work regardless of whether or not 
+the versions match up. 
+
+ompi_info | grep MPI:
+singularity exec Centos7-ompi.img ompi_info | grep MPI:
+
+I do not know if the errors are general or just for ompi versions 1.10.3/4 
+and 2.0.1. I was using an ubuntu 16.04 container and singularity 2.2.
+
+--Matt
+
+On Monday, January 9, 2017 at 9:47:47 PM UTC-5, Limin Gu wrote:
+>
+> Hi All,
+>
+> I have a CentOS 7.2 host, I installed singularity 2.2 on the host and used 
+>  centos7 bootstrap definition file to successfully created a 
+> Centos7-ompi.img, also on the host I installed openmpi the same way as it 
+> was done inside the container.
+>
+> I am able to run openmpi on the host:
+>
+> [root@uranus tetuser]# /usr/local/bin/mpirun --allow-run-as-root 
+> /usr/bin/mpi_ring
+>
+> Process 0 sending 10 to 1, tag 201 (2 processes in ring)
+>
+> Process 0 sent to 1
+>
+> Process 0 decremented value: 9
+>
+> Process 0 decremented value: 8
+>
+> Process 0 decremented value: 7
+>
+> Process 0 decremented value: 6
+>
+> Process 0 decremented value: 5
+>
+> Process 0 decremented value: 4
+>
+> Process 0 decremented value: 3
+>
+> Process 0 decremented value: 2
+>
+> Process 0 decremented value: 1
+>
+> Process 0 decremented value: 0
+>
+> Process 0 exiting
+>
+> Process 1 exiting
+>
+> [root@uranus tetuser]# 
+>
+>
+> I am able to run openmpi inside the container also:
+>
+>
+> [root@uranus tetuser]# /opt/singularity/bin/singularity exec 
+> ./Centos7-ompi.img /usr/local/bin/mpirun --allow-run-as-root 
+> /usr/bin/mpi_ring
+>
+> Process 0 sending 10 to 1, tag 201 (2 processes in ring)
+>
+> Process 0 sent to 1
+>
+> Process 0 decremented value: 9
+>
+> Process 0 decremented value: 8
+>
+> Process 0 decremented value: 7
+>
+> Process 0 decremented value: 6
+>
+> Process 0 decremented value: 5
+>
+> Process 0 decremented value: 4
+>
+> Process 0 decremented value: 3
+>
+> Process 0 decremented value: 2
+>
+> Process 0 decremented value: 1
+>
+> Process 0 decremented value: 0
+>
+> Process 0 exiting
+>
+> Process 1 exiting
+>
+> [root@uranus tetuser]#
+>
+>  
+>
+But when I try to run openmpi within the container by calling mpirun on the 
+> host, it fails with those messages:
+>
+>
+> [root@uranus tetuser]# /usr/local/bin/mpirun --allow-run-as-root 
+> /opt/singularity/bin/singularity exec ./Centos7-ompi.img /usr/bin/mpi_ring
+>
+> *** An error occurred in MPI_Init
+>
+> *** on a NULL communicator
+>
+> *** MPI_ERRORS_ARE_FATAL (processes in this communicator will now abort,
+>
+> ***    and potentially your MPI job)
+>
+> [uranus:47063] Local abort before MPI_INIT completed completed 
+> successfully, but am not able to aggregate error messages, and not able to 
+> guarantee that all other processes were killed!
+>
+> *** An error occurred in MPI_Init
+>
+> *** on a NULL communicator
+>
+> *** MPI_ERRORS_ARE_FATAL (processes in this communicator will now abort,
+>
+> ***    and potentially your MPI job)
+>
+> [uranus:47061] Local abort before MPI_INIT completed completed 
+> successfully, but am not able to aggregate error messages, and not able to 
+> guarantee that all other processes were killed!
+>
+> -------------------------------------------------------
+>
+> Primary job  terminated normally, but 1 process returned
+>
+> a non-zero exit code. Per user-direction, the job has been aborted.
+>
+> -------------------------------------------------------
+>
+> --------------------------------------------------------------------------
+>
+> mpirun detected that one or more processes exited with non-zero status, 
+> thus causing
+>
+> the job to be terminated. The first process to do so was:
+>
+>
+>   Process name: [[6415,1],1]
+>
+>   Exit code:    1
+>
+> --------------------------------------------------------------------------
+>
+> [root@uranus tetuser]# 
+>
+>
+> What did I do wrong? How to fix this?
+>
+>
+> Thank you!
+>
+
+------=_Part_1325_311668949.1484060679777
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div><br></div>I received the same error when the versions=
+ of openmpi differed on the host and within the container. Particularly, I =
+received the null communicator error when the host&#39;s version of ompi wa=
+s less than the ompi version within the container. When the host&#39;s vers=
+ion is greater than that within the container you will get a not found erro=
+r. Run ompi_info from the host and container and make sure they are the sam=
+e. Make sure you are installing ompi 2.0.1, installing 1.10.X will not work=
+ regardless of whether or not the versions match up.=C2=A0<div><br></div><d=
+iv>ompi_info | grep MPI:</div><div>singularity exec Centos7-ompi.img ompi_i=
+nfo | grep MPI:</div><div><br></div><div>I do not know if the errors are ge=
+neral or just for ompi versions 1.10.3/4 and 2.0.1. I was using an ubuntu 1=
+6.04 container and singularity 2.2.<div><div><div><br></div><div>--Matt<br>=
+<br>On Monday, January 9, 2017 at 9:47:47 PM UTC-5, Limin Gu wrote:<blockqu=
+ote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left=
+: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">Hi All,<div><br></div=
+><div>I have a CentOS 7.2 host, I installed singularity 2.2 on the host and=
+ used =C2=A0centos7 bootstrap definition file to successfully created a Cen=
+tos7-ompi.img, also on the host I installed openmpi the same way as it was =
+done inside the container.</div><div><br></div><div>I am able to run openmp=
+i on the host:</div><div><br></div><div><p style=3D"line-height:normal;font=
+-family:Menlo"><span>[root@uranus tetuser]# /usr/local/bin/mpirun --allow-r=
+un-as-root /usr/bin/mpi_ring</span></p>
+<p style=3D"line-height:normal;font-family:Menlo"><span>Process 0 sending 1=
+0 to 1, tag 201 (2 processes in ring)</span></p>
+<p style=3D"line-height:normal;font-family:Menlo"><span>Process 0 sent to 1=
+</span></p>
+<p style=3D"line-height:normal;font-family:Menlo"><span>Process 0 decrement=
+ed value: 9</span></p>
+<p style=3D"line-height:normal;font-family:Menlo"><span>Process 0 decrement=
+ed value: 8</span></p>
+<p style=3D"line-height:normal;font-family:Menlo"><span>Process 0 decrement=
+ed value: 7</span></p>
+<p style=3D"line-height:normal;font-family:Menlo"><span>Process 0 decrement=
+ed value: 6</span></p>
+<p style=3D"line-height:normal;font-family:Menlo"><span>Process 0 decrement=
+ed value: 5</span></p>
+<p style=3D"line-height:normal;font-family:Menlo"><span>Process 0 decrement=
+ed value: 4</span></p>
+<p style=3D"line-height:normal;font-family:Menlo"><span>Process 0 decrement=
+ed value: 3</span></p>
+<p style=3D"line-height:normal;font-family:Menlo"><span>Process 0 decrement=
+ed value: 2</span></p>
+<p style=3D"line-height:normal;font-family:Menlo"><span>Process 0 decrement=
+ed value: 1</span></p>
+<p style=3D"line-height:normal;font-family:Menlo"><span>Process 0 decrement=
+ed value: 0</span></p>
+<p style=3D"line-height:normal;font-family:Menlo"><span>Process 0 exiting</=
+span></p>
+<p style=3D"line-height:normal;font-family:Menlo"><span>Process 1 exiting</=
+span></p>
+<p style=3D"line-height:normal;font-family:Menlo"><span>[root@uranus tetuse=
+r]#=C2=A0</span></p><p style=3D"line-height:normal;font-family:Menlo"><span=
+><br></span></p><p style=3D"line-height:normal;font-family:Menlo"><span><sp=
+an style=3D"font-family:Arial,Helvetica,sans-serif">I am able to run openmp=
+i inside the container also:</span><br></span></p><p style=3D"line-height:n=
+ormal;font-family:Menlo"><span><span style=3D"font-family:Arial,Helvetica,s=
+ans-serif"><br></span></span></p><p style=3D"line-height:normal;font-family=
+:Menlo"><span>[root@uranus tetuser]# /opt/singularity/bin/<wbr>singularity =
+exec ./Centos7-ompi.img /usr/local/bin/mpirun --allow-run-as-root /usr/bin/=
+mpi_ring</span></p><p style=3D"line-height:normal;font-family:Menlo"><span>=
+Process 0 sending 10 to 1, tag 201 (2 processes in ring)</span></p><p style=
+=3D"line-height:normal;font-family:Menlo"><span>Process 0 sent to 1</span><=
+/p><p style=3D"line-height:normal;font-family:Menlo"><span>Process 0 decrem=
+ented value: 9</span></p><p style=3D"line-height:normal;font-family:Menlo">=
+<span>Process 0 decremented value: 8</span></p><p style=3D"line-height:norm=
+al;font-family:Menlo"><span>Process 0 decremented value: 7</span></p><p sty=
+le=3D"line-height:normal;font-family:Menlo"><span>Process 0 decremented val=
+ue: 6</span></p><p style=3D"line-height:normal;font-family:Menlo"><span>Pro=
+cess 0 decremented value: 5</span></p><p style=3D"line-height:normal;font-f=
+amily:Menlo"><span>Process 0 decremented value: 4</span></p><p style=3D"lin=
+e-height:normal;font-family:Menlo"><span>Process 0 decremented value: 3</sp=
+an></p><p style=3D"line-height:normal;font-family:Menlo"><span>Process 0 de=
+cremented value: 2</span></p><p style=3D"line-height:normal;font-family:Men=
+lo"><span>Process 0 decremented value: 1</span></p><p style=3D"line-height:=
+normal;font-family:Menlo"><span>Process 0 decremented value: 0</span></p><p=
+ style=3D"line-height:normal;font-family:Menlo"><span>Process 0 exiting</sp=
+an></p><p style=3D"line-height:normal;font-family:Menlo"><span>Process 1 ex=
+iting</span></p><p style=3D"line-height:normal;font-family:Menlo"><span>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</span></p><p style=3D"line-height:normal;font-family:Menlo"><span>[root@ur=
+anus tetuser]#</span></p><p style=3D"line-height:normal;font-family:Menlo">=
+<span style=3D"font-family: Arial, Helvetica, sans-serif;">=C2=A0</span><br=
+></p></div></div></blockquote><blockquote class=3D"gmail_quote" style=3D"ma=
+rgin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;">=
+<div dir=3D"ltr"><div><p style=3D"line-height:normal;font-family:Menlo"><sp=
+an><span style=3D"font-family:Arial,Helvetica,sans-serif">But when I try to=
+ run openmpi within the container by calling mpirun on the host, it fails w=
+ith those messages:</span><br></span></p><p style=3D"line-height:normal;fon=
+t-family:Menlo"><span><span style=3D"font-family:Arial,Helvetica,sans-serif=
+"><br></span></span></p><p style=3D"line-height:normal;font-family:Menlo"><=
+span>[root@uranus tetuser]# /usr/local/bin/mpirun --allow-run-as-root /opt/=
+singularity/bin/<wbr>singularity exec ./Centos7-ompi.img /usr/bin/mpi_ring<=
+/span></p><p style=3D"line-height:normal;font-family:Menlo"><span>*** An er=
+ror occurred in MPI_Init</span></p><p style=3D"line-height:normal;font-fami=
+ly:Menlo"><span>*** on a NULL communicator</span></p><p style=3D"line-heigh=
+t:normal;font-family:Menlo"><span>*** MPI_ERRORS_ARE_FATAL (processes in th=
+is communicator will now abort,</span></p><p style=3D"line-height:normal;fo=
+nt-family:Menlo"><span>***=C2=A0 =C2=A0 and potentially your MPI job)</span=
+></p><p style=3D"line-height:normal;font-family:Menlo"><span>[uranus:47063]=
+ Local abort before MPI_INIT completed completed successfully, but am not a=
+ble to aggregate error messages, and not able to guarantee that all other p=
+rocesses were killed!</span></p><p style=3D"line-height:normal;font-family:=
+Menlo"><span>*** An error occurred in MPI_Init</span></p><p style=3D"line-h=
+eight:normal;font-family:Menlo"><span>*** on a NULL communicator</span></p>=
+<p style=3D"line-height:normal;font-family:Menlo"><span>*** MPI_ERRORS_ARE_=
+FATAL (processes in this communicator will now abort,</span></p><p style=3D=
+"line-height:normal;font-family:Menlo"><span>***=C2=A0 =C2=A0 and potential=
+ly your MPI job)</span></p><p style=3D"line-height:normal;font-family:Menlo=
+"><span>[uranus:47061] Local abort before MPI_INIT completed completed succ=
+essfully, but am not able to aggregate error messages, and not able to guar=
+antee that all other processes were killed!</span></p><p style=3D"line-heig=
+ht:normal;font-family:Menlo"><span>------------------------------<wbr>-----=
+--------------------</span></p><p style=3D"line-height:normal;font-family:M=
+enlo"><span>Primary job=C2=A0 terminated normally, but 1 process returned</=
+span></p><p style=3D"line-height:normal;font-family:Menlo"><span>a non-zero=
+ exit code. Per user-direction, the job has been aborted.</span></p><p styl=
+e=3D"line-height:normal;font-family:Menlo"><span>--------------------------=
+----<wbr>-------------------------</span></p><p style=3D"line-height:normal=
+;font-family:Menlo"><span>------------------------------<wbr>--------------=
+----------------<wbr>--------------</span></p><p style=3D"line-height:norma=
+l;font-family:Menlo"><span>mpirun detected that one or more processes exite=
+d with non-zero status, thus causing</span></p><p style=3D"line-height:norm=
+al;font-family:Menlo"><span>the job to be terminated. The first process to =
+do so was:</span></p><p style=3D"line-height:normal;font-family:Menlo;min-h=
+eight:15px"><span></span><br></p><p style=3D"line-height:normal;font-family=
+:Menlo"><span>=C2=A0 Process name: [[6415,1],1]</span></p><p style=3D"line-=
+height:normal;font-family:Menlo"><span>=C2=A0 Exit code:=C2=A0 =C2=A0 1</sp=
+an></p><p style=3D"line-height:normal;font-family:Menlo"><span>------------=
+------------------<wbr>------------------------------<wbr>--------------</s=
+pan></p><p style=3D"line-height:normal;font-family:Menlo"><span>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</span></p><p style=3D"line-height:normal;font-family:Menlo"><span>[root@ur=
+anus tetuser]#=C2=A0</span></p><p style=3D"line-height:normal;font-family:M=
+enlo"><span><br></span></p><p style=3D"line-height:normal;font-family:Menlo=
+"><span><span style=3D"font-family:Arial,Helvetica,sans-serif">What did I d=
+o wrong? How to fix this?</span><br></span></p><p style=3D"line-height:norm=
+al;font-family:Menlo"><span><span style=3D"font-family:Arial,Helvetica,sans=
+-serif"><br></span></span></p><p style=3D"line-height:normal;font-family:Me=
+nlo"><span><span style=3D"font-family:Arial,Helvetica,sans-serif">Thank you=
+!</span></span></p></div></div></blockquote></div></div></div></div></div>
+------=_Part_1325_311668949.1484060679777--
+
+------=_Part_1324_1317316918.1484060679776--

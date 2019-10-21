@@ -1,0 +1,394 @@
+Date: Tue, 24 Apr 2018 05:23:42 -0700 (PDT)
+From: Richard Powell <blacksbu...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <0ff4ba58-c43c-42a6-80a5-6abe5af2ff06@lbl.gov>
+In-Reply-To: <CAJ6xeznO5hhBywFLxT2i+rnwP6vDewYQbbz2HHm++hJ6DcDN9Q@mail.gmail.com>
+References: <f9e6b47e-c5dc-47f0-b8d7-e160d94f6911@lbl.gov> <cc462a23-8758-ec7e-6517-c3eb1addb2ab@googlemail.com>
+ <CAJ6xeznO5hhBywFLxT2i+rnwP6vDewYQbbz2HHm++hJ6DcDN9Q@mail.gmail.com>
+Subject: Re: [Singularity] Singularity dropping support for kernels to do
+ not support PR_SET_NO_NEW_PRIVS
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_23387_777607326.1524572622298"
+
+------=_Part_23387_777607326.1524572622298
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_23388_402706696.1524572622299"
+
+------=_Part_23388_402706696.1524572622299
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Dave, I was mistaken on our config being setuid = no, whew!  I'll have to 
+pass along this information to our cluster owners to determine a course of 
+action.
+
+cat /nfs/system/singularity/singularity_2_4_4/singularity.conf | grep setuid
+# Should we allow users to utilize the setuid program flow within 
+Singularity?
+allow setuid = yes
+
+
+On Monday, April 23, 2018 at 8:34:43 PM UTC-4, Dave Godlove wrote:
+>
+> Hi Oliver,
+>
+> We have not provided info about this exploit (and we are not going to) 
+> because there is no workaround short of upgrading the kernel or 
+> uninstalling Singularity.  So giving more details will only help malicious 
+> parties. 
+>
+> I don't think we will be getting a CVE on this because it only affects old 
+> kernels.  In other words, CVE's associated with PR_SET_NO_NEW_PRIVS have 
+> already been provided and resolved.  
+>
+> Singularity can be disabled by setting "allow setuid = no" because this 
+> is only a problem on kernels that predate user namespace support.  So 
+> running without suid wouldn't be an option anyway.  
+>
+> Sorry it wasn't clear from my original message, but all versions of 
+> Singularity are affected as well as any other container platform running on 
+> one of these outdated kernels.  Again, PR_SET_NO_NEW_PRIVS predates user 
+> namespace support, so if a container platform is running on one of these 
+> kernels, then by definition it is using elevated privs in some way shape or 
+> form.  
+>
+> Thanks very much for your questions/comments Oliver.  Hope this 
+> information is helpful and helps others as well.  
+>
+> Dave
+>
+>
+> On Mon, Apr 23, 2018 at 8:21 PM, 'Oliver Freyermuth' via singularity <
+> si...@lbl.gov <javascript:>> wrote:
+>
+>> Hi Dave,
+>>
+>> many thanks for the heads-up!
+>>
+>> A few questions inline... 
+>>
+>> Am 24.04.2018 um 02:03 schrieb Dave Godlove:
+>> > Greetings Singularity users,
+>> > 
+>> > 
+>> > The Singularity team has been working to support older legacy kernels 
+>> that do not instantiate the prctlfunction PR_SET_NO_NEW_PRIVS.  Starting in 
+>> version 2.5, Sylabs is giving up on that fight and outdated kernels will no 
+>> longer be supported.  
+>> > 
+>> > 
+>> > We, at Sylabs, recently discovered an exploit vector to all container 
+>> runtimes which allows a malicious user to gain additional privileges within 
+>> a container on hosts that do not support the PR_SET_NO_NEW_PRIVSfeature.
+>>
+>> Does this statement also hold for container runtimes using user 
+>> namespaces only? 
+>> Is there a CVE? 
+>>
+>> > 
+>> > 
+>> > The PR_SET_NO_NEW_PRIVSfeature was added to prctl()in the Linux 3.5 
+>> kernel. Various distributions have since backported this feature to 
+>> currently maintained kernels (for example, Red Hat added this feature to 
+>> RHEL 6.7 with the 2.6.32-504.16.2kernel). The most effective way to 
+>> determine if your system is affected by this issue is to test the support 
+>> directly.  As a convenience Sylabs provides a script to allow you to do 
+>> that automatically via the following command:
+>> > 
+>> > 
+>> > curl -s https://www.sylabs.io/privtest/no_new_privs.sh | bash
+>> > 
+>> > 
+>> > If you find that your system does not properly support this feature, 
+>> you will need to either upgrade the operating system, upgrade the kernel, 
+>> or disable Singularity (set allow setuid = noin singularity.conffile) 
+>> and/or any other container runtime you may have installed pending a kernel 
+>> update.
+>>
+>> How does setting "allow setuid = no" "disable Singularity"? 
+>> Again: If this is only affecting container runtimes needing setuid root, 
+>> why should I disable others (e.g. charliecloud, runc's rootless 
+>> containers,...)? 
+>> How is PR_SET_NO_NEW_PRIVS of any effect if there are no special 
+>> privileges involved? 
+>>
+>> AFAIK, "allow setuid = no" for Singularity only disables the setuid root 
+>> based functionality, which many users actually do not need - last time I 
+>> checked it was only needed for OverlayFS and image file mounting,
+>> which is to be considered unsafe anyways at least for a few years to 
+>> follow unless the container image source is fully trusted. "limit container 
+>> paths", or just not using image files since they are not so efficiently 
+>> distributed anyways,
+>> are very helpful here. 
+>> See for example 
+>> http://lkml.iu.edu/hypermail/linux/kernel/1804.0/02163.html which 
+>> clearly states the opinion of the expert in the field concerning the 
+>> security implications of mounting image files. 
+>>
+>> Still, many thanks for the heads-up, but some more detailed information 
+>> along the lines of:
+>> - who exactly is affected (it's unclear if this only affects setuid root 
+>> users, and if so, it surely affects only a small subset of available other 
+>> container runtimes!) 
+>> - how to mitigate until one can upgrade (again, you state "disable 
+>> Singularity" and "allow setuid = no" which are two completely different 
+>> things to my knowledge) 
+>> - CVE / background info links, if available, would have been nice. 
+>> - which versions of singularity are affected in which configurations? 
+>>
+>> Or, in short, just see the mail from Dave (Dykstra) at 2018-04-07 18:21 
+>> on this very list asking for this (usually customary) information. 
+>>
+>> Cheers,
+>>         Oliver
+>>
+>> > 
+>> > 
+>> > the Sylabs team
+>> > 
+>> > 
+>> > -- 
+>> > You received this message because you are subscribed to the Google 
+>> Groups "singularity" group.
+>> > To unsubscribe from this group and stop receiving emails from it, send 
+>> an email to singu...@lbl.gov <javascript:> <mailto:
+>> singu...@lbl.gov <javascript:>>.
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+------=_Part_23388_402706696.1524572622299
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Dave, I was mistaken on our config being setuid =3D no, wh=
+ew!=C2=A0 I&#39;ll have to pass along this information to our cluster owner=
+s to determine a course of action.<br><br>cat /nfs/system/singularity/singu=
+larity_2_4_4/singularity.conf | grep setuid<br># Should we allow users to u=
+tilize the setuid program flow within Singularity?<br>allow setuid =3D yes<=
+br><br><br>On Monday, April 23, 2018 at 8:34:43 PM UTC-4, Dave Godlove wrot=
+e:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;b=
+order-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr"><span style=
+=3D"color:rgb(34,34,34);font-family:arial,sans-serif;font-size:small;font-s=
+tyle:normal;font-weight:400;letter-spacing:normal;text-align:start;text-ind=
+ent:0px;text-transform:none;white-space:normal;word-spacing:0px;background-=
+color:rgb(255,255,255);float:none;display:inline">Hi Oliver,</span><div sty=
+le=3D"color:rgb(34,34,34);font-family:arial,sans-serif;font-size:small;font=
+-style:normal;font-weight:400;letter-spacing:normal;text-align:start;text-i=
+ndent:0px;text-transform:none;white-space:normal;word-spacing:0px"><br></di=
+v><div style=3D"color:rgb(34,34,34);font-family:arial,sans-serif;font-size:=
+small;font-style:normal;font-weight:400;letter-spacing:normal;text-align:st=
+art;text-indent:0px;text-transform:none;white-space:normal;word-spacing:0px=
+">We have not provided info about this exploit (and we are not going to) be=
+cause there is no workaround short of upgrading the kernel or uninstalling =
+Singularity.=C2=A0 So giving more details will only help malicious parties.=
+=C2=A0</div><div style=3D"color:rgb(34,34,34);font-family:arial,sans-serif;=
+font-size:small;font-style:normal;font-weight:400;letter-spacing:normal;tex=
+t-align:start;text-indent:0px;text-transform:none;white-space:normal;word-s=
+pacing:0px"><br></div><div style=3D"color:rgb(34,34,34);font-family:arial,s=
+ans-serif;font-size:small;font-style:normal;font-weight:400;letter-spacing:=
+normal;text-align:start;text-indent:0px;text-transform:none;white-space:nor=
+mal;word-spacing:0px">I don&#39;t think we will be getting a CVE on this be=
+cause it only affects old kernels.=C2=A0 In other words, CVE&#39;s associat=
+ed with PR_SET_NO_NEW_PRIVS have already been provided and resolved.=C2=A0=
+=C2=A0</div><div style=3D"color:rgb(34,34,34);font-family:arial,sans-serif;=
+font-size:small;font-style:normal;font-weight:400;letter-spacing:normal;tex=
+t-align:start;text-indent:0px;text-transform:none;white-space:normal;word-s=
+pacing:0px"><br></div><div style=3D"color:rgb(34,34,34);font-family:arial,s=
+ans-serif;font-size:small;font-style:normal;font-weight:400;letter-spacing:=
+normal;text-align:start;text-indent:0px;text-transform:none;white-space:nor=
+mal;word-spacing:0px">Singularity can be disabled by setting=C2=A0<span sty=
+le=3D"color:rgb(34,34,34);font-family:arial,sans-serif;font-size:12.8px;fon=
+t-style:normal;font-weight:400;letter-spacing:normal;text-align:start;text-=
+indent:0px;text-transform:none;white-space:normal;word-spacing:0px;backgrou=
+nd-color:rgb(255,255,255);float:none;display:inline">&quot;allow setuid =3D=
+ no&quot; because this is only a problem on kernels that predate user names=
+pace support.=C2=A0 So running without suid wouldn&#39;t be an option anywa=
+y.=C2=A0=C2=A0</span></div><div style=3D"color:rgb(34,34,34);font-family:ar=
+ial,sans-serif;font-size:small;font-style:normal;font-weight:400;letter-spa=
+cing:normal;text-align:start;text-indent:0px;text-transform:none;white-spac=
+e:normal;word-spacing:0px"><span style=3D"color:rgb(34,34,34);font-family:a=
+rial,sans-serif;font-size:12.8px;font-style:normal;font-weight:400;letter-s=
+pacing:normal;text-align:start;text-indent:0px;text-transform:none;white-sp=
+ace:normal;word-spacing:0px;background-color:rgb(255,255,255);float:none;di=
+splay:inline"><br></span></div><div style=3D"color:rgb(34,34,34);font-famil=
+y:arial,sans-serif;font-size:small;font-style:normal;font-weight:400;letter=
+-spacing:normal;text-align:start;text-indent:0px;text-transform:none;white-=
+space:normal;word-spacing:0px"><span style=3D"color:rgb(34,34,34);font-fami=
+ly:arial,sans-serif;font-size:12.8px;font-style:normal;font-weight:400;lett=
+er-spacing:normal;text-align:start;text-indent:0px;text-transform:none;whit=
+e-space:normal;word-spacing:0px;background-color:rgb(255,255,255);float:non=
+e;display:inline">Sorry it wasn&#39;t clear from my original message, but a=
+ll versions of Singularity are affected as well as any other container plat=
+form running on one of these outdated kernels.=C2=A0 Again, PR_SET_NO_NEW_P=
+RIVS predates user namespace support, so if a container platform is running=
+ on one of these kernels, then by definition it is using elevated privs in =
+some way shape or form.=C2=A0=C2=A0</span></div><div style=3D"color:rgb(34,=
+34,34);font-family:arial,sans-serif;font-size:small;font-style:normal;font-=
+weight:400;letter-spacing:normal;text-align:start;text-indent:0px;text-tran=
+sform:none;white-space:normal;word-spacing:0px"><span style=3D"color:rgb(34=
+,34,34);font-family:arial,sans-serif;font-size:12.8px;font-style:normal;fon=
+t-weight:400;letter-spacing:normal;text-align:start;text-indent:0px;text-tr=
+ansform:none;white-space:normal;word-spacing:0px;background-color:rgb(255,2=
+55,255);float:none;display:inline"><br></span></div><div style=3D"color:rgb=
+(34,34,34);font-family:arial,sans-serif;font-size:small;font-style:normal;f=
+ont-weight:400;letter-spacing:normal;text-align:start;text-indent:0px;text-=
+transform:none;white-space:normal;word-spacing:0px"><span style=3D"color:rg=
+b(34,34,34);font-family:arial,sans-serif;font-size:12.8px;font-style:normal=
+;font-weight:400;letter-spacing:normal;text-align:start;text-indent:0px;tex=
+t-transform:none;white-space:normal;word-spacing:0px;background-color:rgb(2=
+55,255,255);float:none;display:inline">Thanks very much for your questions/=
+comments Oliver.=C2=A0 Hope this information is helpful and helps others as=
+ well.=C2=A0=C2=A0</span></div><div style=3D"color:rgb(34,34,34);font-famil=
+y:arial,sans-serif;font-size:small;font-style:normal;font-weight:400;letter=
+-spacing:normal;text-align:start;text-indent:0px;text-transform:none;white-=
+space:normal;word-spacing:0px"><span style=3D"color:rgb(34,34,34);font-fami=
+ly:arial,sans-serif;font-size:12.8px;font-style:normal;font-weight:400;lett=
+er-spacing:normal;text-align:start;text-indent:0px;text-transform:none;whit=
+e-space:normal;word-spacing:0px;background-color:rgb(255,255,255);float:non=
+e;display:inline"><br></span></div><div style=3D"color:rgb(34,34,34);font-f=
+amily:arial,sans-serif;font-size:small;font-style:normal;font-weight:400;le=
+tter-spacing:normal;text-align:start;text-indent:0px;text-transform:none;wh=
+ite-space:normal;word-spacing:0px"><span style=3D"font-size:12.8px">Dave</s=
+pan></div><br></div><div><br><div class=3D"gmail_quote">On Mon, Apr 23, 201=
+8 at 8:21 PM, &#39;Oliver Freyermuth&#39; via singularity <span dir=3D"ltr"=
+>&lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"y3z=
+1gCeLCAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39=
+;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">=
+si...@lbl.gov</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" st=
+yle=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><span=
+>Hi Dave,<br>
+<br>
+many thanks for the heads-up!<br>
+<br>
+A few questions inline... <br>
+<br>
+Am 24.04.2018 um 02:03 schrieb Dave Godlove:<br>
+</span>&gt; Greetings Singularity users,<br>
+&gt; <br>
+&gt; <br>
+<span>&gt; The Singularity team has been working to support older legacy ke=
+rnels that do not instantiate the prctlfunction PR_SET_NO_NEW_PRIVS.=C2=A0 =
+Starting in version 2.5, Sylabs is giving up on that fight and outdated ker=
+nels will no longer be supported. =C2=A0<br>
+&gt; <br>
+&gt; <br>
+&gt; We, at Sylabs, recently discovered an exploit vector to all container =
+runtimes which allows a malicious user to gain additional privileges within=
+ a container on hosts that do not support the PR_SET_NO_NEW_PRIVSfeature.<b=
+r>
+<br>
+Does this statement also hold for container runtimes using user namespaces =
+only? <br>
+Is there a CVE? <br>
+<br>
+&gt; <br>
+&gt; <br>
+</span>&gt; The PR_SET_NO_NEW_PRIVSfeature was added to prctl()in the Linux=
+ 3.5 kernel. Various distributions have since backported this feature to cu=
+rrently maintained kernels (for example, Red Hat added this feature to RHEL=
+ 6.7 with the 2.6.32-504.16.2kernel). The most effective way to determine i=
+f your system is affected by this issue is to test the support directly.=C2=
+=A0 As a convenience Sylabs provides a script to allow you to do that autom=
+atically via the following command:<br>
+<span>&gt; <br>
+&gt; <br>
+&gt; curl -s <a href=3D"https://www.sylabs.io/privtest/no_new_privs.sh" rel=
+=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www=
+.google.com/url?q\x3dhttps%3A%2F%2Fwww.sylabs.io%2Fprivtest%2Fno_new_privs.=
+sh\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHI8J3Ds7yHYpdIsz5R_b9pzdOCSw&#39=
+;;return true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3=
+dhttps%3A%2F%2Fwww.sylabs.io%2Fprivtest%2Fno_new_privs.sh\x26sa\x3dD\x26snt=
+z\x3d1\x26usg\x3dAFQjCNHI8J3Ds7yHYpdIsz5R_b9pzdOCSw&#39;;return true;">http=
+s://www.sylabs.io/<wbr>privtest/no_new_privs.sh</a> | bash<br>
+&gt; <br>
+&gt; <br>
+</span><span>&gt; If you find that your system does not properly support th=
+is feature, you will need to either upgrade the operating system, upgrade t=
+he kernel, or disable Singularity (set allow setuid =3D noin singularity.co=
+nffile) and/or any other container runtime you may have installed pending a=
+ kernel update.<br>
+<br>
+How does setting &quot;allow setuid =3D no&quot; &quot;disable Singularity&=
+quot;? <br>
+Again: If this is only affecting container runtimes needing setuid root, wh=
+y should I disable others (e.g. charliecloud, runc&#39;s rootless container=
+s,...)? <br>
+How is PR_SET_NO_NEW_PRIVS of any effect if there are no special privileges=
+ involved? <br>
+<br>
+AFAIK, &quot;allow setuid =3D no&quot; for Singularity only disables the se=
+tuid root based functionality, which many users actually do not need - last=
+ time I checked it was only needed for OverlayFS and image file mounting,<b=
+r>
+which is to be considered unsafe anyways at least for a few years to follow=
+ unless the container image source is fully trusted. &quot;limit container =
+paths&quot;, or just not using image files since they are not so efficientl=
+y distributed anyways,<br>
+are very helpful here. <br>
+See for example <a href=3D"http://lkml.iu.edu/hypermail/linux/kernel/1804.0=
+/02163.html" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D=
+&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Flkml.iu.edu%2Fhypermail%2F=
+linux%2Fkernel%2F1804.0%2F02163.html\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQj=
+CNEy6GW3MJY4obN6v2xFiGgN1z4LkA&#39;;return true;" onclick=3D"this.href=3D&#=
+39;http://www.google.com/url?q\x3dhttp%3A%2F%2Flkml.iu.edu%2Fhypermail%2Fli=
+nux%2Fkernel%2F1804.0%2F02163.html\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCN=
+Ey6GW3MJY4obN6v2xFiGgN1z4LkA&#39;;return true;">http://lkml.iu.edu/hypermai=
+l/<wbr>linux/kernel/1804.0/02163.html</a> which clearly states the opinion =
+of the expert in the field concerning the security implications of mounting=
+ image files. <br>
+<br>
+Still, many thanks for the heads-up, but some more detailed information alo=
+ng the lines of:<br>
+- who exactly is affected (it&#39;s unclear if this only affects setuid roo=
+t users, and if so, it surely affects only a small subset of available othe=
+r container runtimes!) <br>
+- how to mitigate until one can upgrade (again, you state &quot;disable Sin=
+gularity&quot; and &quot;allow setuid =3D no&quot; which are two completely=
+ different things to my knowledge) <br>
+- CVE / background info links, if available, would have been nice. <br>
+- which versions of singularity are affected in which configurations? <br>
+<br>
+Or, in short, just see the mail from Dave (Dykstra) at 2018-04-07 18:21 on =
+this very list asking for this (usually customary) information. <br>
+<br>
+Cheers,<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 Oliver<br>
+<br>
+&gt; <br>
+&gt; <br>
+</span><span>&gt; the Sylabs team<br>
+&gt; <br>
+&gt; <br>
+&gt; -- <br>
+&gt; You received this message because you are subscribed to the Google Gro=
+ups &quot;singularity&quot; group.<br>
+</span>&gt; To unsubscribe from this group and stop receiving emails from i=
+t, send an email to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscate=
+d-mailto=3D"y3z1gCeLCAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;=
+javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;=
+;return true;">singularity...@lbl.<wbr>gov</a> &lt;mailto:<a href=3D"javasc=
+ript:" target=3D"_blank" gdf-obfuscated-mailto=3D"y3z1gCeLCAAJ" rel=3D"nofo=
+llow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclic=
+k=3D"this.href=3D&#39;javascript:&#39;;return true;">singularity+<wbr>unsub=
+...@lbl.gov</a>&gt;.<br>
+<div><div><br>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+y3z1gCeLCAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br></div>
+</blockquote></div>
+------=_Part_23388_402706696.1524572622299--
+
+------=_Part_23387_777607326.1524572622298--

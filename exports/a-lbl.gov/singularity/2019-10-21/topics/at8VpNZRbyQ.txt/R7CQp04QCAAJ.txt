@@ -1,0 +1,287 @@
+Date: Sat, 3 Dec 2016 02:19:09 -0800 (PST)
+From: Stefan Kombrink <stefan....@googlemail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <42146c07-59d0-4ce0-9290-a69d53ab6fbd@lbl.gov>
+In-Reply-To: <1480710853495.26432@iu.edu>
+References: <1480710853495.26432@iu.edu>
+Subject: Re: can't mount $HOME as $HOME inside container
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_950_1669389494.1480760349644"
+
+------=_Part_950_1669389494.1480760349644
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_951_1535686170.1480760349644"
+
+------=_Part_951_1535686170.1480760349644
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+I had a similar issue, and I could solve it by bind mounting both the 
+symlinked path and the real path which can be obtained using readlink -f 
+$PWD
+
+Just pass it using the -B option of exec
+
+good luck Stefan
+
+
+
+
+Am Freitag, 2. Dezember 2016 21:34:17 UTC+1 schrieb Abhinav Thota:
+>
+> Hi All,
+>
+>
+> I am at Indiana University and we have been trying out singularity. The 
+> issue I describe here is from a RHEL 6.8 HPC cluster. 
+>
+>
+> When I run singularity to get a shell on this machine, the home directory 
+> is not mounted:
+>
+> [athota@h2 singularity]$ singularity shell centos7.img 
+>
+> WARNING: Not mounting home directory: bind point does not exist in 
+> container: /N
+>
+> WARNING: Could not chdir to home directory: /N/u/athota/Karst
+>
+> Singularity: Invoking an interactive shell within container...
+>
+>
+> Singularity.centos7.img> df
+>
+> Filesystem     1K-blocks      Used Available Use% Mounted on
+>
+> /dev/loop0       2064208    929328   1030024  48% /
+>
+> devtmpfs        33025068       180  33024888   1% /dev
+>
+> tmpfs           33039192         0  33039192   0% /dev/shm
+>
+> /dev/sda1       47940488   7756132  37742424  18% /var/tmp
+>
+> /dev/sda2      192161372 157472880  24920556  87% /tmp
+>
+> rootfs          33039192   4630584  28408608  15% /etc/hosts
+>
+> Singularity.centos7.img> cd $HOME
+>
+> sh: cd: /N/u/athota/Karst: No such file or directory
+>
+>
+> But I am able to mount the home directory at a random location:
+>
+> [athota@h2 singularity]$ singularity shell -B /N/u/athota:/geode 
+> centos7.img 
+>
+> WARNING: Not mounting home directory: bind point does not exist in 
+> container: /N
+>
+> WARNING: Could not chdir to home directory: /N/u/athota/Karst
+>
+> Singularity: Invoking an interactive shell within container...
+>
+>
+> Singularity.centos7.img> df 
+>
+> Filesystem        1K-blocks        Used    Available Use% Mounted on
+>
+> /dev/loop0          2064208      929328      1030024  48% /
+>
+> devtmpfs           33025068         180     33024888   1% /dev
+>
+> tmpfs              33039192           0     33039192   0% /dev/shm
+>
+> /dev/sda1          47940488     7756596     37741960  18% /var/tmp
+>
+> /dev/sda2         192161372   157472904     24920532  87% /tmp
+>
+> rootfs             33039192     4630584     28408608  15% /etc/hosts
+>
+> /dev/gpfs      214748364800 80255732736 134492632064  38% /geode
+>
+>
+> If the bind point exists in the container, this happens:
+>
+> [athota@h2 singularity]$ singularity shell centos-N.img 
+>
+> ERROR  : Failed to mount home directory to stage: Permission denied
+>
+> ABORT  : Retval = 255
+>
+>
+> Here is something that might be relevant:
+>
+> My home directory on this machine is:
+>
+> /N/u/athota/Karst
+>
+>
+> But, in this path, "u" and "athota" are symbolic links: (this is how it is 
+> for all accounts on this machine)
+>
+> [athota@h2 N]$ ll /N/u
+>
+> lrwxrwxrwx 1 root root 10 Nov  1 04:41 /N/u -> /gpfs/hdln
+>
+>
+> [athota@h2 N]$ ll /N/u/athota
+>
+> lrwxrwxrwx 1 root root 18 Nov  4  2014 /N/u/athota -> /N/home/a/t/athota
+>
+>
+> What could be going on here? Any help is appreciated!
+>
+>
+> Thanks,
+>
+> Abhinav
+>
+
+------=_Part_951_1535686170.1480760349644
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">I had a similar issue, and I could solve it by bind mounti=
+ng both the symlinked path and the real path which can be obtained using re=
+adlink -f $PWD<br><br>Just pass it using the -B option of exec<br><br>good =
+luck Stefan<br><br><br><br><br>Am Freitag, 2. Dezember 2016 21:34:17 UTC+1 =
+schrieb Abhinav Thota:<blockquote class=3D"gmail_quote" style=3D"margin: 0;=
+margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;">
+
+
+
+
+<div dir=3D"ltr" style=3D"font-size:12pt;color:#000000;background-color:#ff=
+ffff;font-family:Calibri,Arial,Helvetica,sans-serif">
+<p>Hi All,<br>
+</p>
+<p><br>
+</p>
+<p>I am at Indiana University and we have been=C2=A0trying out singularity.=
+ The issue I describe here is from a=C2=A0RHEL=C2=A06.8=C2=A0HPC=C2=A0clust=
+er.=C2=A0<br>
+</p>
+<p><br>
+</p>
+<p>When I run singularity to get a shell=C2=A0on this machine, the home dir=
+ectory is not mounted:<br>
+</p>
+
+<p><span>[athota@h2 singularity]$ singularity shell centos7.img=C2=A0</span=
+></p>
+<p><span>WARNING: Not mounting home directory: bind point does not exist in=
+ container: /N</span></p>
+<p><span>WARNING: Could not chdir to home directory: /N/u/athota/Karst</spa=
+n></p>
+<p><span>Singularity: Invoking an interactive shell within container...</sp=
+an></p>
+<p><span></span><br>
+</p>
+<p><span>Singularity.centos7.img&gt; df</span></p>
+<p><span>Filesystem =C2=A0 =C2=A0 1K-blocks=C2=A0 =C2=A0 =C2=A0 Used Availa=
+ble Use% Mounted on</span></p>
+<p><span>/dev/loop0 =C2=A0 =C2=A0 =C2=A0 2064208=C2=A0 =C2=A0 929328 =C2=A0=
+ 1030024=C2=A0 48% /</span></p>
+<p><span>devtmpfs=C2=A0 =C2=A0 =C2=A0 =C2=A0 33025068 =C2=A0 =C2=A0 =C2=A0 =
+180=C2=A0 33024888 =C2=A0 1% /dev</span></p>
+<p><span>tmpfs =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 33039192 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 0=C2=A0 33039192 =C2=A0 0% /dev/shm</span></p>
+<p><span>/dev/sda1 =C2=A0 =C2=A0 =C2=A0 47940488 =C2=A0 7756132=C2=A0 37742=
+424=C2=A0 18% /var/tmp</span></p>
+<p><span>/dev/sda2=C2=A0 =C2=A0 =C2=A0 192161372 157472880=C2=A0 24920556=
+=C2=A0 87% /tmp</span></p>
+<p><span>rootfs=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 33039192 =C2=A0 4630584=
+=C2=A0 28408608=C2=A0 15% /etc/hosts</span></p>
+<p><span>Singularity.centos7.img&gt; cd $HOME</span></p>
+<p><span>sh: cd: /N/u/athota/Karst: No such file or directory</span></p>
+<p><br>
+</p>
+<p><span style=3D"font-family:Calibri,Arial,Helvetica,sans-serif;font-size:=
+16px;background-color:rgb(255,255,255)">But I am able to mount the home dir=
+ectory at a random</span><span style=3D"font-family:Calibri,Arial,Helvetica=
+,sans-serif;font-size:16px;background-color:rgb(255,255,255)">=C2=A0locatio=
+n:</span><br>
+</p>
+
+<p><span>[athota@h2 singularity]$ singularity shell -B /N/u/athota:/geode c=
+entos7.img=C2=A0</span></p>
+<p><span>WARNING: Not mounting home directory: bind point does not exist in=
+ container: /N</span></p>
+<p><span>WARNING: Could not chdir to home directory: /N/u/athota/Karst</spa=
+n></p>
+<p><span>Singularity: Invoking an interactive shell within container...</sp=
+an></p>
+<p><span></span><br>
+</p>
+<p><span>Singularity.centos7.img&gt; df=C2=A0</span></p>
+<p><span>Filesystem=C2=A0 =C2=A0 =C2=A0 =C2=A0 1K-blocks=C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 Used=C2=A0 =C2=A0 Available Use% Mounted on</span></p>
+<p><span>/dev/loop0=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 2064208=C2=A0 =C2=A0 =
+=C2=A0 929328=C2=A0 =C2=A0 =C2=A0 1030024=C2=A0 48% /</span></p>
+<p><span>devtmpfs =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 33025068 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 180 =C2=A0 =C2=A0 33024888 =C2=A0 1% /dev</span></p>
+<p><span>tmpfs=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 33039192 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0 =C2=A0 =C2=A0 33039192 =C2=A0 0% /dev/shm=
+</span></p>
+<p><span>/dev/sda1=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 47940488 =C2=A0 =C2=A0=
+ 7756596 =C2=A0 =C2=A0 37741960=C2=A0 18% /var/tmp</span></p>
+<p><span>/dev/sda2 =C2=A0 =C2=A0 =C2=A0 =C2=A0 192161372 =C2=A0 157472904 =
+=C2=A0 =C2=A0 24920532=C2=A0 87% /tmp</span></p>
+<p><span>rootfs =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 33039192 =C2=A0 =
+=C2=A0 4630584 =C2=A0 =C2=A0 28408608=C2=A0 15% /etc/hosts</span></p>
+<p><span>/dev/gpfs=C2=A0 =C2=A0 =C2=A0 214748364800 80255732736 13449263206=
+4=C2=A0 38% /geode</span></p>
+<p><br>
+</p>
+<p>If the bind point exists in the container, this happens:<br>
+</p>
+
+<p><span>[athota@h2 singularity]$ singularity shell centos-N.img=C2=A0</spa=
+n></p>
+<p><span>ERROR=C2=A0 : Failed to mount home directory to stage: Permission =
+denied</span></p>
+<p><span>ABORT=C2=A0 : Retval =3D 255</span></p>
+<p><br>
+</p>
+<p>Here is something that might be relevant:<br>
+</p>
+<p>My home directory on this machine is:<br>
+</p>
+
+<p><span>/N/u/athota/Karst</span></p>
+<p><br>
+</p>
+<p>But, in this path, &quot;u&quot; and &quot;athota&quot; are symbolic lin=
+ks: (this is how it is for all accounts on this machine)<br>
+</p>
+
+<p><span>[athota@h2 N]$ ll /N/u</span></p>
+<p><span>lrwxrwxrwx 1 root root 10 Nov=C2=A0 1 04:41 </span><span>/N/u</spa=
+n><span> -&gt;
+</span><span>/gpfs/hdln</span></p>
+<p><br>
+</p>
+
+<p><span>[athota@h2 N]$ ll /N/u/athota</span></p>
+<p><span>lrwxrwxrwx 1 root root 18 Nov=C2=A0 4=C2=A0 2014 </span><span>/N/u=
+/athota</span><span> -&gt;
+</span><span>/N/home/a/t/athota</span></p>
+<p><br>
+</p>
+<p>What could be going on here? Any help is appreciated!<br>
+</p>
+<p><br>
+</p>
+<p>Thanks,<br>
+</p>
+<p>Abhinav<br>
+</p>
+</div>
+
+</blockquote></div>
+------=_Part_951_1535686170.1480760349644--
+
+------=_Part_950_1669389494.1480760349644--

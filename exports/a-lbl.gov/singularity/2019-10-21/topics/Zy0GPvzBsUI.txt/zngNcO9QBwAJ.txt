@@ -1,0 +1,51 @@
+Date: Fri, 6 Oct 2017 08:54:38 -0700 (PDT)
+From: Aaron <hol...@colorado.edu>
+To: singularity <singu...@lbl.gov>
+Message-Id: <a8889b8f-ca74-40ca-90ae-ceb007ef1b58@lbl.gov>
+In-Reply-To: <398a962a-7a1f-4ba1-8cce-87f5ca13fe69@lbl.gov>
+References: <47b9a516-6aa6-4134-ba3d-e0cbfbf066a5@lbl.gov>
+ <398a962a-7a1f-4ba1-8cce-87f5ca13fe69@lbl.gov>
+Subject: Re: MPI and compiled applications
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2408_1016866248.1507305278902"
+
+------=_Part_2408_1016866248.1507305278902
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2409_219122540.1507305278903"
+
+------=_Part_2409_219122540.1507305278903
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+After talking with some more experienced Singularity folk, I found that 
+you're definitely NOT supposed to install GPFS in the container. I was 
+compiling MPI applications with the system MPI and not the container MPI. 
+The system MPI linked in GPFS, Slurm and few other libraries. I now compile 
+with the containers MPI, and things seem to be working as expected (no need 
+for GPFS or Slurm in the container, multi-node jobs work).
+
+#Compiling ring.c using container mpicc
+singularity exec openmpi.img mpicc $SING_PROJ/ring.c -o $SING_PROJ/mpi_ring
+
+#Running a 2 node, 2 task-per-node mpi_ring job
+bash-4.2$ mpirun -np 4 singularity exec openmpi.img $SING_PROJ/mpi_ring
+0 done.
+Hostname: sknl0701
+1 done.
+Hostname: sknl0701
+2 done.
+Hostname: sknl0702
+3 done.
+Hostname: sknl0702
+
+-Aaron
+
+------=_Part_2409_219122540.1507305278903
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: 7bit
+
+<div dir="ltr"><div>After talking with some more experienced Singularity folk, I found that you&#39;re definitely NOT supposed to install GPFS in the container. I was compiling MPI applications with the system MPI and not the container MPI. The system MPI linked in GPFS, Slurm and few other libraries. I now compile with the containers MPI, and things seem to be working as expected (no need for GPFS or Slurm in the container, multi-node jobs work).</div><div><br></div><div>#Compiling ring.c using container mpicc</div><div>singularity exec openmpi.img mpicc $SING_PROJ/ring.c -o $SING_PROJ/mpi_ring</div><div><br></div><div>#Running a 2 node, 2 task-per-node mpi_ring job</div><div>bash-4.2$ mpirun -np 4 singularity exec openmpi.img $SING_PROJ/mpi_ring</div><div>0 done.</div><div>Hostname: sknl0701</div><div>1 done.</div><div>Hostname: sknl0701</div><div>2 done.</div><div>Hostname: sknl0702</div><div>3 done.</div><div>Hostname: sknl0702</div><div><br></div><div>-Aaron</div></div>
+------=_Part_2409_219122540.1507305278903--
+
+------=_Part_2408_1016866248.1507305278902--

@@ -1,0 +1,158 @@
+Date: Thu, 7 Dec 2017 20:00:05 -0800 (PST)
+From: Steven Brandt <steven...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <0ec7aea2-f49a-488e-a0b9-62ca9434fb28@lbl.gov>
+In-Reply-To: <1c69ec50-3129-4097-b1e9-a634feab24be@lbl.gov>
+References: <3fad7d78-34f1-47b8-8f90-c2b48f35ca48@lbl.gov>
+ <d1ef9403-dddc-41c8-ade1-90c62605b895@lbl.gov>
+ <ecd6a2d9-8974-49fb-901b-16339f7fb49b@lbl.gov>
+ <30f3154d-b3f8-4676-84ae-d419ad2f69c2@lbl.gov>
+ <1c69ec50-3129-4097-b1e9-a634feab24be@lbl.gov>
+Subject: Re: Nothing mounts
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_4335_505191008.1512705605117"
+
+------=_Part_4335_505191008.1512705605117
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_4336_1813394794.1512705605118"
+
+------=_Part_4336_1813394794.1512705605118
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+I rebuilt the docker image and put everything in /usr/install, and it 
+worked. Apparently, this was the issue. Thanks! 
+
+--Steve
+
+On Thursday, December 7, 2017 at 8:55:43 PM UTC-6, Jeff Kriske wrote:
+>
+> Ok, I went back and reread your original post... this is only happening in 
+> the home dir?
+>
+> This occurs on systems that use autofs for home directories. This is why 
+> in /home you only see your own directory whereas on your laptop you see 
+> everything.
+>
+> If you were to create a directory somewhere else like:
+>
+> mkdir /tmp/somedir
+> singularity shell -H /tmp/somedir your_image_name.simg
+> ls /home
+>
+> you will see the missing directories. It's a little weird and unexpected, 
+> but that is exactly what's causing the behavior.
+>
+> -Jeff
+>
+> On Thursday, December 7, 2017 at 9:40:07 PM UTC-5, Steven Brandt wrote:
+>>
+>> That's correct. Are there any settings the file system might somehow be 
+>> causing this problem?
+>>
+>> On Thursday, December 7, 2017 at 5:41:31 PM UTC-6, Jeff Kriske wrote:
+>>>
+>>> You're doing the make install as root correct (or with sudo)?
+>>>
+>>> On Thursday, December 7, 2017 at 5:06:31 PM UTC-5, Steven Brandt wrote:
+>>>>
+>>>> I've tried 2.3.2 and 2.42. The response is the same. No error messages, 
+>>>> but none of the files that are supposed to be in the container are visible.
+>>>> --Steve
+>>>>
+>>>> On Wednesday, December 6, 2017 at 3:26:43 PM UTC-6, Steven Brandt wrote:
+>>>>>
+>>>>> I have tried building both the git version and 2.3.1 of singularity on 
+>>>>> my cluster (shelob.hpc.lsu.edu).
+>>>>>
+>>>>> With the git version I do this:
+>>>>> singularity build funwave-tvd.img 
+>>>>> docker://stevenrbrandt/funwave-tvd-2:latest
+>>>>>
+>>>>> With 2.3.1 I do this:
+>>>>> singularity create funwave-tvd.img --size 2000
+>>>>> singularity import funwave-tvd.img 
+>>>>> docker://stevenrbrandt/funwave-tvd-2:latest
+>>>>>
+>>>>> I then run the image:
+>>>>> singularity run funwave-tvd.img
+>>>>>
+>>>>> I then run "ls /home"
+>>>>>
+>>>>> What I expect to see is three directories, install, jovyan, and 
+>>>>> sbrandt (my user id on shelob). I only see sbrandt. The first
+>>>>> two directories are present in the docker image, and I see them when I 
+>>>>> run Singularity on my laptop.
+>>>>>
+>>>>> Thinking it might have something to do with our NFS file system, I 
+>>>>> tried installing and running out of /tmp. When I do that I see
+>>>>> ERROR  : No valid /bin/sh in container
+>>>>> ABORT  : Retval = 255
+>>>>>
+>>>>> Not sure what to check for next.
+>>>>>
+>>>>> --Steve
+>>>>>
+>>>>
+------=_Part_4336_1813394794.1512705605118
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">I rebuilt the docker image and put everything in /usr/inst=
+all, and it worked. Apparently, this was the issue. Thanks!=C2=A0<div><br><=
+/div><div>--Steve<br><br>On Thursday, December 7, 2017 at 8:55:43 PM UTC-6,=
+ Jeff Kriske wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;mar=
+gin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D=
+"ltr">Ok, I went back and reread your original post... this is only happeni=
+ng in the home dir?<div><br></div><div>This occurs on systems that use auto=
+fs for home directories. This is why in /home you only see your own directo=
+ry whereas on your laptop you see everything.</div><div><br></div><div>If y=
+ou were to create a directory somewhere else like:</div><div><br></div><div=
+>mkdir /tmp/somedir</div><div>singularity shell -H /tmp/somedir your_image_=
+name.simg</div><div>ls /home</div><div><br></div><div>you will see the miss=
+ing directories. It&#39;s a little weird and unexpected, but that is exactl=
+y what&#39;s causing the behavior.</div><div><br></div><div>-Jeff<br><br>On=
+ Thursday, December 7, 2017 at 9:40:07 PM UTC-5, Steven Brandt wrote:<block=
+quote class=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-left=
+:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">That&#39;s correct. Are =
+there any settings the file system might somehow be causing this problem?<b=
+r><br>On Thursday, December 7, 2017 at 5:41:31 PM UTC-6, Jeff Kriske wrote:=
+<blockquote class=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;borde=
+r-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">You&#39;re doing t=
+he make install as root correct (or with sudo)?<br><br>On Thursday, Decembe=
+r 7, 2017 at 5:06:31 PM UTC-5, Steven Brandt wrote:<blockquote class=3D"gma=
+il_quote" style=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc solid;pa=
+dding-left:1ex"><div dir=3D"ltr">I&#39;ve tried 2.3.2 and 2.42. The respons=
+e is the same. No error messages, but none of the files that are supposed t=
+o be in the container are visible.<div>--Steve<br><br>On Wednesday, Decembe=
+r 6, 2017 at 3:26:43 PM UTC-6, Steven Brandt wrote:<blockquote class=3D"gma=
+il_quote" style=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc solid;pa=
+dding-left:1ex"><div dir=3D"ltr">I have tried building both the git version=
+ and 2.3.1 of singularity on my cluster (<a href=3D"http://shelob.hpc.lsu.e=
+du" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;http=
+://www.google.com/url?q\x3dhttp%3A%2F%2Fshelob.hpc.lsu.edu\x26sa\x3dD\x26sn=
+tz\x3d1\x26usg\x3dAFQjCNGUqPcTIKtLbTqPmxGQSKa6tNr8XQ&#39;;return true;" onc=
+lick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fshelob=
+.hpc.lsu.edu\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGUqPcTIKtLbTqPmxGQSKa6=
+tNr8XQ&#39;;return true;">shelob.hpc.lsu.edu</a>).<div><br></div><div>With =
+the git version I do this:</div><div>singularity build funwave-tvd.img dock=
+er://stevenrbrandt/<wbr>funwave-tvd-2:latest<br></div><div><br></div><div>W=
+ith 2.3.1 I do this:</div><div>singularity create funwave-tvd.img --size 20=
+00<br></div><div>singularity import funwave-tvd.img docker://stevenrbrandt/=
+<wbr>funwave-tvd-2:latest<br></div><div><br></div><div>I then run the image=
+:</div><div>singularity run funwave-tvd.img</div><div><br></div><div>I then=
+ run &quot;ls /home&quot;</div><div><br></div><div>What I expect to see is =
+three directories, install, jovyan, and sbrandt (my user id on shelob). I o=
+nly see sbrandt. The first</div><div>two directories are present in the doc=
+ker image, and I see them when I run Singularity on my laptop.</div><div><b=
+r></div><div>Thinking it might have something to do with our NFS file syste=
+m, I tried installing and running out of /tmp. When I do that I see</div><d=
+iv><div>ERROR=C2=A0 : No valid /bin/sh in container</div><div>ABORT=C2=A0 :=
+ Retval =3D 255</div></div><div><br></div><div>Not sure what to check for n=
+ext.</div><div><br></div><div>--Steve</div></div></blockquote></div></div><=
+/blockquote></div></blockquote></div></blockquote></div></div></blockquote>=
+</div></div>
+------=_Part_4336_1813394794.1512705605118--
+
+------=_Part_4335_505191008.1512705605117--

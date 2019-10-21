@@ -1,0 +1,277 @@
+Date: Tue, 12 Feb 2019 22:29:53 -0800 (PST)
+From: Sam Agnew <sama...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <b6b8acf0-a6fc-4fb7-b01f-4ad658a8131c@lbl.gov>
+Subject: Singularity In Docker "Failed to unshare root file system:
+ Operation not permitted"
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2110_452565391.1550039393692"
+
+------=_Part_2110_452565391.1550039393692
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2111_1439654450.1550039393693"
+
+------=_Part_2111_1439654450.1550039393693
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+This might seem a strange usage case but bear with me. Our HPC cluster uses=
+=20
+containerised compute nodes to suballocate the compute resources. These=20
+virtual nodes are assigned CPU and memory limits. The base Docker image=20
+contains an SSSD setup that binds to our AD so users run their jobs with=20
+their own credentials. The virtual nodes are in a Slurm cluster. All of=20
+this has worked well for us.
+
+Recently, there was interest in running containerised workloads. I can=20
+easily spawn the workflow containers from the virtual nodes on the host=20
+Docker engine with the same resource limits (and since these are running as=
+=20
+children of the worker node containers it usefully dovetails with Slurm's=
+=20
+view of things) but, naturally, all the workflow file access would be as=20
+root which is unworkable. I therefore thought of running the containers=20
+with Singularity. Singularity seems happy to run inside of the (CentOS=20
+7-based) virtual worker node container and nicely inherits the resource=20
+limits. The file access is as the user which is great. However, this only=
+=20
+seems to work if the virtual node Singularity launches into happens to be=
+=20
+the Docker container with the highest PID number (most recently spawned).=
+=20
+If it is an earlier launched container then Singularity fails halfway=20
+through with an error "ERROR  : Failed to unshare root file system:=20
+Operation not permitted"
+
+If I run the command in debug mode I can see where the behaviour diverges=
+=20
+(last container versus earlier launched container):
+=E2=80=A2 The first difference is that the running in the last container=20
+Singularity says "Overlay seems supported by the kernel" but in an earlier=
+=20
+container it says "Overlay seems not supported by the kernel"
+=E2=80=A2 The second difference is that the Singularity running in an earli=
+er=20
+container doesn't reach "Create mount namespace"
+
+Here's an edited diff -y to illustrate. last on left, earlier on right:
+VERBOSE    Set messagelevel to: 5                               VERBOSE  =
+=20
+ Set messagelevel to: 5
+DEBUG      PIPE_EXEC_FD value: 7                                DEBUG    =
+=20
+ PIPE_EXEC_FD value: 7
+VERBOSE    Container runtime                                    VERBOSE  =
+=20
+ Container runtime
+VERBOSE    Check if we are running as setuid                    VERBOSE  =
+=20
+ Check if we are running as setuid
+*DEBUG      Overlay seems supported by kernel                  | DEBUG    =
+=20
+ Overlay seems not supported by kernel*
+DEBUG      Drop privileges                                      DEBUG    =
+=20
+ Drop privileges
+DEBUG       Read json configuration from pipe                   DEBUG      =
+=20
+Read json configuration from pipe
+DEBUG       Set child signal mask                               DEBUG      =
+=20
+Set child signal mask
+DEBUG       Create socketpair for smaster communication chann   DEBUG      =
+=20
+Create socketpair for smaster communication chann
+DEBUG       Wait C and JSON runtime configuration from sconta   DEBUG      =
+=20
+Wait C and JSON runtime configuration from sconta
+DEBUG       Set parent death signal to 9                        DEBUG      =
+=20
+Set parent death signal to 9
+VERBOSE     Spawn scontainer stage 1                            VERBOSE    =
+=20
+Spawn scontainer stage 1
+VERBOSE     Get root privileges                                 VERBOSE    =
+=20
+Get root privileges
+DEBUG      Set parent death signal to 9                         DEBUG    =
+=20
+ Set parent death signal to 9
+DEBUG      Entering in scontainer stage 1                       DEBUG    =
+=20
+ Entering in scontainer stage 1
+DEBUG       Set parent death signal to 9                        DEBUG      =
+=20
+Set parent death signal to 9
+VERBOSE    Execute scontainer stage 1                           VERBOSE  =
+=20
+ Execute scontainer stage 1
+DEBUG      Entering scontainer stage 1                          DEBUG    =
+=20
+ Entering scontainer stage 1
+DEBUG      Entering image format intializer                     DEBUG    =
+=20
+ Entering image format intializer
+DEBUG      Check for image format sif                           DEBUG    =
+=20
+ Check for image format sif
+DEBUG       Receiving configuration from scontainer stage 1     DEBUG      =
+=20
+Receiving configuration from scontainer stage 1
+DEBUG       Wait completion of scontainer stage1                DEBUG      =
+=20
+Wait completion of scontainer stage1
+VERBOSE     Get root privileges                                 VERBOSE    =
+=20
+Get root privileges
+*VERBOSE    Create mount namespace                             | ERROR    =
+=20
+ Failed to unshare root file system: Operation not *
+DEBUG      Create RPC socketpair for communication between sc | srun:=20
+error: slurmd4xsacnodez1000: task 0: Exited with exit c
+VERBOSE    Spawn smaster process                              <
+DEBUG      Set parent death signal to 9                       <
+VERBOSE    Spawn scontainer stage 2                           <
+VERBOSE    Create mount namespace                             <
+VERBOSE    Spawn RPC server                                   <
+VERBOSE    Execute smaster process                            <
+
+The nearest Google could get me to something that sounds related was this=
+=20
+post (which I wasn't completely able to=20
+follow): https://github.com/sylabs/singularity/issues/2397
+
+I was using 3.0.3 from the RPM following the instructions for making the=20
+RPM on the Installation section of the website.
+
+Thanks!
+
+Sam
+
+------=_Part_2111_1439654450.1550039393693
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">This might seem a strange usage case but bear with me. Our=
+ HPC cluster uses containerised compute nodes to suballocate the compute re=
+sources. These virtual nodes are assigned CPU and memory limits. The base D=
+ocker image contains an SSSD setup that binds to our AD so users run their =
+jobs with their own credentials. The virtual nodes are in a Slurm cluster. =
+All of this has worked well for us.<div><br></div><div>Recently, there was =
+interest in running containerised workloads. I can easily spawn the workflo=
+w containers from the virtual nodes on the host Docker engine with the same=
+ resource limits (and since these are running as children of the worker nod=
+e containers it usefully dovetails with Slurm&#39;s view of things) but, na=
+turally, all the workflow file access would be as root which is unworkable.=
+ I therefore thought of running the containers with Singularity. Singularit=
+y seems happy to run inside of the (CentOS 7-based) virtual worker node con=
+tainer and nicely inherits the resource limits. The file access is as the u=
+ser which is great. However, this only seems to work if the virtual node Si=
+ngularity launches into happens to be the Docker container with the highest=
+ PID number (most recently spawned). If it is an earlier launched container=
+ then Singularity fails halfway through with an error &quot;<span style=3D"=
+color: rgb(252, 33, 24); font-family: Hack; font-size: 12px; background-col=
+or: rgba(0, 0, 0, 0.901961);">ERROR</span><span style=3D"color: rgb(252, 33=
+, 24); font-family: Hack; font-size: 12px; background-color: rgba(0, 0, 0, =
+0.901961);">=C2=A0 </span><span style=3D"color: rgb(252, 33, 24); font-fami=
+ly: Hack; font-size: 12px; background-color: rgba(0, 0, 0, 0.901961);">: Fa=
+iled to unshare root file system: Operation not permitted</span>&quot;</div=
+><div><br></div><div>If I run the command in debug mode I can see where the=
+ behaviour diverges (last container versus earlier launched container):</di=
+v><div>=E2=80=A2 The first difference is that the running in the last conta=
+iner Singularity says &quot;Overlay seems supported by the kernel&quot; but=
+ in an earlier container it says &quot;Overlay seems not supported by the k=
+ernel&quot;</div><div>=E2=80=A2 The second difference is that the Singulari=
+ty running in an earlier container doesn&#39;t reach &quot;Create mount nam=
+espace&quot;</div><div><br></div><div>Here&#39;s an edited diff -y to illus=
+trate. last on left, earlier on right:</div><div><div>VERBOSE =C2=A0 =C2=A0=
+Set messagelevel to: 5 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 VERBOSE =C2=A0 =C2=A0S=
+et messagelevel to: 5</div><div>DEBUG =C2=A0 =C2=A0 =C2=A0PIPE_EXEC_FD valu=
+e: 7 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0DEBUG =C2=A0 =C2=A0 =C2=A0PIPE_EXE=
+C_FD value: 7</div><div>VERBOSE =C2=A0 =C2=A0Container runtime =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0VERBOSE =C2=A0 =C2=A0Container run=
+time</div><div>VERBOSE =C2=A0 =C2=A0Check if we are running as setuid =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0VERBOSE =
+=C2=A0 =C2=A0Check if we are running as setuid</div><div><b><font color=3D"=
+#cc0000">DEBUG =C2=A0 =C2=A0 =C2=A0Overlay seems supported by kernel =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0| DEBUG =C2=A0 =C2=
+=A0 =C2=A0Overlay seems not supported by kernel</font></b></div><div>DEBUG =
+=C2=A0 =C2=A0 =C2=A0Drop privileges =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0DEBUG =C2=A0 =C2=A0 =C2=A0Drop privileges</div><div>DEB=
+UG =C2=A0 =C2=A0 =C2=A0 Read json configuration from pipe =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 DEBUG =C2=A0 =C2=A0 =C2=A0 Re=
+ad json configuration from pipe</div><div>DEBUG =C2=A0 =C2=A0 =C2=A0 Set ch=
+ild signal mask =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 DEBUG =C2=A0 =C2=A0 =C2=A0 Se=
+t child signal mask</div><div>DEBUG =C2=A0 =C2=A0 =C2=A0 Create socketpair =
+for smaster communication chann =C2=A0 DEBUG =C2=A0 =C2=A0 =C2=A0 Create so=
+cketpair for smaster communication chann</div><div>DEBUG =C2=A0 =C2=A0 =C2=
+=A0 Wait C and JSON runtime configuration from sconta =C2=A0 DEBUG =C2=A0 =
+=C2=A0 =C2=A0 Wait C and JSON runtime configuration from sconta</div><div>D=
+EBUG =C2=A0 =C2=A0 =C2=A0 Set parent death signal to 9 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0DEBUG =C2=A0=
+ =C2=A0 =C2=A0 Set parent death signal to 9</div><div>VERBOSE =C2=A0 =C2=A0=
+ Spawn scontainer stage 1 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0VERBOSE =C2=A0 =C2=A0 Spawn=
+ scontainer stage 1</div><div>VERBOSE =C2=A0 =C2=A0 Get root privileges =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 VERBOSE =C2=A0 =C2=A0 Get root privilege=
+s</div><div>DEBUG =C2=A0 =C2=A0 =C2=A0Set parent death signal to 9 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 DEBUG =C2=A0 =C2=A0 =C2=A0Set parent death signal to 9</div><div>DEBUG =
+=C2=A0 =C2=A0 =C2=A0Entering in scontainer stage 1 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 DEBUG =C2=A0 =C2=A0 =
+=C2=A0Entering in scontainer stage 1</div><div>DEBUG =C2=A0 =C2=A0 =C2=A0 S=
+et parent death signal to 9 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0DEBUG =C2=A0 =C2=A0 =C2=A0 Set parent=
+ death signal to 9</div><div>VERBOSE =C2=A0 =C2=A0Execute scontainer stage =
+1 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 VERBOSE =C2=A0 =C2=A0Execute scontainer stage 1</div><div=
+>DEBUG =C2=A0 =C2=A0 =C2=A0Entering scontainer stage 1 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0DEBUG=
+ =C2=A0 =C2=A0 =C2=A0Entering scontainer stage 1</div><div>DEBUG =C2=A0 =C2=
+=A0 =C2=A0Entering image format intializer =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 DEBUG =C2=A0 =C2=A0 =C2=A0Entering i=
+mage format intializer</div><div>DEBUG =C2=A0 =C2=A0 =C2=A0Check for image =
+format sif =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 DEBUG =C2=A0 =C2=A0 =C2=A0Check for image forma=
+t sif</div><div>DEBUG =C2=A0 =C2=A0 =C2=A0 Receiving configuration from sco=
+ntainer stage 1 =C2=A0 =C2=A0 DEBUG =C2=A0 =C2=A0 =C2=A0 Receiving configur=
+ation from scontainer stage 1</div><div>DEBUG =C2=A0 =C2=A0 =C2=A0 Wait com=
+pletion of scontainer stage1 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0DEBUG =C2=A0 =C2=A0 =C2=A0 Wait completion of scontainer stage1</=
+div><div>VERBOSE =C2=A0 =C2=A0 Get root privileges =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 VERBOSE =C2=A0 =C2=A0 Get root privileges</div><div><b><font =
+color=3D"#cc0000">VERBOSE =C2=A0 =C2=A0Create mount namespace =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 | ERROR =C2=A0 =C2=A0 =C2=A0Failed to unshare root file system: =
+Operation not=C2=A0</font></b></div><div>DEBUG =C2=A0 =C2=A0 =C2=A0Create R=
+PC socketpair for communication between sc | srun: error: slurmd4xsacnodez1=
+000: task 0: Exited with exit c</div><div>VERBOSE =C2=A0 =C2=A0Spawn smaste=
+r process =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0&lt;</div><div>DEBUG =C2=A0 =C2=A0=
+ =C2=A0Set parent death signal to 9 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 &lt;</div><div>VERBOSE =C2=A0 =C2=A0=
+Spawn scontainer stage 2 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 &lt;</div><div>VERBOSE =C2=A0 =C2=
+=A0Create mount namespace =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 &lt;</div><div>VERBOSE =C2=
+=A0 =C2=A0Spawn RPC server =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 &lt;=
+</div><div>VERBOSE =C2=A0 =C2=A0Execute smaster process =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0&lt;</div></div><div><br></div><div>The nearest Google could get me t=
+o something that sounds related was this post (which I wasn&#39;t completel=
+y able to follow):=C2=A0https://github.com/sylabs/singularity/issues/2397</=
+div><div><br></div><div>I was using 3.0.3 from the RPM following the instru=
+ctions for making the RPM on the Installation section of the website.</div>=
+<div><br></div><div>Thanks!</div><div><br></div><div>Sam</div></div>
+------=_Part_2111_1439654450.1550039393693--
+
+------=_Part_2110_452565391.1550039393692--

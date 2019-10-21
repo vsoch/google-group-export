@@ -1,0 +1,208 @@
+Date: Tue, 21 Feb 2017 08:52:48 -0800 (PST)
+From: Geert Jan BEX <geert...@uhasselt.be>
+To: singularity <singu...@lbl.gov>
+Message-Id: <5c39ff15-22d6-4b4f-8566-a670d2910e6a@lbl.gov>
+In-Reply-To: <CAN7etTzUMksoSB_H1ZgA3+-fFvM2pO+XzeD3E-pLqLiiL69c4w@mail.gmail.com>
+References: <4a675b1d-5116-4702-a9e4-cc0024dcb436@lbl.gov>
+ <CAN7etTzUMksoSB_H1ZgA3+-fFvM2pO+XzeD3E-pLqLiiL69c4w@mail.gmail.com>
+Subject: Re: [Singularity] job with multiple singularity calls (mixed
+ MPI/serial) fails
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1447_20546381.1487695968739"
+
+------=_Part_1447_20546381.1487695968739
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1448_1334539658.1487695968739"
+
+------=_Part_1448_1334539658.1487695968739
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Dear Gregory,
+
+Thanks for looking into this.
+
+The /tmp is on the local disks of the compute nodes, so no NFS mounts 
+involved.
+
+The /tmp is also used for the MCA orte_tmpdir_base for mpirun.
+
+I've put the output of a run with --debug on Google Drive, you can access 
+it via:
+https://drive.google.com/file/d/0BxlSeep1Z7B-MzRsd2pwV2dUTG8/view?usp=sharing
+
+The "offending" statement in the job script is:
+mpirun -mca orte_tmpdir_base "${ORTE_TMP}" singularity --debug exec -B 
+${SIMDIR}:/wrf/run $VSC_SCRATCH/containers/wrfrun-latest.img bash -c 'cd 
+/wrf/run/wrfwkdir; real.exe'
+
+So ORTE_TMP points to a directory in /tmp (local disk), VSC_SCRATCH and 
+SIMDIR refer to a GPFS file system, and that is also where the working 
+directory for the job is on.
+
+Singularity's config file is unaltered from default.
+
+Thanks in advance, -gjb-
+
+On Monday, February 20, 2017 at 5:56:56 PM UTC+1, Gregory M. Kurtzer wrote:
+>
+> Hi Geert,
+>
+> The directory is only supposed to be removed when the flock()s have all 
+> been released. I just did some fixups for this in one of the development 
+> branches, but 2.2* should be working in the same way. Is `/tmp` a local 
+> directory, or is it on some form of shared NFS? Does it have any mount 
+> options to disable locking?
+>
+> Can you also try with --debug enabled and send all of the output? 
+>
+> Thanks!
+>
+> On Mon, Feb 20, 2017 at 6:25 AM, Geert Jan BEX <gee...@uhasselt.be 
+> <javascript:>> wrote:
+>
+>> Dear,
+>>
+>> I've run into a problem with singularity, and out of ideas by now.
+>>
+>> When running a job that involves multiple calls to singularity (same 
+>> image each time), some of them serial, some MPI, the MPI ones 
+>> intermittently fail with:
+>> ERROR  : Could not remove session directory 
+>> /tmp/.singularity-session-2530140.42.465829344: Device or resource busy
+>>
+>> This is for OpenMPI 1.10.2 on host and in image.  The host OS is CentOS 
+>> 7, the image OS Ubuntu 16.04,  Singularity 2.2.  The job runs on 4 nodes, 
+>> 27 processes each.
+>>
+>> I've tried several approaches (sleep between calls, setting a session 
+>> directory per singularity call, ...).
+>>
+>> Any ideas?
+>>
+>> Thanks in advance, Geert Jan Bex
+>>
+>>
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> -- 
+> Gregory M. Kurtzer
+> HPC Systems Architect and Technology Developer
+> Lawrence Berkeley National Laboratory HPCS
+> University of California Berkeley Research IT
+> Singularity Linux Containers (http://singularity.lbl.gov/)
+> Warewulf Cluster Management (http://warewulf.lbl.gov/)
+> GitHub: https://github.com/gmkurtzer, Twitter: 
+> https://twitter.com/gmkurtzer
+>
+
+------=_Part_1448_1334539658.1487695968739
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Dear Gregory,<div><br></div><div>Thanks for looking into t=
+his.</div><div><br></div><div>The /tmp is on the local disks of the compute=
+ nodes, so no NFS mounts involved.</div><div><br></div><div>The /tmp is als=
+o used for the MCA orte_tmpdir_base for mpirun.</div><div><br></div><div>I&=
+#39;ve put the output of a run with --debug on Google Drive, you can access=
+ it via:</div><div><a href=3D"https://drive.google.com/file/d/0BxlSeep1Z7B-=
+MzRsd2pwV2dUTG8/view?usp=3Dsharing">https://drive.google.com/file/d/0BxlSee=
+p1Z7B-MzRsd2pwV2dUTG8/view?usp=3Dsharing</a></div><div><br></div><div>The &=
+quot;offending&quot; statement in the job script is:</div><div><div>mpirun =
+-mca orte_tmpdir_base &quot;${ORTE_TMP}&quot; singularity --debug exec -B $=
+{SIMDIR}:/wrf/run $VSC_SCRATCH/containers/wrfrun-latest.img bash -c &#39;cd=
+ /wrf/run/wrfwkdir; real.exe&#39;</div></div><div><br></div><div>So ORTE_TM=
+P points to a directory in /tmp (local disk), VSC_SCRATCH and SIMDIR refer =
+to a GPFS file system, and that is also where the working directory for the=
+ job is on.</div><div><br></div><div>Singularity&#39;s config file is unalt=
+ered from default.</div><div><br></div><div>Thanks in advance, -gjb-<br><br=
+>On Monday, February 20, 2017 at 5:56:56 PM UTC+1, Gregory M. Kurtzer wrote=
+:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;bo=
+rder-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">Hi Geert,<di=
+v><br></div><div>The directory is only supposed to be removed when the floc=
+k()s have all been released. I just did some fixups for this in one of the =
+development branches, but 2.2* should be working in the same way. Is `/tmp`=
+ a local directory, or is it on some form of shared NFS? Does it have any m=
+ount options to disable locking?</div><div><br></div><div>Can you also try =
+with --debug enabled and send all of the output?=C2=A0</div><div><br></div>=
+<div>Thanks!</div></div><div><br><div class=3D"gmail_quote">On Mon, Feb 20,=
+ 2017 at 6:25 AM, Geert Jan BEX <span dir=3D"ltr">&lt;<a href=3D"javascript=
+:" target=3D"_blank" gdf-obfuscated-mailto=3D"M59loGnlEgAJ" rel=3D"nofollow=
+" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D=
+"this.href=3D&#39;javascript:&#39;;return true;">gee...@uhasselt.be</a>&gt;=
+</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .=
+8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Dear,<div=
+><br></div><div>I&#39;ve run into a problem with singularity, and out of id=
+eas by now.</div><div><br></div><div>When running a job that involves multi=
+ple calls to singularity (same image each time), some of them serial, some =
+MPI, the MPI ones intermittently fail with:</div><div><div>ERROR =C2=A0: Co=
+uld not remove session directory /tmp/.singularity-session-<wbr>2530140.42.=
+465829344: Device or resource busy</div></div><div><br></div><div>This is f=
+or OpenMPI 1.10.2 on host and in image.=C2=A0 The host OS is CentOS 7, the =
+image OS Ubuntu 16.04, =C2=A0Singularity 2.2.=C2=A0 The job runs on 4 nodes=
+, 27 processes each.</div><div><br></div><div>I&#39;ve tried several approa=
+ches (sleep between calls, setting a session directory per singularity call=
+, ...).</div><div><br></div><div>Any ideas?</div><div><br></div><div>Thanks=
+ in advance, Geert Jan Bex</div><span><font color=3D"#888888"><div><br></di=
+v><div><br></div><div><br></div></font></span></div><span><font color=3D"#8=
+88888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+M59loGnlEgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><d=
+iv dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div>Gregory M. Kurtzer</d=
+iv><div>HPC Systems Architect and Technology Developer</div><div>Lawrence B=
+erkeley National Laboratory HPCS<br>University of California Berkeley Resea=
+rch IT<br>Singularity Linux Containers=C2=A0(<a href=3D"http://singularity.=
+lbl.gov/" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#3=
+9;http://www.google.com/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.gov%2F\x26sa\=
+x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHITKHVjde-iKsg1vSOOrRt58XtEQ&#39;;return =
+true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2=
+F%2Fsingularity.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHITKHVjd=
+e-iKsg1vSOOrRt58XtEQ&#39;;return true;">http://<wbr>singularity.lbl.gov/</a=
+>)</div><div>Warewulf Cluster Management=C2=A0(<a href=3D"http://warewulf.l=
+bl.gov/" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39=
+;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwarewulf.lbl.gov%2F\x26sa\x3dD=
+\x26sntz\x3d1\x26usg\x3dAFQjCNFPtSL1wiDx3C_BKcVgBhWc77Jxww&#39;;return true=
+;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2F=
+warewulf.lbl.gov%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFPtSL1wiDx3C_BK=
+cVgBhWc77Jxww&#39;;return true;">http://warewulf.<wbr>lbl.gov/</a>)</div><d=
+iv>GitHub:=C2=A0<a href=3D"https://github.com/gmkurtzer" target=3D"_blank" =
+rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.google.com/url=
+?q\x3dhttps%3A%2F%2Fgithub.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x=
+3dAFQjCNHgwLrV-1wbChhxINJY_U3Xyjg2uw&#39;;return true;" onclick=3D"this.hre=
+f=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fgmkurtz=
+er\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHgwLrV-1wbChhxINJY_U3Xyjg2uw&#39=
+;;return true;">https://github.com/<wbr>gmkurtzer</a>,=C2=A0<span style=3D"=
+font-size:12.8px">Twitter:=C2=A0</span><a href=3D"https://twitter.com/gmkur=
+tzer" style=3D"font-size:12.8px" target=3D"_blank" rel=3D"nofollow" onmouse=
+down=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Ftwit=
+ter.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGiphjH-YHVVhLsK=
+sNsH_Zw5B_gRA&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.go=
+ogle.com/url?q\x3dhttps%3A%2F%2Ftwitter.com%2Fgmkurtzer\x26sa\x3dD\x26sntz\=
+x3d1\x26usg\x3dAFQjCNGiphjH-YHVVhLsKsNsH_Zw5B_gRA&#39;;return true;">https:=
+//<wbr>twitter.com/gmkurtzer</a></div></div></div></div></div></div></div><=
+/div></div></div></div>
+</div>
+</blockquote></div></div>
+------=_Part_1448_1334539658.1487695968739--
+
+------=_Part_1447_20546381.1487695968739--

@@ -1,0 +1,179 @@
+Date: Tue, 27 Aug 2019 00:44:01 -0700 (PDT)
+From: Vang Le Quy <lqva...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <bece7fde-73f0-4b9b-852a-4bd9576cc968@lbl.gov>
+Subject: run ssh server in a Singularity container?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1941_2129868889.1566891841701"
+
+------=_Part_1941_2129868889.1566891841701
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1942_1213930856.1566891841701"
+
+------=_Part_1942_1213930856.1566891841701
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+
+*This is my setup:*
+
+Laptop (LT) -> slurm front-end(FE) containing Singularity executable -> 
+Compute node (CN) with GPUs, and also contains Singularity executable.
+
+FE and CN share a partition so users can have shared home directories 
+between FE and CN.
+
+Singularity version: 3.3.0
+
+*Intermediate goal:*
+
+Start a singularity container/instance on FE, and SSH server service 
+therein. Then do SSH from LT into that container.
+
+*Final Goal:*
+
+Submit a slurm job from FE which in turn start a Singularity 
+container/instance on CN. SSH from LT to that Container on CN via FE 
+because users can't logon to CN directly.
+
+
+*My try so far:*
+
+This is my DEF file:
+
+#############
+Bootstrap: docker
+From: nvidia/tensorflow:19.05-py3
+Registry: nvcr.io
+IncludeCmd: yes
+
+%environment
+    export LANG=en_US.UTF-8
+
+%post
+    apt-get update && apt-get install -y --no-install-recommends apt-utils
+    LANG=en_US.UTF-8
+    # Language/locale settings
+    echo $LANG UTF-8 > /etc/locale.gen
+    apt-get install -y locales && update-locale --reset LANG=$LANG
+
+    apt-get install -y --no-install-recommends wget lsb-release parallel 
+vim openssh-server
+    systemctl enable ssh
+
+%startscript
+    systemctl start ssh
+###############
+
+Build: 
+singularity build --fakeroot tensorflow_19.05-py3.sif Singularity.def
+
+Run:
+mkdir overlay
+singularity instance start -B /run:/run  --writable-tmpfs --overlay 
+$PWD/overlay  --fakeroot --net --network-args="portmap=2222:22/tcp" 
+./tensorflow_19.05-py3.sif sshins
+
+INFO:    Convert SIF file to sandbox...
+WARNING: Ignoring --writable-tmpfs as it requires overlay support
+Could not watch jobs: Operation not permitted
+
+INFO:    instance started successfully
+
+Test ssh server status:
+
+singularity shell instance://sshins
+Singularity rootfs-054517279:/tmp/> whoami
+root
+Singularity rootfs-054517279:/tmp> service ssh status
+Failed to retrieve unit: Access denied
+Failed to get properties: Access denied
+Singularity rootfs-054517279:/tmp> ps -ef
+UID         PID   PPID  C STIME TTY          TIME CMD
+root          1      0  0 07:33 ?        00:00:00 sinit
+root         25      0  0 07:34 pts/27   00:00:00 /bin/bash --norc
+root        253     25  0 07:35 pts/27   00:00:00 ps -ef
+
+
+On FE:
+ssh -p 2222 feuser@localhost
+ssh: connect to host localhost port 2222: Connection refused
+
+This is a dead end to me at the moment. Any info and suggestions are 
+welcome.
+
+Kind regards
+Vang
+
+------=_Part_1942_1213930856.1566891841701
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div><b><br></b></div><div><b>This is my setup:</b></div><=
+div><span style=3D"font-family: courier new, monospace;"><br></span></div><=
+div><span style=3D"font-family: courier new, monospace;">Laptop (LT) -&gt; =
+slurm front-end(FE) containing Singularity executable -&gt; Compute node (C=
+N) with GPUs, and also contains Singularity executable.</span></div><div><b=
+r></div><div>FE and CN share a partition so users can have shared home dire=
+ctories between FE and CN.</div><div><br></div><div>Singularity version: 3.=
+3.0</div><div></div><div><br></div><div><b>Intermediate goal:</b></div><div=
+><br></div><div>Start a singularity container/instance on FE, and SSH serve=
+r service therein. Then do SSH from LT into that container.<br></div><div><=
+br></div><div><b>Final Goal:</b></div><div><br></div><div>Submit a slurm jo=
+b from FE which in turn start a Singularity container/instance on CN. SSH f=
+rom LT to that Container on CN via FE because users can&#39;t logon to CN d=
+irectly.</div><div><br></div><div><br></div><div><b>My try so far:</b></div=
+><div><br></div><div>This is my DEF file:</div><div><br></div><div><span st=
+yle=3D"font-family: courier new, monospace;">#############</span></div><div=
+><span style=3D"font-family: courier new, monospace;">Bootstrap: docker<br>=
+From: nvidia/tensorflow:19.05-py3<br>Registry: nvcr.io<br>IncludeCmd: yes<b=
+r><br>%environment<br>=C2=A0=C2=A0=C2=A0 export LANG=3Den_US.UTF-8<br><br>%=
+post<br>=C2=A0=C2=A0=C2=A0 apt-get update &amp;&amp; apt-get install -y --n=
+o-install-recommends apt-utils<br>=C2=A0=C2=A0=C2=A0 LANG=3Den_US.UTF-8<br>=
+=C2=A0=C2=A0=C2=A0 # Language/locale settings<br>=C2=A0=C2=A0=C2=A0 echo $L=
+ANG UTF-8 &gt; /etc/locale.gen<br>=C2=A0=C2=A0=C2=A0 apt-get install -y loc=
+ales &amp;&amp; update-locale --reset LANG=3D$LANG<br><br>=C2=A0=C2=A0=C2=
+=A0 apt-get install -y --no-install-recommends wget lsb-release parallel vi=
+m openssh-server<br>=C2=A0=C2=A0=C2=A0 systemctl enable ssh<br><br>%startsc=
+ript<br>=C2=A0=C2=A0=C2=A0 systemctl start ssh</span></div><div><span style=
+=3D"font-family: courier new, monospace;">###############</span><br></div><=
+div><br></div><div> Build: <br></div><div><span style=3D"font-family: couri=
+er new, monospace;">singularity build --fakeroot tensorflow_19.05-py3.sif S=
+ingularity.def</span></div><div></div><div><br></div><div>Run:</div><div><s=
+pan style=3D"font-family: courier new, monospace;">mkdir overlay<br></span>=
+</div><div><span style=3D"font-family: courier new, monospace;">singularity=
+ instance start -B /run:/run=C2=A0 --writable-tmpfs --overlay $PWD/overlay=
+=C2=A0 --fakeroot --net --network-args=3D&quot;portmap=3D2222:22/tcp&quot; =
+./tensorflow_19.05-py3.sif sshins</span></div><div><span style=3D"font-fami=
+ly: courier new, monospace;"><br></span></div><div><span style=3D"font-fami=
+ly: courier new, monospace;">INFO:=C2=A0=C2=A0=C2=A0 Convert SIF file to sa=
+ndbox...<br>WARNING: Ignoring --writable-tmpfs as it requires overlay suppo=
+rt<br>Could not watch jobs: Operation not permitted<br><br>INFO:=C2=A0=C2=
+=A0=C2=A0 instance started successfully</span></div><div><br></div><div>Tes=
+t ssh server status:</div><div><br></div><div><span style=3D"font-family: c=
+ourier new, monospace;">singularity shell instance://sshins<br>Singularity =
+rootfs-054517279:/tmp/&gt; whoami<br>root<br>Singularity rootfs-054517279:/=
+tmp&gt; service ssh status<br>Failed to retrieve unit: Access denied<br>Fai=
+led to get properties: Access denied</span></div><div><span style=3D"font-f=
+amily: courier new, monospace;">Singularity rootfs-054517279:/tmp&gt; ps -e=
+f<br>UID=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 PID=C2=A0=C2=A0 PP=
+ID=C2=A0 C STIME TTY=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =
+TIME CMD<br>root=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 1=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0 0=C2=A0 0 07:33 ?=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0 00:00:00 sinit<br>root=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0 25=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 0=C2=A0 0 07:34 pts/27=C2=A0=C2=
+=A0 00:00:00 /bin/bash --norc<br>root=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0 253=C2=A0=C2=A0=C2=A0=C2=A0 25=C2=A0 0 07:35 pts/27=C2=A0=C2=A0 00:0=
+0:00 ps -ef<br></span></div><div><span style=3D"font-family: courier new, m=
+onospace;"><br></span></div><div><span style=3D"font-family: courier new, m=
+onospace;"><br></span></div><div><span style=3D"font-family: courier new, m=
+onospace;"><span style=3D"font-family: arial, sans-serif;">On FE:</span><br=
+></span></div><div><span style=3D"font-family: courier new, monospace;">ssh=
+ -p 2222 feuser@localhost<br>ssh: connect to host localhost port 2222: Conn=
+ection refused<br></span></div><div><br></div><div>This is a dead end to me=
+ at the moment. Any info and suggestions are welcome.</div><div><br></div><=
+div>Kind regards</div><div>Vang<br></div></div>
+------=_Part_1942_1213930856.1566891841701--
+
+------=_Part_1941_2129868889.1566891841701--

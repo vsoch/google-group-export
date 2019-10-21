@@ -1,0 +1,575 @@
+Date: Mon, 3 Jul 2017 08:27:06 -0700 (PDT)
+From: =?UTF-8?Q?Jordi_Sol=C3=A0?= <jsmo...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <e4643914-d7ed-4b4f-9d0f-5e862b6a6b61@lbl.gov>
+Subject: Issues with MPI
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1967_387107265.1499095626243"
+
+------=_Part_1967_387107265.1499095626243
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1968_181486103.1499095626244"
+
+------=_Part_1968_181486103.1499095626244
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Hi,=20
+
+I'm having some isues running a simple MPI Hello World, so I'm asking for=
+=20
+some help to see if I am doing something wrong.
+
+Here's the bootstrap script I'm using installing the same version of MPI=20
+inside the container that I have on the host:
+
+Bootstrap: docker
+From: ubuntu:latest
+
+
+%post
+    apt-get update
+    apt-get -y --no-upgrade install gcc build-essential wget
+
+
+    cd /opt
+    if [ ! -d "./openmpi-2.0.1" ]; then
+        wget https:
+//www.open-mpi.org/software/ompi/v2.0/downloads/openmpi-2.0.1.tar.gz
+        tar xfz openmpi-2.0.1.tar.gz
+        rm openmpi-2.0.1.tar.gz
+        cd openmpi-2.0.1
+        mkdir build
+        mkdir install
+        cd build
+        ../configure --prefix=3D$PWD/../install
+        make -j4
+        make install -j4
+        cd ../install
+    fi
+
+
+
+
+%environment
+    export LD_LIBRARY_PATH=3D$LD_LIBRARY_PATH:/opt/openmpi-2.0.1/install/li=
+b
+
+
+After I've created the container i compile the following code:
+
+#include <mpi.h>
+#include <stdio.h>
+
+
+int main(int argc, char** argv) {
+
+
+    printf("Inside Main\n");
+
+
+  // Initialize the MPI environment. The two arguments to MPI Init are not
+  // currently used by MPI implementations, but are there in case future
+  // implementations might need the arguments.
+  MPI_Init(NULL, NULL);
+
+
+  printf("MPI Initialized\n");
+  // Get the number of processes
+  int world_size;
+  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+  printf("MPI size\n");
+
+
+  // Get the rank of the process
+  int world_rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+
+
+  // Get the name of the processor
+  char processor_name[MPI_MAX_PROCESSOR_NAME];
+  int name_len;
+  MPI_Get_processor_name(processor_name, &name_len);
+
+
+  // Print off a hello world message
+  printf("Hello world from processor %s, rank %d out of %d processors\n",
+         processor_name, world_rank, world_size);
+
+
+  // Finalize the MPI environment. No more MPI calls can be made after this
+  MPI_Finalize();
+}
+
+On the host, using:
+
+mpicc mpi_hello_world.c -o mpi_hello_world
+
+And then I try to execute it using:
+
+mpirun -np 2 singularity exec ./ompi_2.0.1.img ./mpi_hello_world
+
+And it crashes with the following error:
+
+--------------------------------------------------------------------------
+It looks like MPI_INIT failed for some reason; your parallel process is
+likely to abort.  There are many reasons that a parallel process can
+fail during MPI_INIT; some of which are due to configuration or environment
+problems.  This failure appears to be an internal failure; here's some
+additional information (which may only be relevant to an Open MPI
+developer):
+
+
+  ompi_mpi_init: ompi_rte_init failed
+  --> Returned "(null)" (-43) instead of "Success" (0)
+--------------------------------------------------------------------------
+*** An error occurred in MPI_Init
+*** on a NULL communicator
+*** MPI_ERRORS_ARE_FATAL (processes in this communicator will now abort,
+***    and potentially your MPI job)
+[login1:13314] Local abort before MPI_INIT completed completed=20
+successfully, but am not able to aggregate error messages, and not able to=
+=20
+guarantee that all other processes were killed!
+*** An error occurred in MPI_Init
+*** on a NULL communicator
+*** MPI_ERRORS_ARE_FATAL (processes in this communicator will now abort,
+***    and potentially your MPI job)
+[login1:13315] Local abort before MPI_INIT completed completed=20
+successfully, but am not able to aggregate error messages, and not able to=
+=20
+guarantee that all other processes were killed!
+--------------------------------------------------------------------------
+It looks like MPI_INIT failed for some reason; your parallel process is
+likely to abort.  There are many reasons that a parallel process can
+fail during MPI_INIT; some of which are due to configuration or environment
+problems.  This failure appears to be an internal failure; here's some
+additional information (which may only be relevant to an Open MPI
+developer):
+
+
+  ompi_mpi_init: ompi_rte_init failed
+  --> Returned "(null)" (-43) instead of "Success" (0)
+--------------------------------------------------------------------------
+-------------------------------------------------------
+Primary job  terminated normally, but 1 process returned
+a non-zero exit code.. Per user-direction, the job has been aborted.
+-------------------------------------------------------
+--------------------------------------------------------------------------
+mpirun detected that one or more processes exited with non-zero status,=20
+thus causing
+the job to be terminated. The first process to do so was:
+
+
+  Process name: [[40136,1],0]
+  Exit code:    1
+--------------------------------------------------------------------------
+
+Thanks in advance for your help,
+
+Jordi Sol=C3=A0
+
+------=_Part_1968_181486103.1499095626244
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi,=C2=A0<div><br></div><div>I&#39;m having some isues run=
+ning a simple MPI Hello World, so I&#39;m asking for some help to see if I =
+am doing something wrong.</div><div><br></div><div>Here&#39;s the bootstrap=
+ script I&#39;m using installing the same version of MPI inside the contain=
+er that I have on the host:</div><div><div class=3D"subprettyprint" style=
+=3D"font-family: monospace; background-color: rgb(250, 250, 250);"><font co=
+lor=3D"#660066"><br class=3D"Apple-interchange-newline"></font></div><div c=
+lass=3D"prettyprint" style=3D"background-color: rgb(250, 250, 250); border-=
+color: rgb(187, 187, 187); border-style: solid; border-width: 1px; word-wra=
+p: break-word;"><code class=3D"prettyprint"><div class=3D"subprettyprint"><=
+span style=3D"color: #606;" class=3D"styled-by-prettify">Bootstrap</span><s=
+pan style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"> docker<br></span><span styl=
+e=3D"color: #606;" class=3D"styled-by-prettify">From</span><span style=3D"c=
+olor: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify"> ubuntu</span><span style=3D"color: #660;"=
+ class=3D"styled-by-prettify">:</span><span style=3D"color: #000;" class=3D=
+"styled-by-prettify">latest<br><br><br></span><span style=3D"color: #660;" =
+class=3D"styled-by-prettify">%</span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify">post<br>=C2=A0 =C2=A0 apt</span><span style=3D"color: #=
+660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #008;" cla=
+ss=3D"styled-by-prettify">get</span><span style=3D"color: #000;" class=3D"s=
+tyled-by-prettify"> update<br>=C2=A0 =C2=A0 apt</span><span style=3D"color:=
+ #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #008;" c=
+lass=3D"styled-by-prettify">get</span><span style=3D"color: #000;" class=3D=
+"styled-by-prettify"> </span><span style=3D"color: #660;" class=3D"styled-b=
+y-prettify">-</span><span style=3D"color: #000;" class=3D"styled-by-prettif=
+y">y </span><span style=3D"color: #660;" class=3D"styled-by-prettify">--</s=
+pan><span style=3D"color: #008;" class=3D"styled-by-prettify">no</span><spa=
+n style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify">upgrade install gcc build</s=
+pan><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span=
+ style=3D"color: #000;" class=3D"styled-by-prettify">essential wget<br><br>=
+<br>=C2=A0 =C2=A0 cd </span><span style=3D"color: #660;" class=3D"styled-by=
+-prettify">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify=
+">opt<br>=C2=A0 =C2=A0 </span><span style=3D"color: #008;" class=3D"styled-=
+by-prettify">if</span><span style=3D"color: #000;" class=3D"styled-by-prett=
+ify"> </span><span style=3D"color: #660;" class=3D"styled-by-prettify">[</s=
+pan><span style=3D"color: #000;" class=3D"styled-by-prettify"> </span><span=
+ style=3D"color: #660;" class=3D"styled-by-prettify">!</span><span style=3D=
+"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #=
+660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #000;" cla=
+ss=3D"styled-by-prettify">d </span><span style=3D"color: #080;" class=3D"st=
+yled-by-prettify">&quot;./openmpi-2.0.1&quot;</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #660;" cla=
+ss=3D"styled-by-prettify">];</span><span style=3D"color: #000;" class=3D"st=
+yled-by-prettify"> </span><span style=3D"color: #008;" class=3D"styled-by-p=
+rettify">then</span><span style=3D"color: #000;" class=3D"styled-by-prettif=
+y"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 wget https</span><span style=3D"color: #=
+660;" class=3D"styled-by-prettify">:</span><span style=3D"color: #800;" cla=
+ss=3D"styled-by-prettify">//www.open-mpi.org/software/ompi/v2.0/downloads/o=
+penmpi-2.0.1.tar.gz</span><span style=3D"color: #000;" class=3D"styled-by-p=
+rettify"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 tar xfz openmpi</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color=
+: #066;" class=3D"styled-by-prettify">2.0</span><span style=3D"color: #660;=
+" class=3D"styled-by-prettify">.</span><span style=3D"color: #066;" class=
+=3D"styled-by-prettify">1.tar</span><span style=3D"color: #660;" class=3D"s=
+tyled-by-prettify">.</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify">gz<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 rm openmpi</span><span style=3D=
+"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #=
+066;" class=3D"styled-by-prettify">2.0</span><span style=3D"color: #660;" c=
+lass=3D"styled-by-prettify">.</span><span style=3D"color: #066;" class=3D"s=
+tyled-by-prettify">1.tar</span><span style=3D"color: #660;" class=3D"styled=
+-by-prettify">.</span><span style=3D"color: #000;" class=3D"styled-by-prett=
+ify">gz<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 cd openmpi</span><span style=3D"colo=
+r: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #066;"=
+ class=3D"styled-by-prettify">2.0</span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">.</span><span style=3D"color: #066;" class=3D"style=
+d-by-prettify">1</span><span style=3D"color: #000;" class=3D"styled-by-pret=
+tify"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 mkdir build<br>=C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 mkdir install<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 cd build<br>=C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 </span><span style=3D"color: #660;" class=3D"styled-by-pr=
+ettify">../</span><span style=3D"color: #000;" class=3D"styled-by-prettify"=
+>configure </span><span style=3D"color: #660;" class=3D"styled-by-prettify"=
+>--</span><span style=3D"color: #000;" class=3D"styled-by-prettify">prefix<=
+/span><span style=3D"color: #660;" class=3D"styled-by-prettify">=3D</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify">$PWD</span><span s=
+tyle=3D"color: #660;" class=3D"styled-by-prettify">/../</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify">install<br>=C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 make </span><span style=3D"color: #660;" class=3D"styled-by-pret=
+tify">-</span><span style=3D"color: #000;" class=3D"styled-by-prettify">j4<=
+br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 make install </span><span style=3D"color: #6=
+60;" class=3D"styled-by-prettify">-</span><span style=3D"color: #000;" clas=
+s=3D"styled-by-prettify">j4<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 cd </span><span =
+style=3D"color: #660;" class=3D"styled-by-prettify">../</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify">install<br>=C2=A0 =C2=A0 </s=
+pan><span style=3D"color: #008;" class=3D"styled-by-prettify">fi</span><spa=
+n style=3D"color: #000;" class=3D"styled-by-prettify"><br><br><br><br><br><=
+/span><span style=3D"color: #660;" class=3D"styled-by-prettify">%</span><sp=
+an style=3D"color: #000;" class=3D"styled-by-prettify">environment<br>=C2=
+=A0 =C2=A0 </span><span style=3D"color: #008;" class=3D"styled-by-prettify"=
+>export</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> LD=
+_LIBRARY_PATH</span><span style=3D"color: #660;" class=3D"styled-by-prettif=
+y">=3D</span><span style=3D"color: #000;" class=3D"styled-by-prettify">$LD_=
+LIBRARY_PATH</span><span style=3D"color: #660;" class=3D"styled-by-prettify=
+">:</span><span style=3D"color: #080;" class=3D"styled-by-prettify">/opt/</=
+span><span style=3D"color: #000;" class=3D"styled-by-prettify">openmpi</spa=
+n><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span s=
+tyle=3D"color: #066;" class=3D"styled-by-prettify">2.0</span><span style=3D=
+"color: #660;" class=3D"styled-by-prettify">.</span><span style=3D"color: #=
+066;" class=3D"styled-by-prettify">1</span><span style=3D"color: #660;" cla=
+ss=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"sty=
+led-by-prettify">install</span><span style=3D"color: #660;" class=3D"styled=
+-by-prettify">/</span><span style=3D"color: #000;" class=3D"styled-by-prett=
+ify">lib</span></div></code></div><div class=3D"subprettyprint" style=3D"fo=
+nt-family: monospace; background-color: rgb(250, 250, 250);"><font color=3D=
+"#660066"><br></font></div><br></div><div>After I&#39;ve created the contai=
+ner i compile the following code:</div><div><br></div><div><div class=3D"pr=
+ettyprint" style=3D"background-color: rgb(250, 250, 250); border-color: rgb=
+(187, 187, 187); border-style: solid; border-width: 1px; word-wrap: break-w=
+ord;"><code class=3D"prettyprint"><div class=3D"subprettyprint"><span style=
+=3D"color: #800;" class=3D"styled-by-prettify">#include</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color=
+: #080;" class=3D"styled-by-prettify">&lt;mpi.h&gt;</span><span style=3D"co=
+lor: #000;" class=3D"styled-by-prettify"><br></span><span style=3D"color: #=
+800;" class=3D"styled-by-prettify">#include</span><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify"> </span><span style=3D"color: #080;" class=
+=3D"styled-by-prettify">&lt;stdio.h&gt;</span><span style=3D"color: #000;" =
+class=3D"styled-by-prettify"><br><br><br></span><span style=3D"color: #008;=
+" class=3D"styled-by-prettify">int</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> main</span><span style=3D"color: #660;" class=3D"s=
+tyled-by-prettify">(</span><span style=3D"color: #008;" class=3D"styled-by-=
+prettify">int</span><span style=3D"color: #000;" class=3D"styled-by-prettif=
+y"> argc</span><span style=3D"color: #660;" class=3D"styled-by-prettify">,<=
+/span><span style=3D"color: #000;" class=3D"styled-by-prettify"> </span><sp=
+an style=3D"color: #008;" class=3D"styled-by-prettify">char</span><span sty=
+le=3D"color: #660;" class=3D"styled-by-prettify">**</span><span style=3D"co=
+lor: #000;" class=3D"styled-by-prettify"> argv</span><span style=3D"color: =
+#660;" class=3D"styled-by-prettify">)</span><span style=3D"color: #000;" cl=
+ass=3D"styled-by-prettify"> </span><span style=3D"color: #660;" class=3D"st=
+yled-by-prettify">{</span><span style=3D"color: #000;" class=3D"styled-by-p=
+rettify"><br><br><br>=C2=A0 =C2=A0 printf</span><span style=3D"color: #660;=
+" class=3D"styled-by-prettify">(</span><span style=3D"color: #080;" class=
+=3D"styled-by-prettify">&quot;Inside Main\n&quot;</span><span style=3D"colo=
+r: #660;" class=3D"styled-by-prettify">);</span><span style=3D"color: #000;=
+" class=3D"styled-by-prettify"><br><br><br>=C2=A0 </span><span style=3D"col=
+or: #800;" class=3D"styled-by-prettify">// Initialize the MPI environment. =
+The two arguments to MPI Init are not</span><span style=3D"color: #000;" cl=
+ass=3D"styled-by-prettify"><br>=C2=A0 </span><span style=3D"color: #800;" c=
+lass=3D"styled-by-prettify">// currently used by MPI implementations, but a=
+re there in case future</span><span style=3D"color: #000;" class=3D"styled-=
+by-prettify"><br>=C2=A0 </span><span style=3D"color: #800;" class=3D"styled=
+-by-prettify">// implementations might need the arguments.</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 MPI_Init</span><=
+span style=3D"color: #660;" class=3D"styled-by-prettify">(</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify">NULL</span><span style=3D"c=
+olor: #660;" class=3D"styled-by-prettify">,</span><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify"> NULL</span><span style=3D"color: #660;" c=
+lass=3D"styled-by-prettify">);</span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify"><br><br><br>=C2=A0 printf</span><span style=3D"color: #=
+660;" class=3D"styled-by-prettify">(</span><span style=3D"color: #080;" cla=
+ss=3D"styled-by-prettify">&quot;MPI Initialized\n&quot;</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">);</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify"><br>=C2=A0 </span><span style=3D"col=
+or: #800;" class=3D"styled-by-prettify">// Get the number of processes</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 </sp=
+an><span style=3D"color: #008;" class=3D"styled-by-prettify">int</span><spa=
+n style=3D"color: #000;" class=3D"styled-by-prettify"> world_size</span><sp=
+an style=3D"color: #660;" class=3D"styled-by-prettify">;</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 MPI_Comm_size</sp=
+an><span style=3D"color: #660;" class=3D"styled-by-prettify">(</span><span =
+style=3D"color: #000;" class=3D"styled-by-prettify">MPI_COMM_WORLD</span><s=
+pan style=3D"color: #660;" class=3D"styled-by-prettify">,</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color=
+: #660;" class=3D"styled-by-prettify">&amp;</span><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify">world_size</span><span style=3D"color: #66=
+0;" class=3D"styled-by-prettify">);</span><span style=3D"color: #000;" clas=
+s=3D"styled-by-prettify"><br>=C2=A0 printf</span><span style=3D"color: #660=
+;" class=3D"styled-by-prettify">(</span><span style=3D"color: #080;" class=
+=3D"styled-by-prettify">&quot;MPI size\n&quot;</span><span style=3D"color: =
+#660;" class=3D"styled-by-prettify">);</span><span style=3D"color: #000;" c=
+lass=3D"styled-by-prettify"><br><br><br>=C2=A0 </span><span style=3D"color:=
+ #800;" class=3D"styled-by-prettify">// Get the rank of the process</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 </span>=
+<span style=3D"color: #008;" class=3D"styled-by-prettify">int</span><span s=
+tyle=3D"color: #000;" class=3D"styled-by-prettify"> world_rank</span><span =
+style=3D"color: #660;" class=3D"styled-by-prettify">;</span><span style=3D"=
+color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 MPI_Comm_rank</span><=
+span style=3D"color: #660;" class=3D"styled-by-prettify">(</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify">MPI_COMM_WORLD</span><span =
+style=3D"color: #660;" class=3D"styled-by-prettify">,</span><span style=3D"=
+color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #6=
+60;" class=3D"styled-by-prettify">&amp;</span><span style=3D"color: #000;" =
+class=3D"styled-by-prettify">world_rank</span><span style=3D"color: #660;" =
+class=3D"styled-by-prettify">);</span><span style=3D"color: #000;" class=3D=
+"styled-by-prettify"><br><br><br>=C2=A0 </span><span style=3D"color: #800;"=
+ class=3D"styled-by-prettify">// Get the name of the processor</span><span =
+style=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 </span><span=
+ style=3D"color: #008;" class=3D"styled-by-prettify">char</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"> processor_name</span><span =
+style=3D"color: #660;" class=3D"styled-by-prettify">[</span><span style=3D"=
+color: #000;" class=3D"styled-by-prettify">MPI_MAX_PROCESSOR_NAME</span><sp=
+an style=3D"color: #660;" class=3D"styled-by-prettify">];</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 </span><span styl=
+e=3D"color: #008;" class=3D"styled-by-prettify">int</span><span style=3D"co=
+lor: #000;" class=3D"styled-by-prettify"> name_len</span><span style=3D"col=
+or: #660;" class=3D"styled-by-prettify">;</span><span style=3D"color: #000;=
+" class=3D"styled-by-prettify"><br>=C2=A0 MPI_Get_processor_name</span><spa=
+n style=3D"color: #660;" class=3D"styled-by-prettify">(</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify">processor_name</span><span s=
+tyle=3D"color: #660;" class=3D"styled-by-prettify">,</span><span style=3D"c=
+olor: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #66=
+0;" class=3D"styled-by-prettify">&amp;</span><span style=3D"color: #000;" c=
+lass=3D"styled-by-prettify">name_len</span><span style=3D"color: #660;" cla=
+ss=3D"styled-by-prettify">);</span><span style=3D"color: #000;" class=3D"st=
+yled-by-prettify"><br><br><br>=C2=A0 </span><span style=3D"color: #800;" cl=
+ass=3D"styled-by-prettify">// Print off a hello world message</span><span s=
+tyle=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 printf</span>=
+<span style=3D"color: #660;" class=3D"styled-by-prettify">(</span><span sty=
+le=3D"color: #080;" class=3D"styled-by-prettify">&quot;Hello world from pro=
+cessor %s, rank %d out of %d processors\n&quot;</span><span style=3D"color:=
+ #660;" class=3D"styled-by-prettify">,</span><span style=3D"color: #000;" c=
+lass=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0processor=
+_name</span><span style=3D"color: #660;" class=3D"styled-by-prettify">,</sp=
+an><span style=3D"color: #000;" class=3D"styled-by-prettify"> world_rank</s=
+pan><span style=3D"color: #660;" class=3D"styled-by-prettify">,</span><span=
+ style=3D"color: #000;" class=3D"styled-by-prettify"> world_size</span><spa=
+n style=3D"color: #660;" class=3D"styled-by-prettify">);</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"><br><br><br>=C2=A0 </span><s=
+pan style=3D"color: #800;" class=3D"styled-by-prettify">// Finalize the MPI=
+ environment. No more MPI calls can be made after this</span><span style=3D=
+"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 MPI_Finalize</span><=
+span style=3D"color: #660;" class=3D"styled-by-prettify">();</span><span st=
+yle=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span style=3D=
+"color: #660;" class=3D"styled-by-prettify">}</span></div></code></div><br>=
+</div><div>On the host, using:</div><div><br></div><div><div class=3D"prett=
+yprint" style=3D"background-color: rgb(250, 250, 250); border-color: rgb(18=
+7, 187, 187); border-style: solid; border-width: 1px; word-wrap: break-word=
+;"><code class=3D"prettyprint"><div class=3D"subprettyprint"><span style=3D=
+"color: #000;" class=3D"styled-by-prettify">mpicc mpi_hello_world</span><sp=
+an style=3D"color: #660;" class=3D"styled-by-prettify">.</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify">c </span><span style=3D"colo=
+r: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #000;"=
+ class=3D"styled-by-prettify">o mpi_hello_world</span></div></code></div><b=
+r></div><div><div>And then I try to execute it using:</div><div><br></div><=
+div><div class=3D"prettyprint" style=3D"background-color: rgb(250, 250, 250=
+); border-color: rgb(187, 187, 187); border-style: solid; border-width: 1px=
+; word-wrap: break-word;"><code class=3D"prettyprint"><div class=3D"subpret=
+typrint"><span style=3D"color: #000;" class=3D"styled-by-prettify">mpirun <=
+/span><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><sp=
+an style=3D"color: #000;" class=3D"styled-by-prettify">np </span><span styl=
+e=3D"color: #066;" class=3D"styled-by-prettify">2</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify"> singularity </span><span style=3D"c=
+olor: #008;" class=3D"styled-by-prettify">exec</span><span style=3D"color: =
+#000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #660;" cl=
+ass=3D"styled-by-prettify">./</span><span style=3D"color: #000;" class=3D"s=
+tyled-by-prettify">ompi_2</span><span style=3D"color: #660;" class=3D"style=
+d-by-prettify">.</span><span style=3D"color: #066;" class=3D"styled-by-pret=
+tify">0.1</span><span style=3D"color: #660;" class=3D"styled-by-prettify">.=
+</span><span style=3D"color: #000;" class=3D"styled-by-prettify">img </span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">./</span><span s=
+tyle=3D"color: #000;" class=3D"styled-by-prettify">mpi_hello_world</span></=
+div></code></div><br></div><div>And it crashes with the following error:</d=
+iv><div><br></div><div><div class=3D"prettyprint" style=3D"background-color=
+: rgb(250, 250, 250); border-color: rgb(187, 187, 187); border-style: solid=
+; border-width: 1px; word-wrap: break-word;"><code class=3D"prettyprint"><d=
+iv class=3D"subprettyprint"><span style=3D"color: #660;" class=3D"styled-by=
+-prettify">----------------------------------------------------------------=
+----------</span><span style=3D"color: #000;" class=3D"styled-by-prettify">=
+<br></span><span style=3D"color: #606;" class=3D"styled-by-prettify">It</sp=
+an><span style=3D"color: #000;" class=3D"styled-by-prettify"> looks like MP=
+I_INIT failed </span><span style=3D"color: #008;" class=3D"styled-by-pretti=
+fy">for</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> so=
+me reason</span><span style=3D"color: #660;" class=3D"styled-by-prettify">;=
+</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> your para=
+llel process </span><span style=3D"color: #008;" class=3D"styled-by-prettif=
+y">is</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br>l=
+ikely to abort</span><span style=3D"color: #660;" class=3D"styled-by-pretti=
+fy">.</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=
+=A0</span><span style=3D"color: #606;" class=3D"styled-by-prettify">There</=
+span><span style=3D"color: #000;" class=3D"styled-by-prettify"> are many re=
+asons that a parallel process can<br>fail during MPI_INIT</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">;</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify"> some of which are due to configurati=
+on </span><span style=3D"color: #008;" class=3D"styled-by-prettify">or</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify"> environment<br=
+>problems</span><span style=3D"color: #660;" class=3D"styled-by-prettify">.=
+</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0</s=
+pan><span style=3D"color: #606;" class=3D"styled-by-prettify">This</span><s=
+pan style=3D"color: #000;" class=3D"styled-by-prettify"> failure appears to=
+ be an </span><span style=3D"color: #008;" class=3D"styled-by-prettify">int=
+ernal</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> fail=
+ure</span><span style=3D"color: #660;" class=3D"styled-by-prettify">;</span=
+><span style=3D"color: #000;" class=3D"styled-by-prettify"> here</span><spa=
+n style=3D"color: #080;" class=3D"styled-by-prettify">&#39;s some<br>additi=
+onal information (which may only be relevant to an Open MPI<br>developer):<=
+br><br><br>=C2=A0 ompi_mpi_init: ompi_rte_init failed<br>=C2=A0 --&gt; Retu=
+rned &quot;(null)&quot; (-43) instead of &quot;Success&quot; (0)<br>-------=
+-------------------------------------------------------------------<br>*** =
+An error occurred in MPI_Init<br>*** on a NULL communicator<br>*** MPI_ERRO=
+RS_ARE_FATAL (processes in this communicator will now abort,<br>*** =C2=A0 =
+=C2=A0and potentially your MPI job)<br>[login1:13314] Local abort before MP=
+I_INIT completed completed successfully, but am not able to aggregate error=
+ messages, and not able to guarantee that all other processes were killed!<=
+br>*** An error occurred in MPI_Init<br>*** on a NULL communicator<br>*** M=
+PI_ERRORS_ARE_FATAL (processes in this communicator will now abort,<br>*** =
+=C2=A0 =C2=A0and potentially your MPI job)<br>[login1:13315] Local abort be=
+fore MPI_INIT completed completed successfully, but am not able to aggregat=
+e error messages, and not able to guarantee that all other processes were k=
+illed!<br>-----------------------------------------------------------------=
+---------<br>It looks like MPI_INIT failed for some reason; your parallel p=
+rocess is<br>likely to abort. =C2=A0There are many reasons that a parallel =
+process can<br>fail during MPI_INIT; some of which are due to configuration=
+ or environment<br>problems. =C2=A0This failure appears to be an internal f=
+ailure; here&#39;</span><span style=3D"color: #000;" class=3D"styled-by-pre=
+ttify">s some<br>additional information </span><span style=3D"color: #660;"=
+ class=3D"styled-by-prettify">(</span><span style=3D"color: #000;" class=3D=
+"styled-by-prettify">which may only be relevant to an </span><span style=3D=
+"color: #606;" class=3D"styled-by-prettify">Open</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify"> MPI<br>developer</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">):</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify"><br><br><br>=C2=A0 ompi_mpi_init</sp=
+an><span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span =
+style=3D"color: #000;" class=3D"styled-by-prettify"> ompi_rte_init failed<b=
+r>=C2=A0 </span><span style=3D"color: #660;" class=3D"styled-by-prettify">-=
+-&gt;</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> </sp=
+an><span style=3D"color: #606;" class=3D"styled-by-prettify">Returned</span=
+><span style=3D"color: #000;" class=3D"styled-by-prettify"> </span><span st=
+yle=3D"color: #080;" class=3D"styled-by-prettify">&quot;(null)&quot;</span>=
+<span style=3D"color: #000;" class=3D"styled-by-prettify"> </span><span sty=
+le=3D"color: #660;" class=3D"styled-by-prettify">(-</span><span style=3D"co=
+lor: #066;" class=3D"styled-by-prettify">43</span><span style=3D"color: #66=
+0;" class=3D"styled-by-prettify">)</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> instead of </span><span style=3D"color: #080;" cla=
+ss=3D"styled-by-prettify">&quot;Success&quot;</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #660;" cla=
+ss=3D"styled-by-prettify">(</span><span style=3D"color: #066;" class=3D"sty=
+led-by-prettify">0</span><span style=3D"color: #660;" class=3D"styled-by-pr=
+ettify">)</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><=
+br></span><span style=3D"color: #660;" class=3D"styled-by-prettify">-------=
+-------------------------------------------------------------------</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span s=
+tyle=3D"color: #660;" class=3D"styled-by-prettify">------------------------=
+-------------------------------</span><span style=3D"color: #000;" class=3D=
+"styled-by-prettify"><br></span><span style=3D"color: #606;" class=3D"style=
+d-by-prettify">Primary</span><span style=3D"color: #000;" class=3D"styled-b=
+y-prettify"> job =C2=A0terminated normally</span><span style=3D"color: #660=
+;" class=3D"styled-by-prettify">,</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> but </span><span style=3D"color: #066;" class=3D"s=
+tyled-by-prettify">1</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify"> process returned<br>a non</span><span style=3D"color: #660;" cla=
+ss=3D"styled-by-prettify">-</span><span style=3D"color: #000;" class=3D"sty=
+led-by-prettify">zero </span><span style=3D"color: #008;" class=3D"styled-b=
+y-prettify">exit</span><span style=3D"color: #000;" class=3D"styled-by-pret=
+tify"> code</span><span style=3D"color: #660;" class=3D"styled-by-prettify"=
+>..</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> </span=
+><span style=3D"color: #606;" class=3D"styled-by-prettify">Per</span><span =
+style=3D"color: #000;" class=3D"styled-by-prettify"> user</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify">direction</span><span style=3D"color:=
+ #660;" class=3D"styled-by-prettify">,</span><span style=3D"color: #000;" c=
+lass=3D"styled-by-prettify"> the job has been aborted</span><span style=3D"=
+color: #660;" class=3D"styled-by-prettify">.</span><span style=3D"color: #0=
+00;" class=3D"styled-by-prettify"><br></span><span style=3D"color: #660;" c=
+lass=3D"styled-by-prettify">-----------------------------------------------=
+--------</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><b=
+r></span><span style=3D"color: #660;" class=3D"styled-by-prettify">--------=
+------------------------------------------------------------------</span><s=
+pan style=3D"color: #000;" class=3D"styled-by-prettify"><br>mpirun detected=
+ that one </span><span style=3D"color: #008;" class=3D"styled-by-prettify">=
+or</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> more pr=
+ocesses exited </span><span style=3D"color: #008;" class=3D"styled-by-prett=
+ify">with</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> =
+non</span><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span=
+><span style=3D"color: #000;" class=3D"styled-by-prettify">zero status</spa=
+n><span style=3D"color: #660;" class=3D"styled-by-prettify">,</span><span s=
+tyle=3D"color: #000;" class=3D"styled-by-prettify"> thus causing<br>the job=
+ to be terminated</span><span style=3D"color: #660;" class=3D"styled-by-pre=
+ttify">.</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> <=
+/span><span style=3D"color: #606;" class=3D"styled-by-prettify">The</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify"> first process to =
+</span><span style=3D"color: #008;" class=3D"styled-by-prettify">do</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify"> so was</span><spa=
+n style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"><br><br><br>=C2=A0 </span><s=
+pan style=3D"color: #606;" class=3D"styled-by-prettify">Process</span><span=
+ style=3D"color: #000;" class=3D"styled-by-prettify"> name</span><span styl=
+e=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #660;"=
+ class=3D"styled-by-prettify">[[</span><span style=3D"color: #066;" class=
+=3D"styled-by-prettify">40136</span><span style=3D"color: #660;" class=3D"s=
+tyled-by-prettify">,</span><span style=3D"color: #066;" class=3D"styled-by-=
+prettify">1</span><span style=3D"color: #660;" class=3D"styled-by-prettify"=
+>],</span><span style=3D"color: #066;" class=3D"styled-by-prettify">0</span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">]</span><span st=
+yle=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 </span><span s=
+tyle=3D"color: #606;" class=3D"styled-by-prettify">Exit</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"> code</span><span style=3D"c=
+olor: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0</span><span style=3D"color:=
+ #066;" class=3D"styled-by-prettify">1</span><span style=3D"color: #000;" c=
+lass=3D"styled-by-prettify"><br></span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">---------------------------------------------------=
+-----------------------</span></div></code></div><div><br></div></div><div>=
+Thanks in advance for your help,</div></div><div><br></div><div>Jordi Sol=
+=C3=A0</div></div>
+------=_Part_1968_181486103.1499095626244--
+
+------=_Part_1967_387107265.1499095626243--

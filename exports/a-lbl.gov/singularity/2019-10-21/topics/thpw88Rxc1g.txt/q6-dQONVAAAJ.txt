@@ -1,0 +1,458 @@
+Date: Tue, 1 Aug 2017 11:34:36 -0700 (PDT)
+From: Christopher Larrieu <chris...@larrieu.org>
+To: singularity <singu...@lbl.gov>
+Message-Id: <702d03df-d965-4bbd-a4fc-52dd79ccf1e7@lbl.gov>
+In-Reply-To: <CAApQTTi9pRBmoHw+DPCN1BH63mZrRSiC3swYQxT7+jTF993TXA@mail.gmail.com>
+References: <d27c2fe3-d019-4b01-b38e-beac9890a842@lbl.gov> <CAM=pu+K39yLJEcOK7rZUCy=Q9mpQzxEUb+JfiZ-mnShzq6464w@mail.gmail.com>
+ <f347c4a6-d527-48d8-adb7-40613c46fd72@lbl.gov> <CAM=pu+LAqzHrkUaNPiKqGaEyTnavKsuhc3189dMqoQCnUutsjQ@mail.gmail.com>
+ <b869abfd-ba2b-4af9-aef0-a2d2f51731ed@lbl.gov> <CAApQTTj9-EvktUgDE9Np=9tj6qe31TfM+9gb6ROwr+dsVKqXLw@mail.gmail.com>
+ <3be35fc7-25d0-4620-95ea-da84a4137416@lbl.gov>
+ <CAApQTTi9pRBmoHw+DPCN1BH63mZrRSiC3swYQxT7+jTF993TXA@mail.gmail.com>
+Subject: Re: [Singularity] Contain home directory within image?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_5475_1089166856.1501612476346"
+
+------=_Part_5475_1089166856.1501612476346
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_5476_514841828.1501612476347"
+
+------=_Part_5476_514841828.1501612476347
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Yeah, I think that will work for my current needs.  Not sure about in the 
+future, though, if I will need access to /dev, etc...
+
+Thanks,
+
+Chris
+
+On Tuesday, August 1, 2017 at 1:49:07 PM UTC-4, Gregory Kurtzer wrote:
+>
+> Does the `--contain` option work for you? It might be possible to have a 
+> subset of --contain which only contains the home directory. But, contain 
+> will cause the home directory to be non-persistent, but it sounds like that 
+> might be ok for your usage.
+>
+> On Tue, Aug 1, 2017 at 10:34 AM, Christopher Larrieu <ch...@larrieu.org 
+> <javascript:>> wrote:
+>
+>> My workaround is to write a wrapper script that creates an empty 
+>> directory then invokes singularity, mapping that temporary directory to 
+>> home via the -H option.  I just thought it might be nice if singularity 
+>> provided an option not to map a user's home directory, specifically to 
+>> avoid unexpected, site-specific external dependencies.
+>>
+>> Thanks,
+>>
+>> Chris
+>>
+>>
+>> On Tuesday, August 1, 2017 at 11:56:49 AM UTC-4, Gregory Kurtzer wrote:
+>>>
+>>> Hi Chris,
+>>>
+>>> That is an interesting use-case, but there is some areas to be cautious. 
+>>> For example, having your home directory physically inside the container 
+>>> would obviously break portability to any other users and it would require 
+>>> that to write to your home directory, you would have to mount the container 
+>>> with `--writable`, which is generally not a good idea.
+>>>
+>>> Does the `-H` option not work for your particular need?
+>>>
+>>> Thanks!
+>>>
+>>> On Tue, Aug 1, 2017 at 7:38 AM, Christopher Larrieu <
+>>> ch...@larrieu.org> wrote:
+>>>
+>>>> The problem is mostly dot files.  Many applications look for files in 
+>>>> the user's home directory that store configuration information, cached 
+>>>> data, etc.  If the runtime behavior of an application depends upon these, 
+>>>> and if they differ between sites (as in the example I listed previously), 
+>>>> the result is a container with uncontained external dependencies.  Many 
+>>>> applications operate in this manner.
+>>>>
+>>>> On Tuesday, August 1, 2017 at 10:25:00 AM UTC-4, vanessa wrote:
+>>>>>
+>>>>> Hi Chris,
+>>>>>
+>>>>> What if you just use cleanenv? The user could still mount home, but 
+>>>>> not have the influence of the (external) home environment. Eg:
+>>>>>
+>>>>>>
+>>>>>> *singularity shell --cleanenv docker://ubuntu*
+>>>>>> Docker image path: index.docker.io/library/ubuntu:latest
+>>>>>> Cache folder set to /home/vanessa/.singularity/docker
+>>>>>> Creating container runtime...
+>>>>>> Singularity: Invoking an interactive shell within container...
+>>>>>> Singularity ubuntu:~> env
+>>>>>> SHELL=/bin/bash
+>>>>>> TERM=xterm
+>>>>>> LD_LIBRARY_PATH=/.singularity.d/libs
+>>>>>> SINGULARITY_NAME=ubuntu
+>>>>>> PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+>>>>>> PWD=/home/vanessa
+>>>>>> LANG=C
+>>>>>> PS1=Singularity ubuntu:\w> 
+>>>>>> SHLVL=1
+>>>>>> HOME=/home/vanessa
+>>>>>> SINGULARITY_CONTAINER=ubuntu
+>>>>>> _=/usr/bin/env
+>>>>>
+>>>>>
+>>>>> Note that none of the 10,000 variables defined on my host are present 
+>>>>> in the container. You would then want to provide whatever paths / variables 
+>>>>> *are* needed inside the container via a custom %environment, etc. 
+>>>>> Would that work?
+>>>>>
+>>>>> Best,
+>>>>>
+>>>>> Vanessa
+>>>>>
+>>>>> On Tue, Aug 1, 2017 at 7:17 AM, Christopher Larrieu <
+>>>>> ch...@larrieu.org> wrote:
+>>>>>
+>>>>>> Hi Vanessa,
+>>>>>>
+>>>>>> Thanks for your quick reply!  What I am most interested in is 
+>>>>>> preventing files in the host system's user home directory from affecting 
+>>>>>> the environment of the container shell.  As the most basic example: 
+>>>>>> .bashrc:  I don't want the shell I spawn within my container to initialize 
+>>>>>> with a configuration file that exists outside.
+>>>>>>
+>>>>>> Another example.  One of the users at our lab insisted that his code 
+>>>>>> simply would not run efficiently on our cluster, so he ended up shipping 
+>>>>>> his data off site for years.  When I dug into his problem, I ultimately 
+>>>>>> discovered that he had a dot file in his home directory that was enabling 
+>>>>>> profiling in his code.  He had totally forgotten about the config file.  
+>>>>>> But this is the sort of problem that singularity could prevent by providing 
+>>>>>> a consistent, self-contained, environment.  The issue is that a user's home 
+>>>>>> directory mounted from outside the container introduces the possibility of 
+>>>>>> all kinds of site-specific differences into the container.
+>>>>>>
+>>>>>> I'm thinking a modification of the -H option to take solely the 
+>>>>>> target part of a source:target pair:
+>>>>>>
+>>>>>>   # singularity exec -H :/contained/home ...
+>>>>>>
+>>>>>> This would simply set the user's home directory within the container 
+>>>>>> to '/contained/home'.
+>>>>>>
+>>>>>> Does that make sense?
+>>>>>>
+>>>>>> Cheers,
+>>>>>>
+>>>>>> Chris
+>>>>>>
+>>>>>>
+>>>>>>
+>>>>>> On Tuesday, August 1, 2017 at 9:55:41 AM UTC-4, vanessa wrote:
+>>>>>>>
+>>>>>>> Hi Chris,
+>>>>>>>
+>>>>>>> If you have important files for the runtime of the container, for 
+>>>>>>> the sake of reproducibility I would caution you from keeping these in home. 
+>>>>>>> If another user were to use your container, would it be broken?
+>>>>>>>
+>>>>>>> For files and dependencies in your home that are shareable, I would 
+>>>>>>> save them somewhere more reliably present in the image (/usr/local/app or 
+>>>>>>> /opt/app).  If you want to be saving some home with "secret" settings then 
+>>>>>>> I think having it mount is the right way to go. You would want to provide 
+>>>>>>> clear instruction to other users about the needed secrets, lest they run 
+>>>>>>> the container without them.
+>>>>>>>
+>>>>>>> If you want to define some custom home, then take a look at the 
+>>>>>>> --home/-H option provided in most commands (shell, exec, etc.) it should 
+>>>>>>> let you specify a custom path (other than /home/[username]) for home when 
+>>>>>>> you run the image. This is however, a bind, which doesn't seem to be what 
+>>>>>>> you want? If you want to specify another directory in the container "as the 
+>>>>>>> actual home" I take it you mean something in the container *not* bound, 
+>>>>>>> in which case see my concern above.
+>>>>>>>
+>>>>>>> If these ideas aren't resolution to your issue, if you could provide 
+>>>>>>> more detail we can think of some workaround that is both portable and 
+>>>>>>> satisfactory.
+>>>>>>>
+>>>>>>> Best,
+>>>>>>>
+>>>>>>> Vanessa
+>>>>>>>
+>>>>>>> On Tue, Aug 1, 2017 at 6:43 AM, Christopher Larrieu <
+>>>>>>> ch...@larrieu.org> wrote:
+>>>>>>>
+>>>>>>>> I'd really like to to have my home directory reside within the 
+>>>>>>>> container.  So many dot files quietly affect the runtime behavior of 
+>>>>>>>> applications that it's quite difficult to guarantee a consistent 
+>>>>>>>> environment when a container runs on systems with different home 
+>>>>>>>> directories.
+>>>>>>>>
+>>>>>>>> The -H option allows you to specify a unique mapping from the host 
+>>>>>>>> system into the container, but what I'd really like is to specify a 
+>>>>>>>> directory within the container as the actual home directory, not the target 
+>>>>>>>> of a mapping.
+>>>>>>>>
+>>>>>>>> Is this possible?
+>>>>>>>>
+>>>>>>>> Thanks,
+>>>>>>>>
+>>>>>>>> Chris
+>>>>>>>>
+>>>>>>>> -- 
+>>>>>>>> You received this message because you are subscribed to the Google 
+>>>>>>>> Groups "singularity" group.
+>>>>>>>> To unsubscribe from this group and stop receiving emails from it, 
+>>>>>>>> send an email to singu...@lbl.gov.
+>>>>>>>>
+>>>>>>>
+>>>>>>>
+>>>>>>>
+>>>>>>> -- 
+>>>>>>> Vanessa Villamia Sochat
+>>>>>>> Stanford University '16
+>>>>>>> (603) 321-0676
+>>>>>>>
+>>>>>> -- 
+>>>>>> You received this message because you are subscribed to the Google 
+>>>>>> Groups "singularity" group.
+>>>>>> To unsubscribe from this group and stop receiving emails from it, 
+>>>>>> send an email to singu...@lbl.gov.
+>>>>>>
+>>>>>
+>>>>>
+>>>>>
+>>>>> -- 
+>>>>> Vanessa Villamia Sochat
+>>>>> Stanford University '16
+>>>>> (603) 321-0676
+>>>>>
+>>>> -- 
+>>>> You received this message because you are subscribed to the Google 
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>> an email to singu...@lbl.gov.
+>>>>
+>>>
+>>>
+>>>
+>>> -- 
+>>> Gregory M. Kurtzer
+>>> CEO, SingularityWare, LLC.
+>>> Senior Architect, RStor
+>>> Computational Science Advisor, Lawrence Berkeley National Laboratory
+>>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> -- 
+> Gregory M. Kurtzer
+> CEO, SingularityWare, LLC.
+> Senior Architect, RStor
+> Computational Science Advisor, Lawrence Berkeley National Laboratory
+>
+
+------=_Part_5476_514841828.1501612476347
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Yeah, I think that will work for my current needs. =C2=A0N=
+ot sure about in the future, though, if I will need access to /dev, etc...<=
+div><br></div><div>Thanks,</div><div><br></div><div>Chris<br><br>On Tuesday=
+, August 1, 2017 at 1:49:07 PM UTC-4, Gregory Kurtzer wrote:<blockquote cla=
+ss=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #=
+ccc solid;padding-left: 1ex;"><div dir=3D"ltr">Does the `--contain` option =
+work for you? It might be possible to have a subset of --contain which only=
+ contains the home directory. But, contain will cause the home directory to=
+ be non-persistent, but it sounds like that might be ok for your usage.</di=
+v><div><br><div class=3D"gmail_quote">On Tue, Aug 1, 2017 at 10:34 AM, Chri=
+stopher Larrieu <span dir=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_bl=
+ank" gdf-obfuscated-mailto=3D"0XHl_yMnAQAJ" rel=3D"nofollow" onmousedown=3D=
+"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#3=
+9;javascript:&#39;;return true;">ch...@larrieu.org</a>&gt;</span> wrote:<br=
+><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1=
+px #ccc solid;padding-left:1ex"><div dir=3D"ltr">My workaround is to write =
+a wrapper script that creates an empty directory then invokes singularity, =
+mapping that temporary directory to home via the -H option.=C2=A0 I just th=
+ought it might be nice if singularity provided an option not to map a user&=
+#39;s home directory, specifically to avoid unexpected, site-specific exter=
+nal dependencies.<div><br></div><div>Thanks,</div><div><br></div><div>Chris=
+<br><div><br></div><div><br><div><span>On Tuesday, August 1, 2017 at 11:56:=
+49 AM UTC-4, Gregory Kurtzer wrote:</span><blockquote class=3D"gmail_quote"=
+ style=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-lef=
+t:1ex"><span><div dir=3D"ltr">Hi Chris,<div><br></div><div>That is an inter=
+esting use-case, but there is some areas to be cautious. For example, havin=
+g your home directory physically inside the container would obviously break=
+ portability to any other users and it would require that to write to your =
+home directory, you would have to mount the container with `--writable`, wh=
+ich is generally not a good idea.</div><div><br></div><div>Does the `-H` op=
+tion not work for your particular need?</div><div><br></div><div>Thanks!</d=
+iv></div></span><div><br><div class=3D"gmail_quote"><div><div>On Tue, Aug 1=
+, 2017 at 7:38 AM, Christopher Larrieu <span dir=3D"ltr">&lt;<a rel=3D"nofo=
+llow">ch...@larrieu.org</a>&gt;</span> wrote:<br></div></div><blockquote cl=
+ass=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;p=
+adding-left:1ex"><div><div><div dir=3D"ltr">The problem is mostly dot files=
+.=C2=A0 Many applications look for files in the user&#39;s home directory t=
+hat store configuration information, cached data, etc.=C2=A0 If the runtime=
+ behavior of an application depends upon these, and if they differ between =
+sites (as in the example I listed previously), the result is a container wi=
+th uncontained external dependencies.=C2=A0 Many applications operate in th=
+is manner.<span><br><br>On Tuesday, August 1, 2017 at 10:25:00 AM UTC-4, va=
+nessa wrote:</span><blockquote class=3D"gmail_quote" style=3D"margin:0;marg=
+in-left:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr"=
+>Hi Chris,<div><br></div><span><div>What if you just use cleanenv? The user=
+ could still mount home, but not have the influence of the (external) home =
+environment. Eg:</div><blockquote class=3D"gmail_quote" style=3D"margin:0px=
+ 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"><br=
+><b>singularity shell --cleanenv docker://ubuntu</b><br>Docker image path: =
+<a href=3D"http://index.docker.io/library/ubuntu:latest" rel=3D"nofollow" t=
+arget=3D"_blank" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?=
+q\x3dhttp%3A%2F%2Findex.docker.io%2Flibrary%2Fubuntu%3Alatest\x26sa\x3dD\x2=
+6sntz\x3d1\x26usg\x3dAFQjCNGBqiAZ3UrByogfBqEHrMrWxTzAXQ&#39;;return true;" =
+onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Find=
+ex.docker.io%2Flibrary%2Fubuntu%3Alatest\x26sa\x3dD\x26sntz\x3d1\x26usg\x3d=
+AFQjCNGBqiAZ3UrByogfBqEHrMrWxTzAXQ&#39;;return true;">index.docker.io/libra=
+ry/<wbr>ubuntu:latest</a><br>Cache folder set to /home/vanessa/.singularity=
+/<wbr>docker<br>Creating container runtime...<br>Singularity: Invoking an i=
+nteractive shell within container...<br>Singularity ubuntu:~&gt; env<br>SHE=
+LL=3D/bin/bash<br>TERM=3Dxterm<br>LD_LIBRARY_PATH=3D/.singularity.<wbr>d/li=
+bs<br>SINGULARITY_NAME=3Dubuntu<br>PATH=3D/usr/local/sbin:/usr/<wbr>local/b=
+in:/usr/sbin:/usr/bin:/<wbr>sbin:/bin<br>PWD=3D/home/vanessa<br>LANG=3DC<br=
+>PS1=3DSingularity ubuntu:\w&gt;=C2=A0<br>SHLVL=3D1<br>HOME=3D/home/vanessa=
+<br>SINGULARITY_CONTAINER=3Dubuntu<br>_=3D/usr/bin/env</blockquote><div><br=
+></div><div>Note that none of the 10,000 variables defined on my host are p=
+resent in the container. You would then want to provide whatever paths / va=
+riables <i>are</i>=C2=A0needed inside the container via a custom %environme=
+nt, etc. Would that work?</div><div><br></div><div>Best,</div><div><br></di=
+v><div>Vanessa</div></span></div><div><div><div><br><div class=3D"gmail_quo=
+te">On Tue, Aug 1, 2017 at 7:17 AM, Christopher Larrieu <span dir=3D"ltr">&=
+lt;<a rel=3D"nofollow">ch...@larrieu.org</a>&gt;</span> wrote:<br><blockquo=
+te class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc so=
+lid;padding-left:1ex"><div dir=3D"ltr">Hi Vanessa,<div><br></div><div>Thank=
+s for your quick reply!=C2=A0 What I am most interested in is preventing fi=
+les in the host system&#39;s user home directory from affecting the environ=
+ment of the container shell.=C2=A0 As the most basic example: .bashrc: =C2=
+=A0I don&#39;t want the shell I spawn within my container to initialize wit=
+h a configuration file that exists outside.</div><div><br></div><div>Anothe=
+r example.=C2=A0 One of the users at our lab insisted that his code simply =
+would not run efficiently on our cluster, so he ended up shipping his data =
+off site for years.=C2=A0 When I dug into his problem, I ultimately discove=
+red that he had a dot file in his home directory that was enabling profilin=
+g in his code.=C2=A0 He had totally forgotten about the config file.=C2=A0 =
+But this is the sort of problem that singularity could prevent by providing=
+ a consistent, self-contained, environment.=C2=A0 The issue is that a user&=
+#39;s home directory mounted from outside the container introduces the poss=
+ibility of all kinds of site-specific differences into the container.</div>=
+<div><br></div><div>I&#39;m thinking a modification of the -H option to tak=
+e solely the target part of a source:target pair:</div><div><br></div><div>=
+=C2=A0 # singularity exec -H :/contained/home ...</div><div><br></div><div>=
+This would simply set the user&#39;s home directory within the container to=
+ &#39;/contained/home&#39;.</div><div><br></div><div>Does that make sense?<=
+/div><div><br></div><div>Cheers,</div><div><br></div><div>Chris</div><div><=
+br></div><div><br></div><div><span><br>On Tuesday, August 1, 2017 at 9:55:4=
+1 AM UTC-4, vanessa wrote:</span><blockquote class=3D"gmail_quote" style=3D=
+"margin:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><s=
+pan><div dir=3D"ltr">Hi Chris,<div><br></div><div>If you have important fil=
+es for the runtime of the container, for the sake of reproducibility I woul=
+d caution you from keeping these in home. If another user were to use your =
+container, would it be broken?</div><div><br></div><div>For files and depen=
+dencies in your home that are shareable, I would save them somewhere more r=
+eliably present in the image (/usr/local/app or /opt/app).=C2=A0 If you wan=
+t to be saving some home with &quot;secret&quot; settings then I think havi=
+ng it mount is the right way to go. You would want to provide clear instruc=
+tion to other users about the needed secrets, lest they run the container w=
+ithout them.</div><div><br></div><div>If you want to define some custom hom=
+e, then take a look at the --home/-H option provided in most commands (shel=
+l, exec, etc.) it should let you specify a custom path (other than /home/[u=
+sername]) for home when you run the image. This is however, a bind, which d=
+oesn&#39;t seem to be what you want? If you want to specify another directo=
+ry in the container &quot;as the actual home&quot; I take it you mean somet=
+hing in the container <i>not</i>=C2=A0bound, in which case see my concern a=
+bove.</div><div><br></div><div>If these ideas aren&#39;t resolution to your=
+ issue, if you could provide more detail we can think of some workaround th=
+at is both portable and satisfactory.</div><div><br></div><div>Best,</div><=
+div><br></div><div>Vanessa</div></div></span><div><br><div class=3D"gmail_q=
+uote"><span>On Tue, Aug 1, 2017 at 6:43 AM, Christopher Larrieu <span dir=
+=3D"ltr">&lt;<a rel=3D"nofollow">ch...@larrieu.org</a>&gt;</span> wrote:<br=
+></span><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border=
+-left:1px #ccc solid;padding-left:1ex"><span><div dir=3D"ltr">I&#39;d reall=
+y like to to have my home directory reside within the container.=C2=A0 So m=
+any dot files quietly affect the runtime behavior of applications that it&#=
+39;s quite difficult to guarantee a consistent environment when a container=
+ runs on systems with different home directories.<div><br></div><div>The -H=
+ option allows you to specify a unique mapping from the host system into th=
+e container, but what I&#39;d really like is to specify a directory within =
+the container as the actual home directory, not the target of a mapping.</d=
+iv><div><br></div><div>Is this possible?</div><div><br></div><div>Thanks,</=
+div><div><br></div><div>Chris</div></div></span><span><font color=3D"#88888=
+8"><span>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br></span>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</font></span></blockquote></div><span><br><br clear=3D"all"><div><br></div=
+>-- <br><div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div=
+><div><div><a value=3D"+16033210676">(603) 321-0676</a></div></div></div></=
+div>
+</span></div>
+</blockquote></div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><d=
+iv><a value=3D"+16033210676">(603) 321-0676</a></div></div></div></div>
+</div>
+</div></div></blockquote></div></div></div><div><div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br></div></div>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</div></div></blockquote></div><span><br><br clear=3D"all"><div><br></div>-=
+- <br><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><di=
+v>Gregory M. Kurtzer</div><div>CEO, SingularityWare, LLC.</div><div>Senior =
+Architect, RStor</div><div><span style=3D"font-size:12.8px">Computational S=
+cience Advisor, Lawrence Berkeley National Laboratory</span><br></div></div=
+></div></div></div></div></div>
+</span></div>
+</blockquote></div></div></div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+0XHl_yMnAQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div>Greg=
+ory M. Kurtzer</div><div>CEO, SingularityWare, LLC.</div><div>Senior Archit=
+ect, RStor</div><div><span style=3D"font-size:12.8px">Computational Science=
+ Advisor, Lawrence Berkeley National Laboratory</span><br></div></div></div=
+></div></div></div></div>
+</div>
+</blockquote></div></div>
+------=_Part_5476_514841828.1501612476347--
+
+------=_Part_5475_1089166856.1501612476346--

@@ -1,0 +1,283 @@
+Date: Sun, 12 May 2019 18:28:49 -0700 (PDT)
+From: Ivo Jimenez <i...@cs.ucsc.edu>
+To: singularity <singu...@lbl.gov>
+Message-Id: <9c0ad32c-d3f8-4730-bfd4-58e1d0025545@lbl.gov>
+In-Reply-To: <CAM=pu++295NpuKOss2rA7embkzZunN64d37sX4QGT+YrNVEdsA@mail.gmail.com>
+References: <00724cc4-9bf5-4ec1-af0d-a61cd376b9de@lbl.gov> <CAM=pu+JJZ73Hh8zHGKVt4cVYV65piT7tU4RmDiY+mSD4NLLN3w@mail.gmail.com>
+ <23462aee-1cc3-4cd8-b340-e7987a1f6ee5@lbl.gov> <CAM=pu+K3y77PgaFz=Zz8MYoZPAaN2sumnZRQois5sXzjVosyfA@mail.gmail.com>
+ <a5fc6c74-375c-456c-8b4c-da2a89a52a0b@lbl.gov>
+ <CAM=pu++295NpuKOss2rA7embkzZunN64d37sX4QGT+YrNVEdsA@mail.gmail.com>
+Subject: Re: [Singularity] A Github Actions extension to support for
+ singularity
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_723_541702675.1557710929961"
+
+------=_Part_723_541702675.1557710929961
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_724_848589715.1557710929961"
+
+------=_Part_724_848589715.1557710929961
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Sorry for the delay! Some answers/comments:
+
+On Wed, May 8, 2019 at 11:45 AM v <vso...@gmail.com> wrote:
+
+> Hey Ivo,
+>
+> In Popper, singularity is supported natively, so you can define an action 
+>> like the following:
+>>
+>> Ah interesting - meaning that it runs directly on the host, and if my 
+> host has singularity I'm good to go.
+>
+
+Yes, this is the goal, to replicate "official" GHA behavior for singularity 
+directly without having to use docker.
+ 
+
+> This works for some use cases, but I'm wondering if workflows (running in 
+> containers) would be supported? If I'm testing a container in some CI, I'd 
+> want to (do similar to GitHub actions) and be able to specify a container 
+> URI to build in (so I don't need to build freshly).
+>
+
+yes, that is also supported by doing something like:
+
+action "shub action" {  
+
+      uses = "shub://singularityhub/hello-world"  
+
+      runs = ["ls", "-al"]
+
+}
+
+
+Yeah, I found this too :P  https://github.com/singularityhub/singularity-ci Good 
+> thing that the other services work really well, most of us are happy 
+> campers until Actions is out of beta.
+>
+
+that's a really cool repo! That will be really useful for addressing this 
+issue related to TravisCI setup 
+<https://github.com/systemslab/popper/issues/642> (and analogous for circle 
+and gitlab).
+
+What are the rules w.r.t the location of main.workflow? For example, since 
+> this wouldn't work on GitHub, I removed the main.workflow from the .github 
+> folder, and am storing it in a popper folder.
+>
+
+Popper looks for a main.workflow file in the current directory and in a 
+.github/ subfolder. Also, the 'popper run' command can be given a 
+`--recursive` flag that instructs popper to look for .workflow files on any 
+subfolder and execute them all. 
+
+What are "best practices" for how these files should be organized in a 
+> repo, given that sometimes we want them to run via actions (and others not?)
+>
+
+If you want a workflow to be executed by the GHA platform, then you have to 
+put them in the .github/ folder in the root of the project, as you 
+mentioned. Popper can find workflow files anywhere in your repo (as I 
+mentioned above). For projects containing multiple workflows, we usually 
+create a workflows/ folder, and create one subfolder per workflow. For 
+example, this is what we do with the popper-examples 
+<https://github.com/popperized/popper-examples> repository.
+ 
+
+> And what is suggested practice for integrating other services - using 
+> popper to generate separate configs, or just using popper run?
+>
+
+It depends on what you want to accomplish. We usually do both, doing 
+'popper run' to quickly iterate locally, and then use a CI service to 
+double-check that all works OK.
+ 
+
+> This runs okay - although (I think?) the steps are isolated - if I write 
+> some file in "Arbitrary Write" it's stuck in the container (this is why 
+> GitHub binds the github workspace 
+> <https://developer.github.com/actions/creating-github-actions/accessing-the-runtime-environment/#filesystem> - 
+> could we do that too here? I'd want to be able to share results between 
+> steps
+>
+
+We currently define the same environment variables that GHA defines (for 
+more take a look here 
+<https://popper.readthedocs.io/en/latest/sections/cli_features.html#environment-variables>). 
+The GITHUB_WORKSPACE variable corresponds to the project folder, and we 
+bind-mount this inside the container. We also bind-mount $HOME and the 
+Docker daemon socket, for containers that run docker inside an action. So 
+anything written to $HOME or $GITHUB_WORKSPACE will persist across actions.
+
+Just a quick note - .git is required? Is there any reason to require it 
+> (and not give a warning instead?) For example, here is an empty folder 
+> where I want to test a workflow (no .git) - I'm not able to.
+>
+
+It is required because of the environment variables that get defined (e.g. 
+GIT_SHA).
+
+Anyway thanks for the cool tool, I'm having a lot of fun! I think it would 
+> be good to keep working on these use cases. I'll do more thinking too!
+>
+
+Thanks a lot for all the feedback! This is really helpful for us, as we get 
+a better idea of what users want from this tool.
+ 
+
+------=_Part_724_848589715.1557710929961
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div style=3D"font-size: 14px;">Sorry for the delay! Some =
+answers/comments:</div><br style=3D"font-size: 14px;"><div class=3D"gmail_q=
+uote" style=3D"font-size: 14px;"><div dir=3D"ltr" class=3D"gmail_attr">On W=
+ed, May 8, 2019 at 11:45 AM v &lt;<a href=3D"mailto:vso...@gmail.com" targe=
+t=3D"_blank" style=3D"color: rgb(17, 85, 204);">vso...@gmail.com</a>&gt; wr=
+ote:<br></div><blockquote class=3D"gmail_quote" style=3D"margin: 0px 0px 0p=
+x 0.8ex; border-left: 1px solid rgb(204, 204, 204); padding-left: 1ex;"><di=
+v dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=
+=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr=
+"><div dir=3D"ltr"><div dir=3D"ltr">Hey Ivo,<div><br></div></div><div class=
+=3D"gmail_quote"><blockquote class=3D"gmail_quote" style=3D"margin: 0px 0px=
+ 0px 0.8ex; border-left: 1px solid rgb(204, 204, 204); padding-left: 1ex;">=
+<div dir=3D"ltr"><div dir=3D"ltr">In Popper, singularity is supported nativ=
+ely, so you can define an action like the following:<div><br></div></div></=
+div></blockquote><div>Ah interesting - meaning that it runs directly on the=
+ host, and if my host has singularity I&#39;m good to go.</div></div></div>=
+</div></div></div></div></div></div></div></div></div></blockquote><div><br=
+></div><div>Yes, this is the goal, to replicate &quot;official&quot; GHA be=
+havior for singularity directly without having to use docker.</div><div>=C2=
+=A0</div><blockquote class=3D"gmail_quote" style=3D"margin: 0px 0px 0px 0.8=
+ex; border-left: 1px solid rgb(204, 204, 204); padding-left: 1ex;"><div dir=
+=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr=
+"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div =
+dir=3D"ltr"><div class=3D"gmail_quote">This works for some use cases, but I=
+&#39;m wondering if workflows (running in containers) would be supported? I=
+f I&#39;m testing a container in some CI, I&#39;d want to (do similar to Gi=
+tHub actions) and be able to specify a container URI to build in (so I don&=
+#39;t need to build freshly).</div></div></div></div></div></div></div></di=
+v></div></div></div></blockquote><div><br></div><div>yes, that is also supp=
+orted by doing something like:</div></div><blockquote style=3D"font-size: 1=
+4px; border: none; padding: 0px;"><div class=3D"gmail_quote"><pre style=3D"=
+color: rgb(0, 0, 0); white-space: pre-wrap;"><font size=3D"2">action &quot;=
+shub action&quot; {  </font></pre></div><div class=3D"gmail_quote"><pre sty=
+le=3D"color: rgb(0, 0, 0); white-space: pre-wrap;"><font size=3D"2">      u=
+ses =3D &quot;shub://singularityhub/hello-<wbr>world&quot;  </font></pre></=
+div><div class=3D"gmail_quote"><pre style=3D"color: rgb(0, 0, 0); white-spa=
+ce: pre-wrap;"><font size=3D"2">      runs =3D [&quot;ls&quot;, &quot;-al&q=
+uot;]</font></pre></div><div class=3D"gmail_quote"><pre style=3D"color: rgb=
+(0, 0, 0); white-space: pre-wrap;"><font size=3D"2">}</font></pre></div></b=
+lockquote><div class=3D"gmail_quote" style=3D"font-size: 14px;"><div><pre s=
+tyle=3D"color: rgb(0, 0, 0); white-space: pre-wrap;"><br></pre></div><block=
+quote class=3D"gmail_quote" style=3D"margin: 0px 0px 0px 0.8ex; border-left=
+: 1px solid rgb(204, 204, 204); padding-left: 1ex;"><div dir=3D"ltr"><div d=
+ir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"l=
+tr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><di=
+v class=3D"gmail_quote">Yeah, I found this too :P=C2=A0=C2=A0<a href=3D"htt=
+ps://github.com/singularityhub/singularity-ci" target=3D"_blank" data-safer=
+edirecturl=3D"https://www.google.com/url?q=3Dhttps://github.com/singularity=
+hub/singularity-ci&amp;source=3Dgmail&amp;ust=3D1557794660622000&amp;usg=3D=
+AFQjCNEbFROaGKCQTXfh76FyGCZcESf2Vg" style=3D"color: rgb(17, 85, 204);">http=
+s://github.com/<wbr>singularityhub/singularity-ci</a>=C2=A0<wbr>Good thing =
+that the other services work really well, most of us are happy campers unti=
+l Actions is out of beta.</div></div></div></div></div></div></div></div></=
+div></div></div></blockquote><div><br></div><div>that&#39;s a really cool r=
+epo! That will be really useful for addressing=C2=A0<a href=3D"https://gith=
+ub.com/systemslab/popper/issues/642" target=3D"_blank" data-saferedirecturl=
+=3D"https://www.google.com/url?q=3Dhttps://github.com/systemslab/popper/iss=
+ues/642&amp;source=3Dgmail&amp;ust=3D1557794660622000&amp;usg=3DAFQjCNE1tYC=
+lV7sKtiWzw5QeAyv1kzznRA" style=3D"color: rgb(17, 85, 204);">this issue rela=
+ted to TravisCI setup</a>=C2=A0(and analogous for circle and gitlab).</div>=
+<div><br></div><blockquote class=3D"gmail_quote" style=3D"margin: 0px 0px 0=
+px 0.8ex; border-left: 1px solid rgb(204, 204, 204); padding-left: 1ex;"><d=
+iv dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=
+=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr=
+"><div dir=3D"ltr"><div class=3D"gmail_quote"><span style=3D"font-size: 0.8=
+75rem;">What are the rules w.r.t the location of main.workflow? For example=
+, since this wouldn&#39;t work on GitHub, I removed the main.workflow from =
+the .github folder, and am storing it in a popper folder.</span></div></div=
+></div></div></div></div></div></div></div></div></div></blockquote><div><b=
+r></div><div><span style=3D"font-size: 0.875rem;">Popper looks for a main.w=
+orkflow file in the current directory and in a .github/ subfolder.</span><s=
+pan style=3D"font-size: 0.875rem;">=C2=A0Also, the &#39;popper run&#39; com=
+mand can be given a `--recursive` flag that instructs popper to look for .w=
+orkflow files on any subfolder and execute them all.</span>=C2=A0</div><div=
+><br></div><blockquote class=3D"gmail_quote" style=3D"margin: 0px 0px 0px 0=
+.8ex; border-left: 1px solid rgb(204, 204, 204); padding-left: 1ex;"><div d=
+ir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"l=
+tr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><di=
+v dir=3D"ltr"><div class=3D"gmail_quote"><span style=3D"font-size: 0.875rem=
+;">What are &quot;best practices&quot; for how these files should be organi=
+zed in a repo, given that sometimes we want them to run via actions (and ot=
+hers not?)</span></div></div></div></div></div></div></div></div></div></di=
+v></div></blockquote><div><br></div><div>If you want a workflow to be execu=
+ted by the GHA platform, then you have to put them in the .github/ folder i=
+n the root of the project, as you mentioned. Popper can find workflow files=
+ anywhere in your repo (as I mentioned above). For projects containing mult=
+iple workflows, we usually create a workflows/ folder, and create one subfo=
+lder per workflow. For example, this is what we do with the=C2=A0<a href=3D=
+"https://github.com/popperized/popper-examples" style=3D"color: rgb(17, 85,=
+ 204);">popper-examples</a>=C2=A0repository.</div><div>=C2=A0</div><blockqu=
+ote class=3D"gmail_quote" style=3D"margin: 0px 0px 0px 0.8ex; border-left: =
+1px solid rgb(204, 204, 204); padding-left: 1ex;"><div dir=3D"ltr"><div dir=
+=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr=
+"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div =
+class=3D"gmail_quote"><span style=3D"font-size: 0.875rem;">And what is sugg=
+ested practice for integrating other services - using popper to generate se=
+parate configs, or just using popper run?</span></div></div></div></div></d=
+iv></div></div></div></div></div></div></blockquote><div><br></div><div>It =
+depends on what you want to accomplish. We usually do both, doing &#39;popp=
+er run&#39; to quickly iterate locally, and then use a CI service to double=
+-check that all works OK.</div><div>=C2=A0</div><blockquote class=3D"gmail_=
+quote" style=3D"margin: 0px 0px 0px 0.8ex; border-left: 1px solid rgb(204, =
+204, 204); padding-left: 1ex;"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=
+=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr=
+"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div class=3D"gmail_qu=
+ote">This runs okay - although (I think?) the steps are isolated - if I wri=
+te some file in &quot;Arbitrary Write&quot; it&#39;s stuck in the container=
+ (this is why GitHub binds the=C2=A0<a href=3D"https://developer.github.com=
+/actions/creating-github-actions/accessing-the-runtime-environment/#filesys=
+tem" target=3D"_blank" data-saferedirecturl=3D"https://www.google.com/url?q=
+=3Dhttps://developer.github.com/actions/creating-github-actions/accessing-t=
+he-runtime-environment/%23filesystem&amp;source=3Dgmail&amp;ust=3D155779466=
+0622000&amp;usg=3DAFQjCNFi9aRPKl39H2mUujBpHwY4CbbQnw" style=3D"color: rgb(1=
+7, 85, 204);">github workspace</a>=C2=A0- could we do that too here? I&#39;=
+d want to be able to share results between steps</div></div></div></div></d=
+iv></div></div></div></div></div></div></blockquote><div><br></div><div>We =
+currently define the same environment variables that GHA defines (for more =
+take a look=C2=A0<a href=3D"https://popper.readthedocs.io/en/latest/section=
+s/cli_features.html#environment-variables" style=3D"color: rgb(17, 85, 204)=
+;">here</a>). The GITHUB_WORKSPACE variable corresponds to the project fold=
+er, and we bind-mount this inside the container. We also bind-mount $HOME a=
+nd the Docker daemon socket, for containers that run docker inside an actio=
+n. So anything written to $HOME or $GITHUB_WORKSPACE will persist across ac=
+tions.</div><div><br></div><blockquote class=3D"gmail_quote" style=3D"margi=
+n: 0px 0px 0px 0.8ex; border-left: 1px solid rgb(204, 204, 204); padding-le=
+ft: 1ex;"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"lt=
+r"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div=
+ dir=3D"ltr"><div dir=3D"ltr"><div class=3D"gmail_quote"><span style=3D"fon=
+t-size: 0.875rem;">Just a quick note - .git is required? Is there any reaso=
+n to require it (and not give a warning instead?) For example, here is an e=
+mpty folder where I want to test a workflow (no .git) - I&#39;m not able to=
+.</span></div></div></div></div></div></div></div></div></div></div></div><=
+/blockquote><div><br></div><div>It is required because of the environment v=
+ariables that get defined (e.g. GIT_SHA).</div><div><br></div><blockquote c=
+lass=3D"gmail_quote" style=3D"margin: 0px 0px 0px 0.8ex; border-left: 1px s=
+olid rgb(204, 204, 204); padding-left: 1ex;"><div dir=3D"ltr"><div dir=3D"l=
+tr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><di=
+v dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div class=
+=3D"gmail_quote"><span style=3D"font-size: 0.875rem;">Anyway thanks for the=
+ cool tool, I&#39;m having a lot of fun! I think it would be good to keep w=
+orking on these use cases. I&#39;ll do more thinking too!</span></div></div=
+></div></div></div></div></div></div></div></div></div></blockquote><div><b=
+r></div><div>Thanks a lot for all the feedback! This is really helpful for =
+us, as we get a better idea of what users want from this tool.</div><div>=
+=C2=A0<br></div></div></div>
+------=_Part_724_848589715.1557710929961--
+
+------=_Part_723_541702675.1557710929961--

@@ -1,0 +1,206 @@
+Date: Sun, 4 Mar 2018 00:35:06 -0800 (PST)
+From: toufique <tech...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <3af015d4-8cd4-49d0-aa67-da7edfc56f39@lbl.gov>
+Subject: question on building software without building the whole container
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_12514_1185536033.1520152506435"
+
+------=_Part_12514_1185536033.1520152506435
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_12515_1878897793.1520152506436"
+
+------=_Part_12515_1878897793.1520152506436
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi everyone, 
+
+I need some help with this.  I have a tool that my I want to build over and 
+over after changing its source code.  But I don't want to build the whole 
+container just for that tool.  How would I do that?
+
+Here is my %post section:
+
+%post
+   sed -i '/xenial.*universe/s/^#//g' /etc/apt/sources.list
+   #apt-get -y install gcc
+   apt-get -y update
+   apt-get update && apt-get install -y \
+    python \
+    python-pip \
+    git \
+    tmux \
+    vim \
+    cmake \
+    wget
+
+   apt-get -y install gcc
+   pip install --upgrade pip
+
+   apt-get update -qq
+
+   apt-get install -y m4 \
+    libz-dev \
+    libprotobuf-dev \
+    protobuf-compiler \
+    libsqlite3-dev \
+    libtcmalloc-minimal4
+
+apt-get install -y \
+      libboost-graph-dev \
+      libboost-regex-dev \
+      libpthread-stubs0-dev \
+      libreadline-dev \
+      libncurses5-dev
+
+
+   mkdir -p /workspace
+   ALADDIN_HOME=/workspace/gem5-aladdin/src/aladdin
+   TRACER_HOME=/workspace/LLVM-Tracer
+   LLVM_HOME=/usr/local
+   BOOST_ROOT=/usr/include
+
+   mkdir -p /tmp/
+
+   wget http://releases.llvm.org/3.4.2/llvm-3.4.2.src.tar.gz && \
+    tar -xvf llvm-3.4.2.src.tar.gz
+
+
+   wget http://releases.llvm.org/3.4.2/cfe-3.4.2.src.tar.gz && \
+    tar -xvf cfe-3.4.2.src.tar.gz && \
+    mkdir -p llvm-3.4.2.src/tools/clang && \
+    mv -f cfe-3.4.2.src/* llvm-3.4.2.src/tools/clang/ && \
+    cd llvm-3.4.2.src && \
+    mkdir build && \
+    cd build && \
+    cmake -DCMAKE_INSTALL_PREFIX=/usr/local .. && \
+    make -j8 && \
+    make install
+
+    wget -q 
+https://github.com/martinh/libconfuse/releases/download/v3.2.1/confuse-3.2.1.tar.gz 
+&& \
+    tar -xf confuse-3.2.1.tar.gz && \
+    cd confuse-3.2.1 && \
+    ./configure && \
+    make install
+
+   cd /workspace
+
+   git clone https://github.com/ysshao/LLVM-Tracer && \
+    cd LLVM-Tracer && \
+    mkdir bin && \
+    mkdir lib && \
+    mkdir build && cd build && \
+    cmake .. && make && make install
+
+
+cd /workspace/
+export FORCE_CXX11_ABI=1
+
+
+# Clone gem5-aladdin, but don't build. We'll assume the developer will 
+build.
+  apt-get install -y scons
+  git clone https://github.com/harvard-acc/gem5-aladdin && \
+    cd gem5-aladdin && \
+    git submodule init && \
+    git submodule update
+
+    #scons gem5.opt
+    mkdir -p build/X86
+    scons build/X86/gem5.opt
+
+
+The last section, as highlighted, I would like to build this section only 
+without building the container and all the dependencies needed for this 
+tool.  
+
+Any help would be very much appreciated!
+
+thank you!
+
+
+
+
+
+------=_Part_12515_1878897793.1520152506436
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi everyone,=C2=A0<div><br></div><div>I need some help wit=
+h this.=C2=A0 I have a tool that my I want to build over and over after cha=
+nging its source code.=C2=A0 But I don&#39;t want to build the whole contai=
+ner just for that tool.=C2=A0 How would I do that?</div><div><br></div><div=
+>Here is my %post section:</div><div><br></div><div><div>%post</div><div>=
+=C2=A0 =C2=A0sed -i &#39;/xenial.*universe/s/^#//g&#39; /etc/apt/sources.li=
+st</div><div>=C2=A0 =C2=A0#apt-get -y install gcc</div><div>=C2=A0 =C2=A0ap=
+t-get -y update</div><div>=C2=A0 =C2=A0apt-get update &amp;&amp; apt-get in=
+stall -y \</div><div>=C2=A0 =C2=A0 python \</div><div>=C2=A0 =C2=A0 python-=
+pip \</div><div>=C2=A0 =C2=A0 git \</div><div>=C2=A0 =C2=A0 tmux \</div><di=
+v>=C2=A0 =C2=A0 vim \</div><div>=C2=A0 =C2=A0 cmake \</div><div>=C2=A0 =C2=
+=A0 wget</div><div><br></div><div>=C2=A0 =C2=A0apt-get -y install gcc</div>=
+<div>=C2=A0 =C2=A0pip install --upgrade pip</div><div><br></div><div>=C2=A0=
+ =C2=A0apt-get update -qq</div><div><br></div><div>=C2=A0 =C2=A0apt-get ins=
+tall -y m4 \</div><div>=C2=A0 =C2=A0 libz-dev \</div><div>=C2=A0 =C2=A0 lib=
+protobuf-dev \</div><div>=C2=A0 =C2=A0 protobuf-compiler \</div><div>=C2=A0=
+ =C2=A0 libsqlite3-dev \</div><div>=C2=A0 =C2=A0 libtcmalloc-minimal4</div>=
+</div><div><br></div><div><div>apt-get install -y \</div><div>=C2=A0 =C2=A0=
+ =C2=A0 libboost-graph-dev \</div><div>=C2=A0 =C2=A0 =C2=A0 libboost-regex-=
+dev \</div><div>=C2=A0 =C2=A0 =C2=A0 libpthread-stubs0-dev \</div><div>=C2=
+=A0 =C2=A0 =C2=A0 libreadline-dev \</div><div>=C2=A0 =C2=A0 =C2=A0 libncurs=
+es5-dev</div><div><br></div><div><br></div><div>=C2=A0 =C2=A0mkdir -p /work=
+space</div><div>=C2=A0 =C2=A0ALADDIN_HOME=3D/workspace/gem5-aladdin/src/ala=
+ddin</div><div>=C2=A0 =C2=A0TRACER_HOME=3D/workspace/LLVM-Tracer</div><div>=
+=C2=A0 =C2=A0LLVM_HOME=3D/usr/local</div><div>=C2=A0 =C2=A0BOOST_ROOT=3D/us=
+r/include</div><div><br></div><div>=C2=A0 =C2=A0mkdir -p /tmp/</div><div><b=
+r></div><div>=C2=A0 =C2=A0wget http://releases.llvm.org/3.4.2/llvm-3.4.2.sr=
+c.tar.gz &amp;&amp; \</div><div>=C2=A0 =C2=A0 tar -xvf llvm-3.4.2.src.tar.g=
+z</div><div><br></div><div><br></div><div>=C2=A0 =C2=A0wget http://releases=
+.llvm.org/3.4.2/cfe-3.4.2.src.tar.gz &amp;&amp; \</div><div>=C2=A0 =C2=A0 t=
+ar -xvf cfe-3.4.2.src.tar.gz &amp;&amp; \</div><div>=C2=A0 =C2=A0 mkdir -p =
+llvm-3.4.2.src/tools/clang &amp;&amp; \</div><div>=C2=A0 =C2=A0 mv -f cfe-3=
+.4.2.src/* llvm-3.4.2.src/tools/clang/ &amp;&amp; \</div><div>=C2=A0 =C2=A0=
+ cd llvm-3.4.2.src &amp;&amp; \</div><div>=C2=A0 =C2=A0 mkdir build &amp;&a=
+mp; \</div><div>=C2=A0 =C2=A0 cd build &amp;&amp; \</div><div>=C2=A0 =C2=A0=
+ cmake -DCMAKE_INSTALL_PREFIX=3D/usr/local .. &amp;&amp; \</div><div>=C2=A0=
+ =C2=A0 make -j8 &amp;&amp; \</div><div>=C2=A0 =C2=A0 make install</div></d=
+iv><div><br></div><div><div>=C2=A0 =C2=A0 wget -q https://github.com/martin=
+h/libconfuse/releases/download/v3.2.1/confuse-3.2.1.tar.gz &amp;&amp; \</di=
+v><div>=C2=A0 =C2=A0 tar -xf confuse-3.2.1.tar.gz &amp;&amp; \</div><div>=
+=C2=A0 =C2=A0 cd confuse-3.2.1 &amp;&amp; \</div><div>=C2=A0 =C2=A0 ./confi=
+gure &amp;&amp; \</div><div>=C2=A0 =C2=A0 make install</div><div><br></div>=
+<div>=C2=A0 =C2=A0cd /workspace</div><div><br></div><div>=C2=A0 =C2=A0git c=
+lone https://github.com/ysshao/LLVM-Tracer &amp;&amp; \</div><div>=C2=A0 =
+=C2=A0 cd LLVM-Tracer &amp;&amp; \</div><div>=C2=A0 =C2=A0 mkdir bin &amp;&=
+amp; \</div><div>=C2=A0 =C2=A0 mkdir lib &amp;&amp; \</div><div>=C2=A0 =C2=
+=A0 mkdir build &amp;&amp; cd build &amp;&amp; \</div><div>=C2=A0 =C2=A0 cm=
+ake .. &amp;&amp; make &amp;&amp; make install</div></div><div><br></div><d=
+iv><br></div><div><div>cd /workspace/</div><div>export FORCE_CXX11_ABI=3D1<=
+/div><div><br></div><div><span style=3D"background-color: rgb(255, 255, 0);=
+"><br></span></div><div><span style=3D"background-color: rgb(255, 255, 0);"=
+># Clone gem5-aladdin, but don&#39;t build. We&#39;ll assume the developer =
+will build.</span></div><div><span style=3D"background-color: rgb(255, 255,=
+ 0);">=C2=A0 apt-get install -y scons</span></div><div><span style=3D"backg=
+round-color: rgb(255, 255, 0);">=C2=A0 git clone https://github.com/harvard=
+-acc/gem5-aladdin &amp;&amp; \</span></div><div><span style=3D"background-c=
+olor: rgb(255, 255, 0);">=C2=A0 =C2=A0 cd gem5-aladdin &amp;&amp; \</span><=
+/div><div><span style=3D"background-color: rgb(255, 255, 0);">=C2=A0 =C2=A0=
+ git submodule init &amp;&amp; \</span></div><div><span style=3D"background=
+-color: rgb(255, 255, 0);">=C2=A0 =C2=A0 git submodule update</span></div><=
+div><span style=3D"background-color: rgb(255, 255, 0);"><br></span></div><d=
+iv><span style=3D"background-color: rgb(255, 255, 0);">=C2=A0 =C2=A0 #scons=
+ gem5.opt</span></div><div><span style=3D"background-color: rgb(255, 255, 0=
+);">=C2=A0 =C2=A0 mkdir -p build/X86</span></div><div><span style=3D"backgr=
+ound-color: rgb(255, 255, 0);">=C2=A0 =C2=A0 scons build/X86/gem5.opt</span=
+></div></div><div><br></div><div><br></div><div>The last section, as highli=
+ghted, I would like to build this section only without building the contain=
+er and all the dependencies needed for this tool.=C2=A0=C2=A0</div><div><br=
+></div><div>Any help would be very much appreciated!</div><div><br></div><d=
+iv>thank you!</div><div><br></div><div><br></div><div><br></div><div><br></=
+div></div>
+------=_Part_12515_1878897793.1520152506436--
+
+------=_Part_12514_1185536033.1520152506435--

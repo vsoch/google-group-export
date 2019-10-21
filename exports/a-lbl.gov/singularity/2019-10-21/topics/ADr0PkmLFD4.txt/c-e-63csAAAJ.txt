@@ -1,0 +1,107 @@
+Date: Thu, 28 Feb 2019 08:36:34 -0800 (PST)
+From: Mike Moore <wxdu...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <710b4b5e-f209-41da-bfcb-c19043201fa4@lbl.gov>
+In-Reply-To: <CAApQTTh9E=oNwfTLFmjmH6rAXDH2Q+X29D0Ur_Y3VMXvGvsDtg@mail.gmail.com>
+References: <a94c4768-8cd7-43aa-8bb9-b21b3ccf950c@lbl.gov>
+ <CAApQTTh9E=oNwfTLFmjmH6rAXDH2Q+X29D0Ur_Y3VMXvGvsDtg@mail.gmail.com>
+Subject: Re: [Singularity] Singularity image download syncronization during
+ multiple job startup
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2609_704813931.1551371794451"
+
+------=_Part_2609_704813931.1551371794451
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2610_2008772707.1551371794451"
+
+------=_Part_2610_2008772707.1551371794451
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi Greg,
+
+  So, our current workloads are batch jobs. There is very little MPI at all 
+currently. We use Univa Grid Engine for our scheduler. Our users submit job 
+arrays with 100->1000s of tasks per job.  Each task is similar, just on 
+different data sets. We do have multiple (up to 20) tasks that can start on 
+a node almost simultaneously. 
+
+  We are deploying singularity images to convert our very large and 
+customized bare metal image into a container. This is the first step in 
+decoupling our applications from our bare metal installation and start a 
+path to computing in the cloud. We went with Singularity because our shared 
+environment makes docker a non-starter with our security dept. 
+
+  I have been trying to get Sregistry working fast enough to move the 
+project out of a POC for functional testing and into production use. 
+However, the time to download the image to the system is unacceptably 
+slow.  I've patched Singularity 3.1.0 to address the missing Shub local 
+caching support, which makes everything better if the image is locally 
+cached.  If the image is not cached and begins to download by the first 
+task on a node, any additional tasks that are released to the node will 
+fail when starting singularity because the image is incomplete. I have test 
+cases (up to 500 tasks) with only a handful of tasks successfully 
+completing because the first tasks are downloading the image and the 
+additional tasks die because the download is in progress.  Our image is on 
+the order of 1.5-9.0GB depending on the software included and the function 
+of the image. So, time to download the image is significant. 
+
+  So, the way we have essentially been running our jobs are:
+
+qsub -q all.q -t1-500 singularity run shub://sregistry/image <application>
+
+Once the scheduler releases the job to the compute node, it starts 
+singularity which downloads image from sregistry. We have written a wrapper 
+that we will be using to force all jobs to run in singularity once our 
+users have completed acceptance testing. But the issue of singularity 
+crashing because the cached image is incomplete is a blocker.
+
+I was trying to get an idea of what others were doing for storing and 
+starting their containers in their HPC environments and if they have a 
+similar issue with trying to start multiple instances of a container on the 
+same system at the same time if the container is not cached yet.
+
+
+
+------=_Part_2610_2008772707.1551371794451
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Greg,<br><br>=C2=A0 So, our current workloads are batch=
+ jobs. There is very little MPI at all currently. We use Univa Grid Engine =
+for our scheduler. Our users submit job arrays with 100-&gt;1000s of tasks =
+per job.=C2=A0 Each task is similar, just on different data sets. We do hav=
+e multiple (up to 20) tasks that can start on a node almost simultaneously.=
+ <br><br>=C2=A0 We are deploying singularity images to convert our very lar=
+ge and customized bare metal image into a container. This is the first step=
+ in decoupling our applications from our bare metal installation and start =
+a path to computing in the cloud. We went with Singularity because our shar=
+ed environment makes docker a non-starter with our security dept. <br><br>=
+=C2=A0 I have been trying to get Sregistry working fast enough to move the =
+project out of a POC for functional testing and into production use. Howeve=
+r, the time to download the image to the system is unacceptably slow.=C2=A0=
+ I&#39;ve patched Singularity 3.1.0 to address the missing Shub local cachi=
+ng support, which makes everything better if the image is locally cached.=
+=C2=A0 If the image is not cached and begins to download by the first task =
+on a node, any additional tasks that are released to the node will fail whe=
+n starting singularity because the image is incomplete. I have test cases (=
+up to 500 tasks) with only a handful of tasks successfully completing becau=
+se the first tasks are downloading the image and the additional tasks die b=
+ecause the download is in progress.=C2=A0 Our image is on the order of 1.5-=
+9.0GB depending on the software included and the function of the image. So,=
+ time to download the image is significant. <br><br>=C2=A0 So, the way we h=
+ave essentially been running our jobs are:<br><br>qsub -q all.q -t1-500 sin=
+gularity run shub://sregistry/image &lt;application&gt;<br><br>Once the sch=
+eduler releases the job to the compute node, it starts singularity which do=
+wnloads image from sregistry. We have written a wrapper that we will be usi=
+ng to force all jobs to run in singularity once our users have completed ac=
+ceptance testing. But the issue of singularity crashing because the cached =
+image is incomplete is a blocker.<br><br>I was trying to get an idea of wha=
+t others were doing for storing and starting their containers in their HPC =
+environments and if they have a similar issue with trying to start multiple=
+ instances of a container on the same system at the same time if the contai=
+ner is not cached yet.<br><br><br></div>
+------=_Part_2610_2008772707.1551371794451--
+
+------=_Part_2609_704813931.1551371794451--

@@ -1,0 +1,245 @@
+Date: Tue, 27 Mar 2018 06:53:57 -0700 (PDT)
+From: David Fletcher <da...@phase92.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <025df42d-b713-469f-800b-3fbec619d220@lbl.gov>
+In-Reply-To: <CAGfAqt8WUK=AfubO46_t3rhYBWG_DBKdEBELFMNxpYvZC-fHsA@mail.gmail.com>
+References: <b2065df2-db8c-49a7-8106-1ecfbfe2b833@lbl.gov>
+ <CAGfAqt8WUK=AfubO46_t3rhYBWG_DBKdEBELFMNxpYvZC-fHsA@mail.gmail.com>
+Subject: Re: [Singularity] Using bind with overlay to gain access to large
+ directory tree
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_18231_1943470250.1522158837738"
+
+------=_Part_18231_1943470250.1522158837738
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_18232_1795857306.1522158837738"
+
+------=_Part_18232_1795857306.1522158837738
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi Jason,
+
+Thanks for the response.  I was running an older version of singularity 
+installed by our IT
+dept so I downloaded/installed the 2.4.5 release and made the change as you 
+suggested.
+
+The change in ordering didn't affect the behaviour.  ie, with the :ro 
+qualifier on the --bind
+argument, the mounted directory cannot be modified; without the :ro 
+qualifier, data is "written
+through" to the host's directory tree.  (I removed the --overlay argument 
+just to see if this had
+any effect.  It didn't.)
+
+If I run the mount command inside the container, I'm seeing just the / 
+partition.  There's no
+indication of an overlay mount.  Is this expected?
+
+I ran singularity with the --debug option and saw lots of output but 
+nothing that told my
+inexperienced eyes anything useful.
+
+Any other suggestions?  Thanks for the help, by the way.  Much appreciated,
+
+David
+
+
+
+On Monday, March 26, 2018 at 5:29:11 PM UTC-4, Jason Stover wrote:
+>
+> Hi David, 
+>
+>   I don't believe that will work... IIRC the overlyfs image is placed 
+> on top of /. Then those other mounts are placed. So their permissions 
+> (i.e. read-only) win since the overlay is already in place. 
+>
+>   Generally, we take file system permissions to restrict writing to 
+> bound directories. Otherwise, in most use cases, they are actually 
+> used for program output. 
+>
+>   If you look at "src/start.c" (I'm pretty sure this is the right 
+> place, but others know the C code better than I do) you can see the 
+> order that the mounts happen... So by default it goes: 
+>
+>     singularity_runtime_overlayfs(); 
+>     singularity_runtime_mounts(); 
+>
+>   You could _try_ swapping singularity_runtime_overlayfs() and 
+> singularity_runtime_mounts()... and see if that gets the expected 
+> behavior you are after. But test on a junk directory... 
+>
+>   I was looking at 2.4.4 tag when going through this, and the above is 
+> a guess on my part from scanning over the code here. 
+>
+> -J 
+>
+>
+> On Mon, Mar 26, 2018 at 1:41 PM, David Fletcher <d...@phase92.com 
+> <javascript:>> wrote: 
+> > Hello all, 
+> > 
+> > I'm new to singularity and to this group.  First, thanks for making this 
+> > tool available. 
+> > 
+> > I've got a container image that has an OS (CentOS 6 for now) and a 
+> > collection of C/C++ compilers and so on.  This is working fine. 
+> > 
+> > What I'd like to do is get access to a large directory tree inside the 
+> > container.  For many reasons, I don't want to copy the (large) 
+> > tree into the container image.  What I'd like to do is form an overlay 
+> file 
+> > system inside the container where the lower, read-only 
+> > layer is the large directory tree on the host's disk and the upper, 
+> > read-write level of the overlay file system would point to another 
+> > directory tree that is located elsewhere. 
+> > 
+> > I've tried this: 
+> >         $ singularity image.create overlay-experiment.img 
+> >         $ singularity shell --bind /path/to/dev/tree:/work:ro --overlay 
+> > overlay-experiment.img Centos_6_7.img 
+> > 
+> > This didn't work.  Inside the container, if I try to touch/modify a 
+> file, 
+> > Singularity complains that the file system is read only.  If I 
+> > remove the ':ro', I can touch/edit files but the /path/to/dev/tree file 
+> > system is modified.  ie, it's not functioning as an overlay. 
+> > 
+> > Maybe my understanding of overlays is weak.  Is there a combination of 
+> > arguments that will give me the arrangement I'm after? 
+> > 
+> > Thanks, in advance, for any help you can provide, 
+> > 
+> > David 
+> > 
+> > -- 
+> > You received this message because you are subscribed to the Google 
+> Groups 
+> > "singularity" group. 
+> > To unsubscribe from this group and stop receiving emails from it, send 
+> an 
+> > email to singu...@lbl.gov <javascript:>. 
+>
+
+------=_Part_18232_1795857306.1522158837738
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Jason,<div><br></div><div>Thanks for the response.=C2=
+=A0 I was running an older version of singularity installed by our IT</div>=
+<div>dept so I downloaded/installed the 2.4.5 release and made the change a=
+s you suggested.</div><div><br>The change in ordering didn&#39;t affect the=
+ behaviour.=C2=A0 ie, with the :ro qualifier on the --bind</div><div>argume=
+nt, the mounted directory cannot be modified; without the :ro qualifier, da=
+ta is &quot;written</div><div>through&quot; to the host&#39;s directory tre=
+e.=C2=A0 (I removed the --overlay argument just to see if this had</div><di=
+v>any effect.=C2=A0 It didn&#39;t.)</div><div><br></div><div>If I run the m=
+ount command inside the container, I&#39;m seeing just the / partition.=C2=
+=A0 There&#39;s no</div><div>indication of an overlay mount.=C2=A0 Is this =
+expected?</div><div><br></div><div>I ran singularity with the --debug optio=
+n and saw lots of output but nothing that told my</div><div>inexperienced e=
+yes anything useful.</div><div><br></div><div>Any other suggestions?=C2=A0 =
+Thanks for the help, by the way.=C2=A0 Much appreciated,</div><div><br></di=
+v><div>David</div><div><br></div><div><br><br>On Monday, March 26, 2018 at =
+5:29:11 PM UTC-4, Jason Stover wrote:<blockquote class=3D"gmail_quote" styl=
+e=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left:=
+ 1ex;">Hi David,
+<br>
+<br>=C2=A0 I don&#39;t believe that will work... IIRC the overlyfs image is=
+ placed
+<br>on top of /. Then those other mounts are placed. So their permissions
+<br>(i.e. read-only) win since the overlay is already in place.
+<br>
+<br>=C2=A0 Generally, we take file system permissions to restrict writing t=
+o
+<br>bound directories. Otherwise, in most use cases, they are actually
+<br>used for program output.
+<br>
+<br>=C2=A0 If you look at &quot;src/start.c&quot; (I&#39;m pretty sure this=
+ is the right
+<br>place, but others know the C code better than I do) you can see the
+<br>order that the mounts happen... So by default it goes:
+<br>
+<br>=C2=A0 =C2=A0 singularity_runtime_overlayfs(<wbr>);
+<br>=C2=A0 =C2=A0 singularity_runtime_mounts();
+<br>
+<br>=C2=A0 You could _try_ swapping singularity_runtime_overlayfs(<wbr>) an=
+d
+<br>singularity_runtime_mounts()..<wbr>. and see if that gets the expected
+<br>behavior you are after. But test on a junk directory...
+<br>
+<br>=C2=A0 I was looking at 2.4.4 tag when going through this, and the abov=
+e is
+<br>a guess on my part from scanning over the code here.
+<br>
+<br>-J
+<br>
+<br>
+<br>On Mon, Mar 26, 2018 at 1:41 PM, David Fletcher &lt;<a href=3D"javascri=
+pt:" target=3D"_blank" gdf-obfuscated-mailto=3D"21JroLJ1AAAJ" rel=3D"nofoll=
+ow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=
+=3D"this.href=3D&#39;javascript:&#39;;return true;">d...@phase92.com</a>&gt=
+; wrote:
+<br>&gt; Hello all,
+<br>&gt;
+<br>&gt; I&#39;m new to singularity and to this group. =C2=A0First, thanks =
+for making this
+<br>&gt; tool available.
+<br>&gt;
+<br>&gt; I&#39;ve got a container image that has an OS (CentOS 6 for now) a=
+nd a
+<br>&gt; collection of C/C++ compilers and so on. =C2=A0This is working fin=
+e.
+<br>&gt;
+<br>&gt; What I&#39;d like to do is get access to a large directory tree in=
+side the
+<br>&gt; container. =C2=A0For many reasons, I don&#39;t want to copy the (l=
+arge)
+<br>&gt; tree into the container image. =C2=A0What I&#39;d like to do is fo=
+rm an overlay file
+<br>&gt; system inside the container where the lower, read-only
+<br>&gt; layer is the large directory tree on the host&#39;s disk and the u=
+pper,
+<br>&gt; read-write level of the overlay file system would point to another
+<br>&gt; directory tree that is located elsewhere.
+<br>&gt;
+<br>&gt; I&#39;ve tried this:
+<br>&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 $ singularity image.create overlay-exp=
+eriment.img
+<br>&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 $ singularity shell --bind /path/to/de=
+v/tree:/work:ro --overlay
+<br>&gt; overlay-experiment.img Centos_6_7.img
+<br>&gt;
+<br>&gt; This didn&#39;t work. =C2=A0Inside the container, if I try to touc=
+h/modify a file,
+<br>&gt; Singularity complains that the file system is read only. =C2=A0If =
+I
+<br>&gt; remove the &#39;:ro&#39;, I can touch/edit files but the /path/to/=
+dev/tree file
+<br>&gt; system is modified. =C2=A0ie, it&#39;s not functioning as an overl=
+ay.
+<br>&gt;
+<br>&gt; Maybe my understanding of overlays is weak. =C2=A0Is there a combi=
+nation of
+<br>&gt; arguments that will give me the arrangement I&#39;m after?
+<br>&gt;
+<br>&gt; Thanks, in advance, for any help you can provide,
+<br>&gt;
+<br>&gt; David
+<br>&gt;
+<br>&gt; --
+<br>&gt; You received this message because you are subscribed to the Google=
+ Groups
+<br>&gt; &quot;singularity&quot; group.
+<br>&gt; To unsubscribe from this group and stop receiving emails from it, =
+send an
+<br>&gt; email to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-=
+mailto=3D"21JroLJ1AAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;ja=
+vascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;r=
+eturn true;">singularity...@lbl.<wbr>gov</a>.
+<br></blockquote></div></div>
+------=_Part_18232_1795857306.1522158837738--
+
+------=_Part_18231_1943470250.1522158837738--

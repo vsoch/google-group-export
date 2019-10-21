@@ -1,0 +1,196 @@
+Date: Thu, 1 Jun 2017 13:40:26 -0700 (PDT)
+From: Maurice M Manning <mmma...@berkeley.edu>
+To: singularity <singu...@lbl.gov>
+Message-Id: <189c1ea4-aad0-4331-b237-f6af6a1d003a@lbl.gov>
+Subject: environment not transferred on import or from def file
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_200_671780197.1496349626658"
+
+------=_Part_200_671780197.1496349626658
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_201_1868991901.1496349626658"
+
+------=_Part_201_1868991901.1496349626658
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+hello
+I am creating a singularity container (v2.2.1) from a docker container. in 
+my Dockerfile Ive set some environment vars but they do not get imported 
+into the Singularity container:
+
+Dockerfile excerpt:
+
+ENV PATH /opt/conda/bin:$PATH
+ENV PYTHONPATH /opt/caiman/CaImAn/:$PYTHONPATH
+
+ENV SHELL=/bin/bash
+
+
+
+Not a big deal but when I create a singularity definition file that has 
+these vars then shell into the container after bootstrap they are still not 
+set.
+
+vagrant@vagrant-ubuntu-trusty-64:~$ cat Singularity 
+
+Bootstrap:docker
+
+From:mmmanning/caiman:latest
+
+
+%environment
+
+SHELL=/bin/bash
+
+PATH=/opt/conda/bin:$PATH
+
+SINGULARITY_SHELL="/bin/bash --norc"
+
+PYTHONPATH=/opt/caiman/CaImAn/:$PYTHONPATH
+
+
+%post
+
+export SHELL PATH SINGULARITY_SHELL PYTHONPATH
+
+
+exec mkdir /scratch/
+
+
+exec bash
+
+exec source /opt/conda/bin/activate CaImAn
+
+Singularity.caiman.img> cat /environment
+
+# Define any environment init code here
+
+
+if test -z "$SINGULARITY_INIT"; then
+
+    PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+
+    PS1="Singularity.$SINGULARITY_CONTAINER> $PS1"
+
+    SINGULARITY_INIT=1
+
+    export PATH PS1 SINGULARITY_INIT
+
+fi
+
+
+As a workaround Ive just edited the /environment file to add these 
+settings. Not sure what Im doing wrong but Ive tried many variations from 
+the docs. Any input would be great.
+
+
+One issue I have not resolved is how to set a virtual environment created 
+during the container configuration as the "standard environment" in which 
+all commands are run. 
+
+Ive tried a number of options including adding  'source activate myenv' to 
+the %post and %runscript sections 
+
+Any ideas?
+
+
+Thanks for your help,
+Maurice
+
+
+
+------=_Part_201_1868991901.1496349626658
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">hello<div>I am creating a singularity container (v2.2.1) f=
+rom a docker container. in my Dockerfile Ive set some environment vars but =
+they do not get imported into the Singularity container:</div><div><br></di=
+v><div>Dockerfile excerpt:</div><div><br></div><blockquote style=3D"margin:=
+ 0 0 0 40px; border: none; padding: 0px;"><div><div>ENV PATH /opt/conda/bin=
+:$PATH</div></div><div><div>ENV PYTHONPATH /opt/caiman/CaImAn/:$PYTHONPATH<=
+/div></div><div><div><br></div></div><div><div>ENV SHELL=3D/bin/bash</div><=
+/div></blockquote><div><br></div><div><br></div><div>Not a big deal but whe=
+n I create a singularity definition file that has these vars then shell int=
+o the container after bootstrap they are still not set.</div><div><br></div=
+><blockquote style=3D"margin: 0 0 0 40px; border: none; padding: 0px;"><div=
+><p class=3D"p1"><span class=3D"s1">vagrant@vagrant-ubuntu-trusty-64:~$ cat=
+ Singularity=C2=A0</span></p></div><div><p class=3D"p1"><span class=3D"s1">=
+Bootstrap:docker</span></p></div><div><p class=3D"p1"><span class=3D"s1">Fr=
+om:mmmanning/caiman:latest</span></p></div><div><p class=3D"p2"><br></p></d=
+iv><div><p class=3D"p1"><span class=3D"s1">%environment</span></p></div><di=
+v><p class=3D"p1"><span class=3D"s1">SHELL=3D/bin/bash</span></p></div><div=
+><p class=3D"p1"><span class=3D"s1">PATH=3D/opt/conda/bin:$PATH</span></p><=
+/div><div><p class=3D"p1"><span class=3D"s1">SINGULARITY_SHELL=3D&quot;/bin=
+/bash --norc&quot;</span></p></div><div><p class=3D"p1"><span class=3D"s1">=
+PYTHONPATH=3D/opt/caiman/CaImAn/:$PYTHONPATH</span></p></div><div><p class=
+=3D"p2"><br></p></div><div><p class=3D"p1"><span class=3D"s1">%post</span><=
+/p></div><div><p class=3D"p1"><span class=3D"s1">export SHELL PATH SINGULAR=
+ITY_SHELL PYTHONPATH</span></p></div><div><p class=3D"p2"><br></p></div><di=
+v><p class=3D"p1"><span class=3D"s1">exec mkdir /scratch/</span></p></div><=
+div><p class=3D"p2"><br></p></div><div><p class=3D"p1"><span class=3D"s1">e=
+xec bash</span></p></div><div><p class=3D"p1"><span class=3D"s1">exec sourc=
+e /opt/conda/bin/activate CaImAn</span></p></div></blockquote><div>
+
+
+
+
+<style type=3D"text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Menlo}
+p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Menlo; min-height: 14.0=
+px}
+span.s1 {font-variant-ligatures: no-common-ligatures}
+</style>
+
+
+
+
+
+<p class=3D"p2"><span class=3D"s1"></span></p>
+</div><div>
+
+
+
+
+<p class=3D"p2"><span class=3D"s1"></span></p></div><blockquote style=3D"ma=
+rgin: 0 0 0 40px; border: none; padding: 0px;"><div><p class=3D"p1"><span c=
+lass=3D"s1">Singularity.caiman.img&gt; cat /environment</span></p></div><di=
+v><p class=3D"p1"><span class=3D"s1"># Define any environment init code her=
+e</span></p></div><div><p class=3D"p2"><br></p></div><div><p class=3D"p1"><=
+span class=3D"s1">if test -z &quot;$SINGULARITY_INIT&quot;; then</span></p>=
+</div><div><p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 PATH=3D$PATH:/b=
+in:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin</span></p></div>=
+<div><p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 PS1=3D&quot;Singulari=
+ty.$SINGULARITY_CONTAINER&gt; $PS1&quot;</span></p></div><div><p class=3D"p=
+1"><span class=3D"s1">=C2=A0 =C2=A0 SINGULARITY_INIT=3D1</span></p></div><d=
+iv><p class=3D"p1"><span class=3D"s1">=C2=A0 =C2=A0 export PATH PS1 SINGULA=
+RITY_INIT</span></p></div><div><p class=3D"p2"></p></div><div><p class=3D"p=
+1"><span class=3D"s1">fi</span></p></div></blockquote><div><p class=3D"p2">=
+<span class=3D"s1"></span></p></div><div><br></div><div>As a workaround Ive=
+ just edited the /environment file to add these settings. Not sure what Im =
+doing wrong but Ive tried many variations from the docs. Any input would be=
+ great.</div><div><br></div><div><br></div><div>One issue I have not resolv=
+ed is how to set a virtual environment created during the container configu=
+ration as the &quot;standard environment&quot; in which all commands are ru=
+n.=C2=A0</div><div><br></div><div>Ive tried a number of options including a=
+dding =C2=A0&#39;source activate myenv&#39; to the %post and=C2=A0<span sty=
+le=3D"font-variant-ligatures: no-common-ligatures; font-family: Menlo; font=
+-size: 12px;">%runscript=C2=A0</span>sections=C2=A0</div>
+
+
+
+
+<style type=3D"text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Menlo}
+span.s1 {font-variant-ligatures: no-common-ligatures}
+</style>
+
+
+<div><br></div><div>Any ideas?</div><div><br></div><div><br></div><div>Than=
+ks for your help,</div><div>Maurice</div><div><br></div><div><br></div></di=
+v>
+------=_Part_201_1868991901.1496349626658--
+
+------=_Part_200_671780197.1496349626658--

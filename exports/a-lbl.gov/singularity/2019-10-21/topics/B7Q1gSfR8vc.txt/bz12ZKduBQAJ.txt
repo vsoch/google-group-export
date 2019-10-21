@@ -1,0 +1,938 @@
+X-Received: by 2002:a17:902:2a0b:: with SMTP id i11mr77179plb.43.1554329737670;
+        Wed, 03 Apr 2019 15:15:37 -0700 (PDT)
+X-BeenThere: singularity@lbl.gov
+Received: by 2002:aa7:8a82:: with SMTP id a2ls853935pfc.13.gmail; Wed, 03 Apr
+ 2019 15:15:36 -0700 (PDT)
+X-Received: by 2002:a63:c112:: with SMTP id w18mr2207147pgf.200.1554329735806;
+        Wed, 03 Apr 2019 15:15:35 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1554329735; cv=none;
+        d=google.com; s=arc-20160816;
+        b=yJrWKzBnPCv6QsSJudKPqUbcM26F0hh+lL3091lAa3ox7Mg4UjuFwsmHRcQqqIM9XZ
+         VrvRuRoV+d5EyF1x4r1LEbDEOI0tMYR4m1fUrlZ33aUKn9NklkjmpZMj6zRBPr2pu9Tu
+         0t5/S/MEj5QOcvfe0awGYzRT3UXkVycVe+1+mfP6nP8/NOPdIwkVcGuEtGD/IivWbjjB
+         VCxgUvule8BPxxfAypomB+wSuZWuvesXwrfzd37K/KqWsC2sIW2uMxI9DDuU/ht0/+wn
+         b/WljRVVIW3eUhm0BcQ61pog6X1Y7rKE7x42ztTeRcG4aFmuv2TtyRkHRcOVfJnrY9uV
+         Z7rg==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816;
+        h=mime-version:content-language:accept-language:in-reply-to
+         :references:message-id:date:thread-index:thread-topic:subject:to
+         :from:dkim-signature;
+        bh=SUDBP6kyxmYSqABZOzgsmB5xurUq7PYXiwYLF91Vt58=;
+        b=BM7Mc7XHf++RujZNwOSjjMP4HSE/OOskQDGF0iXZ9ID4pEkOG2BB2ai4UBfwudzGwp
+         +lepu6Q4sySb1bCAg19J2Jw8WhEeibh070AuenZ3KpydFpWi77ea96JNEuja/UX/HGbd
+         uR+jXa1l4OjQupEjct7B3A3qME4duuloJRgF2elOkOQWcP0zbiNPOOksOv7dqFwtkqSc
+         wSCE4bvVjpvAzyerJUblek247Wnk2JO6g1H+0uyKhbk+0npSc6KJEBXtaBe1ff0G2ha7
+         4C5n7FR5c73zUV36f1s8RWImNnITZfoSt6klpgyKI7GEQ5YxR54t+pYKVRLsVBK+CiCY
+         W6pQ==
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=pass head...@ucsdcloud.onmicrosoft.com header.s=selector1-sdsc-edu header.b=Os8fOxXU;
+       spf=pass (google.com: domain of mka...@sdsc.edu designates 132.239.0.10 as permitted sender) smtp.mailfrom=mka...@sdsc.edu
+Return-Path: <mka...@sdsc.edu>
+Received: from fe4.lbl.gov (fe4.lbl.gov. [131.243.228.53])
+        by mx.google.com with ESMTP id v3si10363117pga.354.2019.04.03.15.15.35
+        for <singu...@lbl.gov>;
+        Wed, 03 Apr 2019 15:15:35 -0700 (PDT)
+Received-SPF: pass (google.com: domain of mka...@sdsc.edu designates 132.239.0.10 as permitted sender) client-ip=132.239.0.10;
+Authentication-Results: mx.google.com;
+       dkim=pass head...@ucsdcloud.onmicrosoft.com header.s=selector1-sdsc-edu header.b=Os8fOxXU;
+       spf=pass (google.com: domain of mka...@sdsc.edu designates 132.239.0.10 as permitted sender) smtp.mailfrom=mka...@sdsc.edu
+X-Ironport-SBRS: 2.3
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: =?us-ascii?q?A0GUAADQL6VcewoA74RiAxsBAQEBAwEBA?=
+ =?us-ascii?q?QcDAQEBgVMEAQEBCwGBDgEuKSdrVCAEMoQHg04DhTGJckqCDYMAhjiNWoEuFIE?=
+ =?us-ascii?q?QAxgXFgMMAQ4BGAEOBQKBAkeCL0YCP4UGIjYHDQEBAwEBAQgBAwIBAQIQAQEJD?=
+ =?us-ascii?q?QoHKSMBC4I6BQIDHwcKBBwxOQIvAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE?=
+ =?us-ascii?q?BAQEBAQEBAQEBAQUCDQcfBQsHJgEBAQEDQAEBCQECLA8CAQgRAgIBASEHByEED?=
+ =?us-ascii?q?AEUCQgCBAgHBAEHDAkEgwImAWpMAxUBAgIKoXwCiV81giCCeQEBBXQKATIBAwI?=
+ =?us-ascii?q?Bg0oNC0ABB4FECAkBgSYBhF2GVReBQT6BEUaCTD6CGkcCAoEiCgESAQkYHQIMC?=
+ =?us-ascii?q?RGCdIIEIopMhmeCCZF0NgMGAod8iDaDXoIFXZFli0uBGIUCgUKCJ4YdgQyCPQI?=
+ =?us-ascii?q?EAgQFAg4BAQWBOxkNWjBxchM7gmwJggEMF4NMaoQqhT9yAQEBAQyBGIxVR4F3A?=
+ =?us-ascii?q?QE?=
+X-IPAS-Result: =?us-ascii?q?A0GUAADQL6VcewoA74RiAxsBAQEBAwEBAQcDAQEBgVMEAQE?=
+ =?us-ascii?q?BCwGBDgEuKSdrVCAEMoQHg04DhTGJckqCDYMAhjiNWoEuFIEQAxgXFgMMAQ4BG?=
+ =?us-ascii?q?AEOBQKBAkeCL0YCP4UGIjYHDQEBAwEBAQgBAwIBAQIQAQEJDQoHKSMBC4I6BQI?=
+ =?us-ascii?q?DHwcKBBwxOQIvAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBA?=
+ =?us-ascii?q?QUCDQcfBQsHJgEBAQEDQAEBCQECLA8CAQgRAgIBASEHByEEDAEUCQgCBAgHBAE?=
+ =?us-ascii?q?HDAkEgwImAWpMAxUBAgIKoXwCiV81giCCeQEBBXQKATIBAwIBg0oNC0ABB4FEC?=
+ =?us-ascii?q?AkBgSYBhF2GVReBQT6BEUaCTD6CGkcCAoEiCgESAQkYHQIMCRGCdIIEIopMhme?=
+ =?us-ascii?q?CCZF0NgMGAod8iDaDXoIFXZFli0uBGIUCgUKCJ4YdgQyCPQIEAgQFAg4BAQWBO?=
+ =?us-ascii?q?xkNWjBxchM7gmwJggEMF4NMaoQqhT9yAQEBAQyBGIxVR4F3AQE?=
+X-IronPort-AV: E=Sophos;i="5.60,306,1549958400"; 
+   d="scan'208,217";a="57525178"
+Received: from iport-acv5-out.ucsd.edu ([132.239.0.10])
+  by fe4.lbl.gov with ESMTP; 03 Apr 2019 15:15:33 -0700
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: =?us-ascii?q?A2FIAADQL6Vc/3UA74RiAxoBAQEBAQIBA?=
+ =?us-ascii?q?QEBBwIBAQEBgVMDAQEBAQsBgQ4BLikna1QgBDKEB4NOA4UxiXKCV4MAhjiNWoE?=
+ =?us-ascii?q?uFIEQAxgXFgMMAQ4BGAEOBQKBAkeCL0YCP4UoNgcNAQEDAQEBCAEDAgEBAmkcA?=
+ =?us-ascii?q?QuCOgUCAx8HCgQcMTkCLwEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE?=
+ =?us-ascii?q?BAQEBAQEFAg0HHwULByYBAQEBA0ABAQkBAiwPAgEIEQICAQEhBwchBAwBFAkIA?=
+ =?us-ascii?q?gQIBwQBBwwJBIMCJgFqTAMVAQIMoXwCiV81giCCeQEBBXQKATIBAwIBg0oNC0A?=
+ =?us-ascii?q?BB4FECAkBgSYBhF2GbIFBPoERRoJMPoIaRwICgSIKARIBCRgdAgwJEYJ0ggQii?=
+ =?us-ascii?q?kyGZ4IJkXQ2AwYCh3yINoNeggVdkWWLS4EYhQKBQoInhh2BDII9AgQCBAUCDgE?=
+ =?us-ascii?q?BBYE7GQ0lNTBxchM7gmwJggEMF4NMaoQqhT9yAQEBAQyBGIxVR4F3AQE?=
+X-IPAS-Result: =?us-ascii?q?A2FIAADQL6Vc/3UA74RiAxoBAQEBAQIBAQEBBwIBAQEBgVM?=
+ =?us-ascii?q?DAQEBAQsBgQ4BLikna1QgBDKEB4NOA4UxiXKCV4MAhjiNWoEuFIEQAxgXFgMMA?=
+ =?us-ascii?q?Q4BGAEOBQKBAkeCL0YCP4UoNgcNAQEDAQEBCAEDAgEBAmkcAQuCOgUCAx8HCgQ?=
+ =?us-ascii?q?cMTkCLwEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEFAg0HH?=
+ =?us-ascii?q?wULByYBAQEBA0ABAQkBAiwPAgEIEQICAQEhBwchBAwBFAkIAgQIBwQBBwwJBIM?=
+ =?us-ascii?q?CJgFqTAMVAQIMoXwCiV81giCCeQEBBXQKATIBAwIBg0oNC0ABB4FECAkBgSYBh?=
+ =?us-ascii?q?F2GbIFBPoERRoJMPoIaRwICgSIKARIBCRgdAgwJEYJ0ggQiikyGZ4IJkXQ2AwY?=
+ =?us-ascii?q?Ch3yINoNeggVdkWWLS4EYhQKBQoInhh2BDII9AgQCBAUCDgEBBYE7GQ0lNTBxc?=
+ =?us-ascii?q?hM7gmwJggEMF4NMaoQqhT9yAQEBAQyBGIxVR4F3AQE?=
+X-IronPort-AV: E=Sophos;i="5.60,306,1549958400"; 
+   d="scan'208,217";a="463335928"
+X-Spam-Status: No
+X-Spam-Level: 
+Received: from xcore-cub1.ucsd.edu (HELO XCORE-CUB1.AD.UCSD.EDU) ([132.239.0.117])
+  by iport-acv5-out.ucsd.edu with ESMTP/TLS/AES256-GCM-SHA384; 03 Apr 2019 15:15:30 -0700
+Received: from XMAIL-A1.AD.UCSD.EDU (132.239.0.26) by XCORE-CUB1.AD.UCSD.EDU
+ (132.239.0.117) with Microsoft SMTP Server (TLS) id 14.3.408.0; Wed, 3 Apr
+ 2019 15:15:15 -0700
+Received: from XMAIL-B1.AD.UCSD.EDU (132.239.0.82) by XMAIL-A1.AD.UCSD.EDU
+ (132.239.0.26) with Microsoft SMTP Server (TLS) id 15.1.396.30; Wed, 3 Apr
+ 2019 15:15:14 -0700
+Received: from NAM05-DM3-obe.outbound.protection.outlook.com (104.47.49.50) by
+ XMAIL-B1.AD.UCSD.EDU (132.239.0.82) with Microsoft SMTP Server (TLS) id
+ 15.1.396.30 via Frontend Transport; Wed, 3 Apr 2019 15:15:14 -0700
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=ucsdcloud.onmicrosoft.com; s=selector1-sdsc-edu;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=SUDBP6kyxmYSqABZOzgsmB5xurUq7PYXiwYLF91Vt58=;
+ b=Os8fOxXUiA5MDF3OCc6vasdHEZlYxWCoyh5OvjL04UFRddzu2zeaKxcsdx9kACdqC+b9zBGPNIIBpdjauDHC1LO/XVv5A58Rg5WcpIQNk2stMgnKq/njdvLG/bCA1gYx3vMsYqXbbLCYr4wsV4nk7J3n6g2b/QHd9mvFbw/+koQ=
+Received: from BYAPR04MB3814.namprd04.prod.outlook.com (52.135.214.21) by
+ BYAPR04MB5320.namprd04.prod.outlook.com (20.178.49.209) with Microsoft SMTP
+ Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.20.1750.19; Wed, 3 Apr 2019 22:15:12 +0000
+Received: from BYAPR04MB3814.namprd04.prod.outlook.com
+ ([fe80::1eb:7175:ff7f:34ae]) by BYAPR04MB3814.namprd04.prod.outlook.com
+ ([fe80::1eb:7175:ff7f:34ae%2]) with mapi id 15.20.1771.011; Wed, 3 Apr 2019
+ 22:15:12 +0000
+From: "Kandes, Martin" <mka...@sdsc.edu>
+To: "singu...@lbl.gov" <singu...@lbl.gov>
+Subject: Re: [Singularity] git won't install through command in recipe file
+Thread-Topic: [Singularity] git won't install through command in recipe file
+Thread-Index: AQHU20phEfb4BQuylUaaT3HY6xTciaYM67AAgAAKd4CAAAj8gIAAA8AAgAAM5ACABKkUMoAC3WyAgBTAhoCAAAD5AIAABM2YgAE5noCAADNbRoAAE3cAgAAuzQCAAAsUgIAABUco
+Date: Wed, 3 Apr 2019 22:15:12 +0000
+Message-ID: <BYAPR04MB3814F85E8AA7959B95E21743DC570@BYAPR04MB3814.namprd04.prod.outlook.com>
+References: <038f06b6-0244-4a54-86b8-882874d0fa40@lbl.gov>
+ <CAM=pu+JxweWtVGSd5aURg1cV8=pJhEYt+ae+2MnOoLM-FOV_WA@mail.gmail.com>
+ <743afdf6-6575-4648-a289-637dc0e416eb@lbl.gov>
+ <CAM=pu+J3h5xe8JX9fncuhKXFzwQG=cUCMW2OXQufDm8zDmqfkw@mail.gmail.com>
+ <fa256970-46b9-4fba-9493-fa20f4fb2e9a@lbl.gov>
+ <CAODo_BQV5cSb92BC35HZC0h7O7vW4ze7HTvp6e5p47JRiMz2NQ@mail.gmail.com>
+ <BYAPR04MB3814C095EBFB6546408D0471DC470@BYAPR04MB3814.namprd04.prod.outlook.com>
+ <6fda08dd-15bb-4d88-8cd0-849813ec4c06@lbl.gov>
+ <29adfdf1-84b8-4dde-8760-fa1b2666175d@lbl.gov>
+ <CAM=pu+JqwmkCsD9zvTCqHPfdphsmJo74fnuaOGEHxyE-xDThhQ@mail.gmail.com>
+ <BYAPR04MB3814251E032B15CFD0EE7627DC560@BYAPR04MB3814.namprd04.prod.outlook.com>
+ <d2111d1d-05fa-4141-8c54-42bc9d8146e5@lbl.gov>
+ <BYAPR04MB3814178350DCCDD1342117CFDC570@BYAPR04MB3814.namprd04.prod.outlook.com>
+ <01bad951-97d6-47d5-8a2b-1cbc98555e48@lbl.gov>
+ <BN6PR03MB25452CE67BE889F2C2500571CE570@BN6PR03MB2545.namprd03.prod.outlook.com>,<CAM=pu++T=xPDBxFvYL4HPu=vKZyuzVnAxrHcpF6Nc-cGht=G-g@mail.gmail.com>
+In-Reply-To: <CAM=pu++T=xPDBxFvYL4HPu=vKZyuzVnAxrHcpF6Nc-cGht=G-g@mail.gmail.com>
+Accept-Language: en-US
+Content-Language: en-US
+X-MS-Has-Attach:
+X-MS-TNEF-Correlator:
+authentication-results: spf=none (sender IP is )
+ smtp.mailfrom=mka...@sdsc.edu; 
+x-originating-ip: [2607:f720:f00:4849:996:841d:cbac:c231]
+x-ms-publictraffictype: Email
+x-ms-office365-filtering-correlation-id: 434246ec-eaa9-4b52-4df2-08d6b881d778
+x-microsoft-antispam: BCL:0;PCL:0;RULEID:(2390118)(7020095)(4652040)(8989299)(5600139)(711020)(4605104)(4534185)(4627221)(201703031133081)(201702281549075)(8990200)(2017052603328)(7193020);SRVR:BYAPR04MB5320;
+x-ms-traffictypediagnostic: BYAPR04MB5320:
+x-ms-exchange-purlcount: 10
+x-microsoft-antispam-prvs: <BYAPR04MB53204A78BB...@BYAPR04MB5320.namprd04.prod.outlook.com>
+x-forefront-prvs: 0996D1900D
+x-forefront-antispam-report: SFV:NSPM;SFS:(10009020)(6019001)(136003)(396003)(346002)(376002)(366004)(39860400002)(269900001)(55674003)(51874003)(199004)(189003)(74316002)(6916009)(966005)(105586002)(316002)(786003)(2501003)(606006)(93886005)(106356001)(14454004)(19627405001)(75432002)(14444005)(46003)(446003)(55016002)(88552002)(54896002)(2351001)(2906002)(478600001)(5024004)(5640700003)(71200400001)(236005)(53936002)(9686003)(5660300002)(25786009)(86362001)(6306002)(53546011)(186003)(76176011)(486006)(7736002)(6506007)(33656002)(229853002)(71190400001)(97736004)(6606003)(102836004)(256004)(6436002)(6246003)(476003)(11346002)(8936002)(1730700003)(7696005)(68736007)(6116002)(81156014)(99286004)(81166006)(8676002)(52536014)(407365006)(256605007);DIR:OUT;SFP:1101;SCL:1;SRVR:BYAPR04MB5320;H:BYAPR04MB3814.namprd04.prod.outlook.com;FPR:;SPF:None;LANG:en;PTR:InfoNoRecords;A:1;MX:1;
+received-spf: None (protection.outlook.com: sdsc.edu does not designate
+ permitted sender hosts)
+x-ms-exchange-senderadcheck: 1
+x-microsoft-antispam-message-info: uRk32dBe361OlvrNeD/mEydOmVImjI1DqXtRITlncXEGzsZcsreZ3D8z0U3BkABNEebylECfIrtZAYW7I7mIXVy6j77vqzudc5PU+a725xOl8ZUWNzvaIWTWZPXgHvaKD3j3JxS/hqN7tZcxGU2Ii4M3Mv5SI5oGi1nUoW0zW3wlaoEsS7uf4BtOqtTm4xOESnr7xOVBHpndBzpVCOwociwKC9zhApcNk/vQDOiizhPwWHkD6MO/lde6Nx5aMY/Izclauy7N4DGiOYQPmacx6/E4U/HiLcEm3Pq4vM7MjqkH9SO8j8uyH/6o2bws3JmJ1hDSPUD8c+2WILty7MDkAXeLSU7jUFtmVMh+GV7tzNZFyIo5q0TgQw+PbHZYSnYWneKoN4GBmnJqcbeQV/SZOOlU6AuA6zcZTZJyLtdu3d0=
+Content-Type: multipart/alternative;
+	boundary="_000_BYAPR04MB3814F85E8AA7959B95E21743DC570BYAPR04MB3814namp_"
+MIME-Version: 1.0
+X-MS-Exchange-CrossTenant-Network-Message-Id: 434246ec-eaa9-4b52-4df2-08d6b881d778
+X-MS-Exchange-CrossTenant-originalarrivaltime: 03 Apr 2019 22:15:12.2670
+ (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: 8a198873-4fec-4e76-8182-ca479edbbd60
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: BYAPR04MB5320
+Return-Path: mka...@sdsc.edu
+X-OriginatorOrg: sdsc.edu
+
+--_000_BYAPR04MB3814F85E8AA7959B95E21743DC570BYAPR04MB3814namp_
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+Rutu,
+
+
+I'm not too familiar with Vagrant myself. My guess is there is some hot key=
+s you have to hold down to connect keyboard/mouse interaction to the Vagran=
+t-based VM screen. At least, that's how it works in VirtualBox. Are you usi=
+ng VirtualBox with Vagrant?
+
+
+Marty
+
+________________________________
+From: v <vso...@gmail.com>
+Sent: Wednesday, April 3, 2019 2:46:47 PM
+To: singu...@lbl.gov
+Subject: Re: [Singularity] git won't install through command in recipe file
+
+Interesting, so this is definitely something to do with the Singularity bui=
+ld process - you can actually use the same base (from Docker) and not run i=
+nto any of these issues. Here is a starter Dockerfile:
+
+FROM tensorflow/tensorflow:1.12.0-gpu-py3
+ENV SHELL /bin/bash
+ENV DEBIAN_FRONTEND noninteractive
+RUN apt-get update && apt-get install -y git
+RUN mkdir -p /software && \
+    cd /software && \
+    git clone https://github.com/cerr/CERR.git && \
+    git clone https://github.com/cerr/aimodels.git
+
+You can (after your modifications) test this, push to docker hub, and then =
+just pull back into Singularity. It's not a direct Singularity recipe, but =
+hey, it gets the job done.
+
+On Wed, Apr 3, 2019 at 5:07 PM Nadas, Stephen <na...@bu.edu<mailto:na...@bu=
+.edu>> wrote:
+Hi Rutu,
+
+I) I saw this and it seems to reproduce (the "bad repo" stuff).   I started=
+ from
+
+       Bootstrap: docker
+       From: tensorflow/tensorflow:1.12.0-gpu-py3
+
+       And then apt-get install git or git-core and got errors
+
+       E: Failed to fetch http://archive.ubuntu.com/ubuntu/pool/main/o/open=
+ssh/openssh-client_7.2p2-4ubuntu2.5_amd64.deb  404  Not Found [IP: 91.189.8=
+8.152 80]
+
+Have a look at https://stackoverflow.com/questions/30316812/ubuntu-apt-get-=
+unable-to-fetch-packages
+
+Consider the suggestion to add the google nameservers  (8.8.8.8/8.8.4.4<htt=
+p://8.8.8.8/8.8.4.4>) to /etc/resolve.conf which fixed installing git for m=
+e, without editing the urls in sources.list
+
+
+II) you may want an " export DEBIAN_FRONTEND=3Dnoninteractive" in the post =
+section to try to pass the pop up menus if you want to go on with building.=
+  You could consider setting up locale info early in %post section
+
+
+III) if you want interactive you can consider building a --sandbox, stoppin=
+g at a good point, and then sudo singularity shell --writable into the sand=
+box to continue in a shell
+
+Ymmv, hth,
+
+Steve
+
+
+From: Rutu Pandya <rut...@gmail.com<mailto:rut...@gmail.com>>
+Sent: Wednesday, April 3, 2019 2:20 PM
+To: singularity <singu...@lbl.gov<mailto:singu...@lbl.gov>>
+Cc: rut...@gmail.com<mailto:rut...@gmail.com>; mka...@sdsc.edu<mailto:mka..=
+.@sdsc.edu>
+Subject: Re: [Singularity] git won't install through command in recipe file
+
+Hi Marty,
+
+Yes I am using Vagrant. Attached is the screen. I can't tab or use up and d=
+own arrow keyes or anything else to get to OK to continue the process.
+
+Thanks,
+Rutu
+
+On Wednesday, April 3, 2019 at 1:13:21 PM UTC-4, Kandes, Martin wrote:
+Rutu,
+
+There shouldn't be any dialog box that pops up when building the container =
+from the definition file. Are you using a Linux virtual machine (e.g., runn=
+ing on Virtual Box) to use Singularity? Maybe you can send us some screensh=
+ots showing the issue?
+
+Marty
+________________________________________
+From: Rutu Pandya <javascript:>
+Sent: Wednesday, April 3, 2019 7:06:09 AM
+To: singularity
+Cc: Kandes, Martin
+Subject: Re: [Singularity] git won't install through command in recipe file
+
+Hi Marty, I actually tried that first - but in the process a dialogue box c=
+omes that requires me to click/select "OK", but they keyes on my keyboard a=
+re not mapped to the display it seems and I am not able to proceed from her=
+e.
+
+I tried a few other recipes as well from Singularity Hub, haven't yet been =
+able to successfully build a container that has Tensorflow 1.12.0, cuda 9 a=
+nd cudnn 7 and has also has git. :(
+
+Thanks,
+Rutu
+
+On Tuesday, April 2, 2019 at 3:25:50 PM UTC-4, Kandes, Martin wrote:
+Rutu,
+
+And as I mentioned previously, if you need to build a custom container for =
+your work, have a look at our definition file [1]. We build TensorFlow with=
+ GPU support from source for both python2 and python3.
+
+Marty
+
+[1]
+
+https://github.com/mkandes/naked-singularity/blob/master/definition-files/c=
+omet/tensorflow/tensorflow-gpu.def
+________________________________________
+From: v <mailto:v...@gmail.com<mailto:v...@gmail.com>>
+Sent: Tuesday, April 2, 2019 12:06:30 PM
+To: mailto:si...@lbl.gov<mailto:si...@lbl.gov>
+Subject: Re: [Singularity] git won't install through command in recipe file
+
+Not a specific one, but if you search for the label that is the cuda versio=
+n, there are a ton!
+
+https://singularity-hub.org/labels/com.nvidia.cuda.version
+
+A control F finds 30 with tensorflow, so maybe one of those guys will be go=
+od :)
+
+On Tue, Apr 2, 2019 at 3:03 PM Rutu Pandya <mailto:r...@gmail.com<mailto:r.=
+..@gmail.com>> wrote:
+Hi Vanessa,
+
+Would you happen to know of a container having cuda and tensorflow both ins=
+talled?
+
+Thanks,
+Rutu
+
+
+On Wednesday, March 20, 2019 at 10:08:45 AM UTC-4, Rutu Pandya wrote:
+Thank you Stephen, Kandes!
+
+On Monday, March 18, 2019 at 2:24:56 PM UTC-4, Kandes, Martin wrote:
+Rutu,
+
+In case you're still having problems, here is our base TensorFlow definitio=
+n file [1].
+
+Marty
+
+[1]
+
+https://github.com/mkandes/naked-singularity/blob/master/definition-files/c=
+omet/tensorflow/tensorflow-gpu.def
+________________________________________
+From: 'Stephen Hauskins' via singularity <mailto:si...@lbl.gov<mailto:si...=
+@lbl.gov>>
+Sent: Friday, March 15, 2019 12:13:32 PM
+To: mailto:si...@lbl.gov<mailto:si...@lbl.gov>
+Subject: Re: [Singularity] git won't install through command in recipe file
+
+Rutu
+
+It looks like you are pointing at a non-existent repository or mirror for t=
+he software.  The error reports that the files are not at
+the URL you are pointing at.
+
+I am not a ubuntu person but rather centos but you should be able to point =
+at another ubuntu repository site.
+
+
+
+On Fri, Mar 15, 2019 at 11:27 AM Rutu Pandya <mailto:r...@gmail.com<mailto:=
+r...@gmail.com>> wrote:
+The install from the source did not work as well, error attached.
+
+Will try bootsrapping from the one you suggested and reinstall tensorflow v=
+ersion 1.12.
+
+Thanks!
+Rutu
+
+
+
+On Friday, March 15, 2019 at 2:14:16 PM UTC-4, vanessa wrote:
+I'm not sure - I'd guess it's the latest in development (1.13.1 something) =
+so you could try installing the version you need:
+
+pip install tensorflow=3D=3D1.12.0
+
+On Fri, Mar 15, 2019 at 1:43 PM Rutu Pandya <mailto:r...@gmail.com<mailto:r=
+...@gmail.com>> wrote:
+This is great, would you happen to know what version of Tensorflow this mig=
+ht be? I need it to be 1.12.0..
+
+Thanks again for your help Vanessa!
+
+On Friday, March 15, 2019 at 1:24:13 PM UTC-4, vanessa wrote:
+Yeah that is weird - maybe the server is down? In the meantime, I found a b=
+ase that has git already installed, if it helps.
+
+Bootstrap:docker
+From:tensorflow/tensorflow:devel-gpu-py3
+
+# sudo singularity build container.sif Singularity
+
+%environment
+    export SHELL=3D/bin/bash
+%post
+
+  mkdir -p /software
+  cd /software
+  git clone https://github.com/cerr/CERR.git
+  git clone https://github.com/cerr/aimodels.git
+
+If it doesn't resolve, you can try https://www.digitalocean.com/community/t=
+utorials/how-to-install-git-on-ubuntu-16-04.
+
+On Fri, Mar 15, 2019 at 12:15 PM Rutu Pandya <mailto:r...@gmail.com<mailto:=
+r...@gmail.com>> wrote:
+Hello,
+
+I am building a container using a recipe file. And want to install git to b=
+e able to clone a repo from it into the container. Even after trying severa=
+l fixes and an exhaustive search for the correct command, I am unable to in=
+stall git. The server I have is Ubuntu 16.04.
+
+Attached is the recipe file for reference.
+
+Thanks in advance!
+Rutu
+--
+You received this message because you are subscribed to the Google Groups "=
+singularity" group.
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to mailto:singu...@lbl.gov<mailto:singu...@lbl.gov>.
+
+
+
+--
+Vanessa Villamia Sochat
+Stanford University '16
+(603) 321-0676
+--
+You received this message because you are subscribed to the Google Groups "=
+singularity" group.
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to mailto:singu...@lbl.gov<mailto:singu...@lbl.gov>.
+
+
+
+--
+Vanessa Villamia Sochat
+Stanford University '16
+(603) 321-0676
+--
+You received this message because you are subscribed to the Google Groups "=
+singularity" group.
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to mailto:singu...@lbl.gov<mailto:singu...@lbl.gov>.
+
+
+--
+
+
+https://its.pbsci.ucsc.edu
+
+https://www.hb.ucsc.edu
+
+Stephen Hauskins
+
+831-334-3961
+--
+You received this message because you are subscribed to the Google Groups "=
+singularity" group.
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to mailto:singu...@lbl.gov<mailto:singu...@lbl.gov>.
+--
+You received this message because you are subscribed to the Google Groups "=
+singularity" group.
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to mailto:si...@lbl.gov<mailto:si...@lbl.gov>.
+
+
+
+--
+Vanessa Villamia Sochat
+Stanford University '16
+(603) 321-0676
+--
+You received this message because you are subscribed to the Google Groups "=
+singularity" group.
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to mailto:si...@lbl.gov<mailto:si...@lbl.gov>.
+--
+You received this message because you are subscribed to the Google Groups "=
+singularity" group.
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to mailto:singu...@lbl.gov<mailto:singularity%...@lbl.gov>.
+
+--
+You received this message because you are subscribed to the Google Groups "=
+singularity" group.
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to singu...@lbl.gov<mailto:singularity%...@lbl.gov>.
+
+
+--
+Vanessa Villamia Sochat
+Stanford University '16
+(603) 321-0676
+
+--
+You received this message because you are subscribed to the Google Groups "=
+singularity" group.
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to singu...@lbl.gov<mailto:singu...@lbl.gov>.
+
+--_000_BYAPR04MB3814F85E8AA7959B95E21743DC570BYAPR04MB3814namp_
+Content-Type: text/html; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+<head>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dus-ascii"=
+>
+<style type=3D"text/css" style=3D"display:none;"><!-- P {margin-top:0;margi=
+n-bottom:0;} --></style>
+</head>
+<body dir=3D"ltr">
+<div id=3D"divtagdefaultwrapper" style=3D"font-size:12pt;color:#000000;font=
+-family:Calibri,Helvetica,sans-serif;" dir=3D"ltr">
+<p style=3D"margin-top:0;margin-bottom:0">Rutu,</p>
+<p style=3D"margin-top:0;margin-bottom:0"><br>
+</p>
+<p style=3D"margin-top:0;margin-bottom:0">I'm not too familiar with Vagrant=
+ myself. My guess is there is some hot keys you have to hold down to connec=
+t keyboard/mouse interaction to the Vagrant-based VM screen. At least, that=
+'s how it works in VirtualBox. Are
+ you using VirtualBox with Vagrant?<br>
+</p>
+<p style=3D"margin-top:0;margin-bottom:0"><br>
+</p>
+<p style=3D"margin-top:0;margin-bottom:0">Marty<br>
+</p>
+</div>
+<hr style=3D"display:inline-block;width:98%" tabindex=3D"-1">
+<div id=3D"divRplyFwdMsg" dir=3D"ltr"><font face=3D"Calibri, sans-serif" st=
+yle=3D"font-size:11pt" color=3D"#000000"><b>From:</b> v &lt;vs...@gmail.com=
+&gt;<br>
+<b>Sent:</b> Wednesday, April 3, 2019 2:46:47 PM<br>
+<b>To:</b> singu...@lbl.gov<br>
+<b>Subject:</b> Re: [Singularity] git won't install through command in reci=
+pe file</font>
+<div>&nbsp;</div>
+</div>
+<div>
+<div dir=3D"ltr">
+<div dir=3D"ltr">Interesting, so this is definitely something to do with th=
+e Singularity build process - you can actually use the same base (from Dock=
+er) and not run into any of these issues. Here is a starter Dockerfile:
+<div><br>
+</div>
+<div>
+<blockquote class=3D"x_gmail_quote" style=3D"margin:0px 0px 0px 0.8ex; bord=
+er-left:1px solid rgb(204,204,204); padding-left:1ex">
+FROM tensorflow/tensorflow:1.12.0-gpu-py3<br>
+ENV SHELL /bin/bash<br>
+ENV DEBIAN_FRONTEND noninteractive<br>
+RUN apt-get update &amp;&amp; apt-get install -y git<br>
+RUN mkdir -p /software &amp;&amp; \<br>
+&nbsp; &nbsp; cd /software &amp;&amp; \<br>
+&nbsp; &nbsp; git clone <a href=3D"https://github.com/cerr/CERR.git">https:=
+//github.com/cerr/CERR.git</a> &amp;&amp; \<br>
+&nbsp; &nbsp; git clone <a href=3D"https://github.com/cerr/aimodels.git">ht=
+tps://github.com/cerr/aimodels.git</a></blockquote>
+</div>
+<div><br>
+</div>
+<div>You can (after your modifications) test this, push to docker hub, and =
+then just pull back into Singularity. It's not a direct Singularity recipe,=
+ but hey, it gets the job done.</div>
+</div>
+</div>
+<br>
+<div class=3D"x_gmail_quote">
+<div dir=3D"ltr" class=3D"x_gmail_attr">On Wed, Apr 3, 2019 at 5:07 PM Nada=
+s, Stephen &lt;<a href=3D"mailto:na...@bu.edu">na...@bu.edu</a>&gt; wrote:<=
+br>
+</div>
+<blockquote class=3D"x_gmail_quote" style=3D"margin:0px 0px 0px 0.8ex; bord=
+er-left:1px solid rgb(204,204,204); padding-left:1ex">
+Hi Rutu, <br>
+<br>
+I) I saw this and it seems to reproduce (the &quot;bad repo&quot; stuff).&n=
+bsp; &nbsp;I started from <br>
+<br>
+&nbsp; &nbsp; &nbsp; &nbsp;Bootstrap: docker<br>
+&nbsp; &nbsp; &nbsp; &nbsp;From: tensorflow/tensorflow:1.12.0-gpu-py3<br>
+<br>
+&nbsp; &nbsp; &nbsp; &nbsp;And then apt-get install git or git-core and got=
+ errors <br>
+<br>
+&nbsp; &nbsp; &nbsp; &nbsp;E: Failed to fetch <a href=3D"http://archive.ubu=
+ntu.com/ubuntu/pool/main/o/openssh/openssh-client_7.2p2-4ubuntu2.5_amd64.de=
+b" rel=3D"noreferrer" target=3D"_blank">
+http://archive.ubuntu.com/ubuntu/pool/main/o/openssh/openssh-client_7.2p2-4=
+ubuntu2.5_amd64.deb</a>&nbsp; 404&nbsp; Not Found [IP: 91.189.88.152 80]<br=
+>
+<br>
+Have a look at <a href=3D"https://stackoverflow.com/questions/30316812/ubun=
+tu-apt-get-unable-to-fetch-packages" rel=3D"noreferrer" target=3D"_blank">
+https://stackoverflow.com/questions/30316812/ubuntu-apt-get-unable-to-fetch=
+-packages</a>
+<br>
+<br>
+Consider the suggestion to add the google nameservers&nbsp; (<a href=3D"htt=
+p://8.8.8.8/8.8.4.4" rel=3D"noreferrer" target=3D"_blank">8.8.8.8/8.8.4.4</=
+a>) to /etc/resolve.conf which fixed installing git for me, without editing=
+ the urls in sources.list
+<br>
+<br>
+<br>
+II) you may want an &quot; export DEBIAN_FRONTEND=3Dnoninteractive&quot; in=
+ the post section to try to pass the pop up menus if you want to go on with=
+ building.&nbsp; You could consider setting up locale info early in %post s=
+ection&nbsp;
+<br>
+<br>
+<br>
+III) if you want interactive you can consider building a --sandbox, stoppin=
+g at a good point, and then sudo singularity shell --writable into the sand=
+box to continue in a shell
+<br>
+<br>
+Ymmv, hth, <br>
+<br>
+Steve <br>
+<br>
+<br>
+From: Rutu Pandya &lt;<a href=3D"mailto:rut...@gmail.com" target=3D"_blank"=
+>rut...@gmail.com</a>&gt;
+<br>
+Sent: Wednesday, April 3, 2019 2:20 PM<br>
+To: singularity &lt;<a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">s=
+ingu...@lbl.gov</a>&gt;<br>
+Cc: <a href=3D"mailto:rut...@gmail.com" target=3D"_blank">rut...@gmail.com<=
+/a>; <a href=3D"mailto:mka...@sdsc.edu" target=3D"_blank">
+mka...@sdsc.edu</a><br>
+Subject: Re: [Singularity] git won't install through command in recipe file=
+<br>
+<br>
+Hi Marty,<br>
+<br>
+Yes I am using Vagrant. Attached is the screen. I can't tab or use up and d=
+own arrow keyes or anything else to get to OK to continue the process.<br>
+<br>
+Thanks,<br>
+Rutu<br>
+<br>
+On Wednesday, April 3, 2019 at 1:13:21 PM UTC-4, Kandes, Martin wrote:<br>
+Rutu,<br>
+<br>
+There shouldn't be any dialog box that pops up when building the container =
+from the definition file.&nbsp;Are you using a Linux virtual machine (e.g.,=
+ running on Virtual Box) to use Singularity? Maybe you can send us some scr=
+eenshots showing the issue?<br>
+<br>
+Marty <br>
+________________________________________<br>
+From: Rutu Pandya &lt;javascript:&gt;<br>
+Sent: Wednesday, April 3, 2019 7:06:09 AM<br>
+To: singularity<br>
+Cc: Kandes, Martin<br>
+Subject: Re: [Singularity] git won't install through command in recipe file=
+ <br>
+&nbsp;<br>
+Hi Marty, I actually tried that first - but in the process a dialogue box c=
+omes that requires me to click/select &quot;OK&quot;, but they keyes on my =
+keyboard are not mapped to the display it seems and I am not able to procee=
+d from here.
+<br>
+<br>
+I tried a few other recipes as well from Singularity Hub, haven't yet been =
+able to successfully build a container that has Tensorflow 1.12.0, cuda 9 a=
+nd cudnn 7 and has also has git. :(<br>
+<br>
+Thanks,<br>
+Rutu&nbsp;<br>
+<br>
+On Tuesday, April 2, 2019 at 3:25:50 PM UTC-4, Kandes, Martin wrote: <br>
+Rutu,<br>
+<br>
+And as I mentioned previously, if you need to build a custom container for =
+your work, have a look at our definition file [1]. We build TensorFlow with=
+ GPU support from source for both python2 and python3.&nbsp;<br>
+<br>
+Marty<br>
+<br>
+[1]<br>
+<br>
+<a href=3D"https://github.com/mkandes/naked-singularity/blob/master/definit=
+ion-files/comet/tensorflow/tensorflow-gpu.def" rel=3D"noreferrer" target=3D=
+"_blank">https://github.com/mkandes/naked-singularity/blob/master/definitio=
+n-files/comet/tensorflow/tensorflow-gpu.def</a><br>
+________________________________________<br>
+From: v &lt;mailto:<a href=3D"mailto:v...@gmail.com" target=3D"_blank">v...=
+@gmail.com</a>&gt;<br>
+Sent: Tuesday, April 2, 2019 12:06:30 PM<br>
+To: mailto:<a href=3D"mailto:si...@lbl.gov" target=3D"_blank">si...@lbl.gov=
+</a><br>
+Subject: Re: [Singularity] git won't install through command in recipe file=
+ <br>
+&nbsp;<br>
+Not a specific one, but if you search for the label that is the cuda versio=
+n, there are a ton!
+<br>
+<br>
+<a href=3D"https://singularity-hub.org/labels/com.nvidia.cuda.version" rel=
+=3D"noreferrer" target=3D"_blank">https://singularity-hub.org/labels/com.nv=
+idia.cuda.version</a><br>
+<br>
+A control F finds 30 with tensorflow, so maybe one of those guys will be go=
+od :)<br>
+<br>
+On Tue, Apr 2, 2019 at 3:03 PM Rutu Pandya &lt;mailto:<a href=3D"mailto:r..=
+.@gmail.com" target=3D"_blank">r...@gmail.com</a>&gt; wrote:<br>
+Hi Vanessa, <br>
+<br>
+Would you happen to know of a container having cuda and tensorflow both ins=
+talled?&nbsp;<br>
+<br>
+Thanks,<br>
+Rutu<br>
+<br>
+<br>
+On Wednesday, March 20, 2019 at 10:08:45 AM UTC-4, Rutu Pandya wrote: <br>
+Thank you Stephen, Kandes! <br>
+<br>
+On Monday, March 18, 2019 at 2:24:56 PM UTC-4, Kandes, Martin wrote: <br>
+Rutu,<br>
+<br>
+In case you're still having problems, here is our base TensorFlow definitio=
+n file [1].<br>
+<br>
+Marty<br>
+<br>
+[1]<br>
+<br>
+<a href=3D"https://github.com/mkandes/naked-singularity/blob/master/definit=
+ion-files/comet/tensorflow/tensorflow-gpu.def" rel=3D"noreferrer" target=3D=
+"_blank">https://github.com/mkandes/naked-singularity/blob/master/definitio=
+n-files/comet/tensorflow/tensorflow-gpu.def</a><br>
+________________________________________<br>
+From: 'Stephen Hauskins' via singularity &lt;mailto:<a href=3D"mailto:si...=
+@lbl.gov" target=3D"_blank">si...@lbl.gov</a>&gt;<br>
+Sent: Friday, March 15, 2019 12:13:32 PM<br>
+To: mailto:<a href=3D"mailto:si...@lbl.gov" target=3D"_blank">si...@lbl.gov=
+</a><br>
+Subject: Re: [Singularity] git won't install through command in recipe file=
+ <br>
+&nbsp;<br>
+Rutu<br>
+<br>
+It looks like you are pointing at a non-existent repository or mirror for t=
+he software.&nbsp; The error reports that the files are not at
+<br>
+the URL you are pointing at.<br>
+<br>
+I am not a ubuntu person but rather centos but you should be able to point =
+at another ubuntu repository site.<br>
+<br>
+<br>
+<br>
+On Fri, Mar 15, 2019 at 11:27 AM Rutu Pandya &lt;mailto:<a href=3D"mailto:r=
+...@gmail.com" target=3D"_blank">r...@gmail.com</a>&gt; wrote:<br>
+The install from the source did not work as well, error attached. <br>
+<br>
+Will try bootsrapping from the one you suggested and reinstall tensorflow v=
+ersion 1.12.<br>
+<br>
+Thanks!<br>
+Rutu<br>
+<br>
+<br>
+<br>
+On Friday, March 15, 2019 at 2:14:16 PM UTC-4, vanessa wrote: <br>
+I'm not sure - I'd guess it's the latest in development (1.13.1 something) =
+so you could try installing the version you need:
+<br>
+<br>
+pip install tensorflow=3D=3D1.12.0<br>
+<br>
+On Fri, Mar 15, 2019 at 1:43 PM Rutu Pandya &lt;mailto:<a href=3D"mailto:r.=
+..@gmail.com" target=3D"_blank">r...@gmail.com</a>&gt; wrote:<br>
+This is great, would you happen to know what version of Tensorflow this mig=
+ht be? I need it to be&nbsp;1.12.0..
+<br>
+<br>
+Thanks again for your help Vanessa!&nbsp;<br>
+<br>
+On Friday, March 15, 2019 at 1:24:13 PM UTC-4, vanessa wrote: <br>
+Yeah that is weird - maybe the server is down? In the meantime, I found a b=
+ase that has git already installed, if it helps.<br>
+<br>
+Bootstrap:docker<br>
+From:tensorflow/tensorflow:devel-gpu-py3<br>
+<br>
+# sudo singularity build container.sif Singularity<br>
+<br>
+%environment<br>
+&nbsp; &nbsp; export SHELL=3D/bin/bash<br>
+%post<br>
+&nbsp;&nbsp;<br>
+&nbsp; mkdir -p /software<br>
+&nbsp; cd /software<br>
+&nbsp; git clone <a href=3D"https://github.com/cerr/CERR.git" rel=3D"norefe=
+rrer" target=3D"_blank">
+https://github.com/cerr/CERR.git</a><br>
+&nbsp; git clone <a href=3D"https://github.com/cerr/aimodels.git" rel=3D"no=
+referrer" target=3D"_blank">
+https://github.com/cerr/aimodels.git</a><br>
+<br>
+If it doesn't resolve, you can try <a href=3D"https://www.digitalocean.com/=
+community/tutorials/how-to-install-git-on-ubuntu-16-04" rel=3D"noreferrer" =
+target=3D"_blank">
+https://www.digitalocean.com/community/tutorials/how-to-install-git-on-ubun=
+tu-16-04</a>.&nbsp;<br>
+<br>
+On Fri, Mar 15, 2019 at 12:15 PM Rutu Pandya &lt;mailto:<a href=3D"mailto:r=
+...@gmail.com" target=3D"_blank">r...@gmail.com</a>&gt; wrote:<br>
+Hello, <br>
+<br>
+I am building a container using a recipe file. And want to install git to b=
+e able to clone a repo from it into the container. Even after trying severa=
+l fixes and an exhaustive search for the correct command, I am unable to in=
+stall git. The server I have is
+ Ubuntu 16.04.&nbsp;<br>
+<br>
+Attached is the recipe file for reference.&nbsp;<br>
+<br>
+Thanks in advance!<br>
+Rutu<br>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to mailto:<a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singu.=
+..@lbl.gov</a>.<br>
+<br>
+<br>
+<br>
+-- <br>
+Vanessa Villamia Sochat<br>
+Stanford University '16<br>
+(603) 321-0676<br>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to mailto:<a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singu.=
+..@lbl.gov</a>.<br>
+<br>
+<br>
+<br>
+-- <br>
+Vanessa Villamia Sochat<br>
+Stanford University '16<br>
+(603) 321-0676<br>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to mailto:<a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singu.=
+..@lbl.gov</a>.<br>
+<br>
+<br>
+-- <br>
+<br>
+<br>
+<a href=3D"https://its.pbsci.ucsc.edu" rel=3D"noreferrer" target=3D"_blank"=
+>https://its.pbsci.ucsc.edu</a><br>
+<br>
+<a href=3D"https://www.hb.ucsc.edu" rel=3D"noreferrer" target=3D"_blank">ht=
+tps://www.hb.ucsc.edu</a><br>
+<br>
+Stephen Hauskins<br>
+<br>
+831-334-3961<br>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to mailto:<a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singu.=
+..@lbl.gov</a>.<br>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to mailto:<a href=3D"mailto:si...@lbl.gov" target=3D"_blank">si...@lbl=
+.gov</a>.<br>
+<br>
+<br>
+<br>
+-- <br>
+Vanessa Villamia Sochat<br>
+Stanford University '16<br>
+(603) 321-0676<br>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to mailto:<a href=3D"mailto:si...@lbl.gov" target=3D"_blank">si...@lbl=
+.gov</a>.<br>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to mailto:<a href=3D"mailto:singularity%...@lbl.gov" target=3D"_blank"=
+>singularity&#43;unsu...@lbl.gov</a>.<br>
+<br>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to
+<a href=3D"mailto:singularity%...@lbl.gov" target=3D"_blank">singularity&#4=
+3;unsu...@lbl.gov</a>.<br>
+</blockquote>
+</div>
+<br clear=3D"all">
+<div><br>
+</div>
+-- <br>
+<div dir=3D"ltr" class=3D"x_gmail_signature">Vanessa Villamia Sochat<br>
+Stanford University '16<br>
+<div>
+<div>
+<div>(603) 321-0676</div>
+</div>
+</div>
+</div>
+<p></p>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to
+<a href=3D"mailto:singularity&#43;unsu...@lbl.gov">singularity&#43;unsu...@=
+lbl.gov</a>.<br>
+</div>
+</body>
+</html>
+
+--_000_BYAPR04MB3814F85E8AA7959B95E21743DC570BYAPR04MB3814namp_--

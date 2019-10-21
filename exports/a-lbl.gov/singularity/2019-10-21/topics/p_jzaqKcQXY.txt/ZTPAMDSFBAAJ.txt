@@ -1,0 +1,76 @@
+X-Received: by 10.98.131.7 with SMTP id h7mr4150885pfe.2.1467143756532;
+        Tue, 28 Jun 2016 12:55:56 -0700 (PDT)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.36.39.74 with SMTP id g71ls20678ita.8.gmail; Tue, 28 Jun 2016
+ 12:55:56 -0700 (PDT)
+X-Received: by 10.98.46.70 with SMTP id u67mr4866957pfu.134.1467143756082;
+        Tue, 28 Jun 2016 12:55:56 -0700 (PDT)
+Return-Path: <jason...@gmail.com>
+Received: from fe3.lbl.gov (fe3.lbl.gov. [128.3.41.68])
+        by mx.google.com with ESMTPS id w11si35092792pfj.166.2016.06.28.12.55.55
+        for <singu...@lbl.gov>
+        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Tue, 28 Jun 2016 12:55:56 -0700 (PDT)
+Received-SPF: pass (google.com: domain of jason...@gmail.com designates 209.85.220.177 as permitted sender) client-ip=209.85.220.177;
+Authentication-Results: mx.google.com;
+       dkim=pass head...@gmail.com;
+       spf=pass (google.com: domain of jason...@gmail.com designates 209.85.220.177 as permitted sender) smtp.mailfrom=jason...@gmail.com
+X-Ironport-SBRS: 3.4
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2DJAQCu1XJXhrHcVdFbg1yBNQanKgQDh0qLMIF7h0cHOhIBAQEBAQEBEgEBAQgLCwkhL4RlER0BGx4DEhAPAiYCJAERAQUBV4dzAQMXBaQPggeBMT4xizuBaoJaBYZ6ChknDVKDaQIGEHGFJ4lZgjWCWgWOb4oTgViMYo8kjkASHoEPJQ6COoF1HjKJMAEBAQ
+X-IronPort-AV: E=Sophos;i="5.26,542,1459839600"; 
+   d="scan'208";a="28465565"
+Received: from mail-qk0-f177.google.com ([209.85.220.177])
+  by fe3.lbl.gov with ESMTP; 28 Jun 2016 12:55:55 -0700
+Received: by mail-qk0-f177.google.com with SMTP id q79so50275605qke.0
+        for <singu...@lbl.gov>; Tue, 28 Jun 2016 12:55:55 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=mime-version:from:date:message-id:subject:to;
+        bh=wZPa0dsXn0Glg3SQE2FqjtH/b/Che8c1mLxQkERcpVE=;
+        b=Wvnf4IPbuKqMFNhHn8x8DiEMf5O7cRBhPh/QJi6jBufx8CYg/ioaF5D6V5kauQfvxn
+         KikCyzrDqKPuyDki5wGLIAQROon1uHQ8wq1np9TGfEp/OVhUq99isOOMGZ5EzCyc6R4d
+         c4qZU6DjISv4IPhOUNtXufNmETMsDMqa5XzzQDZ98ixkbfFOR5vklNdpxqFTYDxR+WF4
+         N7gKVyi8DPkfC7LBkQV66wMVYMM3/SqFSKdWw32/IEmgfG4glb2gUBxVZ30I9GRFfHwk
+         Ui9B8RL+ysogWJiA4iUqpUDLgtVdHBXhMSWui1ky9yh+k4ThAlp1UbInI7Vx24AbEzKp
+         Mb9g==
+X-Gm-Message-State: ALyK8tIDPnOUZIGErBZUPu9GarCOs6Jh4rumuLqnzYW/ROrXxAjL9CD8jwimULmlo9KpuoTHbiaH8cYtpPgCiQ==
+X-Received: by 10.129.123.85 with SMTP id w82mr1839546ywc.251.1467143755090;
+ Tue, 28 Jun 2016 12:55:55 -0700 (PDT)
+MIME-Version: 1.0
+Received: by 10.37.15.196 with HTTP; Tue, 28 Jun 2016 12:55:47 -0700 (PDT)
+From: Jason Stover <jason...@gmail.com>
+Date: Tue, 28 Jun 2016 14:55:47 -0500
+Message-ID: <CAGfAqt-vkPzS8s5yVsxP1kxecODRgeXX0AD74J-RUD3jU94y0g@mail.gmail.com>
+Subject: Bootstrap InstallPkgs config (rhel)
+To: singularity@lbl.gov
+Content-Type: text/plain; charset=UTF-8
+
+Hi all,
+
+  When bootstraping an SL6 image, from an SL7 host the base bootstrap
+works fine. But, if I add in InstallPkgs, then it starts pulling the
+yum config in from the host.
+
+  For example, I have set:
+    InstallPkgs yum
+
+  The initial bootstrap part runs fine. Once it gets to installing
+yum, it pulls from the SL7 repository. It seems that this is because
+the config isn't defined. In linux_build_redhat.smod, the InstallPkgs
+functions reads as:
+
+    $INSTALL_CMD --noplugins --nogpgcheck --installroot
+$SINGULARITY_BUILD_ROOT -y install $*
+
+  I believe that it should also contain:
+
+    -c $SINGULARITY_BUILD_ROOT/$YUM_CONF
+
+  As the Bootstrap function does.
+
+  Does anyone see any issues with this? What about doing a check if
+'$SINGULARITY_BUILD_ROOT/$YUM_CONF' exists, then add the -c option in,
+otherwise run without it?
+
+-J

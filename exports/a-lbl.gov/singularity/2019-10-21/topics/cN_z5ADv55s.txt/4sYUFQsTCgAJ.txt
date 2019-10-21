@@ -1,0 +1,246 @@
+Date: Tue, 26 Jul 2016 18:31:46 -0700 (PDT)
+From: Yaroslav Halchenko <yarik...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <75f09279-32fb-4452-80fb-f7a61259136f@lbl.gov>
+In-Reply-To: <CAN7etTzeZAinD27Q=-Ou8p=voRLwYYk=-pdV5AcA9VNSHKpDBQ@mail.gmail.com>
+References: <ab3762fb-b607-44e5-b227-2e9baafce223@lbl.gov> <CA+3XN_+J5EJY-pb2vM12qkHFg8GAf0wq6y-5oDT4pZ7YKPc3QQ@mail.gmail.com>
+ <CAN7etTwJHh8rq2RsssGng5EAK1qKFsfQYD+oRSJ6kGgtt1BW9w@mail.gmail.com>
+ <CA+3XN_+TCYV5B9C8ys8pwfeHPPEYpgAMpavNpOgensGtqwDEaA@mail.gmail.com>
+ <874m7dsk7y.fsf@pc102091.liv.ac.uk> <CAN7etTwvLcq6WhOQUWuoMw+9EzdeeJFnzgsqXfs8+XnDg9rwvw@mail.gmail.com>
+ <87eg6gqan0.fsf@pc102091.liv.ac.uk>
+ <CAN7etTzeZAinD27Q=-Ou8p=voRLwYYk=-pdV5AcA9VNSHKpDBQ@mail.gmail.com>
+Subject: Re: [Singularity] Scientific Linux 7x packages
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_384_82201913.1469583106897"
+
+------=_Part_384_82201913.1469583106897
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_385_1006424701.1469583106898"
+
+------=_Part_385_1006424701.1469583106898
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Since recommendation was mine, I guess I better chime in
+
+> People don't write shell scripts assuming -u
+
+Well... some do (disclaimer:  nd* scripts are "mine"):
+
+$> grep -l '#!/bin/bash' /{usr/,}{,s}bin/* | xargs grep 'set -[^ ]*u' 
+2>/dev/null                                 
+/usr/bin/adt-virt-ssh:set -u
+/usr/bin/backport-dsc:set -u
+/usr/bin/deb-reversion:set -eu
+/usr/bin/nd_adddistall:set -eu
+/usr/bin/nd-autoinstall:set -u
+/usr/bin/nd_backport:set -u
+/usr/bin/nd_backport:# To overcome bash desire to claim empty array unbound 
+under 'set -u'
+/usr/bin/nd_build_testrdepends:set -u
+/usr/bin/nd-configurerepo:set -u
+/usr/bin/nd_rebuildarchive:set -eu
+/usr/sbin/ip6tables-apply:set -eu
+/usr/sbin/iptables-apply:set -eu
+
+although indeed majority of people don't, although it is frequently 
+recommended strategy to robustify your shell scripts. Results of a quick 
+google search:
+http://www.davidpashley.com/articles/writing-robust-shell-scripts/
+http://kvz.io/blog/2013/11/21/bash-best-practices/
+
+So, even though main mass of people doesn't use 'set -u', I don't think it 
+should be used as an argument anywhere where additional rigor is desired, 
+e.g. in applications where a "mistake" due to some variable being undefined 
+(e.g. as in rm -rf $var/) could be quite sever.
+
+Moreover, I don't see why bash scripts should anyhow be special in treating 
+variables in comparison to other mainline languages (may be discarding 
+basic if it still allows for undefined variables as it did iirc in early 
+90s).  Requirement to explicitly assign (or define to carry a specific 
+default value) a variable before using it is imho again a common practice.  
+And in cases where variable is expected to be undefined or carry no value 
+-- to explicitly check for that one way (${var:-}) or another (surround 
+code block with set +u to disable checks, and set -u to enable this safety 
+measure).  IMHO, and in my experience, such a simple measure does make 
+scripts more robust.
+
+i guess, if set -u to stay, for singularity, might be worth adding 
+CONTRIBUTING.md file and describing that contributed scripts /.defs must 
+not assume default set +u mode of operation
+
+On Tuesday, July 26, 2016 at 7:00:57 PM UTC-4, Gregory M. Kurtzer wrote:
+>
+>
+>
+> On Tue, Jul 26, 2016 at 3:48 PM, Dave Love <d...@liverpool.ac.uk 
+> <javascript:>> wrote:
+>
+>> "Gregory M. Kurtzer" <gm...@lbl.gov <javascript:>> writes:
+>>
+>> > On Mon, Jul 25, 2016 at 10:25 AM, Dave Love <d...@liverpool.ac.uk 
+>> <javascript:>> wrote:
+>> >
+>> > The set -u was a feature request in:
+>> >
+>> > https://github.com/gmkurtzer/singularity/issues/134
+>> >
+>> > And while it does have some side effects they are not insurmountable.
+>>
+>> As far as I can tell, all it's doing is making a load of work defeating
+>> the effect, and breaking things where you haven't defeated it where they
+>> may not show up immediately, and just cause problems.
+>>
+>> People don't write shell scripts assuming -u, and I don't understand how
+>> it could be any benefit, especially when you're not declaring variables
+>> anyhow.  
+>
+>
+> These are fair points indeed.
+>  
+>
+>> I can't see how it's a security feature, and I'd say it's the
+>> opposite, since it causes bugs.
+>>
+>> If there's somewhere you need to distinguish null and unset variables,
+>> you could do it locally (if bash can't tell you directly -- I've never
+>> needed to find out).
+>>
+>
+> I'd like to hear from Yaroslav before I make a decision on this.
+>  
+>
+>>
+>> [Does Warewulf use set -u?  I know the NHC component doesn't.]
+>
+>
+> Warewulf doesn't have any bash scripts, but I am using the -T option 
+> throughout the code which identifies any "tainted" variables and disables 
+> them from being used until they have been checked. That particular feature 
+> causes more bugs and errors then anything else in the code, but it also 
+> ensures that nothing ever gets missed and used in a non-anticipated way.
+>  
+> -- 
+> Gregory M. Kurtzer
+> High Performance Computing Services (HPCS)
+> University of California
+> Lawrence Berkeley National Laboratory
+> One Cyclotron Road, Berkeley, CA 94720
+>
+
+------=_Part_385_1006424701.1469583106898
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Since recommendation was mine, I guess I better chime in<b=
+r><br>&gt; People don&#39;t write shell scripts assuming -u<br><br>Well... =
+some do (disclaimer:=C2=A0 nd* scripts are &quot;mine&quot;):<br><br>$&gt; =
+grep -l &#39;#!/bin/bash&#39; /{usr/,}{,s}bin/* | xargs grep &#39;set -[^ ]=
+*u&#39; 2&gt;/dev/null=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 <br>/usr=
+/bin/adt-virt-ssh:set -u<br>/usr/bin/backport-dsc:set -u<br>/usr/bin/deb-re=
+version:set -eu<br>/usr/bin/nd_adddistall:set -eu<br>/usr/bin/nd-autoinstal=
+l:set -u<br>/usr/bin/nd_backport:set -u<br>/usr/bin/nd_backport:# To overco=
+me bash desire to claim empty array unbound under &#39;set -u&#39;<br>/usr/=
+bin/nd_build_testrdepends:set -u<br>/usr/bin/nd-configurerepo:set -u<br>/us=
+r/bin/nd_rebuildarchive:set -eu<br>/usr/sbin/ip6tables-apply:set -eu<br>/us=
+r/sbin/iptables-apply:set -eu<br><br>although indeed majority of people don=
+&#39;t, although it is frequently recommended strategy to robustify your sh=
+ell scripts. Results of a quick google search:<br>http://www.davidpashley.c=
+om/articles/writing-robust-shell-scripts/<br>http://kvz.io/blog/2013/11/21/=
+bash-best-practices/<br><br>So, even though main mass of people doesn&#39;t=
+ use &#39;set -u&#39;, I don&#39;t think it should be used as an argument a=
+nywhere where additional rigor is desired, e.g. in applications where a &qu=
+ot;mistake&quot; due to some variable being undefined (e.g. as in rm -rf $v=
+ar/) could be quite sever.<br><br>Moreover, I don&#39;t see why bash script=
+s should anyhow be special in treating variables in comparison to other mai=
+nline languages (may be discarding basic if it still allows for undefined v=
+ariables as it did iirc in early 90s).=C2=A0 Requirement to explicitly assi=
+gn (or define to carry a specific default value) a variable before using it=
+ is imho again a common practice.=C2=A0 And in cases where variable is expe=
+cted to be undefined or carry no value -- to explicitly check for that one =
+way (${var:-}) or another (surround code block with set +u to disable check=
+s, and set -u to enable this safety measure).=C2=A0 IMHO, and in my experie=
+nce, such a simple measure does make scripts more robust.<br><br>i guess, i=
+f set -u to stay, for singularity, might be worth adding CONTRIBUTING.md fi=
+le and describing that contributed scripts /.defs must not assume default s=
+et +u mode of operation<br><br>On Tuesday, July 26, 2016 at 7:00:57 PM UTC-=
+4, Gregory M. Kurtzer wrote:<blockquote class=3D"gmail_quote" style=3D"marg=
+in: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><d=
+iv dir=3D"ltr"><br><div><br><div class=3D"gmail_quote">On Tue, Jul 26, 2016=
+ at 3:48 PM, Dave Love <span dir=3D"ltr">&lt;<a href=3D"javascript:" target=
+=3D"_blank" gdf-obfuscated-mailto=3D"s8GSFdAKCgAJ" rel=3D"nofollow" onmouse=
+down=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.hre=
+f=3D&#39;javascript:&#39;;return true;">d...@liverpool.ac.uk</a>&gt;</span>=
+ wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.=
+8ex;border-left-width:1px;border-left-style:solid;border-left-color:rgb(204=
+,204,204);padding-left:1ex"><span>&quot;Gregory M. Kurtzer&quot; &lt;<a hre=
+f=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"s8GSFdAKCgAJ" =
+rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return tr=
+ue;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">gm...@lbl.g=
+ov</a>&gt; writes:<br>
+<br>
+&gt; On Mon, Jul 25, 2016 at 10:25 AM, Dave Love &lt;<a href=3D"javascript:=
+" target=3D"_blank" gdf-obfuscated-mailto=3D"s8GSFdAKCgAJ" rel=3D"nofollow"=
+ onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"=
+this.href=3D&#39;javascript:&#39;;return true;">d...@liverpool.ac.uk</a>&gt=
+; wrote:<br>
+&gt;<br>
+</span><span>&gt; The set -u was a feature request in:<br>
+&gt;<br>
+&gt; <a href=3D"https://github.com/gmkurtzer/singularity/issues/134" rel=3D=
+"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.go=
+ogle.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fgmkurtzer%2Fsingularity%2Fissu=
+es%2F134\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEtzPfoNy_96VgSruhVJ84pp3WU=
+zQ&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.com/ur=
+l?q\x3dhttps%3A%2F%2Fgithub.com%2Fgmkurtzer%2Fsingularity%2Fissues%2F134\x2=
+6sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEtzPfoNy_96VgSruhVJ84pp3WUzQ&#39;;ret=
+urn true;">https://github.com/gmkurtzer/<wbr>singularity/issues/134</a><br>
+&gt;<br>
+&gt; And while it does have some side effects they are not insurmountable.<=
+br>
+<br>
+</span>As far as I can tell, all it&#39;s doing is making a load of work de=
+feating<br>
+the effect, and breaking things where you haven&#39;t defeated it where the=
+y<br>
+may not show up immediately, and just cause problems.<br>
+<br>
+People don&#39;t write shell scripts assuming -u, and I don&#39;t understan=
+d how<br>
+it could be any benefit, especially when you&#39;re not declaring variables=
+<br>
+anyhow.=C2=A0 </blockquote><div><br></div><div>These are fair points indeed=
+.</div><div>=C2=A0</div><blockquote class=3D"gmail_quote" style=3D"margin:0=
+px 0px 0px 0.8ex;border-left-width:1px;border-left-style:solid;border-left-=
+color:rgb(204,204,204);padding-left:1ex">I can&#39;t see how it&#39;s a sec=
+urity feature, and I&#39;d say it&#39;s the<br>
+opposite, since it causes bugs.<br>
+<br>
+If there&#39;s somewhere you need to distinguish null and unset variables,<=
+br>
+you could do it locally (if bash can&#39;t tell you directly -- I&#39;ve ne=
+ver<br>
+needed to find out).<br></blockquote><div><br></div><div>I&#39;d like to he=
+ar from Yaroslav before I make a decision on this.</div><div>=C2=A0</div><b=
+lockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-le=
+ft-width:1px;border-left-style:solid;border-left-color:rgb(204,204,204);pad=
+ding-left:1ex">
+<br>
+[Does Warewulf use set -u?=C2=A0 I know the NHC component doesn&#39;t.]</bl=
+ockquote><div><br></div><div>Warewulf doesn&#39;t have any bash scripts, bu=
+t I am using the -T option throughout the code which identifies any &quot;t=
+ainted&quot; variables and disables them from being used until they have be=
+en checked. That particular feature causes more bugs and errors then anythi=
+ng else in the code, but it also ensures that nothing ever gets missed and =
+used in a non-anticipated way.</div><div>=C2=A0</div></div>-- <br><div><div=
+ dir=3D"ltr"><div>Gregory M. Kurtzer<br>High Performance Computing Services=
+ (HPCS)<br>University of California<br>Lawrence Berkeley National Laborator=
+y<br>One Cyclotron Road, Berkeley, CA 94720</div></div></div>
+</div></div>
+</blockquote></div>
+------=_Part_385_1006424701.1469583106898--
+
+------=_Part_384_82201913.1469583106897--

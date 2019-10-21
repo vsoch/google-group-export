@@ -1,0 +1,481 @@
+Date: Thu, 23 Jun 2016 01:53:43 -0700 (PDT)
+From: Raimon Bosch <raimo...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <054d2758-0acd-48f0-a9bd-b0d52ce02f38@lbl.gov>
+In-Reply-To: <CAN7etTwnpqqbiF=PAqZKDY0yDtyqJGVg2N3x2_-RHFvd6+Qh8Q@mail.gmail.com>
+References: <6247ec64-6881-4978-82a0-f7d6e24039e9@lbl.gov>
+ <CAN7etTx+2ETq_aarfJfez_p4YzoNJ49zwO2CQe=KRwSSZkuR5Q@mail.gmail.com>
+ <3998ac67-7f95-475d-ac75-ceb562e19e3b@lbl.gov>
+ <CAN7etTwNG_1G9YuuTQZWSE3SKZjXqNjt8bsZFrVQBJC8_1-mAw@mail.gmail.com>
+ <1403bcbe-c615-4417-a629-f95568b75ee7@lbl.gov>
+ <CAN7etTwnpqqbiF=PAqZKDY0yDtyqJGVg2N3x2_-RHFvd6+Qh8Q@mail.gmail.com>
+Subject: Re: [Singularity] Communication between singularity containers
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_345_1952646729.1466672023836"
+
+------=_Part_345_1952646729.1466672023836
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_346_476273665.1466672023836"
+
+------=_Part_346_476273665.1466672023836
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+
+One last question: What if I want to execute more than one container in the=
+=20
+same host? With this technique I am bounded always to the same container.=
+=20
+One of our experiments was based in measuring performance of several=20
+containers working in parallel in the same node. Also we had experiments=20
+with N containers per host in a multihost environment.
+
+El mi=C3=A9rcoles, 22 de junio de 2016, 16:41:58 (UTC+2), Gregory M. Kurtze=
+r=20
+escribi=C3=B3:
+>
+> Hi Raimon,
+>
+> Sorry I wasn't clear. I am not yet at my computer and thinking while=20
+> typing on an iPhone hinders my mental processes. Lol
+>
+> If I understand your example properly, you have a docker or VM=20
+> infrastructure already set up and you are invoking the mpirun commands fr=
+om=20
+> within the virtual environment. Singularity works on a very different=20
+> premis because integrating a virtual cluster into an existing cluster and=
+=20
+> scheduling system is a mess.
+>
+> So starting from the physical nodes, which already have access to all=20
+> other nodes in the cluster, and already scheduled properly, and in direct=
+=20
+> access to optimized hardware and file systems.... You call mpirun.=20
+>
+> The mpirun command will take the standard format as you illustrated with=
+=20
+> the following change to call Singularity inline:
+>
+> $ mpirun -np 4 --hostfile hosts.txt singularity exec ~/container.img=20
+> trace.sh bt.C.4
+>
+> This assumes the following:
+>
+> 1. The container image which contains the program's you want to run is at=
+=20
+> ~/container.img and accessible at this path on all nodes referenced in=20
+> hosts.txt
+> 2. The hosts.txt references other physical nodes you want to run on
+> 3. The executables trace.sh and bt.C.4 are both inside the container and=
+=20
+> in a standard path
+>
+> In this case we are performing one execution and MPI + singularity is=20
+> managing all of the communication between processes, nodes and containers=
+.=20
+> Also it is now using any optimized hardware (eg. Infiniband) and existing=
+=20
+> high performance file systems (which should not be accessible via a=20
+> virtualized or Docker'ized cluster for security reasons).
+>
+> This way is actually MUCH simpler then what you are proposing because=20
+> there is no need to manage any virtual nodes, virtual networks, or resour=
+ce=20
+> manager hacks. It really is as easy as just running any other MPI process=
+=20
+> on an existing cluster.=20
+>
+> Hope that helps better!
+>
+>
+>
+> On Wednesday, June 22, 2016, Raimon Bosch <rai...@gmail.com=20
+> <javascript:>> wrote:
+>
+>>
+>>
+>> Hi Gregory,
+>>
+>> I'm not sure if I would achieve the same with your commands. In an=20
+>> environment based on dockers or virtual machines we would do something l=
+ike=20
+>> this [non applicable to Singularity]:
+>>
+>> > cd $OPEN_MPI/bin && mpirun -np 4 --hostfile hosts.txt ./trace.sh=20
+>> ./bt.C.4
+>>
+>> where hosts.txt* is:
+>>
+>> >vm-ip-01-on-*host01* slots=3D2
+>> >vm-ip-01-on-*host02* slots=3D2
+>>
+>> * vm-ip-XX-on-hostXX are IPs i.e. 172.100.60.XX
+>>
+>> and trace.sh is:
+>>
+>> >#!/bin/bash
+>> >
+>> >export EXTRAE_HOME=3D/opt/extrae/
+>> >export EXTRAE_CONFIG_FILE=3D/extrae.xml
+>> >export LD_PRELOAD=3D${EXTRAE_HOME}/lib/libmpitrace.so
+>> >
+>> >## Run the desired program
+>> >$*
+>>
+>> As you see we only perform one execution and OpenMPI transparently=20
+>> manages communication between containers or virtual machines. This comma=
+nd=20
+>> would work well rather VMs are on the same host or not.
+>>
+>> What I understand from your response is that now we should execute=20
+>> OpenMPI on each host and then merge results manually. I don't know yet h=
+ow=20
+>> to do this merge step or if it is any way to centralize everything like =
+I=20
+>> would do with VMs.
+>>
+>> Thanks in advance,
+>>
+>> El mi=C3=A9rcoles, 22 de junio de 2016, 14:42:54 (UTC+2), Gregory M. Kur=
+tzer=20
+>> escribi=C3=B3:
+>>>
+>>> Hi Raimon,
+>>>
+>>> The quick answer is you have mpirun handle that as you would normally=
+=20
+>>> where the container file lives on a shared file system:
+>>>
+>>> $ mpirun singularity exec ~/container.img mpi_prog_in_container
+>>>
+>>> Let the MPI outside the container launch the singularity container on=
+=20
+>>> each host as it would normally launch any MPI program. Then it will cal=
+l=20
+>>> Singulairty and Singularity will launch the MPI program inside the=20
+>>> container on each of your hosts/servers.=20
+>>>
+>>> Hope that helps!
+>>>
+>>>
+>>>
+>>> On Wednesday, June 22, 2016, Raimon Bosch <rai...@gmail.com> wrote:
+>>>
+>>>>
+>>>> Hi Gregory,
+>>>>
+>>>> Thank you for your answer. One of our experiments needs to run OpenMPI=
+=20
+>>>> among several servers. This means that we should put one of our contai=
+ners=20
+>>>> in host01, another in host02 and another in host03 and collect the res=
+ults.=20
+>>>>
+>>>> How can I do this execution in parallel if I need to communicate with=
+=20
+>>>> more than one server?
+>>>>
+>>>> El martes, 21 de junio de 2016, 16:51:03 (UTC+2), Gregory M. Kurtzer=
+=20
+>>>> escribi=C3=B3:
+>>>>>
+>>>>> Hi Raimon,
+>>>>>
+>>>>> The communication model of a Singularity container is very different=
+=20
+>>>>> from that of a Docker implementation. This is because Docker for all=
+=20
+>>>>> practical purposes emulates a virtual machine as each container has i=
+t's=20
+>>>>> own IP address and thus it's own ssh server. It also carries its own =
+set of=20
+>>>>> complexities, for example networks need to be segregated/VLan'ed, DNS=
+/host=20
+>>>>> resolution needs to be dynamic and passed down to the containers (so =
+they=20
+>>>>> can reach each other), ssh daemons and other process running inside t=
+he=20
+>>>>> containers, management via an existing scheduling system, and the lis=
+t goes=20
+>>>>> on and on.
+>>>>>
+>>>>> Think of it this way, Singularity does not do any of that... It runs =
+a=20
+>>>>> program within the container as if it were running on the host itself=
+, so=20
+>>>>> to communicate between containers is as easy as communicating between=
+=20
+>>>>> programs. So for MPI, it would happen with the MPI on the physical ho=
+st=20
+>>>>> (outside the container) invoking the container subsystem which then i=
+nvokes=20
+>>>>> the MPI programs within the container and the MPI programs within the=
+=20
+>>>>> container communicate back to the MPI (orted) outside the container o=
+n the=20
+>>>>> host to get access to the host resources. In this model all available=
+=20
+>>>>> resources and infrastructure can be leveraged at full bandwidth by th=
+e=20
+>>>>> contained processes and all of the aforementioned complexities akin t=
+o=20
+>>>>> running on a virtualized mini-cluster are circumvented.
+>>>>>
+>>>>> There is additional information I have written at:
+>>>>>
+>>>>> http://singularity.lbl.gov/#hpc
+>>>>>
+>>>>> That page is still coming along, and needs more information still but=
+=20
+>>>>> if you have any questions, comments or change proposals please let us=
+ know!
+>>>>>
+>>>>> Thanks and hope that helps!
+>>>>>
+>>>>>
+>>>>>
+>>>>> On Tue, Jun 21, 2016 at 7:37 AM, Raimon Bosch <rai...@gmail.com>=20
+>>>>> wrote:
+>>>>>
+>>>>>>
+>>>>>>
+>>>>>> Hi,
+>>>>>>
+>>>>>> We are trying to run experiments using singularity containers. The=
+=20
+>>>>>> idea is to run OpenMPI among several containers and check performanc=
+e=20
+>>>>>> results.=20
+>>>>>>
+>>>>>> How can I communicate with another container? In docker this is clea=
+r=20
+>>>>>> because every container gets an assigned IP and you can ping there, =
+but=20
+>>>>>> what is the situation in the case of singularity? Is it possible to =
+assign=20
+>>>>>> an IP to each container? Can I connect via ssh to them?
+>>>>>>
+>>>>>> Thanks in advance,
+>>>>>>
+>>>>>> --=20
+>>>>>> You received this message because you are subscribed to the Google=
+=20
+>>>>>> Groups "singularity" group.
+>>>>>> To unsubscribe from this group and stop receiving emails from it,=20
+>>>>>> send an email to singu...@lbl.gov.
+>>>>>>
+>>>>>
+>>>>>
+>>>>>
+>>>>> --=20
+>>>>> Gregory M. Kurtzer
+>>>>> High Performance Computing Services (HPCS)
+>>>>> University of California
+>>>>> Lawrence Berkeley National Laboratory
+>>>>> One Cyclotron Road, Berkeley, CA 94720
+>>>>>
+>>>> --=20
+>>>> You received this message because you are subscribed to the Google=20
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send=
+=20
+>>>> an email to singu...@lbl.gov.
+>>>>
+>>>
+>>>
+>>> --=20
+>>> Gregory M. Kurtzer
+>>> High Performance Computing Services (HPCS)
+>>> University of California
+>>> Lawrence Berkeley National Laboratory
+>>> One Cyclotron Road, Berkeley, CA 94720
+>>>
+>>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s=20
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n=20
+>> email to singu...@lbl.gov.
+>>
+>
+>
+> --=20
+> Gregory M. Kurtzer
+> High Performance Computing Services (HPCS)
+> University of California
+> Lawrence Berkeley National Laboratory
+> One Cyclotron Road, Berkeley, CA 94720
+>
+>
+------=_Part_346_476273665.1466672023836
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><br>One last question: What if I want to execute more than=
+ one container in the same host? With this technique I am bounded always to=
+ the same container. One of our experiments was based in measuring performa=
+nce of several containers working in parallel in the same node. Also we had=
+ experiments with N containers per host in a multihost environment.<br><br>=
+El mi=C3=A9rcoles, 22 de junio de 2016, 16:41:58 (UTC+2), Gregory M. Kurtze=
+r  escribi=C3=B3:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margi=
+n-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;">Hi Raimon,<di=
+v><br></div><div>Sorry I wasn&#39;t clear. I am not yet at my computer and =
+thinking while typing on an iPhone hinders my mental processes. Lol</div><d=
+iv><br></div><div>If I understand your example properly, you have a docker =
+or VM infrastructure already set up and you are invoking the mpirun command=
+s from within the virtual environment. Singularity works on a very differen=
+t premis because integrating a virtual cluster into an existing cluster and=
+ scheduling system is a mess.</div><div><br></div><div>So starting from the=
+ physical nodes, which already have access to all other nodes in the cluste=
+r, and already scheduled properly, and in direct access to optimized hardwa=
+re and file systems.... You call mpirun.=C2=A0</div><div><br></div><div>The=
+ mpirun command will take the standard format as you illustrated with the f=
+ollowing change to call Singularity inline:</div><div><br></div><div>$ mpir=
+un -np 4 --hostfile hosts.txt singularity exec ~/container.img trace.sh bt.=
+C.4</div><div><br></div><div>This assumes the following:</div><div><br></di=
+v><div>1. The container image which contains the program&#39;s you want to =
+run is at ~/container.img and accessible at this path=C2=A0on all nodes ref=
+erenced in hosts.txt</div><div>2. The hosts.txt references other physical n=
+odes you want to run on</div><div>3. The executables trace.sh and bt.C.4 ar=
+e both inside the container and in a standard path</div><br><div>In this ca=
+se we are performing one execution and MPI + singularity is managing all of=
+ the communication between processes, nodes and containers. Also it is now =
+using any optimized hardware (eg. Infiniband)=C2=A0and existing high perfor=
+mance=C2=A0file systems (which should not be accessible via a virtualized o=
+r Docker&#39;ized=C2=A0cluster for security reasons).</div><div><br></div><=
+div>This way is actually MUCH simpler then what you are proposing because t=
+here is no need to manage any virtual nodes, virtual networks, or resource =
+manager hacks. It really is as easy as just running any other MPI=C2=A0proc=
+ess on an existing cluster.=C2=A0</div><div><br></div><div>Hope that helps =
+better!</div><div><br></div><div><span></span><br><br>On Wednesday, June 22=
+, 2016, Raimon Bosch &lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfu=
+scated-mailto=3D"xDydkJacAgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D=
+&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:=
+&#39;;return true;">rai...@gmail.com</a>&gt; wrote:<br><blockquote class=3D=
+"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding=
+-left:1ex"><div dir=3D"ltr"><br><br>Hi Gregory,<br><br>I&#39;m not sure if =
+I would achieve the same with your commands. In an environment based on doc=
+kers or virtual machines we would do something like this [non applicable to=
+ Singularity]:<br><br>&gt; cd $OPEN_MPI/bin &amp;&amp; mpirun -np 4 --hostf=
+ile hosts.txt ./trace.sh ./bt.C.4<br><br>where hosts.txt* is:<br><br>&gt;vm=
+-ip-01-on-<b>host01</b> slots=3D2<br>&gt;vm-ip-01-on-<b>host02</b> slots=3D=
+2<br><br>* vm-ip-XX-on-hostXX<b> </b>are IPs i.e. 172.100.60.XX<br><br>and =
+trace.sh is:<br><br>&gt;#!/bin/bash<br>&gt;<br>&gt;export EXTRAE_HOME=3D/op=
+t/extrae/<br>&gt;export EXTRAE_CONFIG_FILE=3D/extrae.xml<br>&gt;export LD_P=
+RELOAD=3D${EXTRAE_HOME}/lib/<wbr>libmpitrace.so<br>&gt;<br>&gt;## Run the d=
+esired program<br>&gt;$*<br><br>As you see we only perform one execution an=
+d OpenMPI transparently manages communication between containers or virtual=
+ machines. This command would work well rather VMs are on the same host or =
+not.<br><br>What I understand from your response is that now we should exec=
+ute OpenMPI on each host and then merge results manually. I don&#39;t know =
+yet how to do this merge step or if it is any way to centralize everything =
+like I would do with VMs.<br><br>Thanks in advance,<br><br>El mi=C3=A9rcole=
+s, 22 de junio de 2016, 14:42:54 (UTC+2), Gregory M. Kurtzer  escribi=C3=B3=
+:<blockquote class=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;bord=
+er-left:1px #ccc solid;padding-left:1ex">Hi Raimon,<div><br></div><div>The =
+quick answer is you have mpirun handle that as you would normally where the=
+ container file lives on a shared file system:</div><div><br></div><div>$ m=
+pirun singularity exec ~/container.img mpi_prog_in_container</div><div><br>=
+</div><div>Let the MPI outside the container launch the singularity contain=
+er on each host as it would normally launch any MPI program. Then it will c=
+all Singulairty and Singularity will launch the MPI program inside the cont=
+ainer on each of your hosts/servers.=C2=A0</div><div><br></div><div>Hope th=
+at helps!</div><div><br></div><div><span></span><br><br>On Wednesday, June =
+22, 2016, Raimon Bosch &lt;<a rel=3D"nofollow">rai...@gmail.com</a>&gt; wro=
+te:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-=
+left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr"><br>Hi Gregory,<br><=
+br>Thank you for your answer. One of our experiments needs to run OpenMPI a=
+mong several servers. This means that we should put one of our containers i=
+n host01, another in host02 and another in host03 and collect the results. =
+<br><br>How can I do this execution in parallel if I need to communicate wi=
+th more than one server?<br><br>El martes, 21 de junio de 2016, 16:51:03 (U=
+TC+2), Gregory M. Kurtzer  escribi=C3=B3:<blockquote class=3D"gmail_quote" =
+style=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-left=
+:1ex"><div dir=3D"ltr">Hi Raimon,<div><br></div><div>The communication mode=
+l of a Singularity container is very different from that of a Docker implem=
+entation. This is because Docker for all practical purposes emulates a virt=
+ual machine as each container has it&#39;s own IP address and thus it&#39;s=
+ own ssh server. It also carries its own set of complexities, for example n=
+etworks need to be segregated/VLan&#39;ed, DNS/host resolution needs to be =
+dynamic and passed down to the containers (so they can reach each other), s=
+sh daemons and other process running inside the containers, management via =
+an existing scheduling system, and the list goes on and on.</div><div><br><=
+/div><div>Think of it this way, Singularity does not do any of that... It r=
+uns a program within the container as if it were running on the host itself=
+, so to communicate between containers is as easy as communicating between =
+programs. So for MPI, it would happen with the MPI on the physical host (ou=
+tside the container) invoking the container subsystem which then invokes th=
+e MPI programs within the container and the MPI programs within the contain=
+er communicate back to the MPI (orted) outside the container on the host to=
+ get access to the host resources. In this model all available resources an=
+d infrastructure can be leveraged at full bandwidth by the contained proces=
+ses and all of the aforementioned complexities akin to running on a virtual=
+ized mini-cluster are circumvented.</div><div><br></div><div>There is addit=
+ional information I have written at:</div><div><br></div><div><a href=3D"ht=
+tp://singularity.lbl.gov/#hpc" rel=3D"nofollow" target=3D"_blank" onmousedo=
+wn=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fsingular=
+ity.lbl.gov%2F%23hpc\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEKXGCj-HN-lC0p=
+hcop4-SUwsYEjw&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.go=
+ogle.com/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.gov%2F%23hpc\x26sa\x3dD\x26s=
+ntz\x3d1\x26usg\x3dAFQjCNEKXGCj-HN-lC0phcop4-SUwsYEjw&#39;;return true;">ht=
+tp://singularity.lbl.gov/#<wbr>hpc</a><br></div><div><br></div><div>That pa=
+ge is still coming along, and needs more information still but if you have =
+any questions, comments or change proposals please let us know!</div><div><=
+br></div><div>Thanks and hope that helps!</div><div><br></div><div><br></di=
+v></div><div><br><div class=3D"gmail_quote">On Tue, Jun 21, 2016 at 7:37 AM=
+, Raimon Bosch <span dir=3D"ltr">&lt;<a rel=3D"nofollow">rai...@gmail.com</=
+a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0=
+ 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr"><br=
+><br>Hi,<br><br>We are trying to run experiments using singularity containe=
+rs. The idea is to run OpenMPI among several containers and check performan=
+ce results. <br><br>How can I communicate with another container? In docker=
+ this is clear because every container gets an assigned IP and you can ping=
+ there, but what is the situation in the case of singularity? Is it possibl=
+e to assign an IP to each container? Can I connect via ssh to them?<br><br>=
+Thanks in advance,<span><font color=3D"#888888"><br></font></span></div><sp=
+an><font color=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div><div dir=3D"ltr"><div>Gregory M. Kurtzer<br>High Performance Computi=
+ng Services (HPCS)<br>University of California<br>Lawrence Berkeley Nationa=
+l Laboratory<br>One Cyclotron Road, Berkeley, CA 94720</div></div></div>
+</div>
+</blockquote></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a>singularity+unsubscribe@lbl.<wbr>gov</a>.<br>
+</blockquote></div><br><br>-- <br><div dir=3D"ltr"><div>Gregory M. Kurtzer<=
+br>High Performance Computing Services (HPCS)<br>University of California<b=
+r>Lawrence Berkeley National Laboratory<br>One Cyclotron Road, Berkeley, CA=
+ 94720</div></div><br>
+</blockquote></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a>singularity+unsubscribe@lbl.<wbr>gov</a>.<br>
+</blockquote></div><br><br>-- <br><div dir=3D"ltr"><div>Gregory M. Kurtzer<=
+br>High Performance Computing Services (HPCS)<br>University of California<b=
+r>Lawrence Berkeley National Laboratory<br>One Cyclotron Road, Berkeley, CA=
+ 94720</div></div><br>
+</blockquote></div>
+------=_Part_346_476273665.1466672023836--
+
+------=_Part_345_1952646729.1466672023836--

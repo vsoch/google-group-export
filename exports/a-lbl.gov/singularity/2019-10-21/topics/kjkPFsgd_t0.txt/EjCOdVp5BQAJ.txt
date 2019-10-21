@@ -1,0 +1,428 @@
+Date: Tue, 27 Aug 2019 06:08:57 -0700 (PDT)
+From: Vang Le Quy <lqva...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <ad970876-e884-4823-8a9e-2e049cd927c2@lbl.gov>
+In-Reply-To: <6ab21e43-a743-0bea-fcb5-db42076fb8e0@googlemail.com>
+References: <bece7fde-73f0-4b9b-852a-4bd9576cc968@lbl.gov>
+ <d74ad067-3c38-40ca-97ab-adeb2a891e7f@lbl.gov>
+ <6ab21e43-a743-0bea-fcb5-db42076fb8e0@googlemail.com>
+Subject: Re: [Singularity] Re: run ssh server in a Singularity container?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2406_786228196.1566911337279"
+
+------=_Part_2406_786228196.1566911337279
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2407_1697176039.1566911337280"
+
+------=_Part_2407_1697176039.1566911337280
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi Oliver
+
+>
+> this is exactly what our users do via interactive jobs (but with 
+> HTCondor). Did you check if this works or can be made to work with Slurm? 
+> Maybe your admins can offer this? 
+>
+It works with slurm only: Submit interactive job, ssh to the compute node. 
+
+I don't see how an ssh to localhost tests anything related to firewall 
+> setup? 
+>
+Sorry for the ambiguity. FE and CN are test servers, and therefore no 
+firewall or extra security is setup. They are all default Ubuntu setup. 
+Furthermore the network guys at my place control port opening on routers 
+and switches. So ssh to localhost on FE is sufficient. For direct evidence. 
+This works for nginx service:
+user@FE:~ srun --pty bash -l
+user@CN:~ singularity instance start --net 
+--network-args="portmap=2222:80/tcp" --fakeroot nginx.img webtest
+
+I then could visit http://CN:2222 
+
+Did you try to run sshd manually instead of using systemd as I mentioned? 
+>
+I tried after your suggestion. There are several error before sshd really 
+starts (e.g. missing /var/run/sshd directory, directory permission, etc). 
+And I still can't connect.
+
+My conclusion so far is that ssh server requires more things to start up 
+properly inside singularity. But I don't know exactly what are these things 
+yet, keep looking ...
+
+
+On Tuesday, August 27, 2019 at 11:34:06 AM UTC+2, Oliver Freyermuth wrote:
+
+> Hi Vang, 
+>
+> Am 27.08.19 um 11:28 schrieb Vang Le Quy: 
+> > Hi Thomas and Oliver. 
+> > 
+> > I need a full instance of Ubuntu with tensorflow, GPU driver, etc to do 
+> some machine learning inside the container. The ssh connection will allow 
+> remote debug functionality for python code with pyCharm. So a light weight 
+> busybox will not work. 
+>
+> this is exactly what our users do via interactive jobs (but with 
+> HTCondor). Did you check if this works or can be made to work with Slurm? 
+> Maybe your admins can offer this? 
+>
+> > Regarding firewall, this reason can be excluded for now, because I 
+> logged on to the FE and do ssh to localhost. 
+>
+> I don't see how an ssh to localhost tests anything related to firewall 
+> setup? 
+>
+> > More importantly, the ssh service itself inside the instance is not 
+> running (see terminal output at the end of my first email). So I must get 
+> the ssh server up and running inside the instance first. 
+>
+> Did you try to run sshd manually instead of using systemd as I mentioned? 
+>
+> Cheers, 
+>         Oliver 
+>
+> > 
+> > Cheers 
+> > Vang 
+> > 
+> > On Tuesday, August 27, 2019 at 9:44:01 AM UTC+2, Vang Le Quy wrote: 
+> > 
+> >     * 
+> >     * 
+> >     *This is my setup:* 
+> > 
+> >     Laptop (LT) -> slurm front-end(FE) containing Singularity executable 
+> -> Compute node (CN) with GPUs, and also contains Singularity executable. 
+> > 
+> >     FE and CN share a partition so users can have shared home 
+> directories between FE and CN. 
+> > 
+> >     Singularity version: 3.3.0 
+> > 
+> >     *Intermediate goal:* 
+> > 
+> >     Start a singularity container/instance on FE, and SSH server service 
+> therein. Then do SSH from LT into that container. 
+> > 
+> >     *Final Goal:* 
+> > 
+> >     Submit a slurm job from FE which in turn start a Singularity 
+> container/instance on CN. SSH from LT to that Container on CN via FE 
+> because users can't logon to CN directly. 
+> > 
+> > 
+> >     *My try so far:* 
+> > 
+> >     This is my DEF file: 
+> > 
+> >     ############# 
+> >     Bootstrap: docker 
+> >     From: nvidia/tensorflow:19.05-py3 
+> >     Registry: nvcr.io <http://nvcr.io> 
+> >     IncludeCmd: yes 
+> > 
+> >     %environment 
+> >          export LANG=en_US.UTF-8 
+> > 
+> >     %post 
+> >          apt-get update && apt-get install -y --no-install-recommends 
+> apt-utils 
+> >          LANG=en_US.UTF-8 
+> >          # Language/locale settings 
+> >          echo $LANG UTF-8 > /etc/locale.gen 
+> >          apt-get install -y locales && update-locale --reset LANG=$LANG 
+> > 
+> >          apt-get install -y --no-install-recommends wget lsb-release 
+> parallel vim openssh-server 
+> >          systemctl enable ssh 
+> > 
+> >     %startscript 
+> >          systemctl start ssh 
+> >     ############### 
+> > 
+> >     Build: 
+> >     singularity build --fakeroot tensorflow_19.05-py3.sif 
+> Singularity.def 
+> > 
+> >     Run: 
+> >     mkdir overlay 
+> >     singularity instance start -B /run:/run  --writable-tmpfs --overlay 
+> $PWD/overlay  --fakeroot --net --network-args="portmap=2222:22/tcp" 
+> ./tensorflow_19.05-py3.sif sshins 
+> > 
+> >     INFO:    Convert SIF file to sandbox... 
+> >     WARNING: Ignoring --writable-tmpfs as it requires overlay support 
+> >     Could not watch jobs: Operation not permitted 
+> > 
+> >     INFO:    instance started successfully 
+> > 
+> >     Test ssh server status: 
+> > 
+> >     singularity shell instance://sshins 
+> >     Singularity rootfs-054517279:/tmp/> whoami 
+> >     root 
+> >     Singularity rootfs-054517279:/tmp> service ssh status 
+> >     Failed to retrieve unit: Access denied 
+> >     Failed to get properties: Access denied 
+> >     Singularity rootfs-054517279:/tmp> ps -ef 
+> >     UID         PID   PPID  C STIME TTY          TIME CMD 
+> >     root          1      0  0 07:33 ?        00:00:00 sinit 
+> >     root         25      0  0 07:34 pts/27   00:00:00 /bin/bash --norc 
+> >     root        253     25  0 07:35 pts/27   00:00:00 ps -ef 
+> > 
+> > 
+> >     On FE: 
+> >     ssh -p 2222 feuser@localhost 
+> >     ssh: connect to host localhost port 2222: Connection refused 
+> > 
+> >     This is a dead end to me at the moment. Any info and suggestions are 
+> welcome. 
+> > 
+> >     Kind regards 
+> >     Vang 
+> > 
+> > -- 
+> > You received this message because you are subscribed to the Google 
+> Groups "singularity" group. 
+> > To unsubscribe from this group and stop receiving emails from it, send 
+> an email to si...@lbl.gov <javascript:> <mailto:
+> singu...@lbl.gov <javascript:>>. 
+> > To view this discussion on the web visit 
+> https://groups.google.com/a/lbl.gov/d/msgid/singularity/d74ad067-3c38-40ca-97ab-adeb2a891e7f%40lbl.gov 
+> <
+> https://groups.google.com/a/lbl.gov/d/msgid/singularity/d74ad067-3c38-40ca-97ab-adeb2a891e7f%40lbl.gov?utm_medium=email&utm_source=footer>. 
+>
+>
+>
+------=_Part_2407_1697176039.1566911337280
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Hi Oliver</div><blockquote class=3D"gmail_quote" styl=
+e=3D"margin: 0px 0px 0px 0.8ex; border-left: 1px solid rgb(204, 204, 204); =
+padding-left: 1ex;"><div><br></div><div>this is exactly what our users do v=
+ia interactive jobs (but with=20
+HTCondor). Did you check if this works or can be made to work with=20
+Slurm?=20
+<br>Maybe your admins can offer this?=20
+</div></blockquote><div>It works with slurm only: Submit interactive job, s=
+sh to the compute node. <br></div><div><br></div><blockquote class=3D"gmail=
+_quote" style=3D"margin: 0px 0px 0px 0.8ex; border-left: 1px solid rgb(204,=
+ 204, 204); padding-left: 1ex;"><div>I don&#39;t see how an ssh to localhos=
+t tests anything related to firewall setup? <br></div></blockquote><div>Sor=
+ry for the ambiguity. FE and CN are test servers, and therefore no firewall=
+ or extra security is setup. They are all default Ubuntu setup. Furthermore=
+ the network guys at my place control port opening on routers and switches.=
+ So ssh to localhost on FE is sufficient. For direct evidence. This works f=
+or nginx service:</div><div>user@FE:~ srun --pty bash -l</div><div>user@CN:=
+~ singularity instance start --net --network-args=3D&quot;portmap=3D2222:80=
+/tcp&quot; --fakeroot nginx.img webtest</div><div><br></div><div>I then cou=
+ld visit http://CN:2222 <br></div><div></div><div><br></div><blockquote cla=
+ss=3D"gmail_quote" style=3D"margin: 0px 0px 0px 0.8ex; border-left: 1px sol=
+id rgb(204, 204, 204); padding-left: 1ex;"><div>Did you try to run sshd man=
+ually instead of using systemd as I mentioned? <br></div></blockquote><div>=
+I tried after your suggestion. There are several error before sshd really s=
+tarts (e.g. missing /var/run/sshd directory, directory permission, etc). An=
+d I still can&#39;t connect.</div><div><br></div><div>My conclusion so far =
+is that ssh server requires more things to start up properly inside singula=
+rity. But I don&#39;t know exactly what are these things yet, keep looking =
+...<br></div><div><br></div><div><br></div><div>On Tuesday, August 27, 2019=
+ at 11:34:06 AM UTC+2, Oliver Freyermuth wrote:</div><blockquote class=3D"g=
+mail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc sol=
+id;padding-left: 1ex;">Hi Vang,
+<br>
+<br>Am 27.08.19 um 11:28 schrieb Vang Le Quy:
+<br>&gt; Hi Thomas and Oliver.
+<br>&gt;=20
+<br>&gt; I need a full instance of Ubuntu with tensorflow, GPU driver, etc =
+to do some machine learning inside the container. The ssh connection will a=
+llow remote debug functionality for python code with pyCharm. So a light we=
+ight busybox will not work.=20
+<br>
+<br>this is exactly what our users do via interactive jobs (but with HTCond=
+or). Did you check if this works or can be made to work with Slurm?=20
+<br>Maybe your admins can offer this?=20
+<br>
+<br>&gt; Regarding firewall, this reason can be excluded for now, because I=
+ logged on to the FE and do ssh to localhost.=20
+<br>
+<br>I don&#39;t see how an ssh to localhost tests anything related to firew=
+all setup?=20
+<br>
+<br>&gt; More importantly, the ssh service itself inside the instance is no=
+t running (see terminal output at the end of my first email). So I must get=
+ the ssh server up and running inside the instance first.
+<br>
+<br>Did you try to run sshd manually instead of using systemd as I mentione=
+d?=20
+<br>
+<br>Cheers,
+<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0Oliver
+<br>
+<br>&gt;=20
+<br>&gt; Cheers
+<br>&gt; Vang
+<br>&gt;=20
+<br>&gt; On Tuesday, August 27, 2019 at 9:44:01 AM UTC+2, Vang Le Quy wrote=
+:
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 *
+<br>&gt; =C2=A0 =C2=A0 *
+<br>&gt; =C2=A0 =C2=A0 *This is my setup:*
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 Laptop (LT) -&gt; slurm front-end(FE) containing Sin=
+gularity executable -&gt; Compute node (CN) with GPUs, and also contains Si=
+ngularity executable.
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 FE and CN share a partition so users can have shared=
+ home directories between FE and CN.
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 Singularity version: 3.3.0
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 *Intermediate goal:*
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 Start a singularity container/instance on FE, and SS=
+H server service therein. Then do SSH from LT into that container.
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 *Final Goal:*
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 Submit a slurm job from FE which in turn start a Sin=
+gularity container/instance on CN. SSH from LT to that Container on CN via =
+FE because users can&#39;t logon to CN directly.
+<br>&gt;=20
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 *My try so far:*
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 This is my DEF file:
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 #############
+<br>&gt; =C2=A0 =C2=A0 Bootstrap: docker
+<br>&gt; =C2=A0 =C2=A0 From: nvidia/tensorflow:19.05-py3
+<br>&gt; =C2=A0 =C2=A0 Registry: <a href=3D"http://nvcr.io" target=3D"_blan=
+k" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://www.google.com/u=
+rl?q\x3dhttp%3A%2F%2Fnvcr.io\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGCkPpM=
+qfSCPvFW5vNVrqBgbRrDog&#39;;return true;" onclick=3D"this.href=3D&#39;http:=
+//www.google.com/url?q\x3dhttp%3A%2F%2Fnvcr.io\x26sa\x3dD\x26sntz\x3d1\x26u=
+sg\x3dAFQjCNGCkPpMqfSCPvFW5vNVrqBgbRrDog&#39;;return true;">nvcr.io</a> &lt=
+;<a href=3D"http://nvcr.io" target=3D"_blank" rel=3D"nofollow" onmousedown=
+=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fnvcr.io\x2=
+6sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGCkPpMqfSCPvFW5vNVrqBgbRrDog&#39;;ret=
+urn true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%=
+3A%2F%2Fnvcr.io\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGCkPpMqfSCPvFW5vNVr=
+qBgbRrDog&#39;;return true;">http://nvcr.io</a>&gt;
+<br>&gt; =C2=A0 =C2=A0 IncludeCmd: yes
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 %environment
+<br>&gt; =C2=A0 =C2=A0 =C2=A0=C2=A0=C2=A0=C2=A0 export LANG=3Den_US.UTF-8
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 %post
+<br>&gt; =C2=A0 =C2=A0 =C2=A0=C2=A0=C2=A0=C2=A0 apt-get update &amp;&amp; a=
+pt-get install -y --no-install-recommends apt-utils
+<br>&gt; =C2=A0 =C2=A0 =C2=A0=C2=A0=C2=A0=C2=A0 LANG=3Den_US.UTF-8
+<br>&gt; =C2=A0 =C2=A0 =C2=A0=C2=A0=C2=A0=C2=A0 # Language/locale settings
+<br>&gt; =C2=A0 =C2=A0 =C2=A0=C2=A0=C2=A0=C2=A0 echo $LANG UTF-8 &gt; /etc/=
+locale.gen
+<br>&gt; =C2=A0 =C2=A0 =C2=A0=C2=A0=C2=A0=C2=A0 apt-get install -y locales =
+&amp;&amp; update-locale --reset LANG=3D$LANG
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 =C2=A0=C2=A0=C2=A0=C2=A0 apt-get install -y --no-ins=
+tall-recommends wget lsb-release parallel vim openssh-server
+<br>&gt; =C2=A0 =C2=A0 =C2=A0=C2=A0=C2=A0=C2=A0 systemctl enable ssh
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 %startscript
+<br>&gt; =C2=A0 =C2=A0 =C2=A0=C2=A0=C2=A0=C2=A0 systemctl start ssh
+<br>&gt; =C2=A0 =C2=A0 ###############
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 Build:
+<br>&gt; =C2=A0 =C2=A0 singularity build --fakeroot tensorflow_19.05-py3.si=
+f Singularity.def
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 Run:
+<br>&gt; =C2=A0 =C2=A0 mkdir overlay
+<br>&gt; =C2=A0 =C2=A0 singularity instance start -B /run:/run=C2=A0 --writ=
+able-tmpfs --overlay $PWD/overlay=C2=A0 --fakeroot --net --network-args=3D&=
+quot;portmap=3D2222:<wbr>22/tcp&quot; ./tensorflow_19.05-py3.sif sshins
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 INFO:=C2=A0=C2=A0=C2=A0 Convert SIF file to sandbox.=
+..
+<br>&gt; =C2=A0 =C2=A0 WARNING: Ignoring --writable-tmpfs as it requires ov=
+erlay support
+<br>&gt; =C2=A0 =C2=A0 Could not watch jobs: Operation not permitted
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 INFO:=C2=A0=C2=A0=C2=A0 instance started successfull=
+y
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 Test ssh server status:
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 singularity shell instance://sshins
+<br>&gt; =C2=A0 =C2=A0 Singularity rootfs-054517279:/tmp/&gt; whoami
+<br>&gt; =C2=A0 =C2=A0 root
+<br>&gt; =C2=A0 =C2=A0 Singularity rootfs-054517279:/tmp&gt; service ssh st=
+atus
+<br>&gt; =C2=A0 =C2=A0 Failed to retrieve unit: Access denied
+<br>&gt; =C2=A0 =C2=A0 Failed to get properties: Access denied
+<br>&gt; =C2=A0 =C2=A0 Singularity rootfs-054517279:/tmp&gt; ps -ef
+<br>&gt; =C2=A0 =C2=A0 UID=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =
+PID=C2=A0=C2=A0 PPID=C2=A0 C STIME TTY=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0 TIME CMD
+<br>&gt; =C2=A0 =C2=A0 root=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0 1=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 0=C2=A0 0 07:33 ?=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0 00:00:00 sinit
+<br>&gt; =C2=A0 =C2=A0 root=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+ 25=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 0=C2=A0 0 07:34 pts/27=C2=A0=C2=A0 00:00:=
+00 /bin/bash --norc
+<br>&gt; =C2=A0 =C2=A0 root=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 253=
+=C2=A0=C2=A0=C2=A0=C2=A0 25=C2=A0 0 07:35 pts/27=C2=A0=C2=A0 00:00:00 ps -e=
+f
+<br>&gt;=20
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 On FE:
+<br>&gt; =C2=A0 =C2=A0 ssh -p 2222 feuser@localhost
+<br>&gt; =C2=A0 =C2=A0 ssh: connect to host localhost port 2222: Connection=
+ refused
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 This is a dead end to me at the moment. Any info and=
+ suggestions are welcome.
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 Kind regards
+<br>&gt; =C2=A0 =C2=A0 Vang
+<br>&gt;=20
+<br>&gt; --=20
+<br>&gt; You received this message because you are subscribed to the Google=
+ Groups &quot;singularity&quot; group.
+<br>&gt; To unsubscribe from this group and stop receiving emails from it, =
+send an email to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-m=
+ailto=3D"tEXGThEkEAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;jav=
+ascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;re=
+turn true;">singu...@lbl.<wbr>gov</a> &lt;mailto:<a href=3D"javascript:" ta=
+rget=3D"_blank" gdf-obfuscated-mailto=3D"tEXGThEkEAAJ" rel=3D"nofollow" onm=
+ousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this=
+.href=3D&#39;javascript:&#39;;return true;">singularity+<wbr>unsub...@lbl.g=
+ov</a>&gt;.
+<br>&gt; To view this discussion on the web visit <a href=3D"https://groups=
+.google.com/a/lbl.gov/d/msgid/singularity/d74ad067-3c38-40ca-97ab-adeb2a891=
+e7f%40lbl.gov" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=
+=3D&#39;https://groups.google.com/a/lbl.gov/d/msgid/singularity/d74ad067-3c=
+38-40ca-97ab-adeb2a891e7f%40lbl.gov&#39;;return true;" onclick=3D"this.href=
+=3D&#39;https://groups.google.com/a/lbl.gov/d/msgid/singularity/d74ad067-3c=
+38-40ca-97ab-adeb2a891e7f%40lbl.gov&#39;;return true;">https://groups.googl=
+e.com/a/<wbr>lbl.gov/d/msgid/singularity/<wbr>d74ad067-3c38-40ca-97ab-<wbr>=
+adeb2a891e7f%40lbl.gov</a> &lt;<a href=3D"https://groups.google.com/a/lbl.g=
+ov/d/msgid/singularity/d74ad067-3c38-40ca-97ab-adeb2a891e7f%40lbl.gov?utm_m=
+edium=3Demail&amp;utm_source=3Dfooter" target=3D"_blank" rel=3D"nofollow" o=
+nmousedown=3D"this.href=3D&#39;https://groups.google.com/a/lbl.gov/d/msgid/=
+singularity/d74ad067-3c38-40ca-97ab-adeb2a891e7f%40lbl.gov?utm_medium\x3dem=
+ail\x26utm_source\x3dfooter&#39;;return true;" onclick=3D"this.href=3D&#39;=
+https://groups.google.com/a/lbl.gov/d/msgid/singularity/d74ad067-3c38-40ca-=
+97ab-adeb2a891e7f%40lbl.gov?utm_medium\x3demail\x26utm_source\x3dfooter&#39=
+;;return true;">https://groups.google.com/a/<wbr>lbl.gov/d/msgid/singularit=
+y/<wbr>d74ad067-3c38-40ca-97ab-<wbr>adeb2a891e7f%40lbl.gov?utm_<wbr>medium=
+=3Demail&amp;utm_source=3Dfooter</a><wbr>&gt;.
+<br>
+<br></blockquote></div>
+------=_Part_2407_1697176039.1566911337280--
+
+------=_Part_2406_786228196.1566911337279--

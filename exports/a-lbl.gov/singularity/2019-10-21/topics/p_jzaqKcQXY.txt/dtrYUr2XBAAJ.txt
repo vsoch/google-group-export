@@ -1,0 +1,186 @@
+X-Received: by 10.66.41.81 with SMTP id d17mr5454697pal.31.1467164136841;
+        Tue, 28 Jun 2016 18:35:36 -0700 (PDT)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.107.138.35 with SMTP id m35ls5306051iod.79.gmail; Tue, 28 Jun
+ 2016 18:35:36 -0700 (PDT)
+X-Received: by 10.66.42.102 with SMTP id n6mr7229267pal.60.1467164136377;
+        Tue, 28 Jun 2016 18:35:36 -0700 (PDT)
+Return-Path: <gmku...@lbl.gov>
+Received: from fe4.lbl.gov (fe4.lbl.gov. [128.3.41.71])
+        by mx.google.com with ESMTPS id e62si1373747pfe.193.2016.06.28.18.35.36
+        for <singu...@lbl.gov>
+        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Tue, 28 Jun 2016 18:35:36 -0700 (PDT)
+Received-SPF: pass (google.com: domain of gmku...@lbl.gov designates 74.125.82.70 as permitted sender) client-ip=74.125.82.70;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of gmku...@lbl.gov designates 74.125.82.70 as permitted sender) smtp.mailfrom=gmku...@lbl.gov
+X-Ironport-SBRS: 1.6
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2AOAQBjJXNXdEZSfUpbhREGgzaqc4cMhQGBexcBhgACgSwHOBQBAQEBAQEBEgEKCwwIHzGETAEBAQMBEhErMAsLBAcNKgICIQEPAwEFARwGCAcEARwEAYd0Aw8IBaVxgTE+MYs7jAoNhBgBCyUQimWCQ4FPEQGDHYJaBY5viWA0AYwyggiPJYgRhjESHoEPHoRGHDIHiAKBNQEBAQ
+X-IronPort-AV: E=Sophos;i="5.26,543,1459839600"; 
+   d="scan'208,217";a="27836747"
+Received: from mail-wm0-f70.google.com ([74.125.82.70])
+  by fe4.lbl.gov with ESMTP; 28 Jun 2016 18:35:34 -0700
+Received: by mail-wm0-f70.google.com with SMTP id r190so33014693wmr.0
+        for <singu...@lbl.gov>; Tue, 28 Jun 2016 18:35:34 -0700 (PDT)
+X-Gm-Message-State: ALyK8tLeRVb1Gt+8DNOST6hj8OkLvci7O1Zll2st++cj+0qQeL1tWWjYJyico60dj7BMFB9M0O/4cObaGsSW6+lh6qFIT+iqcTa0xcJap7wwMyrXERCZrdo2+ZSl0Rr8/t+B23qjMAg/CHHTH2WO+a4zgJY=
+X-Received: by 10.25.24.80 with SMTP id o77mr1846223lfi.23.1467164134199;
+        Tue, 28 Jun 2016 18:35:34 -0700 (PDT)
+X-Received: by 10.25.24.80 with SMTP id o77mr1846219lfi.23.1467164134037; Tue,
+ 28 Jun 2016 18:35:34 -0700 (PDT)
+MIME-Version: 1.0
+Received: by 10.25.214.158 with HTTP; Tue, 28 Jun 2016 18:35:33 -0700 (PDT)
+In-Reply-To: <CAGfAqt9ivgSpaVp3qkgnkh=FnMf9dA5P38T3=2zmUkWTDxJ=dg@mail.gmail.com>
+References: <CAGfAqt-vkPzS8s5yVsxP1kxecODRgeXX0AD74J-RUD3jU94y0g@mail.gmail.com>
+ <CAGfAqt9ivgSpaVp3qkgnkh=FnMf9dA5P38T3=2zmUkWTDxJ=dg@mail.gmail.com>
+From: "Gregory M. Kurtzer" <gmku...@lbl.gov>
+Date: Tue, 28 Jun 2016 18:35:33 -0700
+Message-ID: <CAN7etTx3_n728poS9Zt8rW_P2+BFA42ruf3s0T5fqPF9cEK61g@mail.gmail.com>
+Subject: Re: [Singularity] Re: Bootstrap InstallPkgs config (rhel)
+To: singularity <singu...@lbl.gov>
+Content-Type: multipart/alternative; boundary=001a114076b2098255053660c506
+
+--001a114076b2098255053660c506
+Content-Type: text/plain; charset=UTF-8
+
+Hi Jason,
+
+I've been thinking about this... Maybe it makes sense to make this
+conditional? If /etc/yum.conf exists, maybe include that too somehow? What
+I can see is someone doing a "InstallPkg yum epel-release" and expecting
+the next command to include the EPEL repo. If we hard code the --config
+option to YUM, I think we will break that expected behavior.
+
+Thoughts?
+
+
+On Tue, Jun 28, 2016 at 1:45 PM, Jason Stover <jason...@gmail.com>
+wrote:
+
+> As a side note ... Adding in the '-c' flag causes InstallPkgs to play
+> nice, and do the right thing.
+>
+> -J
+>
+>
+> On Tue, Jun 28, 2016 at 2:55 PM, Jason Stover <jason...@gmail.com>
+> wrote:
+> > Hi all,
+> >
+> >   When bootstraping an SL6 image, from an SL7 host the base bootstrap
+> > works fine. But, if I add in InstallPkgs, then it starts pulling the
+> > yum config in from the host.
+> >
+> >   For example, I have set:
+> >     InstallPkgs yum
+> >
+> >   The initial bootstrap part runs fine. Once it gets to installing
+> > yum, it pulls from the SL7 repository. It seems that this is because
+> > the config isn't defined. In linux_build_redhat.smod, the InstallPkgs
+> > functions reads as:
+> >
+> >     $INSTALL_CMD --noplugins --nogpgcheck --installroot
+> > $SINGULARITY_BUILD_ROOT -y install $*
+> >
+> >   I believe that it should also contain:
+> >
+> >     -c $SINGULARITY_BUILD_ROOT/$YUM_CONF
+> >
+> >   As the Bootstrap function does.
+> >
+> >   Does anyone see any issues with this? What about doing a check if
+> > '$SINGULARITY_BUILD_ROOT/$YUM_CONF' exists, then add the -c option in,
+> > otherwise run without it?
+> >
+> > -J
+>
+> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+>
+
+
+
+-- 
+Gregory M. Kurtzer
+High Performance Computing Services (HPCS)
+University of California
+Lawrence Berkeley National Laboratory
+One Cyclotron Road, Berkeley, CA 94720
+
+--001a114076b2098255053660c506
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Jason,<div><br></div><div>I&#39;ve been thinking about =
+this... Maybe it makes sense to make this conditional? If /etc/yum.conf exi=
+sts, maybe include that too somehow? What I can see is someone doing a &quo=
+t;InstallPkg yum epel-release&quot; and expecting the next command to inclu=
+de the EPEL repo. If we hard code the --config option to YUM, I think we wi=
+ll break that expected behavior.</div><div><br></div><div>Thoughts?</div><d=
+iv><br></div></div><div class=3D"gmail_extra"><br><div class=3D"gmail_quote=
+">On Tue, Jun 28, 2016 at 1:45 PM, Jason Stover <span dir=3D"ltr">&lt;<a hr=
+ef=3D"mailto:jason...@gmail.com" target=3D"_blank">jason...@gmail.com</a>&g=
+t;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0=
+ .8ex;border-left:1px #ccc solid;padding-left:1ex">As a side note ... Addin=
+g in the &#39;-c&#39; flag causes InstallPkgs to play<br>
+nice, and do the right thing.<br>
+<span class=3D"HOEnZb"><font color=3D"#888888"><br>
+-J<br>
+</font></span><div class=3D"HOEnZb"><div class=3D"h5"><br>
+<br>
+On Tue, Jun 28, 2016 at 2:55 PM, Jason Stover &lt;<a href=3D"mailto:jason..=
+.@gmail.com">jason...@gmail.com</a>&gt; wrote:<br>
+&gt; Hi all,<br>
+&gt;<br>
+&gt;=C2=A0 =C2=A0When bootstraping an SL6 image, from an SL7 host the base =
+bootstrap<br>
+&gt; works fine. But, if I add in InstallPkgs, then it starts pulling the<b=
+r>
+&gt; yum config in from the host.<br>
+&gt;<br>
+&gt;=C2=A0 =C2=A0For example, I have set:<br>
+&gt;=C2=A0 =C2=A0 =C2=A0InstallPkgs yum<br>
+&gt;<br>
+&gt;=C2=A0 =C2=A0The initial bootstrap part runs fine. Once it gets to inst=
+alling<br>
+&gt; yum, it pulls from the SL7 repository. It seems that this is because<b=
+r>
+&gt; the config isn&#39;t defined. In linux_build_redhat.smod, the InstallP=
+kgs<br>
+&gt; functions reads as:<br>
+&gt;<br>
+&gt;=C2=A0 =C2=A0 =C2=A0$INSTALL_CMD --noplugins --nogpgcheck --installroot=
+<br>
+&gt; $SINGULARITY_BUILD_ROOT -y install $*<br>
+&gt;<br>
+&gt;=C2=A0 =C2=A0I believe that it should also contain:<br>
+&gt;<br>
+&gt;=C2=A0 =C2=A0 =C2=A0-c $SINGULARITY_BUILD_ROOT/$YUM_CONF<br>
+&gt;<br>
+&gt;=C2=A0 =C2=A0As the Bootstrap function does.<br>
+&gt;<br>
+&gt;=C2=A0 =C2=A0Does anyone see any issues with this? What about doing a c=
+heck if<br>
+&gt; &#39;$SINGULARITY_BUILD_ROOT/$YUM_CONF&#39; exists, then add the -c op=
+tion in,<br>
+&gt; otherwise run without it?<br>
+&gt;<br>
+&gt; -J<br>
+<br>
+--<br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singularity%...@lbl.gov">singu...@lbl.gov</a>.<br=
+>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div class=3D"gmail_signature" data-smartmail=3D"gmail_signature"><div dir=
+=3D"ltr"><div>Gregory M. Kurtzer<br>High Performance Computing Services (HP=
+CS)<br>University of California<br>Lawrence Berkeley National Laboratory<br=
+>One Cyclotron Road, Berkeley, CA 94720</div></div></div>
+</div>
+
+--001a114076b2098255053660c506--

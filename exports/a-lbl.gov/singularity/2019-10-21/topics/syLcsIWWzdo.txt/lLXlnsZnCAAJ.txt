@@ -1,0 +1,135 @@
+Date: Tue, 22 May 2018 08:35:48 -0700 (PDT)
+From: Jonathan Greenberg <jgr...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <60829c4e-a312-4ec6-997f-f5395f26a835@lbl.gov>
+In-Reply-To: <c5bb9897-dbb7-4667-9499-ce6aba2f4481@lbl.gov>
+References: <43b84047-926f-4ecd-a8da-fd7bbe3470ff@lbl.gov>
+ <5c0b22f1-df4a-41fe-b1a1-49acb174ec35@lbl.gov>
+ <c5bb9897-dbb7-4667-9499-ce6aba2f4481@lbl.gov>
+Subject: Re: Submit additional jobs from within a container
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_25543_2003732060.1527003349045"
+
+------=_Part_25543_2003732060.1527003349045
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_25544_2136496448.1527003349046"
+
+------=_Part_25544_2136496448.1527003349046
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+So we solved this as follows:
+1) Create a file and make it executable named after the slurm command with 
+e.g.:
+
+echo '#!/bin/bash
+ssh $USER@$HOSTNAME squeue $1' >> /usr/local/bin/squeue
+
+2) chmod 755 /usr/local/bin/squeue
+
+This solved it!  Note that you need passwordless ssh and it assumes you are 
+running this on the same system with slurm ($USER and $HOSTNAME), but could 
+easily be modified.
+
+Here's a full definition file for this solution:
+
+https://github.com/gearslaboratory/gears-singularity/blob/master/singularity-definitions/development/Singularity.gears-slurm
+
+--j
+
+On Monday, May 21, 2018 at 9:39:35 AM UTC-7, Jonathan Greenberg wrote:
+>
+> We're still trying to get a definition file working "right" (see my latest 
+> post) but we are seeing a promising lead by simply mapping the slurm 
+> commands to an ssh remote execution command, e.g.:
+>
+>   alias squeue="ssh $USER@$HOSTNAME squeue"
+>
+> As long as you setup ssh keypairs, and your host system allows this, this 
+> will work.  
+>
+> I'm trying to get this formalized in a definition file.  Any suggestions 
+> would be welcome.
+>
+> --j
+>
+> On Sunday, February 25, 2018 at 6:07:33 AM UTC-8, Jeff Kriske wrote:
+>>
+>> I'll chime in at how I've done this...
+>>
+>> Our environment uses environment modules and univa grid engine (uge). I 
+>> simply bind the installation directory and the directory containing the 
+>> module file. From within the container, as long as I've sourced 
+>> /etc/profile I can module load our cluster setup module and start using 
+>> qsub inside the container from the host without any issue.
+>>
+>> The main point isn't necessarily to run qsub manually from within the 
+>> container, many workflows have built libraries assuming qsub is available 
+>> or DRMAA libraries are present with the correct configs. Running qsub 
+>> outside the container would break these kinds of workflows and wouldn't 
+>> make sense.
+>>
+>>
+>> On Sunday, July 16, 2017 at 2:44:00 PM UTC-4, Brian Puchala wrote:
+>>>
+>>> Hi,
+>>>
+>>> I'm trying to familiarize myself with how Singularity might work for our 
+>>> application.  We have components that submit additional jobs through the 
+>>> host job manager (TORQUE or SLURM). Is it possible to run these within 
+>>> their own container?  Is there an example that shows how?
+>>>
+>>> Thanks!
+>>>
+>>>
+------=_Part_25544_2136496448.1527003349046
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">So we solved this as follows:<div>1) Create a file and mak=
+e it executable named after the slurm command with e.g.:</div><div><div><br=
+></div><div>echo &#39;#!/bin/bash</div><div>ssh $USER@$HOSTNAME squeue $1&#=
+39; &gt;&gt; /usr/local/bin/squeue</div></div><div><br></div><div>2) chmod =
+755 /usr/local/bin/squeue</div><div><br></div><div>This solved it!=C2=A0 No=
+te that you need passwordless ssh and it assumes you are running this on th=
+e same system with slurm ($USER and $HOSTNAME), but could easily be modifie=
+d.</div><div><br></div><div>Here&#39;s a full definition file for this solu=
+tion:</div><div><br></div><div>https://github.com/gearslaboratory/gears-sin=
+gularity/blob/master/singularity-definitions/development/Singularity.gears-=
+slurm<br></div><div><br></div><div>--j</div><div><br>On Monday, May 21, 201=
+8 at 9:39:35 AM UTC-7, Jonathan Greenberg wrote:<blockquote class=3D"gmail_=
+quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;pa=
+dding-left: 1ex;"><div dir=3D"ltr">We&#39;re still trying to get a definiti=
+on file working &quot;right&quot; (see my latest post) but we are seeing a =
+promising lead by simply mapping the slurm commands to an ssh remote execut=
+ion command, e.g.:<div><br></div><div>=C2=A0 alias squeue=3D&quot;ssh $USER=
+@$HOSTNAME squeue&quot;</div><div><br></div><div>As long as you setup ssh k=
+eypairs, and your host system allows this, this will work.=C2=A0=C2=A0</div=
+><div><br></div><div>I&#39;m trying to get this formalized in a definition =
+file.=C2=A0 Any suggestions would be welcome.</div><div><br></div><div>--j<=
+br><br>On Sunday, February 25, 2018 at 6:07:33 AM UTC-8, Jeff Kriske wrote:=
+<blockquote class=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;borde=
+r-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">I&#39;ll chime in =
+at how I&#39;ve done this...<div><br></div><div>Our environment uses enviro=
+nment modules and univa grid engine (uge). I simply bind the installation d=
+irectory and the directory containing the module file. From within the cont=
+ainer, as long as I&#39;ve sourced /etc/profile I can module load our clust=
+er setup module and start using qsub inside the container from the host wit=
+hout any issue.</div><div><br></div><div>The main point isn&#39;t necessari=
+ly to run qsub manually from within the container, many workflows have buil=
+t libraries assuming qsub is available or DRMAA libraries are present with =
+the correct configs. Running qsub outside the container would break these k=
+inds of workflows and wouldn&#39;t make sense.</div><div><br></div><div><br=
+>On Sunday, July 16, 2017 at 2:44:00 PM UTC-4, Brian Puchala wrote:<blockqu=
+ote class=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-left:1=
+px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Hi,<br><br>I&#39;m trying =
+to familiarize myself with how Singularity might work for our application.=
+=C2=A0 We have components that submit additional jobs through the host job =
+manager (TORQUE or SLURM). Is it possible to run these within their own con=
+tainer?=C2=A0 Is there an example that shows how?<br><br>Thanks!<br><br></d=
+iv></blockquote></div></div></blockquote></div></div></blockquote></div></d=
+iv>
+------=_Part_25544_2136496448.1527003349046--
+
+------=_Part_25543_2003732060.1527003349045--

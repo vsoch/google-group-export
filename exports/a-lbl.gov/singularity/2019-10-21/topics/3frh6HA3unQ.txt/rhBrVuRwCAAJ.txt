@@ -1,0 +1,653 @@
+Date: Tue, 11 Dec 2018 04:38:01 -0800 (PST)
+From: Alex <csrber...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <a91438f0-c487-47f6-ad17-6dadde0b3ebb@lbl.gov>
+In-Reply-To: <acadcb76-3dcc-4652-b074-b3e33e569999@lbl.gov>
+References: <ed120aaf-4e7b-4123-8a50-836d13ff1c62@lbl.gov>
+ <acadcb76-3dcc-4652-b074-b3e33e569999@lbl.gov>
+Subject: Re: Try to Start a BeeGFS Management Container
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1824_446766212.1544531881303"
+
+------=_Part_1824_446766212.1544531881303
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1825_1404274592.1544531881305"
+
+------=_Part_1825_1404274592.1544531881305
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Hi, you have 2 issues,=20
+
+a) ...
+*but the runmeta.sh wont start...*
+change  "%runscript" for "%startscript" if you need that the script start=
+=20
+with:  instance start ...
+
+...
+%startscript
+
+runmgm.sh
+
+
+b) xattr over tmpfs
+
+For security reasons, temporary file systems have disabled extended=20
+attributes, since this is a possible security flaw by allowing a user to=20
+write on memory pages of other namespace processes.=20
+
+the log show you:
+
+
+*Did you enable extended attributes (user_xattr) on the underlying file=20
+system?*
+
+what it means, enable this kernel feature for tmpfs -> *not recommended * a=
+=20
+test 1. "edit the extended attributes in a temporary file system" : this=20
+will show "No works".
+$ singularity shell --writable-tmpfs mgmtd.sif
+
+Singularity mgtd.sif:~/> touch xattr_file && setfattr -n 'user.testAttr' -v=
+ 'attribute=20
+value' xattr_file &> /dev/null; getfattr xattr_file 2>&1 | grep -q user.tes=
+tAttr=20
+&& echo 'It works!' || echo 'No works!'; rm xattr_file &> /dev/null
+
+
+
+a test 2. "edit the extended attributes in a file system writable on disk"=
+=20
+: this will show "It works".=20
+$ singularity shell mgmtd.sif
+
+Singularity mgtd.sif:~/> touch xattr_file && setfattr -n 'user.testAttr' -v=
+ 'attribute=20
+value' xattr_file &> /dev/null; getfattr xattr_file 2>&1 | grep -q user.tes=
+tAttr=20
+&& echo 'It works!' || echo 'No works!'; rm xattr_file &> /dev/null
+
+
+
+---------------Detect languageAfrikaansAlbanianAmharicArabicArmenian
+AzerbaijaniBanglaBasqueBelarusianBosnianBulgarianBurmeseCatalanCebuanoChine=
+se=20
+(Simplified)Chinese (Traditional)CorsicanCroatianCzechDanishDutchEnglish
+EsperantoEstonianFilipinoFinnishFrenchGalicianGeorgianGermanGreekGujaratiHa=
+itian=20
+CreoleHausaHawaiianHebrewHindiHmongHungarianIcelandicIgboIndonesianIrish
+ItalianJapaneseJavaneseKannadaKazakhKhmerKoreanKurdishKyrgyzLaoLatinLatvian
+LithuanianLuxembourgishMacedonianMalagasyMalayMalayalamMalteseMaoriMarathi
+MongolianNepaliNorwegianNyanjaPashtoPersianPolishPortuguesePunjabiRomanian
+RussianSamoanScottish GaelicSerbianShonaSindhiSinhalaSlovakSlovenianSomaliS=
+outhern=20
+SothoSpanishSundaneseSwahiliSwedishTajikTamilTeluguThaiTurkishUkrainianUrdu
+UzbekVietnameseWelshWestern FrisianXhosaYiddishYorubaZuluSpanish
+
+
+
+---------------Detect languageAfrikaansAlbanianAmharicArabicArmenian
+AzerbaijaniBanglaBasqueBelarusianBosnianBulgarianBurmeseCatalanCebuanoChine=
+se=20
+(Simplified)Chinese (Traditional)CorsicanCroatianCzechDanishDutchEnglish
+EsperantoEstonianFilipinoFinnishFrenchGalicianGeorgianGermanGreekGujaratiHa=
+itian=20
+CreoleHausaHawaiianHebrewHindiHmongHungarianIcelandicIgboIndonesianIrish
+ItalianJapaneseJavaneseKannadaKazakhKhmerKoreanKurdishKyrgyzLaoLatinLatvian
+LithuanianLuxembourgishMacedonianMalagasyMalayMalayalamMalteseMaoriMarathi
+MongolianNepaliNorwegianNyanjaPashtoPersianPolishPortuguesePunjabiRomanian
+RussianSamoanScottish GaelicSerbianShonaSindhiSinhalaSlovakSlovenianSomaliS=
+outhern=20
+SothoSpanishSundaneseSwahiliSwedishTajikTamilTeluguThaiTurkishUkrainianUrdu
+UzbekVietnameseWelshWestern FrisianXhosaYiddishYorubaZuluSpanish
+
+
+On Tuesday, December 11, 2018 at 4:05:01 AM UTC-5, Tobias K=C3=BChn wrote:
+>
+> you are so rigth John and Gregory, the bind Option works verry well. many=
+=20
+> thanks to you
+>
+> Am Montag, 10. Dezember 2018 16:41:01 UTC+1 schrieb Tobias K=C3=BChn:
+>>
+>> Hello Everybody,
+>>
+>> i am trying to install BeeGFS to an singularity container but i have=20
+>> some  serios Problems.
+>>
+>> My Definition File Looks like this:
+>>
+>> # BeeGFS managment server
+>> BootStrap: library
+>> From: centos:7
+>> Include: yum
+>> %post
+>>        yum -y update -x setup
+>>         yum install -y wget net-tools
+>>         wget -O /etc/yum.repos.d/beegfs_rhel7.repo=20
+>> https://www.beegfs.io/release/latest-stable/dists/beegfs_rhel7.re$
+>>         yum install -y beegfs-mgmtd beegfs-utils
+>>         /opt/beegfs/sbin/beegfs-setup-mgmtd -p /data/beegfs/beegfs_mgmtd
+>> %runscript
+>>   runmgm.sh
+>>
+>> The runmeta.sh:
+>>
+>> #!/bin/bash
+>> #
+>> # Wrapper around beegfs-mgmtd to start the service _and_ keep an eye
+>> # on the log. beegfs-mgmtd is able to run non-daemonized, but it
+>> # doesn't report anything on stdout/stderr.
+>> : ${BEEGFS_LOGLEVEL:=3D"3"}
+>> /opt/beegfs/sbin/beegfs-meta \
+>>     cfgFile=3D/etc/beegfs/beegfs-meta.conf \
+>>     logLevel=3D${BEEGFS_LOGLEVEL}
+>> tail -f /var/log/beegfs-meta.log
+>>
+>>
+>>
+>> My instance command as root:
+>>
+>> singularity instance start --net --network bridge,ptp --hostname mgmtd01=
+=20
+>> --writable-tmpfs mgmtd.sif mgmtd1
+>>
+>> but the runmeta.sh wont start. If i start the script manualy in the=20
+>> container then it says:=20
+>> Error: Storage directory not initialized and initialization has been=20
+>> disabled: /data/beegfs/beegfs_meta
+>> [BeeGFS Metadata Node Version: 7.1.1
+>> Refer to the default config file (/etc/beegfs/beegfs-meta.conf)
+>> or visit http://www.beegfs.com to find out about configuration options.]
+>> (3) Dec10 16:14:42 Main [App.cpp:631] >> Limiting number of xattrs per=
+=20
+>> inode.
+>> (1) Dec10 16:14:42 Main [App] >> This appears to be a new storage=20
+>> directory. Creating a new root dir.
+>> (0) Dec10 16:14:42 Main [Directory (store initial metadata file)] >>=20
+>> Unable to store directory xattr metadata: inodes/38/51/root. Did you ena=
+ble=20
+>> extended attributes (user_xattr) on the underlying file system?
+>> (0) Dec10 16:14:42 Main [App] >> Failed to store root directory. Unable=
+=20
+>> to proceed.
+>> (0) Dec10 16:14:42 Main [App] >> Failed to store root directory
+>>
+>>
+>> i do not understand what the message mean with xattrs
+>>
+>> I hope someon can help me.
+>>
+>> Greetings Tobi
+>>
+>
+------=_Part_1825_1404274592.1544531881305
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi, you have 2 issues,=C2=A0<br><br>a) ...<i>but the runme=
+ta.sh wont start...<br></i><br>change=C2=A0 &quot;%runscript&quot; for &quo=
+t;%startscript&quot; if you need that the script start with:=C2=A0 instance=
+ start ...<br><br><pre class=3D"highlight" style=3D"margin-top: 25px; margi=
+n-bottom: 25px; padding: 9.5px; box-sizing: border-box; font-family: Monaco=
+, Menlo, Consolas, &quot;Courier New&quot;, monospace; white-space: pre-wra=
+p; line-height: 1.42857; word-break: break-all; overflow-wrap: break-word; =
+color: rgb(51, 51, 51); background-image: initial; background-position: ini=
+tial; background-size: initial; background-repeat: initial; background-atta=
+chment: initial; background-origin: initial; background-clip: initial; bord=
+er-width: 1px; border-style: solid; border-color: rgb(204, 204, 204); borde=
+r-radius: 4px;"><code style=3D"box-sizing: border-box; font-family: Monaco,=
+ Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: inherit; c=
+olor: rgb(68, 68, 68); background-color: transparent; border-radius: 4px;">=
+...
+%startscript
+
+runmgm.sh</code></pre><br>b) xattr over tmpfs<br><br>For security reasons, =
+temporary file systems have disabled extended attributes, since this is a p=
+ossible security flaw by allowing a user to write on memory pages of other =
+namespace processes.=C2=A0<br><br>the log show you:<br><br><span style=3D"b=
+ackground-color: rgb(250, 250, 250);"><u>Did you enable extended attributes=
+ (user_xattr) on the underlying file system?<br></u></span><br><br class=3D=
+"Apple-interchange-newline"><span style=3D"color: rgb(33, 33, 33); font-fam=
+ily: arial, sans-serif; font-size: 16px; white-space: pre-wrap;">what it me=
+ans, enable this kernel feature for tmpfs -&gt; </span><span style=3D"color=
+: rgb(33, 33, 33); font-family: inherit; white-space: pre-wrap;"><font size=
+=3D"2"><b>not recommended
+</b></font></span><span style=3D"color: rgb(33, 33, 33); font-family: arial=
+, sans-serif; white-space: pre-wrap;"><span style=3D"font-size: 16px;">
+a test 1. &quot;</span></span><span style=3D"color: rgb(33, 33, 33); font-f=
+amily: inherit; font-size: 16px; white-space: pre-wrap;">edit the extended =
+attributes in a temporary file system</span><span style=3D"font-size: 16px;=
+ color: rgb(33, 33, 33); font-family: arial, sans-serif; white-space: pre-w=
+rap;">&quot; : this will show &quot;No works&quot;.</span><br><span style=
+=3D"white-space: pre-wrap; font-family: arial, sans-serif; color: rgb(33, 3=
+3, 33);"><span style=3D"font-size: 16px;">
+</span><div class=3D"prettyprint" style=3D"font-size: 16px; background-colo=
+r: rgb(250, 250, 250); border-color: rgb(187, 187, 187); border-style: soli=
+d; border-width: 1px; overflow-wrap: break-word;"><code class=3D"prettyprin=
+t"><div class=3D"subprettyprint"><span style=3D"color: rgb(0, 64, 0); font-=
+size: 13px; white-space: normal;"><span style=3D"color: #000;" class=3D"sty=
+led-by-prettify">$ singularity shell </span><span style=3D"color: #660;" cl=
+ass=3D"styled-by-prettify">--</span><span style=3D"color: #000;" class=3D"s=
+tyled-by-prettify">writable</span><span style=3D"color: #660;" class=3D"sty=
+led-by-prettify">-</span><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify">tmpfs mgmtd</span><span style=3D"color: #660;" class=3D"styled-by-p=
+rettify">.</span><span style=3D"color: #000;" class=3D"styled-by-prettify">=
+sif<br><br></span></span><span style=3D"color: rgb(0, 102, 0); font-family:=
+ Courier, &quot;Courier New&quot;, monospace; font-size: 11px; white-space:=
+ normal;"><span style=3D"color: #606;" class=3D"styled-by-prettify">Singula=
+rity</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> mgtd<=
+/span><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><sp=
+an style=3D"color: #000;" class=3D"styled-by-prettify">sif</span><span styl=
+e=3D"color: #660;" class=3D"styled-by-prettify">:~/&gt;</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"> touch xattr_file </span><sp=
+an style=3D"color: #660;" class=3D"styled-by-prettify">&amp;&amp;</span><sp=
+an style=3D"color: #000;" class=3D"styled-by-prettify"> setfattr </span><sp=
+an style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify">n </span><span style=3D"colo=
+r: #080;" class=3D"styled-by-prettify">&#39;user.testAttr&#39;</span><span =
+style=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"=
+color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #0=
+00;" class=3D"styled-by-prettify">v </span><span style=3D"color: #080;" cla=
+ss=3D"styled-by-prettify">&#39;attribute value&#39;</span><span style=3D"co=
+lor: #000;" class=3D"styled-by-prettify"> xattr_file </span><span style=3D"=
+color: #660;" class=3D"styled-by-prettify">&amp;&gt;</span><span style=3D"c=
+olor: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #66=
+0;" class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">dev</span><span style=3D"color: #660;" class=3D"sty=
+led-by-prettify">/</span><span style=3D"color: #008;" class=3D"styled-by-pr=
+ettify">null</span><span style=3D"color: #660;" class=3D"styled-by-prettify=
+">;</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> getfat=
+tr xattr_file </span><span style=3D"color: #066;" class=3D"styled-by-pretti=
+fy">2</span><span style=3D"color: #660;" class=3D"styled-by-prettify">&gt;&=
+amp;</span><span style=3D"color: #066;" class=3D"styled-by-prettify">1</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify"> </span><span s=
+tyle=3D"color: #660;" class=3D"styled-by-prettify">|</span><span style=3D"c=
+olor: #000;" class=3D"styled-by-prettify"> grep </span><span style=3D"color=
+: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #000;" =
+class=3D"styled-by-prettify">q user</span><span style=3D"color: #660;" clas=
+s=3D"styled-by-prettify">.</span><span style=3D"color: #000;" class=3D"styl=
+ed-by-prettify">testAttr </span><span style=3D"color: #660;" class=3D"style=
+d-by-prettify">&amp;&amp;</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify"> echo </span><span style=3D"color: #080;" class=3D"styled-by=
+-prettify">&#39;It works!&#39;</span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify"> </span><span style=3D"color: #660;" class=3D"styled-by=
+-prettify">||</span><span style=3D"color: #000;" class=3D"styled-by-prettif=
+y"> echo </span><span style=3D"color: #080;" class=3D"styled-by-prettify">&=
+#39;No works!&#39;</span><span style=3D"color: #660;" class=3D"styled-by-pr=
+ettify">;</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> =
+rm xattr_file </span><span style=3D"color: #660;" class=3D"styled-by-pretti=
+fy">&amp;&gt;</span><span style=3D"color: #000;" class=3D"styled-by-prettif=
+y"> </span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify">dev</span><span=
+ style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D=
+"color: #008;" class=3D"styled-by-prettify">null</span></span><span style=
+=3D"color: rgb(0, 64, 0); font-size: 13px; white-space: normal;"><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify"><br><br></span></span><span=
+ style=3D"color: #000;" class=3D"styled-by-prettify"><br></span></div></cod=
+e></div><div style=3D"font-size: 16px;"><span style=3D"color: rgb(33, 33, 3=
+3); font-family: arial, sans-serif; font-size: 16px; white-space: pre-wrap;=
+"><br></span></div><div style=3D"font-size: 16px;"><span style=3D"font-size=
+: 13px;"><span style=3D"font-size: 16px;">a test 2. &quot;</span></span><sp=
+an style=3D"font-family: inherit;">edit the extended attributes in a file s=
+ystem writable on disk</span>&quot; : this will show &quot;It works&quot;.
+<span style=3D"color: rgb(33, 33, 33); font-family: arial, sans-serif; font=
+-size: 16px; white-space: pre-wrap;">
+<div class=3D"prettyprint" style=3D"background-color: rgb(250, 250, 250); b=
+order-color: rgb(187, 187, 187); border-style: solid; border-width: 1px; ov=
+erflow-wrap: break-word;"><code class=3D"prettyprint"><div class=3D"subpret=
+typrint"><span style=3D"color: rgb(0, 64, 0); font-size: 13px; white-space:=
+ normal;"><span style=3D"color: #000;" class=3D"styled-by-prettify">$ singu=
+larity shell mgmtd</span><span style=3D"color: #660;" class=3D"styled-by-pr=
+ettify">.</span><span style=3D"color: #000;" class=3D"styled-by-prettify">s=
+if<br><br></span></span><span style=3D"color: rgb(0, 102, 0); font-family: =
+Courier, &quot;Courier New&quot;, monospace; font-size: 11px; white-space: =
+normal;"><span style=3D"color: #606;" class=3D"styled-by-prettify">Singular=
+ity</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> mgtd</=
+span><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><spa=
+n style=3D"color: #000;" class=3D"styled-by-prettify">sif</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">:~/&gt;</span><span style=3D=
+"color: #000;" class=3D"styled-by-prettify"> touch xattr_file </span><span =
+style=3D"color: #660;" class=3D"styled-by-prettify">&amp;&amp;</span><span =
+style=3D"color: #000;" class=3D"styled-by-prettify"> setfattr </span><span =
+style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"=
+color: #000;" class=3D"styled-by-prettify">n </span><span style=3D"color: #=
+080;" class=3D"styled-by-prettify">&#39;user.testAttr&#39;</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"colo=
+r: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #000;"=
+ class=3D"styled-by-prettify">v </span><span style=3D"color: #080;" class=
+=3D"styled-by-prettify">&#39;attribute value&#39;</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify"> xattr_file </span><span style=3D"co=
+lor: #660;" class=3D"styled-by-prettify">&amp;&gt;</span><span style=3D"col=
+or: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #660;=
+" class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">dev</span><span style=3D"color: #660;" class=3D"sty=
+led-by-prettify">/</span><span style=3D"color: #008;" class=3D"styled-by-pr=
+ettify">null</span><span style=3D"color: #660;" class=3D"styled-by-prettify=
+">;</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> getfat=
+tr xattr_file </span><span style=3D"color: #066;" class=3D"styled-by-pretti=
+fy">2</span><span style=3D"color: #660;" class=3D"styled-by-prettify">&gt;&=
+amp;</span><span style=3D"color: #066;" class=3D"styled-by-prettify">1</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify"> </span><span s=
+tyle=3D"color: #660;" class=3D"styled-by-prettify">|</span><span style=3D"c=
+olor: #000;" class=3D"styled-by-prettify"> grep </span><span style=3D"color=
+: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #000;" =
+class=3D"styled-by-prettify">q user</span><span style=3D"color: #660;" clas=
+s=3D"styled-by-prettify">.</span><span style=3D"color: #000;" class=3D"styl=
+ed-by-prettify">testAttr </span><span style=3D"color: #660;" class=3D"style=
+d-by-prettify">&amp;&amp;</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify"> echo </span><span style=3D"color: #080;" class=3D"styled-by=
+-prettify">&#39;It works!&#39;</span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify"> </span><span style=3D"color: #660;" class=3D"styled-by=
+-prettify">||</span><span style=3D"color: #000;" class=3D"styled-by-prettif=
+y"> echo </span><span style=3D"color: #080;" class=3D"styled-by-prettify">&=
+#39;No works!&#39;</span><span style=3D"color: #660;" class=3D"styled-by-pr=
+ettify">;</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> =
+rm xattr_file </span><span style=3D"color: #660;" class=3D"styled-by-pretti=
+fy">&amp;&gt;</span><span style=3D"color: #000;" class=3D"styled-by-prettif=
+y"> </span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify">dev</span><span=
+ style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D=
+"color: #008;" class=3D"styled-by-prettify">null</span></span><span style=
+=3D"color: rgb(0, 64, 0); font-size: 13px; white-space: normal;"><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify"><br></span></span></div></c=
+ode></div><br><br></span></div><div style=3D""><div id=3D"tw-source" style=
+=3D"font-size: 0px; -webkit-box-flex: 1; flex: 1 1 0%; width: 0px; max-widt=
+h: calc(50% - 20px); position: relative; padding-top: 30px; padding-bottom:=
+ 50px; height: 92px; white-space: normal;"><div id=3D"u4EBdf" class=3D"tw-l=
+ang-selector-wrapper" style=3D"border-width: 1px; border-style: solid; bord=
+er-color: white; border-radius: 0px 0px 2px 2px; margin-left: -3px; overflo=
+w: hidden; position: absolute; left: -2px; top: 0px; width: 71px;"><br clas=
+s=3D"Apple-interchange-newline"><select class=3D"tw-lang-selector Uekwlc" d=
+ata-dslc=3D"" data-dsln=3D"" data-uiln=3D"English" data-url=3D"/setprefs?si=
+g=3D0_f2sotFk_rHYkAkpqzox3jNlJ6jk%3D&amp;prev=3Dhttps://www.google.com.co/s=
+earch?q%3Dtraductor%26oq%3Dtra%26aqs%3Dchrome.0.69i59j69i57j69i60j69i61j69i=
+60l2.454j0j7%26sourceid%3Dchrome%26ie%3DUTF-8" id=3D"tw-sl" data-dlm=3D"Det=
+ect language" jsaction=3D"change:tob.lc" data-ved=3D"2ahUKEwie_8PB35ffAhXM1=
+FkKHQDoDiEQ8TQwAHoECAQQBQ" style=3D"background: transparent; border-width: =
+initial; border-style: none; border-color: initial; color: rgb(84, 84, 84);=
+ list-style: none; margin: 0px 0px 0px 4px; outline: none; height: 20px; -w=
+ebkit-appearance: none; width: 91px; font-size: 13px !important;"><option v=
+alue=3D"---" disabled>---------------</option><option selected value=3D"aut=
+o" id=3D"tw-dslo">Detect language</option><option value=3D"af">Afrikaans</o=
+ption><option value=3D"sq">Albanian</option><option value=3D"am">Amharic</o=
+ption><option value=3D"ar">Arabic</option><option value=3D"hy">Armenian</op=
+tion><option value=3D"az">Azerbaijani</option><option value=3D"bn">Bangla</=
+option><option value=3D"eu">Basque</option><option value=3D"be">Belarusian<=
+/option><option value=3D"bs">Bosnian</option><option value=3D"bg">Bulgarian=
+</option><option value=3D"my">Burmese</option><option value=3D"ca">Catalan<=
+/option><option value=3D"ceb">Cebuano</option><option value=3D"zh-CN">Chine=
+se (Simplified)</option><option value=3D"zh-TW">Chinese (Traditional)</opti=
+on><option value=3D"co">Corsican</option><option value=3D"hr">Croatian</opt=
+ion><option value=3D"cs">Czech</option><option value=3D"da">Danish</option>=
+<option value=3D"nl">Dutch</option><option value=3D"en">English</option><op=
+tion value=3D"eo">Esperanto</option><option value=3D"et">Estonian</option><=
+option value=3D"tl">Filipino</option><option value=3D"fi">Finnish</option><=
+option value=3D"fr">French</option><option value=3D"gl">Galician</option><o=
+ption value=3D"ka">Georgian</option><option value=3D"de">German</option><op=
+tion value=3D"el">Greek</option><option value=3D"gu">Gujarati</option><opti=
+on value=3D"ht">Haitian Creole</option><option value=3D"ha">Hausa</option><=
+option value=3D"haw">Hawaiian</option><option value=3D"iw">Hebrew</option><=
+option value=3D"hi">Hindi</option><option value=3D"hmn">Hmong</option><opti=
+on value=3D"hu">Hungarian</option><option value=3D"is">Icelandic</option><o=
+ption value=3D"ig">Igbo</option><option value=3D"id">Indonesian</option><op=
+tion value=3D"ga">Irish</option><option value=3D"it">Italian</option><optio=
+n value=3D"ja">Japanese</option><option value=3D"jv">Javanese</option><opti=
+on value=3D"kn">Kannada</option><option value=3D"kk">Kazakh</option><option=
+ value=3D"km">Khmer</option><option value=3D"ko">Korean</option><option val=
+ue=3D"ku">Kurdish</option><option value=3D"ky">Kyrgyz</option><option value=
+=3D"lo">Lao</option><option value=3D"la">Latin</option><option value=3D"lv"=
+>Latvian</option><option value=3D"lt">Lithuanian</option><option value=3D"l=
+b">Luxembourgish</option><option value=3D"mk">Macedonian</option><option va=
+lue=3D"mg">Malagasy</option><option value=3D"ms">Malay</option><option valu=
+e=3D"ml">Malayalam</option><option value=3D"mt">Maltese</option><option val=
+ue=3D"mi">Maori</option><option value=3D"mr">Marathi</option><option value=
+=3D"mn">Mongolian</option><option value=3D"ne">Nepali</option><option value=
+=3D"no">Norwegian</option><option value=3D"ny">Nyanja</option><option value=
+=3D"ps">Pashto</option><option value=3D"fa">Persian</option><option value=
+=3D"pl">Polish</option><option value=3D"pt">Portuguese</option><option valu=
+e=3D"pa">Punjabi</option><option value=3D"ro">Romanian</option><option valu=
+e=3D"ru">Russian</option><option value=3D"sm">Samoan</option><option value=
+=3D"gd">Scottish Gaelic</option><option value=3D"sr">Serbian</option><optio=
+n value=3D"sn">Shona</option><option value=3D"sd">Sindhi</option><option va=
+lue=3D"si">Sinhala</option><option value=3D"sk">Slovak</option><option valu=
+e=3D"sl">Slovenian</option><option value=3D"so">Somali</option><option valu=
+e=3D"st">Southern Sotho</option><option value=3D"es">Spanish</option><optio=
+n value=3D"su">Sundanese</option><option value=3D"sw">Swahili</option><opti=
+on value=3D"sv">Swedish</option><option value=3D"tg">Tajik</option><option =
+value=3D"ta">Tamil</option><option value=3D"te">Telugu</option><option valu=
+e=3D"th">Thai</option><option value=3D"tr">Turkish</option><option value=3D=
+"uk">Ukrainian</option><option value=3D"ur">Urdu</option><option value=3D"u=
+z">Uzbek</option><option value=3D"vi">Vietnamese</option><option value=3D"c=
+y">Welsh</option><option value=3D"fy">Western Frisian</option><option value=
+=3D"xh">Xhosa</option><option value=3D"yi">Yiddish</option><option value=3D=
+"yo">Yoruba</option><option value=3D"zu">Zulu</option></select><select clas=
+s=3D"tw-lang-selector Uekwlc vk_dgy tw-dl" style=3D"color: rgb(84, 84, 84);=
+ background: white; border-width: initial; border-style: none; border-color=
+: initial; list-style: none; margin: 0px 0px 0px 4px; outline: none; height=
+: 20px; position: absolute; visibility: hidden; font-size: 13px !important;=
+"><option>Spanish</option></select></div><div class=3D"tw-menu" id=3D"tw-sm=
+enu" style=3D"display: inline-block; position: absolute; right: -12px; top:=
+ -10px; z-index: 2;"><span class=3D"tw-menu-btn" id=3D"tw-mic" role=3D"butt=
+on" tabindex=3D"0" jsaction=3D"tob.mic" data-ved=3D"2ahUKEwie_8PB35ffAhXM1F=
+kKHQDoDiEQ7zQwAHoECAQQBg" style=3D"display: inline-block; height: 40px; col=
+or: rgba(0, 0, 0, 0.54); width: 40px; position: relative;"><span class=3D"t=
+w-menu-btn-image" style=3D"border-width: 1px; border-style: solid; border-c=
+olor: transparent; display: inline-block; height: 26px; margin: 6px; width:=
+ 26px;"><br></span></span></div></div><div class=3D"oSioSc" style=3D"-webki=
+t-box-flex: 1; flex: 1 1 0%; width: 0px; max-width: calc(50% - 20px); heigh=
+t: 152px; white-space: normal;"><div id=3D"tw-target" style=3D"position: re=
+lative; padding-top: 30px; padding-bottom: 30px;"><div class=3D"gsrt tw-ta-=
+container tw-nfl" id=3D"tw-target-text-container" style=3D"position: relati=
+ve; padding-top: 20px;"><pre class=3D"tw-data-text tw-ta tw-text-medium" da=
+ta-placeholder=3D"Translation" id=3D"tw-target-text" data-fulltext=3D"" dir=
+=3D"ltr" style=3D"unicode-bidi: isolate; background-color: transparent; bor=
+der-width: initial; border-style: none; padding-right: 0.14em; position: re=
+lative; resize: none; font-family: inherit; overflow: hidden; width: 275px;=
+ white-space: pre-wrap; overflow-wrap: break-word; height: 72px; line-heigh=
+t: 36px !important;"><br></pre></div></div></div></div><span style=3D"font-=
+size: 16px;">
+</span></span><div id=3D"tw-source" style=3D"-webkit-box-flex: 1; flex: 1 1=
+ 0%; width: 0px; max-width: calc(50% - 20px); font-size: 0px; position: rel=
+ative; padding-top: 30px; padding-bottom: 50px; height: 92px; color: rgb(33=
+, 33, 33); font-family: arial, sans-serif;"><div id=3D"u4EBdf" class=3D"tw-=
+lang-selector-wrapper" style=3D"border-width: 1px; border-style: solid; bor=
+der-color: white; border-radius: 0px 0px 2px 2px; margin-left: -3px; overfl=
+ow: hidden; position: absolute; left: -2px; top: 0px; width: 71px;"><br cla=
+ss=3D"Apple-interchange-newline"><select class=3D"tw-lang-selector Uekwlc" =
+data-dslc=3D"" data-dsln=3D"" data-uiln=3D"English" data-url=3D"/setprefs?s=
+ig=3D0_f2sotFk_rHYkAkpqzox3jNlJ6jk%3D&amp;prev=3Dhttps://www.google.com.co/=
+search?q%3Dtraductor%26oq%3Dtra%26aqs%3Dchrome.0.69i59j69i57j69i60j69i61j69=
+i60l2.454j0j7%26sourceid%3Dchrome%26ie%3DUTF-8" id=3D"tw-sl" data-dlm=3D"De=
+tect language" jsaction=3D"change:tob.lc" data-ved=3D"2ahUKEwie_8PB35ffAhXM=
+1FkKHQDoDiEQ8TQwAHoECAQQBQ" style=3D"background: transparent; border-width:=
+ initial; border-style: none; border-color: initial; color: rgb(84, 84, 84)=
+; list-style: none; margin: 0px 0px 0px 4px; outline: none; height: 20px; -=
+webkit-appearance: none; width: 91px; font-size: 13px !important;"><option =
+value=3D"---" disabled>---------------</option><option selected value=3D"au=
+to" id=3D"tw-dslo">Detect language</option><option value=3D"af">Afrikaans</=
+option><option value=3D"sq">Albanian</option><option value=3D"am">Amharic</=
+option><option value=3D"ar">Arabic</option><option value=3D"hy">Armenian</o=
+ption><option value=3D"az">Azerbaijani</option><option value=3D"bn">Bangla<=
+/option><option value=3D"eu">Basque</option><option value=3D"be">Belarusian=
+</option><option value=3D"bs">Bosnian</option><option value=3D"bg">Bulgaria=
+n</option><option value=3D"my">Burmese</option><option value=3D"ca">Catalan=
+</option><option value=3D"ceb">Cebuano</option><option value=3D"zh-CN">Chin=
+ese (Simplified)</option><option value=3D"zh-TW">Chinese (Traditional)</opt=
+ion><option value=3D"co">Corsican</option><option value=3D"hr">Croatian</op=
+tion><option value=3D"cs">Czech</option><option value=3D"da">Danish</option=
+><option value=3D"nl">Dutch</option><option value=3D"en">English</option><o=
+ption value=3D"eo">Esperanto</option><option value=3D"et">Estonian</option>=
+<option value=3D"tl">Filipino</option><option value=3D"fi">Finnish</option>=
+<option value=3D"fr">French</option><option value=3D"gl">Galician</option><=
+option value=3D"ka">Georgian</option><option value=3D"de">German</option><o=
+ption value=3D"el">Greek</option><option value=3D"gu">Gujarati</option><opt=
+ion value=3D"ht">Haitian Creole</option><option value=3D"ha">Hausa</option>=
+<option value=3D"haw">Hawaiian</option><option value=3D"iw">Hebrew</option>=
+<option value=3D"hi">Hindi</option><option value=3D"hmn">Hmong</option><opt=
+ion value=3D"hu">Hungarian</option><option value=3D"is">Icelandic</option><=
+option value=3D"ig">Igbo</option><option value=3D"id">Indonesian</option><o=
+ption value=3D"ga">Irish</option><option value=3D"it">Italian</option><opti=
+on value=3D"ja">Japanese</option><option value=3D"jv">Javanese</option><opt=
+ion value=3D"kn">Kannada</option><option value=3D"kk">Kazakh</option><optio=
+n value=3D"km">Khmer</option><option value=3D"ko">Korean</option><option va=
+lue=3D"ku">Kurdish</option><option value=3D"ky">Kyrgyz</option><option valu=
+e=3D"lo">Lao</option><option value=3D"la">Latin</option><option value=3D"lv=
+">Latvian</option><option value=3D"lt">Lithuanian</option><option value=3D"=
+lb">Luxembourgish</option><option value=3D"mk">Macedonian</option><option v=
+alue=3D"mg">Malagasy</option><option value=3D"ms">Malay</option><option val=
+ue=3D"ml">Malayalam</option><option value=3D"mt">Maltese</option><option va=
+lue=3D"mi">Maori</option><option value=3D"mr">Marathi</option><option value=
+=3D"mn">Mongolian</option><option value=3D"ne">Nepali</option><option value=
+=3D"no">Norwegian</option><option value=3D"ny">Nyanja</option><option value=
+=3D"ps">Pashto</option><option value=3D"fa">Persian</option><option value=
+=3D"pl">Polish</option><option value=3D"pt">Portuguese</option><option valu=
+e=3D"pa">Punjabi</option><option value=3D"ro">Romanian</option><option valu=
+e=3D"ru">Russian</option><option value=3D"sm">Samoan</option><option value=
+=3D"gd">Scottish Gaelic</option><option value=3D"sr">Serbian</option><optio=
+n value=3D"sn">Shona</option><option value=3D"sd">Sindhi</option><option va=
+lue=3D"si">Sinhala</option><option value=3D"sk">Slovak</option><option valu=
+e=3D"sl">Slovenian</option><option value=3D"so">Somali</option><option valu=
+e=3D"st">Southern Sotho</option><option value=3D"es">Spanish</option><optio=
+n value=3D"su">Sundanese</option><option value=3D"sw">Swahili</option><opti=
+on value=3D"sv">Swedish</option><option value=3D"tg">Tajik</option><option =
+value=3D"ta">Tamil</option><option value=3D"te">Telugu</option><option valu=
+e=3D"th">Thai</option><option value=3D"tr">Turkish</option><option value=3D=
+"uk">Ukrainian</option><option value=3D"ur">Urdu</option><option value=3D"u=
+z">Uzbek</option><option value=3D"vi">Vietnamese</option><option value=3D"c=
+y">Welsh</option><option value=3D"fy">Western Frisian</option><option value=
+=3D"xh">Xhosa</option><option value=3D"yi">Yiddish</option><option value=3D=
+"yo">Yoruba</option><option value=3D"zu">Zulu</option></select><select clas=
+s=3D"tw-lang-selector Uekwlc vk_dgy tw-dl" style=3D"color: rgb(84, 84, 84);=
+ background: white; border-width: initial; border-style: none; border-color=
+: initial; list-style: none; margin: 0px 0px 0px 4px; outline: none; height=
+: 20px; position: absolute; visibility: hidden; font-size: 13px !important;=
+"><option>Spanish</option></select></div><div class=3D"tw-menu" id=3D"tw-sm=
+enu" style=3D"display: inline-block; position: absolute; right: -12px; top:=
+ -10px; z-index: 2;"><span class=3D"tw-menu-btn" id=3D"tw-mic" role=3D"butt=
+on" tabindex=3D"0" jsaction=3D"tob.mic" data-ved=3D"2ahUKEwie_8PB35ffAhXM1F=
+kKHQDoDiEQ7zQwAHoECAQQBg" style=3D"display: inline-block; height: 40px; col=
+or: rgba(0, 0, 0, 0.54); width: 40px; position: relative;"><span class=3D"t=
+w-menu-btn-image" style=3D"border-width: 1px; border-style: solid; border-c=
+olor: transparent; display: inline-block; height: 26px; margin: 6px; width:=
+ 26px;"></span><span class=3D"tw-menu-btn-image CFq0kc Hnn8f z1asCe JXrXlb"=
+ title=3D"Translate by voice" style=3D"display: inline-block; fill: current=
+color; height: 22px; line-height: 24px; position: absolute; width: 22px; bo=
+rder-width: 1px; border-style: solid; border-color: transparent; margin: 8p=
+x; left: 0px;"><svg focusable=3D"false" xmlns=3D"http://www.w3.org/2000/svg=
+" viewbox=3D"0 0 24 24"><path d=3D"M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.=
+66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.=
+7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7=
+z"></path></svg></span></span><span class=3D"tw-menu-btn" id=3D"tw-src-spkr=
+-button" jsaction=3D"tob.ssp" role=3D"button" tabindex=3D"0" data-ved=3D"2a=
+hUKEwie_8PB35ffAhXM1FkKHQDoDiEQv7cBMAB6BAgEEAc" style=3D"display: inline-bl=
+ock; height: 40px; color: rgba(0, 0, 0, 0.54); width: 40px;"><span class=3D=
+"tw-menu-btn-image z1asCe JKu1je" title=3D"Listen" style=3D"display: inline=
+-block; fill: currentcolor; height: 26px; line-height: 24px; position: rela=
+tive; width: 26px; border-width: 1px; border-style: solid; border-color: tr=
+ansparent; margin: 6px;"><svg focusable=3D"false" xmlns=3D"http://www.w3.or=
+g/2000/svg" viewbox=3D"0 0 24 24"><path d=3D"M3 9v6h4l5 5V4L7 9H3zm13.5 3c0=
+-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89=
+.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-=
+7-8.77z"></path></svg></span></span><span class=3D"tw-menu-btn" id=3D"tw-sw=
+ap" role=3D"button" tabindex=3D"0" jsaction=3D"tob.sw" data-ved=3D"2ahUKEwi=
+e_8PB35ffAhXM1FkKHQDoDiEQ8zQwAHoECAQQCA" style=3D"display: inline-block; he=
+ight: 40px; color: rgba(0, 0, 0, 0.54); width: 40px;"><span class=3D"tw-men=
+u-btn-image xRTQdf z1asCe lA8Tgb" title=3D"Swap languages" style=3D"display=
+: inline-block; fill: currentcolor; height: 26px; line-height: 24px; positi=
+on: relative; width: 26px; border-width: 1px; border-style: solid; border-c=
+olor: transparent; margin: 6px;"><svg focusable=3D"false" xmlns=3D"http://w=
+ww.w3.org/2000/svg" viewbox=3D"0 0 24 24"><path d=3D"M6.99 11L3 15l3.99 4v-=
+3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"></path></svg></span></sp=
+an></div></div><div class=3D"tw-swapa" style=3D"display: flex; padding-righ=
+t: 20px; padding-left: 20px; position: relative; color: rgb(33, 33, 33); fo=
+nt-family: arial, sans-serif; font-size: small;"><div class=3D"DHcWmd" styl=
+e=3D"background-color: rgb(235, 235, 235); display: flex; flex-shrink: 0; h=
+eight: 172px; left: 19.5px; position: absolute; top: 0px; width: 1px;"><spa=
+n style=3D"background-color: transparent; font-family: inherit; white-space=
+: pre-wrap;"><br></span></div></div><div><br></div><div>On Tuesday, Decembe=
+r 11, 2018 at 4:05:01 AM UTC-5, Tobias K=C3=BChn wrote:<blockquote class=3D=
+"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc s=
+olid;padding-left: 1ex;"><div dir=3D"ltr">you are so rigth John and Gregory=
+, the bind Option works verry well. many thanks to you<br><br>Am Montag, 10=
+. Dezember 2018 16:41:01 UTC+1 schrieb Tobias K=C3=BChn:<blockquote class=
+=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc s=
+olid;padding-left:1ex"><div dir=3D"ltr"><div>Hello Everybody,</div><div><br=
+></div><div>i am trying to install BeeGFS to an singularity container but i=
+ have some=C2=A0 serios Problems.</div><div><br></div><div>My Definition Fi=
+le Looks like this:</div><div><br></div><div><div style=3D"border:1px solid=
+ rgb(187,187,187);word-wrap:break-word;background-color:rgb(250,250,250)"><=
+code><div><span style=3D"color:#660"># BeeGFS managment server</span></div>=
+<div><span style=3D"color:#660">BootStrap: library<br>From: centos:7</span>=
+</div><div><span style=3D"color:#660">Include: yum</span></div><div><span s=
+tyle=3D"color:#660">%post<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 yum -y up=
+date -x setup<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 yum install -y =
+wget net-tools<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 wget -O /etc/y=
+um.repos.d/beegfs_rhel7.<wbr>repo <a href=3D"https://www.beegfs.io/release/=
+latest-stable/dists/beegfs_rhel7.re$" rel=3D"nofollow" target=3D"_blank" on=
+mousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2=
+Fwww.beegfs.io%2Frelease%2Flatest-stable%2Fdists%2Fbeegfs_rhel7.re%24\x26sa=
+\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFuwPYfSgawVvU-YoYjq6cz_aWRQw&#39;;return=
+ true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3=
+A%2F%2Fwww.beegfs.io%2Frelease%2Flatest-stable%2Fdists%2Fbeegfs_rhel7.re%24=
+\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFuwPYfSgawVvU-YoYjq6cz_aWRQw&#39;;=
+return true;">https://www.beegfs.io/release/<wbr>latest-stable/dists/beegfs=
+_<wbr>rhel7.re$</a><br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 yum insta=
+ll -y beegfs-mgmtd beegfs-utils<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 /opt/beegfs/sbin/beegfs-setup-<wbr>mgmtd -p /data/beegfs/beegfs_mgmtd</=
+span></div><div><span style=3D"color:#660">%runscript<br>=C2=A0 runmgm.sh<b=
+r></span></div></code></div><br></div><div>The runmeta.sh:</div><div><br></=
+div><div><div style=3D"border:1px solid rgb(187,187,187);word-wrap:break-wo=
+rd;background-color:rgb(250,250,250)"><div><font color=3D"#0b0316"></font><=
+code>#!/bin/bash</code></div><div><code>#</code></div><div><code># Wrapper =
+around beegfs-mgmtd to start the service _and_ keep an eye</code></div><div=
+><code># on the log. beegfs-mgmtd is able to run non-daemonized, but it</co=
+de></div><div><code># doesn&#39;t report anything on stdout/stderr.</code><=
+/div><code></code></div><div style=3D"border:1px solid rgb(187,187,187);wor=
+d-wrap:break-word;background-color:rgb(250,250,250)"><code>: ${BEEGFS_LOGLE=
+VEL:=3D&quot;3&quot;}</code></div><div style=3D"border:1px solid rgb(187,18=
+7,187);word-wrap:break-word;background-color:rgb(250,250,250)"><code>/opt/b=
+eegfs/sbin/beegfs-meta \<br>=C2=A0=C2=A0=C2=A0 cfgFile=3D/etc/beegfs/beegfs=
+-<wbr>meta.conf \<br>=C2=A0=C2=A0=C2=A0 logLevel=3D${BEEGFS_LOGLEVEL}</code=
+></div><div style=3D"border:1px solid rgb(187,187,187);word-wrap:break-word=
+;background-color:rgb(250,250,250)"><code>tail -f /var/log/beegfs-meta.log<=
+/code></div><div style=3D"border:1px solid rgb(187,187,187);word-wrap:break=
+-word;background-color:rgb(250,250,250)"><code><br></code></div><code><div =
+style=3D"border:1px solid rgb(187,187,187);word-wrap:break-word;background-=
+color:rgb(250,250,250)"><br></div></code><br>My instance command as root:</=
+div><div><br></div><div><div style=3D"border:1px solid rgb(187,187,187);wor=
+d-wrap:break-word;background-color:rgb(250,250,250)"><code><div><span style=
+=3D"color:#606"><font color=3D"#004000" style=3D"background-color:transpare=
+nt">singularity instance start --net --network bridge,ptp --hostname mgmtd0=
+1 --writable-tmpfs mgmtd.sif mgmtd1<br></font></span><span style=3D"color:#=
+660"></span></div></code></div><br>but the runmeta.sh wont start. If i star=
+t the script manualy in the container then it says:=C2=A0</div><div><div st=
+yle=3D"border:1px solid rgb(187,187,187);word-wrap:break-word;background-co=
+lor:rgb(250,250,250)"><code><span style=3D"color:#606"></span></code><div><=
+font color=3D"#b06400"></font>Error: Storage directory not initialized and =
+initialization has been disabled: /data/beegfs/beegfs_meta</div><div>[BeeGF=
+S Metadata Node Version: 7.1.1<br>Refer to the default config file (/etc/be=
+egfs/beegfs-meta.conf)<br>or visit <a href=3D"http://www.beegfs.com" rel=3D=
+"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;http://www.goo=
+gle.com/url?q\x3dhttp%3A%2F%2Fwww.beegfs.com\x26sa\x3dD\x26sntz\x3d1\x26usg=
+\x3dAFQjCNH9koU59Zmx4-PWGl-Hr71_X7OB3Q&#39;;return true;" onclick=3D"this.h=
+ref=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwww.beegfs.com\x26sa=
+\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNH9koU59Zmx4-PWGl-Hr71_X7OB3Q&#39;;return=
+ true;">http://www.beegfs.com</a> to find out about configuration options.]=
+</div><div>(3) Dec10 16:14:42 Main [App.cpp:631] &gt;&gt; Limiting number o=
+f xattrs per inode.<br>(1) Dec10 16:14:42 Main [App] &gt;&gt; This appears =
+to be a new storage directory. Creating a new root dir.<br>(0) Dec10 16:14:=
+42 Main [Directory (store initial metadata file)] &gt;&gt; Unable to store =
+directory xattr metadata: inodes/38/51/root. Did you enable extended attrib=
+utes (user_xattr) on the underlying file system?<br>(0) Dec10 16:14:42 Main=
+ [App] &gt;&gt; Failed to store root directory. Unable to proceed.<br>(0) D=
+ec10 16:14:42 Main [App] &gt;&gt; Failed to store root directory</div><div>=
+<br></div></div><br></div><div>i do not understand what the message mean wi=
+th xattrs</div><div><br></div><div>I hope someon can help me.</div><div><br=
+></div><div>Greetings Tobi</div></div></blockquote></div></blockquote></div=
+></div>
+------=_Part_1825_1404274592.1544531881305--
+
+------=_Part_1824_446766212.1544531881303--

@@ -1,0 +1,173 @@
+Date: Wed, 25 Apr 2018 19:54:38 -0700 (PDT)
+From: David Trudgian <dtr...@sylabs.io>
+To: singularity <singu...@lbl.gov>
+Message-Id: <0c1ac340-f0a5-49ec-bfed-d888fed95538@lbl.gov>
+In-Reply-To: <653e3809-a3cd-42e5-80ff-3427cc1df5c8@lbl.gov>
+References: <CAHqiYpct7xPJaB9FdECMdG1WDSx8QBgDsgHm2nvKEGo0f-8dUQ@mail.gmail.com>
+ <653e3809-a3cd-42e5-80ff-3427cc1df5c8@lbl.gov>
+Subject: Re: create singularity image from docker file
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1068_1854346909.1524711278170"
+
+------=_Part_1068_1854346909.1524711278170
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1069_1710477879.1524711278170"
+
+------=_Part_1069_1710477879.1524711278170
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+This pattern is also one that you can follow:
+
+# Start a docker registry
+$ docker run -d -p 5000:5000 --restart=always --name registry registry:2
+
+# Push local docker container to it
+$ docker tag alpine localhost:5000/alpine
+$ docker push localhost:5000/alpine
+
+# Create def file for singularity like this..
+# (add your modifications)
+Bootstrap: docker
+Registry: http://localhost:5000
+Namespace:
+From: alpine:latest
+
+# Build singularity container
+$ sudo SINGULARITY_NOHTTPS=1 singularity build alpine.simg def
+
+DT
+
+On Wednesday, April 25, 2018 at 11:10:27 AM UTC-5, Erik Llorente wrote:
+>
+> I was able to import the docker image by starting a container, saving that 
+> container, importing into Singularity image, then incorporating singularity 
+> scripts
+>
+> 1.  docker run app
+> 2.  docker export --output "app.tar" app
+> 3.  singularity image.create app.img
+> 4.  singularity image.import app.img < app.tar
+>
+> When I tried to run the container, I encountered warnings
+> 1. singularity exec app.img ls -l /
+> WARNING: Container does not have an exec helper script, calling '/bin/ls' 
+> directly
+>
+> I came across this forum post and downloaded the environment.tar and 
+> expanded it in the image.
+> https://github.com/singularityware/singularity/issues/1312
+>
+> mount -o loop app.img /mnt
+> cd /mnt
+> tar xf environment.tar
+> umount /mnt
+>
+> I removed the echo line from /singularity in the image and replaced it with
+> exec /bin/bash "$@"
+>
+> These commands were now successful
+> singularity exec app.img ls -l / 
+> singularity run app.img
+>
+>
+>
+>
+>
+> On Tuesday, April 17, 2018 at 11:44:47 AM UTC-5, airzinger wrote:
+>>
+>> Hello,
+>>
+>> I have a docker file retrieved from github, The docker image is not in 
+>> docker hub. Can  someone point me in the direction to any documentation 
+>> referring to how to convert my docker file to a singularity image?
+>>
+>> Regards,
+>>
+>> Haseeb Mahmud
+>>
+>
+------=_Part_1069_1710477879.1524711278170
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">This pattern is also one that you can follow:<br><br># Sta=
+rt a docker registry<br>$ docker run -d -p 5000:5000 --restart=3Dalways --n=
+ame registry registry:2<br><br># Push local docker container to it<br>$ doc=
+ker tag alpine localhost:5000/alpine<br>$ docker push localhost:5000/alpine=
+<br><br># Create def file for singularity like this..<br># (add your modifi=
+cations)<br>Bootstrap: docker<br>Registry: http://localhost:5000<br>Namespa=
+ce:<br>From: alpine:latest<br><br># Build singularity container<br>$ sudo S=
+INGULARITY_NOHTTPS=3D1 singularity build alpine.simg def<br><br>DT<br><br>O=
+n Wednesday, April 25, 2018 at 11:10:27 AM UTC-5, Erik Llorente wrote:<bloc=
+kquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-l=
+eft: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">I was able to impo=
+rt the docker image by starting a container, saving that container, importi=
+ng into Singularity image, then incorporating singularity scripts<div><br><=
+/div><div>1.=C2=A0 docker run app</div><div>2.=C2=A0=C2=A0<span style=3D"ba=
+ckground-color:transparent;color:inherit;font-size:inherit"><font face=3D"a=
+rial, sans-serif">docker export --output &quot;app.tar&quot; app</font></sp=
+an></div><div><span style=3D"background-color:transparent;color:inherit;fon=
+t-size:inherit"><font face=3D"arial, sans-serif">3.=C2=A0 singularity image=
+.create app.img</font></span></div><div><span style=3D"background-color:tra=
+nsparent;color:inherit;font-size:inherit"><font face=3D"arial, sans-serif">=
+4.=C2=A0 singularity image.import app.img &lt; app.tar</font></span></div><=
+div><span style=3D"background-color:transparent;color:inherit;font-size:inh=
+erit"><font face=3D"arial, sans-serif"><br></font></span></div><div><span s=
+tyle=3D"background-color:transparent;color:inherit;font-size:inherit"><font=
+ face=3D"arial, sans-serif">When I tried to run the container, I encountere=
+d warnings</font></span></div><div><span style=3D"background-color:transpar=
+ent;color:inherit;font-size:inherit"><font face=3D"arial, sans-serif">1. si=
+ngularity exec app.img ls -l /</font></span></div><div><span style=3D"backg=
+round-color:transparent"><font face=3D"arial, sans-serif">WARNING: Containe=
+r does not have an exec helper script, calling &#39;/bin/ls&#39; directly<b=
+r></font></span></div><div><span style=3D"background-color:transparent"><fo=
+nt face=3D"arial, sans-serif"><br></font></span></div><div><span style=3D"b=
+ackground-color:transparent"><font face=3D"arial, sans-serif">I came across=
+ this forum post and downloaded the environment.tar and expanded it in the =
+image.</font></span></div><div><span style=3D"background-color:transparent"=
+><font face=3D"arial, sans-serif"><a href=3D"https://github.com/singularity=
+ware/singularity/issues/1312" target=3D"_blank" rel=3D"nofollow" onmousedow=
+n=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.=
+com%2Fsingularityware%2Fsingularity%2Fissues%2F1312\x26sa\x3dD\x26sntz\x3d1=
+\x26usg\x3dAFQjCNESOjDc7HAxhH3AgS3qqNP4lrr7qw&#39;;return true;" onclick=3D=
+"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%=
+2Fsingularityware%2Fsingularity%2Fissues%2F1312\x26sa\x3dD\x26sntz\x3d1\x26=
+usg\x3dAFQjCNESOjDc7HAxhH3AgS3qqNP4lrr7qw&#39;;return true;">https://github=
+.com/<wbr>singularityware/singularity/<wbr>issues/1312</a><br></font></span=
+></div><div><span style=3D"background-color:transparent"><font face=3D"aria=
+l, sans-serif"><br></font></span></div><div><span style=3D"background-color=
+:transparent"><font face=3D"arial, sans-serif">mount -o loop app.img /mnt</=
+font></span></div><div><span style=3D"background-color:transparent"><font f=
+ace=3D"arial, sans-serif">cd /mnt</font></span></div><div><span style=3D"ba=
+ckground-color:transparent"><font face=3D"arial, sans-serif">tar xf environ=
+ment.tar</font></span></div><div><span style=3D"background-color:transparen=
+t"><font face=3D"arial, sans-serif">umount /mnt</font></span></div><div><br=
+></div><div><font face=3D"arial, sans-serif">I removed the echo line from /=
+singularity=C2=A0in the image and replaced it with</font></div><div><font f=
+ace=3D"arial, sans-serif">exec /bin/bash &quot;$@&quot;</font></div><div><s=
+pan style=3D"background-color:transparent"><font face=3D"arial, sans-serif"=
+><br></font></span></div><div><span style=3D"background-color:transparent">=
+<font face=3D"arial, sans-serif">These commands were now successful</font><=
+/span></div><div><span style=3D"font-family:arial,sans-serif">singularity e=
+xec app.img ls -l /=C2=A0</span><span style=3D"background-color:transparent=
+"><font face=3D"arial, sans-serif"><br></font></span></div><div><font face=
+=3D"arial, sans-serif">singularity</font><span style=3D"font-family:arial,s=
+ans-serif">=C2=A0run app.img</span></div><div><span style=3D"font-family:ar=
+ial,sans-serif"><br></span></div><div><span style=3D"font-family:arial,sans=
+-serif"><br></span></div><div><span style=3D"font-family:arial,sans-serif">=
+<br></span></div><div><span style=3D"background-color:transparent"><font fa=
+ce=3D"arial, sans-serif"><br></font></span></div><div><font face=3D"Menlo, =
+Monaco, Consolas, Courier New, monospace"><br></font>On Tuesday, April 17, =
+2018 at 11:44:47 AM UTC-5, airzinger wrote:<blockquote class=3D"gmail_quote=
+" style=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-le=
+ft:1ex"><div dir=3D"ltr">Hello,<div><br></div><div>I have a docker file ret=
+rieved from github, The docker image is not in docker hub. Can=C2=A0 someon=
+e point me in the direction to any documentation referring to how to conver=
+t my docker file to a singularity image?</div><div><br></div><div>Regards,<=
+/div><div><br></div><div>Haseeb Mahmud</div></div>
+</blockquote></div></div></blockquote></div>
+------=_Part_1069_1710477879.1524711278170--
+
+------=_Part_1068_1854346909.1524711278170--

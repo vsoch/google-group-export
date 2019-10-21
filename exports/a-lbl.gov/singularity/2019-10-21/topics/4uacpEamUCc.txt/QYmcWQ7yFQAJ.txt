@@ -1,0 +1,312 @@
+Date: Tue, 13 Aug 2019 07:46:05 -0700 (PDT)
+From: Justin Cook <jus...@sylabs.io>
+To: singularity <singu...@lbl.gov>
+Message-Id: <03c71aa4-9cc6-421a-a0b9-acaaa4e7301c@lbl.gov>
+In-Reply-To: <85f52304-7857-462f-ac7c-aba5bc1f9fd3@lbl.gov>
+References: <514bb438-f1ea-42bd-91fe-46741855f5ea@lbl.gov> <CAN9aCeenpq19oCxAT8wMfhFeRvF+qtnZJFiJ-ho0hSxUqSHOTQ@mail.gmail.com>
+ <cd6f497a-d714-4123-a200-bbea4af525ab@lbl.gov> <86e5158b-655f-4ff2-abac-d8baed9cf89f@lbl.gov>
+ <ab491828-f63f-4e75-aac5-bf5d574e6239@lbl.gov>
+ <CAA6Bz=dQn9RzW-E1Etdq6pfqwodvnse0=OY5WFGtw8yLa3Bfow@mail.gmail.com>
+ <85f52304-7857-462f-ac7c-aba5bc1f9fd3@lbl.gov>
+Subject: Re: [Singularity] How to pass the host environment variables to the
+ container or override the $PATH within the container?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1837_1556056945.1565707565372"
+
+------=_Part_1837_1556056945.1565707565372
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1838_586662258.1565707565372"
+
+------=_Part_1838_586662258.1565707565372
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Samy,
+
+The preferred way to do this would be to set=20
+`SINGULARITYENV_LD_LIBRARY_PATH` to the value you want to see in the=20
+container.
+
+Example:
+
+```
+$ singularity exec busybox_latest.sif printenv LD_LIBRARY_PATH
+/.singularity.d/libs
+
+$ env SINGULARITYENV_LD_LIBRARY_PATH=3D/path/to/libs singularity exec=20
+busybox_latest.sif printenv LD_LIBRARY_PATH
+/path/to/libs:/.singularity.d/libs
+```
+
+On Wednesday, July 17, 2019 at 10:04:09 AM UTC-5, Samy wrote:
+>
+> THe append works only with PATH. I needed to change the LD_LIBRARY_PATH=
+=20
+> inside the container.
+>
+> On Wednesday, July 17, 2019 at 2:40:25 AM UTC-7, R=C3=A9my Dernat wrote:
+>>
+>> Hi,
+>>
+>> The PATH variable maybe overriden during runtime. You should consider=20
+>> writing to/append to an environment file for Singularity instead:
+>> https://singularity.lbl.gov/docs-environment-metadata
+>>
+>> This old doc works for Singularity 2.x
+>>
+>> Best regards,
+>> R=C3=A9my.
+>>
+>>
+>> Le mar. 16 juil. 2019 =C3=A0 22:23, Samy <sma...@gmail.com> a =C3=A9crit=
+ :
+>>
+>>> Hello Robert,
+>>>
+>>> Yes. I had to pass in my LD_LIBRARY_PATH from the host to the container=
+=20
+>>> to get it to work like this:
+>>>         $ export SINGULARITYENV_LD_LIBRARY_PATH=3D$LD_LIBRARY_PATH.
+>>>
+>>> This will override my $LD_LIBARRY_PATH inside the container. So, i had=
+=20
+>>> to setup this up inside the container to get it to work:
+>>>        $ export LD_LIBRARY_PATH=3D/.singularity.d/libs:$LD_LIBRARY_PATH=
+=20
+>>>
+>>> Here where i found out about these envs:=20
+>>> https://singularity.lbl.gov/docs-environment-metadata
+>>>
+>>>
+>>> On Monday, July 15, 2019 at 7:38:45 AM UTC-7, Robert Lugg wrote:
+>>>>
+>>>> Hi Samy, did you have any luck with this?  I do not know but do you=20
+>>>> need to have those host directories also bound to within the container=
+?
+>>>>
+>>>> On Sunday, May 19, 2019 at 2:13:33 PM UTC-7, Samy wrote:
+>>>>>
+>>>>> That is the version im using already:
+>>>>>
+>>>>> bash-4.2$ singularity --version
+>>>>> 2.6.1-dist
+>>>>>
+>>>>>
+>>>>> On Friday, May 17, 2019 at 7:48:48 PM UTC-7, David Godlove wrote:
+>>>>>>
+>>>>>> That has more to do with the container itself than the version of=20
+>>>>>> Singularity.  Is it possible to rebuild these containers with 2.6.1?=
+ =20
+>>>>>>
+>>>>>> On Fri, May 17, 2019 at 5:48 PM Samy <sma...@gmail.com> wrote:
+>>>>>>
+>>>>>>> Hello,
+>>>>>>>
+>>>>>>> I'm using singularity version 2.6.
+>>>>>>>
+>>>>>>> I basically have containers that dependent on the compiler and mpi=
+=20
+>>>>>>> that exist on the host to run on.  I'm thinking about just setting =
+up the=20
+>>>>>>> $PATH inside the container.
+>>>>>>>
+>>>>>>> The path prior to modifying it looks like:
+>>>>>>>  bash-4.2$ singularity exec lammps..simg echo=20
+>>>>>>> $PATH/usr/local/go/bin:/bin:.:/usr/bin:/usr/local/bin:/usr/sbin:/sb=
+in:/nfs/pdx/home/...
+>>>>>>>
+>>>>>>>
+>>>>>>> Then i set the SINGULARITYENV_PATH as shown here:=20
+>>>>>>> https://www.sylabs.io/guides/3.0/user-guide/environment_and_metadat=
+a.html
+>>>>>>>
+>>>>>>> SINGULARITYENV_PATH=3D/opt/intel/compilers_and_libraries_2019.3.199=
+/linux/tbb/bin:/opt/intel/compilers_and_libraries_2019.4.227/linux/bin/inte=
+l64:/opt/intel/compilers_and_libraries_2019.4.227/linux/mpi/.....
+>>>>>>>
+>>>>>>> But the path still doesn't update/work withing the container:
+>>>>>>> bash-4.2$ singularity exec lammps..simg echo=20
+>>>>>>> $PATH/usr/local/go/bin:/bin:.:/usr/bin:/usr/local/bin:/usr/sbin:/sb=
+in:/nfs/pdx/home/...
+>>>>>>>
+>>>>>>> Any advise please? IF setting up the SINGULARITYENV_PATH is not an=
+=20
+>>>>>>> option, do you have any other recommendations ?
+>>>>>>>
+>>>>>>> Thank you,
+>>>>>>>
+>>>>>>> --=20
+>>>>>>> You received this message because you are subscribed to the Google=
+=20
+>>>>>>> Groups "singularity" group.
+>>>>>>> To unsubscribe from this group and stop receiving emails from it,=
+=20
+>>>>>>> send an email to si...@lbl.gov.
+>>>>>>> To view this discussion on the web visit=20
+>>>>>>> https://groups.google.com/a/lbl.gov/d/msgid/singularity/514bb438-f1=
+ea-42bd-91fe-46741855f5ea%40lbl.gov=20
+>>>>>>> <https://groups.google.com/a/lbl.gov/d/msgid/singularity/514bb438-f=
+1ea-42bd-91fe-46741855f5ea%40lbl.gov?utm_medium=3Demail&utm_source=3Dfooter=
+>
+>>>>>>> .
+>>>>>>>
+>>>>>> --=20
+>>> You received this message because you are subscribed to the Google=20
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send=
+=20
+>>> an email to si...@lbl.gov.
+>>> To view this discussion on the web visit=20
+>>> https://groups.google.com/a/lbl.gov/d/msgid/singularity/ab491828-f63f-4=
+e75-aac5-bf5d574e6239%40lbl.gov=20
+>>> <https://groups.google.com/a/lbl.gov/d/msgid/singularity/ab491828-f63f-=
+4e75-aac5-bf5d574e6239%40lbl.gov?utm_medium=3Demail&utm_source=3Dfooter>
+>>> .
+>>>
+>>
+------=_Part_1838_586662258.1565707565372
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Samy,</div><div><br></div><div>The preferred way to d=
+o this would be to set `SINGULARITYENV_LD_LIBRARY_PATH` to the value you wa=
+nt to see in the container.</div><div><br></div><div>Example:</div><div><br=
+></div><div>```</div><div>$ singularity exec busybox_latest.sif printenv LD=
+_LIBRARY_PATH<br>/.singularity.d/libs</div><div><br></div><div>$ env SINGUL=
+ARITYENV_LD_LIBRARY_PATH=3D/path/to/libs singularity exec busybox_latest.si=
+f printenv LD_LIBRARY_PATH<br>/path/to/libs:/.singularity.d/libs</div><div>=
+```<br></div><br>On Wednesday, July 17, 2019 at 10:04:09 AM UTC-5, Samy wro=
+te:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;=
+border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">THe append=
+ works only with PATH. I needed to change the LD_LIBRARY_PATH inside the co=
+ntainer.<br><br>On Wednesday, July 17, 2019 at 2:40:25 AM UTC-7, R=C3=A9my =
+Dernat wrote:<blockquote class=3D"gmail_quote" style=3D"margin:0;margin-lef=
+t:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"auto">Hi,<=
+div dir=3D"auto"><br></div><div dir=3D"auto">The PATH variable maybe overri=
+den during runtime. You should consider writing to/append to an environment=
+ file for Singularity instead:</div><div dir=3D"auto"><a href=3D"https://si=
+ngularity.lbl.gov/docs-environment-metadata" rel=3D"nofollow" target=3D"_bl=
+ank" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%=
+3A%2F%2Fsingularity.lbl.gov%2Fdocs-environment-metadata\x26sa\x3dD\x26sntz\=
+x3d1\x26usg\x3dAFQjCNHGbD349WZUtmq13ClaHLS8xM5k6Q&#39;;return true;" onclic=
+k=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fsingula=
+rity.lbl.gov%2Fdocs-environment-metadata\x26sa\x3dD\x26sntz\x3d1\x26usg\x3d=
+AFQjCNHGbD349WZUtmq13ClaHLS8xM5k6Q&#39;;return true;">https://singularity.l=
+bl.gov/<wbr>docs-environment-metadata</a><br></div><div dir=3D"auto"><br></=
+div><div dir=3D"auto">This old doc works for Singularity 2.x</div><div dir=
+=3D"auto"><br></div><div dir=3D"auto">Best regards,</div><div dir=3D"auto">=
+R=C3=A9my.</div><div dir=3D"auto"><br></div></div><br><div class=3D"gmail_q=
+uote"><div dir=3D"ltr">Le mar. 16 juil. 2019 =C3=A0 22:23, Samy &lt;<a rel=
+=3D"nofollow">sma...@gmail.com</a>&gt; a =C3=A9crit=C2=A0:<br></div><blockq=
+uote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc =
+solid;padding-left:1ex"><div dir=3D"ltr">Hello Robert,<div><br></div><div>Y=
+es. I had to pass in my LD_LIBRARY_PATH from the host to the container to g=
+et it to work like this:</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 $ export SIN=
+GULARITYENV_LD_LIBRARY_<wbr>PATH=3D$LD_LIBRARY_PATH.<br></div><div><br></di=
+v><div>This will override my $LD_LIBARRY_PATH inside the container. So, i h=
+ad to setup this up inside the container to get it to work:</div><div>=C2=
+=A0 =C2=A0 =C2=A0 =C2=A0$ export LD_LIBRARY_PATH=3D/.singularity.<wbr>d/lib=
+s:$LD_LIBRARY_PATH=C2=A0<br></div><div><br></div><div>Here where i found ou=
+t about these envs:=C2=A0<a href=3D"https://singularity.lbl.gov/docs-enviro=
+nment-metadata" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=
+=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fsingularity.lbl.gov%2=
+Fdocs-environment-metadata\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHGbD349W=
+ZUtmq13ClaHLS8xM5k6Q&#39;;return true;" onclick=3D"this.href=3D&#39;https:/=
+/www.google.com/url?q\x3dhttps%3A%2F%2Fsingularity.lbl.gov%2Fdocs-environme=
+nt-metadata\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHGbD349WZUtmq13ClaHLS8x=
+M5k6Q&#39;;return true;">https://singularity.lbl.<wbr>gov/docs-environment-=
+metadata</a></div><div><br><br>On Monday, July 15, 2019 at 7:38:45 AM UTC-7=
+, Robert Lugg wrote:<blockquote class=3D"gmail_quote" style=3D"margin:0;mar=
+gin-left:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr=
+">Hi Samy, did you have any luck with this?=C2=A0 I do not know but do you =
+need to have those host directories also bound to within the container?<br>=
+<br>On Sunday, May 19, 2019 at 2:13:33 PM UTC-7, Samy wrote:<blockquote cla=
+ss=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc=
+ solid;padding-left:1ex"><div dir=3D"ltr">That is the version im using alre=
+ady:<div><br><div><div>bash-4.2$ singularity --version</div><div>2.6.1-dist=
+</div><div><br></div><br>On Friday, May 17, 2019 at 7:48:48 PM UTC-7, David=
+ Godlove wrote:<blockquote class=3D"gmail_quote" style=3D"margin:0;margin-l=
+eft:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Tha=
+t has more to do with the container itself than the version of Singularity.=
+=C2=A0 Is it possible to rebuild these containers with 2.6.1?=C2=A0=C2=A0</=
+div><br><div class=3D"gmail_quote"><div dir=3D"ltr">On Fri, May 17, 2019 at=
+ 5:48 PM Samy &lt;<a rel=3D"nofollow noreferrer">sma...@gmail.com</a>&gt; w=
+rote:<br></div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0p=
+x 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"><div dir=
+=3D"ltr">Hello,<div><br></div><div>I&#39;m using singularity version 2.6.</=
+div><div><br></div><div>I basically have containers that dependent on the c=
+ompiler and mpi that exist on the host to run on.=C2=A0 I&#39;m thinking ab=
+out just setting up the $PATH inside the container.</div><div><br></div><di=
+v>The path prior to modifying it looks like:</div><div><div>=C2=A0<font fac=
+e=3D"courier new, monospace">bash-4.2$ singularity exec lammps..simg echo $=
+PATH/usr/local/go/bin:/bin:.:<wbr>/usr/bin:/usr/local/bin:/usr/<wbr>sbin:/s=
+bin:/nfs/pdx/home/...</font></div></div><div><br></div><div><br></div><div>=
+Then i set the=C2=A0SINGULARITYENV_PATH as shown here:=C2=A0<a href=3D"http=
+s://www.sylabs.io/guides/3.0/user-guide/environment_and_metadata.html" rel=
+=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www=
+.google.com/url?q\x3dhttps%3A%2F%2Fwww.sylabs.io%2Fguides%2F3.0%2Fuser-guid=
+e%2Fenvironment_and_metadata.html\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNH=
+t7Xkhn9qeH0RDT7XnsXljPImIbA&#39;;return true;" onclick=3D"this.href=3D&#39;=
+https://www.google.com/url?q\x3dhttps%3A%2F%2Fwww.sylabs.io%2Fguides%2F3.0%=
+2Fuser-guide%2Fenvironment_and_metadata.html\x26sa\x3dD\x26sntz\x3d1\x26usg=
+\x3dAFQjCNHt7Xkhn9qeH0RDT7XnsXljPImIbA&#39;;return true;">https://www.sylab=
+s.io/<wbr>guides/3.0/user-guide/<wbr>environment_and_metadata.html</a></div=
+><div><font face=3D"courier new, monospace">SINGULARITYENV_PATH=3D/opt/<wbr=
+>intel/compilers_and_libraries_<wbr>2019.3.199/linux/tbb/bin:/opt/<wbr>inte=
+l/compilers_and_libraries_<wbr>2019.4.227/linux/bin/intel64:/<wbr>opt/intel=
+/compilers_and_<wbr>libraries_2019.4.227/linux/<wbr>mpi/.....</font><br></d=
+iv><div><br></div><div>But the path still doesn&#39;t update/work withing t=
+he container:</div><div><font face=3D"courier new, monospace">bash-4.2$ sin=
+gularity exec lammps..simg echo $PATH/usr/local/go/bin:/bin:.:<wbr>/usr/bin=
+:/usr/local/bin:/usr/<wbr>sbin:/sbin:/nfs/pdx/home/...</font><br></div><div=
+><font face=3D"courier new, monospace"><br></font></div><div><font face=3D"=
+arial, sans-serif">Any advise please? IF setting up the=C2=A0SINGULARITYENV=
+_PATH is not an option, do you have any other recommendations ?</font></div=
+><div><br></div><div><font face=3D"arial, sans-serif">Thank you,</font></di=
+v></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow noreferrer">si...@lbl.gov</a>.<br>
+To view this discussion on the web visit <a href=3D"https://groups.google.c=
+om/a/lbl.gov/d/msgid/singularity/514bb438-f1ea-42bd-91fe-46741855f5ea%40lbl=
+.gov?utm_medium=3Demail&amp;utm_source=3Dfooter" rel=3D"nofollow" target=3D=
+"_blank" onmousedown=3D"this.href=3D&#39;https://groups.google.com/a/lbl.go=
+v/d/msgid/singularity/514bb438-f1ea-42bd-91fe-46741855f5ea%40lbl.gov?utm_me=
+dium\x3demail\x26utm_source\x3dfooter&#39;;return true;" onclick=3D"this.hr=
+ef=3D&#39;https://groups.google.com/a/lbl.gov/d/msgid/singularity/514bb438-=
+f1ea-42bd-91fe-46741855f5ea%40lbl.gov?utm_medium\x3demail\x26utm_source\x3d=
+footer&#39;;return true;">https://groups.google.com/a/<wbr>lbl.gov/d/msgid/=
+singularity/<wbr>514bb438-f1ea-42bd-91fe-<wbr>46741855f5ea%40lbl.gov</a>.<b=
+r>
+</blockquote></div>
+</blockquote></div></div></div></blockquote></div></blockquote></div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">si...@lbl.gov</a>.<br>
+To view this discussion on the web visit <a href=3D"https://groups.google.c=
+om/a/lbl.gov/d/msgid/singularity/ab491828-f63f-4e75-aac5-bf5d574e6239%40lbl=
+.gov?utm_medium=3Demail&amp;utm_source=3Dfooter" rel=3D"nofollow" target=3D=
+"_blank" onmousedown=3D"this.href=3D&#39;https://groups.google.com/a/lbl.go=
+v/d/msgid/singularity/ab491828-f63f-4e75-aac5-bf5d574e6239%40lbl.gov?utm_me=
+dium\x3demail\x26utm_source\x3dfooter&#39;;return true;" onclick=3D"this.hr=
+ef=3D&#39;https://groups.google.com/a/lbl.gov/d/msgid/singularity/ab491828-=
+f63f-4e75-aac5-bf5d574e6239%40lbl.gov?utm_medium\x3demail\x26utm_source\x3d=
+footer&#39;;return true;">https://groups.google.com/a/<wbr>lbl.gov/d/msgid/=
+singularity/<wbr>ab491828-f63f-4e75-aac5-<wbr>bf5d574e6239%40lbl.gov</a>.<b=
+r>
+</blockquote></div>
+</blockquote></div></blockquote></div>
+------=_Part_1838_586662258.1565707565372--
+
+------=_Part_1837_1556056945.1565707565372--

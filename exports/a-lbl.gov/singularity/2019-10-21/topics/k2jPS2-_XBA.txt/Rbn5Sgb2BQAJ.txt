@@ -1,0 +1,1475 @@
+Date: Wed, 23 Aug 2017 02:26:46 -0700 (PDT)
+From: Balazs <blaur...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <1c14281b-e9e2-48aa-9a88-a26a0d18112c@lbl.gov>
+In-Reply-To: <CA+Wz_Fza1nyigSaORd3VLu84o1VGfakzkEdYf+eKxJtpSvVebA@mail.gmail.com>
+References: <30715e7a-2b3c-4193-b0b4-501a001b5c3f@lbl.gov> <1b276d14-5fef-4fa0-9ee2-160aceaa4e3d@lbl.gov>
+ <CA+Wz_Fza1nyigSaORd3VLu84o1VGfakzkEdYf+eKxJtpSvVebA@mail.gmail.com>
+Subject: Re: [Singularity] Re: ompi_rte_init returns (-43) error code when
+ running from a container
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_9604_1612150855.1503480406740"
+
+------=_Part_9604_1612150855.1503480406740
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_9605_2046083507.1503480406743"
+
+------=_Part_9605_2046083507.1503480406743
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Hi Victor,
+
+I made tests with different versions, including the case where I have=20
+openmpi 2.1.0 both inside and outside the container:
+
+## CLUSTER
+[balazsl@lo-login-01]$ singularity --version
+2.3.1-dist
+=20
+## CLUSTER
+[balazsl@lo-login-01]$ mpirun --version
+mpirun (Open MPI) 2.1.0
+Report bugs to http://www.open-mpi.org/community/help/
+=20
+## CONTAINER 1.10.3
+[balazsl@lo-login-01]$ singularity exec mpi_hello_world-1103.img mpirun=20
+--version
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)
+mpirun (Open MPI) 1.10.3
+Report bugs to http://www.open-mpi.org/community/help/
+=20
+## CONTAINER 2.1.0
+[balazsl@lo-login-01]$ singularity exec mpi_hello_world-210.img mpirun=20
+--version
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)
+mpirun (Open MPI) 2.1.0
+Report bugs to http://www.open-mpi.org/community/help/
+=20
+## CLUSTER
+[balazsl@lo-login-01]$ mpicc --version
+gcc (GCC) 4.8.5 20150623 (Red Hat 4.8.5-11)
+Copyright (C) 2015 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+=20
+## CONTAINER 2.1.0
+[balazsl@lo-login-01]$ singularity exec mpi_hello_world-210.img mpicc=20
+--version
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)
+gcc (GCC) 4.8.5 20150623 (Red Hat 4.8.5-11)
+Copyright (C) 2015 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+=20
+## CONTAINER 1.10.3
+[balazsl@lo-login-01]$ singularity exec mpi_hello_world-1103.img mpicc=20
+--version
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)
+gcc (GCC) 4.8.5 20150623 (Red Hat 4.8.5-11)
+Copyright (C) 2015 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+I am at this time doing more tests (with and without LSF, with mpirun=20
+called from inside or outside the container, etc.) and talking with our=20
+sysadmin. I will post here if I find anything useful.
+Here is a brief overview of what is working and what is not at the moment:
+
+<https://lh3.googleusercontent.com/-M4NrJqvKpIQ/WZ1KBt49RgI/AAAAAAAAAYc/fZb=
+EF_BRpUgiqmO_o2SlTYZSYmuzmHT9ACLcBGAs/s1600/summary_table.png>
+
+Bests,
+
+Balazs
+
+Le mercredi 23 ao=C3=BBt 2017 10:03:29 UTC+2, victor sv a =C3=A9crit :
+>
+> Hi Peleg and Balazs,
+>
+> which version of openmpi is installed inside the container?
+>
+> As a starting point, I think you shoul use the same openmpi version both=
+=20
+> inside and outside the container.
+>
+> BR,
+> V=C3=ADctor.
+>
+> 2017-08-18 16:24 GMT+02:00 Balazs <bl...@gmail.com <javascript:>>:
+>
+>> Hi,
+>>
+>> I experienced the very same problem described above, with the very same=
+=20
+>> tutorial test. We are also running openmpi 2.1.0 on our cluster.
+>> The same example *without* container works perfectly fine.
+>>
+>> Any help would also be appreciated.
+>>
+>> Bests,
+>>
+>> Balazs
+>>
+>>
+>> Le mercredi 16 ao=C3=BBt 2017 15:44:09 UTC+2, Peleg Bar Sapir a =C3=A9cr=
+it :
+>>>
+>>> Hello,
+>>>
+>>> I'm a student helper in a HPC service, and was asked to check out=20
+>>> Singularity and help decide if we provided to our users. We run openmpi=
+=20
+>>> 2.1.0 on our cluster.
+>>>
+>>> Following this <http://singularity.lbl.gov/docs-hpc> tutorial I was=20
+>>> able to form a container and use it on our cluster, but running=20
+>>>
+>>>  mpirun -np 20 singularity exec centos7_mpi_test.img /usr/bin/ring
+>>> generates an error (I copied it to the end of this message).
+>>>
+>>> I tried to look for a clue about what is wrong, but couldn't find any u=
+seful help. I would appreciate any help provided.
+>>>
+>>> *Error message*:
+>>> =20
+>>> -----------------------------------------------------------------------=
+---
+>>> It looks like MPI_INIT failed for some reason; your parallel process is
+>>> likely to abort.  There are many reasons that a parallel process can
+>>> fail during MPI_INIT; some of which are due to configuration or environ=
+ment
+>>> problems.  This failure appears to be an internal failure; here's some
+>>> additional information (which may only be relevant to an Open MPI
+>>> developer):
+>>>
+>>>   ompi_mpi_init: ompi_rte_init failed
+>>>   --> Returned "(null)" (-43) instead of "Success" (0)
+>>> -----------------------------------------------------------------------=
+---
+>>> -----------------------------------------------------------------------=
+---
+>>> It looks like MPI_INIT failed for some reason; your parallel process is
+>>> likely to abort.  There are many reasons that a parallel process can
+>>> fail during MPI_INIT; some of which are due to configuration or environ=
+ment
+>>> problems.  This failure appears to be an internal failure; here's some
+>>> additional information (which may only be relevant to an Open MPI
+>>> developer):
+>>>
+>>>   ompi_mpi_init: ompi_rte_init failed
+>>>   --> Returned "(null)" (-43) instead of "Success" (0)
+>>> -----------------------------------------------------------------------=
+---
+>>> *** An error occurred in MPI_Init
+>>> *** on a NULL communicator
+>>> *** MPI_ERRORS_ARE_FATAL (processes in this communicator will now abort=
+,
+>>> ***    and potentially your MPI job)
+>>> *** An error occurred in MPI_Init
+>>> *** on a NULL communicator
+>>> *** MPI_ERRORS_ARE_FATAL (processes in this communicator will now abort=
+,
+>>> ***    and potentially your MPI job)
+>>> [(server name):6349] Local abort before MPI_INIT completed completed su=
+ccessfully, but am not able to aggregate error messages, and not able to gu=
+arantee that all other processes were killed!
+>>> [(server name):6347] Local abort before MPI_INIT completed completed su=
+ccessfully, but am not able to aggregate error messages, and not able to gu=
+arantee that all other processes were killed!
+>>> -------------------------------------------------------
+>>> Primary job  terminated normally, but 1 process returned
+>>> a non-zero exit code.. Per user-direction, the job has been aborted.
+>>> -------------------------------------------------------
+>>> -----------------------------------------------------------------------=
+---
+>>> mpirun detected that one or more processes exited with non-zero status,=
+ thus causing
+>>> the job to be terminated. The first process to do so was:
+>>>
+>>>   Process name: [[12088,1],0]
+>>>   Exit code:    1
+>>> -----------------------------------------------------------------------=
+---
+>>>
+>>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s=20
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n=20
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+------=_Part_9605_2046083507.1503480406743
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Victor,<div><br></div><div>I made tests with different =
+versions, including the case where I have openmpi 2.1.0 both inside and out=
+side the container:</div><div><br></div><div><div class=3D"line number1 ind=
+ex0 alt2" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&qu=
+ot;, &quot;Courier New&quot;, Courier, monospace; font-size: 14px; color: r=
+gb(51, 51, 51); padding-right: 1em !important; padding-left: 1em !important=
+; border-radius: 0px !important; background: none rgb(15, 25, 42) !importan=
+t; float: none !important; height: auto !important; line-height: 20px !impo=
+rtant; outline: 0px !important; overflow: visible !important; vertical-alig=
+n: baseline !important; width: auto !important; box-sizing: content-box !im=
+portant; min-height: auto !important; white-space: nowrap !important;"><cod=
+e class=3D"bash comments" style=3D"font-family: Consolas, &quot;Bitstream V=
+era Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace !important=
+; border-radius: 0px !important; background: none !important; bottom: auto =
+!important; float: none !important; height: auto !important; left: auto !im=
+portant; line-height: 20px !important; outline: 0px !important; overflow: v=
+isible !important; position: static !important; right: auto !important; top=
+: auto !important; vertical-align: baseline !important; width: auto !import=
+ant; box-sizing: content-box !important; min-height: auto !important; color=
+: rgb(66, 139, 221) !important;">## CLUSTER</code></div><div class=3D"line =
+number2 index1 alt1" style=3D"font-family: Consolas, &quot;Bitstream Vera S=
+ans Mono&quot;, &quot;Courier New&quot;, Courier, monospace; font-size: 14p=
+x; color: rgb(51, 51, 51); padding-right: 1em !important; padding-left: 1em=
+ !important; border-radius: 0px !important; background: none rgb(15, 25, 42=
+) !important; float: none !important; height: auto !important; line-height:=
+ 20px !important; outline: 0px !important; overflow: visible !important; ve=
+rtical-align: baseline !important; width: auto !important; box-sizing: cont=
+ent-box !important; min-height: auto !important; white-space: nowrap !impor=
+tant;"><code class=3D"bash plain" style=3D"font-family: Consolas, &quot;Bit=
+stream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace !i=
+mportant; border-radius: 0px !important; background: none !important; botto=
+m: auto !important; float: none !important; height: auto !important; left: =
+auto !important; line-height: 20px !important; outline: 0px !important; ove=
+rflow: visible !important; position: static !important; right: auto !import=
+ant; top: auto !important; vertical-align: baseline !important; width: auto=
+ !important; box-sizing: content-box !important; min-height: auto !importan=
+t; color: rgb(209, 237, 255) !important;">[balazsl@lo-login-01]$ singularit=
+y --version</code></div><div class=3D"line number3 index2 alt2" style=3D"fo=
+nt-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier Ne=
+w&quot;, Courier, monospace; font-size: 14px; color: rgb(51, 51, 51); paddi=
+ng-right: 1em !important; padding-left: 1em !important; border-radius: 0px =
+!important; background: none rgb(15, 25, 42) !important; float: none !impor=
+tant; height: auto !important; line-height: 20px !important; outline: 0px !=
+important; overflow: visible !important; vertical-align: baseline !importan=
+t; width: auto !important; box-sizing: content-box !important; min-height: =
+auto !important; white-space: nowrap !important;"><code class=3D"bash plain=
+" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &qu=
+ot;Courier New&quot;, Courier, monospace !important; border-radius: 0px !im=
+portant; background: none !important; bottom: auto !important; float: none =
+!important; height: auto !important; left: auto !important; line-height: 20=
+px !important; outline: 0px !important; overflow: visible !important; posit=
+ion: static !important; right: auto !important; top: auto !important; verti=
+cal-align: baseline !important; width: auto !important; box-sizing: content=
+-box !important; min-height: auto !important; color: rgb(209, 237, 255) !im=
+portant;">2.3.1-dist</code></div><div class=3D"line number4 index3 alt1" st=
+yle=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;C=
+ourier New&quot;, Courier, monospace; font-size: 14px; color: rgb(51, 51, 5=
+1); padding-right: 1em !important; padding-left: 1em !important; border-rad=
+ius: 0px !important; background: none rgb(15, 25, 42) !important; float: no=
+ne !important; height: auto !important; line-height: 20px !important; outli=
+ne: 0px !important; overflow: visible !important; vertical-align: baseline =
+!important; width: auto !important; box-sizing: content-box !important; min=
+-height: auto !important; white-space: nowrap !important;"><code class=3D"b=
+ash plain" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&q=
+uot;, &quot;Courier New&quot;, Courier, monospace !important; border-radius=
+: 0px !important; background: none !important; bottom: auto !important; flo=
+at: none !important; height: auto !important; left: auto !important; line-h=
+eight: 20px !important; outline: 0px !important; overflow: visible !importa=
+nt; position: static !important; right: auto !important; top: auto !importa=
+nt; vertical-align: baseline !important; width: auto !important; box-sizing=
+: content-box !important; min-height: auto !important; color: rgb(209, 237,=
+ 255) !important;">=C2=A0</code></div><div class=3D"line number5 index4 alt=
+2" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &q=
+uot;Courier New&quot;, Courier, monospace; font-size: 14px; color: rgb(51, =
+51, 51); padding-right: 1em !important; padding-left: 1em !important; borde=
+r-radius: 0px !important; background: none rgb(15, 25, 42) !important; floa=
+t: none !important; height: auto !important; line-height: 20px !important; =
+outline: 0px !important; overflow: visible !important; vertical-align: base=
+line !important; width: auto !important; box-sizing: content-box !important=
+; min-height: auto !important; white-space: nowrap !important;"><code class=
+=3D"bash comments" style=3D"font-family: Consolas, &quot;Bitstream Vera San=
+s Mono&quot;, &quot;Courier New&quot;, Courier, monospace !important; borde=
+r-radius: 0px !important; background: none !important; bottom: auto !import=
+ant; float: none !important; height: auto !important; left: auto !important=
+; line-height: 20px !important; outline: 0px !important; overflow: visible =
+!important; position: static !important; right: auto !important; top: auto =
+!important; vertical-align: baseline !important; width: auto !important; bo=
+x-sizing: content-box !important; min-height: auto !important; color: rgb(6=
+6, 139, 221) !important;">## CLUSTER</code></div><div class=3D"line number6=
+ index5 alt1" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mon=
+o&quot;, &quot;Courier New&quot;, Courier, monospace; font-size: 14px; colo=
+r: rgb(51, 51, 51); padding-right: 1em !important; padding-left: 1em !impor=
+tant; border-radius: 0px !important; background: none rgb(15, 25, 42) !impo=
+rtant; float: none !important; height: auto !important; line-height: 20px !=
+important; outline: 0px !important; overflow: visible !important; vertical-=
+align: baseline !important; width: auto !important; box-sizing: content-box=
+ !important; min-height: auto !important; white-space: nowrap !important;">=
+<code class=3D"bash plain" style=3D"font-family: Consolas, &quot;Bitstream =
+Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace !importan=
+t; border-radius: 0px !important; background: none !important; bottom: auto=
+ !important; float: none !important; height: auto !important; left: auto !i=
+mportant; line-height: 20px !important; outline: 0px !important; overflow: =
+visible !important; position: static !important; right: auto !important; to=
+p: auto !important; vertical-align: baseline !important; width: auto !impor=
+tant; box-sizing: content-box !important; min-height: auto !important; colo=
+r: rgb(209, 237, 255) !important;">[balazsl@lo-login-01]$ mpirun --version<=
+/code></div><div class=3D"line number7 index6 alt2" style=3D"font-family: C=
+onsolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Cou=
+rier, monospace; font-size: 14px; color: rgb(51, 51, 51); padding-right: 1e=
+m !important; padding-left: 1em !important; border-radius: 0px !important; =
+background: none rgb(15, 25, 42) !important; float: none !important; height=
+: auto !important; line-height: 20px !important; outline: 0px !important; o=
+verflow: visible !important; vertical-align: baseline !important; width: au=
+to !important; box-sizing: content-box !important; min-height: auto !import=
+ant; white-space: nowrap !important;"><code class=3D"bash plain" style=3D"f=
+ont-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier N=
+ew&quot;, Courier, monospace !important; border-radius: 0px !important; bac=
+kground: none !important; bottom: auto !important; float: none !important; =
+height: auto !important; left: auto !important; line-height: 20px !importan=
+t; outline: 0px !important; overflow: visible !important; position: static =
+!important; right: auto !important; top: auto !important; vertical-align: b=
+aseline !important; width: auto !important; box-sizing: content-box !import=
+ant; min-height: auto !important; color: rgb(209, 237, 255) !important;">mp=
+irun (Open MPI) 2.1.0</code></div><div class=3D"line number8 index7 alt1" s=
+tyle=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;=
+Courier New&quot;, Courier, monospace; font-size: 14px; color: rgb(51, 51, =
+51); padding-right: 1em !important; padding-left: 1em !important; border-ra=
+dius: 0px !important; background: none rgb(15, 25, 42) !important; float: n=
+one !important; height: auto !important; line-height: 20px !important; outl=
+ine: 0px !important; overflow: visible !important; vertical-align: baseline=
+ !important; width: auto !important; box-sizing: content-box !important; mi=
+n-height: auto !important; white-space: nowrap !important;"><code class=3D"=
+bash plain" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&=
+quot;, &quot;Courier New&quot;, Courier, monospace !important; border-radiu=
+s: 0px !important; background: none !important; bottom: auto !important; fl=
+oat: none !important; height: auto !important; left: auto !important; line-=
+height: 20px !important; outline: 0px !important; overflow: visible !import=
+ant; position: static !important; right: auto !important; top: auto !import=
+ant; vertical-align: baseline !important; width: auto !important; box-sizin=
+g: content-box !important; min-height: auto !important; color: rgb(209, 237=
+, 255) !important;">Report bugs to http:</code><code class=3D"bash plain" s=
+tyle=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;=
+Courier New&quot;, Courier, monospace !important; border-radius: 0px !impor=
+tant; background: none !important; bottom: auto !important; float: none !im=
+portant; height: auto !important; left: auto !important; line-height: 20px =
+!important; outline: 0px !important; overflow: visible !important; position=
+: static !important; right: auto !important; top: auto !important; vertical=
+-align: baseline !important; width: auto !important; box-sizing: content-bo=
+x !important; min-height: auto !important; color: rgb(209, 237, 255) !impor=
+tant;">//www</code><code class=3D"bash plain" style=3D"font-family: Consola=
+s, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, =
+monospace !important; border-radius: 0px !important; background: none !impo=
+rtant; bottom: auto !important; float: none !important; height: auto !impor=
+tant; left: auto !important; line-height: 20px !important; outline: 0px !im=
+portant; overflow: visible !important; position: static !important; right: =
+auto !important; top: auto !important; vertical-align: baseline !important;=
+ width: auto !important; box-sizing: content-box !important; min-height: au=
+to !important; color: rgb(209, 237, 255) !important;">.</code><code class=
+=3D"bash functions" style=3D"font-family: Consolas, &quot;Bitstream Vera Sa=
+ns Mono&quot;, &quot;Courier New&quot;, Courier, monospace !important; bord=
+er-radius: 0px !important; background: none !important; bottom: auto !impor=
+tant; float: none !important; height: auto !important; left: auto !importan=
+t; line-height: 20px !important; outline: 0px !important; overflow: visible=
+ !important; position: static !important; right: auto !important; top: auto=
+ !important; vertical-align: baseline !important; width: auto !important; b=
+ox-sizing: content-box !important; min-height: auto !important; color: rgb(=
+255, 170, 62) !important;">open</code><code class=3D"bash plain" style=3D"f=
+ont-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier N=
+ew&quot;, Courier, monospace !important; border-radius: 0px !important; bac=
+kground: none !important; bottom: auto !important; float: none !important; =
+height: auto !important; left: auto !important; line-height: 20px !importan=
+t; outline: 0px !important; overflow: visible !important; position: static =
+!important; right: auto !important; top: auto !important; vertical-align: b=
+aseline !important; width: auto !important; box-sizing: content-box !import=
+ant; min-height: auto !important; color: rgb(209, 237, 255) !important;">-m=
+pi.org</code><code class=3D"bash plain" style=3D"font-family: Consolas, &qu=
+ot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monosp=
+ace !important; border-radius: 0px !important; background: none !important;=
+ bottom: auto !important; float: none !important; height: auto !important; =
+left: auto !important; line-height: 20px !important; outline: 0px !importan=
+t; overflow: visible !important; position: static !important; right: auto !=
+important; top: auto !important; vertical-align: baseline !important; width=
+: auto !important; box-sizing: content-box !important; min-height: auto !im=
+portant; color: rgb(209, 237, 255) !important;">/community/help/</code></di=
+v><div class=3D"line number9 index8 alt2" style=3D"font-family: Consolas, &=
+quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, mono=
+space; font-size: 14px; color: rgb(51, 51, 51); padding-right: 1em !importa=
+nt; padding-left: 1em !important; border-radius: 0px !important; background=
+: none rgb(15, 25, 42) !important; float: none !important; height: auto !im=
+portant; line-height: 20px !important; outline: 0px !important; overflow: v=
+isible !important; vertical-align: baseline !important; width: auto !import=
+ant; box-sizing: content-box !important; min-height: auto !important; white=
+-space: nowrap !important;"><code class=3D"bash plain" style=3D"font-family=
+: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, =
+Courier, monospace !important; border-radius: 0px !important; background: n=
+one !important; bottom: auto !important; float: none !important; height: au=
+to !important; left: auto !important; line-height: 20px !important; outline=
+: 0px !important; overflow: visible !important; position: static !important=
+; right: auto !important; top: auto !important; vertical-align: baseline !i=
+mportant; width: auto !important; box-sizing: content-box !important; min-h=
+eight: auto !important; color: rgb(209, 237, 255) !important;">=C2=A0</code=
+></div><div class=3D"line number10 index9 alt1" style=3D"font-family: Conso=
+las, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier=
+, monospace; font-size: 14px; color: rgb(51, 51, 51); padding-right: 1em !i=
+mportant; padding-left: 1em !important; border-radius: 0px !important; back=
+ground: none rgb(15, 25, 42) !important; float: none !important; height: au=
+to !important; line-height: 20px !important; outline: 0px !important; overf=
+low: visible !important; vertical-align: baseline !important; width: auto !=
+important; box-sizing: content-box !important; min-height: auto !important;=
+ white-space: nowrap !important;"><code class=3D"bash comments" style=3D"fo=
+nt-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier Ne=
+w&quot;, Courier, monospace !important; border-radius: 0px !important; back=
+ground: none !important; bottom: auto !important; float: none !important; h=
+eight: auto !important; left: auto !important; line-height: 20px !important=
+; outline: 0px !important; overflow: visible !important; position: static !=
+important; right: auto !important; top: auto !important; vertical-align: ba=
+seline !important; width: auto !important; box-sizing: content-box !importa=
+nt; min-height: auto !important; color: rgb(66, 139, 221) !important;">## C=
+ONTAINER 1.10.3</code></div><div class=3D"line number11 index10 alt2" style=
+=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Cour=
+ier New&quot;, Courier, monospace; font-size: 14px; color: rgb(51, 51, 51);=
+ padding-right: 1em !important; padding-left: 1em !important; border-radius=
+: 0px !important; background: none rgb(15, 25, 42) !important; float: none =
+!important; height: auto !important; line-height: 20px !important; outline:=
+ 0px !important; overflow: visible !important; vertical-align: baseline !im=
+portant; width: auto !important; box-sizing: content-box !important; min-he=
+ight: auto !important; white-space: nowrap !important;"><code class=3D"bash=
+ plain" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot=
+;, &quot;Courier New&quot;, Courier, monospace !important; border-radius: 0=
+px !important; background: none !important; bottom: auto !important; float:=
+ none !important; height: auto !important; left: auto !important; line-heig=
+ht: 20px !important; outline: 0px !important; overflow: visible !important;=
+ position: static !important; right: auto !important; top: auto !important;=
+ vertical-align: baseline !important; width: auto !important; box-sizing: c=
+ontent-box !important; min-height: auto !important; color: rgb(209, 237, 25=
+5) !important;">[balazsl@lo-login-01]$ singularity=C2=A0</code><code class=
+=3D"bash functions" style=3D"font-family: Consolas, &quot;Bitstream Vera Sa=
+ns Mono&quot;, &quot;Courier New&quot;, Courier, monospace !important; bord=
+er-radius: 0px !important; background: none !important; bottom: auto !impor=
+tant; float: none !important; height: auto !important; left: auto !importan=
+t; line-height: 20px !important; outline: 0px !important; overflow: visible=
+ !important; position: static !important; right: auto !important; top: auto=
+ !important; vertical-align: baseline !important; width: auto !important; b=
+ox-sizing: content-box !important; min-height: auto !important; color: rgb(=
+255, 170, 62) !important;">exec</code>=C2=A0<code class=3D"bash plain" styl=
+e=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Cou=
+rier New&quot;, Courier, monospace !important; border-radius: 0px !importan=
+t; background: none !important; bottom: auto !important; float: none !impor=
+tant; height: auto !important; left: auto !important; line-height: 20px !im=
+portant; outline: 0px !important; overflow: visible !important; position: s=
+tatic !important; right: auto !important; top: auto !important; vertical-al=
+ign: baseline !important; width: auto !important; box-sizing: content-box !=
+important; min-height: auto !important; color: rgb(209, 237, 255) !importan=
+t;">mpi_hello_world-1103.img mpirun --version</code></div><div class=3D"lin=
+e number12 index11 alt1" style=3D"font-family: Consolas, &quot;Bitstream Ve=
+ra Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace; font-size:=
+ 14px; color: rgb(51, 51, 51); padding-right: 1em !important; padding-left:=
+ 1em !important; border-radius: 0px !important; background: none rgb(15, 25=
+, 42) !important; float: none !important; height: auto !important; line-hei=
+ght: 20px !important; outline: 0px !important; overflow: visible !important=
+; vertical-align: baseline !important; width: auto !important; box-sizing: =
+content-box !important; min-height: auto !important; white-space: nowrap !i=
+mportant;"><code class=3D"bash plain" style=3D"font-family: Consolas, &quot=
+;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospac=
+e !important; border-radius: 0px !important; background: none !important; b=
+ottom: auto !important; float: none !important; height: auto !important; le=
+ft: auto !important; line-height: 20px !important; outline: 0px !important;=
+ overflow: visible !important; position: static !important; right: auto !im=
+portant; top: auto !important; vertical-align: baseline !important; width: =
+auto !important; box-sizing: content-box !important; min-height: auto !impo=
+rtant; color: rgb(209, 237, 255) !important;">/bin/sh</code><code class=3D"=
+bash plain" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&=
+quot;, &quot;Courier New&quot;, Courier, monospace !important; border-radiu=
+s: 0px !important; background: none !important; bottom: auto !important; fl=
+oat: none !important; height: auto !important; left: auto !important; line-=
+height: 20px !important; outline: 0px !important; overflow: visible !import=
+ant; position: static !important; right: auto !important; top: auto !import=
+ant; vertical-align: baseline !important; width: auto !important; box-sizin=
+g: content-box !important; min-height: auto !important; color: rgb(209, 237=
+, 255) !important;">: warning: setlocale: LC_ALL: cannot change locale (en_=
+US.UTF-8)</code></div><div class=3D"line number13 index12 alt2" style=3D"fo=
+nt-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier Ne=
+w&quot;, Courier, monospace; font-size: 14px; color: rgb(51, 51, 51); paddi=
+ng-right: 1em !important; padding-left: 1em !important; border-radius: 0px =
+!important; background: none rgb(15, 25, 42) !important; float: none !impor=
+tant; height: auto !important; line-height: 20px !important; outline: 0px !=
+important; overflow: visible !important; vertical-align: baseline !importan=
+t; width: auto !important; box-sizing: content-box !important; min-height: =
+auto !important; white-space: nowrap !important;"><code class=3D"bash plain=
+" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &qu=
+ot;Courier New&quot;, Courier, monospace !important; border-radius: 0px !im=
+portant; background: none !important; bottom: auto !important; float: none =
+!important; height: auto !important; left: auto !important; line-height: 20=
+px !important; outline: 0px !important; overflow: visible !important; posit=
+ion: static !important; right: auto !important; top: auto !important; verti=
+cal-align: baseline !important; width: auto !important; box-sizing: content=
+-box !important; min-height: auto !important; color: rgb(209, 237, 255) !im=
+portant;">mpirun (Open MPI) 1.10.3</code></div><div class=3D"line number14 =
+index13 alt1" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mon=
+o&quot;, &quot;Courier New&quot;, Courier, monospace; font-size: 14px; colo=
+r: rgb(51, 51, 51); padding-right: 1em !important; padding-left: 1em !impor=
+tant; border-radius: 0px !important; background: none rgb(15, 25, 42) !impo=
+rtant; float: none !important; height: auto !important; line-height: 20px !=
+important; outline: 0px !important; overflow: visible !important; vertical-=
+align: baseline !important; width: auto !important; box-sizing: content-box=
+ !important; min-height: auto !important; white-space: nowrap !important;">=
+<code class=3D"bash plain" style=3D"font-family: Consolas, &quot;Bitstream =
+Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace !importan=
+t; border-radius: 0px !important; background: none !important; bottom: auto=
+ !important; float: none !important; height: auto !important; left: auto !i=
+mportant; line-height: 20px !important; outline: 0px !important; overflow: =
+visible !important; position: static !important; right: auto !important; to=
+p: auto !important; vertical-align: baseline !important; width: auto !impor=
+tant; box-sizing: content-box !important; min-height: auto !important; colo=
+r: rgb(209, 237, 255) !important;">Report bugs to http:</code><code class=
+=3D"bash plain" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans M=
+ono&quot;, &quot;Courier New&quot;, Courier, monospace !important; border-r=
+adius: 0px !important; background: none !important; bottom: auto !important=
+; float: none !important; height: auto !important; left: auto !important; l=
+ine-height: 20px !important; outline: 0px !important; overflow: visible !im=
+portant; position: static !important; right: auto !important; top: auto !im=
+portant; vertical-align: baseline !important; width: auto !important; box-s=
+izing: content-box !important; min-height: auto !important; color: rgb(209,=
+ 237, 255) !important;">//www</code><code class=3D"bash plain" style=3D"fon=
+t-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New=
+&quot;, Courier, monospace !important; border-radius: 0px !important; backg=
+round: none !important; bottom: auto !important; float: none !important; he=
+ight: auto !important; left: auto !important; line-height: 20px !important;=
+ outline: 0px !important; overflow: visible !important; position: static !i=
+mportant; right: auto !important; top: auto !important; vertical-align: bas=
+eline !important; width: auto !important; box-sizing: content-box !importan=
+t; min-height: auto !important; color: rgb(209, 237, 255) !important;">.</c=
+ode><code class=3D"bash functions" style=3D"font-family: Consolas, &quot;Bi=
+tstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace !=
+important; border-radius: 0px !important; background: none !important; bott=
+om: auto !important; float: none !important; height: auto !important; left:=
+ auto !important; line-height: 20px !important; outline: 0px !important; ov=
+erflow: visible !important; position: static !important; right: auto !impor=
+tant; top: auto !important; vertical-align: baseline !important; width: aut=
+o !important; box-sizing: content-box !important; min-height: auto !importa=
+nt; color: rgb(255, 170, 62) !important;">open</code><code class=3D"bash pl=
+ain" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, =
+&quot;Courier New&quot;, Courier, monospace !important; border-radius: 0px =
+!important; background: none !important; bottom: auto !important; float: no=
+ne !important; height: auto !important; left: auto !important; line-height:=
+ 20px !important; outline: 0px !important; overflow: visible !important; po=
+sition: static !important; right: auto !important; top: auto !important; ve=
+rtical-align: baseline !important; width: auto !important; box-sizing: cont=
+ent-box !important; min-height: auto !important; color: rgb(209, 237, 255) =
+!important;">-mpi.org</code><code class=3D"bash plain" style=3D"font-family=
+: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, =
+Courier, monospace !important; border-radius: 0px !important; background: n=
+one !important; bottom: auto !important; float: none !important; height: au=
+to !important; left: auto !important; line-height: 20px !important; outline=
+: 0px !important; overflow: visible !important; position: static !important=
+; right: auto !important; top: auto !important; vertical-align: baseline !i=
+mportant; width: auto !important; box-sizing: content-box !important; min-h=
+eight: auto !important; color: rgb(209, 237, 255) !important;">/community/h=
+elp/</code></div><div class=3D"line number15 index14 alt2" style=3D"font-fa=
+mily: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quo=
+t;, Courier, monospace; font-size: 14px; color: rgb(51, 51, 51); padding-ri=
+ght: 1em !important; padding-left: 1em !important; border-radius: 0px !impo=
+rtant; background: none rgb(15, 25, 42) !important; float: none !important;=
+ height: auto !important; line-height: 20px !important; outline: 0px !impor=
+tant; overflow: visible !important; vertical-align: baseline !important; wi=
+dth: auto !important; box-sizing: content-box !important; min-height: auto =
+!important; white-space: nowrap !important;"><code class=3D"bash plain" sty=
+le=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Co=
+urier New&quot;, Courier, monospace !important; border-radius: 0px !importa=
+nt; background: none !important; bottom: auto !important; float: none !impo=
+rtant; height: auto !important; left: auto !important; line-height: 20px !i=
+mportant; outline: 0px !important; overflow: visible !important; position: =
+static !important; right: auto !important; top: auto !important; vertical-a=
+lign: baseline !important; width: auto !important; box-sizing: content-box =
+!important; min-height: auto !important; color: rgb(209, 237, 255) !importa=
+nt;">=C2=A0</code></div><div class=3D"line number16 index15 alt1" style=3D"=
+font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier =
+New&quot;, Courier, monospace; font-size: 14px; color: rgb(51, 51, 51); pad=
+ding-right: 1em !important; padding-left: 1em !important; border-radius: 0p=
+x !important; background: none rgb(15, 25, 42) !important; float: none !imp=
+ortant; height: auto !important; line-height: 20px !important; outline: 0px=
+ !important; overflow: visible !important; vertical-align: baseline !import=
+ant; width: auto !important; box-sizing: content-box !important; min-height=
+: auto !important; white-space: nowrap !important;"><code class=3D"bash com=
+ments" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;=
+, &quot;Courier New&quot;, Courier, monospace !important; border-radius: 0p=
+x !important; background: none !important; bottom: auto !important; float: =
+none !important; height: auto !important; left: auto !important; line-heigh=
+t: 20px !important; outline: 0px !important; overflow: visible !important; =
+position: static !important; right: auto !important; top: auto !important; =
+vertical-align: baseline !important; width: auto !important; box-sizing: co=
+ntent-box !important; min-height: auto !important; color: rgb(66, 139, 221)=
+ !important;">## CONTAINER 2.1.0</code></div><div class=3D"line number17 in=
+dex16 alt2" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&=
+quot;, &quot;Courier New&quot;, Courier, monospace; font-size: 14px; color:=
+ rgb(51, 51, 51); padding-right: 1em !important; padding-left: 1em !importa=
+nt; border-radius: 0px !important; background: none rgb(15, 25, 42) !import=
+ant; float: none !important; height: auto !important; line-height: 20px !im=
+portant; outline: 0px !important; overflow: visible !important; vertical-al=
+ign: baseline !important; width: auto !important; box-sizing: content-box !=
+important; min-height: auto !important; white-space: nowrap !important;"><c=
+ode class=3D"bash plain" style=3D"font-family: Consolas, &quot;Bitstream Ve=
+ra Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace !important;=
+ border-radius: 0px !important; background: none !important; bottom: auto !=
+important; float: none !important; height: auto !important; left: auto !imp=
+ortant; line-height: 20px !important; outline: 0px !important; overflow: vi=
+sible !important; position: static !important; right: auto !important; top:=
+ auto !important; vertical-align: baseline !important; width: auto !importa=
+nt; box-sizing: content-box !important; min-height: auto !important; color:=
+ rgb(209, 237, 255) !important;">[balazsl@lo-login-01]$ singularity=C2=A0</=
+code><code class=3D"bash functions" style=3D"font-family: Consolas, &quot;B=
+itstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace =
+!important; border-radius: 0px !important; background: none !important; bot=
+tom: auto !important; float: none !important; height: auto !important; left=
+: auto !important; line-height: 20px !important; outline: 0px !important; o=
+verflow: visible !important; position: static !important; right: auto !impo=
+rtant; top: auto !important; vertical-align: baseline !important; width: au=
+to !important; box-sizing: content-box !important; min-height: auto !import=
+ant; color: rgb(255, 170, 62) !important;">exec</code>=C2=A0<code class=3D"=
+bash plain" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&=
+quot;, &quot;Courier New&quot;, Courier, monospace !important; border-radiu=
+s: 0px !important; background: none !important; bottom: auto !important; fl=
+oat: none !important; height: auto !important; left: auto !important; line-=
+height: 20px !important; outline: 0px !important; overflow: visible !import=
+ant; position: static !important; right: auto !important; top: auto !import=
+ant; vertical-align: baseline !important; width: auto !important; box-sizin=
+g: content-box !important; min-height: auto !important; color: rgb(209, 237=
+, 255) !important;">mpi_hello_world-210.img mpirun --version</code></div><d=
+iv class=3D"line number18 index17 alt1" style=3D"font-family: Consolas, &qu=
+ot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monosp=
+ace; font-size: 14px; color: rgb(51, 51, 51); padding-right: 1em !important=
+; padding-left: 1em !important; border-radius: 0px !important; background: =
+none rgb(15, 25, 42) !important; float: none !important; height: auto !impo=
+rtant; line-height: 20px !important; outline: 0px !important; overflow: vis=
+ible !important; vertical-align: baseline !important; width: auto !importan=
+t; box-sizing: content-box !important; min-height: auto !important; white-s=
+pace: nowrap !important;"><code class=3D"bash plain" style=3D"font-family: =
+Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Co=
+urier, monospace !important; border-radius: 0px !important; background: non=
+e !important; bottom: auto !important; float: none !important; height: auto=
+ !important; left: auto !important; line-height: 20px !important; outline: =
+0px !important; overflow: visible !important; position: static !important; =
+right: auto !important; top: auto !important; vertical-align: baseline !imp=
+ortant; width: auto !important; box-sizing: content-box !important; min-hei=
+ght: auto !important; color: rgb(209, 237, 255) !important;">/bin/sh</code>=
+<code class=3D"bash plain" style=3D"font-family: Consolas, &quot;Bitstream =
+Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace !importan=
+t; border-radius: 0px !important; background: none !important; bottom: auto=
+ !important; float: none !important; height: auto !important; left: auto !i=
+mportant; line-height: 20px !important; outline: 0px !important; overflow: =
+visible !important; position: static !important; right: auto !important; to=
+p: auto !important; vertical-align: baseline !important; width: auto !impor=
+tant; box-sizing: content-box !important; min-height: auto !important; colo=
+r: rgb(209, 237, 255) !important;">: warning: setlocale: LC_ALL: cannot cha=
+nge locale (en_US.UTF-8)</code></div><div class=3D"line number19 index18 al=
+t2" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &=
+quot;Courier New&quot;, Courier, monospace; font-size: 14px; color: rgb(51,=
+ 51, 51); padding-right: 1em !important; padding-left: 1em !important; bord=
+er-radius: 0px !important; background: none rgb(15, 25, 42) !important; flo=
+at: none !important; height: auto !important; line-height: 20px !important;=
+ outline: 0px !important; overflow: visible !important; vertical-align: bas=
+eline !important; width: auto !important; box-sizing: content-box !importan=
+t; min-height: auto !important; white-space: nowrap !important;"><code clas=
+s=3D"bash plain" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans =
+Mono&quot;, &quot;Courier New&quot;, Courier, monospace !important; border-=
+radius: 0px !important; background: none !important; bottom: auto !importan=
+t; float: none !important; height: auto !important; left: auto !important; =
+line-height: 20px !important; outline: 0px !important; overflow: visible !i=
+mportant; position: static !important; right: auto !important; top: auto !i=
+mportant; vertical-align: baseline !important; width: auto !important; box-=
+sizing: content-box !important; min-height: auto !important; color: rgb(209=
+, 237, 255) !important;">mpirun (Open MPI) 2.1.0</code></div><div class=3D"=
+line number20 index19 alt1" style=3D"font-family: Consolas, &quot;Bitstream=
+ Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace; font-si=
+ze: 14px; color: rgb(51, 51, 51); padding-right: 1em !important; padding-le=
+ft: 1em !important; border-radius: 0px !important; background: none rgb(15,=
+ 25, 42) !important; float: none !important; height: auto !important; line-=
+height: 20px !important; outline: 0px !important; overflow: visible !import=
+ant; vertical-align: baseline !important; width: auto !important; box-sizin=
+g: content-box !important; min-height: auto !important; white-space: nowrap=
+ !important;"><code class=3D"bash plain" style=3D"font-family: Consolas, &q=
+uot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monos=
+pace !important; border-radius: 0px !important; background: none !important=
+; bottom: auto !important; float: none !important; height: auto !important;=
+ left: auto !important; line-height: 20px !important; outline: 0px !importa=
+nt; overflow: visible !important; position: static !important; right: auto =
+!important; top: auto !important; vertical-align: baseline !important; widt=
+h: auto !important; box-sizing: content-box !important; min-height: auto !i=
+mportant; color: rgb(209, 237, 255) !important;">Report bugs to http:</code=
+><code class=3D"bash plain" style=3D"font-family: Consolas, &quot;Bitstream=
+ Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace !importa=
+nt; border-radius: 0px !important; background: none !important; bottom: aut=
+o !important; float: none !important; height: auto !important; left: auto !=
+important; line-height: 20px !important; outline: 0px !important; overflow:=
+ visible !important; position: static !important; right: auto !important; t=
+op: auto !important; vertical-align: baseline !important; width: auto !impo=
+rtant; box-sizing: content-box !important; min-height: auto !important; col=
+or: rgb(209, 237, 255) !important;">//www</code><code class=3D"bash plain" =
+style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot=
+;Courier New&quot;, Courier, monospace !important; border-radius: 0px !impo=
+rtant; background: none !important; bottom: auto !important; float: none !i=
+mportant; height: auto !important; left: auto !important; line-height: 20px=
+ !important; outline: 0px !important; overflow: visible !important; positio=
+n: static !important; right: auto !important; top: auto !important; vertica=
+l-align: baseline !important; width: auto !important; box-sizing: content-b=
+ox !important; min-height: auto !important; color: rgb(209, 237, 255) !impo=
+rtant;">.</code><code class=3D"bash functions" style=3D"font-family: Consol=
+as, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier,=
+ monospace !important; border-radius: 0px !important; background: none !imp=
+ortant; bottom: auto !important; float: none !important; height: auto !impo=
+rtant; left: auto !important; line-height: 20px !important; outline: 0px !i=
+mportant; overflow: visible !important; position: static !important; right:=
+ auto !important; top: auto !important; vertical-align: baseline !important=
+; width: auto !important; box-sizing: content-box !important; min-height: a=
+uto !important; color: rgb(255, 170, 62) !important;">open</code><code clas=
+s=3D"bash plain" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans =
+Mono&quot;, &quot;Courier New&quot;, Courier, monospace !important; border-=
+radius: 0px !important; background: none !important; bottom: auto !importan=
+t; float: none !important; height: auto !important; left: auto !important; =
+line-height: 20px !important; outline: 0px !important; overflow: visible !i=
+mportant; position: static !important; right: auto !important; top: auto !i=
+mportant; vertical-align: baseline !important; width: auto !important; box-=
+sizing: content-box !important; min-height: auto !important; color: rgb(209=
+, 237, 255) !important;">-mpi.org</code><code class=3D"bash plain" style=3D=
+"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier=
+ New&quot;, Courier, monospace !important; border-radius: 0px !important; b=
+ackground: none !important; bottom: auto !important; float: none !important=
+; height: auto !important; left: auto !important; line-height: 20px !import=
+ant; outline: 0px !important; overflow: visible !important; position: stati=
+c !important; right: auto !important; top: auto !important; vertical-align:=
+ baseline !important; width: auto !important; box-sizing: content-box !impo=
+rtant; min-height: auto !important; color: rgb(209, 237, 255) !important;">=
+/community/help/</code></div><div class=3D"line number21 index20 alt2" styl=
+e=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Cou=
+rier New&quot;, Courier, monospace; font-size: 14px; color: rgb(51, 51, 51)=
+; padding-right: 1em !important; padding-left: 1em !important; border-radiu=
+s: 0px !important; background: none rgb(15, 25, 42) !important; float: none=
+ !important; height: auto !important; line-height: 20px !important; outline=
+: 0px !important; overflow: visible !important; vertical-align: baseline !i=
+mportant; width: auto !important; box-sizing: content-box !important; min-h=
+eight: auto !important; white-space: nowrap !important;"><code class=3D"bas=
+h plain" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quo=
+t;, &quot;Courier New&quot;, Courier, monospace !important; border-radius: =
+0px !important; background: none !important; bottom: auto !important; float=
+: none !important; height: auto !important; left: auto !important; line-hei=
+ght: 20px !important; outline: 0px !important; overflow: visible !important=
+; position: static !important; right: auto !important; top: auto !important=
+; vertical-align: baseline !important; width: auto !important; box-sizing: =
+content-box !important; min-height: auto !important; color: rgb(209, 237, 2=
+55) !important;">=C2=A0</code></div><div class=3D"line number22 index21 alt=
+1" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &q=
+uot;Courier New&quot;, Courier, monospace; font-size: 14px; color: rgb(51, =
+51, 51); padding-right: 1em !important; padding-left: 1em !important; borde=
+r-radius: 0px !important; background: none rgb(15, 25, 42) !important; floa=
+t: none !important; height: auto !important; line-height: 20px !important; =
+outline: 0px !important; overflow: visible !important; vertical-align: base=
+line !important; width: auto !important; box-sizing: content-box !important=
+; min-height: auto !important; white-space: nowrap !important;"><code class=
+=3D"bash comments" style=3D"font-family: Consolas, &quot;Bitstream Vera San=
+s Mono&quot;, &quot;Courier New&quot;, Courier, monospace !important; borde=
+r-radius: 0px !important; background: none !important; bottom: auto !import=
+ant; float: none !important; height: auto !important; left: auto !important=
+; line-height: 20px !important; outline: 0px !important; overflow: visible =
+!important; position: static !important; right: auto !important; top: auto =
+!important; vertical-align: baseline !important; width: auto !important; bo=
+x-sizing: content-box !important; min-height: auto !important; color: rgb(6=
+6, 139, 221) !important;">## CLUSTER</code></div><div class=3D"line number2=
+3 index22 alt2" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans M=
+ono&quot;, &quot;Courier New&quot;, Courier, monospace; font-size: 14px; co=
+lor: rgb(51, 51, 51); padding-right: 1em !important; padding-left: 1em !imp=
+ortant; border-radius: 0px !important; background: none rgb(15, 25, 42) !im=
+portant; float: none !important; height: auto !important; line-height: 20px=
+ !important; outline: 0px !important; overflow: visible !important; vertica=
+l-align: baseline !important; width: auto !important; box-sizing: content-b=
+ox !important; min-height: auto !important; white-space: nowrap !important;=
+"><code class=3D"bash plain" style=3D"font-family: Consolas, &quot;Bitstrea=
+m Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace !import=
+ant; border-radius: 0px !important; background: none !important; bottom: au=
+to !important; float: none !important; height: auto !important; left: auto =
+!important; line-height: 20px !important; outline: 0px !important; overflow=
+: visible !important; position: static !important; right: auto !important; =
+top: auto !important; vertical-align: baseline !important; width: auto !imp=
+ortant; box-sizing: content-box !important; min-height: auto !important; co=
+lor: rgb(209, 237, 255) !important;">[balazsl@lo-login-01]$ mpicc --version=
+</code></div><div class=3D"line number24 index23 alt1" style=3D"font-family=
+: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, =
+Courier, monospace; font-size: 14px; color: rgb(51, 51, 51); padding-right:=
+ 1em !important; padding-left: 1em !important; border-radius: 0px !importan=
+t; background: none rgb(15, 25, 42) !important; float: none !important; hei=
+ght: auto !important; line-height: 20px !important; outline: 0px !important=
+; overflow: visible !important; vertical-align: baseline !important; width:=
+ auto !important; box-sizing: content-box !important; min-height: auto !imp=
+ortant; white-space: nowrap !important;"><code class=3D"bash plain" style=
+=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Cour=
+ier New&quot;, Courier, monospace !important; border-radius: 0px !important=
+; background: none !important; bottom: auto !important; float: none !import=
+ant; height: auto !important; left: auto !important; line-height: 20px !imp=
+ortant; outline: 0px !important; overflow: visible !important; position: st=
+atic !important; right: auto !important; top: auto !important; vertical-ali=
+gn: baseline !important; width: auto !important; box-sizing: content-box !i=
+mportant; min-height: auto !important; color: rgb(209, 237, 255) !important=
+;">gcc (GCC) 4.8.5 20150623 (Red Hat 4.8.5-11)</code></div><div class=3D"li=
+ne number25 index24 alt2" style=3D"font-family: Consolas, &quot;Bitstream V=
+era Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace; font-size=
+: 14px; color: rgb(51, 51, 51); padding-right: 1em !important; padding-left=
+: 1em !important; border-radius: 0px !important; background: none rgb(15, 2=
+5, 42) !important; float: none !important; height: auto !important; line-he=
+ight: 20px !important; outline: 0px !important; overflow: visible !importan=
+t; vertical-align: baseline !important; width: auto !important; box-sizing:=
+ content-box !important; min-height: auto !important; white-space: nowrap !=
+important;"><code class=3D"bash plain" style=3D"font-family: Consolas, &quo=
+t;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospa=
+ce !important; border-radius: 0px !important; background: none !important; =
+bottom: auto !important; float: none !important; height: auto !important; l=
+eft: auto !important; line-height: 20px !important; outline: 0px !important=
+; overflow: visible !important; position: static !important; right: auto !i=
+mportant; top: auto !important; vertical-align: baseline !important; width:=
+ auto !important; box-sizing: content-box !important; min-height: auto !imp=
+ortant; color: rgb(209, 237, 255) !important;">Copyright (C) 2015 Free Soft=
+ware Foundation, Inc.</code></div><div class=3D"line number26 index25 alt1"=
+ style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quo=
+t;Courier New&quot;, Courier, monospace; font-size: 14px; color: rgb(51, 51=
+, 51); padding-right: 1em !important; padding-left: 1em !important; border-=
+radius: 0px !important; background: none rgb(15, 25, 42) !important; float:=
+ none !important; height: auto !important; line-height: 20px !important; ou=
+tline: 0px !important; overflow: visible !important; vertical-align: baseli=
+ne !important; width: auto !important; box-sizing: content-box !important; =
+min-height: auto !important; white-space: nowrap !important;"><code class=
+=3D"bash plain" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans M=
+ono&quot;, &quot;Courier New&quot;, Courier, monospace !important; border-r=
+adius: 0px !important; background: none !important; bottom: auto !important=
+; float: none !important; height: auto !important; left: auto !important; l=
+ine-height: 20px !important; outline: 0px !important; overflow: visible !im=
+portant; position: static !important; right: auto !important; top: auto !im=
+portant; vertical-align: baseline !important; width: auto !important; box-s=
+izing: content-box !important; min-height: auto !important; color: rgb(209,=
+ 237, 255) !important;">This is=C2=A0</code><code class=3D"bash functions" =
+style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot=
+;Courier New&quot;, Courier, monospace !important; border-radius: 0px !impo=
+rtant; background: none !important; bottom: auto !important; float: none !i=
+mportant; height: auto !important; left: auto !important; line-height: 20px=
+ !important; outline: 0px !important; overflow: visible !important; positio=
+n: static !important; right: auto !important; top: auto !important; vertica=
+l-align: baseline !important; width: auto !important; box-sizing: content-b=
+ox !important; min-height: auto !important; color: rgb(255, 170, 62) !impor=
+tant;">free</code>=C2=A0<code class=3D"bash plain" style=3D"font-family: Co=
+nsolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Cour=
+ier, monospace !important; border-radius: 0px !important; background: none =
+!important; bottom: auto !important; float: none !important; height: auto !=
+important; left: auto !important; line-height: 20px !important; outline: 0p=
+x !important; overflow: visible !important; position: static !important; ri=
+ght: auto !important; top: auto !important; vertical-align: baseline !impor=
+tant; width: auto !important; box-sizing: content-box !important; min-heigh=
+t: auto !important; color: rgb(209, 237, 255) !important;">software; see th=
+e=C2=A0</code><code class=3D"bash functions" style=3D"font-family: Consolas=
+, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, m=
+onospace !important; border-radius: 0px !important; background: none !impor=
+tant; bottom: auto !important; float: none !important; height: auto !import=
+ant; left: auto !important; line-height: 20px !important; outline: 0px !imp=
+ortant; overflow: visible !important; position: static !important; right: a=
+uto !important; top: auto !important; vertical-align: baseline !important; =
+width: auto !important; box-sizing: content-box !important; min-height: aut=
+o !important; color: rgb(255, 170, 62) !important;">source</code>=C2=A0<cod=
+e class=3D"bash keyword" style=3D"font-family: Consolas, &quot;Bitstream Ve=
+ra Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace !important;=
+ border-radius: 0px !important; background: none !important; bottom: auto !=
+important; float: none !important; height: auto !important; left: auto !imp=
+ortant; line-height: 20px !important; outline: 0px !important; overflow: vi=
+sible !important; position: static !important; right: auto !important; top:=
+ auto !important; vertical-align: baseline !important; width: auto !importa=
+nt; box-sizing: content-box !important; min-height: auto !important; color:=
+ rgb(180, 61, 61) !important;">for</code>=C2=A0<code class=3D"bash plain" s=
+tyle=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;=
+Courier New&quot;, Courier, monospace !important; border-radius: 0px !impor=
+tant; background: none !important; bottom: auto !important; float: none !im=
+portant; height: auto !important; left: auto !important; line-height: 20px =
+!important; outline: 0px !important; overflow: visible !important; position=
+: static !important; right: auto !important; top: auto !important; vertical=
+-align: baseline !important; width: auto !important; box-sizing: content-bo=
+x !important; min-height: auto !important; color: rgb(209, 237, 255) !impor=
+tant;">copying conditions.=C2=A0 There is NO</code></div><div class=3D"line=
+ number27 index26 alt2" style=3D"font-family: Consolas, &quot;Bitstream Ver=
+a Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace; font-size: =
+14px; color: rgb(51, 51, 51); padding-right: 1em !important; padding-left: =
+1em !important; border-radius: 0px !important; background: none rgb(15, 25,=
+ 42) !important; float: none !important; height: auto !important; line-heig=
+ht: 20px !important; outline: 0px !important; overflow: visible !important;=
+ vertical-align: baseline !important; width: auto !important; box-sizing: c=
+ontent-box !important; min-height: auto !important; white-space: nowrap !im=
+portant;"><code class=3D"bash plain" style=3D"font-family: Consolas, &quot;=
+Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace=
+ !important; border-radius: 0px !important; background: none !important; bo=
+ttom: auto !important; float: none !important; height: auto !important; lef=
+t: auto !important; line-height: 20px !important; outline: 0px !important; =
+overflow: visible !important; position: static !important; right: auto !imp=
+ortant; top: auto !important; vertical-align: baseline !important; width: a=
+uto !important; box-sizing: content-box !important; min-height: auto !impor=
+tant; color: rgb(209, 237, 255) !important;">warranty; not even=C2=A0</code=
+><code class=3D"bash keyword" style=3D"font-family: Consolas, &quot;Bitstre=
+am Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace !impor=
+tant; border-radius: 0px !important; background: none !important; bottom: a=
+uto !important; float: none !important; height: auto !important; left: auto=
+ !important; line-height: 20px !important; outline: 0px !important; overflo=
+w: visible !important; position: static !important; right: auto !important;=
+ top: auto !important; vertical-align: baseline !important; width: auto !im=
+portant; box-sizing: content-box !important; min-height: auto !important; c=
+olor: rgb(180, 61, 61) !important;">for</code>=C2=A0<code class=3D"bash pla=
+in" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &=
+quot;Courier New&quot;, Courier, monospace !important; border-radius: 0px !=
+important; background: none !important; bottom: auto !important; float: non=
+e !important; height: auto !important; left: auto !important; line-height: =
+20px !important; outline: 0px !important; overflow: visible !important; pos=
+ition: static !important; right: auto !important; top: auto !important; ver=
+tical-align: baseline !important; width: auto !important; box-sizing: conte=
+nt-box !important; min-height: auto !important; color: rgb(209, 237, 255) !=
+important;">MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.</code></di=
+v><div class=3D"line number28 index27 alt1" style=3D"font-family: Consolas,=
+ &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, mo=
+nospace; font-size: 14px; color: rgb(51, 51, 51); padding-right: 1em !impor=
+tant; padding-left: 1em !important; border-radius: 0px !important; backgrou=
+nd: none rgb(15, 25, 42) !important; float: none !important; height: auto !=
+important; line-height: 20px !important; outline: 0px !important; overflow:=
+ visible !important; vertical-align: baseline !important; width: auto !impo=
+rtant; box-sizing: content-box !important; min-height: auto !important; whi=
+te-space: nowrap !important;">=C2=A0</div><div class=3D"line number29 index=
+28 alt2" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quo=
+t;, &quot;Courier New&quot;, Courier, monospace; font-size: 14px; color: rg=
+b(51, 51, 51); padding-right: 1em !important; padding-left: 1em !important;=
+ border-radius: 0px !important; background: none rgb(15, 25, 42) !important=
+; float: none !important; height: auto !important; line-height: 20px !impor=
+tant; outline: 0px !important; overflow: visible !important; vertical-align=
+: baseline !important; width: auto !important; box-sizing: content-box !imp=
+ortant; min-height: auto !important; white-space: nowrap !important;"><code=
+ class=3D"bash comments" style=3D"font-family: Consolas, &quot;Bitstream Ve=
+ra Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace !important;=
+ border-radius: 0px !important; background: none !important; bottom: auto !=
+important; float: none !important; height: auto !important; left: auto !imp=
+ortant; line-height: 20px !important; outline: 0px !important; overflow: vi=
+sible !important; position: static !important; right: auto !important; top:=
+ auto !important; vertical-align: baseline !important; width: auto !importa=
+nt; box-sizing: content-box !important; min-height: auto !important; color:=
+ rgb(66, 139, 221) !important;">## CONTAINER 2.1.0</code></div><div class=
+=3D"line number30 index29 alt1" style=3D"font-family: Consolas, &quot;Bitst=
+ream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace; fon=
+t-size: 14px; color: rgb(51, 51, 51); padding-right: 1em !important; paddin=
+g-left: 1em !important; border-radius: 0px !important; background: none rgb=
+(15, 25, 42) !important; float: none !important; height: auto !important; l=
+ine-height: 20px !important; outline: 0px !important; overflow: visible !im=
+portant; vertical-align: baseline !important; width: auto !important; box-s=
+izing: content-box !important; min-height: auto !important; white-space: no=
+wrap !important;"><code class=3D"bash plain" style=3D"font-family: Consolas=
+, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, m=
+onospace !important; border-radius: 0px !important; background: none !impor=
+tant; bottom: auto !important; float: none !important; height: auto !import=
+ant; left: auto !important; line-height: 20px !important; outline: 0px !imp=
+ortant; overflow: visible !important; position: static !important; right: a=
+uto !important; top: auto !important; vertical-align: baseline !important; =
+width: auto !important; box-sizing: content-box !important; min-height: aut=
+o !important; color: rgb(209, 237, 255) !important;">[balazsl@lo-login-01]$=
+ singularity=C2=A0</code><code class=3D"bash functions" style=3D"font-famil=
+y: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;,=
+ Courier, monospace !important; border-radius: 0px !important; background: =
+none !important; bottom: auto !important; float: none !important; height: a=
+uto !important; left: auto !important; line-height: 20px !important; outlin=
+e: 0px !important; overflow: visible !important; position: static !importan=
+t; right: auto !important; top: auto !important; vertical-align: baseline !=
+important; width: auto !important; box-sizing: content-box !important; min-=
+height: auto !important; color: rgb(255, 170, 62) !important;">exec</code>=
+=C2=A0<code class=3D"bash plain" style=3D"font-family: Consolas, &quot;Bits=
+tream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace !im=
+portant; border-radius: 0px !important; background: none !important; bottom=
+: auto !important; float: none !important; height: auto !important; left: a=
+uto !important; line-height: 20px !important; outline: 0px !important; over=
+flow: visible !important; position: static !important; right: auto !importa=
+nt; top: auto !important; vertical-align: baseline !important; width: auto =
+!important; box-sizing: content-box !important; min-height: auto !important=
+; color: rgb(209, 237, 255) !important;">mpi_hello_world-210.img mpicc --ve=
+rsion</code></div><div class=3D"line number31 index30 alt2" style=3D"font-f=
+amily: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&qu=
+ot;, Courier, monospace; font-size: 14px; color: rgb(51, 51, 51); padding-r=
+ight: 1em !important; padding-left: 1em !important; border-radius: 0px !imp=
+ortant; background: none rgb(15, 25, 42) !important; float: none !important=
+; height: auto !important; line-height: 20px !important; outline: 0px !impo=
+rtant; overflow: visible !important; vertical-align: baseline !important; w=
+idth: auto !important; box-sizing: content-box !important; min-height: auto=
+ !important; white-space: nowrap !important;"><code class=3D"bash plain" st=
+yle=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;C=
+ourier New&quot;, Courier, monospace !important; border-radius: 0px !import=
+ant; background: none !important; bottom: auto !important; float: none !imp=
+ortant; height: auto !important; left: auto !important; line-height: 20px !=
+important; outline: 0px !important; overflow: visible !important; position:=
+ static !important; right: auto !important; top: auto !important; vertical-=
+align: baseline !important; width: auto !important; box-sizing: content-box=
+ !important; min-height: auto !important; color: rgb(209, 237, 255) !import=
+ant;">/bin/sh</code><code class=3D"bash plain" style=3D"font-family: Consol=
+as, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier,=
+ monospace !important; border-radius: 0px !important; background: none !imp=
+ortant; bottom: auto !important; float: none !important; height: auto !impo=
+rtant; left: auto !important; line-height: 20px !important; outline: 0px !i=
+mportant; overflow: visible !important; position: static !important; right:=
+ auto !important; top: auto !important; vertical-align: baseline !important=
+; width: auto !important; box-sizing: content-box !important; min-height: a=
+uto !important; color: rgb(209, 237, 255) !important;">: warning: setlocale=
+: LC_ALL: cannot change locale (en_US.UTF-8)</code></div><div class=3D"line=
+ number32 index31 alt1" style=3D"font-family: Consolas, &quot;Bitstream Ver=
+a Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace; font-size: =
+14px; color: rgb(51, 51, 51); padding-right: 1em !important; padding-left: =
+1em !important; border-radius: 0px !important; background: none rgb(15, 25,=
+ 42) !important; float: none !important; height: auto !important; line-heig=
+ht: 20px !important; outline: 0px !important; overflow: visible !important;=
+ vertical-align: baseline !important; width: auto !important; box-sizing: c=
+ontent-box !important; min-height: auto !important; white-space: nowrap !im=
+portant;"><code class=3D"bash plain" style=3D"font-family: Consolas, &quot;=
+Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace=
+ !important; border-radius: 0px !important; background: none !important; bo=
+ttom: auto !important; float: none !important; height: auto !important; lef=
+t: auto !important; line-height: 20px !important; outline: 0px !important; =
+overflow: visible !important; position: static !important; right: auto !imp=
+ortant; top: auto !important; vertical-align: baseline !important; width: a=
+uto !important; box-sizing: content-box !important; min-height: auto !impor=
+tant; color: rgb(209, 237, 255) !important;">gcc (GCC) 4.8.5 20150623 (Red =
+Hat 4.8.5-11)</code></div><div class=3D"line number33 index32 alt2" style=
+=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Cour=
+ier New&quot;, Courier, monospace; font-size: 14px; color: rgb(51, 51, 51);=
+ padding-right: 1em !important; padding-left: 1em !important; border-radius=
+: 0px !important; background: none rgb(15, 25, 42) !important; float: none =
+!important; height: auto !important; line-height: 20px !important; outline:=
+ 0px !important; overflow: visible !important; vertical-align: baseline !im=
+portant; width: auto !important; box-sizing: content-box !important; min-he=
+ight: auto !important; white-space: nowrap !important;"><code class=3D"bash=
+ plain" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot=
+;, &quot;Courier New&quot;, Courier, monospace !important; border-radius: 0=
+px !important; background: none !important; bottom: auto !important; float:=
+ none !important; height: auto !important; left: auto !important; line-heig=
+ht: 20px !important; outline: 0px !important; overflow: visible !important;=
+ position: static !important; right: auto !important; top: auto !important;=
+ vertical-align: baseline !important; width: auto !important; box-sizing: c=
+ontent-box !important; min-height: auto !important; color: rgb(209, 237, 25=
+5) !important;">Copyright (C) 2015 Free Software Foundation, Inc.</code></d=
+iv><div class=3D"line number34 index33 alt1" style=3D"font-family: Consolas=
+, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, m=
+onospace; font-size: 14px; color: rgb(51, 51, 51); padding-right: 1em !impo=
+rtant; padding-left: 1em !important; border-radius: 0px !important; backgro=
+und: none rgb(15, 25, 42) !important; float: none !important; height: auto =
+!important; line-height: 20px !important; outline: 0px !important; overflow=
+: visible !important; vertical-align: baseline !important; width: auto !imp=
+ortant; box-sizing: content-box !important; min-height: auto !important; wh=
+ite-space: nowrap !important;"><code class=3D"bash plain" style=3D"font-fam=
+ily: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot=
+;, Courier, monospace !important; border-radius: 0px !important; background=
+: none !important; bottom: auto !important; float: none !important; height:=
+ auto !important; left: auto !important; line-height: 20px !important; outl=
+ine: 0px !important; overflow: visible !important; position: static !import=
+ant; right: auto !important; top: auto !important; vertical-align: baseline=
+ !important; width: auto !important; box-sizing: content-box !important; mi=
+n-height: auto !important; color: rgb(209, 237, 255) !important;">This is=
+=C2=A0</code><code class=3D"bash functions" style=3D"font-family: Consolas,=
+ &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, mo=
+nospace !important; border-radius: 0px !important; background: none !import=
+ant; bottom: auto !important; float: none !important; height: auto !importa=
+nt; left: auto !important; line-height: 20px !important; outline: 0px !impo=
+rtant; overflow: visible !important; position: static !important; right: au=
+to !important; top: auto !important; vertical-align: baseline !important; w=
+idth: auto !important; box-sizing: content-box !important; min-height: auto=
+ !important; color: rgb(255, 170, 62) !important;">free</code>=C2=A0<code c=
+lass=3D"bash plain" style=3D"font-family: Consolas, &quot;Bitstream Vera Sa=
+ns Mono&quot;, &quot;Courier New&quot;, Courier, monospace !important; bord=
+er-radius: 0px !important; background: none !important; bottom: auto !impor=
+tant; float: none !important; height: auto !important; left: auto !importan=
+t; line-height: 20px !important; outline: 0px !important; overflow: visible=
+ !important; position: static !important; right: auto !important; top: auto=
+ !important; vertical-align: baseline !important; width: auto !important; b=
+ox-sizing: content-box !important; min-height: auto !important; color: rgb(=
+209, 237, 255) !important;">software; see the=C2=A0</code><code class=3D"ba=
+sh functions" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mon=
+o&quot;, &quot;Courier New&quot;, Courier, monospace !important; border-rad=
+ius: 0px !important; background: none !important; bottom: auto !important; =
+float: none !important; height: auto !important; left: auto !important; lin=
+e-height: 20px !important; outline: 0px !important; overflow: visible !impo=
+rtant; position: static !important; right: auto !important; top: auto !impo=
+rtant; vertical-align: baseline !important; width: auto !important; box-siz=
+ing: content-box !important; min-height: auto !important; color: rgb(255, 1=
+70, 62) !important;">source</code>=C2=A0<code class=3D"bash keyword" style=
+=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Cour=
+ier New&quot;, Courier, monospace !important; border-radius: 0px !important=
+; background: none !important; bottom: auto !important; float: none !import=
+ant; height: auto !important; left: auto !important; line-height: 20px !imp=
+ortant; outline: 0px !important; overflow: visible !important; position: st=
+atic !important; right: auto !important; top: auto !important; vertical-ali=
+gn: baseline !important; width: auto !important; box-sizing: content-box !i=
+mportant; min-height: auto !important; color: rgb(180, 61, 61) !important;"=
+>for</code>=C2=A0<code class=3D"bash plain" style=3D"font-family: Consolas,=
+ &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, mo=
+nospace !important; border-radius: 0px !important; background: none !import=
+ant; bottom: auto !important; float: none !important; height: auto !importa=
+nt; left: auto !important; line-height: 20px !important; outline: 0px !impo=
+rtant; overflow: visible !important; position: static !important; right: au=
+to !important; top: auto !important; vertical-align: baseline !important; w=
+idth: auto !important; box-sizing: content-box !important; min-height: auto=
+ !important; color: rgb(209, 237, 255) !important;">copying conditions.=C2=
+=A0 There is NO</code></div><div class=3D"line number35 index34 alt2" style=
+=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Cour=
+ier New&quot;, Courier, monospace; font-size: 14px; color: rgb(51, 51, 51);=
+ padding-right: 1em !important; padding-left: 1em !important; border-radius=
+: 0px !important; background: none rgb(15, 25, 42) !important; float: none =
+!important; height: auto !important; line-height: 20px !important; outline:=
+ 0px !important; overflow: visible !important; vertical-align: baseline !im=
+portant; width: auto !important; box-sizing: content-box !important; min-he=
+ight: auto !important; white-space: nowrap !important;"><code class=3D"bash=
+ plain" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot=
+;, &quot;Courier New&quot;, Courier, monospace !important; border-radius: 0=
+px !important; background: none !important; bottom: auto !important; float:=
+ none !important; height: auto !important; left: auto !important; line-heig=
+ht: 20px !important; outline: 0px !important; overflow: visible !important;=
+ position: static !important; right: auto !important; top: auto !important;=
+ vertical-align: baseline !important; width: auto !important; box-sizing: c=
+ontent-box !important; min-height: auto !important; color: rgb(209, 237, 25=
+5) !important;">warranty; not even=C2=A0</code><code class=3D"bash keyword"=
+ style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quo=
+t;Courier New&quot;, Courier, monospace !important; border-radius: 0px !imp=
+ortant; background: none !important; bottom: auto !important; float: none !=
+important; height: auto !important; left: auto !important; line-height: 20p=
+x !important; outline: 0px !important; overflow: visible !important; positi=
+on: static !important; right: auto !important; top: auto !important; vertic=
+al-align: baseline !important; width: auto !important; box-sizing: content-=
+box !important; min-height: auto !important; color: rgb(180, 61, 61) !impor=
+tant;">for</code>=C2=A0<code class=3D"bash plain" style=3D"font-family: Con=
+solas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Couri=
+er, monospace !important; border-radius: 0px !important; background: none !=
+important; bottom: auto !important; float: none !important; height: auto !i=
+mportant; left: auto !important; line-height: 20px !important; outline: 0px=
+ !important; overflow: visible !important; position: static !important; rig=
+ht: auto !important; top: auto !important; vertical-align: baseline !import=
+ant; width: auto !important; box-sizing: content-box !important; min-height=
+: auto !important; color: rgb(209, 237, 255) !important;">MERCHANTABILITY o=
+r FITNESS FOR A PARTICULAR PURPOSE.</code></div><div class=3D"line number36=
+ index35 alt1" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mo=
+no&quot;, &quot;Courier New&quot;, Courier, monospace; font-size: 14px; col=
+or: rgb(51, 51, 51); padding-right: 1em !important; padding-left: 1em !impo=
+rtant; border-radius: 0px !important; background: none rgb(15, 25, 42) !imp=
+ortant; float: none !important; height: auto !important; line-height: 20px =
+!important; outline: 0px !important; overflow: visible !important; vertical=
+-align: baseline !important; width: auto !important; box-sizing: content-bo=
+x !important; min-height: auto !important; white-space: nowrap !important;"=
+>=C2=A0</div><div class=3D"line number37 index36 alt2" style=3D"font-family=
+: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, =
+Courier, monospace; font-size: 14px; color: rgb(51, 51, 51); padding-right:=
+ 1em !important; padding-left: 1em !important; border-radius: 0px !importan=
+t; background: none rgb(15, 25, 42) !important; float: none !important; hei=
+ght: auto !important; line-height: 20px !important; outline: 0px !important=
+; overflow: visible !important; vertical-align: baseline !important; width:=
+ auto !important; box-sizing: content-box !important; min-height: auto !imp=
+ortant; white-space: nowrap !important;"><code class=3D"bash comments" styl=
+e=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Cou=
+rier New&quot;, Courier, monospace !important; border-radius: 0px !importan=
+t; background: none !important; bottom: auto !important; float: none !impor=
+tant; height: auto !important; left: auto !important; line-height: 20px !im=
+portant; outline: 0px !important; overflow: visible !important; position: s=
+tatic !important; right: auto !important; top: auto !important; vertical-al=
+ign: baseline !important; width: auto !important; box-sizing: content-box !=
+important; min-height: auto !important; color: rgb(66, 139, 221) !important=
+;">## CONTAINER 1.10.3</code></div><div class=3D"line number38 index37 alt1=
+" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &qu=
+ot;Courier New&quot;, Courier, monospace; font-size: 14px; color: rgb(51, 5=
+1, 51); padding-right: 1em !important; padding-left: 1em !important; border=
+-radius: 0px !important; background: none rgb(15, 25, 42) !important; float=
+: none !important; height: auto !important; line-height: 20px !important; o=
+utline: 0px !important; overflow: visible !important; vertical-align: basel=
+ine !important; width: auto !important; box-sizing: content-box !important;=
+ min-height: auto !important; white-space: nowrap !important;"><code class=
+=3D"bash plain" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans M=
+ono&quot;, &quot;Courier New&quot;, Courier, monospace !important; border-r=
+adius: 0px !important; background: none !important; bottom: auto !important=
+; float: none !important; height: auto !important; left: auto !important; l=
+ine-height: 20px !important; outline: 0px !important; overflow: visible !im=
+portant; position: static !important; right: auto !important; top: auto !im=
+portant; vertical-align: baseline !important; width: auto !important; box-s=
+izing: content-box !important; min-height: auto !important; color: rgb(209,=
+ 237, 255) !important;">[balazsl@lo-login-01]$ singularity=C2=A0</code><cod=
+e class=3D"bash functions" style=3D"font-family: Consolas, &quot;Bitstream =
+Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace !importan=
+t; border-radius: 0px !important; background: none !important; bottom: auto=
+ !important; float: none !important; height: auto !important; left: auto !i=
+mportant; line-height: 20px !important; outline: 0px !important; overflow: =
+visible !important; position: static !important; right: auto !important; to=
+p: auto !important; vertical-align: baseline !important; width: auto !impor=
+tant; box-sizing: content-box !important; min-height: auto !important; colo=
+r: rgb(255, 170, 62) !important;">exec</code>=C2=A0<code class=3D"bash plai=
+n" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &q=
+uot;Courier New&quot;, Courier, monospace !important; border-radius: 0px !i=
+mportant; background: none !important; bottom: auto !important; float: none=
+ !important; height: auto !important; left: auto !important; line-height: 2=
+0px !important; outline: 0px !important; overflow: visible !important; posi=
+tion: static !important; right: auto !important; top: auto !important; vert=
+ical-align: baseline !important; width: auto !important; box-sizing: conten=
+t-box !important; min-height: auto !important; color: rgb(209, 237, 255) !i=
+mportant;">mpi_hello_world-1103.img mpicc --version</code></div><div class=
+=3D"line number39 index38 alt2" style=3D"font-family: Consolas, &quot;Bitst=
+ream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace; fon=
+t-size: 14px; color: rgb(51, 51, 51); padding-right: 1em !important; paddin=
+g-left: 1em !important; border-radius: 0px !important; background: none rgb=
+(15, 25, 42) !important; float: none !important; height: auto !important; l=
+ine-height: 20px !important; outline: 0px !important; overflow: visible !im=
+portant; vertical-align: baseline !important; width: auto !important; box-s=
+izing: content-box !important; min-height: auto !important; white-space: no=
+wrap !important;"><code class=3D"bash plain" style=3D"font-family: Consolas=
+, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, m=
+onospace !important; border-radius: 0px !important; background: none !impor=
+tant; bottom: auto !important; float: none !important; height: auto !import=
+ant; left: auto !important; line-height: 20px !important; outline: 0px !imp=
+ortant; overflow: visible !important; position: static !important; right: a=
+uto !important; top: auto !important; vertical-align: baseline !important; =
+width: auto !important; box-sizing: content-box !important; min-height: aut=
+o !important; color: rgb(209, 237, 255) !important;">/bin/sh</code><code cl=
+ass=3D"bash plain" style=3D"font-family: Consolas, &quot;Bitstream Vera San=
+s Mono&quot;, &quot;Courier New&quot;, Courier, monospace !important; borde=
+r-radius: 0px !important; background: none !important; bottom: auto !import=
+ant; float: none !important; height: auto !important; left: auto !important=
+; line-height: 20px !important; outline: 0px !important; overflow: visible =
+!important; position: static !important; right: auto !important; top: auto =
+!important; vertical-align: baseline !important; width: auto !important; bo=
+x-sizing: content-box !important; min-height: auto !important; color: rgb(2=
+09, 237, 255) !important;">: warning: setlocale: LC_ALL: cannot change loca=
+le (en_US.UTF-8)</code></div><div class=3D"line number40 index39 alt1" styl=
+e=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Cou=
+rier New&quot;, Courier, monospace; font-size: 14px; color: rgb(51, 51, 51)=
+; padding-right: 1em !important; padding-left: 1em !important; border-radiu=
+s: 0px !important; background: none rgb(15, 25, 42) !important; float: none=
+ !important; height: auto !important; line-height: 20px !important; outline=
+: 0px !important; overflow: visible !important; vertical-align: baseline !i=
+mportant; width: auto !important; box-sizing: content-box !important; min-h=
+eight: auto !important; white-space: nowrap !important;"><code class=3D"bas=
+h plain" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&quo=
+t;, &quot;Courier New&quot;, Courier, monospace !important; border-radius: =
+0px !important; background: none !important; bottom: auto !important; float=
+: none !important; height: auto !important; left: auto !important; line-hei=
+ght: 20px !important; outline: 0px !important; overflow: visible !important=
+; position: static !important; right: auto !important; top: auto !important=
+; vertical-align: baseline !important; width: auto !important; box-sizing: =
+content-box !important; min-height: auto !important; color: rgb(209, 237, 2=
+55) !important;">gcc (GCC) 4.8.5 20150623 (Red Hat 4.8.5-11)</code></div><d=
+iv class=3D"line number41 index40 alt2" style=3D"font-family: Consolas, &qu=
+ot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monosp=
+ace; font-size: 14px; color: rgb(51, 51, 51); padding-right: 1em !important=
+; padding-left: 1em !important; border-radius: 0px !important; background: =
+none rgb(15, 25, 42) !important; float: none !important; height: auto !impo=
+rtant; line-height: 20px !important; outline: 0px !important; overflow: vis=
+ible !important; vertical-align: baseline !important; width: auto !importan=
+t; box-sizing: content-box !important; min-height: auto !important; white-s=
+pace: nowrap !important;"><code class=3D"bash plain" style=3D"font-family: =
+Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Co=
+urier, monospace !important; border-radius: 0px !important; background: non=
+e !important; bottom: auto !important; float: none !important; height: auto=
+ !important; left: auto !important; line-height: 20px !important; outline: =
+0px !important; overflow: visible !important; position: static !important; =
+right: auto !important; top: auto !important; vertical-align: baseline !imp=
+ortant; width: auto !important; box-sizing: content-box !important; min-hei=
+ght: auto !important; color: rgb(209, 237, 255) !important;">Copyright (C) =
+2015 Free Software Foundation, Inc.</code></div><div class=3D"line number42=
+ index41 alt1" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mo=
+no&quot;, &quot;Courier New&quot;, Courier, monospace; font-size: 14px; col=
+or: rgb(51, 51, 51); padding-right: 1em !important; padding-left: 1em !impo=
+rtant; border-radius: 0px !important; background: none rgb(15, 25, 42) !imp=
+ortant; float: none !important; height: auto !important; line-height: 20px =
+!important; outline: 0px !important; overflow: visible !important; vertical=
+-align: baseline !important; width: auto !important; box-sizing: content-bo=
+x !important; min-height: auto !important; white-space: nowrap !important;"=
+><code class=3D"bash plain" style=3D"font-family: Consolas, &quot;Bitstream=
+ Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace !importa=
+nt; border-radius: 0px !important; background: none !important; bottom: aut=
+o !important; float: none !important; height: auto !important; left: auto !=
+important; line-height: 20px !important; outline: 0px !important; overflow:=
+ visible !important; position: static !important; right: auto !important; t=
+op: auto !important; vertical-align: baseline !important; width: auto !impo=
+rtant; box-sizing: content-box !important; min-height: auto !important; col=
+or: rgb(209, 237, 255) !important;">This is=C2=A0</code><code class=3D"bash=
+ functions" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&=
+quot;, &quot;Courier New&quot;, Courier, monospace !important; border-radiu=
+s: 0px !important; background: none !important; bottom: auto !important; fl=
+oat: none !important; height: auto !important; left: auto !important; line-=
+height: 20px !important; outline: 0px !important; overflow: visible !import=
+ant; position: static !important; right: auto !important; top: auto !import=
+ant; vertical-align: baseline !important; width: auto !important; box-sizin=
+g: content-box !important; min-height: auto !important; color: rgb(255, 170=
+, 62) !important;">free</code>=C2=A0<code class=3D"bash plain" style=3D"fon=
+t-family: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New=
+&quot;, Courier, monospace !important; border-radius: 0px !important; backg=
+round: none !important; bottom: auto !important; float: none !important; he=
+ight: auto !important; left: auto !important; line-height: 20px !important;=
+ outline: 0px !important; overflow: visible !important; position: static !i=
+mportant; right: auto !important; top: auto !important; vertical-align: bas=
+eline !important; width: auto !important; box-sizing: content-box !importan=
+t; min-height: auto !important; color: rgb(209, 237, 255) !important;">soft=
+ware; see the=C2=A0</code><code class=3D"bash functions" style=3D"font-fami=
+ly: Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;=
+, Courier, monospace !important; border-radius: 0px !important; background:=
+ none !important; bottom: auto !important; float: none !important; height: =
+auto !important; left: auto !important; line-height: 20px !important; outli=
+ne: 0px !important; overflow: visible !important; position: static !importa=
+nt; right: auto !important; top: auto !important; vertical-align: baseline =
+!important; width: auto !important; box-sizing: content-box !important; min=
+-height: auto !important; color: rgb(255, 170, 62) !important;">source</cod=
+e>=C2=A0<code class=3D"bash keyword" style=3D"font-family: Consolas, &quot;=
+Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace=
+ !important; border-radius: 0px !important; background: none !important; bo=
+ttom: auto !important; float: none !important; height: auto !important; lef=
+t: auto !important; line-height: 20px !important; outline: 0px !important; =
+overflow: visible !important; position: static !important; right: auto !imp=
+ortant; top: auto !important; vertical-align: baseline !important; width: a=
+uto !important; box-sizing: content-box !important; min-height: auto !impor=
+tant; color: rgb(180, 61, 61) !important;">for</code>=C2=A0<code class=3D"b=
+ash plain" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans Mono&q=
+uot;, &quot;Courier New&quot;, Courier, monospace !important; border-radius=
+: 0px !important; background: none !important; bottom: auto !important; flo=
+at: none !important; height: auto !important; left: auto !important; line-h=
+eight: 20px !important; outline: 0px !important; overflow: visible !importa=
+nt; position: static !important; right: auto !important; top: auto !importa=
+nt; vertical-align: baseline !important; width: auto !important; box-sizing=
+: content-box !important; min-height: auto !important; color: rgb(209, 237,=
+ 255) !important;">copying conditions.=C2=A0 There is NO</code></div><div c=
+lass=3D"line number43 index42 alt2" style=3D"font-family: Consolas, &quot;B=
+itstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace;=
+ font-size: 14px; color: rgb(51, 51, 51); padding-right: 1em !important; pa=
+dding-left: 1em !important; border-radius: 0px !important; background: none=
+ rgb(15, 25, 42) !important; float: none !important; height: auto !importan=
+t; line-height: 20px !important; outline: 0px !important; overflow: visible=
+ !important; vertical-align: baseline !important; width: auto !important; b=
+ox-sizing: content-box !important; min-height: auto !important; white-space=
+: nowrap !important;"><code class=3D"bash plain" style=3D"font-family: Cons=
+olas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courie=
+r, monospace !important; border-radius: 0px !important; background: none !i=
+mportant; bottom: auto !important; float: none !important; height: auto !im=
+portant; left: auto !important; line-height: 20px !important; outline: 0px =
+!important; overflow: visible !important; position: static !important; righ=
+t: auto !important; top: auto !important; vertical-align: baseline !importa=
+nt; width: auto !important; box-sizing: content-box !important; min-height:=
+ auto !important; color: rgb(209, 237, 255) !important;">warranty; not even=
+=C2=A0</code><code class=3D"bash keyword" style=3D"font-family: Consolas, &=
+quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, mono=
+space !important; border-radius: 0px !important; background: none !importan=
+t; bottom: auto !important; float: none !important; height: auto !important=
+; left: auto !important; line-height: 20px !important; outline: 0px !import=
+ant; overflow: visible !important; position: static !important; right: auto=
+ !important; top: auto !important; vertical-align: baseline !important; wid=
+th: auto !important; box-sizing: content-box !important; min-height: auto !=
+important; color: rgb(180, 61, 61) !important;">for</code>=C2=A0<code class=
+=3D"bash plain" style=3D"font-family: Consolas, &quot;Bitstream Vera Sans M=
+ono&quot;, &quot;Courier New&quot;, Courier, monospace !important; border-r=
+adius: 0px !important; background: none !important; bottom: auto !important=
+; float: none !important; height: auto !important; left: auto !important; l=
+ine-height: 20px !important; outline: 0px !important; overflow: visible !im=
+portant; position: static !important; right: auto !important; top: auto !im=
+portant; vertical-align: baseline !important; width: auto !important; box-s=
+izing: content-box !important; min-height: auto !important; color: rgb(209,=
+ 237, 255) !important;">MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE=
+.</code></div><br>I am at this time doing more tests (with and without LSF,=
+ with <font face=3D"courier new, monospace">mpirun</font> called from insid=
+e or outside the container, etc.) and talking with our sysadmin. I will pos=
+t here if I find anything useful.</div><div>Here is a brief overview of wha=
+t is working and what is not at the moment:</div><div><br></div><p class=3D=
+"separator" style=3D"text-align: center; clear: both;"><a imageanchor=3D"1"=
+ href=3D"https://lh3.googleusercontent.com/-M4NrJqvKpIQ/WZ1KBt49RgI/AAAAAAA=
+AAYc/fZbEF_BRpUgiqmO_o2SlTYZSYmuzmHT9ACLcBGAs/s1600/summary_table.png" styl=
+e=3D"margin-left: 1em; margin-right: 1em;"><img src=3D"https://lh3.googleus=
+ercontent.com/-M4NrJqvKpIQ/WZ1KBt49RgI/AAAAAAAAAYc/fZbEF_BRpUgiqmO_o2SlTYZS=
+YmuzmHT9ACLcBGAs/s400/summary_table.png" border=3D"0" style=3D"" width=3D"4=
+00" height=3D"118"></a></p><div><br></div><div>Bests,</div><div><br></div><=
+div>Balazs</div><div><br></div><div>Le mercredi 23 ao=C3=BBt 2017 10:03:29 =
+UTC+2, victor sv a =C3=A9crit=C2=A0:<blockquote class=3D"gmail_quote" style=
+=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: =
+1ex;"><div dir=3D"ltr"><div><div><div><div><div>Hi Peleg and Balazs,<br></d=
+iv><br></div>which version of openmpi is installed inside the container?<br=
+><br></div>As a starting point, I think you shoul use the same openmpi vers=
+ion both inside and outside the container.<br><br></div>BR,<br></div>V=C3=
+=ADctor.<br></div><div><br><div class=3D"gmail_quote">2017-08-18 16:24 GMT+=
+02:00 Balazs <span dir=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_blank=
+" gdf-obfuscated-mailto=3D"RE91bp-jAAAJ" rel=3D"nofollow" onmousedown=3D"th=
+is.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;j=
+avascript:&#39;;return true;">bl...@gmail.com</a>&gt;</span>:<br><blockquot=
+e class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc sol=
+id;padding-left:1ex"><div dir=3D"ltr">Hi,<div><br></div><div>I experienced =
+the very same problem described above, with the very same tutorial test. We=
+ are also running openmpi 2.1.0 on our cluster.</div><div>The same example =
+*without* container works perfectly fine.</div><div><br></div><div>Any help=
+ would also be appreciated.</div><div><br></div><div>Bests,</div><div><br><=
+/div><div>Balazs<div><div><br><br>Le mercredi 16 ao=C3=BBt 2017 15:44:09 UT=
+C+2, Peleg Bar Sapir a =C3=A9crit=C2=A0:<blockquote class=3D"gmail_quote" s=
+tyle=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-left:=
+1ex"><div dir=3D"ltr">Hello,<br><br>I&#39;m a student helper in a HPC servi=
+ce, and was asked to check out Singularity and help decide if we provided t=
+o our users. We run openmpi 2.1.0 on our cluster.<br><br>Following <a href=
+=3D"http://singularity.lbl.gov/docs-hpc" rel=3D"nofollow" target=3D"_blank"=
+ onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%=
+2Fsingularity.lbl.gov%2Fdocs-hpc\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNG4=
+9Dg5CcQfD0NvgYVHqlE6MDAtRw&#39;;return true;" onclick=3D"this.href=3D&#39;h=
+ttp://www.google.com/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.gov%2Fdocs-hpc\x=
+26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNG49Dg5CcQfD0NvgYVHqlE6MDAtRw&#39;;re=
+turn true;">this</a> tutorial I was able to form a container and use it on =
+our cluster, but running <br><pre><code><span> </span>mpirun -np 20 singula=
+rity <span>exec</span> centos7_mpi_test.img /usr/bin/ring<br>generates an e=
+rror (I copied it to the end of this message).<br><br></code><code>I tried<=
+/code><code> to look for a clue about what is wrong, but couldn&#39;t find =
+any useful help. I would appreciate any help provided.<br><br><u>Error mess=
+age</u>:<br>=C2=A0<br></code><code>------------------------------<wbr>-----=
+-------------------------<wbr>--------------</code><br><code>It looks like =
+MPI_INIT failed for some reason; your parallel process is</code><br><code>l=
+ikely to abort.  There are many reasons that a parallel process can</code><=
+br><code>fail during MPI_INIT; some of which are due to configuration or en=
+vironment</code><br><code>problems.  This failure appears to be an internal=
+ failure; here&#39;s some</code><br><code>additional information (which may=
+ only be relevant to an Open MPI</code><br><code>developer):</code><br><cod=
+e></code><br><code>  ompi_mpi_init: ompi_rte_init failed</code><br><code>  =
+--&gt; Returned &quot;(null)&quot; (-43) instead of &quot;Success&quot; (0)=
+</code><br><code>------------------------------<wbr>-----------------------=
+-------<wbr>--------------</code><br><code>------------------------------<w=
+br>------------------------------<wbr>--------------</code><br><code>It loo=
+ks like MPI_INIT failed for some reason; your parallel process is</code><br=
+><code>likely to abort.  There are many reasons that a parallel process can=
+</code><br><code>fail during MPI_INIT; some of which are due to configurati=
+on or environment</code><br><code>problems.  This failure appears to be an =
+internal failure; here&#39;s some</code><br><code>additional information (w=
+hich may only be relevant to an Open MPI</code><br><code>developer):</code>=
+<br><code></code><br><code>  ompi_mpi_init: ompi_rte_init failed</code><br>=
+<code>  --&gt; Returned &quot;(null)&quot; (-43) instead of &quot;Success&q=
+uot; (0)</code><br><code>------------------------------<wbr>---------------=
+---------------<wbr>--------------</code><br><code>*** An error occurred in=
+ MPI_Init</code><br><code>*** on a NULL communicator</code><br><code>*** MP=
+I_ERRORS_ARE_FATAL (processes in this communicator will now abort,</code><b=
+r><code>***    and potentially your MPI job)</code><br><code>*** An error o=
+ccurred in MPI_Init</code><br><code>*** on a NULL communicator</code><br><c=
+ode>*** MPI_ERRORS_ARE_FATAL (processes in this communicator will now abort=
+,</code><br><code>***    and potentially your MPI job)</code><br><code>[</c=
+ode><code><code>(server name)</code>:6349] Local abort before MPI_INIT comp=
+leted completed successfully, but am not able to aggregate error messages, =
+and not able to guarantee that all other processes were killed!<br>[</code>=
+<code><code>(server name)</code>:6347] Local abort before MPI_INIT complete=
+d completed successfully, but am not able to aggregate error messages, and =
+not able to guarantee that all other processes were killed!<br>------------=
+------------------<wbr>-------------------------</code><br><code>Primary jo=
+b  terminated normally, but 1 process returned</code><br><code>a non-zero e=
+xit code.. Per user-direction, the job has been aborted.</code><br><code>--=
+----------------------------<wbr>-------------------------</code><br><code>=
+------------------------------<wbr>------------------------------<wbr>-----=
+---------</code><br><code>mpirun detected that one or more processes exited=
+ with non-zero status, thus causing</code><br><code>the job to be terminate=
+d. The first process to do so was:</code><br><code></code><br><code>  Proce=
+ss name: [[12088,1],0]</code><br><code>  Exit code:    1</code><br><code>--=
+----------------------------<wbr>------------------------------<wbr>-------=
+-------<br></code><code></code></pre></div></blockquote></div></div></div><=
+/div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+RE91bp-jAAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br></div>
+</blockquote></div></div>
+------=_Part_9605_2046083507.1503480406743--
+
+------=_Part_9604_1612150855.1503480406740--

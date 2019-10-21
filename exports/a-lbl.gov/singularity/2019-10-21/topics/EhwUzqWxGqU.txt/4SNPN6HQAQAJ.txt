@@ -1,0 +1,176 @@
+X-Received: by 10.159.35.84 with SMTP id 78mr20401058uae.0.1468690949949;
+        Sat, 16 Jul 2016 10:42:29 -0700 (PDT)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.36.9.8 with SMTP id 8ls1658785itm.16.gmail; Sat, 16 Jul 2016
+ 10:42:29 -0700 (PDT)
+X-Received: by 10.66.47.196 with SMTP id f4mr41772239pan.126.1468690949475;
+        Sat, 16 Jul 2016 10:42:29 -0700 (PDT)
+Return-Path: <gmku...@lbl.gov>
+Received: from fe3.lbl.gov (fe3.lbl.gov. [128.3.41.68])
+        by mx.google.com with ESMTPS id tm1si16468737pac.20.2016.07.16.10.42.29
+        for <singu...@lbl.gov>
+        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Sat, 16 Jul 2016 10:42:29 -0700 (PDT)
+Received-SPF: pass (google.com: domain of gmku...@lbl.gov designates 209.85.215.69 as permitted sender) client-ip=209.85.215.69;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of gmku...@lbl.gov designates 209.85.215.69 as permitted sender) smtp.mailfrom=gmku...@lbl.gov
+X-Ironport-SBRS: 2.7
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2G4AgC/cYpXf0XXVdFchREGrFaHF4J1gg+BeYJjgzcCgSAHORMBAQEBAQEBAw8BAQkLCwkfMYRdAQQBEhFbCwkCCzcCAiEBEgEFARwGEyKHdAMPCAWSY49CgTE+MYs7iVMNhB4BCwEkEIpngkOBZ4MXgloFjwCJcDQBjEOCG4FriAiFRIglhjoSHoEPHwGERxwyiBgBAQE
+X-IronPort-AV: E=Sophos;i="5.28,374,1464678000"; 
+   d="scan'208,217";a="30544030"
+Received: from mail-lf0-f69.google.com ([209.85.215.69])
+  by fe3.lbl.gov with ESMTP; 16 Jul 2016 10:42:13 -0700
+Received: by mail-lf0-f69.google.com with SMTP id p41so91441748lfi.0
+        for <singu...@lbl.gov>; Sat, 16 Jul 2016 10:42:12 -0700 (PDT)
+X-Gm-Message-State: ALyK8tLIIrgzFOF/eBxmN99WJ8yG4LrcJ3p5Mt2LC585Q1z4VIG0iZ5/lK3JN5zPgoe/rBRUr0ujDKnPzBcPazz4jEJUW8SdHPCaNt9xSX2UCWGXNuX8IRc82QPL7cOSUmmsv0ECEdBxB4Y+2TBLdWdLJnQ=
+X-Received: by 10.25.15.167 with SMTP id 39mr11292027lfp.196.1468690931688;
+        Sat, 16 Jul 2016 10:42:11 -0700 (PDT)
+X-Received: by 10.25.15.167 with SMTP id 39mr11292023lfp.196.1468690931400;
+ Sat, 16 Jul 2016 10:42:11 -0700 (PDT)
+MIME-Version: 1.0
+Received: by 10.25.214.158 with HTTP; Sat, 16 Jul 2016 10:42:10 -0700 (PDT)
+In-Reply-To: <fd8d72ed-15ab-405b-84a4-37646ec774d3@lbl.gov>
+References: <4b6a642c-4982-4175-84bd-8492d41eddbc@lbl.gov> <f6d9bf7b-a18f-46be-a664-f2c94cc2fd22@lbl.gov>
+ <910ed8e1-3946-4e87-a896-49d2367271ce@lbl.gov> <CAN7etTyYOZ4i3mycZ8E+z_XMg8_3pRiopfSx_Te90GHjdZmLfA@mail.gmail.com>
+ <fd8d72ed-15ab-405b-84a4-37646ec774d3@lbl.gov>
+From: "Gregory M. Kurtzer" <gmku...@lbl.gov>
+Date: Sat, 16 Jul 2016 10:42:10 -0700
+Message-ID: <CAN7etTxfcu1ARBePCOKDUzZm01D2Qxhe8VZgvG5JNOR4G+yyhg@mail.gmail.com>
+Subject: Re: [Singularity] ABORT: Check installation, must be performed by root.
+To: singularity <singu...@lbl.gov>
+Content-Type: multipart/alternative; boundary=001a113f399a4055c20537c44191
+
+--001a113f399a4055c20537c44191
+Content-Type: text/plain; charset=UTF-8
+
+On Sat, Jul 16, 2016 at 9:03 AM, Igor <igor...@gmail.com> wrote:
+
+> Hi Gregory,
+> We use proot to pretend that a user is installing the software in its
+> final location. So no paths should be broken once a cron job really moves
+> it into the final location.
+>
+
+Ahh, very slick!
+
+
+> So you think it would suffice to do
+> chmod 4755 $libexecdir/singularity/sexec
+> to fix the problem?
+>
+
+It should, as long as the owner of the file is root when you run that
+command. In src/Makefile.am, you will see the relevant bits:
+
+install-exec-hook:
+    @if test `id -ru` = "0"; then \
+        echo " /bin/chown root:root
+$(DESTDIR)$(libexecdir)/singularity/sexec"; \
+        /bin/chown root:root $(DESTDIR)$(libexecdir)/singularity/sexec; \
+        echo " /bin/chmod 4755 $(DESTDIR)$(libexecdir)/singularity/sexec"; \
+        /bin/chmod 4755 $(DESTDIR)$(libexecdir)/singularity/sexec; \
+    fi
+
+
+
+> Another peculiarity, which is probably typical for many HPC centers: the
+> software is installed on a central file system that is mounted to the
+> computing nodes, not on each node. Is that OK with singularity?
+>
+
+Yes, as long as you don't mount the file system with NOSUID enabled.
+
+
+> Considering that singularity image is several gigabytes, might it be too
+> much of a burden on the network and file system to get it from a central
+> file system on all the nodes?
+>
+
+It depends on the file system. For example, a single NFS server getting hit
+by lots of nodes all pulling the same image will indeed put a load on the
+server,.. BUT... Singularity images are not cached. This means, that the
+entire image is not read when the job starts. Some bits are necessary to be
+downloaded on every run, but it will not read the entire container image.
+Instead it will seek to the relevant portions and just pull that from the
+NFS server.
+
+This model works *very* well for parallel file systems BTW...
+
+
+
+> Thank you,
+> Igor
+>
+>
+My pleasure, and I hope that helps!
+
+
+-- 
+Gregory M. Kurtzer
+High Performance Computing Services (HPCS)
+University of California
+Lawrence Berkeley National Laboratory
+One Cyclotron Road, Berkeley, CA 94720
+
+--001a113f399a4055c20537c44191
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><br><div class=3D"gmail_extra"><br><div class=3D"gmail_quo=
+te">On Sat, Jul 16, 2016 at 9:03 AM, Igor <span dir=3D"ltr">&lt;<a href=3D"=
+mailto:igor...@gmail.com" target=3D"_blank">igor...@gmail.com</a>&gt;</span=
+> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0=
+.8ex;border-left-width:1px;border-left-style:solid;border-left-color:rgb(20=
+4,204,204);padding-left:1ex"><div dir=3D"ltr">Hi Gregory,<div>We use proot =
+to pretend that a user is installing the software in its final location. So=
+ no paths should be broken once a cron job really moves it into the final l=
+ocation.</div></div></blockquote><div><br></div><div>Ahh, very slick!</div>=
+<div>=C2=A0</div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px =
+0px 0.8ex;border-left-width:1px;border-left-style:solid;border-left-color:r=
+gb(204,204,204);padding-left:1ex"><div dir=3D"ltr"><div>So you think it wou=
+ld suffice to do=C2=A0</div><div>chmod 4755 $libexecdir/singularity/sexec</=
+div><div>to fix the problem?</div></div></blockquote><div><br></div><div>It=
+ should, as long as the owner of the file is root when you run that command=
+. In src/Makefile.am, you will see the relevant bits:</div><div><br></div><=
+div><div>install-exec-hook:</div><div>=C2=A0 =C2=A0 @if test `id -ru` =3D &=
+quot;0&quot;; then \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 echo &quot; /bin=
+/chown root:root $(DESTDIR)$(libexecdir)/singularity/sexec&quot;; \</div><d=
+iv>=C2=A0 =C2=A0 =C2=A0 =C2=A0 /bin/chown root:root $(DESTDIR)$(libexecdir)=
+/singularity/sexec; \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 echo &quot; /bi=
+n/chmod 4755 $(DESTDIR)$(libexecdir)/singularity/sexec&quot;; \</div><div>=
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 /bin/chmod 4755 $(DESTDIR)$(libexecdir)/singula=
+rity/sexec; \</div><div>=C2=A0 =C2=A0 fi</div></div><div><br></div><div>=C2=
+=A0</div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8e=
+x;border-left-width:1px;border-left-style:solid;border-left-color:rgb(204,2=
+04,204);padding-left:1ex"><div dir=3D"ltr"><div>Another peculiarity, which =
+is probably typical for many HPC centers: the software is installed on a ce=
+ntral file system that is mounted to the computing nodes, not on each node.=
+ Is that OK with singularity?</div></div></blockquote><div><br></div><div>Y=
+es, as long as you don&#39;t mount the file system with NOSUID enabled.</di=
+v><div>=C2=A0</div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0p=
+x 0px 0.8ex;border-left-width:1px;border-left-style:solid;border-left-color=
+:rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr"><div>Considering that =
+singularity image is several gigabytes, might it be too much of a burden on=
+ the network and file system to get it from a central file system on all th=
+e nodes?</div></div></blockquote><div><br></div><div>It depends on the file=
+ system. For example, a single NFS server getting hit by lots of nodes all =
+pulling the same image will indeed put a load on the server,.. BUT... Singu=
+larity images are not cached. This means, that the entire image is not read=
+ when the job starts. Some bits are necessary to be downloaded on every run=
+, but it will not read the entire container image. Instead it will seek to =
+the relevant portions and just pull that from the NFS server.</div><div><br=
+></div><div>This model works *very* well for parallel file systems BTW...</=
+div><div><br></div><div>=C2=A0</div><blockquote class=3D"gmail_quote" style=
+=3D"margin:0px 0px 0px 0.8ex;border-left-width:1px;border-left-style:solid;=
+border-left-color:rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr"><div>=
+Thank you,</div><div>Igor</div><div><br></div></div></blockquote><div><br><=
+/div><div>My pleasure, and I hope that helps!</div><div>=C2=A0<br></div></d=
+iv><div><br></div>-- <br><div class=3D"gmail_signature" data-smartmail=3D"g=
+mail_signature"><div dir=3D"ltr"><div>Gregory M. Kurtzer<br>High Performanc=
+e Computing Services (HPCS)<br>University of California<br>Lawrence Berkele=
+y National Laboratory<br>One Cyclotron Road, Berkeley, CA 94720</div></div>=
+</div>
+</div></div>
+
+--001a113f399a4055c20537c44191--

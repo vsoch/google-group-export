@@ -1,0 +1,1050 @@
+Date: Mon, 20 Aug 2018 13:22:23 -0700 (PDT)
+From: Pedro <pedrol...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <e357abac-4ef3-462f-95a8-4f73e546b13f@lbl.gov>
+In-Reply-To: <20180817215514.GA51901@fnal.gov>
+References: <d79c6365-d22c-480d-a312-a3470a1cb0e3@lbl.gov>
+ <20180814144521.GB62261@fnal.gov>
+ <214e9a6a-b19c-4df3-8a36-352488e1a2df@lbl.gov>
+ <6a7bd5dc-8e91-4c9a-a745-06f946e4e933@lbl.gov>
+ <20180816144105.GA7480@fnal.gov>
+ <CAENAmG4T0ofDhicHh1BHQbM-dWSOjfVve0Ys7Kr9WWWug-smCw@mail.gmail.com>
+ <20180816195405.GA16395@fnal.gov>
+ <c23f768e-b61a-4538-8f6d-6d947c06cb0c@lbl.gov>
+ <20180817215514.GA51901@fnal.gov>
+Subject: Re: [Singularity] How to make a local image behave as a Docker Hub
+ container?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1583_1331102761.1534796543209"
+
+------=_Part_1583_1331102761.1534796543209
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1584_1724375792.1534796543210"
+
+------=_Part_1584_1724375792.1534796543210
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Dave,
+
+I changed accordingly and got $PATH working, but still get the same error=
+=20
+with the python script (maybe because of the singularity version?).=20
+I could get it to work by removing the virtual environment (conda) and=20
+installing the requirements via pip.
+
+Thanks a lot for your assistance!=20
+
+On Friday, August 17, 2018 at 4:55:22 PM UTC-5, Dave Dykstra wrote:
+>
+> I don't get any errors if I either use that -B option I told you about=20
+> so the environment is set up ahead of time, or if I run a shell=20
+> and do "source /environment" before running those two commands.=20
+>
+> WIth the latter it does give a weird prompt string ($PS1), but it=20
+> doesn't print any errors.=20
+>
+> Dave=20
+>
+> On Thu, Aug 16, 2018 at 01:14:35PM -0700, Pedro wrote:=20
+> > Interesting. Thanks, Dave!=20
+> >=20
+> > The permission issue can be observed with a python script importing a=
+=20
+> > module:=20
+> > source activate rl=20
+> > python -c "import tensorflow"=20
+> >=20
+> > Cheers.=20
+> >=20
+> > On Thursday, August 16, 2018 at 2:54:16 PM UTC-5, Dave Dykstra wrote:=
+=20
+> > >=20
+> > > Pedro,=20
+> > >=20
+> > > I was able to reproduce the $PATH problem with singularity-2.6.0 if I=
+=20
+> > > use docker://pfrancaalb/rl.  I think the problem is that /environment=
+=20
+> is=20
+> > > old style and not supported anymore, although I don't know why it=20
+> still=20
+> > > works with execing directly from docker (maybe there's a backward=20
+> > > compatibility mode for docker).  If I make a copy of /environment on=
+=20
+> my=20
+> > > host filesystem in /tmp/environment and exec local_file.img with an=
+=20
+> > > option -B /tmp/environment:/.singularity.d/env/90-environment.sh then=
+=20
+> I=20
+> > > get the expected $PATH.  Probably it should be fixed instead in the=
+=20
+> > > original docker container.=20
+> > >=20
+> > > As for the permission problem, you haven't said what to run in order=
+=20
+> to=20
+> > > reproduce that.=20
+> > >=20
+> > > Dave=20
+> > >=20
+> > > On Thu, Aug 16, 2018 at 09:48:39AM -0500, Pedro Lucas F. Albuquerque=
+=20
+> > > wrote:=20
+> > > > Dave,=20
+> > > >=20
+> > > > I mentioned that image for the sake of the example.  I am actually=
+=20
+> > > running=20
+> > > > "pfrancaalb/rl".=20
+> > > >=20
+> > > > Thanks for your help!=20
+> > > >=20
+> > > > On Thu, Aug 16, 2018 at 9:41 AM Dave Dykstra <d...@fnal.gov=20
+> > > <javascript:>> wrote:=20
+> > > >=20
+> > > > > Pedro,=20
+> > > > >=20
+> > > > > When I try running singularity exec docker://ubuntu:latest bash o=
+n=20
+> > > > > SL6.9 and singularity version 2.6.0, I get=20
+> > > > >     FATAL: kernel too old=20
+> > > > > However if instead of "latest" I use "16.04" that starts the=20
+> shell.=20
+> > > > >=20
+> > > > > Since you are directly running the image from docker, how is that=
+=20
+> > > > > /environment getting created?  This is an area of singularity tha=
+t=20
+> I=20
+> > > > > don't know much about.  When I run the above, inside the containe=
+r=20
+> > > > > /environment is just one comment line.=20
+> > > > >=20
+> > > > > Dave=20
+> > > > >=20
+> > > > > On Wed, Aug 15, 2018 at 09:28:03AM -0700, Pedro wrote:=20
+> > > > > >=20
+> > > > > > My apologies for the bad formatting.=20
+> > > > > > Also, method 1 is mistyped. The correct command is:=20
+> > > > > > singularity exec docker://ubuntu:latest bash script.sh=20
+> > > > > >=20
+> > > > > > I would appreciate any insights!=20
+> > > > > > Cheers=20
+> > > > > >=20
+> > > > > > On Tuesday, August 14, 2018 at 4:46:04 PM UTC-5, Pedro wrote:=
+=20
+> > > > > > >=20
+> > > > > > > Dave,=20
+> > > > > > >=20
+> > > > > > >=20
+> > > > > > > Thanks for pointing out. Here is some additional information:=
+=20
+> > > > > > >=20
+> > > > > > >=20
+> > > > > > > Singularity version: 2.4.2=20
+> > > > > > >=20
+> > > > > > > Host machine OS: Scientific Linux release 6.9=20
+> > > > > > >=20
+> > > > > > >=20
+> > > > > > > As previously stated,=20
+> > > > > > >=20
+> > > > > > >=20
+> > > > > > > Method 1=20
+> > > > > > >=20
+> > > > > > > singularity exec local_file.img bash script.sh=20
+> > > > > > >=20
+> > > > > > >=20
+> > > > > > > Method 2=20
+> > > > > > > singularity pull --name local_image.img docker://ubuntu=20
+> > > > > > > singularity exec local_file.img bash script.sh=20
+> > > > > > >=20
+> > > > > > >=20
+> > > > > > >=20
+> > > > > > > The first difference between the two methods is that system=
+=20
+> > > variables=20
+> > > > > are=20
+> > > > > > > correctly assigned only in the first one.=20
+> > > > > > >=20
+> > > > > > >=20
+> > > > > > > The variables are assigned according to the following=20
+> /environment=20
+> > > > > file:=20
+> > > > > > >=20
+> > > > > > >=20
+> > > > > > >=20
+> > > > > > > if test -z "$SINGULARITY_INIT"; then=20
+> > > > > > >=20
+> > > > > > >    =20
+> > > PATH=3D$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/=
+=20
+> > > > > > > sbin:/util/opt/matlab/r2017a/bin=20
+> > > > > > >=20
+> > > > > > >     PS1=3D"Singularity.$SINGULARITY_CONTAINER> $PS1"=20
+> > > > > > >=20
+> > > > > > >     SINGULARITY_INIT=3D1=20
+> > > > > > >=20
+> > > > > > >     export PATH PS1 SINGULARITY_INIT=20
+> > > > > > >=20
+> > > > > > > fi=20
+> > > > > > >=20
+> > > > > > > . /docker_environment=20
+> > > > > > >=20
+> > > > > > >=20
+> > > > > > > I retrieve different results when displaying the path:=20
+> > > > > > >=20
+> > > > > > > echo $PATH=20
+> > > > > > >=20
+> > > > > > >=20
+> > > > > > > Method 1=20
+> > > > > > >=20
+> > > > > > >=20
+> > > > > > >=20
+> > > > >=20
+> > >=20
+> /usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sb=
+in:/bin:/util/opt/matlab/r2017a/bin:/opt/conda/bin:/opt/conda/envs/test_env=
+/bin=20
+>
+> > >=20
+> > > > > > >=20
+> > > > > > >=20
+> > > > > > > Method 2=20
+> > > > > > >=20
+> > > > > > >=20
+> > > > > > >=20
+> > > > >=20
+> > >=20
+> /opt/conda/envs/rl/bin:/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr=
+/sbin:/usr/bin:/sbin:/bin=20
+>
+> > >=20
+> > > > > > >=20
+> > > > > > >=20
+> > > > > > >=20
+> > > > > > > Even after fixing system variables (by assigning it in=20
+> run-time),=20
+> > > the=20
+> > > > > > > result of the two methods is distinct since I get permission=
+=20
+> > > errors in=20
+> > > > > > > Method 2 that are absent in Method 1.=20
+> > > > > > >=20
+> > > > > > > e.g. this error when executing a python script:=20
+> > > > > > >=20
+> > > > > > >=20
+> > > > > > > File "simulation_interface.py", line 6, in <module>=20
+> > > > > > >=20
+> > > > > > >     from gym.spaces import Box=20
+> > > > > > >=20
+> > > > > > >   File=20
+> > > > > "/opt/conda/envs/rl/lib/python3.5/site-packages/gym/__init__.py",=
+=20
+> > > > > > > line 11, in <module>=20
+> > > > > > >=20
+> > > > > > >     from gym.envs import make, spec=20
+> > > > > > >=20
+> > > > > > >   File=20
+> > > > > > >=20
+> > > "/opt/conda/envs/rl/lib/python3.5/site-packages/gym/envs/__init__.py"=
+,=20
+> > > > > line=20
+> > > > > > > 1, in <module>=20
+> > > > > > >=20
+> > > > > > >     from gym.envs.registration import registry, register,=20
+> make,=20
+> > > spec=20
+> > > > > > >=20
+> > > > > > >   File=20
+> > > > > > >=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/gym/envs/registration.py"=
+,=20
+> > > > > > > line 1, in <module>=20
+> > > > > > >=20
+> > > > > > >     import pkg_resources=20
+> > > > > > >=20
+> > > > > > >   File=20
+> > > > > > >=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py=
+",=20
+> > > > > > > line 3074, in <module>=20
+> > > > > > >=20
+> > > > > > >     @_call_aside=20
+> > > > > > >=20
+> > > > > > >   File=20
+> > > > > > >=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py=
+",=20
+> > > > > > > line 3058, in _call_aside=20
+> > > > > > >=20
+> > > > > > >     f(*args, **kwargs)=20
+> > > > > > >=20
+> > > > > > >   File=20
+> > > > > > >=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py=
+",=20
+> > > > > > > line 3087, in _initialize_master_working_set=20
+> > > > > > >=20
+> > > > > > >     working_set =3D WorkingSet._build_master()=20
+> > > > > > >=20
+> > > > > > >   File=20
+> > > > > > >=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py=
+",=20
+> > > > > > > line 655, in _build_master=20
+> > > > > > >=20
+> > > > > > >     ws =3D cls()=20
+> > > > > > >=20
+> > > > > > >   File=20
+> > > > > > >=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py=
+",=20
+> > > > > > > line 648, in __init__=20
+> > > > > > >=20
+> > > > > > >     self.add_entry(entry)=20
+> > > > > > >=20
+> > > > > > >   File=20
+> > > > > > >=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py=
+",=20
+> > > > > > > line 704, in add_entry=20
+> > > > > > >=20
+> > > > > > >     for dist in find_distributions(entry, True):=20
+> > > > > > >=20
+> > > > > > >   File=20
+> > > > > > >=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py=
+",=20
+> > > > > > > line 2059, in find_on_path=20
+> > > > > > >=20
+> > > > > > >     path_item, entry, metadata, precedence=3DDEVELOP_DIST=20
+> > > > > > >=20
+> > > > > > >   File=20
+> > > > > > >=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py=
+",=20
+> > > > > > > line 2488, in from_location=20
+> > > > > > >=20
+> > > > > > >     py_version=3Dpy_version, platform=3Dplatform, **kw=20
+> > > > > > >=20
+> > > > > > >   File=20
+> > > > > > >=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py=
+",=20
+> > > > > > > line 2828, in _reload_version=20
+> > > > > > >=20
+> > > > > > >     md_version =3D=20
+> > > _version_from_file(self._get_metadata(self.PKG_INFO))=20
+> > > > > > >=20
+> > > > > > >   File=20
+> > > > > > >=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py=
+",=20
+> > > > > > > line 2453, in _version_from_file=20
+> > > > > > >=20
+> > > > > > >     line =3D next(iter(version_lines), '')=20
+> > > > > > >=20
+> > > > > > >   File=20
+> > > > > > >=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py=
+",=20
+> > > > > > > line 2621, in _get_metadata=20
+> > > > > > >=20
+> > > > > > >     for line in self.get_metadata_lines(name):=20
+> > > > > > >=20
+> > > > > > >   File=20
+> > > > > > >=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py=
+",=20
+> > > > > > > line 1895, in get_metadata_lines=20
+> > > > > > >=20
+> > > > > > >     return yield_lines(self.get_metadata(name))=20
+> > > > > > >=20
+> > > > > > >   File=20
+> > > > > > >=20
+> > > > >=20
+> > >=20
+> "/opt/conda/envs/rl/lib/python3.5/site-packages/pkg_resources/__init__.py=
+",=20
+> > > > > > > line 1881, in get_metadata=20
+> > > > > > >=20
+> > > > > > >     with io.open(self.path, encoding=3D'utf-8',=20
+> errors=3D"replace") as=20
+> > > f:=20
+> > > > > > >=20
+> > > > > > > PermissionError: [Errno 13] Permission denied:=20
+> > > > > > >=20
+> > > > >=20
+> > >=20
+> '/opt/conda/envs/rl/lib/python3.5/site-packages/.wh.six-1.10.0-py3.5.egg-=
+info'=20
+>
+> > >=20
+> > > > > > >=20
+> > > > > > >=20
+> > > > > > > Cheers=20
+> > > > > > >=20
+> > > > > > > Em ter=C3=A7a-feira, 14 de agosto de 2018 09:45:28 UTC-5, Dav=
+e=20
+> Dykstra=20
+> > > > > escreveu:=20
+> > > > > > >>=20
+> > > > > > >> Pedro,=20
+> > > > > > >>=20
+> > > > > > >> I think you need to be more specific and give exact error=20
+> > > messages,=20
+> > > > > > >> singularity version, host operating system, and instructions=
+=20
+> to=20
+> > > > > > >> reproduce what you're seeing.=20
+> > > > > > >>=20
+> > > > > > >> Dave=20
+> > > > > > >>=20
+> > > > > > >> On Mon, Aug 13, 2018 at 05:37:21PM -0700, Pedro wrote:=20
+> > > > > > >> > How can I get the execution of a local copy of a docker=20
+> > > container=20
+> > > > > to=20
+> > > > > > >> behave=20
+> > > > > > >> > just like one hosted at Docker Hub?=20
+> > > > > > >> >=20
+> > > > > > >> > I'm trying to keep a local copy of a Docker container, so =
+I=20
+> got=20
+> > > one=20
+> > > > > as=20
+> > > > > > >> > follows:=20
+> > > > > > >> >=20
+> > > > > > >> > singularity pull --name local_image.img docker://ubuntu=20
+> > > > > > >> >=20
+> > > > > > >> > However, there are many differences between running this=
+=20
+> image=20
+> > > > > instead=20
+> > > > > > >> of=20
+> > > > > > >> > the Docker Hub container directly, such as system variable=
+s=20
+> not=20
+> > > set=20
+> > > > > and=20
+> > > > > > >> > many errors on permission.=20
+> > > > > > >> >=20
+> > > > > > >> > So, the question is: how can one get a local file in which=
+=20
+> > > > > > >> > singularity exec local_file.img bash script.sh=20
+> > > > > > >> >=20
+> > > > > > >> > behaves exactly as=20
+> > > > > > >> > singularity exec docker://ubuntu:latest bash script.sh=20
+> > > > > > >> >=20
+> > > > > > >> > p.s.: I've also tried with singularity run, with no=20
+> success.=20
+> > > > > > >> >=20
+> > > > > > >> > Thanks!=20
+> > > > > > >> >=20
+> > > > > > >> > --=20
+> > > > > > >> > You received this message because you are subscribed to th=
+e=20
+> > > Google=20
+> > > > > > >> Groups "singularity" group.=20
+> > > > > > >> > To unsubscribe from this group and stop receiving emails=
+=20
+> from=20
+> > > it,=20
+> > > > > send=20
+> > > > > > >> an email to singu...@lbl.gov.=20
+> > > > > > >>=20
+> > > > > > >>=20
+> > > > > >=20
+> > > > > > --=20
+> > > > > > You received this message because you are subscribed to the=20
+> Google=20
+> > > > > Groups "singularity" group.=20
+> > > > > > To unsubscribe from this group and stop receiving emails from=
+=20
+> it,=20
+> > > send=20
+> > > > > an email to singu...@lbl.gov <javascript:>.=20
+> > > > >=20
+> > > > > --=20
+> > > > > You received this message because you are subscribed to a topic i=
+n=20
+> the=20
+> > > > > Google Groups "singularity" group.=20
+> > > > > To unsubscribe from this topic, visit=20
+> > > > >=20
+> > >=20
+> https://groups.google.com/a/lbl.gov/d/topic/singularity/qpmGfjzFlSc/unsub=
+scribe=20
+> > > > > .=20
+> > > > > To unsubscribe from this group and all its topics, send an email=
+=20
+> to=20
+> > > > > singu...@lbl.gov <javascript:>.=20
+> > > > >=20
+> > > > --=20
+> > > > Pedro Albuquerque=20
+> > > > +55 (67) 8448-9298=20
+> > > >=20
+> > > > --=20
+> > > > You received this message because you are subscribed to the Google=
+=20
+> > > Groups "singularity" group.=20
+> > > > To unsubscribe from this group and stop receiving emails from it,=
+=20
+> send=20
+> > > an email to singu...@lbl.gov <javascript:>.=20
+> > >=20
+> >=20
+> > --=20
+> > You received this message because you are subscribed to the Google=20
+> Groups "singularity" group.=20
+> > To unsubscribe from this group and stop receiving emails from it, send=
+=20
+> an email to singu...@lbl.gov <javascript:>.=20
+>
+>
+------=_Part_1584_1724375792.1534796543210
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Dave,<div><br></div><div>I changed accordingly and got $PA=
+TH working, but still get the same error with the python script (maybe beca=
+use of the singularity version?).=C2=A0</div><div>I could get it to work=C2=
+=A0by removing the virtual environment (conda) and installing the requireme=
+nts via pip.</div><div><br></div><div>Thanks a lot for your assistance!=C2=
+=A0<br><br>On Friday, August 17, 2018 at 4:55:22 PM UTC-5, Dave Dykstra wro=
+te:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;=
+border-left: 1px #ccc solid;padding-left: 1ex;">I don&#39;t get any errors =
+if I either use that -B option I told you about
+<br>so the environment is set up ahead of time, or if I run a shell
+<br>and do &quot;source /environment&quot; before running those two command=
+s.
+<br>
+<br>WIth the latter it does give a weird prompt string ($PS1), but it
+<br>doesn&#39;t print any errors.
+<br>
+<br>Dave
+<br>
+<br>On Thu, Aug 16, 2018 at 01:14:35PM -0700, Pedro wrote:
+<br>&gt; Interesting. Thanks, Dave!
+<br>&gt;=20
+<br>&gt; The permission issue can be observed with a python script importin=
+g a=20
+<br>&gt; module:
+<br>&gt; source activate rl
+<br>&gt; python -c &quot;import tensorflow&quot;
+<br>&gt;=20
+<br>&gt; Cheers.
+<br>&gt;=20
+<br>&gt; On Thursday, August 16, 2018 at 2:54:16 PM UTC-5, Dave Dykstra wro=
+te:
+<br>&gt; &gt;
+<br>&gt; &gt; Pedro,=20
+<br>&gt; &gt;
+<br>&gt; &gt; I was able to reproduce the $PATH problem with singularity-2.=
+6.0 if I=20
+<br>&gt; &gt; use docker://pfrancaalb/rl. =C2=A0I think the problem is that=
+ /environment is=20
+<br>&gt; &gt; old style and not supported anymore, although I don&#39;t kno=
+w why it still=20
+<br>&gt; &gt; works with execing directly from docker (maybe there&#39;s a =
+backward=20
+<br>&gt; &gt; compatibility mode for docker). =C2=A0If I make a copy of /en=
+vironment on my=20
+<br>&gt; &gt; host filesystem in /tmp/environment and exec local_file.img w=
+ith an=20
+<br>&gt; &gt; option -B /tmp/environment:/.<wbr>singularity.d/env/90-<wbr>e=
+nvironment.sh then I=20
+<br>&gt; &gt; get the expected $PATH. =C2=A0Probably it should be fixed ins=
+tead in the=20
+<br>&gt; &gt; original docker container.=20
+<br>&gt; &gt;
+<br>&gt; &gt; As for the permission problem, you haven&#39;t said what to r=
+un in order to=20
+<br>&gt; &gt; reproduce that.=20
+<br>&gt; &gt;
+<br>&gt; &gt; Dave=20
+<br>&gt; &gt;
+<br>&gt; &gt; On Thu, Aug 16, 2018 at 09:48:39AM -0500, Pedro Lucas F. Albu=
+querque=20
+<br>&gt; &gt; wrote:=20
+<br>&gt; &gt; &gt; Dave,=20
+<br>&gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; I mentioned that image for the sake of the example. =C2=
+=A0I am actually=20
+<br>&gt; &gt; running=20
+<br>&gt; &gt; &gt; &quot;pfrancaalb/rl&quot;.=20
+<br>&gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; Thanks for your help!=20
+<br>&gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; On Thu, Aug 16, 2018 at 9:41 AM Dave Dykstra &lt;<a>d...=
+@fnal.gov</a>=20
+<br>&gt; &gt; &lt;javascript:&gt;&gt; wrote:=20
+<br>&gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; Pedro,=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; When I try running singularity exec docker://ubuntu=
+:latest bash on=20
+<br>&gt; &gt; &gt; &gt; SL6.9 and singularity version 2.6.0, I get=20
+<br>&gt; &gt; &gt; &gt; =C2=A0 =C2=A0 FATAL: kernel too old=20
+<br>&gt; &gt; &gt; &gt; However if instead of &quot;latest&quot; I use &quo=
+t;16.04&quot; that starts the shell.=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; Since you are directly running the image from docke=
+r, how is that=20
+<br>&gt; &gt; &gt; &gt; /environment getting created? =C2=A0This is an area=
+ of singularity that I=20
+<br>&gt; &gt; &gt; &gt; don&#39;t know much about. =C2=A0When I run the abo=
+ve, inside the container=20
+<br>&gt; &gt; &gt; &gt; /environment is just one comment line.=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; Dave=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; On Wed, Aug 15, 2018 at 09:28:03AM -0700, Pedro wro=
+te:=20
+<br>&gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; My apologies for the bad formatting.=20
+<br>&gt; &gt; &gt; &gt; &gt; Also, method 1 is mistyped. The correct comman=
+d is:=20
+<br>&gt; &gt; &gt; &gt; &gt; singularity exec docker://ubuntu:latest bash s=
+cript.sh=20
+<br>&gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; I would appreciate any insights!=20
+<br>&gt; &gt; &gt; &gt; &gt; Cheers=20
+<br>&gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; On Tuesday, August 14, 2018 at 4:46:04 PM UTC-=
+5, Pedro wrote:=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; Dave,=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; Thanks for pointing out. Here is some add=
+itional information:=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; Singularity version: 2.4.2=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; Host machine OS: Scientific Linux release=
+ 6.9=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; As previously stated,=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; Method 1=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; singularity exec local_file.img bash scri=
+pt.sh=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; Method 2=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; singularity pull --name local_image.img d=
+ocker://ubuntu=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; singularity exec local_file.img bash scri=
+pt.sh=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; The first difference between the two meth=
+ods is that system=20
+<br>&gt; &gt; variables=20
+<br>&gt; &gt; &gt; &gt; are=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; correctly assigned only in the first one.=
+=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; The variables are assigned according to t=
+he following /environment=20
+<br>&gt; &gt; &gt; &gt; file:=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; if test -z &quot;$SINGULARITY_INIT&quot;;=
+ then=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 =C2=A0=20
+<br>&gt; &gt; PATH=3D$PATH:/bin:/sbin:/usr/<wbr>bin:/usr/sbin:/usr/local/bi=
+n:/<wbr>usr/local/=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; sbin:/util/opt/matlab/r2017a/<wbr>bin=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 =C2=A0 PS1=3D&quot;Singularity.$SI=
+NGULARITY_<wbr>CONTAINER&gt; $PS1&quot;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 =C2=A0 SINGULARITY_INIT=3D1=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 =C2=A0 export PATH PS1 SINGULARITY=
+_INIT=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; fi=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; . /docker_environment=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; I retrieve different results when display=
+ing the path:=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; echo $PATH=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; Method 1=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; /usr/local/cuda/bin:/usr/<wbr>local/sbin:/usr/local/bin:/<wbr=
+>usr/sbin:/usr/bin:/sbin:/bin:/<wbr>util/opt/matlab/r2017a/bin:/<wbr>opt/co=
+nda/bin:/opt/conda/envs/<wbr>test_env/bin=20
+<br>&gt; &gt;
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; Method 2=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; /opt/conda/envs/rl/bin:/opt/<wbr>conda/bin:/usr/local/sbin:/<=
+wbr>usr/local/bin:/usr/sbin:/usr/<wbr>bin:/sbin:/bin=20
+<br>&gt; &gt;
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; Even after fixing system variables (by as=
+signing it in run-time),=20
+<br>&gt; &gt; the=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; result of the two methods is distinct sin=
+ce I get permission=20
+<br>&gt; &gt; errors in=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; Method 2 that are absent in Method 1.=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; e.g. this error when executing a python s=
+cript:=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; File &quot;simulation_interface.py&quot;,=
+ line 6, in &lt;module&gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 =C2=A0 from gym.spaces import Box=
+=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 File=20
+<br>&gt; &gt; &gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-pa=
+ckages/gym/__<wbr>init__.py&quot;,=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; line 11, in &lt;module&gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 =C2=A0 from gym.envs import make, =
+spec=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 File=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/gym=
+/<wbr>envs/__init__.py&quot;,=20
+<br>&gt; &gt; &gt; &gt; line=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; 1, in &lt;module&gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 =C2=A0 from gym.envs.registration =
+import registry, register, make,=20
+<br>&gt; &gt; spec=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 File=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/gym=
+/<wbr>envs/registration.py&quot;,=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; line 1, in &lt;module&gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 =C2=A0 import pkg_resources=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 File=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/pkg=
+_<wbr>resources/__init__.py&quot;,=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; line 3074, in &lt;module&gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 =C2=A0 @_call_aside=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 File=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/pkg=
+_<wbr>resources/__init__.py&quot;,=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; line 3058, in _call_aside=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 =C2=A0 f(*args, **kwargs)=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 File=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/pkg=
+_<wbr>resources/__init__.py&quot;,=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; line 3087, in _initialize_master_working_=
+set=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 =C2=A0 working_set =3D WorkingSet.=
+_build_master()=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 File=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/pkg=
+_<wbr>resources/__init__.py&quot;,=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; line 655, in _build_master=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 =C2=A0 ws =3D cls()=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 File=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/pkg=
+_<wbr>resources/__init__.py&quot;,=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; line 648, in __init__=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 =C2=A0 self.add_entry(entry)=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 File=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/pkg=
+_<wbr>resources/__init__.py&quot;,=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; line 704, in add_entry=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 =C2=A0 for dist in find_distributi=
+ons(entry, True):=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 File=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/pkg=
+_<wbr>resources/__init__.py&quot;,=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; line 2059, in find_on_path=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 =C2=A0 path_item, entry, metadata,=
+ precedence=3DDEVELOP_DIST=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 File=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/pkg=
+_<wbr>resources/__init__.py&quot;,=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; line 2488, in from_location=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 =C2=A0 py_version=3Dpy_version, pl=
+atform=3Dplatform, **kw=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 File=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/pkg=
+_<wbr>resources/__init__.py&quot;,=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; line 2828, in _reload_version=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 =C2=A0 md_version =3D=20
+<br>&gt; &gt; _version_from_file(self._get_<wbr>metadata(self.PKG_INFO))=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 File=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/pkg=
+_<wbr>resources/__init__.py&quot;,=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; line 2453, in _version_from_file=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 =C2=A0 line =3D next(iter(version_=
+lines), &#39;&#39;)=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 File=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/pkg=
+_<wbr>resources/__init__.py&quot;,=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; line 2621, in _get_metadata=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 =C2=A0 for line in self.get_metada=
+ta_lines(name):=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 File=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/pkg=
+_<wbr>resources/__init__.py&quot;,=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; line 1895, in get_metadata_lines=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 =C2=A0 return yield_lines(self.get=
+_metadata(<wbr>name))=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 File=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &quot;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/pkg=
+_<wbr>resources/__init__.py&quot;,=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; line 1881, in get_metadata=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; =C2=A0 =C2=A0 with io.open(self.path, enc=
+oding=3D&#39;utf-8&#39;, errors=3D&quot;replace&quot;) as=20
+<br>&gt; &gt; f:=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; PermissionError: [Errno 13] Permission de=
+nied:=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &#39;/opt/conda/envs/rl/lib/<wbr>python3.5/site-packages/.wh.=
+<wbr>six-1.10.0-py3.5.egg-info&#39;=20
+<br>&gt; &gt;
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; Cheers=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt; Em ter=C3=A7a-feira, 14 de agosto de 2018=
+ 09:45:28 UTC-5, Dave Dykstra=20
+<br>&gt; &gt; &gt; &gt; escreveu:=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; Pedro,=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; I think you need to be more specific =
+and give exact error=20
+<br>&gt; &gt; messages,=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; singularity version, host operating s=
+ystem, and instructions to=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; reproduce what you&#39;re seeing.=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; Dave=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; On Mon, Aug 13, 2018 at 05:37:21PM -0=
+700, Pedro wrote:=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; &gt; How can I get the execution of a=
+ local copy of a docker=20
+<br>&gt; &gt; container=20
+<br>&gt; &gt; &gt; &gt; to=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; behave=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; &gt; just like one hosted at Docker H=
+ub?=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; &gt; I&#39;m trying to keep a local c=
+opy of a Docker container, so I got=20
+<br>&gt; &gt; one=20
+<br>&gt; &gt; &gt; &gt; as=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; &gt; follows:=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; &gt; singularity pull --name local_im=
+age.img docker://ubuntu=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; &gt; However, there are many differen=
+ces between running this image=20
+<br>&gt; &gt; &gt; &gt; instead=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; of=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; &gt; the Docker Hub container directl=
+y, such as system variables not=20
+<br>&gt; &gt; set=20
+<br>&gt; &gt; &gt; &gt; and=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; &gt; many errors on permission.=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; &gt; So, the question is: how can one=
+ get a local file in which=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; &gt; singularity exec local_file.img =
+bash script.sh=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; &gt; behaves exactly as=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; &gt; singularity exec docker://ubuntu=
+:latest bash script.sh=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; &gt; p.s.: I&#39;ve also tried with s=
+ingularity run, with no success.=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; &gt; Thanks!=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; &gt; --=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; &gt; You received this message becaus=
+e you are subscribed to the=20
+<br>&gt; &gt; Google=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; Groups &quot;singularity&quot; group.=
+=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; &gt; To unsubscribe from this group a=
+nd stop receiving emails from=20
+<br>&gt; &gt; it,=20
+<br>&gt; &gt; &gt; &gt; send=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt; an email to <a>singu...@lbl.gov</a>.=
+=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; &gt;&gt;=20
+<br>&gt; &gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; &gt; --=20
+<br>&gt; &gt; &gt; &gt; &gt; You received this message because you are subs=
+cribed to the Google=20
+<br>&gt; &gt; &gt; &gt; Groups &quot;singularity&quot; group.=20
+<br>&gt; &gt; &gt; &gt; &gt; To unsubscribe from this group and stop receiv=
+ing emails from it,=20
+<br>&gt; &gt; send=20
+<br>&gt; &gt; &gt; &gt; an email to <a>singu...@lbl.gov</a> &lt;javascript:=
+&gt;.=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; --=20
+<br>&gt; &gt; &gt; &gt; You received this message because you are subscribe=
+d to a topic in the=20
+<br>&gt; &gt; &gt; &gt; Google Groups &quot;singularity&quot; group.=20
+<br>&gt; &gt; &gt; &gt; To unsubscribe from this topic, visit=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; <a href=3D"https://groups.google.com/a/lbl.gov/d/topic/singul=
+arity/qpmGfjzFlSc/unsubscribe" target=3D"_blank" rel=3D"nofollow" onmousedo=
+wn=3D"this.href=3D&#39;https://groups.google.com/a/lbl.gov/d/topic/singular=
+ity/qpmGfjzFlSc/unsubscribe&#39;;return true;" onclick=3D"this.href=3D&#39;=
+https://groups.google.com/a/lbl.gov/d/topic/singularity/qpmGfjzFlSc/unsubsc=
+ribe&#39;;return true;">https://groups.google.com/a/<wbr>lbl.gov/d/topic/si=
+ngularity/<wbr>qpmGfjzFlSc/unsubscribe</a>=20
+<br>&gt; &gt; &gt; &gt; .=20
+<br>&gt; &gt; &gt; &gt; To unsubscribe from this group and all its topics, =
+send an email to=20
+<br>&gt; &gt; &gt; &gt; <a>singu...@lbl.gov</a> &lt;javascript:&gt;.=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; --=20
+<br>&gt; &gt; &gt; Pedro Albuquerque=20
+<br>&gt; &gt; &gt; +55 (67) 8448-9298=20
+<br>&gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; --=20
+<br>&gt; &gt; &gt; You received this message because you are subscribed to =
+the Google=20
+<br>&gt; &gt; Groups &quot;singularity&quot; group.=20
+<br>&gt; &gt; &gt; To unsubscribe from this group and stop receiving emails=
+ from it, send=20
+<br>&gt; &gt; an email to <a>singu...@lbl.gov</a> &lt;javascript:&gt;.=20
+<br>&gt; &gt;
+<br>&gt;=20
+<br>&gt; --=20
+<br>&gt; You received this message because you are subscribed to the Google=
+ Groups &quot;singularity&quot; group.
+<br>&gt; To unsubscribe from this group and stop receiving emails from it, =
+send an email to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-m=
+ailto=3D"-3irYW5tDQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;jav=
+ascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;re=
+turn true;">singularity...@lbl.<wbr>gov</a>.
+<br>
+<br></blockquote></div></div>
+------=_Part_1584_1724375792.1534796543210--
+
+------=_Part_1583_1331102761.1534796543209--

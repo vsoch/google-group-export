@@ -1,0 +1,156 @@
+Date: Fri, 18 Jan 2019 20:49:53 -0800 (PST)
+From: Tims <tims....@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <f8dd49b5-1663-4930-8756-5d33321839ec@lbl.gov>
+In-Reply-To: <CAPqNE2XXe3a7jnL90xB+zJN1DCif7SPRf6nWqunKvZ1Ntqw8xA@mail.gmail.com>
+References: <9310c07c-393a-423f-9e83-18bd07c9c099@lbl.gov> <67e60139-1082-4915-bced-c766eafc96f2@lbl.gov>
+ <CAPqNE2XXe3a7jnL90xB+zJN1DCif7SPRf6nWqunKvZ1Ntqw8xA@mail.gmail.com>
+Subject: Re: [Singularity] Re: Permission denied accessing certain packages
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1272_393736255.1547873394145"
+
+------=_Part_1272_393736255.1547873394145
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1273_1575966128.1547873394145"
+
+------=_Part_1273_1575966128.1547873394145
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Thanks John, yes I need 0.6.4.
+The workaround I have is to chown and give wheel access to /root/.julia and 
+then convert from sandbox to squashfs.
+It  works for package Compat.but breaks witha seg fault for package 
+Complementarity.
+
+singularity exec intelmpi-julia0.6.4.img/ julia -e "using Complementarity"
+
+signal (11): Segmentation fault
+while loading /root/.julia/v0.6/ForwardDiff/src/ForwardDiff.jl, in 
+expression starting on line 12
+
+Any clue?
+
+
+
+On Friday, January 18, 2019 at 8:30:22 PM UTC-8, John Hearns wrote:
+>
+> Hi Tim.  I guess you have good reasons for using Julia version 0.6.4 - 
+> most probably because you have code which only runs with this version, and 
+> hence why Compay.jl is being asked for also.
+>
+> Not very helpful of me, but using Singularity 3.0.2 I can pull a Julia 
+> container from the Docker registry which has Julia 1.0.3
+>
+> singularity pull docker://julia
+> singularity exec julia_latest.sif  julia -e 'import Pkg; 
+> Pkg.add("Compat"); using Compat'
+>
+> The .julia directory from my own account is being used - I can add 
+> packages before execing the container also.
+> The extra Pkg stuff after -e is due to the new Julia package manager, if 
+> anyone is wondering why. You have to pull Pkg in now as it is not in Base 
+> AFAIK
+>
+>
+>
+> On Sat, 19 Jan 2019 at 02:21, Tims <ti...@gmail.com <javascript:>> 
+> wrote:
+>
+>> The image was built from a sandbox as
+>>
+>> sudo singularity build julia0.6.4.simg julia0.6.4.img/
+>>
+>>
+>> singularity exec intelmpi-julia0.6.4.simg julia -e 'using Compat'
+>>
+>> ERROR: SystemError: opening file /root/.julia/lib/v0.6/Compat.ji: 
+>> Permission denied
+>> Stacktrace:
+>>
+>>
+>>
+>>
+>> On Friday, January 18, 2019 at 2:19:33 PM UTC-8, Tims wrote:
+>>>
+>>>
+>>> While running a singularity container, Julia is apparently trying to 
+>>> precompile packages and running into permission errors.
+>>>
+>>> ERROR: LoadError: LoadError: SystemError: opening file 
+>>> /root/.julia/lib/v0.6/Compat.ji: Permission denied
+>>>
+>>>
+>>> What is a good way to avoid this error without sudo ing?
+>>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+------=_Part_1273_1575966128.1547873394145
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Thanks John, yes I need 0.6.4.</div>The workaround I =
+have is to chown and give wheel access to /root/.julia and then convert fro=
+m sandbox to squashfs.<div>It=C2=A0 works for package Compat.but breaks wit=
+ha seg fault for package Complementarity.</div><div><br></div><div><div>sin=
+gularity exec intelmpi-julia0.6.4.img/ julia -e &quot;using Complementarity=
+&quot;</div><div><br></div><div>signal (11): Segmentation fault</div><div>w=
+hile loading /root/.julia/v0.6/ForwardDiff/src/ForwardDiff.jl, in expressio=
+n starting on line 12</div></div><div><br></div><div>Any clue?</div><div><b=
+r><br><br>On Friday, January 18, 2019 at 8:30:22 PM UTC-8, John Hearns wrot=
+e:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;b=
+order-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">Hi Tim.=C2=
+=A0 I guess you have good reasons for using Julia version 0.6.4 - most prob=
+ably because you have code which only runs with this version, and hence why=
+ Compay.jl is being asked for also.<div><br></div><div>Not very helpful of =
+me, but using Singularity 3.0.2 I can pull a Julia container from the Docke=
+r registry which has Julia 1.0.3</div><div><br></div><div>singularity pull =
+docker://julia</div><div>singularity exec julia_latest.sif=C2=A0 julia -e &=
+#39;import Pkg; Pkg.add(&quot;Compat&quot;); using Compat&#39;<br></div><di=
+v><br></div><div>The .julia directory from my own account is being used - I=
+ can add packages before execing the container also.</div><div>The extra Pk=
+g stuff after -e is due to the new Julia package manager, if anyone is wond=
+ering why. You have to pull Pkg in now as it is not in Base AFAIK</div><div=
+><br></div><div><br></div></div><br><div class=3D"gmail_quote"><div dir=3D"=
+ltr">On Sat, 19 Jan 2019 at 02:21, Tims &lt;<a href=3D"javascript:" target=
+=3D"_blank" gdf-obfuscated-mailto=3D"2rVwVBOYDwAJ" rel=3D"nofollow" onmouse=
+down=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.hre=
+f=3D&#39;javascript:&#39;;return true;">ti...@gmail.com</a>&gt; wrote:<br><=
+/div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;bo=
+rder-left:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr">The=
+ image was built from a sandbox as<div><br></div><div><div>sudo singularity=
+ build julia0.6.4.simg julia0.6.4.img/</div><div><br></div><div><br></div><=
+div><div>singularity exec intelmpi-julia0.6.4.simg julia -e &#39;using Comp=
+at&#39;</div><div><br></div><div>ERROR: SystemError: opening file /root/.ju=
+lia/lib/v0.6/Compat.<wbr>ji: Permission denied</div><div>Stacktrace:</div><=
+/div><div><br></div><div><br></div><div><br></div><br>On Friday, January 18=
+, 2019 at 2:19:33 PM UTC-8, Tims wrote:<blockquote class=3D"gmail_quote" st=
+yle=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padd=
+ing-left:1ex"><div dir=3D"ltr"><br><div>While running a singularity contain=
+er, Julia is apparently trying to precompile packages and running into perm=
+ission errors.</div><div><br></div><div><div>ERROR: LoadError: LoadError: S=
+ystemError: opening file /root/.julia/lib/v0.6/Compat.<wbr>ji: Permission d=
+enied</div></div><div><br></div><div><br></div><div>What is a good way to a=
+void this error without sudo ing?</div></div></blockquote></div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+2rVwVBOYDwAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</blockquote></div>
+</blockquote></div></div>
+------=_Part_1273_1575966128.1547873394145--
+
+------=_Part_1272_393736255.1547873394145--

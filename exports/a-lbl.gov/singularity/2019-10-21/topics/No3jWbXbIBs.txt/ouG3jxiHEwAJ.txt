@@ -1,0 +1,200 @@
+Date: Wed, 22 Feb 2017 10:19:49 -0800 (PST)
+From: Chih-Song Kuo <chihs...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <d0a10fdc-f912-4e9c-8681-a54f5d53fd72@lbl.gov>
+Subject: Performance impact: My experience
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1873_205044636.1487787589714"
+
+------=_Part_1873_205044636.1487787589714
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1874_2001050861.1487787589714"
+
+------=_Part_1874_2001050861.1487787589714
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hello,
+
+This is again Chih-Song from Fujitsu. I decided to make another post to 
+share my experience of performance impact with two kernel benchmarks: High 
+Performance Linpack (HPL) and the OSU MPI benchmark suit.
+
+Overall, there was no noticeable performance difference for benchmarks 
+running on a single node. But for benchmarks running across nodes, I did 
+observe some difference, which was against to the claim of Singularity. 
+Have anybody done any similar exercise? What are your findings? Can you 
+suspect whether I was doing anything wrong?
+
+Host configuration:
+2x Intel E5-2680v2 (Ivybridge)
+64GB memory
+Mellanox ConnectX-3 FDR adapter (but connects to a Mellanox QDR switch)
+RHEL 6.7
+OpenMPI development master branch (8.2.17)
+Intel MKL 2017.0 community edition
+gcc 4.4
+
+Container:
+Centos 6 and 7 both tested without noticeable performance difference
+OpenMPI development master branch (8.2.17)
+Intel MKL 2017.0 community edition
+gcc 4.4.7 (Centos-6), gcc 4.8.5 (Centos-7)
+
+Benchmarks:
+1. LINPACK 2.2
+2. OSU 5.3.2
+
+<LINPACK>
+Single node. N=40000, P=5, Q=4
+Container: 368 GFlops
+Host: 368 GFLOPS
+#A single node has 2x Intel E5-2680v2. So we are expecting 2 x 10 x 8 * 2.8 
+= 448 GFlops
+Efficiency = 368 / 448 = 82%. Not bad (given the small N (matrix size) and 
+that gcc instead of icc was used, and the executable was dynamically linked 
+-- by purpose)
+
+Dual-node, N=60000, P=8, Q=5
+Container: 702 GFLOPS
+Host:737 GFLOPS
+There is roughly 5% of performance degradation with the container.
+
+<OSU-P2P-Bandwidth>
+The container only saw 50-65% of the total bandwidth.
+
+Container: 
+Msg size(bytes) BW (MB/s)
+65536                2142.28
+131072               2363.45
+262144               1705.79
+524288               1592.56
+1048576              1721.88
+2097152              1557.42
+4194304              1655.90
+
+Host:
+Msg size(bytes) BW (MB/s)
+65536                3722.32
+131072               3751.33
+262144               3771.13
+524288               3774.33
+1048576              3781.43
+2097152              3775.00
+4194304              3773.68
+
+<OSU-P2P-Latency>
+Here the container was significantly slower.
+
+Container: 
+Msg size(bytes)  Latency (us)
+0                      31.59
+1                      31.86
+2                      31.83
+
+Host:
+Msg size(bytes)  Latency (us)
+0                       1.55
+1                       1.63
+2                       1.63
+
+Note 1: Run-to-run variation of performance was much smaller than the 
+difference on the host and in the container.
+Note 2: When Singularity was used, I could not instruct mpirun to use the 
+ofed by specifying "--mca btl openib,self,vader" in the mpirun parameter 
+list. Doing so would give me an error message stating that the openib 
+component is missing. However, from the bandwidth measured above, the 
+container did seem to be able to use InfiniBand, otherwise the bandwidth 
+would not be so high (the nodes only had InfiniBand and 1G Ethernet). Maybe 
+container was using IPoIB? I did not check that yet. 
+
+Reference: How the benchmarks were executed:
+mpirun -n 20 -hostfile hostfile singularity exec 
+/home/chih/containers/container-centos6-demo.img xhpl
+mpirun -n 2 -hostfile hostfile singularity exec 
+/home/chih/containers/container-centos6-demo.img osu_bw
+mpirun -n 2 -hostfile hostfile singularity exec 
+/home/chih/containers/container-centos6-demo.img osu_latency
+
+Chih-Song
+
+
+------=_Part_1874_2001050861.1487787589714
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hello,<br><br>This is again Chih-Song from Fujitsu. I deci=
+ded to make another post to share my experience of performance impact with =
+two kernel benchmarks: High Performance Linpack (HPL) and the OSU MPI bench=
+mark suit.<br><br>Overall, there was no noticeable performance difference f=
+or benchmarks running on a single node. But for benchmarks running across n=
+odes, I did observe some difference, which was against to the claim of Sing=
+ularity. Have anybody done any similar exercise? What are your findings? Ca=
+n you suspect whether I was doing anything wrong?<br><br>Host configuration=
+:<br>2x Intel E5-2680v2 (Ivybridge)<br>64GB memory<br>Mellanox ConnectX-3 F=
+DR adapter (but connects to a Mellanox QDR switch)<br>RHEL 6.7<br>OpenMPI d=
+evelopment master branch (8.2.17)<br>Intel MKL 2017.0 community edition<br>=
+gcc 4.4<br><br>Container:<br>Centos 6 and 7 both tested without noticeable =
+performance difference<br>OpenMPI development master branch (8.2.17)<br>Int=
+el MKL 2017.0 community edition<br>gcc 4.4.7 (Centos-6), gcc 4.8.5 (Centos-=
+7)<br><br>Benchmarks:<br>1. LINPACK 2.2<br>2. OSU 5.3.2<br><br>&lt;LINPACK&=
+gt;<br>Single node. N=3D40000, P=3D5, Q=3D4<br>Container: 368 GFlops<br>Hos=
+t: 368 GFLOPS<br>#A single node has 2x Intel E5-2680v2. So we are expecting=
+ 2 x 10 x 8 * 2.8 =3D 448 GFlops<br>Efficiency =3D 368 / 448 =3D 82%. Not b=
+ad (given the small N (matrix size) and that gcc instead of icc was used, a=
+nd the executable was dynamically linked -- by purpose)<br><br>Dual-node, N=
+=3D60000, P=3D8, Q=3D5<br>Container: 702 GFLOPS<br>Host:737 GFLOPS<br>There=
+ is roughly 5% of performance degradation with the container.<br><br>&lt;OS=
+U-P2P-Bandwidth&gt;<br>The container only saw 50-65% of the total bandwidth=
+.<br><br>Container: <br>Msg size(bytes) BW (MB/s)<br>65536=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+ 2142.28<br>131072=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0 2363.45<br>262144=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 1705.79<br>524288=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0 1592.56<br>1048576=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 1721.88<br>2097152=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 1557.42<br>4194304=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 1655.90<br><br>Host:<br>Msg size(bytes) BW (MB/s)<br>65536=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 3722.32<br>131072=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 3751.33<br>262144=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 3771.13<br>524288=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0 3774.33<br>1048576=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 3781.43<br>2097152=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 3775.00<br>419430=
+4=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0 3773.68<br><br>&lt;OSU-P2P-Latency&gt;<br>Here the container was sig=
+nificantly slower.<br><br>Container: <br>Msg size(bytes)=C2=A0 Latency (us)=
+<br>0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 31.59<br>1=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 31.86<br>2=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 31.83<br><br>Host:<br>Msg size(bytes)=C2=
+=A0 Latency (us)<br>0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 1.55<br>1=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 1.=
+63<br>2=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 1.63<br>=
+<br>Note 1: Run-to-run variation of performance was much smaller than the d=
+ifference on the host and in the container.<br>Note 2: When Singularity was=
+ used, I could not instruct mpirun to use the ofed by specifying &quot;--mc=
+a btl openib,self,vader&quot; in the mpirun parameter list. Doing so would =
+give me an error message stating that the openib component is missing. Howe=
+ver, from the bandwidth measured above, the container did seem to be able t=
+o use InfiniBand, otherwise the bandwidth would not be so high (the nodes o=
+nly had InfiniBand and 1G Ethernet). Maybe container was using IPoIB? I did=
+ not check that yet. <br><br>Reference: How the benchmarks were executed:<b=
+r>mpirun -n 20 -hostfile hostfile singularity exec /home/chih/containers/co=
+ntainer-centos6-demo.img xhpl<br>mpirun -n 2 -hostfile hostfile singularity=
+ exec /home/chih/containers/container-centos6-demo.img osu_bw<br>mpirun -n =
+2 -hostfile hostfile singularity exec /home/chih/containers/container-cento=
+s6-demo.img osu_latency<br><br>Chih-Song<br><br></div>
+------=_Part_1874_2001050861.1487787589714--
+
+------=_Part_1873_205044636.1487787589714--

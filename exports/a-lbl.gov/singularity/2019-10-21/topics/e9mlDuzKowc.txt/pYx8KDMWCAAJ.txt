@@ -1,0 +1,559 @@
+Date: Mon, 16 Jan 2017 03:47:14 -0800 (PST)
+From: Chris Collins <cca...@googlemail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <b14e6534-1279-4efe-919b-c48a5be1ef75@lbl.gov>
+In-Reply-To: <CAKswpQizZjKHPgdNxVZNAmvfLQXNmRp8tXBpV1S-ZSttfw82Ww@mail.gmail.com>
+References: <5161117d-8823-45f9-a320-d35642b6278d@lbl.gov> <CAN7etTwTe_fHzof4ACoU2L48kp14K5y2nvustjaJXfEwf2MOFQ@mail.gmail.com>
+ <4c1b65a3-6283-4b2a-be50-03e7650a155c@lbl.gov> <e23a02cf-a55c-4da5-bf0f-72c449c49e44@lbl.gov>
+ <CAKswpQizZjKHPgdNxVZNAmvfLQXNmRp8tXBpV1S-ZSttfw82Ww@mail.gmail.com>
+Subject: Re: [Singularity] Singularity within Docker: could not virtualize
+ mount namespace
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1319_1070921948.1484567234234"
+
+------=_Part_1319_1070921948.1484567234234
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1320_1064273036.1484567234234"
+
+------=_Part_1320_1064273036.1484567234234
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi Brian,
+
+Thanks very much for the suggestion on that - I'll give that a try when 
+resource is available. There is a single top level docker image which is 
+managed by us, so it would only be the singularity images which are user 
+provided.
+
+Just having a quick look with pscap and comparing docker on my real (where 
+is doesn't work) and test (where it does work) systems the capabilities 
+look the same, but I will give the explicit SYS_ADMIN capability a try:
+
+Real:
+6881  6882  root        docker            full
+6882  25028 root        supervisord       chown, dac_override, fowner, 
+fsetid, kill, setgid, setuid, setpcap, net_bind_service, net_raw, 
+sys_chroot, mknod, audit_write, setfcap
+
+Test:
+1     1432  root        docker-current    full
+1432  2042  root        supervisord       chown, dac_override, fowner, 
+fsetid, kill, setgid, setuid, setpcap, net_bind_service, net_raw, 
+sys_chroot, mknod, audit_write, setfcap
+ 
+Thanks,
+
+Chris
+
+
+On Thursday, 12 January 2017 22:53:26 UTC, Brian Bockelman wrote:
+>
+> Hi Chris, 
+>
+> Locally, we were able to get singularity-inside-Docker working by 
+> adding the following to the Docker command line: 
+>
+> --cap-add=SYS_ADMIN 
+>
+> That gives the container more privilege for setuid apps, but 
+> significantly less than adding --privileged.  The full list of default 
+> caps is here: 
+>
+> https://docs.docker.com/engine/reference/run/ 
+>
+> If you drop the default caps, the other ones needed are: 
+>
+> DAC_OVERRIDE 
+> SETUID 
+> SETGID 
+> SYS_CHROOT 
+>
+> That said, we still only allow this flag when the user is utilizing 
+> sysadmin-provided images.  For user-provided docker images, we drop 
+> all caps. 
+>
+> HTH, 
+>
+> Brian 
+>
+> On Tue, Jan 10, 2017 at 4:40 AM, 'Chris Collins' via singularity 
+> <si...@lbl.gov <javascript:>> wrote: 
+> > Hi, 
+> > 
+> > Just to fill in some details on this for those interested, having 
+> resumed 
+> > looking at this post-Christmas.... 
+> > 
+> > In my (VM) test environment, the obvious indicators are that the docker 
+> > container is running non-privilege (I'm even starting docker with 
+> > --privileged=false) and docker inspect is showing: 
+> > 
+> > [root@centos7base ~]# docker inspect 
+> --format='{{.HostConfig.Privileged}}' 
+> > test-docker 
+> > false 
+> > 
+> > However, within the container, things are a bit different - using an 
+> > approach suggested at 
+> > 
+> http://stackoverflow.com/questions/32144575/how-to-know-if-a-docker-container-is-running-in-privileged-mode 
+> > specifically the following, seems to indicate I have at least some 
+> > privilege. I guess that is why singularity works here. 
+> > 
+> > ip link add dummy0 type dummy >/dev/null 
+> > if [[ $? -eq 0 ]]; then 
+> >     PRIVILEGED=true 
+> >     # clean the dummy0 link 
+> >     ip link delete dummy0 >/dev/null 
+> > else 
+> >     PRIVILEGED=false 
+> > fi 
+> > 
+> > 
+> > On my real production servers, the docker inspect comes back the same, 
+> but 
+> > the above code errors with "Operation not permitted". 
+> > 
+> > I've only recently started looking at Docker and singularity, so I need 
+> to 
+> > do a little more investigation i.e. is there some global Docker setting 
+> > impacting here or is there something within the container that allows 
+> this? 
+> > 
+> > Either way, as things stand it is a no go in my production environment, 
+> > which is a real shame. 
+> > 
+> > Thanks anyway, 
+> > 
+> > Chris 
+> > 
+> > On Tuesday, 27 December 2016 22:05:25 UTC, Chris Collins wrote: 
+> >> 
+> >> Hi Greg, 
+> >> 
+> >> Thanks for getting back to me with that. 
+> >> 
+> >> That does sound right, and I'm pretty sure Docker in my production env 
+> >> isn't setting privileged, while journalctl is recording the launch with 
+> >> privileged=false. 
+> >> 
+> >> However, unless I'm missing something, the Docker in my VM test 
+> >> environment (where singularity works) doesn't explicitly use the 
+> >> --privileged option and from journalctl it also looks like privileged 
+> is 
+> >> false. 
+> >> 
+> >> Could there be anything else that would result in similar behaviour? 
+> Does 
+> >> anyone know if there is a way of actually testing privilege 
+> requirements 
+> >> from within a docker container? 
+> >> 
+> >> Thanks, 
+> >> 
+> >> Chris 
+> >> 
+> >> On Saturday, 24 December 2016 01:50:51 UTC, Gregory M. Kurtzer wrote: 
+> >>> 
+> >>> Hi Chris, 
+> >>> 
+> >>> To use Singularity within a Docker container I think you must use the 
+> >>> --privileged Docker option. 
+> >>> 
+> >>> Hope that helps! 
+> >>> 
+> >>> Greg 
+> >>> 
+> >>> 
+> >>> On Fri, Dec 23, 2016 at 3:08 PM 'Chris Collins' via singularity 
+> >>> <si...@lbl.gov> wrote: 
+> >>>> 
+> >>>> Hi, 
+> >>>> 
+> >>>> I've just starting playing around with Singularity as a way of 
+> >>>> potentially providing access to containerised workflows. I am however 
+> >>>> running into some issues with getting it working in my already Docker 
+> based 
+> >>>> production environment. I've got a simple example working in a 
+> similar test 
+> >>>> environment (though not exactly the same) but in principal, I know 
+> >>>> Singularity works fine from within Docker. 
+> >>>> 
+> >>>> Anyway, the error I'm getting is: 
+> >>>> 
+> >>>> singularity shell -C docker-anaconda27.img 
+> >>>> ERROR  : Could not virtualize mount namespace: Operation not 
+> permitted 
+> >>>> ABORT  : Retval = 255 
+> >>>> 
+> >>>> I'm running as root at this stage to rule out any permission issue. A 
+> >>>> snip of the debug output doesn't make anything clearer: 
+> >>>> 
+> >>>> VERBOSE [U=0,P=41280]      pid.c:54:singularity_ns_pid_unshare()     
+>  : 
+> >>>> Not virtualizing PID namespace by configuration 
+> >>>> DEBUG   [U=0,P=41280] 
+> >>>> config_parser.c:62:singularity_config_rewind(): Rewinding 
+> configuration file 
+> >>>> DEBUG   [U=0,P=41280] 
+> >>>> config_parser.c:107:singularity_config_get_bool(): Called 
+> >>>> singularity_config_get_bool(mount slave, 0) 
+> >>>> DEBUG   [U=0,P=41280] 
+> >>>> config_parser.c:80:singularity_config_get_value(): Called 
+> >>>> singularity_config_get_value(mount slave) 
+> >>>> VERBOSE [U=0,P=41280] 
+> >>>> config_parser.c:91:singularity_config_get_value(): Got config key 
+> mount 
+> >>>> slave (= 'no') 
+> >>>> DEBUG   [U=0,P=41280] 
+> >>>> config_parser.c:118:singularity_config_get_bool(): Return 
+> >>>> singularity_config_get_bool(mount slave, 0) = 0 
+> >>>> DEBUG   [U=0,P=41280]     
+>  privilege.c:147:singularity_priv_escalate(): 
+> >>>> Running as root, not changing privileges 
+> >>>> DEBUG   [U=0,P=41280]      mnt.c:54:singularity_ns_mnt_unshare()     
+>  : 
+> >>>> Virtualizing FS namespace 
+> >>>> DEBUG   [U=0,P=41280]      mnt.c:61:singularity_ns_mnt_unshare()     
+>  : 
+> >>>> Virtualizing mount namespace 
+> >>>> ERROR   [U=0,P=41280]      mnt.c:63:singularity_ns_mnt_unshare()     
+>  : 
+> >>>> Could not virtualize mount namespace: Operation not permitted 
+> >>>> 
+> >>>> I have "allow pid ns = no" as this was also kicking up an error. I've 
+> >>>> tried setting all mount options in the conf to no. 
+> >>>> 
+> >>>> The same command from the same installation works fine on the bare 
+> metal 
+> >>>> system. 
+> >>>> 
+> >>>> Does anyone have any suggestions of what might be the issue or at 
+> least 
+> >>>> where to start looking? 
+> >>>> 
+> >>>> Thanks very much, 
+> >>>> 
+> >>>> Chris 
+> >>>> 
+> >>>> 
+> >>>> 
+> >>>> 
+> >>>> 
+> >>>> 
+> >>>> 
+> >>>> 
+> >>>> -- 
+> >>>> 
+> >>>> 
+> >>>> You received this message because you are subscribed to the Google 
+> >>>> Groups "singularity" group. 
+> >>>> 
+> >>>> 
+> >>>> To unsubscribe from this group and stop receiving emails from it, 
+> send 
+> >>>> an email to singu...@lbl.gov. 
+> >>>> 
+> >>>> 
+> > -- 
+> > You received this message because you are subscribed to the Google 
+> Groups 
+> > "singularity" group. 
+> > To unsubscribe from this group and stop receiving emails from it, send 
+> an 
+> > email to singu...@lbl.gov <javascript:>. 
+>
+
+------=_Part_1320_1064273036.1484567234234
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Brian,<div><br></div><div>Thanks very much for the sugg=
+estion on that - I&#39;ll give that a try when resource is available. There=
+ is a single top level docker image which is managed by us, so it would onl=
+y be the singularity images which are user provided.</div><div><br></div><d=
+iv>Just having a quick look with pscap and comparing docker on my real (whe=
+re is doesn&#39;t work) and test (where it does work) systems the capabilit=
+ies look the same, but I will give the explicit SYS_ADMIN capability a try:=
+</div><div><br></div><div>Real:</div><div><div>6881 =C2=A06882 =C2=A0root =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0docker =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+full</div><div>6882 =C2=A025028 root =C2=A0 =C2=A0 =C2=A0 =C2=A0supervisord=
+ =C2=A0 =C2=A0 =C2=A0 chown, dac_override, fowner, fsetid, kill, setgid, se=
+tuid, setpcap, net_bind_service, net_raw, sys_chroot, mknod, audit_write, s=
+etfcap</div></div><div><br></div><div>Test:</div><div><div>1 =C2=A0 =C2=A0 =
+1432 =C2=A0root =C2=A0 =C2=A0 =C2=A0 =C2=A0docker-current =C2=A0 =C2=A0full=
+</div><div>1432 =C2=A02042 =C2=A0root =C2=A0 =C2=A0 =C2=A0 =C2=A0supervisor=
+d =C2=A0 =C2=A0 =C2=A0 chown, dac_override, fowner, fsetid, kill, setgid, s=
+etuid, setpcap, net_bind_service, net_raw, sys_chroot, mknod, audit_write, =
+setfcap</div></div><div>=C2=A0</div><div>Thanks,</div><div><br></div><div>C=
+hris<br><div><br><br>On Thursday, 12 January 2017 22:53:26 UTC, Brian Bocke=
+lman  wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-lef=
+t: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;">Hi Chris,
+<br>
+<br>Locally, we were able to get singularity-inside-Docker working by
+<br>adding the following to the Docker command line:
+<br>
+<br>--cap-add=3DSYS_ADMIN
+<br>
+<br>That gives the container more privilege for setuid apps, but
+<br>significantly less than adding --privileged. =C2=A0The full list of def=
+ault
+<br>caps is here:
+<br>
+<br><a href=3D"https://docs.docker.com/engine/reference/run/" target=3D"_bl=
+ank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.google.co=
+m/url?q\x3dhttps%3A%2F%2Fdocs.docker.com%2Fengine%2Freference%2Frun%2F\x26s=
+a\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGD4GF24tFiYLUFXcJ3zS4nZlg4Tg&#39;;retur=
+n true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%=
+3A%2F%2Fdocs.docker.com%2Fengine%2Freference%2Frun%2F\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNGD4GF24tFiYLUFXcJ3zS4nZlg4Tg&#39;;return true;">https://=
+docs.docker.com/<wbr>engine/reference/run/</a>
+<br>
+<br>If you drop the default caps, the other ones needed are:
+<br>
+<br>DAC_OVERRIDE
+<br>SETUID
+<br>SETGID
+<br>SYS_CHROOT
+<br>
+<br>That said, we still only allow this flag when the user is utilizing
+<br>sysadmin-provided images. =C2=A0For user-provided docker images, we dro=
+p
+<br>all caps.
+<br>
+<br>HTH,
+<br>
+<br>Brian
+<br>
+<br>On Tue, Jan 10, 2017 at 4:40 AM, &#39;Chris Collins&#39; via singularit=
+y
+<br>&lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+Kx-aP_vkEgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">si...@lbl.gov</a>&gt; wrote:
+<br>&gt; Hi,
+<br>&gt;
+<br>&gt; Just to fill in some details on this for those interested, having =
+resumed
+<br>&gt; looking at this post-Christmas....
+<br>&gt;
+<br>&gt; In my (VM) test environment, the obvious indicators are that the d=
+ocker
+<br>&gt; container is running non-privilege (I&#39;m even starting docker w=
+ith
+<br>&gt; --privileged=3Dfalse) and docker inspect is showing:
+<br>&gt;
+<br>&gt; [root@centos7base ~]# docker inspect --format=3D&#39;{{.HostConfig=
+.<wbr>Privileged}}&#39;
+<br>&gt; test-docker
+<br>&gt; false
+<br>&gt;
+<br>&gt; However, within the container, things are a bit different - using =
+an
+<br>&gt; approach suggested at
+<br>&gt; <a href=3D"http://stackoverflow.com/questions/32144575/how-to-know=
+-if-a-docker-container-is-running-in-privileged-mode" target=3D"_blank" rel=
+=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x=
+3dhttp%3A%2F%2Fstackoverflow.com%2Fquestions%2F32144575%2Fhow-to-know-if-a-=
+docker-container-is-running-in-privileged-mode\x26sa\x3dD\x26sntz\x3d1\x26u=
+sg\x3dAFQjCNEoAuzRm4g4tMCvYj6qmhQK9ZVlSw&#39;;return true;" onclick=3D"this=
+.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fstackoverflow.com%=
+2Fquestions%2F32144575%2Fhow-to-know-if-a-docker-container-is-running-in-pr=
+ivileged-mode\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEoAuzRm4g4tMCvYj6qmhQ=
+K9ZVlSw&#39;;return true;">http://stackoverflow.com/<wbr>questions/32144575=
+/how-to-<wbr>know-if-a-docker-container-is-<wbr>running-in-privileged-mode<=
+/a>
+<br>&gt; specifically the following, seems to indicate I have at least some
+<br>&gt; privilege. I guess that is why singularity works here.
+<br>&gt;
+<br>&gt; ip link add dummy0 type dummy &gt;/dev/null
+<br>&gt; if [[ $? -eq 0 ]]; then
+<br>&gt; =C2=A0 =C2=A0 PRIVILEGED=3Dtrue
+<br>&gt; =C2=A0 =C2=A0 # clean the dummy0 link
+<br>&gt; =C2=A0 =C2=A0 ip link delete dummy0 &gt;/dev/null
+<br>&gt; else
+<br>&gt; =C2=A0 =C2=A0 PRIVILEGED=3Dfalse
+<br>&gt; fi
+<br>&gt;
+<br>&gt;
+<br>&gt; On my real production servers, the docker inspect comes back the s=
+ame, but
+<br>&gt; the above code errors with &quot;Operation not permitted&quot;.
+<br>&gt;
+<br>&gt; I&#39;ve only recently started looking at Docker and singularity, =
+so I need to
+<br>&gt; do a little more investigation i.e. is there some global Docker se=
+tting
+<br>&gt; impacting here or is there something within the container that all=
+ows this?
+<br>&gt;
+<br>&gt; Either way, as things stand it is a no go in my production environ=
+ment,
+<br>&gt; which is a real shame.
+<br>&gt;
+<br>&gt; Thanks anyway,
+<br>&gt;
+<br>&gt; Chris
+<br>&gt;
+<br>&gt; On Tuesday, 27 December 2016 22:05:25 UTC, Chris Collins wrote:
+<br>&gt;&gt;
+<br>&gt;&gt; Hi Greg,
+<br>&gt;&gt;
+<br>&gt;&gt; Thanks for getting back to me with that.
+<br>&gt;&gt;
+<br>&gt;&gt; That does sound right, and I&#39;m pretty sure Docker in my pr=
+oduction env
+<br>&gt;&gt; isn&#39;t setting privileged, while journalctl is recording th=
+e launch with
+<br>&gt;&gt; privileged=3Dfalse.
+<br>&gt;&gt;
+<br>&gt;&gt; However, unless I&#39;m missing something, the Docker in my VM=
+ test
+<br>&gt;&gt; environment (where singularity works) doesn&#39;t explicitly u=
+se the
+<br>&gt;&gt; --privileged option and from journalctl it also looks like pri=
+vileged is
+<br>&gt;&gt; false.
+<br>&gt;&gt;
+<br>&gt;&gt; Could there be anything else that would result in similar beha=
+viour? Does
+<br>&gt;&gt; anyone know if there is a way of actually testing privilege re=
+quirements
+<br>&gt;&gt; from within a docker container?
+<br>&gt;&gt;
+<br>&gt;&gt; Thanks,
+<br>&gt;&gt;
+<br>&gt;&gt; Chris
+<br>&gt;&gt;
+<br>&gt;&gt; On Saturday, 24 December 2016 01:50:51 UTC, Gregory M. Kurtzer=
+ wrote:
+<br>&gt;&gt;&gt;
+<br>&gt;&gt;&gt; Hi Chris,
+<br>&gt;&gt;&gt;
+<br>&gt;&gt;&gt; To use Singularity within a Docker container I think you m=
+ust use the
+<br>&gt;&gt;&gt; --privileged Docker option.
+<br>&gt;&gt;&gt;
+<br>&gt;&gt;&gt; Hope that helps!
+<br>&gt;&gt;&gt;
+<br>&gt;&gt;&gt; Greg
+<br>&gt;&gt;&gt;
+<br>&gt;&gt;&gt;
+<br>&gt;&gt;&gt; On Fri, Dec 23, 2016 at 3:08 PM &#39;Chris Collins&#39; vi=
+a singularity
+<br>&gt;&gt;&gt; &lt;<a>si...@lbl.gov</a>&gt; wrote:
+<br>&gt;&gt;&gt;&gt;
+<br>&gt;&gt;&gt;&gt; Hi,
+<br>&gt;&gt;&gt;&gt;
+<br>&gt;&gt;&gt;&gt; I&#39;ve just starting playing around with Singularity=
+ as a way of
+<br>&gt;&gt;&gt;&gt; potentially providing access to containerised workflow=
+s. I am however
+<br>&gt;&gt;&gt;&gt; running into some issues with getting it working in my=
+ already Docker based
+<br>&gt;&gt;&gt;&gt; production environment. I&#39;ve got a simple example =
+working in a similar test
+<br>&gt;&gt;&gt;&gt; environment (though not exactly the same) but in princ=
+ipal, I know
+<br>&gt;&gt;&gt;&gt; Singularity works fine from within Docker.
+<br>&gt;&gt;&gt;&gt;
+<br>&gt;&gt;&gt;&gt; Anyway, the error I&#39;m getting is:
+<br>&gt;&gt;&gt;&gt;
+<br>&gt;&gt;&gt;&gt; singularity shell -C docker-anaconda27.img
+<br>&gt;&gt;&gt;&gt; ERROR =C2=A0: Could not virtualize mount namespace: Op=
+eration not permitted
+<br>&gt;&gt;&gt;&gt; ABORT =C2=A0: Retval =3D 255
+<br>&gt;&gt;&gt;&gt;
+<br>&gt;&gt;&gt;&gt; I&#39;m running as root at this stage to rule out any =
+permission issue. A
+<br>&gt;&gt;&gt;&gt; snip of the debug output doesn&#39;t make anything cle=
+arer:
+<br>&gt;&gt;&gt;&gt;
+<br>&gt;&gt;&gt;&gt; VERBOSE [U=3D0,P=3D41280] =C2=A0 =C2=A0 =C2=A0pid.c:54=
+:singularity_ns_pid_<wbr>unshare() =C2=A0 =C2=A0 =C2=A0:
+<br>&gt;&gt;&gt;&gt; Not virtualizing PID namespace by configuration
+<br>&gt;&gt;&gt;&gt; DEBUG =C2=A0 [U=3D0,P=3D41280]
+<br>&gt;&gt;&gt;&gt; config_parser.c:62:<wbr>singularity_config_rewind(): R=
+ewinding configuration file
+<br>&gt;&gt;&gt;&gt; DEBUG =C2=A0 [U=3D0,P=3D41280]
+<br>&gt;&gt;&gt;&gt; config_parser.c:107:<wbr>singularity_config_get_bool()=
+: Called
+<br>&gt;&gt;&gt;&gt; singularity_config_get_bool(<wbr>mount slave, 0)
+<br>&gt;&gt;&gt;&gt; DEBUG =C2=A0 [U=3D0,P=3D41280]
+<br>&gt;&gt;&gt;&gt; config_parser.c:80:<wbr>singularity_config_get_value()=
+<wbr>: Called
+<br>&gt;&gt;&gt;&gt; singularity_config_get_value(<wbr>mount slave)
+<br>&gt;&gt;&gt;&gt; VERBOSE [U=3D0,P=3D41280]
+<br>&gt;&gt;&gt;&gt; config_parser.c:91:<wbr>singularity_config_get_value()=
+<wbr>: Got config key mount
+<br>&gt;&gt;&gt;&gt; slave (=3D &#39;no&#39;)
+<br>&gt;&gt;&gt;&gt; DEBUG =C2=A0 [U=3D0,P=3D41280]
+<br>&gt;&gt;&gt;&gt; config_parser.c:118:<wbr>singularity_config_get_bool()=
+: Return
+<br>&gt;&gt;&gt;&gt; singularity_config_get_bool(<wbr>mount slave, 0) =3D 0
+<br>&gt;&gt;&gt;&gt; DEBUG =C2=A0 [U=3D0,P=3D41280] =C2=A0 =C2=A0 =C2=A0pri=
+vilege.c:147:singularity_<wbr>priv_escalate():
+<br>&gt;&gt;&gt;&gt; Running as root, not changing privileges
+<br>&gt;&gt;&gt;&gt; DEBUG =C2=A0 [U=3D0,P=3D41280] =C2=A0 =C2=A0 =C2=A0mnt=
+.c:54:singularity_ns_mnt_<wbr>unshare() =C2=A0 =C2=A0 =C2=A0:
+<br>&gt;&gt;&gt;&gt; Virtualizing FS namespace
+<br>&gt;&gt;&gt;&gt; DEBUG =C2=A0 [U=3D0,P=3D41280] =C2=A0 =C2=A0 =C2=A0mnt=
+.c:61:singularity_ns_mnt_<wbr>unshare() =C2=A0 =C2=A0 =C2=A0:
+<br>&gt;&gt;&gt;&gt; Virtualizing mount namespace
+<br>&gt;&gt;&gt;&gt; ERROR =C2=A0 [U=3D0,P=3D41280] =C2=A0 =C2=A0 =C2=A0mnt=
+.c:63:singularity_ns_mnt_<wbr>unshare() =C2=A0 =C2=A0 =C2=A0:
+<br>&gt;&gt;&gt;&gt; Could not virtualize mount namespace: Operation not pe=
+rmitted
+<br>&gt;&gt;&gt;&gt;
+<br>&gt;&gt;&gt;&gt; I have &quot;allow pid ns =3D no&quot; as this was als=
+o kicking up an error. I&#39;ve
+<br>&gt;&gt;&gt;&gt; tried setting all mount options in the conf to no.
+<br>&gt;&gt;&gt;&gt;
+<br>&gt;&gt;&gt;&gt; The same command from the same installation works fine=
+ on the bare metal
+<br>&gt;&gt;&gt;&gt; system.
+<br>&gt;&gt;&gt;&gt;
+<br>&gt;&gt;&gt;&gt; Does anyone have any suggestions of what might be the =
+issue or at least
+<br>&gt;&gt;&gt;&gt; where to start looking?
+<br>&gt;&gt;&gt;&gt;
+<br>&gt;&gt;&gt;&gt; Thanks very much,
+<br>&gt;&gt;&gt;&gt;
+<br>&gt;&gt;&gt;&gt; Chris
+<br>&gt;&gt;&gt;&gt;
+<br>&gt;&gt;&gt;&gt;
+<br>&gt;&gt;&gt;&gt;
+<br>&gt;&gt;&gt;&gt;
+<br>&gt;&gt;&gt;&gt;
+<br>&gt;&gt;&gt;&gt;
+<br>&gt;&gt;&gt;&gt;
+<br>&gt;&gt;&gt;&gt;
+<br>&gt;&gt;&gt;&gt; --
+<br>&gt;&gt;&gt;&gt;
+<br>&gt;&gt;&gt;&gt;
+<br>&gt;&gt;&gt;&gt; You received this message because you are subscribed t=
+o the Google
+<br>&gt;&gt;&gt;&gt; Groups &quot;singularity&quot; group.
+<br>&gt;&gt;&gt;&gt;
+<br>&gt;&gt;&gt;&gt;
+<br>&gt;&gt;&gt;&gt; To unsubscribe from this group and stop receiving emai=
+ls from it, send
+<br>&gt;&gt;&gt;&gt; an email to <a>singu...@lbl.gov</a>.
+<br>&gt;&gt;&gt;&gt;
+<br>&gt;&gt;&gt;&gt;
+<br>&gt; --
+<br>&gt; You received this message because you are subscribed to the Google=
+ Groups
+<br>&gt; &quot;singularity&quot; group.
+<br>&gt; To unsubscribe from this group and stop receiving emails from it, =
+send an
+<br>&gt; email to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-=
+mailto=3D"Kx-aP_vkEgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;ja=
+vascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;r=
+eturn true;">singularity...@lbl.<wbr>gov</a>.
+<br></blockquote></div></div></div>
+------=_Part_1320_1064273036.1484567234234--
+
+------=_Part_1319_1070921948.1484567234234--

@@ -1,0 +1,296 @@
+Date: Tue, 22 May 2018 08:33:36 -0700 (PDT)
+From: Jonathan Greenberg <jgr...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Cc: thomas....@desy.de
+Message-Id: <1896376f-2fa6-4fbe-b372-214c100ce676@lbl.gov>
+In-Reply-To: <8a9b1dad-df1e-b942-1e74-18ed3c7b07ab@desy.de>
+References: <36d5172e-f600-4a90-8f14-f4ca0a780d3f@lbl.gov>
+ <7ba57c0e-3804-411c-a921-d6b50e9785a3@lbl.gov>
+ <CAM=pu++ETnfddv+B4oP=Xk7i5x44F97_XD+wc2AZPL9A2UW-NQ@mail.gmail.com>
+ <8a9b1dad-df1e-b942-1e74-18ed3c7b07ab@desy.de>
+Subject: Re: [Singularity] Re: Aliases in a container referencing
+ environment variables?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_25750_1565348768.1527003216463"
+
+------=_Part_25750_1565348768.1527003216463
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_25751_521741167.1527003216464"
+
+------=_Part_25751_521741167.1527003216464
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+So I never got these suggestions working, but I did get a solution that is 
+a bit hacky, but works:
+
+https://github.com/gearslaboratory/gears-singularity/blob/master/singularity-definitions/development/Singularity.gears-slurm
+
+Basically, I made little text files for each command mapped to what I want 
+it to do.  
+
+This works!
+
+On Tuesday, May 22, 2018 at 1:25:41 AM UTC-7, Thomas Hartmann wrote:
+>
+> Hi all, 
+>
+> a maybe somewhat hacky way could be to peak from the container into its 
+> parent PID environment variables... [1] 
+>   > cat /proc/${PPID}/environ | tr '\0' '\n' | grep "USER=" 
+>
+> However, I would personally would vote for Vanessa suggestion and 
+> pass/rename the variables into the container (which should be much 
+> cleaner) 
+>
+> Cheers, 
+>   Thomas 
+>
+> [1] 
+> which requires to work no PID namespace isolation to be active, i.e., 
+> seeing all processes) - which should be the default, I guess - but YMMV 
+>
+>
+>
+> On 2018-05-21 22:26, v wrote: 
+> > Why can't you just change the quote? 
+> > 
+> > 
+> >     alias squeue='ssh ${USER}@${HOSTNAME} squeue' 
+> > 
+> > 
+> > and if you need additional double quotes inside, you can do that too. 
+> > 
+> >     alias squeue='"ssh ${USER}@${HOSTNAME} squeue"' 
+> > 
+> > 
+> > and don't forget at runtime you can pass variables into the environment 
+> > with SINGULARITYENV_<variable-name>  
+> > 
+> > On Mon, May 21, 2018 at 12:36 PM, Jonathan Greenberg <j...@gmail.com 
+> <javascript:> 
+> > <mailto:j...@gmail.com <javascript:>>> wrote: 
+> > 
+> >     Quick follow-up -- it seems I may want to use a function instead, 
+> e.g.: 
+> > 
+> >       function squeue { ssh $USER@$HOSTNAME squeue; } 
+> > 
+> >     But I'm not sure where/how to declare this function in a singularity 
+> >     definition.  Any ideas? 
+> > 
+> >     --j 
+> > 
+> >     On Monday, May 21, 2018 at 9:33:57 AM UTC-7, Jonathan Greenberg 
+> wrote: 
+> > 
+> >         Folks: 
+> > 
+> >         We have a new approach for dealing with the previous issues 
+> >         running e.g. a SLURM command from WITHIN a container -- a basic 
+> >         hack where we're simply ssh'ing to our local machine and 
+> >         executing the command remotely.  I thought I could simply add 
+> >         this to a container: 
+> > 
+> >           alias squeue="ssh $USER@$HOSTNAME squeue" 
+> > 
+> >         But now that I see what happened, this gets executed during the 
+> >         build so $USER turns into "root" and $HOSTNAME doesn't get 
+> >         evaluated at all. 
+> > 
+> >         So, given I need the container to be able to execute a command 
+> >         named simply "squeue" that needs to be interpreted as "ssh 
+> >         $USER@$HOSTNAME squeue" (where $USER is the user who is 
+> >         executing the singularity container and $HOSTNAME is the machine 
+> >         to launch the command on), what is the "right" way to do this? 
+> > 
+> >         Note I've tried the other approaches to solving the SLURM issue 
+> >         (bind paths, modules, etc.) and they don't work on our system.  
+> >         ssh does work from within a shell, but I need the command be 
+> >         part of the definition itself. 
+> > 
+> >         --j 
+> > 
+> >     -- 
+> >     You received this message because you are subscribed to the Google 
+> >     Groups "singularity" group. 
+> >     To unsubscribe from this group and stop receiving emails from it, 
+> >     send an email to singu...@lbl.gov <javascript:> 
+> >     <mailto:singu...@lbl.gov <javascript:>>. 
+> > 
+> > 
+> > 
+> > 
+> > -- 
+> > Vanessa Villamia Sochat 
+> > Stanford University '16 
+> > (603) 321-0676 
+> > 
+> > -- 
+> > You received this message because you are subscribed to the Google 
+> > Groups "singularity" group. 
+> > To unsubscribe from this group and stop receiving emails from it, send 
+> > an email to singu...@lbl.gov <javascript:> 
+> > <mailto:singu...@lbl.gov <javascript:>>. 
+>
+>
+------=_Part_25751_521741167.1527003216464
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">So I never got these suggestions working, but I did get a =
+solution that is a bit hacky, but works:<div><br></div><div>https://github.=
+com/gearslaboratory/gears-singularity/blob/master/singularity-definitions/d=
+evelopment/Singularity.gears-slurm</div><div><br></div><div>Basically, I ma=
+de little text files for each command mapped to what I want it to do.=C2=A0=
+=C2=A0</div><div><br></div><div>This works!<br><br>On Tuesday, May 22, 2018=
+ at 1:25:41 AM UTC-7, Thomas Hartmann wrote:<blockquote class=3D"gmail_quot=
+e" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;paddin=
+g-left: 1ex;">Hi all,
+<br>
+<br>a maybe somewhat hacky way could be to peak from the container into its
+<br>parent PID environment variables... [1]
+<br>=C2=A0 &gt; cat /proc/${PPID}/environ | tr &#39;\0&#39; &#39;\n&#39; | =
+grep &quot;USER=3D&quot;
+<br>
+<br>However, I would personally would vote for Vanessa suggestion and
+<br>pass/rename the variables into the container (which should be much clea=
+ner)
+<br>
+<br>Cheers,
+<br>=C2=A0 Thomas
+<br>
+<br>[1]
+<br>which requires to work no PID namespace isolation to be active, i.e.,
+<br>seeing all processes) - which should be the default, I guess - but YMMV
+<br>
+<br>
+<br>
+<br>On 2018-05-21 22:26, v wrote:
+<br>&gt; Why can&#39;t you just change the quote?
+<br>&gt;=20
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 alias squeue=3D&#39;ssh ${USER}@${HOSTNAME} squeue&#=
+39;
+<br>&gt;=20
+<br>&gt;=20
+<br>&gt; and if you need additional double quotes inside, you can do that t=
+oo.
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 alias squeue=3D&#39;&quot;ssh ${USER}@${HOSTNAME} sq=
+ueue&quot;&#39;
+<br>&gt;=20
+<br>&gt;=20
+<br>&gt; and don&#39;t forget at runtime you can pass variables into the en=
+vironment
+<br>&gt; with SINGULARITYENV_&lt;variable-name&gt;<wbr>=C2=A0
+<br>&gt;=20
+<br>&gt; On Mon, May 21, 2018 at 12:36 PM, Jonathan Greenberg &lt;<a href=
+=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"d4ehnETHCgAJ" r=
+el=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return tru=
+e;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">j...@gmail.c=
+om</a>
+<br>&gt; &lt;mailto:<a href=3D"javascript:" target=3D"_blank" gdf-obfuscate=
+d-mailto=3D"d4ehnETHCgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;=
+javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;=
+;return true;">j...@gmail.com</a>&gt;&gt; wrote:
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 Quick follow-up -- it seems I may want to use a func=
+tion instead, e.g.:
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 =C2=A0 function squeue { ssh $USER@$HOSTNAME squeue;=
+ }
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 But I&#39;m not sure where/how to declare this funct=
+ion in a singularity
+<br>&gt; =C2=A0 =C2=A0 definition.=C2=A0 Any ideas?
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 --j
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 On Monday, May 21, 2018 at 9:33:57 AM UTC-7, Jonatha=
+n Greenberg wrote:
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 Folks:
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 We have a new approach for dealing wit=
+h the previous issues
+<br>&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 running e.g. a SLURM command from WITH=
+IN a container -- a basic
+<br>&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 hack where we&#39;re simply ssh&#39;in=
+g to our local machine and
+<br>&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 executing the command remotely.=C2=A0 =
+I thought I could simply add
+<br>&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 this to a container:
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 alias squeue=3D&quot;ssh $USER@=
+$HOSTNAME squeue&quot;
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 But now that I see what happened, this=
+ gets executed during the
+<br>&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 build so $USER turns into &quot;root&q=
+uot; and $HOSTNAME doesn&#39;t get
+<br>&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 evaluated at all.
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 So, given I need the container to be a=
+ble to execute a command
+<br>&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 named simply &quot;squeue&quot; that n=
+eeds to be interpreted as &quot;ssh
+<br>&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 $USER@$HOSTNAME squeue&quot; (where $U=
+SER is the user who is
+<br>&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 executing the singularity container an=
+d $HOSTNAME is the machine
+<br>&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 to launch the command on), what is the=
+ &quot;right&quot; way to do this?
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 Note I&#39;ve tried the other approach=
+es to solving the SLURM issue
+<br>&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 (bind paths, modules, etc.) and they d=
+on&#39;t work on our system.=C2=A0
+<br>&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 ssh does work from within a shell, but=
+ I need the command be
+<br>&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 part of the definition itself.
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 --j
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 --=20
+<br>&gt; =C2=A0 =C2=A0 You received this message because you are subscribed=
+ to the Google
+<br>&gt; =C2=A0 =C2=A0 Groups &quot;singularity&quot; group.
+<br>&gt; =C2=A0 =C2=A0 To unsubscribe from this group and stop receiving em=
+ails from it,
+<br>&gt; =C2=A0 =C2=A0 send an email to <a href=3D"javascript:" target=3D"_=
+blank" gdf-obfuscated-mailto=3D"d4ehnETHCgAJ" rel=3D"nofollow" onmousedown=
+=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D=
+&#39;javascript:&#39;;return true;">singularity...@lbl.<wbr>gov</a>
+<br>&gt; =C2=A0 =C2=A0 &lt;mailto:<a href=3D"javascript:" target=3D"_blank"=
+ gdf-obfuscated-mailto=3D"d4ehnETHCgAJ" rel=3D"nofollow" onmousedown=3D"thi=
+s.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;ja=
+vascript:&#39;;return true;">singularity+<wbr>unsub...@lbl.gov</a>&gt;.
+<br>&gt;=20
+<br>&gt;=20
+<br>&gt;=20
+<br>&gt;=20
+<br>&gt; --=20
+<br>&gt; Vanessa Villamia Sochat
+<br>&gt; Stanford University &#39;16
+<br>&gt; (603) 321-0676
+<br>&gt;=20
+<br>&gt; --=20
+<br>&gt; You received this message because you are subscribed to the Google
+<br>&gt; Groups &quot;singularity&quot; group.
+<br>&gt; To unsubscribe from this group and stop receiving emails from it, =
+send
+<br>&gt; an email to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscat=
+ed-mailto=3D"d4ehnETHCgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39=
+;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39=
+;;return true;">singularity...@lbl.<wbr>gov</a>
+<br>&gt; &lt;mailto:<a href=3D"javascript:" target=3D"_blank" gdf-obfuscate=
+d-mailto=3D"d4ehnETHCgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;=
+javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;=
+;return true;">singularity+<wbr>unsub...@lbl.gov</a>&gt;.
+<br>
+<br></blockquote></div></div>
+------=_Part_25751_521741167.1527003216464--
+
+------=_Part_25750_1565348768.1527003216463--

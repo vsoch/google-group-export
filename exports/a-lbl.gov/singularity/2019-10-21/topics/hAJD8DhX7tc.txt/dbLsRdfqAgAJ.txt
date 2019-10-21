@@ -1,0 +1,232 @@
+Date: Thu, 28 Sep 2017 01:23:52 -0700 (PDT)
+From: =?UTF-8?Q?C=C3=A9dric_Clerget?= <cedric...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <4b7bc3e1-9f3e-42df-9e52-16120c15222b@lbl.gov>
+In-Reply-To: <93cc508b-250f-49ec-988c-816a96f959ea@lbl.gov>
+References: <c1d20296-2d88-43d5-9b71-7566ba73a838@lbl.gov>
+ <7e52a379-9fe8-4129-81dd-e36ab43d108a@lbl.gov>
+ <93cc508b-250f-49ec-988c-816a96f959ea@lbl.gov>
+Subject: Re: Too many levels of symbolic links - autofs, automount,
+ namespaces, and singularity
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_749_1381640912.1506587032905"
+
+------=_Part_749_1381640912.1506587032905
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_750_342954633.1506587032905"
+
+------=_Part_750_342954633.1506587032905
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+No, actually configuration file doesn't take environment variables but it=
+=20
+could be a good idea to address your problem
+
+C=C3=A9dric
+
+Le jeudi 28 septembre 2017 01:34:33 UTC+2, Benjamin McGough a =C3=A9crit :
+>
+> Will $HOME work in singularity.conf? When run as root (suid)? That would=
+=20
+> certainly help.
+>
+> What we see are autofs unmounts due to timeout as singularity itself=20
+> doesn't hold a file handle in the namespace of autofs. But we are also=20
+> seeing other unrelated users unable to cause autofs to mount their home=
+=20
+> directories. I believe autofs is in a weird state as I get 'not mounted' =
+if=20
+> I try to manually umount the directory in question, but I see it in the=
+=20
+> parent directory listing (automount should remove the mountpoint I think)=
+.
+>
+> I will see about trying $HOME - thanks for the suggestion!
+>
+> -Ben
+>
+> On Wednesday, September 27, 2017 at 3:20:51 PM UTC-7, C=C3=A9dric Clerget=
+ wrote:
+>>
+>> Hi,
+>>
+>> Indeed, if you have to put every path in configuration file ...
+>> If singularity is executed while current working directory is home=20
+>> directory, it produces error ?
+>> Otherwise maybe you could try to put for in user directories a file=20
+>> $HOME/.singularity-init with contents:
+>>
+>> #!/bin/bash
+>>>
+>>> OLD=3D$PWD
+>>> cd $HOME # force autofs mount
+>>> cd $OLD
+>>>
+>>
+>> This file is sourced before executing shell/exec/run commands, it may=20
+>> help you
+>>
+>> C=C3=A9dric
+>>
+>> Le mercredi 27 septembre 2017 00:13:07 UTC+2, Benjamin McGough a =C3=A9c=
+rit :
+>>>
+>>> We have several interactive compute servers for our users. Over the las=
+t=20
+>>> few months, we have deployed singularity, and have several users who ar=
+e=20
+>>> making heavy use of it!
+>>>
+>>> Correlated with that use have been numerous contacts due to the 'Too=20
+>>> many levels of symbolic links' error.
+>>>
+>>> I am familiar with the issues posted and the workaround in the=20
+>>> development branch right now, and I think that will likely solve the is=
+sue=20
+>>> for most users, but not us unfortunately. Also, we see this error on=20
+>>> automounted directories for users who do not use singularity at all. I=
+=20
+>>> suspect autofs is in a bad state as a result of the namespace=20
+>>> collision/misunderstanding.
+>>>
+>>> My understanding of the workaround in singularity is that you simply=20
+>>> open directories listed in the config file before you leave the namespa=
+ce.=20
+>>> This makes everything work as autofs expects things to work (our autofs=
+ -=20
+>>> Ubuntu 14.04 3.13.0-68 I believe to be namespace agnostic). The reason =
+it=20
+>>> does not work for us is that we use automount for our users' home=20
+>>> directories. We would have a config file several thousand lines long an=
+d=20
+>>> this would defeat most of the benefit of autofs in the first place. We =
+are=20
+>>> looking at narrowing the user list down to the actual users, and gating=
+=20
+>>> access with the config file change necessary for new users, but we woul=
+d=20
+>>> rather not do that.
+>>>
+>>> Finally, I am still in the dark about the errors outside singularity an=
+d=20
+>>> what state the automounter is in when producing these errors. I have=20
+>>> observed the following simultaneously:
+>>>
+>>> one user's home directory produces the error on every attempted access,=
+=20
+>>> and I am unable to unmount it manually (umount: dir: not mounted)
+>>> unmounted directories can be mounted by running `ls` but there is about=
+=20
+>>> a 30 second timeout before it happens - once mounted they return direct=
+ory=20
+>>> contents quickly
+>>> another user's home directory was producing the error, but after a time=
+=20
+>>> I was able to mount it and read it again, so it had unmounted successfu=
+lly=20
+>>> at some point
+>>>
+>>> My investigations are a bit stymied right now as autofs is very opaque.=
+=20
+>>> The `automount` service/daemon simply manages the mount points and spen=
+ds=20
+>>> almost all of its life in sigtimedwait. All the cool stuff happens in t=
+he=20
+>>> kernel.
+>>>
+>>> Also to note is that Ubuntu 14.04 is not blessed with systemd and we ar=
+e=20
+>>> not running docker or any other container systems, so I do not know of =
+any=20
+>>> other software other than singularity using namespaces on the systems.
+>>>
+>>> I hope other singluarity users and contributors who have had any=20
+>>> experiences with this issue can chime in on what they have seen, and ma=
+ybe=20
+>>> we can figure out if we are just running systems too old for this, or i=
+f=20
+>>> there is a fix that will make everyone happy.
+>>>
+>>> Thanks,
+>>>
+>>> -Ben
+>>>
+>>
+------=_Part_750_342954633.1506587032905
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">No, actually configuration file doesn&#39;t take environme=
+nt variables but it could be a good idea to address your problem<br><br>C=
+=C3=A9dric<br><br>Le jeudi 28 septembre 2017 01:34:33 UTC+2, Benjamin McGou=
+gh a =C3=A9crit=C2=A0:<blockquote class=3D"gmail_quote" style=3D"margin: 0;=
+margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=
+=3D"ltr">Will $HOME work in singularity.conf? When run as root (suid)? That=
+ would certainly help.<div><br></div><div>What we see are autofs unmounts d=
+ue to timeout as singularity itself doesn&#39;t hold a file handle in the n=
+amespace of autofs. But we are also seeing other unrelated users unable to =
+cause autofs to mount their home directories. I believe autofs is in a weir=
+d state as I get &#39;not mounted&#39; if I try to manually umount the dire=
+ctory in question, but I see it in the parent directory listing (automount =
+should remove the mountpoint I think).</div><div><br></div><div>I will see =
+about trying $HOME - thanks for the suggestion!</div><div><br></div><div>-B=
+en<br><br>On Wednesday, September 27, 2017 at 3:20:51 PM UTC-7, C=C3=A9dric=
+ Clerget wrote:<blockquote class=3D"gmail_quote" style=3D"margin:0;margin-l=
+eft:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Hi,=
+<br><br>Indeed, if you have to put every path in configuration file ...<br>=
+If singularity is executed while current working directory is home director=
+y, it produces error ?<br>Otherwise maybe you could try to put for in user =
+directories a file $HOME/.singularity-init with contents:<br><br><blockquot=
+e class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px s=
+olid rgb(204,204,204);padding-left:1ex">#!/bin/bash<br><br>OLD=3D$PWD<br>cd=
+ $HOME # force autofs mount<br>cd $OLD<br></blockquote><br>This file is sou=
+rced before executing shell/exec/run commands, it may help you<br><br>C=C3=
+=A9dric<br><br>Le mercredi 27 septembre 2017 00:13:07 UTC+2, Benjamin McGou=
+gh a =C3=A9crit=C2=A0:<blockquote class=3D"gmail_quote" style=3D"margin:0;m=
+argin-left:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"l=
+tr">We have several interactive compute servers for our users. Over the las=
+t few months, we have deployed singularity, and have several users who are =
+making heavy use of it!<div><br></div><div>Correlated with that use have be=
+en numerous contacts due to the &#39;Too many levels of symbolic links&#39;=
+ error.</div><div><br></div><div>I am familiar with the issues posted and t=
+he workaround in the development branch right now, and I think that will li=
+kely solve the issue for most users, but not us unfortunately. Also, we see=
+ this error on automounted directories for users who do not use singularity=
+ at all. I suspect autofs is in a bad state as a result of the namespace co=
+llision/misunderstanding.</div><div><br></div><div>My understanding of the =
+workaround in singularity is that you simply open directories listed in the=
+ config file before you leave the namespace. This makes everything work as =
+autofs expects things to work (our autofs - Ubuntu 14.04 3.13.0-68 I believ=
+e to be namespace agnostic). The reason it does not work for us is that we =
+use automount for our users&#39; home directories. We would have a config f=
+ile several thousand lines long and this would defeat most of the benefit o=
+f autofs in the first place. We are looking at narrowing the user list down=
+ to the actual users, and gating access with the config file change necessa=
+ry for new users, but we would rather not do that.</div><div><br></div><div=
+>Finally, I am still in the dark about the errors outside singularity and w=
+hat state the automounter is in when producing these errors. I have observe=
+d the following simultaneously:</div><div><br></div><div>one user&#39;s hom=
+e directory produces the error on every attempted access, and I am unable t=
+o unmount it manually (umount: dir: not mounted)</div><div>unmounted direct=
+ories can be mounted by running `ls` but there is about a 30 second timeout=
+ before it happens - once mounted they return directory contents quickly</d=
+iv><div>another user&#39;s home directory was producing the error, but afte=
+r a time I was able to mount it and read it again, so it had unmounted succ=
+essfully at some point</div><div><br></div><div>My investigations are a bit=
+ stymied right now as autofs is very opaque. The `automount` service/daemon=
+ simply manages the mount points and spends almost all of its life in sigti=
+medwait. All the cool stuff happens in the kernel.</div><div><br></div><div=
+>Also to note is that Ubuntu 14.04 is not blessed with systemd and we are n=
+ot running docker or any other container systems, so I do not know of any o=
+ther software other than singularity using namespaces on the systems.</div>=
+<div><br></div><div>I hope other singluarity users and contributors who hav=
+e had any experiences with this issue can chime in on what they have seen, =
+and maybe we can figure out if we are just running systems too old for this=
+, or if there is a fix that will make everyone happy.</div><div><br></div><=
+div>Thanks,</div><div><br></div><div>-Ben</div></div></blockquote></div></b=
+lockquote></div></div></blockquote></div>
+------=_Part_750_342954633.1506587032905--
+
+------=_Part_749_1381640912.1506587032905--

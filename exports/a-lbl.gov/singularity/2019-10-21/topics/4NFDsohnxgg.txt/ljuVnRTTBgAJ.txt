@@ -1,0 +1,622 @@
+Date: Sun, 16 Dec 2018 07:50:40 -0800 (PST)
+From: Rutu Pandya <rut...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <819249fa-4fc2-4fe3-b0f1-23e441bf76c9@lbl.gov>
+In-Reply-To: <CAM=pu+LqHTUGmOMCL4f-qwy2Kd+W3wk2YEzCAWpfWtUCfGDmxw@mail.gmail.com>
+References: <5bb26521-8bfd-4759-b496-0b3e83f269b8@lbl.gov> <CAM=pu+LciqdYD6hTuPsa2HqQZSNbUs_Y+grhNYV_P5sAnT0_5g@mail.gmail.com>
+ <CAM=pu+LbiWsbJbaUDGryDQv1S5Oz4--iJpZ-bKX3xhA=28N=yw@mail.gmail.com>
+ <CAM=pu+LqHTUGmOMCL4f-qwy2Kd+W3wk2YEzCAWpfWtUCfGDmxw@mail.gmail.com>
+Subject: Re: [Singularity] copy a whole folder inside container
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1292_1935506963.1544975440395"
+
+------=_Part_1292_1935506963.1544975440395
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1293_980504358.1544975440396"
+
+------=_Part_1293_980504358.1544975440396
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi Vanessa,
+
+I have bootstrapped a container from docker and have installed some more 
+dependencies. Do not have a recipe file for it. Is it possible to copy a 
+folder from the host into this already existing container? 
+Would I need to create a recipe file for the container that includes 
+building it in it's entirety or can I just use a cp command to copy the 
+files and folders in an existing container?
+
+Thanks!
+
+Rutu
+
+On Monday, April 30, 2018 at 8:15:49 PM UTC-4, vanessa wrote:
+>
+> Ignore the last section, it's a Vanessa-Copy-Paste-Fail :)
+>
+> On Mon, Apr 30, 2018 at 8:09 PM, v <v...@gmail.com <javascript:>> wrote:
+>
+>> Heyo! Okay here is a more robust and complete answer. I'll describe this 
+>> in two ways - the first is using %setup (my preference for control, 
+>> interacts with host filesystem) and the second is using %files (still 
+>> interacts with host, but relative to container, and less under your control.
+>>
+>> *Example Files*
+>>
+>> Here is how I prepared this example, creating the directory /tmp/data and 
+>> saving the recipes to each of Singularity.setup and Singularity.files 
+>> (shown below):
+>>
+>> cd /tmp
+>>> touch /tmp/data/file1.txt
+>>> touch /tmp/data/file2.txt
+>>>
+>>
+>> our goal is to copy the directory data (in entirety) into our container. 
+>> First, here is the setup recipe:
+>>
+>> *Setup*
+>>
+>>
+>> Bootstrap: docker
+>>> From: ubuntu:14.04
+>>>
+>>  
+>>
+>>> %setup
+>>>     # Copy and rename
+>>>     cp -R /tmp/data ${SINGULARITY_ROOTFS}/renamed
+>>>     # Copy to root with name "data"
+>>>     cp -R /tmp/data ${SINGULARITY_ROOTFS}
+>>> %post
+>>>     echo "Here is a listing at the root /"
+>>>     ls /
+>>>     echo "Here is a listing at /renamed"
+>>>     ls /renamed
+>>>     echo "Here is the content of /data"
+>>>     ls -1 /data
+>>
+>>
+>> to build:
+>>
+>> sudo singularity build setup.simg Singularity.setup
+>>
+>>
+>> the output is the following - we can see that all three cases of what we 
+>> did above we achieved what we wanted (it's up to you which is your 
+>> preference). 
+>>
+>> ...
+>>> + cp -R /tmp/data /usr/local/var/singularity/mnt/container/renamed
+>>> + cp -R /tmp/data /usr/local/var/singularity/mnt/container
+>>> Running post scriptlet
+>>>
+>>  
+>>
+>>> *+ echo Here is a listing at the root /* 
+>>
+>> Here is a listing at the root /    <--- note under this listing we see 
+>>> both *renamed* and *data*
+>>> + ls /
+>>>
+>>>
+>>>
+>>> *bin   dev    home   media  proc   run        srv  usrboot  environment  
+>>> lib   mnt renamed  sbin        sys  vardata  etc    lib64  opt root   
+>>> singularity  tmp*+ echo Here is a listing at /renamed
+>>>
+>>  
+>>
+>>>
+>>> *Here is a listing at /renamed*+ ls /renamed
+>>> file1.txt  file2.txt
+>>>
+>>  
+>>
+>>>
+>>> *+ echo Here is the content of /data*Here is the content of /data
+>>> + ls /data
+>>> file1.txt  file2.txt
+>>>
+>>
+>> *Files*
+>>
+>> The cleanest option (with *just* files) is to do something like this:
+>>
+>> %files
+>>>     /tmp/data /opt
+>>
+>>
+>> This will copy to /opt/data
+>>
+>> *Here is a listing at /opt*
+>> + ls /opt
+>> data
+>>
+>> *+ echo Here is a listing at /opt/data*
+>> + ls /opt/data
+>> file1.txt  file2.txt
+>>
+>> You can also rename as we did before: 
+>>
+>>  
+>>>
+>> %files
+>>>     /tmp/data /opt/custom
+>>
+>>
+>>
+>> *Here is a listing at /opt*
+>> + ls /opt
+>> custom
+>>
+>>
+>> *Here is a listing at /opt/custom*
+>> + ls /opt/custom
+>> file1.txt  file2.txt
+>>
+>> If you need to move it to a place that doesn't exist when the container 
+>> is fresh, you need to make the path in setup first.
+>>
+>> %setup
+>>>  mkdir -p /opt/custom/more/data
+>>
+>>
+>> And of course use mkdir -p because if you don't and build again, you will 
+>> get an error that it exists.
+>>
+>> *Careful Here!*
+>>
+>> Finally, where I've seen weirdness is with respect to folders and paths 
+>> that already exist. This should technically work:
+>>
+>> %files
+>>>     /tmp/data
+>>> %post
+>>>     echo "Here is a tree at /tmp/data"
+>>>     tree /tmp/data
+>>
+>>
+>> I would expect /tmp/data to be copied as /tmp/data. But it already exists 
+>> (/tmp is bound, so data is there) so  I get this error:
+>>
+>> Copying '/tmp/data' to '/tmp/data'
+>>> /bin/cp: cannot copy a directory, '/tmp/data', into itself, 
+>>> '/usr/local/var/singularity/mnt/container//tmp/data/data'
+>>> ERROR: Failed copying file(s) into container
+>>
+>>
+>> And there are many derivations of that that pop up when you mess around 
+>> with different binds, and also using a * or not. I just messed around a few 
+>> times, and I got some crazy recursion going on:
+>>
+>>
+>>> * ls /tmp/data/data/data/**file1.txt  file2.txt*
+>>
+>>
+>> (and there are file1.txt and file2.txt in each of the data folders!)
+>>
+>> !!!
+>>
+>> *A Third Strategy!*
+>>
+>> This isn't covered by %files or %setup, but what I like to do is to get 
+>> data that should go in the container from some nice version controlled 
+>> place, usually github :) This comes down to just cloning it (or wget, your 
+>> choice) in the %post section:
+>>
+>> %post
+>>> wget https://...
+>>> cd /opt && git clone https://...
+>>
+>>
+>> This way, you can throw your recipe around, it can lose the folder it was 
+>> in (with the dependencies on the host) and still have a good chance of 
+>> working unless the files hosted on Github or elsewhere went away. It's also 
+>> less burdensome to keep the data / recipe packaged together. Of course it's 
+>> understandable if the files are too big for version control / download. but 
+>> in this case I would question if you want to add them to the container, 
+>> period. Big data like that might arguably be better to be mounted at 
+>> runtime.
+>>
+>>
+>> *Summary*
+>>
+>> *%files*
+>> The approach that I think is most sound using %files is to copy a single 
+>> entire folder or files to the root, without specifying any directory paths 
+>> already mounted that could lead to unexpected results and/or bugs.  Then do 
+>> advanced manipulation of that single copy (folder or file) in %post
+>>
+>> *%setup*
+>> OR just doing everything in %setup where you have better control, 
+>> relative to $SINGULARITY_ROOTFS.
+>>
+>> *Good practice*
+>> It's good practice to test your work, and never assume that things are 
+>> what you think they should be. The derivation that you choose above is 
+>> probably going to depend on your use case, and I definitely forget which of 
+>> the derivations above work / don't work for the use case! So what to do? 
+>> Just do some quick testing / sanity checks with prints and what not to be 
+>> absolutely sure that your strategy is working.
+>>
+>>
+>> Hope that helps!
+>>
+>> Best,
+>>
+>> Vanessa
+>>
+>>
+>> %files
+>>>     /tmp/data
+>>>     /tmp/data /renamed
+>>>     /tmp/data/* /renamed
+>>
+>>
+>> The first will (sort of) work because /tmp/data will go to /tmp/data in 
+>> the container.
+>>
+>> Now we can do the same trying to use the files section! Here is our 
+>> recipe:
+>>
+>>  
+>>
+>> On Mon, Apr 30, 2018 at 6:58 PM, v <v...@gmail.com <javascript:>> 
+>> wrote:
+>>
+>>> Heyo!
+>>>
+>>> I'm away from keyboard at the moment so I will need to get back to test 
+>>> this, but I think there are a few things that you can do. The easiest thing 
+>>> is in setup to just explicitly through the copy of the entire folder:
+>>>
+>>> cp -R /path/host/folder $SINGULARITY_ROOTFS
+>>>
+>>> And then the folder would be available at the root of the filesystem, 
+>>> and you could optionally name it something else. Using the files section 
+>>> you are also using the copy command but you would probably want to try 
+>>> something like this:
+>>>
+>>> %files
+>>> /path/host/folder /folder
+>>>
+>>> But if I remember correctly I had issues with this particular Syntax for 
+>>> some reason. You could also try removing the destination to see if that 
+>>> would work. My recommendation is to use set up in the first approach so you 
+>>> have more control.
+>>>
+>>> I'm out adventuring I'll be back in a little bit and I can give you a 
+>>> more definitive answer!
+>>>
+>>> Best,
+>>>
+>>> Vanessa
+>>>
+>>>
+>>> On Mon, Apr 30, 2018, 6:37 PM M Noon <sa...@gmail.com <javascript:>> 
+>>> wrote:
+>>>
+>>>> Hi Vanessa, 
+>>>>
+>>>> I know that we can copy individual files into a container in two ways:
+>>>>
+>>>> # Both of the below are copied before %post
+>>>> # 1. This is how to copy files for legacy < 2.3
+>>>> %setup
+>>>>     touch ${SINGULARITY_ROOTFS}/tacos.txt
+>>>>     touch avocados.txt
+>>>>
+>>>> # 2. This is how to copy files for >= 2.3
+>>>> %files
+>>>>     avocados.txt 
+>>>>
+>>>> avocados.txt /opt 
+>>>>
+>>>>
+>>>> I am using singularity 2.4 therefore, I am trying to using %files for 
+>>>> this purpose. How can I copy a whole folder? I couldn't find an example 
+>>>> anywhere. Can you please help me on this?
+>>>>
+>>>> Regards,
+>>>> M
+>>>>
+>>>> -- 
+>>>> You received this message because you are subscribed to the Google 
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>> an email to singu...@lbl.gov <javascript:>.
+>>>>
+>>>
+>>
+>>
+>> -- 
+>> Vanessa Villamia Sochat
+>> Stanford University '16
+>> (603) 321-0676
+>>
+>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_1293_980504358.1544975440396
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Vanessa,<div><br></div><div>I have bootstrapped a conta=
+iner from docker and have installed some more dependencies. Do not have a r=
+ecipe file for it. Is it possible to copy a folder from the host into this =
+already existing container?=C2=A0</div><div>Would I need to create a recipe=
+ file for the container that includes building it in it&#39;s entirety or c=
+an I just use a cp command to copy the files and folders in an existing con=
+tainer?</div><div><br></div><div>Thanks!</div><div><br>Rutu<br><div><br>On =
+Monday, April 30, 2018 at 8:15:49 PM UTC-4, vanessa wrote:<blockquote class=
+=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #cc=
+c solid;padding-left: 1ex;"><div dir=3D"ltr">Ignore the last section, it&#3=
+9;s a Vanessa-Copy-Paste-Fail :)</div><div><br><div class=3D"gmail_quote">O=
+n Mon, Apr 30, 2018 at 8:09 PM, v <span dir=3D"ltr">&lt;<a href=3D"javascri=
+pt:" target=3D"_blank" gdf-obfuscated-mailto=3D"VMN0a6Q_BQAJ" rel=3D"nofoll=
+ow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=
+=3D"this.href=3D&#39;javascript:&#39;;return true;">v...@gmail.com</a>&gt;<=
+/span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8=
+ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Heyo! Okay=
+ here is a more robust and complete answer. I&#39;ll describe this in two w=
+ays - the first is using %setup (my preference for control, interacts with =
+host filesystem) and the second is using %files (still interacts with host,=
+ but relative to container, and less under your control.<div><br></div><div=
+><b>Example Files</b></div><div><b><br></b></div><div>Here is how I prepare=
+d this example, creating the directory /tmp/data and saving the recipes to =
+each of Singularity.setup and Singularity.files (shown below):</div><div><b=
+r></div><div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px =
+0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"><span style=
+=3D"color:rgb(34,34,34);font-family:arial,sans-serif;font-size:small;font-s=
+tyle:normal;font-weight:400;letter-spacing:normal;text-align:start;text-ind=
+ent:0px;text-transform:none;white-space:normal;word-spacing:0px;background-=
+color:rgb(255,255,255);float:none;display:inline">cd /tmp<br></span><span s=
+tyle=3D"color:rgb(34,34,34);font-family:arial,sans-serif;font-size:small;fo=
+nt-style:normal;font-weight:400;letter-spacing:normal;text-align:start;text=
+-indent:0px;text-transform:none;white-space:normal;word-spacing:0px;backgro=
+und-color:rgb(255,255,255);float:none;display:inline">touch /tmp/data/file1=
+.txt<br></span><span style=3D"color:rgb(34,34,34);font-family:arial,sans-se=
+rif;font-size:small;font-style:normal;font-weight:400;letter-spacing:normal=
+;text-align:start;text-indent:0px;text-transform:none;white-space:normal;wo=
+rd-spacing:0px;background-color:rgb(255,255,255);float:none;display:inline"=
+>touch /tmp/data/file2.txt<br></span></blockquote></div><div><br></div><div=
+>our goal is to copy the directory data (in entirety) into our container. F=
+irst, here is the setup recipe:</div><div><br></div><div><b style=3D"backgr=
+ound-color:rgb(255,255,0)">Setup</b></div><div><br></div><div><br></div><di=
+v><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;borde=
+r-left:1px solid rgb(204,204,204);padding-left:1ex">Bootstrap: docker<br>Fr=
+om: ubuntu:14.04<br></blockquote><div>=C2=A0</div><blockquote class=3D"gmai=
+l_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,20=
+4,204);padding-left:1ex">%setup<br>=C2=A0 =C2=A0 # Copy and rename<br>=C2=
+=A0 =C2=A0 cp -R /tmp/data ${SINGULARITY_ROOTFS}/renamed<br>=C2=A0 =C2=A0 #=
+ Copy to root with name &quot;data&quot;<br>=C2=A0 =C2=A0 cp -R /tmp/data $=
+{SINGULARITY_ROOTFS}<br>%post<br>=C2=A0 =C2=A0 echo &quot;Here is a listing=
+ at the root /&quot;<br>=C2=A0 =C2=A0 ls /<br>=C2=A0 =C2=A0 echo &quot;Here=
+ is a listing at /renamed&quot;<br>=C2=A0 =C2=A0 ls /renamed<br>=C2=A0 =C2=
+=A0 echo &quot;Here is the content of /data&quot;<br>=C2=A0 =C2=A0 ls -1 /d=
+ata</blockquote><div><br></div><div>to build:</div><div><br></div><div><blo=
+ckquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left=
+:1px solid rgb(204,204,204);padding-left:1ex"><span style=3D"color:rgb(34,3=
+4,34);font-family:arial,sans-serif;font-size:small;font-style:normal;font-w=
+eight:400;letter-spacing:normal;text-align:start;text-indent:0px;text-trans=
+form:none;white-space:normal;word-spacing:0px;background-color:rgb(255,255,=
+255);float:none;display:inline">sudo singularity build setup.simg Singulari=
+ty.setup</span></blockquote><br></div><div>the output is the following - we=
+ can see that all three cases of what we did above we achieved what we want=
+ed (it&#39;s up to you which is your preference).=C2=A0</div></div><div><br=
+></div><div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0=
+.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex">...<br>+ cp -=
+R /tmp/data /usr/local/var/singularity/<wbr>mnt/container/renamed<br>+ cp -=
+R /tmp/data /usr/local/var/singularity/<wbr>mnt/container<br>Running post s=
+criptlet<br></blockquote><div>=C2=A0</div><blockquote class=3D"gmail_quote"=
+ style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);p=
+adding-left:1ex"><b>+ echo Here is a listing at the root /</b>=C2=A0</block=
+quote><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;b=
+order-left:1px solid rgb(204,204,204);padding-left:1ex">Here is a listing a=
+t the root /=C2=A0 =C2=A0 &lt;--- note under this listing we see both <b>re=
+named</b>=C2=A0and <b>data</b><br>+ ls /<br><b>bin=C2=A0 =C2=A0dev<span sty=
+le=3D"white-space:pre-wrap">=09</span>=C2=A0 =C2=A0home=C2=A0 =C2=A0media=
+=C2=A0 proc<span style=3D"white-space:pre-wrap">=09</span>=C2=A0 run<span s=
+tyle=3D"white-space:pre-wrap">=09</span>=C2=A0 =C2=A0 =C2=A0 =C2=A0srv=C2=
+=A0 usr<br>boot=C2=A0 environment=C2=A0 lib<span style=3D"white-space:pre-w=
+rap">=09</span>=C2=A0 mnt<span style=3D"white-space:pre-wrap">=09</span> <f=
+ont color=3D"#9900ff">renamed</font>=C2=A0 sbin<span style=3D"white-space:p=
+re-wrap">=09</span>=C2=A0 =C2=A0 =C2=A0 =C2=A0sys=C2=A0 var<br><font color=
+=3D"#9900ff">data</font>=C2=A0 etc<span style=3D"white-space:pre-wrap">=09<=
+/span>=C2=A0 =C2=A0lib64=C2=A0 opt<span style=3D"white-space:pre-wrap">=09<=
+/span> root<span style=3D"white-space:pre-wrap">=09</span>=C2=A0 singularit=
+y=C2=A0 tmp<br></b>+ echo Here is a listing at /renamed<br><b></b></blockqu=
+ote><div>=C2=A0</div><blockquote class=3D"gmail_quote" style=3D"margin:0px =
+0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"><b>H=
+ere is a listing at /renamed<br></b>+ ls /renamed<br>file1.txt=C2=A0 file2.=
+txt<br></blockquote><div>=C2=A0</div><blockquote class=3D"gmail_quote" styl=
+e=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);paddin=
+g-left:1ex"><b>+ echo Here is the content of /data<br></b>Here is the conte=
+nt of /data<br>+ ls /data<br>file1.txt=C2=A0 file2.txt<br></blockquote><div=
+><br></div><div><b style=3D"background-color:rgb(255,255,0)">Files</b></div=
+><div><br></div><div>The cleanest option (with <i>just</i>=C2=A0files) is t=
+o do something like this:</div><div><br></div><div><blockquote class=3D"gma=
+il_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,2=
+04,204);padding-left:1ex">%files<br>=C2=A0 =C2=A0 /tmp/data /opt</blockquot=
+e><div><br></div><div>This will copy to /opt/data</div><div><br></div><div>=
+<div><b>Here is a listing at /opt</b></div><div>+ ls /opt</div><div>data</d=
+iv><div><b><br></b></div><div><b>+ echo Here is a listing at /opt/data</b><=
+/div><div>+ ls /opt/data<br></div><div>file1.txt=C2=A0 file2.txt</div></div=
+><div><br></div><div>You can also rename as we did before:=C2=A0<br></div><=
+/div><div><br></div><div><div style=3D"color:rgb(34,34,34);font-family:aria=
+l,sans-serif;font-size:small;font-style:normal;font-weight:400;letter-spaci=
+ng:normal;text-align:start;text-indent:0px;text-transform:none;white-space:=
+normal;word-spacing:0px;background-color:rgb(255,255,255)"><blockquote clas=
+s=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid r=
+gb(204,204,204);padding-left:1ex">=C2=A0<br></blockquote><blockquote class=
+=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rg=
+b(204,204,204);padding-left:1ex">%files<br>=C2=A0 =C2=A0 /tmp/data /opt/cus=
+tom</blockquote></div><br><br></div><div><div><b>Here is a listing at /opt<=
+/b></div><div>+ ls /opt</div><div>custom</div><div><br></div><div><b>Here i=
+s a listing at /opt/custom<br></b></div><div>+ ls /opt/custom</div><div>fil=
+e1.txt=C2=A0 file2.txt</div></div><div><br></div><div>If you need to move i=
+t to a place that doesn&#39;t exist when the container is fresh, you need t=
+o make the path in setup first.</div><div><br></div><div><blockquote class=
+=3D"gmail_quote" style=3D"color:rgb(34,34,34);font-family:arial,sans-serif;=
+font-size:small;font-style:normal;font-weight:400;letter-spacing:normal;tex=
+t-align:start;text-indent:0px;text-transform:none;white-space:normal;word-s=
+pacing:0px;margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);=
+padding-left:1ex">%setup<br>=C2=A0mkdir -p /opt/custom/more/data</blockquot=
+e><br>And of course use mkdir -p because if you don&#39;t and build again, =
+you will get an error that it exists.</div><div><br></div><div><b style=3D"=
+background-color:rgb(255,255,0)">Careful Here!</b></div><div><b><br></b></d=
+iv><div>Finally, where I&#39;ve seen weirdness is with respect to folders a=
+nd paths that already exist. This should technically work:</div><div><br></=
+div><div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8e=
+x;border-left:1px solid rgb(204,204,204);padding-left:1ex">%files<br>=C2=A0=
+ =C2=A0 /tmp/data<br>%post<br>=C2=A0 =C2=A0 echo &quot;Here is a tree at /t=
+mp/data&quot;<br>=C2=A0 =C2=A0 tree /tmp/data</blockquote></div><div><br></=
+div><div>I would expect /tmp/data to be copied as /tmp/data. But it already=
+ exists (/tmp is bound, so data is there) so=C2=A0 I get this error:</div><=
+div><br></div><div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0p=
+x 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex">Copyin=
+g &#39;/tmp/data&#39; to &#39;/tmp/data&#39;<br>/bin/cp: cannot copy a dire=
+ctory, &#39;/tmp/data&#39;, into itself, &#39;/usr/local/var/singularity/<w=
+br>mnt/container//tmp/data/data&#39;<br>ERROR: Failed copying file(s) into =
+container</blockquote></div><div><br></div><div>And there are many derivati=
+ons of that that pop up when you mess around with different binds, and also=
+ using a * or not. I just messed around a few times, and I got some crazy r=
+ecursion going on:</div><div><br></div><div><blockquote class=3D"gmail_quot=
+e" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204)=
+;padding-left:1ex"><b>=C2=A0ls /tmp/data/data/data/<br></b><b>file1.txt=C2=
+=A0 file2.txt</b></blockquote></div><div><br></div><div>(and there are file=
+1.txt and file2.txt in each of the data folders!)</div><div><br></div><div>=
+!!!</div><div><br></div><div><div style=3D"color:rgb(34,34,34);font-family:=
+arial,sans-serif;font-size:small;font-style:normal;font-weight:400;letter-s=
+pacing:normal;text-align:start;text-indent:0px;text-transform:none;white-sp=
+ace:normal;word-spacing:0px;background-color:rgb(255,255,255)"><b style=3D"=
+background-color:rgb(255,255,0)">A Third Strategy!</b></div><br></div><div>=
+This isn&#39;t covered by %files or %setup, but what I like to do is to get=
+ data that should go in the container from some nice version controlled pla=
+ce, usually github :) This comes down to just cloning it (or wget, your cho=
+ice) in the %post section:</div><div><br></div><blockquote class=3D"gmail_q=
+uote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,2=
+04);padding-left:1ex">%post<br>wget https://...<br>cd /opt &amp;&amp; git c=
+lone https://...</blockquote><div><br></div><div>This way, you can throw yo=
+ur recipe around, it can lose the folder it was in (with the dependencies o=
+n the host) and still have a good chance of working unless the files hosted=
+ on Github or elsewhere went away. It&#39;s also less burdensome to keep th=
+e data / recipe packaged together. Of course it&#39;s understandable if the=
+ files are too big for version control / download. but in this case I would=
+ question if you want to add them to the container, period. Big data like t=
+hat might arguably be better to be mounted at runtime.</div><div><br></div>=
+<div><br></div><div><div><b style=3D"background-color:rgb(255,255,0)">Summa=
+ry</b></div><div><b><br></b></div><div><b>%files</b></div><div>The approach=
+ that I think is most sound using %files is to copy a single entire folder =
+or files to the root, without specifying any directory paths already mounte=
+d that could lead to unexpected results and/or bugs.=C2=A0 Then do advanced=
+ manipulation of that single copy (folder or file) in %post</div><div><br><=
+/div><div><b>%setup</b></div><div>OR just doing everything in %setup where =
+you have better control, relative to $SINGULARITY_ROOTFS.</div></div><div><=
+br></div><div><b>Good practice</b></div><div>It&#39;s good practice to test=
+ your work, and never assume that things are what you think they should be.=
+ The derivation that you choose above is probably going to depend on your u=
+se case, and I definitely forget which of the derivations above work / don&=
+#39;t work for the use case! So what to do? Just do some quick testing / sa=
+nity checks with prints and what not to be absolutely sure that your strate=
+gy is working.</div><div><br></div><div><br></div><div>Hope that helps!</di=
+v><div><br></div><div>Best,</div><div><br></div><div>Vanessa</div><div><br>=
+</div><div><br></div><div><blockquote class=3D"gmail_quote" style=3D"margin=
+:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"=
+>%files<br>=C2=A0 =C2=A0 /tmp/data<br>=C2=A0 =C2=A0 /tmp/data /renamed<br>=
+=C2=A0 =C2=A0 /tmp/data/* /renamed</blockquote></div><div><br></div><div>Th=
+e first will (sort of) work because /tmp/data will go to /tmp/data in the c=
+ontainer.</div><div><br></div><div>Now we can do the same trying to use the=
+ files section! Here is our recipe:</div><div><br></div><div>=C2=A0</div></=
+div><div><div><div><br><div class=3D"gmail_quote">On Mon, Apr 30, 2018 at 6=
+:58 PM, v <span dir=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_blank" g=
+df-obfuscated-mailto=3D"VMN0a6Q_BQAJ" rel=3D"nofollow" onmousedown=3D"this.=
+href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;java=
+script:&#39;;return true;">v...@gmail.com</a>&gt;</span> wrote:<br><blockqu=
+ote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc s=
+olid;padding-left:1ex"><div dir=3D"auto"><div>Heyo!</div><div dir=3D"auto">=
+<br></div><div dir=3D"auto">I&#39;m away from keyboard at the moment so I w=
+ill need to get back to test this, but I think there are a few things that =
+you can do. The easiest thing is in setup to just explicitly through the co=
+py of the entire folder:</div><div dir=3D"auto"><br></div><div dir=3D"auto"=
+>cp -R /path/host/folder $SINGULARITY_ROOTFS</div><div dir=3D"auto"><br></d=
+iv><div dir=3D"auto">And then the folder would be available at the root of =
+the filesystem, and you could optionally name it something else. Using the =
+files section you are also using the copy command but you would probably wa=
+nt to try something like this:</div><div dir=3D"auto"><br></div><div dir=3D=
+"auto">%files</div><div dir=3D"auto">/path/host/folder /folder</div><div di=
+r=3D"auto"><br></div><div dir=3D"auto">But if I remember correctly I had is=
+sues with this particular Syntax for some reason. You could also try removi=
+ng the destination to see if that would work. My recommendation is to use s=
+et up in the first approach so you have more control.</div><div dir=3D"auto=
+"><br></div><div dir=3D"auto">I&#39;m out adventuring I&#39;ll be back in a=
+ little bit and I can give you a more definitive answer!</div><div dir=3D"a=
+uto"><br></div><div dir=3D"auto">Best,</div><div dir=3D"auto"><br></div><di=
+v dir=3D"auto">Vanessa<div><div><br><br><div class=3D"gmail_quote" dir=3D"a=
+uto"><div dir=3D"ltr">On Mon, Apr 30, 2018, 6:37 PM M Noon &lt;<a href=3D"j=
+avascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"VMN0a6Q_BQAJ" rel=3D=
+"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" o=
+nclick=3D"this.href=3D&#39;javascript:&#39;;return true;">sa...@gmail.com</=
+a>&gt; wrote:<br></div><blockquote class=3D"gmail_quote" style=3D"margin:0 =
+0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Hi V=
+anessa,=C2=A0<div><br></div><div>I know that we can copy individual files i=
+nto a container in two ways:</div><div><br></div><pre style=3D"font-family:=
+Monaco,Menlo,Consolas,&quot;Courier New&quot;,monospace;white-space:pre-wra=
+p;padding:9.5px;margin-top:25px;margin-bottom:25px;line-height:1.42857;word=
+-break:break-all;word-wrap:break-word;color:rgb(51,51,51);background-image:=
+initial;background-position:initial;background-repeat:initial;border-width:=
+1px;border-style:solid;border-color:rgb(204,204,204);border-radius:4px"><co=
+de style=3D"font-family:Monaco,Menlo,Consolas,&quot;Courier New&quot;,monos=
+pace;font-size:inherit;color:rgb(68,68,68);background-color:transparent;bor=
+der-radius:4px"># Both of the below are copied before %post
+# 1. This is how to copy files for legacy &lt; 2.3
+%setup
+    touch ${SINGULARITY_ROOTFS}/tacos.<wbr>txt
+    touch avocados.txt
+
+# 2. This is how to copy files for &gt;=3D 2.3
+%files
+    avocados.txt=C2=A0</code></pre><pre style=3D"font-family:Monaco,Menlo,C=
+onsolas,&quot;Courier New&quot;,monospace;white-space:pre-wrap;padding:9.5p=
+x;margin-top:25px;margin-bottom:25px;line-height:1.42857;word-break:break-a=
+ll;word-wrap:break-word;color:rgb(51,51,51);background-image:initial;backgr=
+ound-position:initial;background-repeat:initial;border-width:1px;border-sty=
+le:solid;border-color:rgb(204,204,204);border-radius:4px">avocados.txt /opt=
+<span style=3D"color:rgb(34,34,34);font-family:Arial,Helvetica,sans-serif">=
+=C2=A0</span></pre><div><br></div><div>I am using singularity 2.4 therefore=
+, I am trying to using %files for this purpose. How can I copy a whole fold=
+er? I couldn&#39;t find an example anywhere. Can you please help me on this=
+?</div><div><br></div><div>Regards,</div><div>M</div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" rel=3D"nofollow" target=3D"_blank" gdf-obfu=
+scated-mailto=3D"VMN0a6Q_BQAJ" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</blockquote></div></div></div></div></div></blockquote></div><br><br clear=
+=3D"all"><div><br></div></div></div><span><font color=3D"#888888">-- <br><d=
+iv>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><div=
+>(603) 321-0676</div></div></div></div>
+</font></span></div></div>
+</blockquote></div><br><br clear=3D"all"><div><br></div>-- <br><div>Vanessa=
+ Villamia Sochat<br>Stanford University &#39;16<br><div><div><div>(603) 321=
+-0676</div></div></div></div>
+</div>
+</blockquote></div></div></div>
+------=_Part_1293_980504358.1544975440396--
+
+------=_Part_1292_1935506963.1544975440395--

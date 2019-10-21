@@ -1,0 +1,542 @@
+Date: Wed, 11 Apr 2018 18:46:50 -0700 (PDT)
+From: David Trudgian <dtr...@sylabs.io>
+To: singularity <singu...@lbl.gov>
+Message-Id: <ad1b3e97-ac64-4f5e-a9b4-ae0a20a3b63a@lbl.gov>
+In-Reply-To: <f3f4633e-74aa-464c-bf69-7a1613c29fd4@lbl.gov>
+References: <181b5c82-3e7c-46d4-bda6-34321ac2180f@lbl.gov>
+ <CAMOYqY7z+UyA7NdFezu=M00N6_gmWarSHCkfCTj7OiutJeOr4A@mail.gmail.com>
+ <f3f4633e-74aa-464c-bf69-7a1613c29fd4@lbl.gov>
+Subject: Re: [Singularity] Convert from docker container to singularity
+ introduces error
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_954_1993505853.1523497611311"
+
+------=_Part_954_1993505853.1523497611311
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_955_36871939.1523497611312"
+
+------=_Part_955_36871939.1523497611312
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi Maurice,
+
+I do get the help message if i run like that, but it doesn't throw the 
+locale error you see:
+
+dave@spongebob:~
+08:42 PM $ singularity exec photoscan13-latest.simg 
+/usr/local/photoscan-pro/photoscan.sh --help
+Agisoft PhotoScan Professional version 1.4.1 build 5925 (64 bit)
+Usage: photoscan [project] [flags]
+
+Do you have an example script I can try and run, if I create an empty 
+python script with nothing really in it I'm still getting the following, 
+not a locale error:
+
+singularity exec photoscan13-latest.simg 
+/usr/local/photoscan-pro/photoscan.sh -r test.py
+This application failed to start because it could not find or load the Qt 
+platform plugin "xcb"
+in "".
+
+Reinstalling the application may fix this problem.
+Aborted
+
+Also, trying the interactive python option gives the same thing:
+
+dave@spongebob:~
+08:42 PM $ singularity exec photoscan13-latest.simg 
+/usr/local/photoscan-pro/photoscan.sh -i
+This application failed to start because it could not find or load the Qt 
+platform plugin "xcb"
+in "".
+
+Reinstalling the application may fix this problem.
+Aborted
+
+Cheers,
+
+DT
+
+On Thursday, April 5, 2018 at 7:51:47 PM UTC-5, Maurice Manning wrote:
+>
+> Hi David
+> that error is because you are in headless mode. when running in 
+> batch/command line mode you need to provide a script with the '-r' param so 
+> that it does not try to launch the gui. To just ping the exec try:
+>
+> *vagrant@vagrant*:*~/photoscan13-containerized*$ singularity exec 
+> photoscan13-latest.img /usr/local/photoscan-pro/photoscan.sh --help
+>
+> Agisoft PhotoScan Professional version 1.3.0 build 3772 (64 bit)
+>
+> Usage: photoscan [project] [flags]
+>
+>
+>
+> On Friday, April 6, 2018 at 1:44:55 AM UTC+8, David Trudgian wrote:
+>>
+>> Hi Maurice,
+>>
+>> I just tried to reproduce by pulling your docker image, but if I call the 
+>> .sh I get something different:
+>>
+>> ```
+>> $ singularity exec photoscan13-latest.simg 
+>> /usr/local/photoscan-pro/photoscan.sh
+>> This application failed to start because it could not find or load the Qt 
+>> platform plugin "xcb"
+>> in "".
+>>
+>> Reinstalling the application may fix this problem.
+>> ```
+>>
+>> Is any part of this related to what you are binding in to /opt in your 
+>> example?
+>>
+>> Thanks,
+>>
+>> DT
+>>
+>>
+>> On Thu, Apr 5, 2018 at 8:27 AM, Maurice Manning <mau...@gmail.com> 
+>> wrote:
+>>
+>>> Hello 
+>>> Ran into an issue with converting a Docker container containing 
+>>> Photoscan into a Singularity container. When I run the Docker container 
+>>> with a basic Photoscan command it notifies me that I don't have a license 
+>>> (expected) then exits. Then I push this build to docker hub and pull into a 
+>>> Singularity container. When I run the same command on the Singularity 
+>>> container I get local encoding errors.
+>>>
+>>> Working as expected with Docker:
+>>> vagrant@vagrant:~/photoscan13-containerized$ *docker run -v 
+>>> /home/vagrant/:/opt  -it  photoscan13 /usr/local/photoscan-pro/photoscan.sh 
+>>> -r /opt/ps.py*
+>>> No license found.
+>>> Details: No license for product (-1)
+>>> vagrant@vagrant:~/photoscan13-containerized$ docker tag 
+>>> photoscan13:latest mmmanning/photoscan13:latest
+>>>
+>>> New errors when run as Singularity:
+>>> vagrant@vagrant:~/photoscan13-containerized$* singularity exec -B 
+>>> /home/vagrant/:/opt/ photoscan13-latest.img 
+>>> /usr/local/photoscan-pro/photoscan.sh -r /opt/ps.py*
+>>> No license found.
+>>> Details: No license for product (-1)
+>>> Can't load geoid: /usr/local/photoscan-pro/geoids/egm96-15.tif
+>>> Fatal Python error: Py_Initialize: Unable to get the locale encoding
+>>> ImportError: No module named 'encodings'
+>>>
+>>> Current thread 0x00007f407236b7c0 (most recent call first):
+>>>
+>>> (process:29277): Gtk-WARNING **: Locale not supported by C library.
+>>> Using the fallback 'C' locale.
+>>> Aborted (core dumped)
+>>> vagrant@vagrant:~/photoscan13-containerized$
+>>>
+>>>  My Dockerfile:
+>>>
+>>>
+>>> ##
+>>> ## Dockerfile for photoscan13
+>>> ##
+>>>
+>>>
+>>> FROM ubuntu:xenial
+>>> RUN apt-get update && \
+>>> apt-get -y upgrade && \
+>>> apt-get install -y software-properties-common libglib2.0 libqt5gui5 
+>>> libgtk2.0-0 libglu1-mesa libgomp1 zlib1g && \
+>>> apt-get install -y language-pack-en language-pack-en-base wget vim 
+>>> ## install Agisoft Photoscan 1.3
+>>> RUN wget --directory-prefix=/usr/local 
+>>> http://download.agisoft.com/photoscan-pro_1_3_0_amd64.tar.gz ;\
+>>> (cd /usr/local && tar zxvf photoscan-pro_1_3_0_amd64.tar.gz) ;\
+>>> (cd /usr/local/bin && ln -s ../photoscan-pro/photoscan-pro.sh) ;\
+>>> rm -f /usr/local/photoscan-pro_1_3_0_amd64.tar.gz ;\
+>>> dpkg-reconfigure locales ;\
+>>> chmod 755 /usr/local//photoscan-pro/ ;\
+>>> chmod 755 /usr/local//photoscan-pro/*
+>>>
+>>> CMD ["bash"]
+>>>
+>>>
+>>> My build process:
+>>>
+>>> git clone https://github.com/mauricemanning/photoscan13-containerizedcd photoscan13-containerized
+>>> docker build --rm --tag photoscan13 .
+>>> docker tag photoscan13:latest mmmanning/photoscan13:latest
+>>> docker push mmmanning/photoscan13:latest
+>>> docker images
+>>> singularity pull docker://mmmanning/photoscan13:latest
+>>>
+>>>
+>>>
+>>> Thanks for an ideas.
+>>> Maurice
+>>>
+>>>
+>>> -- 
+>>> You received this message because you are subscribed to the Google 
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>> an email to singu...@lbl.gov.
+>>>
+>>
+>>
+------=_Part_955_36871939.1523497611312
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Maurice,<br><br>I do get the help message if i run like=
+ that, but it doesn&#39;t throw the locale error you see:<br><br><span styl=
+e=3D"font-family: courier\ new, monospace;">dave@spongebob:~<br>08:42 PM $ =
+singularity exec photoscan13-latest.simg /usr/local/photoscan-pro/photoscan=
+.sh --help<br>Agisoft PhotoScan Professional version 1.4.1 build 5925 (64 b=
+it)<br>Usage: photoscan [project] [flags]<br><br><font face=3D"arial,sans-s=
+erif">Do you have an example script I can try and run, if I create an empty=
+ python script with nothing really in it I&#39;m still getting the followin=
+g, not a locale error:<br><br><span style=3D"font-family: courier\ new, mon=
+ospace;">singularity exec photoscan13-latest.simg /usr/local/photoscan-pro/=
+photoscan.sh -r test.py<br>This application failed to start because it coul=
+d not find or load the Qt platform plugin &quot;xcb&quot;<br>in &quot;&quot=
+;.<br><br>Reinstalling the application may fix this problem.<br>Aborted</sp=
+an><br><br>Also, trying the interactive python option gives the same thing:=
+<br><br><span style=3D"font-family: courier\ new, monospace;">dave@spongebo=
+b:~<br>08:42 PM $ singularity exec photoscan13-latest.simg /usr/local/photo=
+scan-pro/photoscan.sh -i<br>This application failed to start because it cou=
+ld not find or load the Qt platform plugin &quot;xcb&quot;<br>in &quot;&quo=
+t;.<br><br>Reinstalling the application may fix this problem.<br>Aborted</s=
+pan><br></font></span><br>Cheers,<br><br>DT<br><br>On Thursday, April 5, 20=
+18 at 7:51:47 PM UTC-5, Maurice Manning wrote:<blockquote class=3D"gmail_qu=
+ote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padd=
+ing-left: 1ex;"><div dir=3D"ltr">Hi David<div>that error is because you are=
+ in headless mode. when running in batch/command line mode you need to prov=
+ide a script with the &#39;-r&#39; param so that it does not try to launch =
+the gui. To just ping the exec try:</div><div><br></div><div><p style=3D"fo=
+nt-stretch:normal;font-size:11px;line-height:normal;font-family:Menlo;color=
+:rgb(0,0,0)"><span style=3D"color:#34bc26"><b>vagrant@vagrant</b></span><sp=
+an>:</span><span style=3D"color:#5230e1"><b>~/photoscan13-<wbr>containerize=
+d</b></span><span>$ singularity exec photoscan13-latest.img /usr/local/phot=
+oscan-pro/<wbr>photoscan.sh --help</span></p>
+<p style=3D"font-stretch:normal;font-size:11px;line-height:normal;font-fami=
+ly:Menlo;color:rgb(0,0,0)"><span>Agisoft PhotoScan Professional version 1.3=
+.0 build 3772 (64 bit)</span></p>
+<p style=3D"font-stretch:normal;font-size:11px;line-height:normal;font-fami=
+ly:Menlo;color:rgb(0,0,0)"><span>Usage: photoscan [project] [flags]</span><=
+/p></div><div><br></div><div><br></div><div><br>On Friday, April 6, 2018 at=
+ 1:44:55 AM UTC+8, David Trudgian wrote:<blockquote class=3D"gmail_quote" s=
+tyle=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-left:=
+1ex"><div dir=3D"ltr"><div><div><div><div>Hi Maurice,<br><br></div>I just t=
+ried to reproduce by pulling your docker image, but if I call the .sh I get=
+ something different:<br><br>```<br>$ singularity exec photoscan13-latest.s=
+img /usr/local/photoscan-pro/<wbr>photoscan.sh<br>This application failed t=
+o start because it could not find or load the Qt platform plugin &quot;xcb&=
+quot;<br>in &quot;&quot;.<br><br>Reinstalling the application may fix this =
+problem.<br>```<br><br></div>Is any part of this related to what you are bi=
+nding in to /opt in your example?<br><br></div>Thanks,<br><br></div>DT<br><=
+div><div><div><div><br></div></div></div></div></div><div><br><div class=3D=
+"gmail_quote">On Thu, Apr 5, 2018 at 8:27 AM, Maurice Manning <span dir=3D"=
+ltr">&lt;<a rel=3D"nofollow">mau...@gmail.com</a>&gt;</span> wrote:<br><blo=
+ckquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #c=
+cc solid;padding-left:1ex"><div dir=3D"ltr">Hello=C2=A0<div>Ran into an iss=
+ue with converting a Docker container containing Photoscan into a Singulari=
+ty container. When I run the Docker container with a basic Photoscan comman=
+d it notifies me that I don&#39;t have a license (expected) then exits. The=
+n I push this build to docker hub and pull into a Singularity container. Wh=
+en I run the same command on the Singularity container I get local encoding=
+ errors.</div><div><br></div><div>Working as expected with Docker:</div><di=
+v><div style=3D"color:rgb(38,40,42);font-family:&quot;times new roman&quot;=
+,&quot;new york&quot;,times,serif;font-size:16px">vagrant@vagrant:~/photosc=
+an13-<wbr>containerized$=C2=A0<b>docker run -v /home/vagrant/:/opt=C2=A0 -i=
+t=C2=A0 photoscan13 /usr/local/photoscan-pro/<wbr>photoscan.sh -r /opt/ps.p=
+y</b></div><div style=3D"color:rgb(38,40,42);font-family:&quot;times new ro=
+man&quot;,&quot;new york&quot;,times,serif;font-size:16px">No license found=
+.</div><div style=3D"color:rgb(38,40,42);font-family:&quot;times new roman&=
+quot;,&quot;new york&quot;,times,serif;font-size:16px">Details: No license =
+for product (-1)</div><div style=3D"color:rgb(38,40,42);font-family:&quot;t=
+imes new roman&quot;,&quot;new york&quot;,times,serif;font-size:16px">vagra=
+nt@vagrant:~/photoscan13-<wbr>containerized$ docker tag photoscan13:latest =
+mmmanning/photoscan13:latest</div></div><div style=3D"color:rgb(38,40,42);f=
+ont-family:&quot;times new roman&quot;,&quot;new york&quot;,times,serif;fon=
+t-size:16px"><br></div><div>New errors when run as Singularity:</div><div><=
+div style=3D"color:rgb(38,40,42);font-family:&quot;times new roman&quot;,&q=
+uot;new york&quot;,times,serif;font-size:16px">vagrant@vagrant:~/photoscan1=
+3-<wbr>containerized$<b>=C2=A0singularity exec -B /home/vagrant/:/opt/ phot=
+oscan13-latest.img /usr/local/photoscan-pro/<wbr>photoscan.sh -r /opt/ps.py=
+</b></div><div style=3D"color:rgb(38,40,42);font-family:&quot;times new rom=
+an&quot;,&quot;new york&quot;,times,serif;font-size:16px">No license found.=
+</div><div style=3D"color:rgb(38,40,42);font-family:&quot;times new roman&q=
+uot;,&quot;new york&quot;,times,serif;font-size:16px">Details: No license f=
+or product (-1)</div><div style=3D"color:rgb(38,40,42);font-family:&quot;ti=
+mes new roman&quot;,&quot;new york&quot;,times,serif;font-size:16px">Can&#3=
+9;t load geoid: /usr/local/photoscan-pro/<wbr>geoids/egm96-15.tif</div><div=
+ style=3D"color:rgb(38,40,42);font-family:&quot;times new roman&quot;,&quot=
+;new york&quot;,times,serif;font-size:16px">Fatal Python error: Py_Initiali=
+ze: Unable to get the locale encoding</div><div style=3D"color:rgb(38,40,42=
+);font-family:&quot;times new roman&quot;,&quot;new york&quot;,times,serif;=
+font-size:16px">ImportError: No module named &#39;encodings&#39;</div><div =
+style=3D"color:rgb(38,40,42);font-family:&quot;times new roman&quot;,&quot;=
+new york&quot;,times,serif;font-size:16px"><br clear=3D"none"></div><div st=
+yle=3D"color:rgb(38,40,42);font-family:&quot;times new roman&quot;,&quot;ne=
+w york&quot;,times,serif;font-size:16px">Current thread 0x00007f407236b7c0 =
+(most recent call first):</div><div style=3D"color:rgb(38,40,42);font-famil=
+y:&quot;times new roman&quot;,&quot;new york&quot;,times,serif;font-size:16=
+px"><br clear=3D"none"></div><div style=3D"color:rgb(38,40,42);font-family:=
+&quot;times new roman&quot;,&quot;new york&quot;,times,serif;font-size:16px=
+">(process:29277): Gtk-WARNING **: Locale not supported by C library.</div>=
+<div style=3D"color:rgb(38,40,42);font-family:&quot;times new roman&quot;,&=
+quot;new york&quot;,times,serif;font-size:16px"><span style=3D"white-space:=
+pre-wrap">=09</span>Using the fallback &#39;C&#39; locale.</div><div style=
+=3D"color:rgb(38,40,42);font-family:&quot;times new roman&quot;,&quot;new y=
+ork&quot;,times,serif;font-size:16px">Aborted (core dumped)</div><div style=
+=3D"color:rgb(38,40,42);font-family:&quot;times new roman&quot;,&quot;new y=
+ork&quot;,times,serif;font-size:16px">vagrant@vagrant:~/photoscan13-<wbr>co=
+ntainerized$</div></div><div style=3D"color:rgb(38,40,42);font-family:&quot=
+;times new roman&quot;,&quot;new york&quot;,times,serif;font-size:16px"><br=
+></div><div style=3D"color:rgb(38,40,42);font-family:&quot;times new roman&=
+quot;,&quot;new york&quot;,times,serif;font-size:16px">=C2=A0My Dockerfile:=
+</div><div style=3D"color:rgb(38,40,42);font-family:&quot;times new roman&q=
+uot;,&quot;new york&quot;,times,serif;font-size:16px"><br><br><table style=
+=3D"border-collapse:collapse;color:rgb(36,41,46);font-family:-apple-system,=
+system-ui,&quot;Segoe UI&quot;,Helvetica,Arial,sans-serif,&quot;Apple Color=
+ Emoji&quot;,&quot;Segoe UI Emoji&quot;,&quot;Segoe UI Symbol&quot;;font-si=
+ze:14px"><tbody><tr><td style=3D"padding-right:10px;padding-left:10px;line-=
+height:20px;vertical-align:top;overflow:visible;font-family:SFMono-Regular,=
+Consolas,&quot;Liberation Mono&quot;,Menlo,Courier,monospace;font-size:12px=
+;word-wrap:normal;white-space:pre-wrap"><span style=3D"color:rgb(106,115,12=
+5)"><span>#</span>#</span></td></tr><tr><td style=3D"padding-right:10px;pad=
+ding-left:10px;width:50px;min-width:50px;font-family:SFMono-Regular,Consola=
+s,&quot;Liberation Mono&quot;,Menlo,Courier,monospace;font-size:12px;line-h=
+eight:20px;color:rgba(27,31,35,0.298039);text-align:right;white-space:nowra=
+p;vertical-align:top"></td><td style=3D"padding-right:10px;padding-left:10p=
+x;line-height:20px;vertical-align:top;overflow:visible;font-family:SFMono-R=
+egular,Consolas,&quot;Liberation Mono&quot;,Menlo,Courier,monospace;font-si=
+ze:12px;word-wrap:normal;white-space:pre-wrap"><span style=3D"color:rgb(106=
+,115,125)"><span>#</span># Dockerfile for photoscan13</span></td></tr><tr><=
+td style=3D"padding-right:10px;padding-left:10px;width:50px;min-width:50px;=
+font-family:SFMono-Regular,Consolas,&quot;Liberation Mono&quot;,Menlo,Couri=
+er,monospace;font-size:12px;line-height:20px;color:rgba(27,31,35,0.298039);=
+text-align:right;white-space:nowrap;vertical-align:top"></td><td style=3D"p=
+adding-right:10px;padding-left:10px;line-height:20px;vertical-align:top;ove=
+rflow:visible;font-family:SFMono-Regular,Consolas,&quot;Liberation Mono&quo=
+t;,Menlo,Courier,monospace;font-size:12px;word-wrap:normal;white-space:pre-=
+wrap"><span style=3D"color:rgb(106,115,125)"><span>#</span>#</span></td></t=
+r><tr><td style=3D"padding-right:10px;padding-left:10px;width:50px;min-widt=
+h:50px;font-family:SFMono-Regular,Consolas,&quot;Liberation Mono&quot;,Menl=
+o,Courier,monospace;font-size:12px;line-height:20px;color:rgba(27,31,35,0.2=
+98039);text-align:right;white-space:nowrap;vertical-align:top"><br></td><td=
+ style=3D"padding-right:10px;padding-left:10px;line-height:20px;vertical-al=
+ign:top;overflow:visible;font-family:SFMono-Regular,Consolas,&quot;Liberati=
+on Mono&quot;,Menlo,Courier,monospace;font-size:12px;word-wrap:normal;white=
+-space:pre-wrap"><br></td></tr><tr><td style=3D"padding-right:10px;padding-=
+left:10px;width:50px;min-width:50px;font-family:SFMono-Regular,Consolas,&qu=
+ot;Liberation Mono&quot;,Menlo,Courier,monospace;font-size:12px;line-height=
+:20px;color:rgba(27,31,35,0.298039);text-align:right;white-space:nowrap;ver=
+tical-align:top"></td><td style=3D"padding-right:10px;padding-left:10px;lin=
+e-height:20px;vertical-align:top;overflow:visible;font-family:SFMono-Regula=
+r,Consolas,&quot;Liberation Mono&quot;,Menlo,Courier,monospace;font-size:12=
+px;word-wrap:normal;white-space:pre-wrap">
+</td></tr><tr><td style=3D"padding-right:10px;padding-left:10px;width:50px;=
+min-width:50px;font-family:SFMono-Regular,Consolas,&quot;Liberation Mono&qu=
+ot;,Menlo,Courier,monospace;font-size:12px;line-height:20px;color:rgba(27,3=
+1,35,0.298039);text-align:right;white-space:nowrap;vertical-align:top"></td=
+><td style=3D"padding-right:10px;padding-left:10px;line-height:20px;vertica=
+l-align:top;overflow:visible;font-family:SFMono-Regular,Consolas,&quot;Libe=
+ration Mono&quot;,Menlo,Courier,monospace;font-size:12px;word-wrap:normal;w=
+hite-space:pre-wrap"><span style=3D"color:rgb(215,58,73)">FROM</span> ubunt=
+u:xenial</td></tr><tr><td style=3D"padding-right:10px;padding-left:10px;wid=
+th:50px;min-width:50px;font-family:SFMono-Regular,Consolas,&quot;Liberation=
+ Mono&quot;,Menlo,Courier,monospace;font-size:12px;line-height:20px;color:r=
+gba(27,31,35,0.298039);text-align:right;white-space:nowrap;vertical-align:t=
+op"></td><td style=3D"padding-right:10px;padding-left:10px;line-height:20px=
+;vertical-align:top;overflow:visible;font-family:SFMono-Regular,Consolas,&q=
+uot;Liberation Mono&quot;,Menlo,Courier,monospace;font-size:12px;word-wrap:=
+normal;white-space:pre-wrap">
+</td></tr><tr><td style=3D"padding-right:10px;padding-left:10px;width:50px;=
+min-width:50px;font-family:SFMono-Regular,Consolas,&quot;Liberation Mono&qu=
+ot;,Menlo,Courier,monospace;font-size:12px;line-height:20px;color:rgba(27,3=
+1,35,0.298039);text-align:right;white-space:nowrap;vertical-align:top"></td=
+><td style=3D"padding-right:10px;padding-left:10px;line-height:20px;vertica=
+l-align:top;overflow:visible;font-family:SFMono-Regular,Consolas,&quot;Libe=
+ration Mono&quot;,Menlo,Courier,monospace;font-size:12px;word-wrap:normal;w=
+hite-space:pre-wrap"><span style=3D"color:rgb(215,58,73)">RUN</span> apt-ge=
+t update &amp;&amp; \</td></tr><tr><td style=3D"padding-right:10px;padding-=
+left:10px;width:50px;min-width:50px;font-family:SFMono-Regular,Consolas,&qu=
+ot;Liberation Mono&quot;,Menlo,Courier,monospace;font-size:12px;line-height=
+:20px;color:rgba(27,31,35,0.298039);text-align:right;white-space:nowrap;ver=
+tical-align:top"></td><td style=3D"padding-right:10px;padding-left:10px;lin=
+e-height:20px;vertical-align:top;overflow:visible;font-family:SFMono-Regula=
+r,Consolas,&quot;Liberation Mono&quot;,Menlo,Courier,monospace;font-size:12=
+px;word-wrap:normal;white-space:pre-wrap">    apt-get -y upgrade &amp;&amp;=
+ \</td></tr><tr><td style=3D"padding-right:10px;padding-left:10px;width:50p=
+x;min-width:50px;font-family:SFMono-Regular,Consolas,&quot;Liberation Mono&=
+quot;,Menlo,Courier,monospace;font-size:12px;line-height:20px;color:rgba(27=
+,31,35,0.298039);text-align:right;white-space:nowrap;vertical-align:top"></=
+td><td style=3D"padding-right:10px;padding-left:10px;line-height:20px;verti=
+cal-align:top;overflow:visible;font-family:SFMono-Regular,Consolas,&quot;Li=
+beration Mono&quot;,Menlo,Courier,monospace;font-size:12px;word-wrap:normal=
+;white-space:pre-wrap">    apt-get install -y software-properties-common li=
+bglib2.0 libqt5gui5 libgtk2.0-0 libglu1-mesa libgomp1 zlib1g &amp;&amp; \</=
+td></tr><tr><td style=3D"padding-right:10px;padding-left:10px;width:50px;mi=
+n-width:50px;font-family:SFMono-Regular,Consolas,&quot;Liberation Mono&quot=
+;,Menlo,Courier,monospace;font-size:12px;line-height:20px;color:rgba(27,31,=
+35,0.298039);text-align:right;white-space:nowrap;vertical-align:top"></td><=
+td style=3D"padding-right:10px;padding-left:10px;line-height:20px;vertical-=
+align:top;overflow:visible;font-family:SFMono-Regular,Consolas,&quot;Libera=
+tion Mono&quot;,Menlo,Courier,monospace;font-size:12px;word-wrap:normal;whi=
+te-space:pre-wrap">    apt-get install -y language-pack-en language-pack-en=
+-base wget vim </td></tr><tr><td style=3D"padding-right:10px;padding-left:1=
+0px;width:50px;min-width:50px;font-family:SFMono-Regular,Consolas,&quot;Lib=
+eration Mono&quot;,Menlo,Courier,monospace;font-size:12px;line-height:20px;=
+color:rgba(27,31,35,0.298039);text-align:right;white-space:nowrap;vertical-=
+align:top"></td><td style=3D"padding-right:10px;padding-left:10px;line-heig=
+ht:20px;vertical-align:top;overflow:visible;font-family:SFMono-Regular,Cons=
+olas,&quot;Liberation Mono&quot;,Menlo,Courier,monospace;font-size:12px;wor=
+d-wrap:normal;white-space:pre-wrap">    </td></tr><tr><td style=3D"padding-=
+right:10px;padding-left:10px;width:50px;min-width:50px;font-family:SFMono-R=
+egular,Consolas,&quot;Liberation Mono&quot;,Menlo,Courier,monospace;font-si=
+ze:12px;line-height:20px;color:rgba(27,31,35,0.298039);text-align:right;whi=
+te-space:nowrap;vertical-align:top"></td><td style=3D"padding-right:10px;pa=
+dding-left:10px;line-height:20px;vertical-align:top;overflow:visible;font-f=
+amily:SFMono-Regular,Consolas,&quot;Liberation Mono&quot;,Menlo,Courier,mon=
+ospace;font-size:12px;word-wrap:normal;white-space:pre-wrap"><span style=3D=
+"color:rgb(106,115,125)"><span>#</span># install Agisoft Photoscan 1.3</spa=
+n></td></tr><tr><td style=3D"padding-right:10px;padding-left:10px;width:50p=
+x;min-width:50px;font-family:SFMono-Regular,Consolas,&quot;Liberation Mono&=
+quot;,Menlo,Courier,monospace;font-size:12px;line-height:20px;color:rgba(27=
+,31,35,0.298039);text-align:right;white-space:nowrap;vertical-align:top"></=
+td><td style=3D"padding-right:10px;padding-left:10px;line-height:20px;verti=
+cal-align:top;overflow:visible;font-family:SFMono-Regular,Consolas,&quot;Li=
+beration Mono&quot;,Menlo,Courier,monospace;font-size:12px;word-wrap:normal=
+;white-space:pre-wrap"><span style=3D"color:rgb(215,58,73)">RUN</span> wget=
+ --directory-prefix=3D/usr/local <a href=3D"http://download.agisoft.com/pho=
+toscan-pro_1_3_0_amd64.tar.gz" rel=3D"nofollow" target=3D"_blank" onmousedo=
+wn=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fdownload=
+.agisoft.com%2Fphotoscan-pro_1_3_0_amd64.tar.gz\x26sa\x3dD\x26sntz\x3d1\x26=
+usg\x3dAFQjCNH0Xe6nILeMHygvQ1xxcY7jSfrH5w&#39;;return true;" onclick=3D"thi=
+s.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fdownload.agisoft.=
+com%2Fphotoscan-pro_1_3_0_amd64.tar.gz\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAF=
+QjCNH0Xe6nILeMHygvQ1xxcY7jSfrH5w&#39;;return true;">http://download.agisoft=
+.com/<wbr>photoscan-pro_1_3_0_amd64.tar.<wbr>gz</a> ;\</td></tr><tr><td sty=
+le=3D"padding-right:10px;padding-left:10px;width:50px;min-width:50px;font-f=
+amily:SFMono-Regular,Consolas,&quot;Liberation Mono&quot;,Menlo,Courier,mon=
+ospace;font-size:12px;line-height:20px;color:rgba(27,31,35,0.298039);text-a=
+lign:right;white-space:nowrap;vertical-align:top"></td><td style=3D"padding=
+-right:10px;padding-left:10px;line-height:20px;vertical-align:top;overflow:=
+visible;font-family:SFMono-Regular,Consolas,&quot;Liberation Mono&quot;,Men=
+lo,Courier,monospace;font-size:12px;word-wrap:normal;white-space:pre-wrap">=
+(cd /usr/local &amp;&amp; tar zxvf photoscan-pro_1_3_0_amd64.tar.<wbr>gz) ;=
+\</td></tr><tr><td style=3D"padding-right:10px;padding-left:10px;width:50px=
+;min-width:50px;font-family:SFMono-Regular,Consolas,&quot;Liberation Mono&q=
+uot;,Menlo,Courier,monospace;font-size:12px;line-height:20px;color:rgba(27,=
+31,35,0.298039);text-align:right;white-space:nowrap;vertical-align:top"></t=
+d><td style=3D"padding-right:10px;padding-left:10px;line-height:20px;vertic=
+al-align:top;overflow:visible;font-family:SFMono-Regular,Consolas,&quot;Lib=
+eration Mono&quot;,Menlo,Courier,monospace;font-size:12px;word-wrap:normal;=
+white-space:pre-wrap">(cd /usr/local/bin &amp;&amp; ln -s ../photoscan-pro/=
+photoscan-<wbr>pro.sh) ;\</td></tr><tr><td style=3D"padding-right:10px;padd=
+ing-left:10px;width:50px;min-width:50px;font-family:SFMono-Regular,Consolas=
+,&quot;Liberation Mono&quot;,Menlo,Courier,monospace;font-size:12px;line-he=
+ight:20px;color:rgba(27,31,35,0.298039);text-align:right;white-space:nowrap=
+;vertical-align:top"></td><td style=3D"padding-right:10px;padding-left:10px=
+;line-height:20px;vertical-align:top;overflow:visible;font-family:SFMono-Re=
+gular,Consolas,&quot;Liberation Mono&quot;,Menlo,Courier,monospace;font-siz=
+e:12px;word-wrap:normal;white-space:pre-wrap">rm -f /usr/local/photoscan-pr=
+o_1_3_<wbr>0_amd64.tar.gz ;\</td></tr><tr><td style=3D"padding-right:10px;p=
+adding-left:10px;width:50px;min-width:50px;font-family:SFMono-Regular,Conso=
+las,&quot;Liberation Mono&quot;,Menlo,Courier,monospace;font-size:12px;line=
+-height:20px;color:rgba(27,31,35,0.298039);text-align:right;white-space:now=
+rap;vertical-align:top"></td><td style=3D"padding-right:10px;padding-left:1=
+0px;line-height:20px;vertical-align:top;overflow:visible;font-family:SFMono=
+-Regular,Consolas,&quot;Liberation Mono&quot;,Menlo,Courier,monospace;font-=
+size:12px;word-wrap:normal;white-space:pre-wrap">dpkg-reconfigure locales ;=
+\</td></tr><tr><td style=3D"padding-right:10px;padding-left:10px;width:50px=
+;min-width:50px;font-family:SFMono-Regular,Consolas,&quot;Liberation Mono&q=
+uot;,Menlo,Courier,monospace;font-size:12px;line-height:20px;color:rgba(27,=
+31,35,0.298039);text-align:right;white-space:nowrap;vertical-align:top"></t=
+d><td style=3D"padding-right:10px;padding-left:10px;line-height:20px;vertic=
+al-align:top;overflow:visible;font-family:SFMono-Regular,Consolas,&quot;Lib=
+eration Mono&quot;,Menlo,Courier,monospace;font-size:12px;word-wrap:normal;=
+white-space:pre-wrap">chmod 755 /usr/local//photoscan-pro/ ;\</td></tr><tr>=
+<td style=3D"padding-right:10px;padding-left:10px;width:50px;min-width:50px=
+;font-family:SFMono-Regular,Consolas,&quot;Liberation Mono&quot;,Menlo,Cour=
+ier,monospace;font-size:12px;line-height:20px;color:rgba(27,31,35,0.298039)=
+;text-align:right;white-space:nowrap;vertical-align:top"></td><td style=3D"=
+padding-right:10px;padding-left:10px;line-height:20px;vertical-align:top;ov=
+erflow:visible;font-family:SFMono-Regular,Consolas,&quot;Liberation Mono&qu=
+ot;,Menlo,Courier,monospace;font-size:12px;word-wrap:normal;white-space:pre=
+-wrap">chmod 755 /usr/local//photoscan-pro/*</td></tr><tr><td style=3D"padd=
+ing-right:10px;padding-left:10px;width:50px;min-width:50px;font-family:SFMo=
+no-Regular,Consolas,&quot;Liberation Mono&quot;,Menlo,Courier,monospace;fon=
+t-size:12px;line-height:20px;color:rgba(27,31,35,0.298039);text-align:right=
+;white-space:nowrap;vertical-align:top"></td><td style=3D"padding-right:10p=
+x;padding-left:10px;line-height:20px;vertical-align:top;overflow:visible;fo=
+nt-family:SFMono-Regular,Consolas,&quot;Liberation Mono&quot;,Menlo,Courier=
+,monospace;font-size:12px;word-wrap:normal;white-space:pre-wrap"><br></td><=
+/tr><tr><td style=3D"padding-right:10px;padding-left:10px;width:50px;min-wi=
+dth:50px;font-family:SFMono-Regular,Consolas,&quot;Liberation Mono&quot;,Me=
+nlo,Courier,monospace;font-size:12px;line-height:20px;color:rgba(27,31,35,0=
+.298039);text-align:right;white-space:nowrap;vertical-align:top"></td><td s=
+tyle=3D"padding-right:10px;padding-left:10px;line-height:20px;vertical-alig=
+n:top;overflow:visible;font-family:SFMono-Regular,Consolas,&quot;Liberation=
+ Mono&quot;,Menlo,Courier,monospace;font-size:12px;word-wrap:normal;white-s=
+pace:pre-wrap"><span style=3D"color:rgb(215,58,73)">CMD</span> [<span style=
+=3D"color:rgb(3,47,98)">&quot;bash&quot;</span>]</td></tr></tbody></table><=
+/div><div style=3D"color:rgb(38,40,42);font-family:&quot;times new roman&qu=
+ot;,&quot;new york&quot;,times,serif;font-size:16px"><br></div><div style=
+=3D"color:rgb(38,40,42);font-family:&quot;times new roman&quot;,&quot;new y=
+ork&quot;,times,serif;font-size:16px"><br></div><div style=3D"color:rgb(38,=
+40,42);font-family:&quot;times new roman&quot;,&quot;new york&quot;,times,s=
+erif;font-size:16px">My build process:</div><div style=3D"color:rgb(38,40,4=
+2);font-family:&quot;times new roman&quot;,&quot;new york&quot;,times,serif=
+;font-size:16px"><pre style=3D"font-family:SFMono-Regular,Consolas,&quot;Li=
+beration Mono&quot;,Menlo,Courier,monospace;font-size:13.6px;word-wrap:norm=
+al;padding:16px;overflow:auto;line-height:1.45;background-color:rgb(246,248=
+,250);border-top-left-radius:3px;border-top-right-radius:3px;border-bottom-=
+right-radius:3px;border-bottom-left-radius:3px;word-break:normal;color:rgb(=
+36,41,46)">git clone <a href=3D"https://github.com/mauricemanning/photoscan=
+13-containerized" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.hr=
+ef=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fmauric=
+emanning%2Fphotoscan13-containerized\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQj=
+CNH5tFsFWGQWhn8gh9qmAUY6XVebRA&#39;;return true;" onclick=3D"this.href=3D&#=
+39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fmauricemannin=
+g%2Fphotoscan13-containerized\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNH5tFs=
+FWGQWhn8gh9qmAUY6XVebRA&#39;;return true;">https://github.com/<wbr>mauricem=
+anning/photoscan13-<wbr>containerized</a>
+<span style=3D"color:rgb(0,92,197)">cd</span> photoscan13-containerized
+docker build --rm --tag photoscan13 <span style=3D"color:rgb(0,92,197)">.</=
+span>
+docker tag photoscan13:latest mmmanning/photoscan13:latest
+docker push mmmanning/photoscan13:latest
+docker images
+singularity pull docker://mmmanning/<wbr>photoscan13:latest</pre></div><div=
+ style=3D"color:rgb(38,40,42);font-family:&quot;times new roman&quot;,&quot=
+;new york&quot;,times,serif;font-size:16px"><br></div><div style=3D"color:r=
+gb(38,40,42);font-family:&quot;times new roman&quot;,&quot;new york&quot;,t=
+imes,serif;font-size:16px"><br></div><div style=3D"color:rgb(38,40,42);font=
+-family:&quot;times new roman&quot;,&quot;new york&quot;,times,serif;font-s=
+ize:16px">Thanks for an ideas.</div><span><font color=3D"#888888"><div styl=
+e=3D"color:rgb(38,40,42);font-family:&quot;times new roman&quot;,&quot;new =
+york&quot;,times,serif;font-size:16px">Maurice</div><div style=3D"color:rgb=
+(38,40,42);font-family:&quot;times new roman&quot;,&quot;new york&quot;,tim=
+es,serif;font-size:16px"><br></div><div style=3D"color:rgb(38,40,42);font-f=
+amily:&quot;times new roman&quot;,&quot;new york&quot;,times,serif;font-siz=
+e:16px"><br></div></font></span></div><span><font color=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</font></span></blockquote></div><br></div>
+</blockquote></div></div></blockquote></div>
+------=_Part_955_36871939.1523497611312--
+
+------=_Part_954_1993505853.1523497611311--

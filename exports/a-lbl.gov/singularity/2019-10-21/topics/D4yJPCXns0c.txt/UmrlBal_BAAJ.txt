@@ -1,0 +1,148 @@
+Date: Tue, 13 Nov 2018 12:38:57 -0800 (PST)
+From: Mike Moore <wxdu...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <f7003a30-6d9a-4df1-a1dc-9d9ec5912580@lbl.gov>
+Subject: Sregistry serving performance tweaks
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1054_1140280666.1542141537879"
+
+------=_Part_1054_1140280666.1542141537879
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1055_2047884147.1542141537879"
+
+------=_Part_1055_2047884147.1542141537879
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi everyone,
+
+  Our POC with sregistry has been moving along well.  I am trying to 
+address reliability issues when running multiple simultaneous pulls from 
+sregistry.  I would see timeouts and disconnects on the compute node side 
+when trying to run only 5 simultaneous pulls.  With changes to the number 
+of processes and worker threads in the nginx and sregistry uwsgi 
+containers, I have been able to resolve these timeouts for the most part.  
+What I am running into is a significant throughput limit on a per-pull 
+basis.  So, here is a little background on our POC infrastructure.  
+
+Sregistry is running in a virtual machine with 16 GB of RAM and 8 Cores.  
+The VM is running CentOS 7, hosted by KVM hypervisor, on a HP Blade with 2 
+x 2.2GHz AMD Opteron 6174 (12 Core) processors.  Due to limitations in the 
+network hardware, the hypervisor has a 6 Gbit Ethernet connection out to 
+our network. The VM's disk is a single qcow2 image running on a GPFS file 
+system.  The disk will provide easily 100+MB/s of throughput.  
+
+The problem I am having is that there is something throttling the ability 
+for sregistry to push the container image out to the clients. For a single 
+client pull of a 1.5GB image, I only see about ~32MB/s of throughput (256 
+Mbit/s).  With multiple simultaneous pulls, I can get up to about 230-240 
+MB/s sustained (2+ Gbit/s).  Using dstat to monitor cpu, disk, network, and 
+interrupts, I have ruled out the disk and CPU being a limit.  CPU 
+utilization for the single pull cases is almost nothing, and when really 
+cranking (at least 40+ simultaneous pulls) it is busy, but nothing is 
+blocked on disk IO.  There is no disk activity that I can see.  It appears 
+that everything is being served from memory. 
+
+I first thought this was an issue with the network configuration so I ran 
+iperf between the VM and the compute nodes to test the throughput. I get 
+between 4-5 Gbit/s throughput between the VM to the compute nodes. So next, 
+I shelled into the containers to see if the docker proxy between the 
+container network and the outside world was causing problems. Using the 
+uwsgi container, I can get again 4-5 Gbit/s throughput.  So it is not the 
+proxy causing the limit.
+
+If I understand the traffic flow I am seeing using "docker stats",  when 
+singularity pulls from sregistry, the traffic flow looks like
+
+       uwsgi/sregistry container------->nginx container------>docker 
+proxy------>VM eth0------->network------>compute node--->singularity client
+
+The nginx container has a lot of traffic coming and going as everything 
+does go through it. 
+
+I am at a loss as where to look next to improve performance.  Here is what 
+I have done so far:
+
+In uwsgi.ini, I replaced the original processes and threads with the 
+following settings:
+http-timeout = 3600000
+socket-timeout = 120
+processes = 128
+threads = 1
+ignore-sigpipe = true
+ignore-write-errors = true
+disable-write-exception = true
+
+In nginx, I made the following changes:
+Upped worker_processes to 32, but keeping it lower didn't make an 
+appreciable difference.
+Disabled access logging
+Upped worker_connections from 1024 to 2048
+Added settings to do asynchronous IO, disabled sendfile.
+
+I still see the occasional failure on a pull, and I think that is because 
+the registry isn't pushing data out as fast as it could.  Does anyone have 
+any further suggestions on settings to try to relieve the bottleneck(s)?
+
+Thank you
+-Mike
+
+
+------=_Part_1055_2047884147.1542141537879
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi everyone,<br><br>=C2=A0 Our POC with sregistry has been=
+ moving along well.=C2=A0 I am trying to address reliability issues when ru=
+nning multiple simultaneous pulls from sregistry.=C2=A0 I would see timeout=
+s and disconnects on the compute node side when trying to run only 5 simult=
+aneous pulls.=C2=A0 With changes to the number of processes and worker thre=
+ads in the nginx and sregistry uwsgi containers, I have been able to resolv=
+e these timeouts for the most part.=C2=A0 What I am running into is a signi=
+ficant throughput limit on a per-pull basis.=C2=A0 So, here is a little bac=
+kground on our POC infrastructure.=C2=A0 <br><br>Sregistry is running in a =
+virtual machine with 16 GB of RAM and 8 Cores.=C2=A0 The VM is running Cent=
+OS 7, hosted by KVM hypervisor, on a HP Blade with 2 x 2.2GHz AMD Opteron 6=
+174 (12 Core) processors.=C2=A0 Due to limitations in the network hardware,=
+ the hypervisor has a 6 Gbit Ethernet connection out to our network. The VM=
+&#39;s disk is a single qcow2 image running on a GPFS file system.=C2=A0 Th=
+e disk will provide easily 100+MB/s of throughput.=C2=A0 <br><br>The proble=
+m I am having is that there is something throttling the ability for sregist=
+ry to push the container image out to the clients. For a single client pull=
+ of a 1.5GB image, I only see about ~32MB/s of throughput (256 Mbit/s).=C2=
+=A0 With multiple simultaneous pulls, I can get up to about 230-240 MB/s su=
+stained (2+ Gbit/s).=C2=A0 Using dstat to monitor cpu, disk, network, and i=
+nterrupts, I have ruled out the disk and CPU being a limit.=C2=A0 CPU utili=
+zation for the single pull cases is almost nothing, and when really crankin=
+g (at least 40+ simultaneous pulls) it is busy, but nothing is blocked on d=
+isk IO.=C2=A0 There is no disk activity that I can see.=C2=A0 It appears th=
+at everything is being served from memory. <br><br>I first thought this was=
+ an issue with the network configuration so I ran iperf between the VM and =
+the compute nodes to test the throughput. I get between 4-5 Gbit/s throughp=
+ut between the VM to the compute nodes. So next, I shelled into the contain=
+ers to see if the docker proxy between the container network and the outsid=
+e world was causing problems. Using the uwsgi container, I can get again 4-=
+5 Gbit/s throughput.=C2=A0 So it is not the proxy causing the limit.<br><br=
+>If I understand the traffic flow I am seeing using &quot;docker stats&quot=
+;,=C2=A0 when singularity pulls from sregistry, the traffic flow looks like=
+<br><br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 uwsgi/sregistry container-----=
+--&gt;nginx container------&gt;docker proxy------&gt;VM eth0-------&gt;netw=
+ork------&gt;compute node---&gt;singularity client<br><br>The nginx contain=
+er has a lot of traffic coming and going as everything does go through it. =
+<br><br>I am at a loss as where to look next to improve performance.=C2=A0 =
+Here is what I have done so far:<br><br>In uwsgi.ini, I replaced the origin=
+al processes and threads with the following settings:<br>http-timeout =3D 3=
+600000<br>socket-timeout =3D 120<br>processes =3D 128<br>threads =3D 1<br>i=
+gnore-sigpipe =3D true<br>ignore-write-errors =3D true<br>disable-write-exc=
+eption =3D true<br><br>In nginx, I made the following changes:<br>Upped wor=
+ker_processes to 32, but keeping it lower didn&#39;t make an appreciable di=
+fference.<br>Disabled access logging<br>Upped worker_connections from 1024 =
+to 2048<br>Added settings to do asynchronous IO, disabled sendfile.<br><br>=
+I still see the occasional failure on a pull, and I think that is because t=
+he registry isn&#39;t pushing data out as fast as it could.=C2=A0 Does anyo=
+ne have any further suggestions on settings to try to relieve the bottlenec=
+k(s)?<br><br>Thank you<br>-Mike<br><br></div>
+------=_Part_1055_2047884147.1542141537879--
+
+------=_Part_1054_1140280666.1542141537879--

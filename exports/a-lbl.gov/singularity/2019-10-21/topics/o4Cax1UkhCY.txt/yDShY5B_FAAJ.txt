@@ -1,0 +1,279 @@
+Date: Tue, 5 Sep 2017 23:19:34 -0700 (PDT)
+From: jared...@uwyo.edu
+To: singularity <singu...@lbl.gov>
+Message-Id: <fcefe610-7dd8-42ae-bc0d-4f62c1a4ee4f@lbl.gov>
+In-Reply-To: <CAM=pu++u+0M0OBtS+226urgGLFnodpDV7ge_Ut9bttdH7GcsHA@mail.gmail.com>
+References: <eeafd848-da9d-4e9f-9ed7-87eb767feb97@lbl.gov>
+ <CAM=pu++u+0M0OBtS+226urgGLFnodpDV7ge_Ut9bttdH7GcsHA@mail.gmail.com>
+Subject: Re: [Singularity] Spec file macros?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1884_1042759652.1504678774616"
+
+------=_Part_1884_1042759652.1504678774616
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1885_744743221.1504678774617"
+
+------=_Part_1885_744743221.1504678774617
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hello Vanessa,
+
+I think the sci-f proposal looks interesting. I'll see if I can give your 
+development branch a try later in the week. I suppose the short example I 
+gave is just a *very* small portion I was working on to see if I could 
+avoid any external preprocessor steps since the documentation states that 
+the container setup should be within a single file. I'd like to follow this 
+logic and I think at the very minimal, having a basic string substitution 
+similar to what can be done within an RPM spec file (i.e., %global) would 
+be extremely helpful in writing less error prone recipes and improved 
+automation capability. I see no reason why this couldn't be integrated as a 
+use case.
+
+I think the "app" idea is quite solid. My first goal for using containers 
+is to build complete working environments, not necessarily single 
+applications (even though others may ask if the container is doing too 
+much). It's the more complex environments which I'm attempting to control 
+for my end users or software which perhaps doesn't work well on the cluster 
+host OS. I can see how the "app" could facilitate these complex workflows 
+especially if it has some sort of "app" specific pre/post segments. If we 
+extend my basic snippet out further to supply Rstudio, then running either 
+R (Rscript, etc.) or Rstudio could have independent starting mechanisms 
+built into the container. TBH, most of our current users have no idea their 
+workflow is actually running from a container because I will often provide 
+wrapper scripts for launching the containers (i.e., R) as it would if you 
+just called the application normally. It'd be great if I can simplify these 
+wrapper scripts.
+
+Thanks,
+
+Jared
+
+On Tuesday, September 5, 2017 at 5:05:07 PM UTC-6, vanessa wrote:
+>
+> Hey Jared,
+>
+> This would fit perfectly into what is called a sci-f app (see here 
+> <https://docs.google.com/document/d/1k0I1M1BIR1aqGxVVJrow_Gj3T8BXHco-oqnreYKuxL8/edit>) 
+> meaning it's a little snippet of code that acts as a modular thing (check, 
+> test, runtime connector, whatever) for a container. The implementation is 
+> currently in the development branch (with some tweaks 
+> <https://github.com/singularityware/singularity/pull/904> waiting for gmk 
+> to review). I am working on some simple use cases for SCIF (for publication 
+> after), and would love to integrate your idea (as a use case?) if you are 
+> up for it. The overall vision is to provide programmatic, predictable 
+> accessibility to these software apps inside the container, and have them 
+> modular enough so you could have a little database of them (some of your 
+> snippets above) and add them to a single container just by combining the 
+> chunks. As a super simple example, an app could be as simple as this to 
+> make it easy to access an environment variable (from inside the container) 
+> but called via the shell outside:
+>
+> %appinstall env
+>>    exec printenv "$@"
+>
+>
+> Right now, if you have some variable $FOO in the container and you do:
+>
+> singularity exec container.img echo $FOO
+>
+>
+> The calling shell unfolds FOO, so you see nothing printed (even if FOO is 
+> defined within!) With the simple useful snippet (that could be shared with 
+> others!) You would do:
+>
+> singularity exec --app env container.img FOO
+>> BAR
+>
+>
+>
+> That's a super simple example, there are many other ideas for both 
+> developers / researchers that would find this useful. Let me know your 
+> thoughts!
+>
+> Best,
+>
+> Vanessa
+>
+>  
+>
+> On Tue, Sep 5, 2017 at 6:43 PM, <ja...@uwyo.edu <javascript:>> wrote:
+>
+>> Hello,
+>>
+>> I've been experimenting a little bit with some things and I found that I 
+>> may have use for the use of macros within the spec file during a bootstrap 
+>> such as %define or %global as found in the rpm use of spec files. I don't 
+>> find macros working (as somewhat expected, but hoping macros worked).Is 
+>> there an equivalent or preferred step forward? A simple use case in my spec 
+>> file would be:
+>>
+>> --
+>> bootstrap:docker
+>> from:fedora:latest
+>>
+>> %global imgname R-fedora26
+>>
+>> %setup
+>>
+>> %files
+>>
+>> %labels
+>>         AUTHOR jared.baker
+>>         IMGNAME %{imgname}
+>>
+>> %environment
+>>         export IMGNAME=%{imgname}
+>>
+>> %runscript
+>>         [ 0 -eq $EUID ] && echo "Don't run as root!"
+>>
+>>         [ ! -d "~/.R/%{imgname}" ] && mkdir -p -v ~/.R/%{imgname}
+>>
+>>         R "$@"
+>>
+>> %post
+>>         # Install R
+>>         dnf -y install R
+>>
+>>         echo "R_LIBS=~/.R/%{imgname}" > /usr/lib64/R/etc/Renviron.site
+>> --
+>>
+>> Jared
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_1885_744743221.1504678774617
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hello Vanessa,<div><br></div><div>I think the sci-f propos=
+al looks interesting. I&#39;ll see if I can give your development branch a =
+try later in the week. I suppose the short example I gave is just a *very* =
+small portion I was working on to see if I could avoid any external preproc=
+essor steps since the documentation states that the container setup should =
+be within a single file. I&#39;d like to follow this logic and I think at t=
+he very minimal, having a basic string substitution similar to what can be =
+done within an RPM spec file (i.e., %global) would be extremely helpful in =
+writing less error prone recipes and improved automation capability. I see =
+no reason why this couldn&#39;t be integrated as a use case.</div><div><br>=
+</div><div>I think the &quot;app&quot; idea is quite solid. My first goal f=
+or using containers is to build complete working environments, not necessar=
+ily single applications (even though others may ask if the container is doi=
+ng too much). It&#39;s the more complex environments which I&#39;m attempti=
+ng to control for my end users or software which perhaps doesn&#39;t work w=
+ell on the cluster host OS. I can see how the &quot;app&quot; could facilit=
+ate these complex workflows especially if it has some sort of &quot;app&quo=
+t; specific pre/post segments. If we extend my basic snippet out further to=
+ supply Rstudio, then running either R (Rscript, etc.) or Rstudio could hav=
+e independent starting mechanisms built into the container. TBH, most of ou=
+r current users have no idea their workflow is actually running from a cont=
+ainer because I will often provide wrapper scripts for launching the contai=
+ners (i.e., R) as it would if you just called the application normally. It&=
+#39;d be great if I can simplify these wrapper scripts.</div><div><br></div=
+><div>Thanks,</div><div><br></div><div>Jared<br><br>On Tuesday, September 5=
+, 2017 at 5:05:07 PM UTC-6, vanessa wrote:<blockquote class=3D"gmail_quote"=
+ style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-=
+left: 1ex;"><div dir=3D"ltr">Hey Jared,<div><br></div><div>This would fit p=
+erfectly into what is called a sci-f app (<a href=3D"https://docs.google.co=
+m/document/d/1k0I1M1BIR1aqGxVVJrow_Gj3T8BXHco-oqnreYKuxL8/edit" target=3D"_=
+blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://docs.google=
+.com/document/d/1k0I1M1BIR1aqGxVVJrow_Gj3T8BXHco-oqnreYKuxL8/edit&#39;;retu=
+rn true;" onclick=3D"this.href=3D&#39;https://docs.google.com/document/d/1k=
+0I1M1BIR1aqGxVVJrow_Gj3T8BXHco-oqnreYKuxL8/edit&#39;;return true;">see here=
+</a>) meaning it&#39;s a little snippet of code that acts as a modular thin=
+g (check, test, runtime connector, whatever) for a container. The implement=
+ation is currently in the development branch (with <a href=3D"https://githu=
+b.com/singularityware/singularity/pull/904" target=3D"_blank" rel=3D"nofoll=
+ow" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3=
+A%2F%2Fgithub.com%2Fsingularityware%2Fsingularity%2Fpull%2F904\x26sa\x3dD\x=
+26sntz\x3d1\x26usg\x3dAFQjCNH0RVW_We2X6vmeO8sWTolQsWmryQ&#39;;return true;"=
+ onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2F=
+github.com%2Fsingularityware%2Fsingularity%2Fpull%2F904\x26sa\x3dD\x26sntz\=
+x3d1\x26usg\x3dAFQjCNH0RVW_We2X6vmeO8sWTolQsWmryQ&#39;;return true;">some t=
+weaks</a> waiting for gmk to review). I am working on some simple use cases=
+ for SCIF (for publication after), and would love to integrate your idea (a=
+s a use case?) if you are up for it. The overall vision is to provide progr=
+ammatic, predictable accessibility to these software apps inside the contai=
+ner, and have them modular enough so you could have a little database of th=
+em (some of your snippets above) and add them to a single container just by=
+ combining the chunks. As a super simple example, an app could be as simple=
+ as this to make it easy to access an environment variable (from inside the=
+ container) but called via the shell outside:</div><div><br></div><blockquo=
+te class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px =
+solid rgb(204,204,204);padding-left:1ex">%appinstall env<br>=C2=A0 =C2=A0ex=
+ec printenv &quot;$@&quot;</blockquote><div><br></div><div>Right now, if yo=
+u have some variable $FOO in the container and you do:</div><div><br></div>=
+<blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-=
+left:1px solid rgb(204,204,204);padding-left:1ex">singularity exec containe=
+r.img echo $FOO</blockquote><div><br></div><div>The calling shell unfolds F=
+OO, so you see nothing printed (even if FOO is defined within!) With the si=
+mple useful snippet (that could be shared with others!) You would do:</div>=
+<div><br></div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0p=
+x 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex">singularit=
+y exec --app env container.img FOO<br>BAR</blockquote><div><br></div><div><=
+br></div><div>That&#39;s a super simple example, there are many other ideas=
+ for both developers / researchers that would find this useful. Let me know=
+ your thoughts!</div><div><br></div><div>Best,</div><div><br></div><div>Van=
+essa</div><div><br></div><div>=C2=A0</div></div><div><br><div class=3D"gmai=
+l_quote">On Tue, Sep 5, 2017 at 6:43 PM,  <span dir=3D"ltr">&lt;<a href=3D"=
+javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"bC2gWQcFAAAJ" rel=
+=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;=
+" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">ja...@uwyo.edu=
+</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin=
+:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">H=
+ello,<div><br></div><div>I&#39;ve been experimenting a little bit with some=
+ things and I found that I may have use for the use of macros within the sp=
+ec file during a bootstrap such as %define or %global as found in the rpm u=
+se of spec files. I don&#39;t find macros working (as somewhat expected, bu=
+t hoping macros worked).Is there an equivalent or preferred step forward? A=
+ simple use case in my spec file would be:</div><div><br></div><div>--</div=
+><div><div>bootstrap:docker</div><div>from:fedora:latest</div><div><br></di=
+v><div>%global imgname R-fedora26</div><div><br></div><div>%setup</div><div=
+><br></div><div>%files</div><div><br></div><div>%labels</div><div>=C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 AUTHOR jared.baker</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 IMGNAME %{imgname}</div><div><br></div><div>%environment</div><div>=C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 export IMGNAME=3D%{imgname}</div><div><br></div><d=
+iv>%runscript</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 [ 0 -eq $EUID ] &amp;&a=
+mp; echo &quot;Don&#39;t run as root!&quot;</div><div><br></div><div>=C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 [ ! -d &quot;~/.R/%{imgname}&quot; ] &amp;&amp; mkdir=
+ -p -v ~/.R/%{imgname}</div><div><br></div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ R &quot;$@&quot;</div><div><br></div><div>%post</div><div>=C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 # Install R</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 dnf -y inst=
+all R</div><div><br></div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 echo &quot;R_LIB=
+S=3D~/.R/%{imgname}&quot; &gt; /usr/lib64/R/etc/Renviron.site</div></div><d=
+iv>--</div><div><br></div><div>Jared</div></div><span><font color=3D"#88888=
+8">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+bC2gWQcFAAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div>=
+<div>(603) 321-0676</div></div></div></div>
+</div>
+</blockquote></div></div>
+------=_Part_1885_744743221.1504678774617--
+
+------=_Part_1884_1042759652.1504678774616--

@@ -1,0 +1,562 @@
+Date: Fri, 9 Aug 2019 02:22:40 -0700 (PDT)
+From: aashish agarwal <agarwala...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <1326d3b0-583d-49d9-ad4b-59c0765ab133@lbl.gov>
+In-Reply-To: <CAO8dC8vRNX0CYoJhrkFcn81X_ZZmVBiW-BasKO_vkO=ppzM0NQ@mail.gmail.com>
+References: <2a6d518e-3f1c-49ef-b54f-47e681918d13@lbl.gov> <9b7e4e0d-93dd-4b6b-8b98-07bf02ceb2ef@Spark>
+ <CAM=pu+LZRU-maP9=xfED7SDzhRCgfD7nU+hXt6+XSXZ+K26abg@mail.gmail.com>
+ <78ab9cc1-c041-4f30-b4a7-88812a040448@Spark> <CAM=pu+LQvtXX6kToJaWJqZDA1kiN8YqAWTf7zbrn3SLCrD0N-w@mail.gmail.com>
+ <CAM=pu+JizYiXuYMs=WvJvFvGjrZ_qKiTb5u8dji4=4oTcBkNuQ@mail.gmail.com>
+ <CAO8dC8vRNX0CYoJhrkFcn81X_ZZmVBiW-BasKO_vkO=ppzM0NQ@mail.gmail.com>
+Subject: Re: [Singularity] Extract Singularity Recipe from Singularity Image
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_842_53757639.1565342560648"
+
+------=_Part_842_53757639.1565342560648
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_843_125009234.1565342560649"
+
+------=_Part_843_125009234.1565342560649
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hello Vanessa and Setan,
+
+I executed the command as guided but I only get the following output:
+
+[axa1142@hpc3 singularity-images]$  singularity exec rh_xenial_20180308.img 
+cat /.singularity.d/Singularity
+==deffile==
+BootStrap: debootstrap
+OSVersion: xenial
+MirrorURL: http://us.archive.ubuntu.com/ubuntu/
+
+Also, I tried to go inside the image and route to path /.singularity.d/ and 
+image the image content, but unfortunately, I got the same output as above. 
+I am unable to extract the recipe (file) from the image. Any advice?
+
+Regards,
+Aashish
+
+On Thursday, 8 August 2019 02:41:46 UTC+2, setan wrote:
+>
+> It depends what you trying to archive.  If you just want to build on top 
+> of the existing image, you can try to bootstrap localimage, and put your 
+> extra steps into your recipe.
+> Here is an example:
+>
+>> bootstrap:localimage
+>> From:/scratch/ISU-HPC-ros-master-kinetic.simg
+>> %labels
+>>    WHATAMI rebuild of ros-master
+>> %environment
+>> %files
+>>     /scratch/virtualgl_2.5.2_amd64.deb /root/
+>> %post
+>>     # Additional packages
+>>     apt-get -y update
+>>     apt-get install -y libcanberra-gtk-module
+>>     apt-get install -y packagekit-gtk3-module
+>>     # Adding VirtualGL package for 3-D graphics
+>> dpkg -i /root/virtualgl_2.5.2_amd64.deb
+>
+> Hope this share some lights to your question.
+>
+>
+>
+> Thank you.
+> Warmest regards,
+> Ser Heang TAN
+> On 8 Aug 2019, 9:47 AM +1000, v <v...@gmail.com <javascript:>>, wrote:
+>
+> But of course you'd still lose any customizations you might have done with 
+> --writable. But using "writable" has always been "at your own risk." But it 
+> shouldn't be the case, imho, that building from another image or multiple 
+> builds with different recipes (where every action is written down in some 
+> recipe) results into a non-reproducible build, which is what we currently 
+> have. But it's good that it's been noticed, so it can be properly fixed.
+>
+> On Wed, Aug 7, 2019 at 7:44 PM v <v...@gmail.com <javascript:>> wrote:
+>
+>> Yep, older versions of Singularity would grab any previous recipes and 
+>> put them into a bootstrap-history folder, but this isn't done anymore. I 
+>> opened an issue here https://github.com/sylabs/singularity/issues/4134 and 
+>> to see how it used to work, you can look at the old source code: 
+>> https://github.com/sylabs/singularity/blob/vault/release-2.6/libexec/bootstrap-scripts/deffile-sections.sh#L453
+>>
+>> On Wed, Aug 7, 2019 at 7:31 PM Ser Heang Tan <se...@gmail.com 
+>> <javascript:>> wrote:
+>>
+>>> This is only valid if the container is build with singularity recipe.  
+>>> If the container is build from sandbox then you might not see the correct 
+>>> recipe to rebuild.
+>>>
+>>>
+>>> Thank you.
+>>> Warmest regards,
+>>> Ser Heang TAN
+>>> On 7 Aug 2019, 10:15 PM +1000, v <v...@gmail.com <javascript:>>, 
+>>> wrote:
+>>>
+>>> The Singularity recipe is just a file in the image (revealed by inspect 
+>>> with the -d flag, as Ser Heang pointed out). If for some reason inspect 
+>>> doesn't work, you can also just physically look at the file. For example: 
+>>>
+>>> $ singularity exec busybox_latest.sif cat 
+>>>> */.singularity.d/Singularity*BootStrap: docker
+>>>> From: busybox
+>>>>
+>>>
+>>> So if you need it for some reason without interacting with the image, 
+>>> it's at /.singularity.d/Singularity. If you shell into much older images 
+>>> that have had multiple builds done over, you'll even find a bootstrap 
+>>> folder that keeps all previous recipes, for reproducibility. I don't see 
+>>> that anymore :( Was it moved? How can an image build be reproduced without 
+>>> all the recipes?
+>>>
+>>> On Wed, Aug 7, 2019 at 6:40 AM Ser Heang Tan <se...@gmail.com 
+>>> <javascript:>> wrote:
+>>>
+>>>> singularity inspect -d [sif]
+>>>>
+>>>>
+>>>> Thank you.
+>>>> Warmest regards,
+>>>> Ser Heang TAN
+>>>> On 7 Aug 2019, 7:24 PM +1000, aashish agarwal <agar...@gmail.com 
+>>>> <javascript:>>, wrote:
+>>>>
+>>>> Hello Team, 
+>>>>
+>>>> Is there a way we can extract singularity recipe from singularity image?
+>>>>
+>>>> Regards,
+>>>> Aashish Agarwal
+>>>>
+>>>> --
+>>>> You received this message because you are subscribed to the Google 
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>> an email to si...@lbl.gov <javascript:>.
+>>>> To view this discussion on the web visit 
+>>>> https://groups.google.com/a/lbl.gov/d/msgid/singularity/2a6d518e-3f1c-49ef-b54f-47e681918d13%40lbl.gov 
+>>>> <https://groups.google.com/a/lbl.gov/d/msgid/singularity/2a6d518e-3f1c-49ef-b54f-47e681918d13%40lbl.gov?utm_medium=email&utm_source=footer>
+>>>> .
+>>>>
+>>>> --
+>>>> You received this message because you are subscribed to the Google 
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>> an email to si...@lbl.gov <javascript:>.
+>>>> To view this discussion on the web visit 
+>>>> https://groups.google.com/a/lbl.gov/d/msgid/singularity/9b7e4e0d-93dd-4b6b-8b98-07bf02ceb2ef%40Spark 
+>>>> <https://groups.google.com/a/lbl.gov/d/msgid/singularity/9b7e4e0d-93dd-4b6b-8b98-07bf02ceb2ef%40Spark?utm_medium=email&utm_source=footer>
+>>>> .
+>>>>
+>>>
+>>>
+>>> --
+>>> Vanessa Villamia Sochat
+>>> Stanford University '16
+>>> (603) 321-0676
+>>>
+>>> --
+>>> You received this message because you are subscribed to the Google 
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>> an email to si...@lbl.gov <javascript:>.
+>>> To view this discussion on the web visit 
+>>> https://groups.google.com/a/lbl.gov/d/msgid/singularity/CAM%3Dpu%2BLZRU-maP9%3DxfED7SDzhRCgfD7nU%2BhXt6%2BXSXZ%2BK26abg%40mail.gmail.com 
+>>> <https://groups.google.com/a/lbl.gov/d/msgid/singularity/CAM%3Dpu%2BLZRU-maP9%3DxfED7SDzhRCgfD7nU%2BhXt6%2BXSXZ%2BK26abg%40mail.gmail.com?utm_medium=email&utm_source=footer>
+>>> .
+>>>
+>>> --
+>>> You received this message because you are subscribed to the Google 
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>> an email to si...@lbl.gov <javascript:>.
+>>> To view this discussion on the web visit 
+>>> https://groups.google.com/a/lbl.gov/d/msgid/singularity/78ab9cc1-c041-4f30-b4a7-88812a040448%40Spark 
+>>> <https://groups.google.com/a/lbl.gov/d/msgid/singularity/78ab9cc1-c041-4f30-b4a7-88812a040448%40Spark?utm_medium=email&utm_source=footer>
+>>> .
+>>>
+>>
+>>
+>> --
+>> Vanessa Villamia Sochat
+>> Stanford University '16
+>> (603) 321-0676
+>>
+>
+>
+> --
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+> --
+> You received this message because you are subscribed to the Google Groups 
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an 
+> email to si...@lbl.gov <javascript:>.
+> To view this discussion on the web visit 
+> https://groups.google.com/a/lbl.gov/d/msgid/singularity/CAM%3Dpu%2BJizYiXuYMs%3DWvJvFvGjrZ_qKiTb5u8dji4%3D4oTcBkNuQ%40mail.gmail.com 
+> <https://groups.google.com/a/lbl.gov/d/msgid/singularity/CAM%3Dpu%2BJizYiXuYMs%3DWvJvFvGjrZ_qKiTb5u8dji4%3D4oTcBkNuQ%40mail.gmail.com?utm_medium=email&utm_source=footer>
+> .
+>
+>
+------=_Part_843_125009234.1565342560649
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hello Vanessa and Setan,<div><br></div><div>I executed the=
+ command as guided but I only get the following output:</div><div><br></div=
+><div><div>[axa1142@hpc3 singularity-images]$=C2=A0 singularity exec rh_xen=
+ial_20180308.img cat /.singularity.d/Singularity</div><div>=3D=3Ddeffile=3D=
+=3D</div><div>BootStrap: debootstrap</div><div>OSVersion: xenial</div><div>=
+MirrorURL: http://us.archive.ubuntu.com/ubuntu/</div></div><div><br></div><=
+div>Also, I tried to go inside the image and route to path /.singularity.d/=
+ and image the image content, but unfortunately, I got the same output as a=
+bove. I am unable to extract the recipe (file) from the image. Any advice?<=
+/div><div><br></div><div>Regards,</div><div>Aashish<br><br>On Thursday, 8 A=
+ugust 2019 02:41:46 UTC+2, setan  wrote:<blockquote class=3D"gmail_quote" s=
+tyle=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-le=
+ft: 1ex;"><div dir=3D"ltr">
+
+
+
+<div>
+<div name=3D"messageBodySection">
+<div dir=3D"auto">It depends what you trying to archive.=C2=A0 If you just =
+want to build on top of the existing image, you can try to bootstrap locali=
+mage, and put your extra steps into your recipe.</div><div>Here is an examp=
+le:</div></div></div><blockquote style=3D"margin:0px 0px 0px 0.8ex;border-l=
+eft:1px solid rgb(204,204,204);padding-left:1ex" class=3D"gmail_quote"><spa=
+n style=3D"font-family:&quot;andale mono&quot;,&quot;lucida console&quot;,m=
+onospace;font-size:12.0012px">bootstrap:localimage<br></span><span style=3D=
+"font-family:&quot;andale mono&quot;,&quot;lucida console&quot;,monospace;f=
+ont-size:12.0012px">From:/scratch/ISU-HPC-ros-<wbr>master-kinetic.simg</spa=
+n><font face=3D"andale mono, lucida console, monospace"><span style=3D"font=
+-size:12.0012px;white-space:pre"><br></span></font><span style=3D"font-fami=
+ly:&quot;andale mono&quot;,&quot;lucida console&quot;,monospace;font-size:1=
+2.0012px">%labels<br></span><span style=3D"font-family:&quot;andale mono&qu=
+ot;,&quot;lucida console&quot;,monospace;font-size:12.0012px">=C2=A0 =C2=A0=
+WHATAMI rebuild of ros-master</span><font face=3D"andale mono, lucida conso=
+le, monospace"><span style=3D"font-size:12.0012px;white-space:pre"><br></sp=
+an></font><span style=3D"font-family:&quot;andale mono&quot;,&quot;lucida c=
+onsole&quot;,monospace;font-size:12.0012px">%environment</span><font face=
+=3D"andale mono, lucida console, monospace"><span style=3D"font-size:12.001=
+2px;white-space:pre"><br></span></font><span style=3D"font-family:&quot;and=
+ale mono&quot;,&quot;lucida console&quot;,monospace;font-size:12.0012px">%f=
+iles</span><font face=3D"andale mono, lucida console, monospace"><span styl=
+e=3D"font-size:12.0012px;white-space:pre"><br></span></font><span style=3D"=
+font-family:&quot;andale mono&quot;,&quot;lucida console&quot;,monospace;fo=
+nt-size:12.0012px">=C2=A0 =C2=A0 /scratch/virtualgl_2.5.2_<wbr>amd64.deb /r=
+oot/</span><font face=3D"andale mono, lucida console, monospace"><span styl=
+e=3D"font-size:12.0012px;white-space:pre"><br></span></font><span style=3D"=
+font-family:&quot;andale mono&quot;,&quot;lucida console&quot;,monospace;fo=
+nt-size:12.0012px">%post</span><font face=3D"andale mono, lucida console, m=
+onospace"><span style=3D"font-size:12.0012px;white-space:pre"><br></span></=
+font><span style=3D"font-family:&quot;andale mono&quot;,&quot;lucida consol=
+e&quot;,monospace;font-size:12.0012px">=C2=A0 =C2=A0 # Additional packages<=
+br></span><span style=3D"font-family:&quot;andale mono&quot;,&quot;lucida c=
+onsole&quot;,monospace;font-size:12.0012px">=C2=A0 =C2=A0 apt-get -y update=
+<br></span><span style=3D"font-family:&quot;andale mono&quot;,&quot;lucida =
+console&quot;,monospace;font-size:12.0012px">=C2=A0 =C2=A0 apt-get install =
+-y libcanberra-gtk-module<br></span><span style=3D"font-family:&quot;andale=
+ mono&quot;,&quot;lucida console&quot;,monospace;font-size:12.0012px">=C2=
+=A0 =C2=A0 apt-get install -y packagekit-gtk3-module<br></span><span style=
+=3D"font-family:&quot;andale mono&quot;,&quot;lucida console&quot;,monospac=
+e;font-size:12.0012px">=C2=A0 =C2=A0 # Adding VirtualGL package for 3-D gra=
+phics<br></span>    dpkg -i /root/virtualgl_2.5.2_amd64.<wbr>deb</blockquot=
+e><div><div name=3D"messageBodySection"><div><pre style=3D"margin-top:1.5em=
+;margin-bottom:1.5em;padding:0px;border:0px;font-stretch:normal;font-size:1=
+2.0012px;line-height:1.5;font-family:&quot;andale mono&quot;,&quot;lucida c=
+onsole&quot;,monospace;vertical-align:baseline">Hope this share some lights=
+ to your question.</pre></div>
+</div>
+<div name=3D"messageSignatureSection"><br>
+<div dir=3D"auto"><br>
+Thank you.<br>
+Warmest regards,<br>
+Ser Heang TAN</div>
+</div>
+<div name=3D"messageReplySection">On 8 Aug 2019, 9:47 AM +1000, v &lt;<a hr=
+ef=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"X2njr7SHFAAJ"=
+ rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return t=
+rue;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">v...@gmail=
+.com</a>&gt;, wrote:<br>
+<blockquote type=3D"cite" style=3D"margin:5px 5px;padding-left:10px;border-=
+left:thin solid #1abc9c">
+<div dir=3D"ltr">But of course you&#39;d still lose any customizations you =
+might have done with --writable. But using &quot;writable&quot; has always =
+been &quot;at your own risk.&quot; But it shouldn&#39;t be the case, imho, =
+that building from another image or multiple builds with different recipes =
+(where every action is written down in some recipe) results into a non-repr=
+oducible build, which is what we currently have. But it&#39;s good that it&=
+#39;s been noticed, so it can be properly fixed.</div>
+<br>
+<div class=3D"gmail_quote">
+<div dir=3D"ltr">On Wed, Aug 7, 2019 at 7:44 PM v &lt;<a href=3D"javascript=
+:" target=3D"_blank" gdf-obfuscated-mailto=3D"X2njr7SHFAAJ" rel=3D"nofollow=
+" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D=
+"this.href=3D&#39;javascript:&#39;;return true;">v...@gmail.com</a>&gt; wro=
+te:<br></div>
+<blockquote class=3D"gmail_quote" style=3D"margin:5px 5px;padding-left:10px=
+;border-left:thin solid #e67e22">
+<div dir=3D"ltr">Yep, older versions of Singularity would grab any previous=
+ recipes and put them into a bootstrap-history folder, but this isn&#39;t d=
+one anymore. I opened an issue here=C2=A0<a href=3D"https://github.com/syla=
+bs/singularity/issues/4134" target=3D"_blank" rel=3D"nofollow" onmousedown=
+=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.c=
+om%2Fsylabs%2Fsingularity%2Fissues%2F4134\x26sa\x3dD\x26sntz\x3d1\x26usg\x3=
+dAFQjCNEqMxXrLaTO0PxlhJfcwE093Vg41Q&#39;;return true;" onclick=3D"this.href=
+=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsylabs%2=
+Fsingularity%2Fissues%2F4134\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEqMxXr=
+LaTO0PxlhJfcwE093Vg41Q&#39;;return true;">https://github.com/<wbr>sylabs/si=
+ngularity/issues/4134</a><wbr>=C2=A0and to see how it used to work, you can=
+ look at the old source code:=C2=A0<a href=3D"https://github.com/sylabs/sin=
+gularity/blob/vault/release-2.6/libexec/bootstrap-scripts/deffile-sections.=
+sh#L453" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39=
+;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsylabs%2Fsingul=
+arity%2Fblob%2Fvault%2Frelease-2.6%2Flibexec%2Fbootstrap-scripts%2Fdeffile-=
+sections.sh%23L453\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNF9QRdapfNgYKsLFP=
+QysWhuQlCgSQ&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.goo=
+gle.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsylabs%2Fsingularity%2Fblob%2Fv=
+ault%2Frelease-2.6%2Flibexec%2Fbootstrap-scripts%2Fdeffile-sections.sh%23L4=
+53\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNF9QRdapfNgYKsLFPQysWhuQlCgSQ&#39=
+;;return true;">https://github.com/<wbr>sylabs/singularity/blob/vault/<wbr>=
+release-2.6/libexec/bootstrap-<wbr>scripts/deffile-sections.sh#<wbr>L453</a=
+></div>
+<br>
+<div class=3D"gmail_quote">
+<div dir=3D"ltr">On Wed, Aug 7, 2019 at 7:31 PM Ser Heang Tan &lt;<a href=
+=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"X2njr7SHFAAJ" r=
+el=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return tru=
+e;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">se...@gmail.=
+com</a>&gt; wrote:<br></div>
+<blockquote class=3D"gmail_quote" style=3D"margin:5px 5px;padding-left:10px=
+;border-left:thin solid #3498db">
+<div>
+<div name=3D"messageBodySection">
+<div dir=3D"auto">This is only valid if the container is build with singula=
+rity recipe.=C2=A0 If the container is build from sandbox then you might no=
+t see the correct recipe to rebuild.</div>
+</div>
+<div name=3D"messageSignatureSection"><br>
+<div dir=3D"auto"><br>
+Thank you.<br>
+Warmest regards,<br>
+Ser Heang TAN</div>
+</div>
+<div name=3D"messageReplySection">On 7 Aug 2019, 10:15 PM +1000, v &lt;<a h=
+ref=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"X2njr7SHFAAJ=
+" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return =
+true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">v...@gmai=
+l.com</a>&gt;, wrote:<br>
+<blockquote type=3D"cite" style=3D"margin:5px 5px;padding-left:10px;border-=
+left:thin solid #d35400">
+<div dir=3D"ltr">The Singularity recipe is just a file in the image (reveal=
+ed by inspect with the -d flag, as Ser Heang pointed out). If for some reas=
+on inspect doesn&#39;t work, you can also just physically look at the file.=
+ For example:
+<div><br></div>
+<blockquote class=3D"gmail_quote" style=3D"margin:5px 5px;padding-left:10px=
+;border-left:thin solid #34495e">$ singularity exec busybox_latest.sif cat =
+<b>/.singularity.d/Singularity<br></b>BootStrap: docker<br>
+From: busybox<br></blockquote>
+<div><br></div>
+<div>So if you need it for some reason without interacting with the image, =
+it&#39;s at /.singularity.d/Singularity. If you shell into much older image=
+s that have had multiple builds done over, you&#39;ll even find a bootstrap=
+ folder that keeps all previous recipes, for reproducibility. I don&#39;t s=
+ee that anymore :( Was it moved? How can an image build be reproduced witho=
+ut all the recipes?</div>
+</div>
+<br>
+<div class=3D"gmail_quote">
+<div dir=3D"ltr">On Wed, Aug 7, 2019 at 6:40 AM Ser Heang Tan &lt;<a href=
+=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"X2njr7SHFAAJ" r=
+el=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return tru=
+e;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">se...@gmail.=
+com</a>&gt; wrote:<br></div>
+<blockquote class=3D"gmail_quote" style=3D"margin:5px 5px;padding-left:10px=
+;border-left:thin solid #34495e">
+<div>
+<div name=3D"messageBodySection">
+<div dir=3D"auto">singularity inspect -d [sif]</div>
+</div>
+<div name=3D"messageSignatureSection"><br>
+<div dir=3D"auto"><br>
+Thank you.<br>
+Warmest regards,<br>
+Ser Heang TAN</div>
+</div>
+<div name=3D"messageReplySection">On 7 Aug 2019, 7:24 PM +1000, aashish aga=
+rwal &lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D=
+"X2njr7SHFAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:=
+&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return tru=
+e;">agar...@gmail.com</a>&gt;, wrote:<br>
+<blockquote type=3D"cite" style=3D"margin:5px 5px;padding-left:10px;border-=
+left:thin solid #2ecc71">
+<div dir=3D"ltr">Hello Team,
+<div><br></div>
+<div>Is there a way we can extract singularity recipe from singularity imag=
+e?</div>
+<div><br></div>
+<div>Regards,</div>
+<div>Aashish Agarwal</div>
+</div>
+<p></p>
+--<br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+X2njr7SHFAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singu...@lbl.<wbr>gov</a>.<br>
+To view this discussion on the web visit <a href=3D"https://groups.google.c=
+om/a/lbl.gov/d/msgid/singularity/2a6d518e-3f1c-49ef-b54f-47e681918d13%40lbl=
+.gov?utm_medium=3Demail&amp;utm_source=3Dfooter" target=3D"_blank" rel=3D"n=
+ofollow" onmousedown=3D"this.href=3D&#39;https://groups.google.com/a/lbl.go=
+v/d/msgid/singularity/2a6d518e-3f1c-49ef-b54f-47e681918d13%40lbl.gov?utm_me=
+dium\x3demail\x26utm_source\x3dfooter&#39;;return true;" onclick=3D"this.hr=
+ef=3D&#39;https://groups.google.com/a/lbl.gov/d/msgid/singularity/2a6d518e-=
+3f1c-49ef-b54f-47e681918d13%40lbl.gov?utm_medium\x3demail\x26utm_source\x3d=
+footer&#39;;return true;">https://groups.google.com/a/<wbr>lbl.gov/d/msgid/=
+singularity/<wbr>2a6d518e-3f1c-49ef-b54f-<wbr>47e681918d13%40lbl.gov</a>.<b=
+r></blockquote>
+</div>
+</div>
+<p></p>
+--<br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+X2njr7SHFAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singu...@lbl.<wbr>gov</a>.<br>
+To view this discussion on the web visit <a href=3D"https://groups.google.c=
+om/a/lbl.gov/d/msgid/singularity/9b7e4e0d-93dd-4b6b-8b98-07bf02ceb2ef%40Spa=
+rk?utm_medium=3Demail&amp;utm_source=3Dfooter" target=3D"_blank" rel=3D"nof=
+ollow" onmousedown=3D"this.href=3D&#39;https://groups.google.com/a/lbl.gov/=
+d/msgid/singularity/9b7e4e0d-93dd-4b6b-8b98-07bf02ceb2ef%40Spark?utm_medium=
+\x3demail\x26utm_source\x3dfooter&#39;;return true;" onclick=3D"this.href=
+=3D&#39;https://groups.google.com/a/lbl.gov/d/msgid/singularity/9b7e4e0d-93=
+dd-4b6b-8b98-07bf02ceb2ef%40Spark?utm_medium\x3demail\x26utm_source\x3dfoot=
+er&#39;;return true;">https://groups.google.com/a/<wbr>lbl.gov/d/msgid/sing=
+ularity/<wbr>9b7e4e0d-93dd-4b6b-8b98-<wbr>07bf02ceb2ef%40Spark</a>.<br></bl=
+ockquote>
+</div>
+<br clear=3D"all">
+<div><br></div>
+--<br>
+<div dir=3D"ltr">Vanessa Villamia Sochat<br>
+Stanford University &#39;16<br>
+<div>
+<div>
+<div>(603) 321-0676</div>
+</div>
+</div>
+</div>
+<p></p>
+--<br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+X2njr7SHFAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singu...@lbl.<wbr>gov</a>.<br>
+To view this discussion on the web visit <a href=3D"https://groups.google.c=
+om/a/lbl.gov/d/msgid/singularity/CAM%3Dpu%2BLZRU-maP9%3DxfED7SDzhRCgfD7nU%2=
+BhXt6%2BXSXZ%2BK26abg%40mail.gmail.com?utm_medium=3Demail&amp;utm_source=3D=
+footer" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;=
+https://groups.google.com/a/lbl.gov/d/msgid/singularity/CAM%3Dpu%2BLZRU-maP=
+9%3DxfED7SDzhRCgfD7nU%2BhXt6%2BXSXZ%2BK26abg%40mail.gmail.com?utm_medium\x3=
+demail\x26utm_source\x3dfooter&#39;;return true;" onclick=3D"this.href=3D&#=
+39;https://groups.google.com/a/lbl.gov/d/msgid/singularity/CAM%3Dpu%2BLZRU-=
+maP9%3DxfED7SDzhRCgfD7nU%2BhXt6%2BXSXZ%2BK26abg%40mail.gmail.com?utm_medium=
+\x3demail\x26utm_source\x3dfooter&#39;;return true;">https://groups.google.=
+com/a/<wbr>lbl.gov/d/msgid/singularity/<wbr>CAM%3Dpu%2BLZRU-maP9%<wbr>3DxfE=
+D7SDzhRCgfD7nU%2BhXt6%<wbr>2BXSXZ%2BK26abg%40mail.gmail.<wbr>com</a>.<br></=
+blockquote>
+</div>
+</div>
+<p></p>
+--<br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+X2njr7SHFAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singu...@lbl.<wbr>gov</a>.<br>
+To view this discussion on the web visit <a href=3D"https://groups.google.c=
+om/a/lbl.gov/d/msgid/singularity/78ab9cc1-c041-4f30-b4a7-88812a040448%40Spa=
+rk?utm_medium=3Demail&amp;utm_source=3Dfooter" target=3D"_blank" rel=3D"nof=
+ollow" onmousedown=3D"this.href=3D&#39;https://groups.google.com/a/lbl.gov/=
+d/msgid/singularity/78ab9cc1-c041-4f30-b4a7-88812a040448%40Spark?utm_medium=
+\x3demail\x26utm_source\x3dfooter&#39;;return true;" onclick=3D"this.href=
+=3D&#39;https://groups.google.com/a/lbl.gov/d/msgid/singularity/78ab9cc1-c0=
+41-4f30-b4a7-88812a040448%40Spark?utm_medium\x3demail\x26utm_source\x3dfoot=
+er&#39;;return true;">https://groups.google.com/a/<wbr>lbl.gov/d/msgid/sing=
+ularity/<wbr>78ab9cc1-c041-4f30-b4a7-<wbr>88812a040448%40Spark</a>.<br></bl=
+ockquote>
+</div>
+<br clear=3D"all">
+<div><br></div>
+--<br>
+<div dir=3D"ltr">Vanessa Villamia Sochat<br>
+Stanford University &#39;16<br>
+<div>
+<div>
+<div>(603) 321-0676</div>
+</div>
+</div>
+</div>
+</blockquote>
+</div>
+<br clear=3D"all">
+<div><br></div>
+--<br>
+<div dir=3D"ltr">Vanessa Villamia Sochat<br>
+Stanford University &#39;16<br>
+<div>
+<div>
+<div>(603) 321-0676</div>
+</div>
+</div>
+</div>
+<p></p>
+--<br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+X2njr7SHFAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singu...@lbl.<wbr>gov</a>.<br>
+To view this discussion on the web visit <a href=3D"https://groups.google.c=
+om/a/lbl.gov/d/msgid/singularity/CAM%3Dpu%2BJizYiXuYMs%3DWvJvFvGjrZ_qKiTb5u=
+8dji4%3D4oTcBkNuQ%40mail.gmail.com?utm_medium=3Demail&amp;utm_source=3Dfoot=
+er" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http=
+s://groups.google.com/a/lbl.gov/d/msgid/singularity/CAM%3Dpu%2BJizYiXuYMs%3=
+DWvJvFvGjrZ_qKiTb5u8dji4%3D4oTcBkNuQ%40mail.gmail.com?utm_medium\x3demail\x=
+26utm_source\x3dfooter&#39;;return true;" onclick=3D"this.href=3D&#39;https=
+://groups.google.com/a/lbl.gov/d/msgid/singularity/CAM%3Dpu%2BJizYiXuYMs%3D=
+WvJvFvGjrZ_qKiTb5u8dji4%3D4oTcBkNuQ%40mail.gmail.com?utm_medium\x3demail\x2=
+6utm_source\x3dfooter&#39;;return true;">https://groups.google.com/a/<wbr>l=
+bl.gov/d/msgid/singularity/<wbr>CAM%3Dpu%2BJizYiXuYMs%<wbr>3DWvJvFvGjrZ_qKi=
+Tb5u8dji4%<wbr>3D4oTcBkNuQ%40mail.gmail.com</a>.<br></blockquote>
+</div>
+</div>
+
+</div>
+</blockquote></div></div>
+------=_Part_843_125009234.1565342560649--
+
+------=_Part_842_53757639.1565342560648--

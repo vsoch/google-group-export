@@ -1,0 +1,137 @@
+Date: Fri, 15 Mar 2019 09:15:08 -0700 (PDT)
+From: Rutu Pandya <rut...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <038f06b6-0244-4a54-86b8-882874d0fa40@lbl.gov>
+Subject: git won't install through command in recipe file
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_424_29336039.1552666508639"
+
+------=_Part_424_29336039.1552666508639
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_425_1760737612.1552666508639"
+
+------=_Part_425_1760737612.1552666508639
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hello,
+
+I am building a container using a recipe file. And want to install git to 
+be able to clone a repo from it into the container. Even after trying 
+several fixes and an exhaustive search for the correct command, I am unable 
+to install git. The server I have is Ubuntu 16.04. 
+
+Attached is the recipe file for reference. 
+
+Thanks in advance!
+Rutu
+
+------=_Part_425_1760737612.1552666508639
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hello,<div><br></div><div>I am building a container using =
+a recipe file. And want to install git to be able to clone a repo from it i=
+nto the container. Even after trying several fixes and an exhaustive search=
+ for the correct command, I am unable to install git. The server I have is =
+Ubuntu 16.04.=C2=A0</div><div><br></div><div>Attached is the recipe file fo=
+r reference.=C2=A0</div><div><br></div><div>Thanks in advance!</div><div>Ru=
+tu</div></div>
+------=_Part_425_1760737612.1552666508639--
+
+------=_Part_424_29336039.1552666508639
+Content-Type: text/plain; charset=US-ASCII; name=new_recipe.txt
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename=new_recipe.txt
+X-Attachment-Id: 8307e9dc-1a6c-4b20-b6b3-f619f376471d
+Content-ID: <8307e9dc-1a6c-4b20-b6b3-f619f376471d>
+
+BootStrap:docker
+From:tensorflow/tensorflow:1.12.0-gpu-py3
+
+%environment
+
+	#Environment variables
+
+	#Use bash as default shell
+	SHELL=/bin/bash
+
+	
+%setup
+	#Runs on host
+	#The path to the image is $SINGULARITY_ROOTFS
+	 # Copy and rename
+    	#cp -R /vagrant/pyModule ${SINGULARITY_ROOTFS}
+	
+
+%files
+	#cp -r /home/vagrant/testing\ pipeline /opt
+
+%post
+	#Post setup script
+
+	
+
+  #Updating and getting required packages
+  apt-get clean
+  apt-get dist-upgrade && apt-get install -y --no-install-recommends --ignore-missing \
+  python-dicom\
+  python-numpy\
+  python-scipy\
+  python-matplotlib\
+  ipython\
+  ipython-notebook\
+  python-pandas\
+  python-sympy\
+  python-nose
+  #git
+
+  apt-get clean
+
+  #apt-get update
+  #apt-get install -y wget git vim
+  #apt-get install python-dicom
+  #apt-get install python-numpy python-scipy python-matplotlib ipython ipython-notebook python-pandas python-sympy python-nose
+
+  pip install dicom==0.9.9.post1
+  pip install scikit-image
+  pip install opencv-python
+  
+  apt update && apt install -y libsm6 libxext6
+  apt-get install -y libxrender-dev
+
+  apt-get update
+  
+  #apt-get install git-core
+  add-apt-repository ppa:git-core/ppa
+  apt-get update
+  apt-get install git
+
+
+  mkdir /software
+  cd /software
+  #cp -r /pyModule /software
+  git clone https://github.com/cerr/CERR.git
+  git clone https://github.com/cerr/aimodels.git
+
+
+%runscript
+	#Executes with the singularity run command
+	#cd /software/pipeline/pyModule
+	python /software/CERR/CERR_core/Contouring/models/mr_prostate_DeepLab/run_inference_clinical_3D.py arg1=$1 arg2=$2	
+
+%labels
+AUTHOR pand...@mskcc.org
+
+
+%test
+	#Test that script is a success
+
+	#Load environment variables
+	#. /environment
+
+	#Test tensorflow install
+	#python -c "import tensorflow"
+
+------=_Part_424_29336039.1552666508639--

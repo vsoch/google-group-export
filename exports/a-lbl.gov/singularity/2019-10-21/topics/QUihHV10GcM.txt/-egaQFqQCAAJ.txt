@@ -1,0 +1,154 @@
+Date: Tue, 10 Apr 2018 13:23:49 -0700 (PDT)
+From: =?UTF-8?Q?C=C3=A9dric_Clerget?= <cedric...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <8d60f957-22b1-4493-b3b1-ed3f2a6db911@lbl.gov>
+In-Reply-To: <1c38ecd6-2e39-46ec-be2d-f53ce75ab28a@lbl.gov>
+References: <1c38ecd6-2e39-46ec-be2d-f53ce75ab28a@lbl.gov>
+Subject: Re: Using bind with overlay to gain access to large directory tree,
+ part II
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_27276_1792495211.1523391830105"
+
+------=_Part_27276_1792495211.1523391830105
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_27277_726335440.1523391830106"
+
+------=_Part_27277_726335440.1523391830106
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Hi David,
+
+There is two reasons why it doesn't work :
+
+   1.  setuid binaries are not allowed inside container for security reason=
+s
+   2.  setting setuid bit on a shell script isn't allowed by Linux kernel=
+=20
+   for security reasons.
+  =20
+Unfortunately it's not possible to do what you need inside container.
+
+But that could be a feature to add in 3.X releases by giving possibility to=
+=20
+add bind paths as part of overlay lowerdirs. Is it what you need ?
+
+C=C3=A9dric
+
+Le mercredi 28 mars 2018 21:43:34 UTC+2, David Fletcher a =C3=A9crit :
+>
+> Hello,
+>
+> I'd like to bind-mount a large directory tree into a singularity and have=
+=20
+> this run as the read-only, lower
+> portion of an overlay file system.  The read-write, upper portion of the=
+=20
+> overlay - where the changes
+> would be made - would be held elsewhere.
+>
+> Originally, I tried to do this using --bind and --overlay flags but this=
+=20
+> didn't work.  I posted a message
+> describing my situation.  Since then, I've tried another approach, which=
+=20
+> is to form an overlay file
+> system on my own:
+>
+>         $ sudo singularity shell --bind /path/to/large/tree:/data:ro =20
+> MyImage.simg
+>
+>         Singularity MyImage:/> mkdir /tmp/work /tmp/overlay
+>         Singularity MyImage:/> mount -t overlay -o=20
+> lowerdir=3D/data,upperdir=3D/tmp/hacks,workdir=3D/tmp/work none /tmp/over=
+lay
+>
+> This works.  I can create new files, edit files, etc, inside the=20
+> container's /data directory.  I haven't figured out
+> where the changes are being written, however.  (I'm new to singularity an=
+d=20
+> I'm not seeing this info in
+> the documentation; I'll have to open up the source code... unless someone=
+=20
+> wants to tell me a command
+> I can use to find where the data is going.)
+>
+> Besides the missing data, there is another problem.  I don't want to run=
+=20
+> the container with sudo.  I tried adding
+> a simple setuid shell script to my recipe file:
+>
+>         %setup
+>                cp /path/to/script  /etc/mount-overlay
+>                chmod a+x /etc/mount-overlay
+>                chmod u+s /etc/mount-overlay
+>
+> Unfortunately, this doesn't seem to work.  Calling the mount command=20
+> directly does work, however.
+> (I need to add some extra debugging capabilities to my script, obviously.=
+)
+>
+> I'm probably breaking all sorts of rules and I'm happy to receive=20
+> instruction how to do this properly.  But,
+> this solves a rather thorny problem for me: how to get shared access to a=
+=20
+> large amount of data.
+>
+> Thanks,
+>
+> David
+>
+
+------=_Part_27277_726335440.1523391830106
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi David,<br><br>There is two reasons why it doesn&#39;t w=
+ork :<br><ol><li>=C2=A0setuid binaries are not allowed inside container for=
+ security reasons</li><li>=C2=A0setting setuid bit on a shell script isn&#3=
+9;t allowed by Linux kernel for security reasons.<br></li></ol>Unfortunatel=
+y it&#39;s not possible to do what you need inside container.<br><br>But th=
+at could be a feature to add in 3.X releases by giving possibility to add b=
+ind paths as part of overlay lowerdirs. Is it what you need ?<br><br>C=C3=
+=A9dric<br><br>Le mercredi 28 mars 2018 21:43:34 UTC+2, David Fletcher a =
+=C3=A9crit=C2=A0:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margi=
+n-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"l=
+tr">Hello,<div><br></div><div>I&#39;d like to bind-mount a large directory =
+tree into a singularity and have this run as the read-only, lower</div><div=
+>portion of an overlay file system.=C2=A0 The read-write, upper portion of =
+the overlay - where the changes</div><div>would be made - would be held els=
+ewhere.</div><div><br></div><div>Originally, I tried to do this using --bin=
+d and --overlay flags but this didn&#39;t work.=C2=A0 I posted a message</d=
+iv><div>describing my situation.=C2=A0 Since then, I&#39;ve tried another a=
+pproach, which is to form an overlay file</div><div>system on my own:</div>=
+<div><br></div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 $ sudo singularity shell --=
+bind /path/to/large/tree:/data:ro=C2=A0 MyImage.simg</div><div><br></div><d=
+iv>=C2=A0 =C2=A0 =C2=A0 =C2=A0 Singularity MyImage:/&gt; mkdir /tmp/work /t=
+mp/overlay</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 Singularity MyImage:/&gt; =
+mount -t overlay -o lowerdir=3D/data,upperdir=3D/tmp/<wbr>hacks,workdir=3D/=
+tmp/work none /tmp/overlay</div><div><br></div><div>This works.=C2=A0 I can=
+ create new files, edit files, etc, inside the container&#39;s /data direct=
+ory.=C2=A0 I haven&#39;t figured out</div><div>where the changes are being =
+written, however.=C2=A0 (I&#39;m new to singularity and I&#39;m not seeing =
+this info in</div><div>the documentation; I&#39;ll have to open up the sour=
+ce code... unless someone wants to tell me a command</div><div>I can use to=
+ find where the data is going.)</div><div><br></div><div>Besides the missin=
+g data, there is another problem.=C2=A0 I don&#39;t want to run the contain=
+er with sudo.=C2=A0 I tried adding</div><div>a simple setuid shell script t=
+o my recipe file:</div><div><br></div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 %set=
+up</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0cp /pat=
+h/to/script=C2=A0 /etc/mount-overlay</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0chmod a+x /etc/mount-overlay</div><div>=C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0chmod u+s /etc/mount-overla=
+y</div><div><br></div><div>Unfortunately, this doesn&#39;t seem to work.=C2=
+=A0 Calling the mount command directly does work, however.</div><div>(I nee=
+d to add some extra debugging capabilities to my script, obviously.)</div><=
+div><br></div><div>I&#39;m probably breaking all sorts of rules and I&#39;m=
+ happy to receive instruction how to do this properly.=C2=A0 But,</div><div=
+>this solves a rather thorny problem for me: how to get shared access to a =
+large amount of data.</div><div><br></div><div>Thanks,</div><div><br></div>=
+<div>David</div></div></blockquote></div>
+------=_Part_27277_726335440.1523391830106--
+
+------=_Part_27276_1792495211.1523391830105--

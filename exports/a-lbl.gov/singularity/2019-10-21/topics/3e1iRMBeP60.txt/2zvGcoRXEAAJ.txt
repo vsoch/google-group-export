@@ -1,0 +1,507 @@
+Date: Sat, 20 Jul 2019 20:27:47 -0700 (PDT)
+From: Yilong Li <yil...@stanford.edu>
+To: singularity <singu...@lbl.gov>
+Cc: t...@pasteur.fr
+Message-Id: <efec933c-8c4c-42ce-9588-b8b2f8baef9c@lbl.gov>
+In-Reply-To: <20190720162715.GR9634@sillage.bis.pasteur.fr>
+References: <ee186118-1e09-4068-86a7-72e4c9743037@lbl.gov>
+ <CAPw58N5BAaDXopt-Nye-x9DzpgC3WKsZnUVExc7yv2_SaRSspw@mail.gmail.com>
+ <8a99269e-78dd-4568-8c04-6fe13878e9e6@lbl.gov>
+ <CAGfAqt9ziO4pEkBrKCV4paYOgkk6qkk0Emz=j4_EXafG+ybsTg@mail.gmail.com>
+ <CAPqNE2XrB4_4y5ptzhLM6HXxt2Rn1hVFh2Xx2Fg4tcokgp4uuQ@mail.gmail.com>
+ <a7fb6487-4c8b-42f9-8b17-da2642176ce5@lbl.gov>
+ <20190720162715.GR9634@sillage.bis.pasteur.fr>
+Subject: Re: [Singularity] Weird interaction between NFS and singularity?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_5205_1172225574.1563679667483"
+
+------=_Part_5205_1172225574.1563679667483
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_5206_361196389.1563679667483"
+
+------=_Part_5206_361196389.1563679667483
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi Tru,
+
+There is nothing special in .bashrc or /etc/profile.d/*.sh. I also tried 
+the docker://ubuntu:18.04 image and got similar segfaults.
+
+Singularity ubuntu_18.04.sif:~/work> /usr/bin/mkdir
+Segmentation fault (core dumped)
+Singularity ubuntu_18.04.sif:~/work> cat ~/.bashrc 
+# .bashrc
+
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+        . /etc/bashrc
+fi
+
+# Uncomment the following line if you don't like systemctl's auto-paging 
+feature:
+# export SYSTEMD_PAGER=
+
+# User specific aliases and functions
+Singularity ubuntu_18.04.sif:~/work> ls /etc/profile.d/                 
+01-locale-fix.sh
+Singularity ubuntu_18.04.sif:~/work> cat /etc/profile.d/01-locale-fix.sh 
+# Make sure the locale variables are set to valid values.
+eval $(/usr/bin/locale-check C.UTF-8)
+Singularity ubuntu_18.04.sif:~/work> type mkdir
+mkdir is hashed (/bin/mkdir)
+Singularity ubuntu_18.04.sif:~/work> /usr/bin/mkdir
+Segmentation fault (core dumped)
+Singularity ubuntu_18.04.sif:~/work> ldd /bin/mkdir
+        linux-vdso.so.1 (0x00007ffdda5dd000)
+        libselinux.so.1 => /lib/x86_64-linux-gnu/libselinux.so.1 
+(0x00002b4bcf099000)
+        libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00002b4bcf2c1000)
+        libpcre.so.3 => /lib/x86_64-linux-gnu/libpcre.so.3 
+(0x00002b4bcf6b2000)
+        libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00002b4bcf924000)
+        /lib64/ld-linux-x86-64.so.2 (0x00002b4bcec5b000)
+        libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 
+(0x00002b4bcfb28000)
+
+
+
+Best,
+Yilong
+
+On Saturday, July 20, 2019 at 9:27:24 AM UTC-7, Tru Huynh wrote:
+>
+> On Sat, Jul 20, 2019 at 12:39:31AM -0700, Yilong Li wrote: 
+> >    Hi Jason and John, 
+> >    Outside the container, I have CentOS 7: 
+> >    [yilongl@n592 ~]$ uname -a 
+> >    Linux n592 3.10.0-514.21.2.el7.735g0000.x86_64 #1 SMP Wed Jun 21 
+> 02:03:38 
+> >    UTC 2017 x86_64 x86_64 x86_64 GNU/Linux 
+> >    [yilongl@n592 ~]$ lsb_release -a 
+> >    LSB Version: 
+> >    Distributor ID: CentOS 
+> >    Description:    CentOS Linux release 7.3.1611 (Core)  
+> >    Release:        7.3.1611 
+> >    Codename:       Core 
+>
+> it's might be centos 7.3(2017!) based but that's not a centos kernel 
+> 3.10.0-514.21.2.el7.735g0000.x86_64 <- not listed at 
+> http://vault.centos.org/7.3.1611/updates/x86_64/Packages/ 
+> [ ]        kernel-3.10.0-514.21.1.el7.x86_64.rpm        2017-05-25 23:21 
+> 37M         
+> [ ]        kernel-3.10.0-514.21.2.el7.x86_64.rpm        2017-06-20 14:31 
+> 37M         
+> [ ]        kernel-3.10.0-514.26.1.el7.x86_64.rpm        2017-06-29 18:14 
+> 37M         
+> [ ]        kernel-3.10.0-514.26.2.el7.x86_64.rpm        2017-07-04 17:01 
+> 37M         
+>
+> >    Inside the container, I have Ubuntu 18.04: 
+> >    Singularity rb-5d313adc7615c12d83388aed_latest.sif:~/work> uname -a 
+> >    Linux n592 3.10.0-514.21.2.el7.735g0000.x86_64 #1 SMP Wed Jun 21 
+> 02:03:38 
+> >    UTC 2017 x86_64 x86_64 x86_64 GNU/Linux 
+> >    Singularity rb-5d313adc7615c12d83388aed_latest.sif:~/work> cat 
+> >    /etc/os-release  
+> >    NAME="Ubuntu" 
+> >    VERSION="18.04.2 LTS (Bionic Beaver)" 
+> >    ID=ubuntu 
+> >    ID_LIKE=debian 
+> >    PRETTY_NAME="Ubuntu 18.04.2 LTS" 
+> >    VERSION_ID="18.04" 
+> >    HOME_URL="https://www.ubuntu.com/" 
+> >    SUPPORT_URL="https://help.ubuntu.com/" 
+> >    BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/" 
+> >    PRIVACY_POLICY_URL="
+> https://www.ubuntu.com/legal/terms-and-policies/privacy-policy" 
+> >    VERSION_CODENAME=bionic 
+> >    UBUNTU_CODENAME=bionic 
+> >    I also tried a few more commands inside the container: 
+> >    Singularity rb-5d313adc7615c12d83388aed_latest.sif:~/work> ldd 
+> /bin/mkdir 
+> >            linux-vdso.so.1 (0x00007ffc3fffc000) 
+> >            libselinux.so.1 => /lib/x86_64-linux-gnu/libselinux.so.1 
+> >    (0x00002b1cdb0f8000) 
+> >            libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 
+> (0x00002b1cdb320000) 
+> >            libpcre.so.3 => /lib/x86_64-linux-gnu/libpcre.so.3 
+> >    (0x00002b1cdb711000) 
+> >            libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 
+> >    (0x00002b1cdb983000) 
+> >            /lib64/ld-linux-x86-64.so.2 (0x00002b1cdacba000) 
+> >            libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 
+> >    (0x00002b1cdbb87000) 
+> > 
+> >    Singularity rb-5d313adc7615c12d83388aed_latest.sif:~/work> ldd 
+> >    /usr/bin/mkdir 
+> >    ldd: /usr/bin/mkdir: No such file or directory 
+> > 
+> >    Singularity rb-5d313adc7615c12d83388aed_latest.sif:~/work> 
+> /usr/bin/mkdir 
+> >    Segmentation fault (core dumped) 
+> >    And there is no /rootfs inside the container: 
+> >    Singularity rb-5d313adc7615c12d83388aed_latest.sif:~/work> cd /rootfs 
+> >    bash: cd: /rootfs: No such file or directory 
+> >    As Randy suggested earlier, segfault is not really the problem. I 
+> wouldn't 
+> >    be surprised if it's a libc issue because the `mkdir` outside the 
+> >    container is pretty old. The real problem is why I can execute 
+> >    /usr/bin/mkdir even though such binary doesn't even exist under 
+> /usr/bin/ 
+> >    inside the container. And why `env mkdir` will resolve to this 
+> >    non-existent binary. 
+> is there anything specific in your .bashrc or /etc/profile.d/*.sh ? 
+>
+> [tru@sillage ~]$ uname -a 
+> Linux sillage.bis.pasteur.fr 3.10.0-957.21.3.el7.x86_64 #1 SMP Tue Jun 18 
+> 16:35:19 UTC 2019 x86_64 x86_64 x86_64 GNU/Linux 
+> [tru@sillage ~]$ singularity shell docker://ubuntu:18.04 
+> INFO:    Converting OCI blobs to SIF format 
+> INFO:    Starting build... 
+> Getting image source signatures 
+> Copying blob 
+> sha256:5b7339215d1d5f8e68622d584a224f60339f5bef41dbd74330d081e912f0cddd 
+>  25.45 MiB / 25.45 MiB 
+> [====================================================] 0s 
+> Copying blob 
+> sha256:14ca88e9f6723ce82bc14b241cda8634f6d19677184691d086662641ab96fe68 
+>  34.52 KiB / 34.52 KiB 
+> [====================================================] 0s 
+> Copying blob 
+> sha256:a31c3b1caad473a474d574283741f880e37c708cc06ee620d3e93fa602125ee0 
+>  849 B / 849 B 
+> [============================================================] 0s 
+> Copying blob 
+> sha256:b054a26005b7f3b032577f811421fab5ec3b42ce45a4012dfa00cf6ed6191b0f 
+>  162 B / 162 B 
+> [============================================================] 0s 
+> Copying config 
+> sha256:84c9d0762469176a58d9c54375a1e9a4dcdc0045e3e14e191d97bd12cd5b23a1 
+>  2.42 KiB / 2.42 KiB 
+> [======================================================] 0s 
+> Writing manifest to image destination 
+> Storing signatures 
+> INFO:    Creating SIF file... 
+> INFO:    Build complete: 
+> /home/tru/.singularity/cache/oci-tmp/9b1702dcfe32c873a770a32cfd306dd7fc1c4fd134adfb783db68defc8894b3c/ubuntu_18.04.sif 
+>
+> Singularity ubuntu_18.04.sif:~> type mkdir 
+> mkdir is /bin/mkdir 
+> Singularity ubuntu_18.04.sif:~> /usr/bin/mkdir 
+> bash: /usr/bin/mkdir: No such file or directory 
+> Singularity ubuntu_18.04.sif:~> ldd /bin/mkdir   
+>         linux-vdso.so.1 (0x00007ffda8dea000) 
+>         libselinux.so.1 => /lib/x86_64-linux-gnu/libselinux.so.1 
+> (0x00007fc470b9c000) 
+>         libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007fc4707ab000) 
+>         libpcre.so.3 => /lib/x86_64-linux-gnu/libpcre.so.3 
+> (0x00007fc470539000) 
+>         libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 
+> (0x00007fc470335000) 
+>         /lib64/ld-linux-x86-64.so.2 (0x00007fc470fd8000) 
+>         libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 
+> (0x00007fc470116000) 
+> Singularity ubuntu_18.04.sif:~> 
+>
+> ymmv 
+>
+> Tru 
+>
+> -- 
+> Tru Huynh (PhD) | mailto:t...@pasteur.fr <javascript:> | tel +33 1 45 68 
+> 87 37 
+> https://research.pasteur.fr/en/team/structural-bioinformatics/ 
+> Institut Pasteur, 25-28 rue du Docteur Roux, 75724 Paris CEDEX 15 France   
+>
+
+------=_Part_5206_361196389.1563679667483
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Tru,<div><br></div><div>There is nothing special in=C2=
+=A0.bashrc or /etc/profile.d/*.sh. I also tried the=C2=A0docker://ubuntu:18=
+.04 image and got similar segfaults.</div><div><br></div><div><div class=3D=
+"prettyprint" style=3D"background-color: rgb(250, 250, 250); border-color: =
+rgb(187, 187, 187); border-style: solid; border-width: 1px; overflow-wrap: =
+break-word;"><code class=3D"prettyprint"><div class=3D"subprettyprint"><div=
+ class=3D"subprettyprint"><font color=3D"#660066">Singularity ubuntu_18.04.=
+sif:~/work&gt; /usr/bin/mkdir</font></div><div class=3D"subprettyprint"><fo=
+nt color=3D"#660066">Segmentation fault (core dumped)</font></div><div clas=
+s=3D"subprettyprint"><font color=3D"#660066">Singularity ubuntu_18.04.sif:~=
+/work&gt; cat ~/.bashrc=C2=A0</font></div><div class=3D"subprettyprint"><fo=
+nt color=3D"#660066"># .bashrc</font></div><div class=3D"subprettyprint"><f=
+ont color=3D"#660066"><br></font></div><div class=3D"subprettyprint"><font =
+color=3D"#660066"># Source global definitions</font></div><div class=3D"sub=
+prettyprint"><font color=3D"#660066">if [ -f /etc/bashrc ]; then</font></di=
+v><div class=3D"subprettyprint"><font color=3D"#660066">=C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 . /etc/bashrc</font></div><div class=3D"subprettyprint"><font co=
+lor=3D"#660066">fi</font></div><div class=3D"subprettyprint"><font color=3D=
+"#660066"><br></font></div><div class=3D"subprettyprint"><font color=3D"#66=
+0066"># Uncomment the following line if you don&#39;t like systemctl&#39;s =
+auto-paging feature:</font></div><div class=3D"subprettyprint"><font color=
+=3D"#660066"># export SYSTEMD_PAGER=3D</font></div><div class=3D"subprettyp=
+rint"><font color=3D"#660066"><br></font></div><div class=3D"subprettyprint=
+"><font color=3D"#660066"># User specific aliases and functions</font></div=
+><div class=3D"subprettyprint"><font color=3D"#660066">Singularity ubuntu_1=
+8.04.sif:~/work&gt; ls /etc/profile.d/=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0</font></div><div class=3D"subprettyprint"><font=
+ color=3D"#660066">01-locale-fix.sh</font></div><div class=3D"subprettyprin=
+t"><font color=3D"#660066">Singularity ubuntu_18.04.sif:~/work&gt; cat /etc=
+/profile.d/01-locale-fix.sh=C2=A0</font></div><div class=3D"subprettyprint"=
+><font color=3D"#660066"># Make sure the locale variables are set to valid =
+values.</font></div><div class=3D"subprettyprint"><font color=3D"#660066">e=
+val $(/usr/bin/locale-check C.UTF-8)</font></div><div class=3D"subprettypri=
+nt"><font color=3D"#660066">Singularity ubuntu_18.04.sif:~/work&gt; type mk=
+dir</font></div><div class=3D"subprettyprint"><font color=3D"#660066">mkdir=
+ is hashed (/bin/mkdir)</font></div><div class=3D"subprettyprint"><font col=
+or=3D"#660066">Singularity ubuntu_18.04.sif:~/work&gt; /usr/bin/mkdir</font=
+></div><div class=3D"subprettyprint"><font color=3D"#660066">Segmentation f=
+ault (core dumped)</font></div><div class=3D"subprettyprint"><font color=3D=
+"#660066">Singularity ubuntu_18.04.sif:~/work&gt; ldd /bin/mkdir</font></di=
+v><div class=3D"subprettyprint"><font color=3D"#660066">=C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 linux-vdso.so.1 (0x00007ffdda5dd000)</font></div><div class=3D"s=
+ubprettyprint"><font color=3D"#660066">=C2=A0 =C2=A0 =C2=A0 =C2=A0 libselin=
+ux.so.1 =3D&gt; /lib/x86_64-linux-gnu/libselinux.so.1 (0x00002b4bcf099000)<=
+/font></div><div class=3D"subprettyprint"><font color=3D"#660066">=C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 libc.so.6 =3D&gt; /lib/x86_64-linux-gnu/libc.so.6 (0x0=
+0002b4bcf2c1000)</font></div><div class=3D"subprettyprint"><font color=3D"#=
+660066">=C2=A0 =C2=A0 =C2=A0 =C2=A0 libpcre.so.3 =3D&gt; /lib/x86_64-linux-=
+gnu/libpcre.so.3 (0x00002b4bcf6b2000)</font></div><div class=3D"subprettypr=
+int"><font color=3D"#660066">=C2=A0 =C2=A0 =C2=A0 =C2=A0 libdl.so.2 =3D&gt;=
+ /lib/x86_64-linux-gnu/libdl.so.2 (0x00002b4bcf924000)</font></div><div cla=
+ss=3D"subprettyprint"><font color=3D"#660066">=C2=A0 =C2=A0 =C2=A0 =C2=A0 /=
+lib64/ld-linux-x86-64.so.2 (0x00002b4bcec5b000)</font></div><div class=3D"s=
+ubprettyprint"><font color=3D"#660066">=C2=A0 =C2=A0 =C2=A0 =C2=A0 libpthre=
+ad.so.0 =3D&gt; /lib/x86_64-linux-gnu/libpthread.so.0 (0x00002b4bcfb28000)<=
+/font></div><div><br></div></div></code></div><br><br>Best,</div><div>Yilon=
+g<br><br>On Saturday, July 20, 2019 at 9:27:24 AM UTC-7, Tru Huynh wrote:<b=
+lockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;borde=
+r-left: 1px #ccc solid;padding-left: 1ex;">On Sat, Jul 20, 2019 at 12:39:31=
+AM -0700, Yilong Li wrote:
+<br>&gt; =C2=A0 =C2=A0Hi Jason and John,
+<br>&gt; =C2=A0 =C2=A0Outside the container, I have CentOS 7:
+<br>&gt; =C2=A0 =C2=A0[yilongl@n592 ~]$ uname -a
+<br>&gt; =C2=A0 =C2=A0Linux n592 3.10.0-514.21.2.el7.735g0000.<wbr>x86_64 #=
+1 SMP Wed Jun 21 02:03:38
+<br>&gt; =C2=A0 =C2=A0UTC 2017 x86_64 x86_64 x86_64 GNU/Linux
+<br>&gt; =C2=A0 =C2=A0[yilongl@n592 ~]$ lsb_release -a
+<br>&gt; =C2=A0 =C2=A0LSB Version:
+<br>&gt; =C2=A0 =C2=A0Distributor ID: CentOS
+<br>&gt; =C2=A0 =C2=A0Description:=C2=A0 =C2=A0 CentOS Linux release 7.3.16=
+11 (Core)=C2=A0
+<br>&gt; =C2=A0 =C2=A0Release:=C2=A0 =C2=A0 =C2=A0 =C2=A0 7.3.1611
+<br>&gt; =C2=A0 =C2=A0Codename:=C2=A0 =C2=A0 =C2=A0 =C2=A0Core
+<br>
+<br>it&#39;s might be centos 7.3(2017!) based but that&#39;s not a centos k=
+ernel
+<br>3.10.0-514.21.2.el7.735g0000.<wbr>x86_64 &lt;- not listed at
+<br><a href=3D"http://vault.centos.org/7.3.1611/updates/x86_64/Packages/" t=
+arget=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://ww=
+w.google.com/url?q\x3dhttp%3A%2F%2Fvault.centos.org%2F7.3.1611%2Fupdates%2F=
+x86_64%2FPackages%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEo2p-14uVKPdnm=
+nDAjmD3P3GJ4RQ&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.go=
+ogle.com/url?q\x3dhttp%3A%2F%2Fvault.centos.org%2F7.3.1611%2Fupdates%2Fx86_=
+64%2FPackages%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEo2p-14uVKPdnmnDAj=
+mD3P3GJ4RQ&#39;;return true;">http://vault.centos.org/7.3.<wbr>1611/updates=
+/x86_64/Packages/</a>
+<br>[ ]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0kernel-3.10.0-514.21=
+.<wbr>1.el7.x86_64.rpm=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A02017-=
+<wbr>05-25 23:21 37M=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=20
+<br>[ ]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0kernel-3.10.0-514.21=
+.<wbr>2.el7.x86_64.rpm=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A02017-=
+<wbr>06-20 14:31 37M=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=20
+<br>[ ]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0kernel-3.10.0-514.26=
+.<wbr>1.el7.x86_64.rpm=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A02017-=
+<wbr>06-29 18:14 37M=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=20
+<br>[ ]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0kernel-3.10.0-514.26=
+.<wbr>2.el7.x86_64.rpm=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A02017-=
+<wbr>07-04 17:01 37M=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=20
+<br>
+<br>&gt; =C2=A0 =C2=A0Inside the container, I have Ubuntu 18.04:
+<br>&gt; =C2=A0 =C2=A0Singularity rb-5d313adc7615c12d83388aed_<wbr>latest.s=
+if:~/work&gt; uname -a
+<br>&gt; =C2=A0 =C2=A0Linux n592 3.10.0-514.21.2.el7.735g0000.<wbr>x86_64 #=
+1 SMP Wed Jun 21 02:03:38
+<br>&gt; =C2=A0 =C2=A0UTC 2017 x86_64 x86_64 x86_64 GNU/Linux
+<br>&gt; =C2=A0 =C2=A0Singularity rb-5d313adc7615c12d83388aed_<wbr>latest.s=
+if:~/work&gt; cat
+<br>&gt; =C2=A0 =C2=A0/etc/os-release=C2=A0
+<br>&gt; =C2=A0 =C2=A0NAME=3D&quot;Ubuntu&quot;
+<br>&gt; =C2=A0 =C2=A0VERSION=3D&quot;18.04.2 LTS (Bionic Beaver)&quot;
+<br>&gt; =C2=A0 =C2=A0ID=3Dubuntu
+<br>&gt; =C2=A0 =C2=A0ID_LIKE=3Ddebian
+<br>&gt; =C2=A0 =C2=A0PRETTY_NAME=3D&quot;Ubuntu 18.04.2 LTS&quot;
+<br>&gt; =C2=A0 =C2=A0VERSION_ID=3D&quot;18.04&quot;
+<br>&gt; =C2=A0 =C2=A0HOME_URL=3D&quot;<a href=3D"https://www.ubuntu.com/" =
+target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://=
+www.google.com/url?q\x3dhttps%3A%2F%2Fwww.ubuntu.com%2F\x26sa\x3dD\x26sntz\=
+x3d1\x26usg\x3dAFQjCNGlkyvYV_Xl6w3szgw0nE8z_xkDIg&#39;;return true;" onclic=
+k=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fwww.ubu=
+ntu.com%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGlkyvYV_Xl6w3szgw0nE8z_x=
+kDIg&#39;;return true;">https://www.ubuntu.<wbr>com/</a>&quot;
+<br>&gt; =C2=A0 =C2=A0SUPPORT_URL=3D&quot;<a href=3D"https://help.ubuntu.co=
+m/" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http=
+s://www.google.com/url?q\x3dhttps%3A%2F%2Fhelp.ubuntu.com%2F\x26sa\x3dD\x26=
+sntz\x3d1\x26usg\x3dAFQjCNFJVte2zfc10M61dWPfvPZedZC_xg&#39;;return true;" o=
+nclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fhe=
+lp.ubuntu.com%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFJVte2zfc10M61dWPf=
+vPZedZC_xg&#39;;return true;">https://help.<wbr>ubuntu.com/</a>&quot;
+<br>&gt; =C2=A0 =C2=A0BUG_REPORT_URL=3D&quot;<a href=3D"https://bugs.launch=
+pad.net/ubuntu/" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.hre=
+f=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fbugs.launchpad.net%2=
+Fubuntu%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNG1aHRG8NArT5uKXIcZi9Khv_=
+zJMQ&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.com/=
+url?q\x3dhttps%3A%2F%2Fbugs.launchpad.net%2Fubuntu%2F\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNG1aHRG8NArT5uKXIcZi9Khv_zJMQ&#39;;return true;">https://=
+bugs.<wbr>launchpad.net/ubuntu/</a>&quot;
+<br>&gt; =C2=A0 =C2=A0PRIVACY_POLICY_URL=3D&quot;<a href=3D"https://www.ubu=
+ntu.com/legal/terms-and-policies/privacy-policy" target=3D"_blank" rel=3D"n=
+ofollow" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dht=
+tps%3A%2F%2Fwww.ubuntu.com%2Flegal%2Fterms-and-policies%2Fprivacy-policy\x2=
+6sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFxILBQmxmak_tdR9l4X1ZAcpQqSg&#39;;ret=
+urn true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttp=
+s%3A%2F%2Fwww.ubuntu.com%2Flegal%2Fterms-and-policies%2Fprivacy-policy\x26s=
+a\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFxILBQmxmak_tdR9l4X1ZAcpQqSg&#39;;retur=
+n true;">https://<wbr>www.ubuntu.com/legal/terms-<wbr>and-policies/privacy-=
+policy</a>&quot;
+<br>&gt; =C2=A0 =C2=A0VERSION_CODENAME=3Dbionic
+<br>&gt; =C2=A0 =C2=A0UBUNTU_CODENAME=3Dbionic
+<br>&gt; =C2=A0 =C2=A0I also tried a few more commands inside the container=
+:
+<br>&gt; =C2=A0 =C2=A0Singularity rb-5d313adc7615c12d83388aed_<wbr>latest.s=
+if:~/work&gt; ldd /bin/mkdir
+<br>&gt; =C2=A0 =C2=A0=C2=A0 =C2=A0 =C2=A0 =C2=A0 linux-vdso.so.1 (0x00007f=
+fc3fffc000)
+<br>&gt; =C2=A0 =C2=A0=C2=A0 =C2=A0 =C2=A0 =C2=A0 libselinux.so.1 =3D&gt; /=
+lib/x86_64-linux-gnu/<wbr>libselinux.so.1
+<br>&gt; =C2=A0 =C2=A0(0x00002b1cdb0f8000)
+<br>&gt; =C2=A0 =C2=A0=C2=A0 =C2=A0 =C2=A0 =C2=A0 libc.so.6 =3D&gt; /lib/x8=
+6_64-linux-gnu/libc.so.<wbr>6 (0x00002b1cdb320000)
+<br>&gt; =C2=A0 =C2=A0=C2=A0 =C2=A0 =C2=A0 =C2=A0 libpcre.so.3 =3D&gt; /lib=
+/x86_64-linux-gnu/libpcre.<wbr>so.3
+<br>&gt; =C2=A0 =C2=A0(0x00002b1cdb711000)
+<br>&gt; =C2=A0 =C2=A0=C2=A0 =C2=A0 =C2=A0 =C2=A0 libdl.so.2 =3D&gt; /lib/x=
+86_64-linux-gnu/libdl.<wbr>so.2
+<br>&gt; =C2=A0 =C2=A0(0x00002b1cdb983000)
+<br>&gt; =C2=A0 =C2=A0=C2=A0 =C2=A0 =C2=A0 =C2=A0 /lib64/ld-linux-x86-64.so=
+.2 (0x00002b1cdacba000)
+<br>&gt; =C2=A0 =C2=A0=C2=A0 =C2=A0 =C2=A0 =C2=A0 libpthread.so.0 =3D&gt; /=
+lib/x86_64-linux-gnu/<wbr>libpthread.so.0
+<br>&gt; =C2=A0 =C2=A0(0x00002b1cdbb87000)
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0Singularity rb-5d313adc7615c12d83388aed_<wbr>latest.s=
+if:~/work&gt; ldd
+<br>&gt; =C2=A0 =C2=A0/usr/bin/mkdir
+<br>&gt; =C2=A0 =C2=A0ldd: /usr/bin/mkdir: No such file or directory
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0Singularity rb-5d313adc7615c12d83388aed_<wbr>latest.s=
+if:~/work&gt; /usr/bin/mkdir
+<br>&gt; =C2=A0 =C2=A0Segmentation fault (core dumped)
+<br>&gt; =C2=A0 =C2=A0And there is no /rootfs inside the container:
+<br>&gt; =C2=A0 =C2=A0Singularity rb-5d313adc7615c12d83388aed_<wbr>latest.s=
+if:~/work&gt; cd /rootfs
+<br>&gt; =C2=A0 =C2=A0bash: cd: /rootfs: No such file or directory
+<br>&gt; =C2=A0 =C2=A0As Randy suggested earlier, segfault is not really th=
+e problem. I wouldn&#39;t
+<br>&gt; =C2=A0 =C2=A0be surprised if it&#39;s a libc issue because the `mk=
+dir` outside the
+<br>&gt; =C2=A0 =C2=A0container is pretty old. The real problem is why I ca=
+n execute
+<br>&gt; =C2=A0 =C2=A0/usr/bin/mkdir even though such binary doesn&#39;t ev=
+en exist under /usr/bin/
+<br>&gt; =C2=A0 =C2=A0inside the container. And why `env mkdir` will resolv=
+e to this
+<br>&gt; =C2=A0 =C2=A0non-existent binary.
+<br>is there anything specific in your .bashrc or /etc/profile.d/*.sh ?
+<br>
+<br>[tru@sillage ~]$ uname -a
+<br>Linux <a href=3D"http://sillage.bis.pasteur.fr" target=3D"_blank" rel=
+=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x=
+3dhttp%3A%2F%2Fsillage.bis.pasteur.fr\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQ=
+jCNG7S8ZeotifZ0aZ0jkHhmdCCZqGSA&#39;;return true;" onclick=3D"this.href=3D&=
+#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fsillage.bis.pasteur.fr\x26s=
+a\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNG7S8ZeotifZ0aZ0jkHhmdCCZqGSA&#39;;retur=
+n true;">sillage.bis.pasteur.fr</a> 3.10.0-957.21.3.el7.x86_64 #1 SMP Tue J=
+un 18 16:35:19 UTC 2019 x86_64 x86_64 x86_64 GNU/Linux
+<br>[tru@sillage ~]$ singularity shell docker://ubuntu:18.04
+<br>INFO: =C2=A0 =C2=A0Converting OCI blobs to SIF format
+<br>INFO: =C2=A0 =C2=A0Starting build...
+<br>Getting image source signatures
+<br>Copying blob sha256:<wbr>5b7339215d1d5f8e68622d584a224f<wbr>60339f5bef4=
+1dbd74330d081e912f0<wbr>cddd
+<br>=C2=A025.45 MiB / 25.45 MiB [=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D] 0s
+<br>Copying blob sha256:<wbr>14ca88e9f6723ce82bc14b241cda86<wbr>34f6d196771=
+84691d086662641ab96<wbr>fe68
+<br>=C2=A034.52 KiB / 34.52 KiB [=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D] 0s
+<br>Copying blob sha256:<wbr>a31c3b1caad473a474d574283741f8<wbr>80e37c708cc=
+06ee620d3e93fa60212<wbr>5ee0
+<br>=C2=A0849 B / 849 B [=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D] 0s
+<br>Copying blob sha256:<wbr>b054a26005b7f3b032577f811421fa<wbr>b5ec3b42ce4=
+5a4012dfa00cf6ed619<wbr>1b0f
+<br>=C2=A0162 B / 162 B [=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D] 0s
+<br>Copying config sha256:<wbr>84c9d0762469176a58d9c54375a1e9<wbr>a4dcdc004=
+5e3e14e191d97bd12cd5b<wbr>23a1
+<br>=C2=A02.42 KiB / 2.42 KiB [=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D] 0s
+<br>Writing manifest to image destination
+<br>Storing signatures
+<br>INFO: =C2=A0 =C2=A0Creating SIF file...
+<br>INFO: =C2=A0 =C2=A0Build complete: /home/tru/.singularity/cache/<wbr>oc=
+i-tmp/<wbr>9b1702dcfe32c873a770a32cfd306d<wbr>d7fc1c4fd134adfb783db68defc88=
+9<wbr>4b3c/ubuntu_18.04.sif
+<br>Singularity ubuntu_18.04.sif:~&gt; type mkdir
+<br>mkdir is /bin/mkdir
+<br>Singularity ubuntu_18.04.sif:~&gt; /usr/bin/mkdir
+<br>bash: /usr/bin/mkdir: No such file or directory
+<br>Singularity ubuntu_18.04.sif:~&gt; ldd /bin/mkdir =C2=A0
+<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0linux-vdso.so.1 (0x0000=
+7ffda8dea000)
+<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0libselinux.so.1 =3D&gt;=
+ /lib/x86_64-linux-gnu/<wbr>libselinux.so.1 (0x00007fc470b9c000)
+<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0libc.so.6 =3D&gt; /lib/=
+x86_64-linux-gnu/libc.so.<wbr>6 (0x00007fc4707ab000)
+<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0libpcre.so.3 =3D&gt; /l=
+ib/x86_64-linux-gnu/libpcre.<wbr>so.3 (0x00007fc470539000)
+<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0libdl.so.2 =3D&gt; /lib=
+/x86_64-linux-gnu/libdl.<wbr>so.2 (0x00007fc470335000)
+<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0/lib64/ld-linux-x86-<wb=
+r>64.so.2 (0x00007fc470fd8000)
+<br>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0libpthread.so.0 =3D&gt;=
+ /lib/x86_64-linux-gnu/<wbr>libpthread.so.0 (0x00007fc470116000)
+<br>Singularity ubuntu_18.04.sif:~&gt;=20
+<br>
+<br>ymmv
+<br>
+<br>Tru
+<br>
+<br>--=20
+<br>Tru Huynh (PhD) | mailto:<a href=3D"javascript:" target=3D"_blank" gdf-=
+obfuscated-mailto=3D"3ZsPFlE4DQAJ" rel=3D"nofollow" onmousedown=3D"this.hre=
+f=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascr=
+ipt:&#39;;return true;">t...@pasteur.fr</a> | tel +33 1 45 68 87 37
+<br><a href=3D"https://research.pasteur.fr/en/team/structural-bioinformatic=
+s/" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http=
+s://www.google.com/url?q\x3dhttps%3A%2F%2Fresearch.pasteur.fr%2Fen%2Fteam%2=
+Fstructural-bioinformatics%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEeKbU=
+9BnUpp8olAJN27KaKPPfWEA&#39;;return true;" onclick=3D"this.href=3D&#39;http=
+s://www.google.com/url?q\x3dhttps%3A%2F%2Fresearch.pasteur.fr%2Fen%2Fteam%2=
+Fstructural-bioinformatics%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEeKbU=
+9BnUpp8olAJN27KaKPPfWEA&#39;;return true;">https://research.pasteur.fr/<wbr=
+>en/team/structural-<wbr>bioinformatics/</a>
+<br>Institut Pasteur, 25-28 rue du Docteur Roux, 75724 Paris CEDEX 15 Franc=
+e =C2=A0
+<br></blockquote></div></div>
+------=_Part_5206_361196389.1563679667483--
+
+------=_Part_5205_1172225574.1563679667483--

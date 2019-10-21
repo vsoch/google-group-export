@@ -1,0 +1,332 @@
+Date: Fri, 18 Jan 2019 21:51:24 -0800 (PST)
+From: Tims <tims....@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <a6050ea3-8ae3-4621-8b9b-ee98cd10d30b@lbl.gov>
+In-Reply-To: <CAPqNE2W0tSb=YRCcCpd11kSTERbtLN=VGTG3zeBdx4kECcqpVQ@mail.gmail.com>
+References: <9310c07c-393a-423f-9e83-18bd07c9c099@lbl.gov> <67e60139-1082-4915-bced-c766eafc96f2@lbl.gov>
+ <CAPqNE2XXe3a7jnL90xB+zJN1DCif7SPRf6nWqunKvZ1Ntqw8xA@mail.gmail.com>
+ <f8dd49b5-1663-4930-8756-5d33321839ec@lbl.gov> <CAPqNE2Xe6q0_RXfC4SWQHR4_j1bYTnBwVx+ivgSDZj28timZpA@mail.gmail.com>
+ <CAPqNE2WQk+Tv4nNumSBjcje_UM+XEx-o8fT1VugHwgFCEErkwQ@mail.gmail.com> <CAPqNE2XMG5vgQv=noBJf7wCr7S49ze0C51yt1mo9+T-vysWY-g@mail.gmail.com>
+ <CAPqNE2W0tSb=YRCcCpd11kSTERbtLN=VGTG3zeBdx4kECcqpVQ@mail.gmail.com>
+Subject: Re: [Singularity] Re: Permission denied accessing certain packages
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1211_509490427.1547877085162"
+
+------=_Part_1211_509490427.1547877085162
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1212_1241388789.1547877085162"
+
+------=_Part_1212_1241388789.1547877085162
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+per your suggestion John, I am trying to install Ipopt from REPL.
+So, first trying to remove Ipopt:
+
+ Pkg.rm("Ipopt")
+INFO: Removing Ipopt v0.4.5
+ERROR: sendfile: no space left on device (ENOSPC)
+
+Started REPL as:
+singularity shell intelmpi-julia0.6.4.img/
+julia
+
+
+
+On Friday, January 18, 2019 at 9:38:03 PM UTC-8, John Hearns wrote:
+>
+> Having said what I just said, running Julia 1.0.3 within the container I=
+=20
+> had to do Pkg.build("SpecialFunctions")
+> Working OK now though  - curioser and curioser as Alice said.
+>
+> On Sat, 19 Jan 2019 at 05:31, John Hearns <h...@googlemail.com=20
+> <javascript:>> wrote:
+>
+>> Also shirking responsibility here - the folks over at=20
+>> https://discourse.julialang.org/ are pretty helpful.
+>> I think you have pointed out a wrinkle regarding usign Julia in=20
+>> containers - you need to either bring along a development environment, o=
+r=20
+>> install things beforehand in your .julia
+>>
+>> On Sat, 19 Jan 2019 at 05:28, John Hearns <h...@googlemail.com=20
+>> <javascript:>> wrote:
+>>
+>>> Going out on a bit of a limb here I think they way forward it to
+>>>
+>>> a) create a container with all the build tools which are needed
+>>>
+>>> b) run the Julia REPL from a normal shell, Pkg add and Pkg build all th=
+e=20
+>>> packages you need
+>>> Then when the container runs it should pick up everything from your=20
+>>> .julia directory
+>>> I may be wrong
+>>>
+>>> On Sat, 19 Jan 2019 at 05:25, John Hearns <h...@googlemail.com=20
+>>> <javascript:>> wrote:
+>>>
+>>>> Hi Tim. =20
+>>>> Why are you running as root? Is that necessary?
+>>>>
+>>>> When I try to add the Complementarity module in the version 1.0.3=20
+>>>> container
+>>>>
+>>>> =E2=94=82 [ Info: Changing directory to=20
+>>>> /home/hearnsj/.julia/packages/PATHSolver/xjazJ/deps/src/PathJulia-0.1.=
+2/src
+>>>> =E2=94=82 ERROR: LoadError: IOError: could not spawn `make linux64`: n=
+o such=20
+>>>> file or directory (ENOENT)
+>>>> =E2=94=82 Stacktrace:
+>>>>
+>>>> I guess all that is saying is that 'make' is not installed int he=20
+>>>> container.
+>>>>
+>>>>
+>>>> I guess you dont have command line Julia 0.6.4 installed on your syste=
+m.
+>>>> Maybe worth installing that, and trying to add Complementarity
+>>>> I thought I had 0.6 as an alternative on my system,  but sorry seem to=
+=20
+>>>> have deleted it
+>>>>
+>>>>
+>>>>
+>>>>
+>>>> On Sat, 19 Jan 2019 at 04:50, Tims <ti...@gmail.com <javascript:>>=20
+>>>> wrote:
+>>>>
+>>>>> Thanks John, yes I need 0.6.4.
+>>>>> The workaround I have is to chown and give wheel access to=20
+>>>>> /root/.julia and then convert from sandbox to squashfs.
+>>>>> It  works for package Compat.but breaks witha seg fault for package=
+=20
+>>>>> Complementarity.
+>>>>>
+>>>>> singularity exec intelmpi-julia0.6.4.img/ julia -e "using=20
+>>>>> Complementarity"
+>>>>>
+>>>>> signal (11): Segmentation fault
+>>>>> while loading /root/.julia/v0.6/ForwardDiff/src/ForwardDiff.jl, in=20
+>>>>> expression starting on line 12
+>>>>>
+>>>>> Any clue?
+>>>>>
+>>>>>
+>>>>>
+>>>>> On Friday, January 18, 2019 at 8:30:22 PM UTC-8, John Hearns wrote:
+>>>>>>
+>>>>>> Hi Tim.  I guess you have good reasons for using Julia version 0.6.4=
+=20
+>>>>>> - most probably because you have code which only runs with this vers=
+ion,=20
+>>>>>> and hence why Compay.jl is being asked for also.
+>>>>>>
+>>>>>> Not very helpful of me, but using Singularity 3.0.2 I can pull a=20
+>>>>>> Julia container from the Docker registry which has Julia 1.0.3
+>>>>>>
+>>>>>> singularity pull docker://julia
+>>>>>> singularity exec julia_latest.sif  julia -e 'import Pkg;=20
+>>>>>> Pkg.add("Compat"); using Compat'
+>>>>>>
+>>>>>> The .julia directory from my own account is being used - I can add=
+=20
+>>>>>> packages before execing the container also.
+>>>>>> The extra Pkg stuff after -e is due to the new Julia package manager=
+,=20
+>>>>>> if anyone is wondering why. You have to pull Pkg in now as it is not=
+ in=20
+>>>>>> Base AFAIK
+>>>>>>
+>>>>>>
+>>>>>>
+>>>>>> On Sat, 19 Jan 2019 at 02:21, Tims <ti...@gmail.com> wrote:
+>>>>>>
+>>>>>>> The image was built from a sandbox as
+>>>>>>>
+>>>>>>> sudo singularity build julia0.6.4.simg julia0.6.4.img/
+>>>>>>>
+>>>>>>>
+>>>>>>> singularity exec intelmpi-julia0.6.4.simg julia -e 'using Compat'
+>>>>>>>
+>>>>>>> ERROR: SystemError: opening file /root/.julia/lib/v0.6/Compat.ji:=
+=20
+>>>>>>> Permission denied
+>>>>>>> Stacktrace:
+>>>>>>>
+>>>>>>>
+>>>>>>>
+>>>>>>>
+>>>>>>> On Friday, January 18, 2019 at 2:19:33 PM UTC-8, Tims wrote:
+>>>>>>>>
+>>>>>>>>
+>>>>>>>> While running a singularity container, Julia is apparently trying=
+=20
+>>>>>>>> to precompile packages and running into permission errors.
+>>>>>>>>
+>>>>>>>> ERROR: LoadError: LoadError: SystemError: opening file=20
+>>>>>>>> /root/.julia/lib/v0.6/Compat.ji: Permission denied
+>>>>>>>>
+>>>>>>>>
+>>>>>>>> What is a good way to avoid this error without sudo ing?
+>>>>>>>>
+>>>>>>> --=20
+>>>>>>> You received this message because you are subscribed to the Google=
+=20
+>>>>>>> Groups "singularity" group.
+>>>>>>> To unsubscribe from this group and stop receiving emails from it,=
+=20
+>>>>>>> send an email to singu...@lbl.gov.
+>>>>>>>
+>>>>>> --=20
+>>>>> You received this message because you are subscribed to the Google=20
+>>>>> Groups "singularity" group.
+>>>>> To unsubscribe from this group and stop receiving emails from it, sen=
+d=20
+>>>>> an email to singu...@lbl.gov <javascript:>.
+>>>>>
+>>>>
+------=_Part_1212_1241388789.1547877085162
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>per your suggestion John, I am trying to install Ipop=
+t from REPL.</div><div>So, first trying to remove Ipopt:</div><div><br></di=
+v><div>=C2=A0Pkg.rm(&quot;Ipopt&quot;)</div><div>INFO: Removing Ipopt v0.4.=
+5</div><div>ERROR: sendfile: no space left on device (ENOSPC)</div><div><br=
+></div><div>Started REPL as:</div><div>singularity shell intelmpi-julia0.6.=
+4.img/<br></div><div>julia</div><div><br></div><div><br></div><br>On Friday=
+, January 18, 2019 at 9:38:03 PM UTC-8, John Hearns wrote:<blockquote class=
+=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #cc=
+c solid;padding-left: 1ex;"><div dir=3D"ltr"><div dir=3D"ltr">Having said w=
+hat I just said, running Julia 1.0.3 within the container I had to do Pkg.b=
+uild(&quot;SpecialFunctions&quot;)</div><div>Working OK now though=C2=A0 - =
+curioser and curioser as Alice said.</div></div><br><div class=3D"gmail_quo=
+te"><div dir=3D"ltr">On Sat, 19 Jan 2019 at 05:31, John Hearns &lt;<a href=
+=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"O10a_8SbDwAJ" r=
+el=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return tru=
+e;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">h...@googlem=
+ail.com</a>&gt; wrote:<br></div><blockquote class=3D"gmail_quote" style=3D"=
+margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-lef=
+t:1ex"><div dir=3D"ltr"><div dir=3D"ltr">Also shirking responsibility here =
+- the folks over at=C2=A0<a href=3D"https://discourse.julialang.org/" targe=
+t=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.g=
+oogle.com/url?q\x3dhttps%3A%2F%2Fdiscourse.julialang.org%2F\x26sa\x3dD\x26s=
+ntz\x3d1\x26usg\x3dAFQjCNEhN-iEZFZs7qCF4J5gQcZoKla6JA&#39;;return true;" on=
+click=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fdis=
+course.julialang.org%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEhN-iEZFZs7=
+qCF4J5gQcZoKla6JA&#39;;return true;">https://discourse.<wbr>julialang.org/<=
+/a> are pretty helpful.</div><div>I think you have pointed out a wrinkle re=
+garding usign Julia in containers - you need to either bring along a develo=
+pment environment, or install things beforehand in your .julia</div></div><=
+br><div class=3D"gmail_quote"><div dir=3D"ltr">On Sat, 19 Jan 2019 at 05:28=
+, John Hearns &lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-=
+mailto=3D"O10a_8SbDwAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;ja=
+vascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;r=
+eturn true;">h...@googlemail.com</a>&gt; wrote:<br></div><blockquote class=
+=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rg=
+b(204,204,204);padding-left:1ex"><div dir=3D"ltr">Going out on a bit of a l=
+imb here I think they way forward it to<div><br></div><div>a) create a cont=
+ainer with all the build tools which are needed</div><div><br></div><div>b)=
+ run the Julia REPL from a normal shell, Pkg add and Pkg build all the pack=
+ages you need</div><div>Then when the container runs it should pick up ever=
+ything from your .julia directory</div><div>I may be wrong</div></div><br><=
+div class=3D"gmail_quote"><div dir=3D"ltr">On Sat, 19 Jan 2019 at 05:25, Jo=
+hn Hearns &lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mail=
+to=3D"O10a_8SbDwAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javasc=
+ript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;retur=
+n true;">h...@googlemail.com</a>&gt; wrote:<br></div><blockquote class=3D"g=
+mail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204=
+,204,204);padding-left:1ex"><div dir=3D"ltr"><div dir=3D"ltr">Hi Tim.=C2=A0=
+=C2=A0<div>Why are you running as root? Is that necessary?</div><div><br></=
+div><div>When I try to add the Complementarity module in the version 1.0.3 =
+container</div><div><div><br></div><div>=E2=94=82 [ Info: Changing director=
+y to /home/hearnsj/.julia/packages/<wbr>PATHSolver/xjazJ/deps/src/<wbr>Path=
+Julia-0.1.2/src</div><div>=E2=94=82 ERROR: LoadError: IOError: could not sp=
+awn `make linux64`: no such file or directory (ENOENT)</div><div>=E2=94=82 =
+Stacktrace:</div></div><div><br></div><div>I guess all that is saying is th=
+at &#39;make&#39; is not installed int he container.</div><div><br></div><d=
+iv><br></div><div>I guess you dont have command line Julia 0.6.4 installed =
+on your system.</div><div>Maybe worth installing that, and trying to add Co=
+mplementarity</div><div>I thought I had 0.6 as an alternative on my system,=
+=C2=A0 but sorry seem to have deleted it</div><div><br></div><div><br></div=
+><div><br></div></div></div><br><div class=3D"gmail_quote"><div dir=3D"ltr"=
+>On Sat, 19 Jan 2019 at 04:50, Tims &lt;<a href=3D"javascript:" target=3D"_=
+blank" gdf-obfuscated-mailto=3D"O10a_8SbDwAJ" rel=3D"nofollow" onmousedown=
+=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D=
+&#39;javascript:&#39;;return true;">ti...@gmail.com</a>&gt; wrote:<br></div=
+><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border=
+-left:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr"><div>Th=
+anks John, yes I need 0.6.4.</div>The workaround I have is to chown and giv=
+e wheel access to /root/.julia and then convert from sandbox to squashfs.<d=
+iv>It=C2=A0 works for package Compat.but breaks witha seg fault for package=
+ Complementarity.</div><div><br></div><div><div>singularity exec intelmpi-j=
+ulia0.6.4.img/ julia -e &quot;using Complementarity&quot;</div><div><br></d=
+iv><div>signal (11): Segmentation fault</div><div>while loading /root/.juli=
+a/v0.6/ForwardDiff/<wbr>src/ForwardDiff.jl, in expression starting on line =
+12</div></div><div><br></div><div>Any clue?</div><div><br><br><br>On Friday=
+, January 18, 2019 at 8:30:22 PM UTC-8, John Hearns wrote:<blockquote class=
+=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rg=
+b(204,204,204);padding-left:1ex"><div dir=3D"ltr">Hi Tim.=C2=A0 I guess you=
+ have good reasons for using Julia version 0.6.4 - most probably because yo=
+u have code which only runs with this version, and hence why Compay.jl is b=
+eing asked for also.<div><br></div><div>Not very helpful of me, but using S=
+ingularity 3.0.2 I can pull a Julia container from the Docker registry whic=
+h has Julia 1.0.3</div><div><br></div><div>singularity pull docker://julia<=
+/div><div>singularity exec julia_latest.sif=C2=A0 julia -e &#39;import Pkg;=
+ Pkg.add(&quot;Compat&quot;); using Compat&#39;<br></div><div><br></div><di=
+v>The .julia directory from my own account is being used - I can add packag=
+es before execing the container also.</div><div>The extra Pkg stuff after -=
+e is due to the new Julia package manager, if anyone is wondering why. You =
+have to pull Pkg in now as it is not in Base AFAIK</div><div><br></div><div=
+><br></div></div><br><div class=3D"gmail_quote"><div dir=3D"ltr">On Sat, 19=
+ Jan 2019 at 02:21, Tims &lt;<a rel=3D"nofollow">ti...@gmail.com</a>&gt; wr=
+ote:<br></div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px=
+ 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D=
+"ltr">The image was built from a sandbox as<div><br></div><div><div>sudo si=
+ngularity build julia0.6.4.simg julia0.6.4.img/</div><div><br></div><div><b=
+r></div><div><div>singularity exec intelmpi-julia0.6.4.simg julia -e &#39;u=
+sing Compat&#39;</div><div><br></div><div>ERROR: SystemError: opening file =
+/root/.julia/lib/v0.6/Compat.<wbr>ji: Permission denied</div><div>Stacktrac=
+e:</div></div><div><br></div><div><br></div><div><br></div><br>On Friday, J=
+anuary 18, 2019 at 2:19:33 PM UTC-8, Tims wrote:<blockquote class=3D"gmail_=
+quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,=
+204);padding-left:1ex"><div dir=3D"ltr"><br><div>While running a singularit=
+y container, Julia is apparently trying to precompile packages and running =
+into permission errors.</div><div><br></div><div><div>ERROR: LoadError: Loa=
+dError: SystemError: opening file /root/.julia/lib/v0.6/Compat.<wbr>ji: Per=
+mission denied</div></div><div><br></div><div><br></div><div>What is a good=
+ way to avoid this error without sudo ing?</div></div></blockquote></div></=
+div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</blockquote></div>
+</blockquote></div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+O10a_8SbDwAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</blockquote></div>
+</blockquote></div>
+</blockquote></div>
+</blockquote></div>
+</blockquote></div>
+------=_Part_1212_1241388789.1547877085162--
+
+------=_Part_1211_509490427.1547877085162--

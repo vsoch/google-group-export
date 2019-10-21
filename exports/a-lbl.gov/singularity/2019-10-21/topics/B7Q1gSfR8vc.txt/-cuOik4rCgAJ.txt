@@ -1,0 +1,1415 @@
+Date: Wed, 24 Apr 2019 04:55:26 -0700 (PDT)
+From: Rutu Pandya <rut...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <f00e219f-0f1a-4394-bfce-c5d07bc58820@lbl.gov>
+In-Reply-To: <CAM=pu+Lb3z23UAmZsSqO-5JJ_68U35Ff-RGFZSLSwbQfOmqTzw@mail.gmail.com>
+References: <038f06b6-0244-4a54-86b8-882874d0fa40@lbl.gov> <CAM=pu+JxweWtVGSd5aURg1cV8=pJhEYt+ae+2MnOoLM-FOV_WA@mail.gmail.com>
+ <743afdf6-6575-4648-a289-637dc0e416eb@lbl.gov> <CAM=pu+J3h5xe8JX9fncuhKXFzwQG=cUCMW2OXQufDm8zDmqfkw@mail.gmail.com>
+ <fa256970-46b9-4fba-9493-fa20f4fb2e9a@lbl.gov> <CAODo_BQV5cSb92BC35HZC0h7O7vW4ze7HTvp6e5p47JRiMz2NQ@mail.gmail.com>
+ <BYAPR04MB3814C095EBFB6546408D0471DC470@BYAPR04MB3814.namprd04.prod.outlook.com>
+ <6fda08dd-15bb-4d88-8cd0-849813ec4c06@lbl.gov> <29adfdf1-84b8-4dde-8760-fa1b2666175d@lbl.gov>
+ <CAM=pu+JqwmkCsD9zvTCqHPfdphsmJo74fnuaOGEHxyE-xDThhQ@mail.gmail.com>
+ <BYAPR04MB3814251E032B15CFD0EE7627DC560@BYAPR04MB3814.namprd04.prod.outlook.com>
+ <d2111d1d-05fa-4141-8c54-42bc9d8146e5@lbl.gov> <BYAPR04MB3814178350DCCDD1342117CFDC570@BYAPR04MB3814.namprd04.prod.outlook.com>
+ <01bad951-97d6-47d5-8a2b-1cbc98555e48@lbl.gov> <BN6PR03MB25452CE67BE889F2C2500571CE570@BN6PR03MB2545.namprd03.prod.outlook.com>
+ <CAM=pu++T=xPDBxFvYL4HPu=vKZyuzVnAxrHcpF6Nc-cGht=G-g@mail.gmail.com>
+ <e859274c-90df-4c4c-a915-827169788c23@lbl.gov> <f71c2404-7289-4146-b8b7-a489116348d2@lbl.gov>
+ <CAM=pu+Lb3z23UAmZsSqO-5JJ_68U35Ff-RGFZSLSwbQfOmqTzw@mail.gmail.com>
+Subject: Re: [Singularity] git won't install through command in recipe file
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_760_123007491.1556106926126"
+
+------=_Part_760_123007491.1556106926126
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_761_1610409048.1556106926127"
+
+------=_Part_761_1610409048.1556106926127
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi Everyone,
+
+I come across the following error which seems to suggest that the CUDA 
+installation in the container doesn't seem to be working. But I am unable 
+to figure out what must be wrong with it..
+
+Attached is the error and my recipe file - bootstrapping from 
+nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04 docker container.
+
+Does anything stand out? Would really appreciate your help as always!
+
+Thanks,
+Rutu
+
+On Tuesday, April 9, 2019 at 3:44:49 PM UTC-4, vanessa wrote:
+>
+> Awesome!! :D
+>
+> On Tue, Apr 9, 2019 at 3:26 PM Rutu Pandya <r...@gmail.com <javascript:>> 
+> wrote:
+>
+>> Update: The best way turned out to be using the following:
+>>
+>> Bootstrap: docker
+>> From: nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
+>>
+>> Then installing python3.5, python virtualenv, tensorflow  and the 
+>> dependencies. 
+>>
+>> Thank you all for your help!
+>>
+>> Rutu
+>>
+>>
+>> On Thursday, April 4, 2019 at 11:41:27 AM UTC-4, Rutu Pandya wrote:
+>>>
+>>> Thanks Vanessa I am going to try this now.
+>>>
+>>> On Wednesday, April 3, 2019 at 5:47:10 PM UTC-4, vanessa wrote:
+>>>>
+>>>> Interesting, so this is definitely something to do with the Singularity 
+>>>> build process - you can actually use the same base (from Docker) and not 
+>>>> run into any of these issues. Here is a starter Dockerfile:
+>>>>
+>>>> FROM tensorflow/tensorflow:1.12.0-gpu-py3
+>>>>> ENV SHELL /bin/bash
+>>>>> ENV DEBIAN_FRONTEND noninteractive
+>>>>> RUN apt-get update && apt-get install -y git
+>>>>> RUN mkdir -p /software && \
+>>>>>     cd /software && \
+>>>>>     git clone https://github.com/cerr/CERR.git && \
+>>>>>     git clone https://github.com/cerr/aimodels.git
+>>>>
+>>>>
+>>>> You can (after your modifications) test this, push to docker hub, and 
+>>>> then just pull back into Singularity. It's not a direct Singularity recipe, 
+>>>> but hey, it gets the job done.
+>>>>
+>>>> On Wed, Apr 3, 2019 at 5:07 PM Nadas, Stephen <n...@bu.edu> wrote:
+>>>>
+>>>>> Hi Rutu, 
+>>>>>
+>>>>> I) I saw this and it seems to reproduce (the "bad repo" stuff).   I 
+>>>>> started from 
+>>>>>
+>>>>>        Bootstrap: docker
+>>>>>        From: tensorflow/tensorflow:1.12.0-gpu-py3
+>>>>>
+>>>>>        And then apt-get install git or git-core and got errors 
+>>>>>
+>>>>>        E: Failed to fetch 
+>>>>> http://archive.ubuntu.com/ubuntu/pool/main/o/openssh/openssh-client_7.2p2-4ubuntu2.5_amd64.deb  
+>>>>> 404  Not Found [IP: 91.189.88.152 80]
+>>>>>
+>>>>> Have a look at 
+>>>>> https://stackoverflow.com/questions/30316812/ubuntu-apt-get-unable-to-fetch-packages 
+>>>>>
+>>>>> Consider the suggestion to add the google nameservers  (
+>>>>> 8.8.8.8/8.8.4.4) to /etc/resolve.conf which fixed installing git for 
+>>>>> me, without editing the urls in sources.list 
+>>>>>
+>>>>>
+>>>>> II) you may want an " export DEBIAN_FRONTEND=noninteractive" in the 
+>>>>> post section to try to pass the pop up menus if you want to go on with 
+>>>>> building.  You could consider setting up locale info early in %post 
+>>>>> section  
+>>>>>
+>>>>>
+>>>>> III) if you want interactive you can consider building a --sandbox, 
+>>>>> stopping at a good point, and then sudo singularity shell --writable into 
+>>>>> the sandbox to continue in a shell 
+>>>>>
+>>>>> Ymmv, hth, 
+>>>>>
+>>>>> Steve 
+>>>>>
+>>>>>
+>>>>> From: Rutu Pandya <r...@gmail.com> 
+>>>>> Sent: Wednesday, April 3, 2019 2:20 PM
+>>>>> To: singularity <si...@lbl.gov>
+>>>>> Cc: r...@gmail.com; m...@sdsc.edu
+>>>>> Subject: Re: [Singularity] git won't install through command in recipe 
+>>>>> file
+>>>>>
+>>>>> Hi Marty,
+>>>>>
+>>>>> Yes I am using Vagrant. Attached is the screen. I can't tab or use up 
+>>>>> and down arrow keyes or anything else to get to OK to continue the process.
+>>>>>
+>>>>> Thanks,
+>>>>> Rutu
+>>>>>
+>>>>> On Wednesday, April 3, 2019 at 1:13:21 PM UTC-4, Kandes, Martin wrote:
+>>>>> Rutu,
+>>>>>
+>>>>> There shouldn't be any dialog box that pops up when building the 
+>>>>> container from the definition file. Are you using a Linux virtual machine 
+>>>>> (e.g., running on Virtual Box) to use Singularity? Maybe you can send us 
+>>>>> some screenshots showing the issue?
+>>>>>
+>>>>> Marty 
+>>>>> ________________________________________
+>>>>> From: Rutu Pandya <javascript:>
+>>>>> Sent: Wednesday, April 3, 2019 7:06:09 AM
+>>>>> To: singularity
+>>>>> Cc: Kandes, Martin
+>>>>> Subject: Re: [Singularity] git won't install through command in recipe 
+>>>>> file 
+>>>>>  
+>>>>> Hi Marty, I actually tried that first - but in the process a dialogue 
+>>>>> box comes that requires me to click/select "OK", but they keyes on my 
+>>>>> keyboard are not mapped to the display it seems and I am not able to 
+>>>>> proceed from here. 
+>>>>>
+>>>>> I tried a few other recipes as well from Singularity Hub, haven't yet 
+>>>>> been able to successfully build a container that has Tensorflow 1.12.0, 
+>>>>> cuda 9 and cudnn 7 and has also has git. :(
+>>>>>
+>>>>> Thanks,
+>>>>> Rutu 
+>>>>>
+>>>>> On Tuesday, April 2, 2019 at 3:25:50 PM UTC-4, Kandes, Martin wrote: 
+>>>>> Rutu,
+>>>>>
+>>>>> And as I mentioned previously, if you need to build a custom container 
+>>>>> for your work, have a look at our definition file [1]. We build TensorFlow 
+>>>>> with GPU support from source for both python2 and python3. 
+>>>>>
+>>>>> Marty
+>>>>>
+>>>>> [1]
+>>>>>
+>>>>>
+>>>>> https://github.com/mkandes/naked-singularity/blob/master/definition-files/comet/tensorflow/tensorflow-gpu.def
+>>>>> ________________________________________
+>>>>> From: v <mailto:v...@gmail.com>
+>>>>> Sent: Tuesday, April 2, 2019 12:06:30 PM
+>>>>> To: mailto:si...@lbl.gov
+>>>>> Subject: Re: [Singularity] git won't install through command in recipe 
+>>>>> file 
+>>>>>  
+>>>>> Not a specific one, but if you search for the label that is the cuda 
+>>>>> version, there are a ton! 
+>>>>>
+>>>>> https://singularity-hub.org/labels/com.nvidia.cuda.version
+>>>>>
+>>>>> A control F finds 30 with tensorflow, so maybe one of those guys will 
+>>>>> be good :)
+>>>>>
+>>>>> On Tue, Apr 2, 2019 at 3:03 PM Rutu Pandya <mailto:r...@gmail.com> 
+>>>>> wrote:
+>>>>> Hi Vanessa, 
+>>>>>
+>>>>> Would you happen to know of a container having cuda and tensorflow 
+>>>>> both installed? 
+>>>>>
+>>>>> Thanks,
+>>>>> Rutu
+>>>>>
+>>>>>
+>>>>> On Wednesday, March 20, 2019 at 10:08:45 AM UTC-4, Rutu Pandya wrote: 
+>>>>> Thank you Stephen, Kandes! 
+>>>>>
+>>>>> On Monday, March 18, 2019 at 2:24:56 PM UTC-4, Kandes, Martin wrote: 
+>>>>> Rutu,
+>>>>>
+>>>>> In case you're still having problems, here is our base TensorFlow 
+>>>>> definition file [1].
+>>>>>
+>>>>> Marty
+>>>>>
+>>>>> [1]
+>>>>>
+>>>>>
+>>>>> https://github.com/mkandes/naked-singularity/blob/master/definition-files/comet/tensorflow/tensorflow-gpu.def
+>>>>> ________________________________________
+>>>>> From: 'Stephen Hauskins' via singularity <mailto:si...@lbl.gov>
+>>>>> Sent: Friday, March 15, 2019 12:13:32 PM
+>>>>> To: mailto:si...@lbl.gov
+>>>>> Subject: Re: [Singularity] git won't install through command in recipe 
+>>>>> file 
+>>>>>  
+>>>>> Rutu
+>>>>>
+>>>>> It looks like you are pointing at a non-existent repository or mirror 
+>>>>> for the software.  The error reports that the files are not at 
+>>>>> the URL you are pointing at.
+>>>>>
+>>>>> I am not a ubuntu person but rather centos but you should be able to 
+>>>>> point at another ubuntu repository site.
+>>>>>
+>>>>>
+>>>>>
+>>>>> On Fri, Mar 15, 2019 at 11:27 AM Rutu Pandya <mailto:r...@gmail.com> 
+>>>>> wrote:
+>>>>> The install from the source did not work as well, error attached. 
+>>>>>
+>>>>> Will try bootsrapping from the one you suggested and reinstall 
+>>>>> tensorflow version 1.12.
+>>>>>
+>>>>> Thanks!
+>>>>> Rutu
+>>>>>
+>>>>>
+>>>>>
+>>>>> On Friday, March 15, 2019 at 2:14:16 PM UTC-4, vanessa wrote: 
+>>>>> I'm not sure - I'd guess it's the latest in development (1.13.1 
+>>>>> something) so you could try installing the version you need: 
+>>>>>
+>>>>> pip install tensorflow==1.12.0
+>>>>>
+>>>>> On Fri, Mar 15, 2019 at 1:43 PM Rutu Pandya <mailto:r...@gmail.com> 
+>>>>> wrote:
+>>>>> This is great, would you happen to know what version of Tensorflow 
+>>>>> this might be? I need it to be 1.12.0.. 
+>>>>>
+>>>>> Thanks again for your help Vanessa! 
+>>>>>
+>>>>> On Friday, March 15, 2019 at 1:24:13 PM UTC-4, vanessa wrote: 
+>>>>> Yeah that is weird - maybe the server is down? In the meantime, I 
+>>>>> found a base that has git already installed, if it helps.
+>>>>>
+>>>>> Bootstrap:docker
+>>>>> From:tensorflow/tensorflow:devel-gpu-py3
+>>>>>
+>>>>> # sudo singularity build container.sif Singularity
+>>>>>
+>>>>> %environment
+>>>>>     export SHELL=/bin/bash
+>>>>> %post
+>>>>>   
+>>>>>   mkdir -p /software
+>>>>>   cd /software
+>>>>>   git clone https://github.com/cerr/CERR.git
+>>>>>   git clone https://github.com/cerr/aimodels.git
+>>>>>
+>>>>> If it doesn't resolve, you can try 
+>>>>> https://www.digitalocean.com/community/tutorials/how-to-install-git-on-ubuntu-16-04
+>>>>> . 
+>>>>>
+>>>>> On Fri, Mar 15, 2019 at 12:15 PM Rutu Pandya <mailto:r...@gmail.com> 
+>>>>> wrote:
+>>>>> Hello, 
+>>>>>
+>>>>> I am building a container using a recipe file. And want to install git 
+>>>>> to be able to clone a repo from it into the container. Even after trying 
+>>>>> several fixes and an exhaustive search for the correct command, I am unable 
+>>>>> to install git. The server I have is Ubuntu 16.04. 
+>>>>>
+>>>>> Attached is the recipe file for reference. 
+>>>>>
+>>>>> Thanks in advance!
+>>>>> Rutu
+>>>>> -- 
+>>>>> You received this message because you are subscribed to the Google 
+>>>>> Groups "singularity" group.
+>>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>>> an email to mailto:singu...@lbl.gov.
+>>>>>
+>>>>>
+>>>>>
+>>>>> -- 
+>>>>> Vanessa Villamia Sochat
+>>>>> Stanford University '16
+>>>>> (603) 321-0676
+>>>>> -- 
+>>>>> You received this message because you are subscribed to the Google 
+>>>>> Groups "singularity" group.
+>>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>>> an email to mailto:singu...@lbl.gov.
+>>>>>
+>>>>>
+>>>>>
+>>>>> -- 
+>>>>> Vanessa Villamia Sochat
+>>>>> Stanford University '16
+>>>>> (603) 321-0676
+>>>>> -- 
+>>>>> You received this message because you are subscribed to the Google 
+>>>>> Groups "singularity" group.
+>>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>>> an email to mailto:singu...@lbl.gov.
+>>>>>
+>>>>>
+>>>>> -- 
+>>>>>
+>>>>>
+>>>>> https://its.pbsci.ucsc.edu
+>>>>>
+>>>>> https://www.hb.ucsc.edu
+>>>>>
+>>>>> Stephen Hauskins
+>>>>>
+>>>>> 831-334-3961
+>>>>> -- 
+>>>>> You received this message because you are subscribed to the Google 
+>>>>> Groups "singularity" group.
+>>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>>> an email to mailto:singu...@lbl.gov.
+>>>>> -- 
+>>>>> You received this message because you are subscribed to the Google 
+>>>>> Groups "singularity" group.
+>>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>>> an email to mailto:si...@lbl.gov.
+>>>>>
+>>>>>
+>>>>>
+>>>>> -- 
+>>>>> Vanessa Villamia Sochat
+>>>>> Stanford University '16
+>>>>> (603) 321-0676
+>>>>> -- 
+>>>>> You received this message because you are subscribed to the Google 
+>>>>> Groups "singularity" group.
+>>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>>> an email to mailto:si...@lbl.gov.
+>>>>> -- 
+>>>>> You received this message because you are subscribed to the Google 
+>>>>> Groups "singularity" group.
+>>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>>> an email to mailto:singu...@lbl.gov.
+>>>>>
+>>>>> -- 
+>>>>> You received this message because you are subscribed to the Google 
+>>>>> Groups "singularity" group.
+>>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>>> an email to si...@lbl.gov.
+>>>>>
+>>>>
+>>>>
+>>>> -- 
+>>>> Vanessa Villamia Sochat
+>>>> Stanford University '16
+>>>> (603) 321-0676
+>>>>
+>>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to si...@lbl.gov <javascript:>.
+>>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_761_1610409048.1556106926127
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Everyone,<div><br></div><div>I come across the followin=
+g error which seems to suggest that the CUDA installation in the container =
+doesn&#39;t seem to be working. But I am unable to figure out what must be =
+wrong with it..</div><div><br></div><div>Attached is the error and my recip=
+e file - bootstrapping from nvidia/cuda:9.0-cudnn7-devel-<wbr>ubuntu16.04 d=
+ocker container.</div><div><br></div><div>Does anything stand out? Would re=
+ally appreciate your help as always!</div><div><br></div><div>Thanks,</div>=
+<div>Rutu</div><div><br>On Tuesday, April 9, 2019 at 3:44:49 PM UTC-4, vane=
+ssa wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left:=
+ 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">Awe=
+some!! :D</div><br><div class=3D"gmail_quote"><div dir=3D"ltr">On Tue, Apr =
+9, 2019 at 3:26 PM Rutu Pandya &lt;<a href=3D"javascript:" target=3D"_blank=
+" gdf-obfuscated-mailto=3D"7w-iKeg9BwAJ" rel=3D"nofollow" onmousedown=3D"th=
+is.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;j=
+avascript:&#39;;return true;">r...@gmail.com</a>&gt; wrote:<br></div><block=
+quote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1=
+px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr">Update: The be=
+st way turned out to be using the following:<div><br></div><div>Bootstrap: =
+docker<br></div><div>From: nvidia/cuda:9.0-cudnn7-devel-<wbr>ubuntu16.04</d=
+iv><div><br></div><div>Then installing python3.5, python virtualenv, tensor=
+flow=C2=A0 and the dependencies.=C2=A0</div><div><br></div><div>Thank you a=
+ll for your help!</div><div><br></div><div>Rutu<br><div><br><br>On Thursday=
+, April 4, 2019 at 11:41:27 AM UTC-4, Rutu Pandya wrote:<blockquote class=
+=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rg=
+b(204,204,204);padding-left:1ex"><div dir=3D"ltr">Thanks Vanessa I am going=
+ to try this now.<br><br>On Wednesday, April 3, 2019 at 5:47:10 PM UTC-4, v=
+anessa wrote:<blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px =
+0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"=
+ltr"><div dir=3D"ltr">Interesting, so this is definitely something to do wi=
+th the Singularity build process - you can actually use the same base (from=
+ Docker) and not run into any of these issues. Here is a starter Dockerfile=
+:<div><br></div><div><blockquote class=3D"gmail_quote" style=3D"margin:0px =
+0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex">FROM=
+ tensorflow/tensorflow:1.12.0-<wbr>gpu-py3<br>ENV SHELL /bin/bash<br>ENV DE=
+BIAN_FRONTEND noninteractive<br>RUN apt-get update &amp;&amp; apt-get insta=
+ll -y git<br>RUN mkdir -p /software &amp;&amp; \<br>=C2=A0 =C2=A0 cd /softw=
+are &amp;&amp; \<br>=C2=A0 =C2=A0 git clone <a href=3D"https://github.com/c=
+err/CERR.git" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=
+=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fcerr%2FC=
+ERR.git\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEAObUXWgb_ln36CN0CDqS9YzYe4=
+A&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.com/url=
+?q\x3dhttps%3A%2F%2Fgithub.com%2Fcerr%2FCERR.git\x26sa\x3dD\x26sntz\x3d1\x2=
+6usg\x3dAFQjCNEAObUXWgb_ln36CN0CDqS9YzYe4A&#39;;return true;">https://githu=
+b.com/cerr/CERR.<wbr>git</a> &amp;&amp; \<br>=C2=A0 =C2=A0 git clone <a hre=
+f=3D"https://github.com/cerr/aimodels.git" rel=3D"nofollow" target=3D"_blan=
+k" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A=
+%2F%2Fgithub.com%2Fcerr%2Faimodels.git\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAF=
+QjCNFlzJKmpqW5naxEzVe_8IZKTHMLCg&#39;;return true;" onclick=3D"this.href=3D=
+&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fcerr%2Faimo=
+dels.git\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFlzJKmpqW5naxEzVe_8IZKTHML=
+Cg&#39;;return true;">https://github.com/cerr/<wbr>aimodels.git</a></blockq=
+uote></div><div><br></div><div>You can (after your modifications) test this=
+, push to docker hub, and then just pull back into Singularity. It&#39;s no=
+t a direct Singularity recipe, but hey, it gets the job done.</div></div></=
+div><br><div class=3D"gmail_quote"><div dir=3D"ltr">On Wed, Apr 3, 2019 at =
+5:07 PM Nadas, Stephen &lt;<a rel=3D"nofollow">n...@bu.edu</a>&gt; wrote:<b=
+r></div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex=
+;border-left:1px solid rgb(204,204,204);padding-left:1ex">Hi Rutu, <br>
+<br>
+I) I saw this and it seems to reproduce (the &quot;bad repo&quot; stuff).=
+=C2=A0 =C2=A0I started from <br>
+<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0Bootstrap: docker<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0From: tensorflow/tensorflow:1.12.0-<wbr>gpu-py3<=
+br>
+<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0And then apt-get install git or git-core and got=
+ errors <br>
+<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0E: Failed to fetch <a href=3D"http://archive.ubu=
+ntu.com/ubuntu/pool/main/o/openssh/openssh-client_7.2p2-4ubuntu2.5_amd64.de=
+b" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;http:=
+//www.google.com/url?q\x3dhttp%3A%2F%2Farchive.ubuntu.com%2Fubuntu%2Fpool%2=
+Fmain%2Fo%2Fopenssh%2Fopenssh-client_7.2p2-4ubuntu2.5_amd64.deb\x26sa\x3dD\=
+x26sntz\x3d1\x26usg\x3dAFQjCNHRMdzyCI2M8ctlBzueCDTztL3tTw&#39;;return true;=
+" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fa=
+rchive.ubuntu.com%2Fubuntu%2Fpool%2Fmain%2Fo%2Fopenssh%2Fopenssh-client_7.2=
+p2-4ubuntu2.5_amd64.deb\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHRMdzyCI2M8=
+ctlBzueCDTztL3tTw&#39;;return true;">http://archive.ubuntu.com/<wbr>ubuntu/=
+pool/main/o/openssh/<wbr>openssh-client_7.2p2-4ubuntu2.<wbr>5_amd64.deb</a>=
+=C2=A0 404=C2=A0 Not Found [IP: 91.189.88.152 80]<br>
+<br>
+Have a look at <a href=3D"https://stackoverflow.com/questions/30316812/ubun=
+tu-apt-get-unable-to-fetch-packages" rel=3D"nofollow" target=3D"_blank" onm=
+ousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2F=
+stackoverflow.com%2Fquestions%2F30316812%2Fubuntu-apt-get-unable-to-fetch-p=
+ackages\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEwiGnN8qjHLltMkRgvMb6mm5_t6=
+w&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.com/url=
+?q\x3dhttps%3A%2F%2Fstackoverflow.com%2Fquestions%2F30316812%2Fubuntu-apt-g=
+et-unable-to-fetch-packages\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEwiGnN8=
+qjHLltMkRgvMb6mm5_t6w&#39;;return true;">https://stackoverflow.com/<wbr>que=
+stions/30316812/ubuntu-apt-<wbr>get-unable-to-fetch-packages</a> <br>
+<br>
+Consider the suggestion to add the google nameservers=C2=A0 (<a href=3D"htt=
+p://8.8.8.8/8.8.4.4" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this=
+.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2F8.8.8.8%2F8.8.4.4\=
+x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGapsFYA5MirG6fDLiBnkhSgHki8A&#39;;r=
+eturn true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhtt=
+p%3A%2F%2F8.8.8.8%2F8.8.4.4\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGapsFYA=
+5MirG6fDLiBnkhSgHki8A&#39;;return true;">8.8.8.8/8.8.4.4</a>) to /etc/resol=
+ve.conf which fixed installing git for me, without editing the urls in sour=
+ces.list <br>
+<br>
+<br>
+II) you may want an &quot; export DEBIAN_FRONTEND=3D<wbr>noninteractive&quo=
+t; in the post section to try to pass the pop up menus if you want to go on=
+ with building.=C2=A0 You could consider setting up locale info early in %p=
+ost section=C2=A0 <br>
+<br>
+<br>
+III) if you want interactive you can consider building a --sandbox, stoppin=
+g at a good point, and then sudo singularity shell --writable into the sand=
+box to continue in a shell <br>
+<br>
+Ymmv, hth, <br>
+<br>
+Steve <br>
+<br>
+<br>
+From: Rutu Pandya &lt;<a rel=3D"nofollow">r...@gmail.com</a>&gt; <br>
+Sent: Wednesday, April 3, 2019 2:20 PM<br>
+To: singularity &lt;<a rel=3D"nofollow">si...@lbl.gov</a>&gt;<br>
+Cc: <a rel=3D"nofollow">r...@gmail.com</a>; <a rel=3D"nofollow">m...@sdsc.e=
+du</a><br>
+Subject: Re: [Singularity] git won&#39;t install through command in recipe =
+file<br>
+<br>
+Hi Marty,<br>
+<br>
+Yes I am using Vagrant. Attached is the screen. I can&#39;t tab or use up a=
+nd down arrow keyes or anything else to get to OK to continue the process.<=
+br>
+<br>
+Thanks,<br>
+Rutu<br>
+<br>
+On Wednesday, April 3, 2019 at 1:13:21 PM UTC-4, Kandes, Martin wrote:<br>
+Rutu,<br>
+<br>
+There shouldn&#39;t be any dialog box that pops up when building the contai=
+ner from the definition file.=C2=A0Are you using a Linux virtual machine (e=
+.g., running on Virtual Box) to use Singularity? Maybe you can send us some=
+ screenshots showing the issue?<br>
+<br>
+Marty <br>
+______________________________<wbr>__________<br>
+From: Rutu Pandya &lt;javascript:&gt;<br>
+Sent: Wednesday, April 3, 2019 7:06:09 AM<br>
+To: singularity<br>
+Cc: Kandes, Martin<br>
+Subject: Re: [Singularity] git won&#39;t install through command in recipe =
+file <br>
+=C2=A0<br>
+Hi Marty, I actually tried that first - but in the process a dialogue box c=
+omes that requires me to click/select &quot;OK&quot;, but they keyes on my =
+keyboard are not mapped to the display it seems and I am not able to procee=
+d from here. <br>
+<br>
+I tried a few other recipes as well from Singularity Hub, haven&#39;t yet b=
+een able to successfully build a container that has Tensorflow 1.12.0, cuda=
+ 9 and cudnn 7 and has also has git. :(<br>
+<br>
+Thanks,<br>
+Rutu=C2=A0<br>
+<br>
+On Tuesday, April 2, 2019 at 3:25:50 PM UTC-4, Kandes, Martin wrote: <br>
+Rutu,<br>
+<br>
+And as I mentioned previously, if you need to build a custom container for =
+your work, have a look at our definition file [1]. We build TensorFlow with=
+ GPU support from source for both python2 and python3.=C2=A0<br>
+<br>
+Marty<br>
+<br>
+[1]<br>
+<br>
+<a href=3D"https://github.com/mkandes/naked-singularity/blob/master/definit=
+ion-files/comet/tensorflow/tensorflow-gpu.def" rel=3D"nofollow" target=3D"_=
+blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttp=
+s%3A%2F%2Fgithub.com%2Fmkandes%2Fnaked-singularity%2Fblob%2Fmaster%2Fdefini=
+tion-files%2Fcomet%2Ftensorflow%2Ftensorflow-gpu.def\x26sa\x3dD\x26sntz\x3d=
+1\x26usg\x3dAFQjCNEwnDAJqOZANKUJ5moaVaDHehuV6Q&#39;;return true;" onclick=
+=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.c=
+om%2Fmkandes%2Fnaked-singularity%2Fblob%2Fmaster%2Fdefinition-files%2Fcomet=
+%2Ftensorflow%2Ftensorflow-gpu.def\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCN=
+EwnDAJqOZANKUJ5moaVaDHehuV6Q&#39;;return true;">https://github.com/mkandes/=
+<wbr>naked-singularity/blob/master/<wbr>definition-files/comet/<wbr>tensorf=
+low/tensorflow-gpu.def</a><br>
+______________________________<wbr>__________<br>
+From: v &lt;mailto:<a>v...@gmail.com</a>&gt;<br>
+Sent: Tuesday, April 2, 2019 12:06:30 PM<br>
+To: mailto:<a>si...@lbl.gov</a><br>
+Subject: Re: [Singularity] git won&#39;t install through command in recipe =
+file <br>
+=C2=A0<br>
+Not a specific one, but if you search for the label that is the cuda versio=
+n, there are a ton! <br>
+<br>
+<a href=3D"https://singularity-hub.org/labels/com.nvidia.cuda.version" rel=
+=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www=
+.google.com/url?q\x3dhttps%3A%2F%2Fsingularity-hub.org%2Flabels%2Fcom.nvidi=
+a.cuda.version\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEy1s4eSaR9T9EzJ4BHIC=
+evenQWmg&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.=
+com/url?q\x3dhttps%3A%2F%2Fsingularity-hub.org%2Flabels%2Fcom.nvidia.cuda.v=
+ersion\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEy1s4eSaR9T9EzJ4BHICevenQWmg=
+&#39;;return true;">https://singularity-hub.org/<wbr>labels/com.nvidia.cuda=
+.version</a><br>
+<br>
+A control F finds 30 with tensorflow, so maybe one of those guys will be go=
+od :)<br>
+<br>
+On Tue, Apr 2, 2019 at 3:03 PM Rutu Pandya &lt;mailto:<a>r...@gmail.com</a>=
+&gt; wrote:<br>
+Hi Vanessa, <br>
+<br>
+Would you happen to know of a container having cuda and tensorflow both ins=
+talled?=C2=A0<br>
+<br>
+Thanks,<br>
+Rutu<br>
+<br>
+<br>
+On Wednesday, March 20, 2019 at 10:08:45 AM UTC-4, Rutu Pandya wrote: <br>
+Thank you Stephen, Kandes! <br>
+<br>
+On Monday, March 18, 2019 at 2:24:56 PM UTC-4, Kandes, Martin wrote: <br>
+Rutu,<br>
+<br>
+In case you&#39;re still having problems, here is our base TensorFlow defin=
+ition file [1].<br>
+<br>
+Marty<br>
+<br>
+[1]<br>
+<br>
+<a href=3D"https://github.com/mkandes/naked-singularity/blob/master/definit=
+ion-files/comet/tensorflow/tensorflow-gpu.def" rel=3D"nofollow" target=3D"_=
+blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttp=
+s%3A%2F%2Fgithub.com%2Fmkandes%2Fnaked-singularity%2Fblob%2Fmaster%2Fdefini=
+tion-files%2Fcomet%2Ftensorflow%2Ftensorflow-gpu.def\x26sa\x3dD\x26sntz\x3d=
+1\x26usg\x3dAFQjCNEwnDAJqOZANKUJ5moaVaDHehuV6Q&#39;;return true;" onclick=
+=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.c=
+om%2Fmkandes%2Fnaked-singularity%2Fblob%2Fmaster%2Fdefinition-files%2Fcomet=
+%2Ftensorflow%2Ftensorflow-gpu.def\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCN=
+EwnDAJqOZANKUJ5moaVaDHehuV6Q&#39;;return true;">https://github.com/mkandes/=
+<wbr>naked-singularity/blob/master/<wbr>definition-files/comet/<wbr>tensorf=
+low/tensorflow-gpu.def</a><br>
+______________________________<wbr>__________<br>
+From: &#39;Stephen Hauskins&#39; via singularity &lt;mailto:<a>si...@lbl.go=
+v</a>&gt;<br>
+Sent: Friday, March 15, 2019 12:13:32 PM<br>
+To: mailto:<a>si...@lbl.gov</a><br>
+Subject: Re: [Singularity] git won&#39;t install through command in recipe =
+file <br>
+=C2=A0<br>
+Rutu<br>
+<br>
+It looks like you are pointing at a non-existent repository or mirror for t=
+he software.=C2=A0 The error reports that the files are not at <br>
+the URL you are pointing at.<br>
+<br>
+I am not a ubuntu person but rather centos but you should be able to point =
+at another ubuntu repository site.<br>
+<br>
+<br>
+<br>
+On Fri, Mar 15, 2019 at 11:27 AM Rutu Pandya &lt;mailto:<a>r...@gmail.com</=
+a>&gt; wrote:<br>
+The install from the source did not work as well, error attached. <br>
+<br>
+Will try bootsrapping from the one you suggested and reinstall tensorflow v=
+ersion 1.12.<br>
+<br>
+Thanks!<br>
+Rutu<br>
+<br>
+<br>
+<br>
+On Friday, March 15, 2019 at 2:14:16 PM UTC-4, vanessa wrote: <br>
+I&#39;m not sure - I&#39;d guess it&#39;s the latest in development (1.13.1=
+ something) so you could try installing the version you need: <br>
+<br>
+pip install tensorflow=3D=3D1.12.0<br>
+<br>
+On Fri, Mar 15, 2019 at 1:43 PM Rutu Pandya &lt;mailto:<a>r...@gmail.com</a=
+>&gt; wrote:<br>
+This is great, would you happen to know what version of Tensorflow this mig=
+ht be? I need it to be=C2=A01.12.0.. <br>
+<br>
+Thanks again for your help Vanessa!=C2=A0<br>
+<br>
+On Friday, March 15, 2019 at 1:24:13 PM UTC-4, vanessa wrote: <br>
+Yeah that is weird - maybe the server is down? In the meantime, I found a b=
+ase that has git already installed, if it helps.<br>
+<br>
+Bootstrap:docker<br>
+From:tensorflow/tensorflow:<wbr>devel-gpu-py3<br>
+<br>
+# sudo singularity build container.sif Singularity<br>
+<br>
+%environment<br>
+=C2=A0 =C2=A0 export SHELL=3D/bin/bash<br>
+%post<br>
+=C2=A0=C2=A0<br>
+=C2=A0 mkdir -p /software<br>
+=C2=A0 cd /software<br>
+=C2=A0 git clone <a href=3D"https://github.com/cerr/CERR.git" rel=3D"nofoll=
+ow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.google.co=
+m/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fcerr%2FCERR.git\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNEAObUXWgb_ln36CN0CDqS9YzYe4A&#39;;return true;" onclick=
+=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.c=
+om%2Fcerr%2FCERR.git\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEAObUXWgb_ln36=
+CN0CDqS9YzYe4A&#39;;return true;">https://github.com/cerr/CERR.<wbr>git</a>=
+<br>
+=C2=A0 git clone <a href=3D"https://github.com/cerr/aimodels.git" rel=3D"no=
+follow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.googl=
+e.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fcerr%2Faimodels.git\x26sa\x3dD\x2=
+6sntz\x3d1\x26usg\x3dAFQjCNFlzJKmpqW5naxEzVe_8IZKTHMLCg&#39;;return true;" =
+onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fg=
+ithub.com%2Fcerr%2Faimodels.git\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFlz=
+JKmpqW5naxEzVe_8IZKTHMLCg&#39;;return true;">https://github.com/cerr/<wbr>a=
+imodels.git</a><br>
+<br>
+If it doesn&#39;t resolve, you can try <a href=3D"https://www.digitalocean.=
+com/community/tutorials/how-to-install-git-on-ubuntu-16-04" rel=3D"nofollow=
+" target=3D"_blank" onmousedown=3D"this.href=3D&#39;https://www.google.com/=
+url?q\x3dhttps%3A%2F%2Fwww.digitalocean.com%2Fcommunity%2Ftutorials%2Fhow-t=
+o-install-git-on-ubuntu-16-04\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEKa0D=
+YRC9yTlmBSs7AJJ1gRBJqzw&#39;;return true;" onclick=3D"this.href=3D&#39;http=
+s://www.google.com/url?q\x3dhttps%3A%2F%2Fwww.digitalocean.com%2Fcommunity%=
+2Ftutorials%2Fhow-to-install-git-on-ubuntu-16-04\x26sa\x3dD\x26sntz\x3d1\x2=
+6usg\x3dAFQjCNEKa0DYRC9yTlmBSs7AJJ1gRBJqzw&#39;;return true;">https://www.d=
+igitalocean.com/<wbr>community/tutorials/how-to-<wbr>install-git-on-ubuntu-=
+16-04</a>.=C2=A0<br>
+<br>
+On Fri, Mar 15, 2019 at 12:15 PM Rutu Pandya &lt;mailto:<a>r...@gmail.com</=
+a>&gt; wrote:<br>
+Hello, <br>
+<br>
+I am building a container using a recipe file. And want to install git to b=
+e able to clone a repo from it into the container. Even after trying severa=
+l fixes and an exhaustive search for the correct command, I am unable to in=
+stall git. The server I have is Ubuntu 16.04.=C2=A0<br>
+<br>
+Attached is the recipe file for reference.=C2=A0<br>
+<br>
+Thanks in advance!<br>
+Rutu<br>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to mailto:<a>singu...@lbl.gov</a>.<br>
+<br>
+<br>
+<br>
+-- <br>
+Vanessa Villamia Sochat<br>
+Stanford University &#39;16<br>
+(603) 321-0676<br>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to mailto:<a>singu...@lbl.gov</a>.<br>
+<br>
+<br>
+<br>
+-- <br>
+Vanessa Villamia Sochat<br>
+Stanford University &#39;16<br>
+(603) 321-0676<br>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to mailto:<a>singu...@lbl.gov</a>.<br>
+<br>
+<br>
+-- <br>
+<br>
+<br>
+<a href=3D"https://its.pbsci.ucsc.edu" rel=3D"nofollow" target=3D"_blank" o=
+nmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%=
+2Fits.pbsci.ucsc.edu\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGiC_sQTaU1T_Om=
+GsHfGodkmdcwzQ&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.g=
+oogle.com/url?q\x3dhttps%3A%2F%2Fits.pbsci.ucsc.edu\x26sa\x3dD\x26sntz\x3d1=
+\x26usg\x3dAFQjCNGiC_sQTaU1T_OmGsHfGodkmdcwzQ&#39;;return true;">https://it=
+s.pbsci.ucsc.edu</a><br>
+<br>
+<a href=3D"https://www.hb.ucsc.edu" rel=3D"nofollow" target=3D"_blank" onmo=
+usedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fw=
+ww.hb.ucsc.edu\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEnP3oSLhx67Z2UrOkO_m=
+faQBvjHQ&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.=
+com/url?q\x3dhttps%3A%2F%2Fwww.hb.ucsc.edu\x26sa\x3dD\x26sntz\x3d1\x26usg\x=
+3dAFQjCNEnP3oSLhx67Z2UrOkO_mfaQBvjHQ&#39;;return true;">https://www.hb.ucsc=
+.edu</a><br>
+<br>
+Stephen Hauskins<br>
+<br>
+831-334-3961<br>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to mailto:<a>singu...@lbl.gov</a>.<br>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to mailto:<a>si...@lbl.gov</a>.<br>
+<br>
+<br>
+<br>
+-- <br>
+Vanessa Villamia Sochat<br>
+Stanford University &#39;16<br>
+(603) 321-0676<br>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to mailto:<a>si...@lbl.gov</a>.<br>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to mailto:<a rel=3D"nofollow">singularity+<wbr>unsub...@lbl.gov</a>.<b=
+r>
+<br>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">si...@lbl.gov</a>.<br>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><div>(=
+603) 321-0676</div></div></div></div>
+</blockquote></div></blockquote></div></div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+7w-iKeg9BwAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singu...@lbl.<wbr>gov</a>.<br>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><div>(=
+603) 321-0676</div></div></div></div>
+</blockquote></div></div>
+------=_Part_761_1610409048.1556106926127--
+
+------=_Part_760_123007491.1556106926126
+Content-Type: image/png; name=Capture.PNG
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename=Capture.PNG
+X-Attachment-Id: fc745006-810c-4427-ad90-53ca07d0f46c
+Content-ID: <fc745006-810c-4427-ad90-53ca07d0f46c>
+
+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
+yb5WPmjNLya3Rv1HuZz0sW9DV9en7XYyztn5YVkOov0H32/WvoFch38fkVvteVS/opcNEXIL1B8i
+txH5FIyvq39R49SM9RfpLyBfqz3q+Faa/8WWSYfl8hJuCej+WkpuPe+o5HbyhVDDcpse/WSOFdQL
+VVb9WcuSfqlI2mSz/QfKn8NyW/QFWJncWuVbz6Gj9VQ/vPK3yFiyiFk+tyXlL4rcCseuLv1LynDN
+z9bkFj2WPnw8bra740fSVw/fTt4R67csB9H+W+PTun1RcjvT+hYit0D9zchtg/F19a/A7esS9cf2
+T0O+gz1EczmzxtfjFhbpX6u7BrOQW8Pl6yKWW5GYRH1uo/HkrPolnylnZACx/9HyK/ncRolnlNw2
+I7aWfhTI3+rntPxk8hgTqsWFhpaW283zJkzOxHoWbrntn3cfTF39H9dfjv+Gj6VnsNyq49O6fXNY
+bu+Z3DYY3xaW00vXH7HcIvLtxuOn779R15hSyy1S/91YbmuT26jPLUJcSqMlHDu7epo48HtuY3qj
+CXjdErzErKT8aLQEzacGbX+pz20NYquV79WPkfwPv//x6WFqpR+Q1+HzSfnChbLh4qyWvxCf29wm
+o7kanSNcAORg2P/cAoX6nIbIrTLvEZ+73XZzlE3X/t1u52pfLZ9brXxxfFq3L0puHeU3IbeCj72b
+XCnzJ0RuK41vsc+rJZ+F1F/L51aS79ulMZlc1fC5lep37a9X5HNr7q8XjZYgWMY8x/rpberssUAg
+Dqo3DqzfbWDvijPqJbc14tyKygu03xyfSPmg/NTJ59SPVP7jLFZTn9/0ef7oTY7TZ5UfIbe14txa
+N3bF27bA5m/FGJz0QdggQuQ20WM1lnF2/Ic+7okOAEdf2m3lGv1Xb0O3bF8FcouW34TcpuubcJsf
+qT83f6T5md6Z0OQTHd9QtAJLPkuo37NGAtES1D1GMEqI4ztTNIOW5Vv7f/S5ub9eLM4tQRDEHSMa
+OvDe20fMO77oBalrqZ+4bTD9LkEQxNxY+uZM8nD3+teRSTEpTVQ/Ll0/QZDcEgRBEDeDNPlD4ELw
+PVh3UbePq6mf40+Q3BIEQRAEQRDEjZJb5paWLjst43io1fiUhEhblP9jiZUjaJl5+NN/eXn5i5dX
+/PrvX/7qF7+YVV5W/b/44//98o+/+ofZ23WN83cJ+r/IY/19nVBJXP+4l7rlS7cMkluS2/vxzbvV
+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
+------=_Part_760_123007491.1556106926126
+Content-Type: text/plain; charset=US-ASCII; name=recipe.txt
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename=recipe.txt
+X-Attachment-Id: 1f444b42-e2c7-4bf2-a4bf-c742c7bb12ab
+Content-ID: <1f444b42-e2c7-4bf2-a4bf-c742c7bb12ab>
+
+Bootstrap: docker
+From: nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
+
+%environment
+
+	#Environment variables
+
+	#Use bash as default shell
+	SHELL=/bin/bash
+
+	#Add nvidia driver paths
+	PATH="/nvbin:$PATH"
+	LD_LIBRARY_PATH="/nvlib;$LD_LIBRARY_PATH"
+
+	#Add CUDA paths
+	CPATH="/usr/local/cuda/include:$CPATH"
+	PATH="/usr/local/cuda/bin:$PATH"
+	LD_LIBRARY_PATH="/usr/local/cuda/lib64:$LD_LIBRARY_PATH"
+	CUDA_HOME="/usr/local/cuda"
+
+	#Add Anaconda path
+	PATH="/usr/local/anaconda3-4.2.0/bin:$PATH"
+
+	export PATH LD_LIBRARY_PATH CPATH CUDA_HOME
+
+
+%setup
+	#Runs on host
+	#The path to the image is $SINGULARITY_ROOTFS
+
+
+
+%post
+	#Post setup script
+
+	#Load environment variables
+	. /environment
+
+	#Default mount paths
+	mkdir /scratch /data /shared /fastdata
+
+	#Nvidia Library mount paths
+	mkdir /nvlib /nvbin
+1.12.
+  	#Updating and getting required packages
+  	apt-get update
+ 	apt-get install -y python3
+  	apt-get install -y wget git vim
+
+  	apt update
+  	apt install -y virtualenv
+  	virtualenv -p python3 env
+  	ls env/lib
+  	ls -l `which sh`
+  	. env/bin/activate
+
+  	#Creates a build directory
+  	mkdir build
+  	cd build
+
+  	apt install -y python3-pip
+  	python --version
+  	pip3 --version
+  
+	pip3 install Pillow 
+
+  	#Install Tensorflow  	
+  	pip3 install --no-cache-dir tensorflow-gpu==1.12.0
+
+  	# Upgrade all packages to their latest versions
+  	apt-get -y update && apt-get -y upgrade
+
+  	# Install expect to automate responses for interactive build questions
+  	apt-get -y install expect
+
+  	apt-get clean
+  	apt-get dist-upgrade && apt-get install -y --no-install-recommends --ignore-missing \
+  	python-dicom\
+  	python-numpy\
+  	python-scipy\
+  	python-matplotlib\
+  	ipython\
+  	ipython-notebook\
+  	python-pandas\
+  	python-sympy\
+  	python-nose
+
+  
+  	apt update
+  	apt-get clean
+
+  	pip3 install pydicom
+  	pip3 install numpy
+  	pip3 install scikit-image
+  	pip3 install opencv-python
+  	pip3 install protobuf
+  	pip3 install matplotlib
+  	pip install --upgrade pip
+	
+	apt-get install -y python-imaging
+
+  	apt update && apt install -y libsm6 libxext6
+  	apt-get install -y libxrender-dev
+
+  	apt update
+  	
+  	mkdir /software
+  	cd /software
+  	git clone https://github.com/cerr/CERR.git
+  	wget https://github.com/cerr/aimodels/raw/master/PROSTATE_DEEPLABV3_1.0.pb
+  
+
+
+	#Install Keras
+	#pip install keras
+
+%runscript
+	#Executes with the singularity run command
+	
+	which python
+	python --version
+	pwd
+	. /env/bin/activate	
+	
+	python /software/CERR/CERR_core/Contouring/models/mr_prostate_DeepLab/run_inference_clinical_3D.py arg1=$1 arg2=$2	
+
+%test
+	#Test that script is a success
+
+	#Load environment variables
+	#. /environment
+
+	#Test tensorflow install
+	#python -c "import tensorflow"
+
+------=_Part_760_123007491.1556106926126--

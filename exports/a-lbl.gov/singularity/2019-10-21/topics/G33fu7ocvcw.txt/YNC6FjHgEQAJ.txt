@@ -1,0 +1,435 @@
+Date: Fri, 15 Feb 2019 20:24:18 -0800 (PST)
+From: David Godlove <davidg...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <ccc3e3ac-f657-4639-9f92-26bc8ab44580@lbl.gov>
+In-Reply-To: <CAApQTThy=aUJNK_Otmm4jFgP39kPfwaKP17Q0PkWuch+s25JUg@mail.gmail.com>
+References: <0cba02cc-5f20-4d7e-b47f-7033e9a58c71@lbl.gov> <CAM=pu+L+AQgX0o_62pjaT4vfn6fdCUWu8RN=JKHZDDi+kZtCrg@mail.gmail.com>
+ <0E852A7D-83DA-4A66-873C-AE8F274669C5@lanl.gov> <51574d28-5723-8c60-fda1-e89943d8e469@desy.de>
+ <af37229e-fdfe-4b50-8335-7056d94c6069@lbl.gov> <CAGgX3c3uVrycGq-1y7A9SRLmzmPp-kHrzxrqm9rnTY52vg5kiQ@mail.gmail.com>
+ <20190214195509.GA29255@fnal.gov>
+ <CAApQTThy=aUJNK_Otmm4jFgP39kPfwaKP17Q0PkWuch+s25JUg@mail.gmail.com>
+Subject: Re: [Singularity] singularity and privileged containers
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_44_1952143187.1550291058172"
+
+------=_Part_44_1952143187.1550291058172
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_45_517925237.1550291058173"
+
+------=_Part_45_517925237.1550291058173
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Here is the official statement from Sylabs concerning CVE-2019-5736.
+
+https://www.sylabs.io/2019/02/cve-2019-5736-and-its-impact-on-singularity-containers/
+
+On Friday, February 15, 2019 at 6:00:24 PM UTC-5, Gregory Kurtzer wrote:
+>
+> If I understand the user name space correctly, which I don't assume I do, 
+> it doesn't seem like this would add much in terms of security. This is 
+> because the unprivileged user can invoke the user name space, reset their 
+> UID within that context to anything they want. Themselves or maxuid-1.
+>
+> Are you thinking that the SETUID workflow could in fact do more with the 
+> user name space to limit security even more? If so, I'm all ears!
+>
+> I've been challenging the developers to consider how to use the user name 
+> space to "fake root" such that we can run typically root only workflows as 
+> an unprivileged user. It's something we've been thinking through and open 
+> to ideas here as well.
+>
+> Greg
+>
+> On Thu, Feb 14, 2019 at 11:55 AM David Dykstra <d...@fnal.gov 
+> <javascript:>> wrote:
+>
+>> By LXC's definition in the article below, the default mode of operation
+>> of singularity is unsafe, because singularity only maps uid 0 inside the
+>> container to something else outside the container when it runs in
+>> unprivileged mode (with allow setuid = no, exec -u, or installation
+>> without setuid).  However, singularity makes it practically impossible
+>> for a process inside of the container to become root, because it starts
+>> the process as the original user and uses NO_NEW_PRIVS to prevent the
+>> process from ever gaining any more privileges.  This is much different
+>> than docker, which by default starts containers as root.
+>>
+>> Having said that, I have been thinking to propose that setuid singularity
+>> by default also use user namespace uid mapping if it can, to make it
+>> even safer.  This also enables nsenter to join the namespace unprivileged,
+>> which is a very nice feature.  I like to use the following unprivileged
+>> command to fully join a singularity namespace that was started with -c -i 
+>> -p:
+>>  eval nsenter -t $1 -U --preserve-credentials -m -i -p -r -w /usr/bin/env 
+>> \
+>>   -i $(xargs -0 bash -c 'printf "%q\n" "$@"' -- </proc/$1/environ) 
+>> /bin/bash
+>> where "$1" is the process id that is being joined.
+>>
+>> The only disadvantage that I can think of is that when one does ls -l of
+>> any file not owned by the user, they show up as owned by "nfsnobody"
+>> instead of the original owner.  That might mess some people up so I don't
+>> know if such a proposal would be accepted.  Maybe it could at least be
+>> a configuration option.
+>>
+>> Dave
+>>
+>> On Wed, Feb 13, 2019 at 08:23:58PM -0600, Alan Sill wrote:
+>> > Subject: Re: [Singularity] Is this Singularity related? CVE-2019-5736: 
+>> runc container breakout
+>> > Thanks for the review and statement.
+>> > 
+>> > FYI, here is a useful related post by one of the maintainers of LXC, 
+>> which
+>> > determined they were affected by a related issue and produced a patch:
+>> > 
+>> > https://brauner.github.io/2019/02/12/privileged-containers.html
+>> > 
+>> > The post contains a useful discussion of the role of privileged versus
+>> > unprivileged containers that is similar in spirit to the one provided by
+>> > the Singularity team, but in my humble opinion goes further.
+>> > 
+>> > Thanks again for the study and response.
+>> > 
+>> > Alan
+>> > 
+>> > On Wed, Feb 13, 2019 at 8:01 PM David Godlove <dav...@gmail.com 
+>> <javascript:>>
+>> > wrote:
+>> > 
+>> > > Heya everyone.  Sorry it took some time to respond to this thread, but
+>> > > this is security related and security is important.  So we wanted to 
+>> make
+>> > > sure we had all of our ducks in a row and did not go off half-cocked.
+>> > > Check this post:
+>> > >
+>> > >
+>> > > 
+>> https://groups.google.com/a/lbl.gov/forum/??sdf%7Csort:date#!topic/singularity/aNcMhf3Mq9s
+>> > >
+>> > > On Tuesday, February 12, 2019 at 11:40:01 AM UTC-5, Thomas Hartmann 
+>> wrote:
+>> > >>
+>> > >> my 2c - since Singularity containers are run in the user's context, I
+>> > >> don't think there is a risk like fwith runc where the symlink on the
+>> > >> original application is the issue (here runc running in the root 
+>> context
+>> > >> as for Dockerd)
+>> > >>
+>> > >> On 12/02/2019 17.35, 'Priedhorsky, Reid' via singularity wrote:
+>> > >> > The fact that Singularity doesn???t use runc is not a definitive 
+>> answer.
+>> > >> > E.g., LXC and Mesos are also vulnerable. From the linked notice:
+>> > >> >
+>> > >> >> It is quite likely that most container runtimes are
+>> > >> >> vulnerable to this flaw, unless they took very strange mitigations
+>> > >> >> before-hand.
+>> > >> >
+>> > >> > In my opinion, the Singularity team should analyze its code to see 
+>> if
+>> > >> > it???s vulnerable.
+>> > >> >
+>> > >> > Thanks,
+>> > >> > Reid
+>> > >> >
+>> > >> >> On Feb 12, 2019, at 8:22 AM, v <v...@gmail.com
+>> > >> >> <mailto:v...@gmail.com>> wrote:
+>> > >> >>
+>> > >> >> No, Singularity does not use runc.
+>> > >> >>
+>> > >> >> On Tue, Feb 12, 2019 at 10:21 AM Hugo R Hernandez <
+>> hd...@gmail.com
+>> > >> >> <mailto:hd...@gmail.com>> wrote:
+>> > >> >>
+>> > >> >>     Hello there, wondering if this affects Singularity as well (I
+>> > >> >>     would say no, as this is Docker related but they mention 
+>> cri-o as
+>> > >> >>     well which I guess it is included on S version 3.1.0... could 
+>> be
+>> > >> >>     possible I'm completely wrong and I'm mixing apples with
+>> > >> >>     plantains... for the ones looking green):
+>> > >> >>
+>> > >> >>     *CVE-2019-5736: runc container breakout (all versions)*
+>> > >> >>     ...runc (the underlying container runtime underneath Docker,
+>> > >> >>     *cri-o*, containerd, Kubernetes, and so on)...
+>> > >> >>
+>> > >> >>     https://seclists.org/oss-sec/2019/q1/119
+>> > >> >>
+>> > >> >
+>> > >> > --
+>> > >> > You received this message because you are subscribed to the Google
+>> > >> > Groups "singularity" group.
+>> > >> > To unsubscribe from this group and stop receiving emails from it, 
+>> send
+>> > >> > an email to singu...@lbl.gov
+>> > >> > <mailto:singu...@lbl.gov <javascript:>>.
+>> > >>
+>> > >> --
+>> > > You received this message because you are subscribed to the Google 
+>> Groups
+>> > > "singularity" group.
+>> > > To unsubscribe from this group and stop receiving emails from it, 
+>> send an
+>> > > email to singu...@lbl.gov <javascript:>.
+>> > >
+>> > 
+>> > -- 
+>> > You received this message because you are subscribed to the Google 
+>> Groups "singularity" group.
+>> > To unsubscribe from this group and stop receiving emails from it, send 
+>> an email to singu...@lbl.gov <javascript:>.
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+> -- 
+> Gregory M. Kurtzer
+> CEO, Sylabs Inc.
+>
+
+------=_Part_45_517925237.1550291058173
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Here is the official statement from Sylabs concerning CVE-=
+2019-5736.<div><br></div><div>https://www.sylabs.io/2019/02/cve-2019-5736-a=
+nd-its-impact-on-singularity-containers/<br><br>On Friday, February 15, 201=
+9 at 6:00:24 PM UTC-5, Gregory Kurtzer wrote:<blockquote class=3D"gmail_quo=
+te" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;paddi=
+ng-left: 1ex;"><div dir=3D"ltr">If I understand the user name space correct=
+ly, which I don&#39;t assume I do, it doesn&#39;t seem like this would add =
+much in terms of security. This is because the unprivileged user can invoke=
+ the user name space, reset their UID within that context to anything they =
+want. Themselves or maxuid-1.<div><br></div><div>Are you thinking that the =
+SETUID workflow could in fact do more with the user name space to limit sec=
+urity even more? If so, I&#39;m all ears!</div><div><br></div><div>I&#39;ve=
+ been challenging the developers to consider how to use the user name space=
+ to &quot;fake root&quot; such that we can run typically root only workflow=
+s as an unprivileged user. It&#39;s something we&#39;ve been thinking throu=
+gh and open to ideas here as well.</div><div><br></div><div>Greg</div></div=
+><br><div class=3D"gmail_quote"><div dir=3D"ltr">On Thu, Feb 14, 2019 at 11=
+:55 AM David Dykstra &lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfu=
+scated-mailto=3D"lihvZDx6BgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D=
+&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:=
+&#39;;return true;">d...@fnal.gov</a>&gt; wrote:<br></div><blockquote class=
+=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rg=
+b(204,204,204);padding-left:1ex">By LXC&#39;s definition in the article bel=
+ow, the default mode of operation<br>
+of singularity is unsafe, because singularity only maps uid 0 inside the<br=
+>
+container to something else outside the container when it runs in<br>
+unprivileged mode (with allow setuid =3D no, exec -u, or installation<br>
+without setuid).=C2=A0 However, singularity makes it practically impossible=
+<br>
+for a process inside of the container to become root, because it starts<br>
+the process as the original user and uses NO_NEW_PRIVS to prevent the<br>
+process from ever gaining any more privileges.=C2=A0 This is much different=
+<br>
+than docker, which by default starts containers as root.<br>
+<br>
+Having said that, I have been thinking to propose that setuid singularity<b=
+r>
+by default also use user namespace uid mapping if it can, to make it<br>
+even safer.=C2=A0 This also enables nsenter to join the namespace unprivile=
+ged,<br>
+which is a very nice feature.=C2=A0 I like to use the following unprivilege=
+d<br>
+command to fully join a singularity namespace that was started with -c -i -=
+p:<br>
+=C2=A0eval nsenter -t $1 -U --preserve-credentials -m -i -p -r -w /usr/bin/=
+env \<br>
+=C2=A0 -i $(xargs -0 bash -c &#39;printf &quot;%q\n&quot; &quot;$@&quot;&#3=
+9; -- &lt;/proc/$1/environ) /bin/bash<br>
+where &quot;$1&quot; is the process id that is being joined.<br>
+<br>
+The only disadvantage that I can think of is that when one does ls -l of<br=
+>
+any file not owned by the user, they show up as owned by &quot;nfsnobody&qu=
+ot;<br>
+instead of the original owner.=C2=A0 That might mess some people up so I do=
+n&#39;t<br>
+know if such a proposal would be accepted.=C2=A0 Maybe it could at least be=
+<br>
+a configuration option.<br>
+<br>
+Dave<br>
+<br>
+On Wed, Feb 13, 2019 at 08:23:58PM -0600, Alan Sill wrote:<br>
+&gt; Subject: Re: [Singularity] Is this Singularity related? CVE-2019-5736:=
+ runc container breakout<br>
+&gt; Thanks for the review and statement.<br>
+&gt; <br>
+&gt; FYI, here is a useful related post by one of the maintainers of LXC, w=
+hich<br>
+&gt; determined they were affected by a related issue and produced a patch:=
+<br>
+&gt; <br>
+&gt; <a href=3D"https://brauner.github.io/2019/02/12/privileged-containers.=
+html" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;ht=
+tps://www.google.com/url?q\x3dhttps%3A%2F%2Fbrauner.github.io%2F2019%2F02%2=
+F12%2Fprivileged-containers.html\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEI=
+BuaNKU9XyVRarezYlNXD_jbkMg&#39;;return true;" onclick=3D"this.href=3D&#39;h=
+ttps://www.google.com/url?q\x3dhttps%3A%2F%2Fbrauner.github.io%2F2019%2F02%=
+2F12%2Fprivileged-containers.html\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNE=
+IBuaNKU9XyVRarezYlNXD_jbkMg&#39;;return true;">https://brauner.github.io/<w=
+br>2019/02/12/privileged-<wbr>containers.html</a><br>
+&gt; <br>
+&gt; The post contains a useful discussion of the role of privileged versus=
+<br>
+&gt; unprivileged containers that is similar in spirit to the one provided =
+by<br>
+&gt; the Singularity team, but in my humble opinion goes further.<br>
+&gt; <br>
+&gt; Thanks again for the study and response.<br>
+&gt; <br>
+&gt; Alan<br>
+&gt; <br>
+&gt; On Wed, Feb 13, 2019 at 8:01 PM David Godlove &lt;<a href=3D"javascrip=
+t:" target=3D"_blank" gdf-obfuscated-mailto=3D"lihvZDx6BgAJ" rel=3D"nofollo=
+w" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=
+=3D"this.href=3D&#39;javascript:&#39;;return true;">dav...@gmail.com</a>&gt=
+;<br>
+&gt; wrote:<br>
+&gt; <br>
+&gt; &gt; Heya everyone.=C2=A0 Sorry it took some time to respond to this t=
+hread, but<br>
+&gt; &gt; this is security related and security is important.=C2=A0 So we w=
+anted to make<br>
+&gt; &gt; sure we had all of our ducks in a row and did not go off half-coc=
+ked.<br>
+&gt; &gt; Check this post:<br>
+&gt; &gt;<br>
+&gt; &gt;<br>
+&gt; &gt; <a href=3D"https://groups.google.com/a/lbl.gov/forum/??sdf%7Csort=
+:date#!topic/singularity/aNcMhf3Mq9s" rel=3D"nofollow" target=3D"_blank" on=
+mousedown=3D"this.href=3D&#39;https://groups.google.com/a/lbl.gov/forum/??s=
+df%7Csort:date#!topic/singularity/aNcMhf3Mq9s&#39;;return true;" onclick=3D=
+"this.href=3D&#39;https://groups.google.com/a/lbl.gov/forum/??sdf%7Csort:da=
+te#!topic/singularity/aNcMhf3Mq9s&#39;;return true;">https://groups.google.=
+com/a/<wbr>lbl.gov/forum/??sdf%7Csort:<wbr>date#!topic/singularity/<wbr>aNc=
+Mhf3Mq9s</a><br>
+&gt; &gt;<br>
+&gt; &gt; On Tuesday, February 12, 2019 at 11:40:01 AM UTC-5, Thomas Hartma=
+nn wrote:<br>
+&gt; &gt;&gt;<br>
+&gt; &gt;&gt; my 2c - since Singularity containers are run in the user&#39;=
+s context, I<br>
+&gt; &gt;&gt; don&#39;t think there is a risk like fwith runc where the sym=
+link on the<br>
+&gt; &gt;&gt; original application is the issue (here runc running in the r=
+oot context<br>
+&gt; &gt;&gt; as for Dockerd)<br>
+&gt; &gt;&gt;<br>
+&gt; &gt;&gt; On 12/02/2019 17.35, &#39;Priedhorsky, Reid&#39; via singular=
+ity wrote:<br>
+&gt; &gt;&gt; &gt; The fact that Singularity doesn???t use runc is not a de=
+finitive answer.<br>
+&gt; &gt;&gt; &gt; E.g., LXC and Mesos are also vulnerable. From the linked=
+ notice:<br>
+&gt; &gt;&gt; &gt;<br>
+&gt; &gt;&gt; &gt;&gt; It is quite likely that most container runtimes are<=
+br>
+&gt; &gt;&gt; &gt;&gt; vulnerable to this flaw, unless they took very stran=
+ge mitigations<br>
+&gt; &gt;&gt; &gt;&gt; before-hand.<br>
+&gt; &gt;&gt; &gt;<br>
+&gt; &gt;&gt; &gt; In my opinion, the Singularity team should analyze its c=
+ode to see if<br>
+&gt; &gt;&gt; &gt; it???s vulnerable.<br>
+&gt; &gt;&gt; &gt;<br>
+&gt; &gt;&gt; &gt; Thanks,<br>
+&gt; &gt;&gt; &gt; Reid<br>
+&gt; &gt;&gt; &gt;<br>
+&gt; &gt;&gt; &gt;&gt; On Feb 12, 2019, at 8:22 AM, v &lt;<a>v...@gmail.com=
+</a><br>
+&gt; &gt;&gt; &gt;&gt; &lt;mailto:<a>v...@gmail.com</a>&gt;&gt; wrote:<br>
+&gt; &gt;&gt; &gt;&gt;<br>
+&gt; &gt;&gt; &gt;&gt; No, Singularity does not use runc.<br>
+&gt; &gt;&gt; &gt;&gt;<br>
+&gt; &gt;&gt; &gt;&gt; On Tue, Feb 12, 2019 at 10:21 AM Hugo R Hernandez &l=
+t;<a>hd...@gmail.com</a><br>
+&gt; &gt;&gt; &gt;&gt; &lt;mailto:<a>hd...@gmail.com</a>&gt;&gt; wrote:<br>
+&gt; &gt;&gt; &gt;&gt;<br>
+&gt; &gt;&gt; &gt;&gt;=C2=A0 =C2=A0 =C2=A0Hello there, wondering if this af=
+fects Singularity as well (I<br>
+&gt; &gt;&gt; &gt;&gt;=C2=A0 =C2=A0 =C2=A0would say no, as this is Docker r=
+elated but they mention cri-o as<br>
+&gt; &gt;&gt; &gt;&gt;=C2=A0 =C2=A0 =C2=A0well which I guess it is included=
+ on S version 3.1.0... could be<br>
+&gt; &gt;&gt; &gt;&gt;=C2=A0 =C2=A0 =C2=A0possible I&#39;m completely wrong=
+ and I&#39;m mixing apples with<br>
+&gt; &gt;&gt; &gt;&gt;=C2=A0 =C2=A0 =C2=A0plantains... for the ones looking=
+ green):<br>
+&gt; &gt;&gt; &gt;&gt;<br>
+&gt; &gt;&gt; &gt;&gt;=C2=A0 =C2=A0 =C2=A0*CVE-2019-5736: runc container br=
+eakout (all versions)*<br>
+&gt; &gt;&gt; &gt;&gt;=C2=A0 =C2=A0 =C2=A0...runc (the underlying container=
+ runtime underneath Docker,<br>
+&gt; &gt;&gt; &gt;&gt;=C2=A0 =C2=A0 =C2=A0*cri-o*, containerd, Kubernetes, =
+and so on)...<br>
+&gt; &gt;&gt; &gt;&gt;<br>
+&gt; &gt;&gt; &gt;&gt;=C2=A0 =C2=A0 =C2=A0<a href=3D"https://seclists.org/o=
+ss-sec/2019/q1/119" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.=
+href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fseclists.org%2Fos=
+s-sec%2F2019%2Fq1%2F119\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFQwHeyyFBlA=
+EUIYUabvCbZe0f9Bw&#39;;return true;" onclick=3D"this.href=3D&#39;https://ww=
+w.google.com/url?q\x3dhttps%3A%2F%2Fseclists.org%2Foss-sec%2F2019%2Fq1%2F11=
+9\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFQwHeyyFBlAEUIYUabvCbZe0f9Bw&#39;=
+;return true;">https://seclists.org/oss-sec/<wbr>2019/q1/119</a><br>
+&gt; &gt;&gt; &gt;&gt;<br>
+&gt; &gt;&gt; &gt;<br>
+&gt; &gt;&gt; &gt; --<br>
+&gt; &gt;&gt; &gt; You received this message because you are subscribed to =
+the Google<br>
+&gt; &gt;&gt; &gt; Groups &quot;singularity&quot; group.<br>
+&gt; &gt;&gt; &gt; To unsubscribe from this group and stop receiving emails=
+ from it, send<br>
+&gt; &gt;&gt; &gt; an email to <a>singu...@lbl.gov</a><br>
+&gt; &gt;&gt; &gt; &lt;mailto:<a href=3D"javascript:" target=3D"_blank" gdf=
+-obfuscated-mailto=3D"lihvZDx6BgAJ" rel=3D"nofollow" onmousedown=3D"this.hr=
+ef=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javasc=
+ript:&#39;;return true;">singularity+<wbr>unsub...@lbl.gov</a>&gt;.<br>
+&gt; &gt;&gt;<br>
+&gt; &gt;&gt; --<br>
+&gt; &gt; You received this message because you are subscribed to the Googl=
+e Groups<br>
+&gt; &gt; &quot;singularity&quot; group.<br>
+&gt; &gt; To unsubscribe from this group and stop receiving emails from it,=
+ send an<br>
+&gt; &gt; email to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated=
+-mailto=3D"lihvZDx6BgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;j=
+avascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;=
+return true;">singularity...@lbl.<wbr>gov</a>.<br>
+&gt; &gt;<br>
+&gt; <br>
+&gt; -- <br>
+&gt; You received this message because you are subscribed to the Google Gro=
+ups &quot;singularity&quot; group.<br>
+&gt; To unsubscribe from this group and stop receiving emails from it, send=
+ an email to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailt=
+o=3D"lihvZDx6BgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascr=
+ipt:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return=
+ true;">singularity...@lbl.<wbr>gov</a>.<br>
+<br>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+lihvZDx6BgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=
+=3D"ltr"><div><div dir=3D"ltr"><div>Gregory M. Kurtzer</div><div>CEO, Sylab=
+s Inc.</div></div></div></div></div></div></div></div></div></div></div>
+</blockquote></div></div>
+------=_Part_45_517925237.1550291058173--
+
+------=_Part_44_1952143187.1550291058172--

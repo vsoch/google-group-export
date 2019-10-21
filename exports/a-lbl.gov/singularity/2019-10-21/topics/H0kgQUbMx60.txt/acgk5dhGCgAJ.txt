@@ -1,0 +1,657 @@
+Date: Thu, 1 Jun 2017 13:01:32 -0700 (PDT)
+From: Michael Yourshaw <myou...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <858b8bb7-ba28-476e-8fc6-28db94495211@lbl.gov>
+In-Reply-To: <CAApQTTjsEFu1QYW0YnPHA+W4M7-A-uUEd2OZZcMoBWmPH3m0Pw@mail.gmail.com>
+References: <8d2a7f42-2ef0-436f-88e4-edf43347004c@lbl.gov>
+ <CAApQTTjsEFu1QYW0YnPHA+W4M7-A-uUEd2OZZcMoBWmPH3m0Pw@mail.gmail.com>
+Subject: Re: [Singularity] v 2.3 bootstrap fails if "Include" used
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_131_37229478.1496347293003"
+
+------=_Part_131_37229478.1496347293003
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_132_22207990.1496347293005"
+
+------=_Part_132_22207990.1496347293005
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Thanks.
+
+I posted the issue on github. In the meanwhile, a workaround is to have 
+only `Include: yum` in the first section of the .def file, and then in the 
+%post section have `yum -y install foo bar ...`
+
+On Thursday, June 1, 2017 at 1:37:53 PM UTC-6, Gregory Kurtzer wrote:
+>
+> Good catch, at present we don't properly support multiple Include 
+> directives. Can you file a GitHub issue for this?
+>
+>
+> On Thu, Jun 1, 2017 at 9:56 AM, Michael Yourshaw <my...@gmail.com 
+> <javascript:>> wrote:
+>
+>> I'm having a problem bootstraping with the new version 2.3. The presence 
+>> of an `Include:` line seems to result in the error `/bin/sh: line 3: yum: 
+>> command not found` when executing `yum install` in the %post section. 
+>> This was not a problem with 2.2.1.
+>>
+>> Here is an example test def file (note that the same problem happens 
+>> whether or not I put `Include: yum` in line 4):
+>>
+>> BootStrap: yum
+>> OSVersion: 7
+>> MirrorURL: http://
+>> mirror.centos.org/centos-%{OSVERSION}/%{OSVERSION}/os/$basearch/
+>> Include: yum
+>>
+>> UpdateURL: http://
+>> mirror.centos.org/centos-%{OSVERSION}/%{OSVERSION}/updates/$basearch/
+>>
+>> # additional packages
+>> Include: bzip2
+>>
+>>
+>> %post
+>>
+>>   echo "Installing EPEL"
+>>   yum -y install epel-release
+>>
+>> The output looks like:
+>>
+>> sudo ${SINGULARITY} bootstrap singularity-2.3_centos_test.img singularity
+>> -2.3_test.def
+>> Sanitizing environment
+>> Building from bootstrap definition recipe
+>> Adding base Singularity environment to container
+>> Found YUM at: /bin/yum
+>> 'UpdateURL' or 'UpdateMetaLink' defined in bootstrap definition
+>> Skipping GPG key import.
+>> base                                                                     
+>>                                     | 3.6 kB  00:00:00     
+>> updates                                                                   
+>>                                    | 3.4 kB  00:00:00     
+>> (1/3): base/x86_64/group_gz                                             
+>>                                      | 155 kB  00:00:00     
+>> (2/3): base/x86_64/primary_db                                           
+>>                                      | 5.6 MB  00:00:01     
+>> (3/3): updates/x86_64/primary_db                                         
+>>                                     | 5.6 MB  00:00:01     
+>> Resolving Dependencies
+>> --> Running transaction check
+>> ---> Package bzip2.x86_64 0:1.0.6-13.el7 will be installed
+>> --> Processing Dependency: bzip2-libs = 1.0.6-13.el7 for package: bzip2-
+>> 1.0.6-13.el7.x86_64
+>>
+>> ...
+>>
+>> Installed:
+>>   bzip2.x86_64 0:1.0.6-13.el7          centos-release.x86_64 0:7-3.1611.
+>> el7.centos          coreutils.x86_64 0:8.22-18.el7         
+>>
+>> Dependency Installed:
+>>   basesystem.noarch 0:10.0-7.el7.centos                            bash.x86_64 
+>> 0:4.2.46-21.el7_3                                   
+>>   bzip2-libs.x86_64 0:1.0.6-13.el7                                 ca-
+>> certificates.noarch 0:2017.2.11-70.1.el7_3                   
+>>   chkconfig.x86_64 0:1.7.2-1.el7                                   
+>> filesystem.x86_64 0:3.2-21.el7                                  
+>>   gawk.x86_64 0:4.0.2-4.el7                                        glibc.x86_64 
+>> 0:2.17-157.el7_3.2                                 
+>>   glibc-common.x86_64 0:2.17-157.el7_3.2                           gmp.x86_64 
+>> 1:6.0.0-12.el7_1                                     
+>>   grep.x86_64 0:2.20-2.el7                                         info.x86_64 
+>> 0:5.1-4.el7                                         
+>>   keyutils-libs.x86_64 0:1.5.8-3.el7                               krb5-
+>> libs.x86_64 0:1.14.1-27.el7_3                              
+>>   libacl.x86_64 0:2.2.51-12.el7                                   
+>>  libattr.x86_64 0:2.4.46-12.el7                                  
+>>   libcap.x86_64 0:2.22-8.el7                                       
+>> libcom_err.x86_64 0:1.42.9-9.el7                                
+>>   libffi.x86_64 0:3.0.13-18.el7                                    libgcc
+>> .x86_64 0:4.8.5-11.el7                                    
+>>   libselinux.x86_64 0:2.5-6.el7                                   
+>>  libsepol.x86_64 0:2.5-6.el7                                     
+>>   libstdc++.x86_64 0:4.8.5-11.el7                                 
+>>  libtasn1.x86_64 0:3.8-3.el7                                     
+>>   libverto.x86_64 0:0.2.5-4.el7                                   
+>>  ncurses.x86_64 0:5.9-13.20130511.el7                            
+>>   ncurses-base.noarch 0:5.9-13.20130511.el7                       
+>>  ncurses-libs.x86_64 0:5.9-13.20130511.el7                       
+>>   nss-softokn-freebl.x86_64 0:3.16.2.3-14.4.el7                   
+>>  openssl-libs.x86_64 1:1.0.1e-60.el7_3.1                         
+>>   p11-kit.x86_64 0:0.20.7-3.el7                                    p11-
+>> kit-trust.x86_64 0:0.20.7-3.el7                             
+>>   pcre.x86_64 0:8.32-15.el7_2.1                                    popt.x86_64 
+>> 0:1.13-16.el7                                       
+>>   sed.x86_64 0:4.2.2-5.el7                                         setup.noarch 
+>> 0:2.8.71-7.el7                                     
+>>   tzdata.noarch 0:2017b-1.el7                                      zlib.x86_64 
+>> 0:1.2.7-17.el7                                      
+>>
+>> Complete!
+>> Running post scriptlet
+>> + echo 'Installing EPEL'
+>> Installing EPEL
+>> + yum -y install epel-release
+>> /bin/sh: line 3: yum: command not found
+>> ABORT: Aborting with RETVAL=255
+>>
+>>
+>> If I omit the `Include: bzip` line, the bootstrap process completes 
+>> successfully.
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+------=_Part_132_22207990.1496347293005
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Thanks.<br><br>I posted the issue on github. In the meanwh=
+ile, a workaround is to have only `Include: yum` in the first section of th=
+e .def file, and then in the %post section have `yum -y install foo bar ...=
+`<br><br>On Thursday, June 1, 2017 at 1:37:53 PM UTC-6, Gregory Kurtzer wro=
+te:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;=
+border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">Good catch=
+, at present we don&#39;t properly support multiple Include directives. Can=
+ you file a GitHub issue for this?<div><br></div></div><div><br><div class=
+=3D"gmail_quote">On Thu, Jun 1, 2017 at 9:56 AM, Michael Yourshaw <span dir=
+=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailt=
+o=3D"fdYJoAkLBQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascr=
+ipt:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return=
+ true;">my...@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail=
+_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:=
+1ex"><div dir=3D"ltr">I&#39;m having a problem bootstraping with the new ve=
+rsion 2.3. The presence of an `Include:` line seems to result in the error =
+`<code><span style=3D"color:#660">/</span><span style=3D"color:#000">bin</s=
+pan><span style=3D"color:#660">/</span><span style=3D"color:#000">sh</span>=
+<span style=3D"color:#660">:</span><span style=3D"color:#000"> line </span>=
+<span style=3D"color:#066">3</span><span style=3D"color:#660">:</span><span=
+ style=3D"color:#000"> yum</span><span style=3D"color:#660">:</span><span s=
+tyle=3D"color:#000"> command </span><span style=3D"color:#008">not</span><s=
+pan style=3D"color:#000"> found</span><span style=3D"color:#000">` <span st=
+yle=3D"font-family:arial,sans-serif">when executing `yum install` in the</s=
+pan> %post <span style=3D"font-family:arial,sans-serif">section. This was n=
+ot a problem with 2.2.1</span>.</span></code><br><br>Here is an example tes=
+t def file (note that the same problem happens whether or not I put `Includ=
+e: yum` in line 4):<br><br><div style=3D"background-color:rgb(250,250,250);=
+border-color:rgb(187,187,187);border-style:solid;border-width:1px"><code><d=
+iv><span style=3D"color:#606">BootStrap</span><span style=3D"color:#660">:<=
+/span><span style=3D"color:#000"> yum<br></span><span style=3D"color:#606">=
+OSVersion</span><span style=3D"color:#660">:</span><span style=3D"color:#00=
+0"> </span><span style=3D"color:#066">7</span><span style=3D"color:#000"><b=
+r></span><span style=3D"color:#606">MirrorURL</span><span style=3D"color:#6=
+60">:</span><span style=3D"color:#000"> http</span><span style=3D"color:#66=
+0">:</span><span style=3D"color:#800">//<a href=3D"http://mirror.centos.org=
+/centos-%%7BOSVERSION%7D/%%7BOSVERSION%7D/os/$basearch/" target=3D"_blank" =
+rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?=
+q\x3dhttp%3A%2F%2Fmirror.centos.org%2Fcentos-%25%257BOSVERSION%257D%2F%25%2=
+57BOSVERSION%257D%2Fos%2F%24basearch%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dA=
+FQjCNHfH2HjUXZK-hJjm03wlVLzlhIsAw&#39;;return true;" onclick=3D"this.href=
+=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fmirror.centos.org%2Fcen=
+tos-%25%257BOSVERSION%257D%2F%25%257BOSVERSION%257D%2Fos%2F%24basearch%2F\x=
+26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHfH2HjUXZK-hJjm03wlVLzlhIsAw&#39;;re=
+turn true;">mirror.centos.org/<wbr>centos-%{OSVERSION}/%{<wbr>OSVERSION}/os=
+/$basearch/</a></span><span style=3D"color:#000"><br></span><span style=3D"=
+color:#606">Include</span><span style=3D"color:#660">:</span><span style=3D=
+"color:#000"> yum<br><br></span><span style=3D"color:#606">UpdateURL</span>=
+<span style=3D"color:#660">:</span><span style=3D"color:#000"> http</span><=
+span style=3D"color:#660">:</span><span style=3D"color:#800">//<a href=3D"h=
+ttp://mirror.centos.org/centos-%%7BOSVERSION%7D/%%7BOSVERSION%7D/updates/$b=
+asearch/" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#3=
+9;http://www.google.com/url?q\x3dhttp%3A%2F%2Fmirror.centos.org%2Fcentos-%2=
+5%257BOSVERSION%257D%2F%25%257BOSVERSION%257D%2Fupdates%2F%24basearch%2F\x2=
+6sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEipDvz_ZtHW94caFZgJkdzuGsZXg&#39;;ret=
+urn true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%=
+3A%2F%2Fmirror.centos.org%2Fcentos-%25%257BOSVERSION%257D%2F%25%257BOSVERSI=
+ON%257D%2Fupdates%2F%24basearch%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCN=
+EipDvz_ZtHW94caFZgJkdzuGsZXg&#39;;return true;">mirror.centos.org/<wbr>cent=
+os-%{OSVERSION}/%{<wbr>OSVERSION}/updates/$basearch/</a></span><span style=
+=3D"color:#000"><br><br></span><span style=3D"color:#800"># additional pack=
+ages</span><span style=3D"color:#000"><br></span><span style=3D"color:#606"=
+>Include</span><span style=3D"color:#660">:</span><span style=3D"color:#000=
+"> bzip2<br><br><br></span><span style=3D"color:#660">%</span><span style=
+=3D"color:#000">post<br><br>=C2=A0 echo </span><span style=3D"color:#080">&=
+quot;Installing EPEL&quot;</span><span style=3D"color:#000"><br>=C2=A0 yum =
+</span><span style=3D"color:#660">-</span><span style=3D"color:#000">y inst=
+all epel</span><span style=3D"color:#660">-</span><span style=3D"color:#000=
+">release<br></span></div></code></div><br>The output looks like:<br><br><d=
+iv style=3D"background-color:rgb(250,250,250);border-color:rgb(187,187,187)=
+;border-style:solid;border-width:1px"><code><div><span style=3D"color:#000"=
+>sudo $</span><span style=3D"color:#660">{</span><span style=3D"color:#000"=
+>SINGULARITY</span><span style=3D"color:#660">}</span><span style=3D"color:=
+#000"> bootstrap singularity</span><span style=3D"color:#660">-</span><span=
+ style=3D"color:#066">2.3</span><span style=3D"color:#000">_centos_test</sp=
+an><span style=3D"color:#660">.</span><span style=3D"color:#000">im<wbr>g s=
+ingularity</span><span style=3D"color:#660">-</span><span style=3D"color:#0=
+66">2.3</span><span style=3D"color:#000">_test</span><span style=3D"color:#=
+660">.</span><span style=3D"color:#008">def</span><span style=3D"color:#000=
+"><br></span><span style=3D"color:#606">Sanitizing</span><span style=3D"col=
+or:#000"> environment<br></span><span style=3D"color:#606">Building</span><=
+span style=3D"color:#000"> </span><span style=3D"color:#008">from</span><sp=
+an style=3D"color:#000"> bootstrap definition recipe<br></span><span style=
+=3D"color:#606">Adding</span><span style=3D"color:#000"> </span><span style=
+=3D"color:#008">base</span><span style=3D"color:#000"> </span><span style=
+=3D"color:#606">Singularity</span><span style=3D"color:#000"> environment t=
+o container<br></span><span style=3D"color:#606">Found</span><span style=3D=
+"color:#000"> YUM at</span><span style=3D"color:#660">:</span><span style=
+=3D"color:#000"> </span><span style=3D"color:#080">/bin/</span><span style=
+=3D"color:#000">yum<br></span><span style=3D"color:#080">&#39;UpdateURL&#39=
+;</span><span style=3D"color:#000"> </span><span style=3D"color:#008">or</s=
+pan><span style=3D"color:#000"> </span><span style=3D"color:#080">&#39;Upda=
+teMetaLink&#39;</span><span style=3D"color:#000"> </span><span style=3D"col=
+or:#008">defined</span><span style=3D"color:#000"> </span><span style=3D"co=
+lor:#008">in</span><span style=3D"color:#000"> bootstrap definition<br></sp=
+an><span style=3D"color:#606">Skipping</span><span style=3D"color:#000"> GP=
+G key </span><span style=3D"color:#008">import</span><span style=3D"color:#=
+660">.</span><span style=3D"color:#000"><br></span><span style=3D"color:#00=
+8">base</span><span style=3D"color:#000"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 </span><span style=3D"color:#660">|<=
+/span><span style=3D"color:#000"> </span><span style=3D"color:#066">3.6</sp=
+an><span style=3D"color:#000"> kB =C2=A0</span><span style=3D"color:#066">0=
+0</span><span style=3D"color:#660">:</span><span style=3D"color:#066">00</s=
+pan><span style=3D"color:#660">:</span><span style=3D"color:#066">00</span>=
+<span style=3D"color:#000"> =C2=A0 =C2=A0 <br>updates =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0</span><span style=3D"color:#660">=
+|</span><span style=3D"color:#000"> </span><span style=3D"color:#066">3.4</=
+span><span style=3D"color:#000"> kB =C2=A0</span><span style=3D"color:#066"=
+>00</span><span style=3D"color:#660">:</span><span style=3D"color:#066">00<=
+/span><span style=3D"color:#660">:</span><span style=3D"color:#066">00</spa=
+n><span style=3D"color:#000"> =C2=A0 =C2=A0 <br></span><span style=3D"color=
+:#660">(</span><span style=3D"color:#066">1</span><span style=3D"color:#660=
+">/</span><span style=3D"color:#066">3</span><span style=3D"color:#660">):<=
+/span><span style=3D"color:#000"> </span><span style=3D"color:#008">base</s=
+pan><span style=3D"color:#660">/</span><span style=3D"color:#000">x86_64</s=
+pan><span style=3D"color:#660">/</span><span style=3D"color:#000">group_gz =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0</span><s=
+pan style=3D"color:#660">|</span><span style=3D"color:#000"> </span><span s=
+tyle=3D"color:#066">155</span><span style=3D"color:#000"> kB =C2=A0</span><=
+span style=3D"color:#066">00</span><span style=3D"color:#660">:</span><span=
+ style=3D"color:#066">00</span><span style=3D"color:#660">:</span><span sty=
+le=3D"color:#066">00</span><span style=3D"color:#000"> =C2=A0 =C2=A0 <br></=
+span><span style=3D"color:#660">(</span><span style=3D"color:#066">2</span>=
+<span style=3D"color:#660">/</span><span style=3D"color:#066">3</span><span=
+ style=3D"color:#660">):</span><span style=3D"color:#000"> </span><span sty=
+le=3D"color:#008">base</span><span style=3D"color:#660">/</span><span style=
+=3D"color:#000">x86_64</span><span style=3D"color:#660">/</span><span style=
+=3D"color:#000">primary_db =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0</span><span style=3D"color:#660">|</span><span style=3D"color:#0=
+00"> </span><span style=3D"color:#066">5.6</span><span style=3D"color:#000"=
+> MB =C2=A0</span><span style=3D"color:#066">00</span><span style=3D"color:=
+#660">:</span><span style=3D"color:#066">00</span><span style=3D"color:#660=
+">:</span><span style=3D"color:#066">01</span><span style=3D"color:#000"> =
+=C2=A0 =C2=A0 <br></span><span style=3D"color:#660">(</span><span style=3D"=
+color:#066">3</span><span style=3D"color:#660">/</span><span style=3D"color=
+:#066">3</span><span style=3D"color:#660">):</span><span style=3D"color:#00=
+0"> updates</span><span style=3D"color:#660">/</span><span style=3D"color:#=
+000">x86_64</span><span style=3D"color:#660">/</span><span style=3D"color:#=
+000">primary_db =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 </span><span st=
+yle=3D"color:#660">|</span><span style=3D"color:#000"> </span><span style=
+=3D"color:#066">5.6</span><span style=3D"color:#000"> MB =C2=A0</span><span=
+ style=3D"color:#066">00</span><span style=3D"color:#660">:</span><span sty=
+le=3D"color:#066">00</span><span style=3D"color:#660">:</span><span style=
+=3D"color:#066">01</span><span style=3D"color:#000"> =C2=A0 =C2=A0 <br></sp=
+an><span style=3D"color:#606">Resolving</span><span style=3D"color:#000"> <=
+/span><span style=3D"color:#606">Dependencies</span><span style=3D"color:#0=
+00"><br></span><span style=3D"color:#660">--&gt;</span><span style=3D"color=
+:#000"> </span><span style=3D"color:#606">Running</span><span style=3D"colo=
+r:#000"> transaction check<br></span><span style=3D"color:#660">---&gt;</sp=
+an><span style=3D"color:#000"> </span><span style=3D"color:#606">Package</s=
+pan><span style=3D"color:#000"> bzip2</span><span style=3D"color:#660">.</s=
+pan><span style=3D"color:#000">x86_64 </span><span style=3D"color:#066">0</=
+span><span style=3D"color:#660">:</span><span style=3D"color:#066">1.0</spa=
+n><span style=3D"color:#660">.</span><span style=3D"color:#066">6</span><sp=
+an style=3D"color:#660">-</span><span style=3D"color:#066">13.el7</span><sp=
+an style=3D"color:#000"> will be installed<br></span><span style=3D"color:#=
+660">--&gt;</span><span style=3D"color:#000"> </span><span style=3D"color:#=
+606">Processing</span><span style=3D"color:#000"> </span><span style=3D"col=
+or:#606">Dependency</span><span style=3D"color:#660">:</span><span style=3D=
+"color:#000"> bzip2</span><span style=3D"color:#660">-</span><span style=3D=
+"color:#000">libs </span><span style=3D"color:#660">=3D</span><span style=
+=3D"color:#000"> </span><span style=3D"color:#066">1.0</span><span style=3D=
+"color:#660">.</span><span style=3D"color:#066">6</span><span style=3D"colo=
+r:#660">-</span><span style=3D"color:#066">13.el7</span><span style=3D"colo=
+r:#000"> </span><span style=3D"color:#008">for</span><span style=3D"color:#=
+000"> </span><span style=3D"color:#008">package</span><span style=3D"color:=
+#660">:</span><span style=3D"color:#000"> bzip2</span><span style=3D"color:=
+#660">-</span><span style=3D"color:#066">1.0</span><span style=3D"color:#66=
+0">.</span><span style=3D"color:#066">6</span><span style=3D"color:#660">-<=
+/span><span style=3D"color:#066">13.el7.x86</span><span style=3D"color:#000=
+">_64<br><br></span><span style=3D"color:#660">...</span><span style=3D"col=
+or:#000"><br><br></span><span style=3D"color:#606">Installed</span><span st=
+yle=3D"color:#660">:</span><span style=3D"color:#000"><br>=C2=A0 bzip2</spa=
+n><span style=3D"color:#660">.</span><span style=3D"color:#000">x86_64 </sp=
+an><span style=3D"color:#066">0</span><span style=3D"color:#660">:</span><s=
+pan style=3D"color:#066">1.0</span><span style=3D"color:#660">.</span><span=
+ style=3D"color:#066">6</span><span style=3D"color:#660">-</span><span styl=
+e=3D"color:#066">13.el7</span><span style=3D"color:#000"> =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0centos</span><span style=3D"color:#660">-</span><span styl=
+e=3D"color:#000">release</span><span style=3D"color:#660">.</span><span sty=
+le=3D"color:#000">x86_64 </span><span style=3D"color:#066">0</span><span st=
+yle=3D"color:#660">:</span><span style=3D"color:#066">7</span><span style=
+=3D"color:#660">-</span><span style=3D"color:#066">3.1611</span><span style=
+=3D"color:#660">.</span><span style=3D"color:#000">el7</span><span style=3D=
+"color:#660">.</span><span style=3D"color:#000">centos =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0coreutils</span><span style=3D"color:#660">.</span><span styl=
+e=3D"color:#000">x86_64 </span><span style=3D"color:#066">0</span><span sty=
+le=3D"color:#660">:</span><span style=3D"color:#066">8.22</span><span style=
+=3D"color:#660">-</span><span style=3D"color:#066">18.el7</span><span style=
+=3D"color:#000"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 <br><br></span><span style=3D"=
+color:#606">Dependency</span><span style=3D"color:#000"> </span><span style=
+=3D"color:#606">Installed</span><span style=3D"color:#660">:</span><span st=
+yle=3D"color:#000"><br>=C2=A0 basesystem</span><span style=3D"color:#660">.=
+</span><span style=3D"color:#000">noarch </span><span style=3D"color:#066">=
+0</span><span style=3D"color:#660">:</span><span style=3D"color:#066">10.0<=
+/span><span style=3D"color:#660">-</span><span style=3D"color:#066">7.el7.c=
+entos</span><span style=3D"color:#000"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0bash</span><s=
+pan style=3D"color:#660">.</span><span style=3D"color:#000">x86_64 </span><=
+span style=3D"color:#066">0</span><span style=3D"color:#660">:</span><span =
+style=3D"color:#066">4.2</span><span style=3D"color:#660">.</span><span sty=
+le=3D"color:#066">46</span><span style=3D"color:#660">-</span><span style=
+=3D"color:#066">21.el7_3</span><span style=3D"color:#000"> =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 <br>=C2=A0 bzip2</span><span style=3D"color=
+:#660">-</span><span style=3D"color:#000">libs</span><span style=3D"color:#=
+660">.</span><span style=3D"color:#000">x86_64 </span><span style=3D"color:=
+#066">0</span><span style=3D"color:#660">:</span><span style=3D"color:#066"=
+>1.0</span><span style=3D"color:#660">.</span><span style=3D"color:#066">6<=
+/span><span style=3D"color:#660">-</span><span style=3D"color:#066">13.el7<=
+/span><span style=3D"color:#000"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 ca</=
+span><span style=3D"color:#660">-</span><span style=3D"color:#000">certific=
+ates</span><span style=3D"color:#660">.</span><span style=3D"color:#000">no=
+arch </span><span style=3D"color:#066">0</span><span style=3D"color:#660">:=
+</span><span style=3D"color:#066">2017.2</span><span style=3D"color:#660">.=
+</span><span style=3D"color:#066">11</span><span style=3D"color:#660">-</sp=
+an><span style=3D"color:#066">70.1</span><span style=3D"color:#660">.</span=
+><span style=3D"color:#000">el7_3 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 <br>=C2=A0 chkconfig</span><span style=3D"color:#660"=
+>.</span><span style=3D"color:#000">x86_64 </span><span style=3D"color:#066=
+">0</span><span style=3D"color:#660">:</span><span style=3D"color:#066">1.7=
+</span><span style=3D"color:#660">.</span><span style=3D"color:#066">2</spa=
+n><span style=3D"color:#660">-</span><span style=3D"color:#066">1.el7</span=
+><span style=3D"color:#000"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 f=
+ilesystem</span><span style=3D"color:#660">.</span><span style=3D"color:#00=
+0">x86_64 </span><span style=3D"color:#066">0</span><span style=3D"color:#6=
+60">:</span><span style=3D"color:#066">3.2</span><span style=3D"color:#660"=
+>-</span><span style=3D"color:#066">21.el7</span><span style=3D"color:#000"=
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0<br>=C2=A0 gawk</span><span st=
+yle=3D"color:#660">.</span><span style=3D"color:#000">x86_64 </span><span s=
+tyle=3D"color:#066">0</span><span style=3D"color:#660">:</span><span style=
+=3D"color:#066">4.0</span><span style=3D"color:#660">.</span><span style=3D=
+"color:#066">2</span><span style=3D"color:#660">-</span><span style=3D"colo=
+r:#066">4.el7</span><span style=3D"color:#000"> =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0glibc</span><span style=3D"color:#660=
+">.</span><span style=3D"color:#000">x86_64 </span><span style=3D"color:#06=
+6">0</span><span style=3D"color:#660">:</span><span style=3D"color:#066">2.=
+17</span><span style=3D"color:#660">-</span><span style=3D"color:#066">157.=
+el7_3.2</span><span style=3D"color:#000"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 <br>=C2=A0 glibc</span><span style=3D"color:#660">-</span><span styl=
+e=3D"color:#000">common</span><span style=3D"color:#660">.</span><span styl=
+e=3D"color:#000">x86_64 </span><span style=3D"color:#066">0</span><span sty=
+le=3D"color:#660">:</span><span style=3D"color:#066">2.17</span><span style=
+=3D"color:#660">-</span><span style=3D"color:#066">157.el7_3.2</span><span =
+style=3D"color:#000"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 gmp</span><span style=3D"color:#660"=
+>.</span><span style=3D"color:#000">x86_64 </span><span style=3D"color:#066=
+">1</span><span style=3D"color:#660">:</span><span style=3D"color:#066">6.0=
+</span><span style=3D"color:#660">.</span><span style=3D"color:#066">0</spa=
+n><span style=3D"color:#660">-</span><span style=3D"color:#066">12.el7_1</s=
+pan><span style=3D"color:#000"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 <br>=C2=A0 grep</span><span style=3D"color:#660">.</span><span s=
+tyle=3D"color:#000">x86_64 </span><span style=3D"color:#066">0</span><span =
+style=3D"color:#660">:</span><span style=3D"color:#066">2.20</span><span st=
+yle=3D"color:#660">-</span><span style=3D"color:#066">2.el7</span><span sty=
+le=3D"color:#000"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 info</span><span style=3D"color:#660">.</span><span style=3D"col=
+or:#000">x86_64 </span><span style=3D"color:#066">0</span><span style=3D"co=
+lor:#660">:</span><span style=3D"color:#066">5.1</span><span style=3D"color=
+:#660">-</span><span style=3D"color:#066">4.el7</span><span style=3D"color:=
+#000"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 <=
+br>=C2=A0 keyutils</span><span style=3D"color:#660">-</span><span style=3D"=
+color:#000">libs</span><span style=3D"color:#660">.</span><span style=3D"co=
+lor:#000">x86_64 </span><span style=3D"color:#066">0</span><span style=3D"c=
+olor:#660">:</span><span style=3D"color:#066">1.5</span><span style=3D"colo=
+r:#660">.</span><span style=3D"color:#066">8</span><span style=3D"color:#66=
+0">-</span><span style=3D"color:#066">3.el7</span><span style=3D"color:#000=
+"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 krb5</span><span style=3D"color:#660">-<=
+/span><span style=3D"color:#000">libs</span><span style=3D"color:#660">.</s=
+pan><span style=3D"color:#000">x86_64 </span><span style=3D"color:#066">0</=
+span><span style=3D"color:#660">:</span><span style=3D"color:#066">1.14</sp=
+an><span style=3D"color:#660">.</span><span style=3D"color:#066">1</span><s=
+pan style=3D"color:#660">-</span><span style=3D"color:#066">27.el7_3</span>=
+<span style=3D"color:#000"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0<br>=C2=A0 libac=
+l</span><span style=3D"color:#660">.</span><span style=3D"color:#000">x86_6=
+4 </span><span style=3D"color:#066">0</span><span style=3D"color:#660">:</s=
+pan><span style=3D"color:#066">2.2</span><span style=3D"color:#660">.</span=
+><span style=3D"color:#066">51</span><span style=3D"color:#660">-</span><sp=
+an style=3D"color:#066">12.el7</span><span style=3D"color:#000"> =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0libattr</span><span style=3D"color=
+:#660">.</span><span style=3D"color:#000">x86_64 </span><span style=3D"colo=
+r:#066">0</span><span style=3D"color:#660">:</span><span style=3D"color:#06=
+6">2.4</span><span style=3D"color:#660">.</span><span style=3D"color:#066">=
+46</span><span style=3D"color:#660">-</span><span style=3D"color:#066">12.e=
+l7</span><span style=3D"color:#000"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0<br>=C2=A0 libcap</span><span style=3D"color:#660">.</span><span styl=
+e=3D"color:#000">x86_64 </span><span style=3D"color:#066">0</span><span sty=
+le=3D"color:#660">:</span><span style=3D"color:#066">2.22</span><span style=
+=3D"color:#660">-</span><span style=3D"color:#066">8.el7</span><span style=
+=3D"color:#000"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 libcom_err</span><span style=3D"color:#660">.</span><span style=3D"colo=
+r:#000">x86_64 </span><span style=3D"color:#066">0</span><span style=3D"col=
+or:#660">:</span><span style=3D"color:#066">1.42</span><span style=3D"color=
+:#660">.</span><span style=3D"color:#066">9</span><span style=3D"color:#660=
+">-</span><span style=3D"color:#066">9.el7</span><span style=3D"color:#000"=
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0<br>=C2=A0 libffi</span><span style=
+=3D"color:#660">.</span><span style=3D"color:#000">x86_64 </span><span styl=
+e=3D"color:#066">0</span><span style=3D"color:#660">:</span><span style=3D"=
+color:#066">3.0</span><span style=3D"color:#660">.</span><span style=3D"col=
+or:#066">13</span><span style=3D"color:#660">-</span><span style=3D"color:#=
+066">18.el7</span><span style=3D"color:#000"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0libgcc</span><span style=3D"color:#660">.</span><sp=
+an style=3D"color:#000">x86_64 </span><span style=3D"color:#066">0</span><s=
+pan style=3D"color:#660">:</span><span style=3D"color:#066">4.8</span><span=
+ style=3D"color:#660">.</span><span style=3D"color:#066">5</span><span styl=
+e=3D"color:#660">-</span><span style=3D"color:#066">11.el7</span><span styl=
+e=3D"color:#000"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0<br>=
+=C2=A0 libselinux</span><span style=3D"color:#660">.</span><span style=3D"c=
+olor:#000">x86_64 </span><span style=3D"color:#066">0</span><span style=3D"=
+color:#660">:</span><span style=3D"color:#066">2.5</span><span style=3D"col=
+or:#660">-</span><span style=3D"color:#066">6.el7</span><span style=3D"colo=
+r:#000"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0libsepol</span><=
+span style=3D"color:#660">.</span><span style=3D"color:#000">x86_64 </span>=
+<span style=3D"color:#066">0</span><span style=3D"color:#660">:</span><span=
+ style=3D"color:#066">2.5</span><span style=3D"color:#660">-</span><span st=
+yle=3D"color:#066">6.el7</span><span style=3D"color:#000"> =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 <br>=C2=A0 libstdc</span><span style=
+=3D"color:#660">++.</span><span style=3D"color:#000">x86_64 </span><span st=
+yle=3D"color:#066">0</span><span style=3D"color:#660">:</span><span style=
+=3D"color:#066">4.8</span><span style=3D"color:#660">.</span><span style=3D=
+"color:#066">5</span><span style=3D"color:#660">-</span><span style=3D"colo=
+r:#066">11.el7</span><span style=3D"color:#000"> =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0libtasn1</span><span style=3D"color:#660">.</span><span=
+ style=3D"color:#000">x86_64 </span><span style=3D"color:#066">0</span><spa=
+n style=3D"color:#660">:</span><span style=3D"color:#066">3.8</span><span s=
+tyle=3D"color:#660">-</span><span style=3D"color:#066">3.el7</span><span st=
+yle=3D"color:#000"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 <br>=
+=C2=A0 libverto</span><span style=3D"color:#660">.</span><span style=3D"col=
+or:#000">x86_64 </span><span style=3D"color:#066">0</span><span style=3D"co=
+lor:#660">:</span><span style=3D"color:#066">0.2</span><span style=3D"color=
+:#660">.</span><span style=3D"color:#066">5</span><span style=3D"color:#660=
+">-</span><span style=3D"color:#066">4.el7</span><span style=3D"color:#000"=
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0ncurses</span><span sty=
+le=3D"color:#660">.</span><span style=3D"color:#000">x86_64 </span><span st=
+yle=3D"color:#066">0</span><span style=3D"color:#660">:</span><span style=
+=3D"color:#066">5.9</span><span style=3D"color:#660">-</span><span style=3D=
+"color:#066">13.20130511</span><span style=3D"color:#660">.</span><span sty=
+le=3D"color:#000">el7 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0<br>=C2=A0 ncurses</span><span=
+ style=3D"color:#660">-</span><span style=3D"color:#008">base</span><span s=
+tyle=3D"color:#660">.</span><span style=3D"color:#000">noarch </span><span =
+style=3D"color:#066">0</span><span style=3D"color:#660">:</span><span style=
+=3D"color:#066">5.9</span><span style=3D"color:#660">-</span><span style=3D=
+"color:#066">13.20130511</span><span style=3D"color:#660">.</span><span sty=
+le=3D"color:#000">el7 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0ncurses</span><span style=3D"color:#660">-</=
+span><span style=3D"color:#000">libs</span><span style=3D"color:#660">.</sp=
+an><span style=3D"color:#000">x86_64 </span><span style=3D"color:#066">0</s=
+pan><span style=3D"color:#660">:</span><span style=3D"color:#066">5.9</span=
+><span style=3D"color:#660">-</span><span style=3D"color:#066">13.20130511<=
+/span><span style=3D"color:#660">.</span><span style=3D"color:#000">el7 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 <=
+br>=C2=A0 nss</span><span style=3D"color:#660">-</span><span style=3D"color=
+:#000">softokn</span><span style=3D"color:#660">-</span><span style=3D"colo=
+r:#000">freebl</span><span style=3D"color:#660">.</span><span style=3D"colo=
+r:#000">x86_64 </span><span style=3D"color:#066">0</span><span style=3D"col=
+or:#660">:</span><span style=3D"color:#066">3.16</span><span style=3D"color=
+:#660">.</span><span style=3D"color:#066">2.3</span><span style=3D"color:#6=
+60">-</span><span style=3D"color:#066">14.4</span><span style=3D"color:#660=
+">.</span><span style=3D"color:#000">el7 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0openssl</span><span style=3D"color:#660"=
+>-</span><span style=3D"color:#000">libs</span><span style=3D"color:#660">.=
+</span><span style=3D"color:#000">x86_64 </span><span style=3D"color:#066">=
+1</span><span style=3D"color:#660">:</span><span style=3D"color:#066">1.0</=
+span><span style=3D"color:#660">.</span><span style=3D"color:#066">1e-60</s=
+pan><span style=3D"color:#660">.</span><span style=3D"color:#000">el7_3</sp=
+an><span style=3D"color:#660">.</span><span style=3D"color:#066">1</span><s=
+pan style=3D"color:#000"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 <br>=C2=A0 p11</span><span style=3D"colo=
+r:#660">-</span><span style=3D"color:#000">kit</span><span style=3D"color:#=
+660">.</span><span style=3D"color:#000">x86_64 </span><span style=3D"color:=
+#066">0</span><span style=3D"color:#660">:</span><span style=3D"color:#066"=
+>0.20</span><span style=3D"color:#660">.</span><span style=3D"color:#066">7=
+</span><span style=3D"color:#660">-</span><span style=3D"color:#066">3.el7<=
+/span><span style=3D"color:#000"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0p11</span><span style=3D"color:#660">-</span><span style=3D"color=
+:#000">kit</span><span style=3D"color:#660">-</span><span style=3D"color:#0=
+00">trust</span><span style=3D"color:#660">.</span><span style=3D"color:#00=
+0">x86_64 </span><span style=3D"color:#066">0</span><span style=3D"color:#6=
+60">:</span><span style=3D"color:#066">0.20</span><span style=3D"color:#660=
+">.</span><span style=3D"color:#066">7</span><span style=3D"color:#660">-</=
+span><span style=3D"color:#066">3.el7</span><span style=3D"color:#000"> =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 <br>=C2=A0 pcre</span><span style=3D"color:#660">.</sp=
+an><span style=3D"color:#000">x86_64 </span><span style=3D"color:#066">0</s=
+pan><span style=3D"color:#660">:</span><span style=3D"color:#066">8.32</spa=
+n><span style=3D"color:#660">-</span><span style=3D"color:#066">15.el7_2.1<=
+/span><span style=3D"color:#000"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0popt</span><span style=3D"color:#660">.</span><span style=3D"colo=
+r:#000">x86_64 </span><span style=3D"color:#066">0</span><span style=3D"col=
+or:#660">:</span><span style=3D"color:#066">1.13</span><span style=3D"color=
+:#660">-</span><span style=3D"color:#066">16.el7</span><span style=3D"color=
+:#000"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 <br>=C2=
+=A0 sed</span><span style=3D"color:#660">.</span><span style=3D"color:#000"=
+>x86_64 </span><span style=3D"color:#066">0</span><span style=3D"color:#660=
+">:</span><span style=3D"color:#066">4.2</span><span style=3D"color:#660">.=
+</span><span style=3D"color:#066">2</span><span style=3D"color:#660">-</spa=
+n><span style=3D"color:#066">5.el7</span><span style=3D"color:#000"> =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 setup</span><sp=
+an style=3D"color:#660">.</span><span style=3D"color:#000">noarch </span><s=
+pan style=3D"color:#066">0</span><span style=3D"color:#660">:</span><span s=
+tyle=3D"color:#066">2.8</span><span style=3D"color:#660">.</span><span styl=
+e=3D"color:#066">71</span><span style=3D"color:#660">-</span><span style=3D=
+"color:#066">7.el7</span><span style=3D"color:#000"> =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 <br>=C2=A0 tzdata</span><span style=3D"colo=
+r:#660">.</span><span style=3D"color:#000">noarch </span><span style=3D"col=
+or:#066">0</span><span style=3D"color:#660">:</span><span style=3D"color:#0=
+66">2017b</span><span style=3D"color:#660">-</span><span style=3D"color:#06=
+6">1.el7</span><span style=3D"color:#000"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0zlib</span><span style=3D"color:#660">.</span><s=
+pan style=3D"color:#000">x86_64 </span><span style=3D"color:#066">0</span><=
+span style=3D"color:#660">:</span><span style=3D"color:#066">1.2</span><spa=
+n style=3D"color:#660">.</span><span style=3D"color:#066">7</span><span sty=
+le=3D"color:#660">-</span><span style=3D"color:#066">17.el7</span><span sty=
+le=3D"color:#000"> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0<br><br></span><span style=3D"color:#606">Complete</span><span style=3D"=
+color:#660">!</span><span style=3D"color:#000"><br></span><span style=3D"co=
+lor:#606">Running</span><span style=3D"color:#000"> post scriptlet<br></spa=
+n><span style=3D"color:#660">+</span><span style=3D"color:#000"> echo </spa=
+n><span style=3D"color:#080">&#39;Installing EPEL&#39;</span><span style=3D=
+"color:#000"><br></span><span style=3D"color:#606">Installing</span><span s=
+tyle=3D"color:#000"> EPEL<br></span><span style=3D"color:#660">+</span><spa=
+n style=3D"color:#000"> yum </span><span style=3D"color:#660">-</span><span=
+ style=3D"color:#000">y install epel</span><span style=3D"color:#660">-</sp=
+an><span style=3D"color:#000">release<br></span><span style=3D"color:#660">=
+/</span><span style=3D"color:#000">bin</span><span style=3D"color:#660">/</=
+span><span style=3D"color:#000">sh</span><span style=3D"color:#660">:</span=
+><span style=3D"color:#000"> line </span><span style=3D"color:#066">3</span=
+><span style=3D"color:#660">:</span><span style=3D"color:#000"> yum</span><=
+span style=3D"color:#660">:</span><span style=3D"color:#000"> command </spa=
+n><span style=3D"color:#008">not</span><span style=3D"color:#000"> found<br=
+>ABORT</span><span style=3D"color:#660">:</span><span style=3D"color:#000">=
+ </span><span style=3D"color:#606">Aborting</span><span style=3D"color:#000=
+"> </span><span style=3D"color:#008">with</span><span style=3D"color:#000">=
+ RETVAL</span><span style=3D"color:#660">=3D</span><span style=3D"color:#06=
+6">255</span><span style=3D"color:#000"><br><br></span></div></code></div><=
+br>If I omit the `Include: bzip` line, the bootstrap process completes succ=
+essfully.<span><font color=3D"#888888"><br></font></span></div><span><font =
+color=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+fdYJoAkLBQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</font></span></blockquote></div><br></div>
+</blockquote></div>
+------=_Part_132_22207990.1496347293005--
+
+------=_Part_131_37229478.1496347293003--

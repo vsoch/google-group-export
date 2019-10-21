@@ -1,0 +1,344 @@
+Date: Fri, 1 Mar 2019 12:46:35 -0800 (PST)
+From: Mike Moore <wxdu...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <a347f411-2d39-472c-bd5f-d1401eb3fa97@lbl.gov>
+In-Reply-To: <CAM=pu+K3LpHL-MbQ==RMumDX7_gADoui=MBmRmTmeGc7JxPn_w@mail.gmail.com>
+References: <a94c4768-8cd7-43aa-8bb9-b21b3ccf950c@lbl.gov> <CAApQTTh9E=oNwfTLFmjmH6rAXDH2Q+X29D0Ur_Y3VMXvGvsDtg@mail.gmail.com>
+ <710b4b5e-f209-41da-bfcb-c19043201fa4@lbl.gov> <CAM=pu++geyfoQ+HWGtWVOStYfuH3+b49VLSk6zwQS0pH7V_WCA@mail.gmail.com>
+ <54a4fb06-9c3c-46f0-bcf8-7d788fb7d381@lbl.gov>
+ <CAM=pu+K3LpHL-MbQ==RMumDX7_gADoui=MBmRmTmeGc7JxPn_w@mail.gmail.com>
+Subject: Re: [Singularity] Singularity image download syncronization during
+ multiple job startup
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_473_1081675438.1551473195496"
+
+------=_Part_473_1081675438.1551473195496
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_474_706507900.1551473195497"
+
+------=_Part_474_706507900.1551473195497
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+
+
+On Friday, March 1, 2019 at 2:10:38 PM UTC-5, vanessa wrote:
+>
+> HPC and cloud are very different use cases, and that seems to be the edge 
+> we are hitting here!
+>
+> I completely agree. We are just starting to looking into this. 
+
+>  
+>
+>>   From the admin side, we are trying to slide in containerization between 
+>> the existing system image and the applications without requiring a massive 
+>> change to the user workflows.  A lot of our users are researchers who just 
+>> run a tool provided to them from the tool builders. They are not cluster 
+>> aware application developers. We are working with our toolbuilders on this 
+>> project, but their focus is on new work, not trying to rework old 
+>> workflows. So we have to make this as seamless as possible to the existing 
+>> job submission workflows. Introducing job dependencies will likely break 
+>> these workflows. 
+>>
+>> Singularity was (first) optimized for this use case (HPC), so a shared 
+> cache would be a good solution. The only other alternative would be through 
+> educating your users to pull to a file first, and then submit the file to 
+> the jobs. You don't need to use dependencies exactly, but the simple 
+> example that @gmk gave pulling first You are saying this isn't an option? 
+>  
+>
+Like I said, for the legacy workloads that we are just trying to lift into 
+a container, this all needs to be invisible to the jobs and essentially the 
+users.  For new workflows, things can be very different.  It is a tough 
+problem.  Add into this whole discussion that if there is any sort of 
+deviation in the time it takes to complete a workflow, our users are on us 
+about how "the grid is slow".... There is a lot of code/workflows created 
+by researchers, not programmers/developers.  So we have a lot of incredibly 
+non-optimal workflows with huge inefficiencies. And it "can't be broken". 
+So we are trying to introduce Singularity to abstract the workflows to 
+enable us to move forward. 
+
+  Our prolog wrapper is how we are going to force the workflows into 
+>> containerization. We have two "default" container images (one for CPU jobs, 
+>> one for GPU jobs) that are almost 100% identical to our current images. 
+>> That 9 GB container image I mentioned in our collection is one of those 
+>> default. Our toolbuilders have pushed back against the slow download times 
+>> already. The efforts to enable caching, object storage backends, etc. were 
+>> attempts to reduce the download times. 
+>>
+>> A shared filesystem cache, so you could download once, would be a typical 
+> HPC use case (sharing binaries between jobs) and help this, no? I see that 
+> you opened a PR to do that here: 
+> https://github.com/sylabs/singularity/pull/2776
+>  
+>
+Yes, that PR enables singularity to check the local cache for shub 
+downloads. This feature was missing. But even with that fix, if two tasks 
+are released to the same node nearly simultaneously and the required 
+container is not in the cache, the first task starts the download to the 
+cache, but the second task just sees the file name in the cache and tries 
+to run it.  If the download was sufficiently fast, this would be less of an 
+issue. If it is cached, it is not an issue.
+
+Just to give some data, here are some rough timing results I did on one of 
+our GPU servers.  I ran singularity to download one of our GPU containers 
+(~4.5 GB in size), and run /bin/true.  This gave a pretty good idea of the 
+time to download and run the container.
+
+Command(s) 
+run                                                                                                                        
+time to run (s)
+singularity exec shub://sregistry/centos7-cuda9.2-container 
+/bin/true                                              169.7
+sregistry-cli pull centos7-cuda9.2-container; singularity exec 
+~/centos7-cuda9.2-container /bin/true   50.1
+singularity exec /gpfs/sregistry/centos7-cuda9.2-container 
+/bin/true                                                 1.5 - 3.5
+singularity exec ~/centos7-cuda9.2-container 
+/bin/true                                                                   
+0.6
+/bin/true   (run on 
+bare-metal)                                                                                                       
+0.001
+
+The second example (sregistry-cli/singularity) was to come up with a rough 
+estimate of the time it would take if we downloaded the container directly 
+from object storage.  The third example is to just get an idea of how fast 
+it would be if we ran the containers from our GPFS file system.  That will 
+be very variable based on cluster load and health.  The fourth example is 
+to get an idea of what running out of the singularity cache is like. My 
+testing with Singularity 3.1.0 with my PR showed a runtime of ~45s for 500 
+tasks going through our scheduler.
+
+
+
+
+
+
+
+
+I had hoped that by enabling shub caching in Singularity that it would 
+>> help, and it does so long as we don't run into this corner case. But 
+>> knowing our workflows, users, and operational procedures, we are going to 
+>> hit it regularly.  Thats why I am trying to figure out any alternatives 
+>> short of putting our containers into a shared directory. The shared 
+>> directory model would work for today.  But we have to move to the cloud and 
+>> having a running shared directory that is not object based is costly. 
+>>
+>> If you need to run a file, and the file is in some external server, it 
+> seems logical that you either need to download a gazillion copies of the 
+> same thing (not ideal) or share a few copies via shared systems (more 
+> ideal).  The cloud is a different use case because it won't be too costly 
+> on the instance to download, but it would be a burden on the registry. This 
+> is good rationale for having a service that can handle that kind of 
+> concurrency - whether it means deploying multiple front ends to your own 
+> storage, or using something like Google Storage that can handle it. What 
+> could be other solutions? You could set up something complicated with 
+> Globus and then have a shared folder "somewhere else" but that just makes 
+> it more complicated. You could provide a wrapper for users that enforces a 
+> pull first, but it sounds like you don't want to do that.
+>
+
+I don't have a problem with the wrapper doing the pull. It is the corner 
+case where one download is currently running while another job starts 
+trying to use the same image on the same node. Some of this may be our own 
+fault because we moved the singularity cache out of ${HOME} and into a 
+shared local directory. We did this because 1) the GPFS home directory on 
+the compute nodes is very limited - Only to be used to create your compute 
+environment and is read-only on the compute/gpu nodes.  2) By using a 
+shared cache, we reduce the amount of local storage used for image caching. 
+I would just have to figure out a synchronization method to hold jobs if 
+the image is being actively downloaded. The wrapper could do that.  
+
+1. Check for a lock file, if it exists, wait until it disappears and then 
+run the container.  
+2. If there is no lock file, Check the local cache for the existence of the 
+image.
+  a. If the image exists in the cache, run singularity
+  b. If it is missing, touch a lock file, pull the image, remove the lock 
+file, and run singularity.
+
+Like I said, I was just trying to see what experience others have had with 
+this...
+
+So, I guess my next question would be, Does Singularity itself support 
+pulling from and object store directly using an S3 or Swift client? I know 
+it handles docker/OCI, Singularity Library, Singularity Hub, and local file 
+system paths. That would probably the be better fit overall instead of 
+moving to a share file system. The transition to a public cloud would be 
+easier with the container store being in object storage.
+
+-Mike
+
+------=_Part_474_706507900.1551473195497
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><br><br>On Friday, March 1, 2019 at 2:10:38 PM UTC-5, vane=
+ssa wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left:=
+ 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr"><di=
+v dir=3D"ltr"><div dir=3D"ltr">HPC and cloud are very different use cases, =
+and that seems to be the edge we are hitting here!</div></div><div class=3D=
+"gmail_quote"><br></div></div></blockquote><div>I completely agree. We are =
+just starting to looking into this. <br></div><blockquote class=3D"gmail_qu=
+ote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padd=
+ing-left: 1ex;"><div dir=3D"ltr"><div class=3D"gmail_quote"><div>=C2=A0</di=
+v><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;borde=
+r-left:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr">=C2=A0=
+ From the admin side, we are trying to slide in containerization between th=
+e existing system image and the applications without requiring a massive ch=
+ange to the user workflows.=C2=A0 A lot of our users are researchers who ju=
+st run a tool provided to them from the tool builders. They are not cluster=
+ aware application developers. We are working with our toolbuilders on this=
+ project, but their focus is on new work, not trying to rework old workflow=
+s. So we have to make this as seamless as possible to the existing job subm=
+ission workflows. Introducing job dependencies will likely break these work=
+flows. <br><br></div></blockquote><div>Singularity was (first) optimized fo=
+r this use case (HPC), so a shared cache would be a good solution. The only=
+ other alternative would be through educating your users to pull to a file =
+first, and then submit the file to the jobs. You don&#39;t need to use depe=
+ndencies exactly, but the simple example that @gmk gave pulling first You a=
+re saying this isn&#39;t an option?=C2=A0</div><div>=C2=A0<br></div></div><=
+/div></blockquote><div>Like I said, for the legacy workloads that we are ju=
+st trying to lift into a container, this all needs to be invisible to the j=
+obs and essentially the users.=C2=A0 For new workflows, things can be very =
+different.=C2=A0 It is a tough problem.=C2=A0 Add into this whole discussio=
+n that if there is any sort of deviation in the time it takes to complete a=
+ workflow, our users are on us about how &quot;the grid is slow&quot;.... T=
+here is a lot of code/workflows created by researchers, not programmers/dev=
+elopers.=C2=A0 So we have a lot of incredibly non-optimal workflows with hu=
+ge inefficiencies. And it &quot;can&#39;t be broken&quot;. So we are trying=
+ to introduce Singularity to abstract the workflows to enable us to move fo=
+rward. <br><br></div><blockquote class=3D"gmail_quote" style=3D"margin: 0;m=
+argin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=
+=3D"ltr"><div class=3D"gmail_quote"><div></div><blockquote class=3D"gmail_q=
+uote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,2=
+04);padding-left:1ex"><div dir=3D"ltr">=C2=A0 Our prolog wrapper is how we =
+are going to force the workflows into containerization. We have two &quot;d=
+efault&quot; container images (one for CPU jobs, one for GPU jobs) that are=
+ almost 100% identical to our current images. That 9 GB container image I m=
+entioned in our collection is one of those default. Our toolbuilders have p=
+ushed back against the slow download times already. The efforts to enable c=
+aching, object storage backends, etc. were attempts to reduce the download =
+times. <br><br></div></blockquote><div>A shared filesystem cache, so you co=
+uld download once, would be a typical HPC use case (sharing binaries betwee=
+n jobs) and help this, no? I see that you opened a PR to do that here: <a h=
+ref=3D"https://github.com/sylabs/singularity/pull/2776" target=3D"_blank" r=
+el=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?=
+q\x3dhttps%3A%2F%2Fgithub.com%2Fsylabs%2Fsingularity%2Fpull%2F2776\x26sa\x3=
+dD\x26sntz\x3d1\x26usg\x3dAFQjCNEaDSrtNF1kmcm9Nrtl8lKmsBNg6Q&#39;;return tr=
+ue;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2=
+F%2Fgithub.com%2Fsylabs%2Fsingularity%2Fpull%2F2776\x26sa\x3dD\x26sntz\x3d1=
+\x26usg\x3dAFQjCNEaDSrtNF1kmcm9Nrtl8lKmsBNg6Q&#39;;return true;">https://gi=
+thub.com/sylabs/<wbr>singularity/pull/2776</a></div><div>=C2=A0</div></div>=
+</div></blockquote><div>Yes, that PR enables singularity to check the local=
+ cache for shub downloads. This feature was missing. But even with that fix=
+, if two tasks are released to the same node nearly simultaneously and the =
+required container is not in the cache, the first task starts the download =
+to the cache, but the second task just sees the file name in the cache and =
+tries to run it.=C2=A0 If the download was sufficiently fast, this would be=
+ less of an issue. If it is cached, it is not an issue.<br><br>Just to give=
+ some data, here are some rough timing results I did on one of our GPU serv=
+ers.=C2=A0 I ran singularity to download one of our GPU containers (~4.5 GB=
+ in size), and run /bin/true.=C2=A0 This gave a pretty good idea of the tim=
+e to download and run the container.<br><br>Command(s) run=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0 time to run (s)<br>singularity exec shub://sregist=
+ry/centos7-cuda9.2-container /bin/true=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0 169.7<br>sregistry-cli pull centos7-cuda9.2-container; singularit=
+y exec ~/centos7-cuda9.2-container /bin/true=C2=A0=C2=A0 50.1<br>singularit=
+y exec /gpfs/sregistry/centos7-cuda9.2-container /bin/true=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 1.5 - 3.5<br>singularity e=
+xec ~/centos7-cuda9.2-container /bin/true=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 0.6<br>/bin=
+/true=C2=A0=C2=A0 (run on bare-metal)=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 0.001<br><br>The second=
+ example (sregistry-cli/singularity) was to come up with a rough estimate o=
+f the time it would take if we downloaded the container directly from objec=
+t storage.=C2=A0 The third example is to just get an idea of how fast it wo=
+uld be if we ran the containers from our GPFS file system.=C2=A0 That will =
+be very variable based on cluster load and health.=C2=A0 The fourth example=
+ is to get an idea of what running out of the singularity cache is like. My=
+ testing with Singularity 3.1.0 with my PR showed a runtime of ~45s for 500=
+ tasks going through our scheduler.<br><table class=3D"j-table jiveBorder" =
+width=3D"100%"><tbody><tr><td style=3D"width: 41.6667%;"><br></td><td style=
+=3D"width: 55.3333%;"><br></td></tr><tr><td style=3D"width: 41.6667%;"><br>=
+</td><td style=3D"width: 55.3333%;"><br></td></tr><tr><td style=3D"width: 4=
+1.6667%;"><br></td><td style=3D"width: 55.3333%;"><br></td></tr><tr><td sty=
+le=3D"width: 41.6667%;"><br></td><td style=3D"width: 55.3333%;"><br></td></=
+tr></tbody></table></div><blockquote class=3D"gmail_quote" style=3D"margin:=
+ 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div =
+dir=3D"ltr"><div class=3D"gmail_quote"><blockquote class=3D"gmail_quote" st=
+yle=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padd=
+ing-left:1ex"><div dir=3D"ltr">I had hoped that by enabling shub caching in=
+ Singularity that it would help, and it does so long as we don&#39;t run in=
+to this corner case. But knowing our workflows, users, and operational proc=
+edures, we are going to hit it regularly.=C2=A0 Thats why I am trying to fi=
+gure out any alternatives short of putting our containers into a shared dir=
+ectory. The shared directory model would work for today.=C2=A0 But we have =
+to move to the cloud and having a running shared directory that is not obje=
+ct based is costly. <br><br></div></blockquote><div>If you need to run a fi=
+le, and the file is in some external server, it seems logical that you eith=
+er need to download a gazillion copies of the same thing (not ideal) or sha=
+re a few copies via shared systems (more ideal).=C2=A0 The cloud is a diffe=
+rent use case because it won&#39;t be too costly on the instance to downloa=
+d, but it would be a burden on the registry. This is good rationale for hav=
+ing a service that can handle that kind of concurrency - whether it means d=
+eploying multiple front ends to your own storage, or using something like G=
+oogle Storage that can handle it. What could be other solutions? You could =
+set up something complicated with Globus and then have a shared folder &quo=
+t;somewhere else&quot; but that just makes it more complicated. You could p=
+rovide a wrapper for users that enforces a pull first, but it sounds like y=
+ou don&#39;t want to do that.</div></div></div></blockquote><div><br>I don&=
+#39;t have a problem with the wrapper doing the pull. It is the corner case=
+ where one download is currently running while another job starts trying to=
+ use the same image on the same node. Some of this may be our own fault bec=
+ause we moved the singularity cache out of ${HOME} and into a shared local =
+directory. We did this because 1) the GPFS home directory on the compute no=
+des is very limited - Only to be used to create your compute environment an=
+d is read-only on the compute/gpu nodes.=C2=A0 2) By using a shared cache, =
+we reduce the amount of local storage used for image caching. I would just =
+have to figure out a synchronization method to hold jobs if the image is be=
+ing actively downloaded. The wrapper could do that.=C2=A0 <br><br>1. Check =
+for a lock file, if it exists, wait until it disappears and then run the co=
+ntainer.=C2=A0 <br>2. If there is no lock file, Check the local cache for t=
+he existence of the image.<br>=C2=A0 a. If the image exists in the cache, r=
+un singularity<br>=C2=A0 b. If it is missing, touch a lock file, pull the i=
+mage, remove the lock file, and run singularity.<br><br>Like I said, I was =
+just trying to see what experience others have had with this...<br><br>So, =
+I guess my next question would be, Does Singularity itself support pulling =
+from and object store directly using an S3 or Swift client? I know it handl=
+es docker/OCI, Singularity Library, Singularity Hub, and local file system =
+paths. That would probably the be better fit overall instead of moving to a=
+ share file system. The transition to a public cloud would be easier with t=
+he container store being in object storage.<br><br>-Mike<br></div></div>
+------=_Part_474_706507900.1551473195497--
+
+------=_Part_473_1081675438.1551473195496--

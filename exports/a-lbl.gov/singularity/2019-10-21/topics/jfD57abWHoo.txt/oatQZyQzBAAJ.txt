@@ -1,0 +1,311 @@
+Date: Mon, 25 Jun 2018 11:01:17 -0700 (PDT)
+From: Jonathan Greenberg <jgr...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Cc: thomas....@desy.de
+Message-Id: <1d88fbaf-4724-476c-b57e-cae758cc419c@lbl.gov>
+In-Reply-To: <b9ae6d6a-f447-44fb-be16-6cafc38f1670@lbl.gov>
+References: <bf76f200-2050-450b-96b7-7aad7738f80d@lbl.gov>
+ <cd14236b-286c-d1eb-50e4-685758683200@desy.de>
+ <CAGfAqt8TW8Hwj9tPstcTPySOBxnP-E8yfkS5dhwt=epoNOrqhA@mail.gmail.com>
+ <643aafbd-f708-40e6-9e63-3bd4f05a8676@lbl.gov>
+ <0816ad68-a437-d389-a8cb-94500a33f44f@desy.de>
+ <b9ae6d6a-f447-44fb-be16-6cafc38f1670@lbl.gov>
+Subject: Re: [Singularity] Is there a way to auto-pass environment variables
+ to the container?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_29757_1104349026.1529949677968"
+
+------=_Part_29757_1104349026.1529949677968
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_29758_498701350.1529949677968"
+
+------=_Part_29758_498701350.1529949677968
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+AH.  Got it.  I had (don't remember why):
+
+%environment
+    TMPDIR=TMPDIR
+    TMP=TMP
+    TEMP=TEMP
+    export TMPDIR TMP TEMP 
+
+in my container def.  Fixing it now!
+
+--j
+
+On Monday, June 25, 2018 at 10:59:50 AM UTC-7, Jonathan Greenberg wrote:
+>
+> The grep (from inside the container) returns:
+>
+> /.singularity.d/env/90-environment.sh:    TMPDIR=TMPDIR
+> /.singularity.d/env/90-environment.sh:    export TMPDIR TMP TEMP
+>
+> On Monday, June 25, 2018 at 10:36:33 AM UTC-7, Thomas Hartmann wrote:
+>>
+>> hmmm, can you grep in your container, if maybe another script 
+>> sets/overwrites TMPDIR? 
+>>
+>>   grep -ri TMPDIR /.singularity.d/env 
+>>
+>> On 2018-06-25 18:59, Jonathan Greenberg wrote: 
+>> > Hmm, so is "TMPDIR" a protected name?  The MOO -> cow thing worked 
+>> > properly, but: 
+>> > 
+>> > export SINGULARITYENV_MOO="cow"  
+>> > export SINGULARITYENV_TMPDIR=/pathto/scratch/$USER 
+>> > echo $SINGULARITYENV_MOO 
+>> > cow 
+>> > echo $SINGULARITYENV_TMPDIR 
+>> > /pathto/scratch/jgreenberg 
+>> > 
+>> > Now in Singularity: 
+>> > singularity shell 
+>> > ~/gearslaboratory-gears-singularity-master-gears-general.simg 
+>> > 
+>> > echo $MOO 
+>> > cow 
+>> > 
+>> > echo $TMPDIR 
+>> > TMPDIR 
+>> > 
+>> > Not working!  Thoughts? 
+>> > 
+>> > --j 
+>> > 
+>> > 
+>> > On Monday, June 25, 2018 at 9:47:18 AM UTC-7, Jason Stover wrote: 
+>> > 
+>> >     Hi, 
+>> > 
+>> >       As mentioned you can use the %environment section in the DEF 
+>> file. 
+>> >     If you need to pass changing values, you can do something like: 
+>> > 
+>> >         export SINGULARITYENV_MOO="cow" 
+>> > 
+>> >       Then when you run singularity, you should have the "MOO" variable 
+>> >     available to you. Just prefix whatever with "SINGULARITYENV_" ... 
+>> i.e. 
+>> >     SINGULARITYENV_MY_VAR ... for "MY_VAR". 
+>> > 
+>> >     -J 
+>> > 
+>> >     On Mon, Jun 25, 2018 at 11:43 AM Thomas Hartmann 
+>> >     <tho...@desy.de <javascript:>> wrote: 
+>> >     > 
+>> >     > Hi Jonathan, 
+>> >     > 
+>> >     > if you create a Singularity container natively, you can add 
+>> >     environment 
+>> >     > variables in your Singularity file with the enironment flag, e.g. 
+>> >     > 
+>> >     >   %environment 
+>> >     >   MYFOOVAR="somevalue" 
+>> >     >   MYBAZVAR=23 
+>> >     > 
+>> >     > Else, if you have imported a container from Docker or so, you 
+>> >     maybe can 
+>> >     > trick it by creating a sandboxed version and add an env-script to 
+>> >     > 
+>> >     >   yoursandbox.d/.singularity.d/env/99-mystuff.sh 
+>> >     > 
+>> >     > (there should be a hidden .singularity/ directory in a container, 
+>> >     where 
+>> >     > Singularity keeps its info) 
+>> >     > 
+>> >     > Cheers, 
+>> >     >   Thomas 
+>> >     > 
+>> >     > On 2018-06-25 18:27, Jonathan Greenberg wrote: 
+>> >     > > I'm still a bit confused about how environment variables are 
+>> >     passed to 
+>> >     > > the containers.  Say I want to make sure some environment 
+>> >     variable I've 
+>> >     > > assigned my global environment "MOO" available in the container 
+>> >     > > "automatically" (not tacking it to the singularity exec 
+>> >     statement) -- 
+>> >     > > how do I go about doing this? 
+>> >     > > 
+>> >     > > --j 
+>> >     > > 
+>> >     > > -- 
+>> >     > > You received this message because you are subscribed to the 
+>> Google 
+>> >     > > Groups "singularity" group. 
+>> >     > > To unsubscribe from this group and stop receiving emails from 
+>> >     it, send 
+>> >     > > an email to singu...@lbl.gov <javascript:> 
+>> >     > > <mailto:singu...@lbl.gov <javascript:>>. 
+>> >     > 
+>> >     > -- 
+>> >     > You received this message because you are subscribed to the 
+>> Google 
+>> >     Groups "singularity" group. 
+>> >     > To unsubscribe from this group and stop receiving emails from it, 
+>> >     send an email to singu...@lbl.gov <javascript:>. 
+>> > 
+>> > -- 
+>> > You received this message because you are subscribed to the Google 
+>> > Groups "singularity" group. 
+>> > To unsubscribe from this group and stop receiving emails from it, send 
+>> > an email to singu...@lbl.gov 
+>> > <mailto:singu...@lbl.gov>. 
+>>
+>>
+------=_Part_29758_498701350.1529949677968
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">AH.=C2=A0 Got it.=C2=A0 I had (don&#39;t remember why):<di=
+v><br></div><div>%environment</div><div>=C2=A0 =C2=A0 TMPDIR=3DTMPDIR</div>=
+<div>=C2=A0 =C2=A0 TMP=3DTMP</div><div>=C2=A0 =C2=A0 TEMP=3DTEMP</div><div>=
+=C2=A0 =C2=A0 export TMPDIR TMP TEMP=C2=A0</div><div><br></div><div>in my c=
+ontainer def.=C2=A0 Fixing it now!</div><div><br></div><div>--j<br><br>On M=
+onday, June 25, 2018 at 10:59:50 AM UTC-7, Jonathan Greenberg wrote:<blockq=
+uote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-lef=
+t: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">The grep (from insid=
+e the container) returns:<div><br></div><div><div>/.singularity.d/env/90-<w=
+br>environment.sh:=C2=A0 =C2=A0 TMPDIR=3DTMPDIR</div><div>/.singularity.d/e=
+nv/90-<wbr>environment.sh:=C2=A0 =C2=A0 export TMPDIR TMP TEMP</div><br>On =
+Monday, June 25, 2018 at 10:36:33 AM UTC-7, Thomas Hartmann wrote:<blockquo=
+te class=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-left:1p=
+x #ccc solid;padding-left:1ex">hmmm, can you grep in your container, if may=
+be another script
+<br>sets/overwrites TMPDIR?
+<br>
+<br>=C2=A0 grep -ri TMPDIR /.singularity.d/env
+<br>
+<br>On 2018-06-25 18:59, Jonathan Greenberg wrote:
+<br>&gt; Hmm, so is &quot;TMPDIR&quot; a protected name?=C2=A0 The MOO -&gt=
+; cow thing worked
+<br>&gt; properly, but:
+<br>&gt;=20
+<br>&gt; export SINGULARITYENV_MOO=3D&quot;cow&quot;=C2=A0
+<br>&gt; export SINGULARITYENV_TMPDIR=3D/pathto/<wbr>scratch/$USER
+<br>&gt; echo $SINGULARITYENV_MOO
+<br>&gt; cow
+<br>&gt; echo $SINGULARITYENV_TMPDIR
+<br>&gt; /pathto/scratch/jgreenberg
+<br>&gt;=20
+<br>&gt; Now in Singularity:
+<br>&gt; singularity shell
+<br>&gt; ~/gearslaboratory-gears-<wbr>singularity-master-gears-<wbr>general=
+.simg
+<br>&gt;=20
+<br>&gt; echo $MOO
+<br>&gt; cow
+<br>&gt;=20
+<br>&gt; echo $TMPDIR
+<br>&gt; TMPDIR
+<br>&gt;=20
+<br>&gt; Not working!=C2=A0 Thoughts?
+<br>&gt;=20
+<br>&gt; --j
+<br>&gt;=20
+<br>&gt;=20
+<br>&gt; On Monday, June 25, 2018 at 9:47:18 AM UTC-7, Jason Stover wrote:
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 Hi,
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 =C2=A0 As mentioned you can use the %environment sec=
+tion in the DEF file.
+<br>&gt; =C2=A0 =C2=A0 If you need to pass changing values, you can do some=
+thing like:
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 export SINGULARITYENV_MOO=3D&quot;cow&=
+quot;
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 =C2=A0 Then when you run singularity, you should hav=
+e the &quot;MOO&quot; variable
+<br>&gt; =C2=A0 =C2=A0 available to you. Just prefix whatever with &quot;SI=
+NGULARITYENV_&quot; ... i.e.
+<br>&gt; =C2=A0 =C2=A0 SINGULARITYENV_MY_VAR ... for &quot;MY_VAR&quot;.
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 -J
+<br>&gt;=20
+<br>&gt; =C2=A0 =C2=A0 On Mon, Jun 25, 2018 at 11:43 AM Thomas Hartmann
+<br>&gt; =C2=A0 =C2=A0 &lt;<a>tho...@desy.de</a> &lt;javascript:&gt;&gt; wr=
+ote:
+<br>&gt; =C2=A0 =C2=A0 &gt;
+<br>&gt; =C2=A0 =C2=A0 &gt; Hi Jonathan,
+<br>&gt; =C2=A0 =C2=A0 &gt;
+<br>&gt; =C2=A0 =C2=A0 &gt; if you create a Singularity container natively,=
+ you can add
+<br>&gt; =C2=A0 =C2=A0 environment
+<br>&gt; =C2=A0 =C2=A0 &gt; variables in your Singularity file with the eni=
+ronment flag, e.g.
+<br>&gt; =C2=A0 =C2=A0 &gt;
+<br>&gt; =C2=A0 =C2=A0 &gt; =C2=A0 %environment
+<br>&gt; =C2=A0 =C2=A0 &gt; =C2=A0 MYFOOVAR=3D&quot;somevalue&quot;
+<br>&gt; =C2=A0 =C2=A0 &gt; =C2=A0 MYBAZVAR=3D23
+<br>&gt; =C2=A0 =C2=A0 &gt;
+<br>&gt; =C2=A0 =C2=A0 &gt; Else, if you have imported a container from Doc=
+ker or so, you
+<br>&gt; =C2=A0 =C2=A0 maybe can
+<br>&gt; =C2=A0 =C2=A0 &gt; trick it by creating a sandboxed version and ad=
+d an env-script to
+<br>&gt; =C2=A0 =C2=A0 &gt;
+<br>&gt; =C2=A0 =C2=A0 &gt; =C2=A0 yoursandbox.d/.singularity.d/<wbr>env/99=
+-mystuff.sh
+<br>&gt; =C2=A0 =C2=A0 &gt;
+<br>&gt; =C2=A0 =C2=A0 &gt; (there should be a hidden .singularity/ directo=
+ry in a container,
+<br>&gt; =C2=A0 =C2=A0 where
+<br>&gt; =C2=A0 =C2=A0 &gt; Singularity keeps its info)
+<br>&gt; =C2=A0 =C2=A0 &gt;
+<br>&gt; =C2=A0 =C2=A0 &gt; Cheers,
+<br>&gt; =C2=A0 =C2=A0 &gt; =C2=A0 Thomas
+<br>&gt; =C2=A0 =C2=A0 &gt;
+<br>&gt; =C2=A0 =C2=A0 &gt; On 2018-06-25 18:27, Jonathan Greenberg wrote:
+<br>&gt; =C2=A0 =C2=A0 &gt; &gt; I&#39;m still a bit confused about how env=
+ironment variables are
+<br>&gt; =C2=A0 =C2=A0 passed to
+<br>&gt; =C2=A0 =C2=A0 &gt; &gt; the containers. =C2=A0Say I want to make s=
+ure some environment
+<br>&gt; =C2=A0 =C2=A0 variable I&#39;ve
+<br>&gt; =C2=A0 =C2=A0 &gt; &gt; assigned my global environment &quot;MOO&q=
+uot; available in the container
+<br>&gt; =C2=A0 =C2=A0 &gt; &gt; &quot;automatically&quot; (not tacking it =
+to the singularity exec
+<br>&gt; =C2=A0 =C2=A0 statement) --
+<br>&gt; =C2=A0 =C2=A0 &gt; &gt; how do I go about doing this?
+<br>&gt; =C2=A0 =C2=A0 &gt; &gt;
+<br>&gt; =C2=A0 =C2=A0 &gt; &gt; --j
+<br>&gt; =C2=A0 =C2=A0 &gt; &gt;
+<br>&gt; =C2=A0 =C2=A0 &gt; &gt; --
+<br>&gt; =C2=A0 =C2=A0 &gt; &gt; You received this message because you are =
+subscribed to the Google
+<br>&gt; =C2=A0 =C2=A0 &gt; &gt; Groups &quot;singularity&quot; group.
+<br>&gt; =C2=A0 =C2=A0 &gt; &gt; To unsubscribe from this group and stop re=
+ceiving emails from
+<br>&gt; =C2=A0 =C2=A0 it, send
+<br>&gt; =C2=A0 =C2=A0 &gt; &gt; an email to <a>singu...@lbl.gov</a> &lt;ja=
+vascript:&gt;
+<br>&gt; =C2=A0 =C2=A0 &gt; &gt; &lt;mailto:<a rel=3D"nofollow">singularity=
++<wbr>unsub...@lbl.gov</a> &lt;javascript:&gt;&gt;.
+<br>&gt; =C2=A0 =C2=A0 &gt;
+<br>&gt; =C2=A0 =C2=A0 &gt; --
+<br>&gt; =C2=A0 =C2=A0 &gt; You received this message because you are subsc=
+ribed to the Google
+<br>&gt; =C2=A0 =C2=A0 Groups &quot;singularity&quot; group.
+<br>&gt; =C2=A0 =C2=A0 &gt; To unsubscribe from this group and stop receivi=
+ng emails from it,
+<br>&gt; =C2=A0 =C2=A0 send an email to <a>singu...@lbl.gov</a> &lt;javascr=
+ipt:&gt;.
+<br>&gt;=20
+<br>&gt; --=20
+<br>&gt; You received this message because you are subscribed to the Google
+<br>&gt; Groups &quot;singularity&quot; group.
+<br>&gt; To unsubscribe from this group and stop receiving emails from it, =
+send
+<br>&gt; an email to <a rel=3D"nofollow">singu...@lbl.gov</a>
+<br>&gt; &lt;mailto:<a rel=3D"nofollow">singularity+<wbr>unsub...@lbl.gov</=
+a>&gt;.
+<br>
+<br></blockquote></div></div></blockquote></div></div>
+------=_Part_29758_498701350.1529949677968--
+
+------=_Part_29757_1104349026.1529949677968--

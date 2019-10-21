@@ -1,0 +1,143 @@
+Date: Tue, 9 Oct 2018 06:55:49 -0700 (PDT)
+From: Trey Dockendorf <tdock...@osc.edu>
+To: singularity <singu...@lbl.gov>
+Message-Id: <c369e946-7719-4f48-9251-f5ae77da4d32@lbl.gov>
+Subject: Building Singularity 3.0.0 RPMs
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1453_1024054370.1539093349389"
+
+------=_Part_1453_1024054370.1539093349389
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1454_728180817.1539093349389"
+
+------=_Part_1454_728180817.1539093349389
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+In the past I've built my own RPMs for Singularity so that I can force 
+everything except configs into /opt/singularity.  The spec I use is the 
+same one distributed with source.  I've now attempted a build with 3.0.0 
+and am hitting an issue I haven't been able to resolve.  I build RPMs in 
+mock but not sure that's the issue here.  The "No build ID note found" 
+error I've found mentions of using "--build-id" during %build and %install 
+by doing LDFLAGS+=--build-id on the make commands but that didn't seem to 
+change the error.
+
+Also below is a diff of changes I had to make to fix the RPM build 
+process.  I'll open a PR once I have things working.
+
+extracting debug info from 
+/builddir/build/BUILDROOT/singularity-3.0.0-1.el7.x86_64/usr/bin/singularity
+extracting debug info from 
+/builddir/build/BUILDROOT/singularity-3.0.0-1.el7.x86_64/usr/libexec/singularity/bin/starter
+extracting debug info from 
+/builddir/build/BUILDROOT/singularity-3.0.0-1.el7.x86_64/usr/libexec/singularity/bin/starter-suid
+*** WARNING: identical binaries are copied, not linked:
+        /usr/libexec/singularity/bin/starter-suid
+   and  /usr/libexec/singularity/bin/starter
+extracting debug info from 
+/builddir/build/BUILDROOT/singularity-3.0.0-1.el7.x86_64/usr/libexec/singularity/cni/dhcp
+*** ERROR: No build ID note found in 
+/builddir/build/BUILDROOT/singularity-3.0.0-1.el7.x86_64/usr/libexec/singularity/cni/dhcp
+error: Bad exit status from /var/tmp/rpm-tmp.QD6jSl (%install)
+
+
+RPM build errors:
+    Bad exit status from /var/tmp/rpm-tmp.QD6jSl (%install)
+ERROR: Exception(SRPMS/singularity-3.0.0-1.el7.src.rpm) 
+Config(rhel-7-x86_64) 1 minutes 31 seconds
+INFO: Results and/or logs in: 
+/users/sysp/tdockendorf/rpmbuilds/singularity/built
+
+
+--- singularity/dist/rpm/singularity.spec       2018-10-08 
+01:36:34.000000000 -0400
++++ singularity.spec    2018-10-09 09:13:14.252371000 -0400
+@@ -26,7 +26,7 @@
+ 
+ Summary: Application and environment virtualization
+ Name: singularity
+-Version: v3.0.0
++Version: 3.0.0
+ Release: 1%{?dist}
+ # https://spdx.org/licenses/BSD-3-Clause-LBNL.html
+ License: BSD-3-Clause-LBNL
+@@ -36,6 +36,7 @@
+ ExclusiveOS: linux
+ BuildRoot: 
+%{?_tmppath}%{!?_tmppath:/var/tmp}/%{name}-%{version}-%{release}-root
+ BuildRequires: wget
++BuildRequires: git
+ BuildRequires: libuuid-devel
+ BuildRequires: libarchive-devel
+ BuildRequires: openssl-devel
+@@ -66,8 +67,8 @@
+ 
+ %build
+ export GOROOT=$PWD/go
+-export PATH=$GOROOT/bin:$PATH
+ export GOPATH=$PWD/gopath
++export PATH=$GOROOT/bin:$GOPATH/bin:$PATH
+ cd $GOPATH/%{singgopath}
+ go get -u -v github.com/golang/dep/cmd/dep
+ ./mconfig -V %{version}-%{release} -p '""' -e /usr
+
+
+
+
+------=_Part_1454_728180817.1539093349389
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">In the past I&#39;ve built my own RPMs for Singularity so =
+that I can force everything except configs into /opt/singularity.=C2=A0 The=
+ spec I use is the same one distributed with source.=C2=A0 I&#39;ve now att=
+empted a build with 3.0.0 and am hitting an issue I haven&#39;t been able t=
+o resolve.=C2=A0 I build RPMs in mock but not sure that&#39;s the issue her=
+e.=C2=A0 The &quot;No build ID note found&quot; error I&#39;ve found mentio=
+ns of using &quot;--build-id&quot; during %build and %install by doing=C2=
+=A0<span style=3D"color: rgb(0, 0, 0);">LDFLAGS+=3D--build-id on the make c=
+ommands but that didn&#39;t seem to change the error.</span><div><br></div>=
+<div>Also below is a diff of changes I had to make to fix the RPM build pro=
+cess.=C2=A0 I&#39;ll open a PR once I have things working.</div><div><br></=
+div><div><div>extracting debug info from /builddir/build/BUILDROOT/singular=
+ity-3.0.0-1.el7.x86_64/usr/bin/singularity</div><div>extracting debug info =
+from /builddir/build/BUILDROOT/singularity-3.0.0-1.el7.x86_64/usr/libexec/s=
+ingularity/bin/starter</div><div>extracting debug info from /builddir/build=
+/BUILDROOT/singularity-3.0.0-1.el7.x86_64/usr/libexec/singularity/bin/start=
+er-suid</div><div>*** WARNING: identical binaries are copied, not linked:</=
+div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 /usr/libexec/singularity/bin/starter-s=
+uid</div><div>=C2=A0 =C2=A0and=C2=A0 /usr/libexec/singularity/bin/starter</=
+div><div>extracting debug info from /builddir/build/BUILDROOT/singularity-3=
+.0.0-1.el7.x86_64/usr/libexec/singularity/cni/dhcp</div><div>*** ERROR: No =
+build ID note found in /builddir/build/BUILDROOT/singularity-3.0.0-1.el7.x8=
+6_64/usr/libexec/singularity/cni/dhcp</div><div>error: Bad exit status from=
+ /var/tmp/rpm-tmp.QD6jSl (%install)</div><div><br></div><div><br></div><div=
+>RPM build errors:</div><div>=C2=A0 =C2=A0 Bad exit status from /var/tmp/rp=
+m-tmp.QD6jSl (%install)</div><div>ERROR: Exception(SRPMS/singularity-3.0.0-=
+1.el7.src.rpm) Config(rhel-7-x86_64) 1 minutes 31 seconds</div><div>INFO: R=
+esults and/or logs in: /users/sysp/tdockendorf/rpmbuilds/singularity/built<=
+/div><div><br></div><div><br></div><div><div>--- singularity/dist/rpm/singu=
+larity.spec=C2=A0 =C2=A0 =C2=A0 =C2=A02018-10-08 01:36:34.000000000 -0400</=
+div><div>+++ singularity.spec=C2=A0 =C2=A0 2018-10-09 09:13:14.252371000 -0=
+400</div><div>@@ -26,7 +26,7 @@</div><div>=C2=A0</div><div>=C2=A0Summary: A=
+pplication and environment virtualization</div><div>=C2=A0Name: singularity=
+</div><div>-Version: v3.0.0</div><div>+Version: 3.0.0</div><div>=C2=A0Relea=
+se: 1%{?dist}</div><div>=C2=A0# https://spdx.org/licenses/BSD-3-Clause-LBNL=
+.html</div><div>=C2=A0License: BSD-3-Clause-LBNL</div><div>@@ -36,6 +36,7 @=
+@</div><div>=C2=A0ExclusiveOS: linux</div><div>=C2=A0BuildRoot: %{?_tmppath=
+}%{!?_tmppath:/var/tmp}/%{name}-%{version}-%{release}-root</div><div>=C2=A0=
+BuildRequires: wget</div><div>+BuildRequires: git</div><div>=C2=A0BuildRequ=
+ires: libuuid-devel</div><div>=C2=A0BuildRequires: libarchive-devel</div><d=
+iv>=C2=A0BuildRequires: openssl-devel</div><div>@@ -66,8 +67,8 @@</div><div=
+>=C2=A0</div><div>=C2=A0%build</div><div>=C2=A0export GOROOT=3D$PWD/go</div=
+><div>-export PATH=3D$GOROOT/bin:$PATH</div><div>=C2=A0export GOPATH=3D$PWD=
+/gopath</div><div>+export PATH=3D$GOROOT/bin:$GOPATH/bin:$PATH</div><div>=
+=C2=A0cd $GOPATH/%{singgopath}</div><div>=C2=A0go get -u -v github.com/gola=
+ng/dep/cmd/dep</div><div>=C2=A0./mconfig -V %{version}-%{release} -p &#39;&=
+quot;&quot;&#39; -e /usr</div></div><div><br></div><div><br></div><div><br>=
+</div></div></div>
+------=_Part_1454_728180817.1539093349389--
+
+------=_Part_1453_1024054370.1539093349389--

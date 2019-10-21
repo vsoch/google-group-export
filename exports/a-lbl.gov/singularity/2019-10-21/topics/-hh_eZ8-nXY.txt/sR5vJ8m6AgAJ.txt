@@ -1,0 +1,206 @@
+Date: Wed, 5 Sep 2018 11:54:44 -0700 (PDT)
+From: David Trudgian <dtr...@sylabs.io>
+To: singularity <singu...@lbl.gov>
+Message-Id: <7ee00bc3-63d6-4bc8-ba19-cbf9e641767a@lbl.gov>
+In-Reply-To: <b6d5848a-790a-419b-9a93-adfdf3c4f01f@lbl.gov>
+References: <b6d5848a-790a-419b-9a93-adfdf3c4f01f@lbl.gov>
+Subject: Re: Sregistry tuning and multi-site deployments
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_14_1385978052.1536173684745"
+
+------=_Part_14_1385978052.1536173684745
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_15_255828906.1536173684746"
+
+------=_Part_15_255828906.1536173684746
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi Mike,
+
+I can give a little bit of info, as I deployed sregistry in my previous 
+position at an HPC center and was involved a bit in the development, 
+contributing the LDAP plugin. Hopefully Vanessa Sochat will be able to 
+chime in on this too as she is the main developer and might be able to give 
+information about any future plans.
+
+The deployment I set up was a single install on an ESXi VM, keeping the 
+images on SSD storage. We were a single cluster with everything local, very 
+fast Infiniband networking, and it would have kept up with usage on the 
+200-300 nodes. I left before it went into production though, so can't 
+confirm the usage.
+
+I'm not aware that anyone has deployed sregistry multi-site. In the current 
+codebase there isn't any implementation of syncing between multiple 
+installs. I could potentially see running a master install somewhere, and 
+using external tools to synchronize the database and files to read-only 
+mirrors at other sites. That could allow the heavy download operations to 
+be performed locally, but getting tokens etc. would have to be done on the 
+(possibly remote) master. Also, I'm not really sure how it would handle lag 
+on filesystem replication of containers. I don't think there is anything 
+that would check for consistency before serving an image - but I may be 
+wrong there.
+
+With regard to playing around the VM - to get useful performance with 
+simultaneous connections I had to tweak both UWSGI and NGINX configuration. 
+I believe I was allowing 48 UWSGI procs and 48 NGINX worker processes on a 
+fairly beefy machine. This was prior to Vanessa changing the uploads to be 
+offloaded to NGINX. Large uploads/downloads are going to block a uwsgi 
+and/or nginx process, so you will need the max numbers for those set high 
+enough. 
+
+Regarding cryptographic signing of images - this is coming in Singularity 
+3.0 with the new SIF format. If you are adventurous you can try it out in 
+the master branch of the GitHub repo which is the 3.0 development area.
+
+Cheers,
+
+DT
+
+
+On Wednesday, September 5, 2018 at 11:15:10 AM UTC-5, Mike Moore wrote:
+>
+> Hello everyone,
+>
+>   My name is Mike Moore.  I am an HPC Systems Engineer at Nuance 
+> Communications.  I am running a project to introduce container technology 
+> into our HPC environments and guide our users/developers to containerize 
+> their HPC/AI workloads using Singularity.  We are deploying several 
+> sregistry VM's into HPC Grids as a POC to enable our users to work with 
+> Singularity.  I have several questions about sregistry in regards to 
+> multi-site deployment and how to tune it for scalability.  I'm hoping the 
+> experts here can share some of the lessons they have learned when blazing 
+> the path.
+>
+> Multi-server sregistry deployment:
+>
+> We have multiple, separate HPC grids in different regions around the world 
+> for various regulatory compliance needs.  We run similar workloads in these 
+> environment, just with different datasets.  We will have at least one 
+> sregistry server running in each environment to host the container images 
+> and serve the out fast enough for the jobs.  Our WAN backbone isn't 
+> sufficient to support a single centralized sregistry server 
+> infrastructure.  My questions are:
+>
+>    1. Has anyone deployed a similar model with sregistry?
+>    2. If so, how have you kept the separate instances in-sync?  
+>    3. Is there any built-in replication functionality that we could take 
+>    advantage of to mirror the container images/metadata to the other regions?
+>    4. If you are not running sregistry, what did you do for hosting your 
+>    container images?
+>    5. We are using LDAP for authentication within Singularity.  Is there 
+>    any way to keep the per-user tokens in sync between instances of sregistry?
+>    
+> Tuning/Scalability:
+>
+> So, currently we have ~2000 nodes in our various HPC environments.  Our 
+> smaller environments are on the order of 100-200 nodes.  Our largest is 
+> north of 1200.  We have a mix of CPU and GPU compute nodes.  CPU nodes have 
+> a max capacity of 8 to 20 jobs based on CPU type.  Our GPU nodes have a max 
+> capacity of 2 to 16 jobs, again based on GPU type.  We have a run-rate of 
+> ~30-50 million jobs per month in our largest environment.  I am wondering 
+> if:
+>
+>
+>    1. Has anyone run sregistry in an environment this big?  
+>    2. If not, any alternative suggestions for a container repository or 
+>    image storage that is compatible with Singularity?
+>    3. If you don't mind sharing, what does your sregistry infrastructure 
+>    look like?  
+>    4. I've started testing an sregistry VM setup following the direction 
+>    on the sregistry page.  However, it does not seem to handle simultaneous 
+>    connections well (1 upload and 1 download).  Are there any recommendations 
+>    for parameters for nginx?
+>
+> One final question..  Does Singularity support the cryptographic signing 
+> of images yet?  If not, any plans/timeframe for when it will?
+>
+>
+> Thank you,
+>
+>
+> -Mike Moore
+>
+
+------=_Part_15_255828906.1536173684746
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Hi Mike,</div><div><br></div><div>I can give a little=
+ bit of info, as I deployed sregistry in my previous position at an HPC cen=
+ter and was involved a bit in the development, contributing the LDAP plugin=
+. Hopefully Vanessa Sochat will be able to chime in on this too as she is t=
+he main developer and might be able to give information about any future pl=
+ans.</div><div><br></div><div>The deployment I set up was a single install =
+on an ESXi VM, keeping the images on SSD storage. We were a single cluster =
+with everything local, very fast Infiniband networking, and it would have k=
+ept up with usage on the 200-300 nodes. I left before it went into producti=
+on though, so can&#39;t confirm the usage.<br></div><div><br></div><div>I&#=
+39;m not aware that anyone has deployed sregistry multi-site. In the curren=
+t codebase there isn&#39;t any implementation of syncing between multiple i=
+nstalls. I could potentially see running a master install somewhere, and us=
+ing external tools to synchronize the database and files to read-only mirro=
+rs at other sites. That could allow the heavy download operations to be per=
+formed locally, but getting tokens etc. would have to be done on the (possi=
+bly remote) master. Also, I&#39;m not really sure how it would handle lag o=
+n filesystem replication of containers. I don&#39;t think there is anything=
+ that would check for consistency before serving an image - but I may be wr=
+ong there.<br></div><div><br></div><div>With regard to playing around the V=
+M - to get useful performance with simultaneous connections I had to tweak =
+both UWSGI and NGINX configuration. I believe I was allowing 48 UWSGI procs=
+ and 48 NGINX worker processes on a fairly beefy machine. This was prior to=
+ Vanessa changing the uploads to be offloaded to NGINX. Large uploads/downl=
+oads are going to block a uwsgi and/or nginx process, so you will need the =
+max numbers for those set high enough. <br></div><div><br></div><div>Regard=
+ing cryptographic signing of images - this is coming in Singularity 3.0 wit=
+h the new SIF format. If you are adventurous you can try it out in the mast=
+er branch of the GitHub repo which is the 3.0 development area.</div><div><=
+br></div><div>Cheers,</div><div><br>DT<br></div><div><br></div><div><br></d=
+iv>On Wednesday, September 5, 2018 at 11:15:10 AM UTC-5, Mike Moore wrote:<=
+blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;bord=
+er-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">Hello everyone=
+,<br><br>=C2=A0 My name is Mike Moore.=C2=A0 I am an HPC Systems Engineer a=
+t Nuance Communications.=C2=A0 I am running a project to introduce containe=
+r technology into our HPC environments and guide our users/developers to co=
+ntainerize their HPC/AI workloads using Singularity.=C2=A0 We are deploying=
+ several sregistry VM&#39;s into HPC Grids as a POC to enable our users to =
+work with Singularity.=C2=A0 I have several questions about sregistry in re=
+gards to multi-site deployment and how to tune it for scalability.=C2=A0 I&=
+#39;m hoping the experts here can share some of the lessons they have learn=
+ed when blazing the path.<br><br>Multi-server sregistry deployment:<br><br>=
+We have multiple, separate HPC grids in different regions around the world =
+for various regulatory compliance needs.=C2=A0 We run similar workloads in =
+these environment, just with different datasets.=C2=A0 We will have at leas=
+t one sregistry server running in each environment to host the container im=
+ages and serve the out fast enough for the jobs.=C2=A0 Our WAN backbone isn=
+&#39;t sufficient to support a single centralized sregistry server infrastr=
+ucture.=C2=A0 My questions are:<br><ol><li>Has anyone deployed a similar mo=
+del with sregistry?</li><li>If so, how have you kept the separate instances=
+ in-sync?=C2=A0 <br></li><li>Is there any built-in replication functionalit=
+y that we could take advantage of to mirror the container images/metadata t=
+o the other regions?</li><li>If you are not running sregistry, what did you=
+ do for hosting your container images?</li><li>We are using LDAP for authen=
+tication within Singularity.=C2=A0 Is there any way to keep the per-user to=
+kens in sync between instances of sregistry?<br></li></ol>Tuning/Scalabilit=
+y:<br><br>So, currently we have ~2000 nodes in our various HPC environments=
+.=C2=A0 Our smaller environments are on the order of 100-200 nodes.=C2=A0 O=
+ur largest is north of 1200.=C2=A0 We have a mix of CPU and GPU compute nod=
+es.=C2=A0 CPU nodes have a max capacity of 8 to 20 jobs based on CPU type.=
+=C2=A0 Our GPU nodes have a max capacity of 2 to 16 jobs, again based on GP=
+U type.=C2=A0 We have a run-rate of ~30-50 million jobs per month in our la=
+rgest environment.=C2=A0 I am wondering if:<br><br><ol><li>Has anyone run s=
+registry in an environment this big?=C2=A0 <br></li><li>If not, any alterna=
+tive suggestions for a container repository or image storage that is compat=
+ible with Singularity?<br></li><li>If you don&#39;t mind sharing, what does=
+ your sregistry infrastructure look like?=C2=A0 <br></li><li>I&#39;ve start=
+ed testing an sregistry VM setup following the direction on the sregistry p=
+age.=C2=A0 However, it does not seem to handle simultaneous connections wel=
+l (1 upload and 1 download).=C2=A0 Are there any recommendations for parame=
+ters for nginx?</li></ol><p>One final question..=C2=A0 Does Singularity sup=
+port the cryptographic signing of images yet?=C2=A0 If not, any plans/timef=
+rame for when it will?</p><p><br></p><p>Thank you,</p><p><br></p><p>-Mike M=
+oore<br></p></div></blockquote></div>
+------=_Part_15_255828906.1536173684746--
+
+------=_Part_14_1385978052.1536173684745--

@@ -1,0 +1,342 @@
+Date: Tue, 19 Dec 2017 17:08:28 -0800 (PST)
+From: Jeff Kriske <jekr...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Cc: s...@encs.concordia.ca
+Message-Id: <15c5ccfe-2962-4919-943d-5d60a34d1e58@lbl.gov>
+In-Reply-To: <CAApQTTiJU7kTHemBzzpQHsf+XUh0LLv3eD5rpD2RFtFrvQaRug@mail.gmail.com>
+References: <be51681f-a256-437a-aa33-bfb33f5fa19f@lbl.gov> <alpine.LRH.2.00.1711301241340.720@grace.encs.concordia.ca>
+ <52fc7a93-abae-47d5-b0af-5c4aa63be0cd@lbl.gov> <4e5d15c4-4ea2-4376-8565-04aa87d5f402@lbl.gov>
+ <eccfa4d5-9241-4072-ba6e-8797e1acbdbe@lbl.gov> <ecbcf541-d796-4a8c-b7f6-c1d2b63bc569@lbl.gov>
+ <CAApQTTiJU7kTHemBzzpQHsf+XUh0LLv3eD5rpD2RFtFrvQaRug@mail.gmail.com>
+Subject: Re: [Singularity] sandbox always writable?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_46_2103917082.1513732109055"
+
+------=_Part_46_2103917082.1513732109055
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_47_501073150.1513732109055"
+
+------=_Part_47_501073150.1513732109055
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hey Greg, I've opened an issue and documented it at 
+https://github.com/singularityware/singularity/issues/1225
+
+On Tuesday, December 19, 2017 at 7:19:05 PM UTC-5, Gregory Kurtzer wrote:
+>
+> If this is a bug, can we get it posted to our GitHub issue tracker and 
+> tagged as a bug?
+>
+> Thanks!
+>
+> On Thu, Dec 7, 2017 at 1:34 PM, Jeff Kriske <je...@gmail.com 
+> <javascript:>> wrote:
+>
+>> Wow, I tried this while explicitly installing libtool, autoconf, and 
+>> automake plus making sure to run ./autogen.sh before the configure step and 
+>> I was able to recreate the behavior you're seeing 100% of the time with 2.4 
+>> and 2.4.2
+>>
+>> However, when I used the newer Xenial64 image it worked as it should...
+>>
+>>
+>> On Thursday, December 7, 2017 at 10:55:56 AM UTC-5, Tom Cook wrote:
+>>>
+>>> So, here is the vagrant script I use to build the vm that hosts 
+>>> singularity on my laptop:
+>>> ```
+>>> # -*- mode: ruby -*-
+>>> # vi: set ft=ruby :
+>>> VAGRANTFILE_API_VERSION = "2"
+>>> $script = <<SCRIPT
+>>> SINGULARITY_VERSION=2.4
+>>> FILE=/usr/local/bin/singularity
+>>> if [ ! -f $FILE ]; then
+>>> sudo apt-get update
+>>> sudo apt-get install -y squashfs-tools
+>>> sudo apt-get install -y  gcc build-essential python
+>>> wget 
+>>> https://github.com/singularityware/singularity/releases/download/$SINGULARITY_VERSION/singularity-$SINGULARITY_VERSION.tar.gz
+>>> tar xvf singularity-$SINGULARITY_VERSION.tar.gz
+>>> cd singularity-$SINGULARITY_VERSION
+>>> ./configure --prefix=/usr/local
+>>> sudo make
+>>> sudo make install
+>>> fi
+>>> SCRIPT
+>>> Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+>>>   config.vm.box = "ubuntu/trusty64"
+>>>   config.vm.provision 'second',  type:'shell', inline: $script, 
+>>> preserve_order:true
+>>>   config.vm.provider "virtualbox" do |vb|
+>>>     vb.customize ["modifyvm", :id, "--memory", "2048"]
+>>>   end
+>>> end
+>>> ```
+>>> From what I gather, the base box (trusty) does not have singularity 
+>>> pre-installed, and the install of singularity from git seems pretty vanilla 
+>>> to me. 
+>>> I've destroyed the box and rebuilt it and I still get the same 
+>>> persistence in changes as described above...
+>>>
+>>> -- 
+>>> tom cook
+>>>
+>>> On Monday, December 4, 2017 at 7:59:05 PM UTC-6, Jeff Kriske wrote:
+>>>>
+>>>> Yes, that's right.
+>>>>
+>>>> Did you by any chance install over an older version or forget to run 
+>>>> make clean before compiling a new version? 
+>>>>
+>>>> If you remove the version you have, clean, and rebuild it, do you still 
+>>>> get the behavior? Like I mentioned it happened to me but at the time I was 
+>>>> switching between dev and release-2.4 branches quite often so I might not 
+>>>> have been diligent. 
+>>>>
+>>>> I prefer when bugs are reproducible so I wish I knew the exact 
+>>>> conditions which had caused the behavior in the first place.
+>>>>
+>>>> On Monday, December 4, 2017 at 3:31:56 PM UTC-5, Tom Cook wrote:
+>>>>>
+>>>>> I do not think this is expected. As mentioned further down that same 
+>>>>> docs page: 
+>>>>>
+>>>>>>  If you wanted to create a container within a writable directory 
+>>>>>> (called a sandbox) you could do so with the --sandboxoption. [...] The 
+>>>>>> resulting directory operates just like a container in an image file. You 
+>>>>>> are permitted to make changes and write files within the directory, but 
+>>>>>> those changes will not persist when you are finished using the container. 
+>>>>>>
+>>>>>
+>>>>> My understanding is that, for changes to be persistent, the 
+>>>>> `--writable` flag must be used when executing `singularity shell`.
+>>>>> -- 
+>>>>> tom cook 
+>>>>>
+>>>>> On Thursday, November 30, 2017 at 11:46:04 AM UTC-6, Sylvain 
+>>>>> Robitaille wrote:
+>>>>>>
+>>>>>> On Wed, 29 Nov 2017, Tom Cook wrote: 
+>>>>>>
+>>>>>> > I've been building some basic images in sandbox mode and I find 
+>>>>>> that 
+>>>>>> > when I shell into them, changes are persistent, even though i am 
+>>>>>> not 
+>>>>>> > running singularity with the --writable flag. This is contrary to 
+>>>>>> the 
+>>>>>> > documentation. Is this new behavior or a bug, or am I just missing 
+>>>>>> > something? 
+>>>>>> > ... 
+>>>>>> > Steps to reproduce: 
+>>>>>> > 1. build with `singularity build --sandbox singularity.img 
+>>>>>> Singularity` 
+>>>>>> > ... 
+>>>>>>
+>>>>>> I might be missing something, as I'm still very new to Singularity, 
+>>>>>> but 
+>>>>>> http://singularity.lbl.gov/docs-build-container tells us: 
+>>>>>>
+>>>>>>     Formats types can be specified by passing the following options 
+>>>>>> to 
+>>>>>>     build. 
+>>>>>>     ... 
+>>>>>>       * writable (ch)root directory called a sandbox for interactive 
+>>>>>>         development (--sandbox option) 
+>>>>>>
+>>>>>> As I understand it, the behaviour you're seeing is consistent with 
+>>>>>> the documentation. 
+>>>>>>
+>>>>>> I hope that helps ... 
+>>>>>>
+>>>>>> -- 
+>>>>>> ---------------------------------------------------------------------- 
+>>>>>>
+>>>>>> Sylvain Robitaille                               
+>>>>>> s...@encs.concordia.ca 
+>>>>>>
+>>>>>> Systems analyst / AITS                            Concordia 
+>>>>>> University 
+>>>>>> Faculty of Engineering and Computer Science   Montreal, Quebec, 
+>>>>>> Canada 
+>>>>>> ---------------------------------------------------------------------- 
+>>>>>>
+>>>>>>
+>>>>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> -- 
+> Gregory M. Kurtzer
+> CEO, Sylabs Inc.
+>
+
+------=_Part_47_501073150.1513732109055
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hey Greg, I&#39;ve opened an issue and documented it at <a=
+ href=3D"https://github.com/singularityware/singularity/issues/1225">https:=
+//github.com/singularityware/singularity/issues/1225</a><br><br>On Tuesday,=
+ December 19, 2017 at 7:19:05 PM UTC-5, Gregory Kurtzer wrote:<blockquote c=
+lass=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px=
+ #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">If this is a bug, can we g=
+et it posted to our GitHub issue tracker and tagged as a bug?<div><br></div=
+><div>Thanks!</div></div><div><br><div class=3D"gmail_quote">On Thu, Dec 7,=
+ 2017 at 1:34 PM, Jeff Kriske <span dir=3D"ltr">&lt;<a href=3D"javascript:"=
+ target=3D"_blank" gdf-obfuscated-mailto=3D"sXnLDYQ1BQAJ" rel=3D"nofollow" =
+onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"t=
+his.href=3D&#39;javascript:&#39;;return true;">je...@gmail.com</a>&gt;</spa=
+n> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;b=
+order-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Wow, I tried t=
+his while explicitly installing libtool, autoconf, and automake plus making=
+ sure to run ./autogen.sh before the configure step and I was able to recre=
+ate the behavior you&#39;re seeing 100% of the time with 2.4 and 2.4.2<div>=
+<br></div><div>However, when I used the newer Xenial64 image it worked as i=
+t should...</div><div><div><div><br></div><div><br>On Thursday, December 7,=
+ 2017 at 10:55:56 AM UTC-5, Tom Cook wrote:<blockquote class=3D"gmail_quote=
+" style=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-le=
+ft:1ex"><div dir=3D"ltr">So, here is the vagrant script I use to build the =
+vm that hosts singularity on my laptop:<div>```</div><div><div><div># -*- m=
+ode: ruby -*-</div><div># vi: set ft=3Druby :</div><div>VAGRANTFILE_API_VER=
+SION =3D &quot;2&quot;</div><div>$script =3D &lt;&lt;SCRIPT</div><div>SINGU=
+LARITY_VERSION=3D2.4</div><div>FILE=3D/usr/local/bin/<wbr>singularity</div>=
+<div>if [ ! -f $FILE ]; then</div><div>sudo apt-get update</div><div>sudo a=
+pt-get install -y squashfs-tools</div><div>sudo apt-get install -y =C2=A0gc=
+c build-essential python</div><div>wget <a href=3D"https://github.com/singu=
+larityware/singularity/releases/download/$SINGULARITY_VERSION/singularity-$=
+SINGULARITY_VERSION.tar.gz" rel=3D"nofollow" target=3D"_blank" onmousedown=
+=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.c=
+om%2Fsingularityware%2Fsingularity%2Freleases%2Fdownload%2F%24SINGULARITY_V=
+ERSION%2Fsingularity-%24SINGULARITY_VERSION.tar.gz\x26sa\x3dD\x26sntz\x3d1\=
+x26usg\x3dAFQjCNElqRdsX1SLsMZG1u-784hmUistuw&#39;;return true;" onclick=3D"=
+this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2=
+Fsingularityware%2Fsingularity%2Freleases%2Fdownload%2F%24SINGULARITY_VERSI=
+ON%2Fsingularity-%24SINGULARITY_VERSION.tar.gz\x26sa\x3dD\x26sntz\x3d1\x26u=
+sg\x3dAFQjCNElqRdsX1SLsMZG1u-784hmUistuw&#39;;return true;">https://github.=
+com/<wbr>singularityware/singularity/<wbr>releases/download/$<wbr>SINGULARI=
+TY_VERSION/<wbr>singularity-$SINGULARITY_<wbr>VERSION.tar.gz</a></div><div>=
+tar xvf singularity-$SINGULARITY_<wbr>VERSION.tar.gz</div><div>cd singulari=
+ty-$SINGULARITY_<wbr>VERSION</div><div>./configure --prefix=3D/usr/local</d=
+iv><div>sudo make</div><div>sudo make install</div><div>fi</div><div>SCRIPT=
+</div><div>Vagrant.configure(VAGRANTFILE_<wbr>API_VERSION) do |config|</div=
+><div>=C2=A0 config.vm.box =3D &quot;ubuntu/trusty64&quot;</div><div>=C2=A0=
+ config.vm.provision &#39;second&#39;, =C2=A0type:&#39;shell&#39;, inline: =
+$script, preserve_order:true</div><div>=C2=A0 config.vm.provider &quot;virt=
+ualbox&quot; do |vb|</div><div>=C2=A0 =C2=A0 vb.customize [&quot;modifyvm&q=
+uot;, :id, &quot;--memory&quot;, &quot;2048&quot;]</div><div>=C2=A0 end</di=
+v><div>end</div></div><div>```</div>From what I gather, the base box (trust=
+y) does not have singularity pre-installed, and the install of singularity =
+from git seems pretty vanilla to me.=C2=A0</div><div>I&#39;ve destroyed the=
+ box and rebuilt it and I still get the same persistence in changes as desc=
+ribed above...</div><div><br></div><div>--=C2=A0</div><div>tom cook</div><d=
+iv><br>On Monday, December 4, 2017 at 7:59:05 PM UTC-6, Jeff Kriske wrote:<=
+blockquote class=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border=
+-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Yes, that&#39;s rig=
+ht.<div><br></div><div>Did you by any chance install over an older version =
+or forget to run make clean before compiling a new version?=C2=A0</div><div=
+><br></div><div>If you remove the version you have, clean, and rebuild it, =
+do you still get the behavior? Like I mentioned it happened to me but at th=
+e time I was switching between dev and release-2.4 branches quite often so =
+I might not have been diligent.=C2=A0</div><div><br></div><div>I prefer whe=
+n bugs are reproducible so I wish I knew the exact conditions which had cau=
+sed the behavior in the first place.<br><br>On Monday, December 4, 2017 at =
+3:31:56 PM UTC-5, Tom Cook wrote:<blockquote class=3D"gmail_quote" style=3D=
+"margin:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><d=
+iv dir=3D"ltr">I do not think this is expected. As mentioned further down t=
+hat same docs page:=C2=A0<div><blockquote class=3D"gmail_quote" style=3D"ma=
+rgin:0px 0px 0px 0.8ex;border-left-width:1px;border-left-style:solid;border=
+-left-color:rgb(204,204,204);padding-left:1ex">=C2=A0If you wanted to creat=
+e a container within a writable directory (called a sandbox) you could do s=
+o with the --sandboxoption. [...] The resulting directory operates just lik=
+e a container in an image file. You are permitted to make changes and write=
+ files within the directory, but those changes will not persist when you ar=
+e finished using the container.=C2=A0<br></blockquote><div><br></div><div>M=
+y understanding is that, for changes to be persistent, the `--writable` fla=
+g must be used when executing `singularity shell`.</div><div>--=C2=A0</div>=
+<div>tom cook=C2=A0</div><br>On Thursday, November 30, 2017 at 11:46:04 AM =
+UTC-6, Sylvain Robitaille wrote:<blockquote class=3D"gmail_quote" style=3D"=
+margin:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-left:1ex">On =
+Wed, 29 Nov 2017, Tom Cook wrote:
+<br>
+<br>&gt; I&#39;ve been building some basic images in sandbox mode and I fin=
+d that
+<br>&gt; when I shell into them, changes are persistent, even though i am n=
+ot
+<br>&gt; running singularity with the --writable flag. This is contrary to =
+the
+<br>&gt; documentation. Is this new behavior or a bug, or am I just missing
+<br>&gt; something?
+<br>&gt; ...
+<br>&gt; Steps to reproduce:
+<br>&gt; 1. build with `singularity build --sandbox singularity.img Singula=
+rity`
+<br>&gt; ...
+<br>
+<br>I might be missing something, as I&#39;m still very new to Singularity,=
+ but
+<br><a href=3D"http://singularity.lbl.gov/docs-build-container" rel=3D"nofo=
+llow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;http://www.google.c=
+om/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.gov%2Fdocs-build-container\x26sa\x=
+3dD\x26sntz\x3d1\x26usg\x3dAFQjCNECsjgax-Od-3v5yD23dKfyTjD-xw&#39;;return t=
+rue;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F=
+%2Fsingularity.lbl.gov%2Fdocs-build-container\x26sa\x3dD\x26sntz\x3d1\x26us=
+g\x3dAFQjCNECsjgax-Od-3v5yD23dKfyTjD-xw&#39;;return true;">http://singulari=
+ty.lbl.gov/<wbr>docs-build-container</a> tells us:
+<br>
+<br>=C2=A0 =C2=A0 Formats types can be specified by passing the following o=
+ptions to
+<br>=C2=A0 =C2=A0 build.
+<br>=C2=A0 =C2=A0 ...
+<br>=C2=A0 =C2=A0 =C2=A0 * writable (ch)root directory called a sandbox for=
+ interactive
+<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 development (--sandbox option)
+<br>
+<br>As I understand it, the behaviour you&#39;re seeing is consistent with
+<br>the documentation.
+<br>
+<br>I hope that helps ...
+<br>
+<br>--=20
+<br>------------------------------<wbr>------------------------------<wbr>-=
+---------
+<br>Sylvain Robitaille =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 <a rel=3D"nofollow">s.=
+..@encs.concordia.ca</a>
+<br>
+<br>Systems analyst / AITS =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Concordia University
+<br>Faculty of Engineering and Computer Science =C2=A0 Montreal, Quebec, Ca=
+nada
+<br>------------------------------<wbr>------------------------------<wbr>-=
+---------
+<br></blockquote></div></div></blockquote></div></div></blockquote></div></=
+div></blockquote></div></div></div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+sXnLDYQ1BQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div=
+ dir=3D"ltr"><div><div dir=3D"ltr"><div>Gregory M. Kurtzer</div><div>CEO, S=
+ylabs Inc.</div></div></div></div></div></div></div></div></div></div></div=
+>
+</div>
+</blockquote></div>
+------=_Part_47_501073150.1513732109055--
+
+------=_Part_46_2103917082.1513732109055--

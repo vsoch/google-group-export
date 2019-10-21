@@ -1,0 +1,153 @@
+Date: Thu, 4 Apr 2019 10:06:34 -0700 (PDT)
+From: Kevin <nl.v...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <59a5487d-20b5-42dd-9388-1a7330d9130c@lbl.gov>
+Subject: how to treat config files during/after build
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1617_1990547161.1554397594828"
+
+------=_Part_1617_1990547161.1554397594828
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1618_652286319.1554397594828"
+
+------=_Part_1618_652286319.1554397594828
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hey,
+
+so, this might an incredibly stupid question but I couldn't resolve it 
+using the docs - so here it is: 
+
+I am trying to create a singularity recipy file for building a completely 
+isolated jupyter notebook (+ R kernel) container. Here's my recipe:
+
+Bootstrap: docker
+From: rocker/verse:latest
+
+%post
+    apt-get update
+    apt-get -y install curl wget python3-pip
+
+    # install snakemake
+    pip3 install snakemake
+
+    # install jupyter notebook
+    python3 -m pip install jupyter
+    python3 -m pip install nbconvert
+
+    # install R packages
+    R -e "install.packages('IRkernel'); IRkernel::installspec(prefix = 
+'/usr/local', user = FALSE)"
+
+after building, I run this via
+
+singularity exec \
+ --bind $PWD:/run/user singularity-container-image.sif \
+ jupyter notebook \
+ --ip=127.0.0.1 --no-browser
+
+I need to bind /run/user since the image is read only and jupyter server 
+needs to write some stuff during execution.
+My problem is that jupyter puts a lot of essential config files in the user 
+home folder (e.g. the kernels). If I understand it correctly, 
+~ is automatically mounted along with a few other directories in 
+singularity. I.e. when I run my build script the kernels are 
+actually written in my host home folder! 
+Trying to run my notebook on a different system thenobviously fails du to 
+the kernels not being present in the home folder.
+I find it extremely convenient that $PWD is mounted by default but how on 
+earth am I ever going to get reproducible results if
+all the configs in the home directory are by default not taken from inside 
+the container? 
+
+Could somebody shed some light on this for me? Do I need to tweak my 
+singularity config to only auto-bind $PWD? 
+How will that behave with a standard singularity installation where the 
+user home is again bound by default?
+
+Any help appreciated, thanks!
+
+Kevin
+
+------=_Part_1618_652286319.1554397594828
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Hey,</div><div><br></div><div>so, this might an incre=
+dibly stupid question but I couldn&#39;t resolve it using the docs - so her=
+e it is: <br></div><div><br></div><div>I am trying to create a singularity =
+recipy file for building a completely isolated jupyter notebook (+ R kernel=
+) container. Here&#39;s my recipe:</div><div><br></div><div><div style=3D"b=
+ackground-color: rgb(250, 250, 250); border-color: rgb(187, 187, 187); bord=
+er-style: solid; border-width: 1px; overflow-wrap: break-word;" class=3D"pr=
+ettyprint"><code class=3D"prettyprint"><div class=3D"subprettyprint"><span =
+style=3D"color: #606;" class=3D"styled-by-prettify">Bootstrap</span><span s=
+tyle=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D"c=
+olor: #000;" class=3D"styled-by-prettify"> docker<br></span><span style=3D"=
+color: #606;" class=3D"styled-by-prettify">From</span><span style=3D"color:=
+ #660;" class=3D"styled-by-prettify">:</span><span style=3D"color: #000;" c=
+lass=3D"styled-by-prettify"> rocker</span><span style=3D"color: #660;" clas=
+s=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"styl=
+ed-by-prettify">verse</span><span style=3D"color: #660;" class=3D"styled-by=
+-prettify">:</span><span style=3D"color: #000;" class=3D"styled-by-prettify=
+">latest<br><br></span><span style=3D"color: #660;" class=3D"styled-by-pret=
+tify">%</span><span style=3D"color: #000;" class=3D"styled-by-prettify">pos=
+t<br>=C2=A0 =C2=A0 apt</span><span style=3D"color: #660;" class=3D"styled-b=
+y-prettify">-</span><span style=3D"color: #008;" class=3D"styled-by-prettif=
+y">get</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> upd=
+ate<br>=C2=A0 =C2=A0 apt</span><span style=3D"color: #660;" class=3D"styled=
+-by-prettify">-</span><span style=3D"color: #008;" class=3D"styled-by-prett=
+ify">get</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> <=
+/span><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><sp=
+an style=3D"color: #000;" class=3D"styled-by-prettify">y install curl wget =
+python3</span><span style=3D"color: #660;" class=3D"styled-by-prettify">-</=
+span><span style=3D"color: #000;" class=3D"styled-by-prettify">pip<br><br>=
+=C2=A0 =C2=A0 </span><span style=3D"color: #800;" class=3D"styled-by-pretti=
+fy"># install snakemake</span><span style=3D"color: #000;" class=3D"styled-=
+by-prettify"><br>=C2=A0 =C2=A0 pip3 install snakemake<br><br>=C2=A0 =C2=A0 =
+</span><span style=3D"color: #800;" class=3D"styled-by-prettify"># install =
+jupyter notebook</span><span style=3D"color: #000;" class=3D"styled-by-pret=
+tify"><br>=C2=A0 =C2=A0 python3 </span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">-</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify">m pip install jupyter<br>=C2=A0 =C2=A0 python3 </span><span =
+style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"=
+color: #000;" class=3D"styled-by-prettify">m pip install nbconvert<br><br>=
+=C2=A0 =C2=A0 </span><span style=3D"color: #800;" class=3D"styled-by-pretti=
+fy"># install R packages</span><span style=3D"color: #000;" class=3D"styled=
+-by-prettify"><br>=C2=A0 =C2=A0 R </span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">-</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify">e </span><span style=3D"color: #080;" class=3D"styled-by-pre=
+ttify">&quot;install.packages(&#39;IRkernel&#39;); IRkernel::installspec(pr=
+efix =3D &#39;/usr/local&#39;, user =3D FALSE)&quot;</span></div></code></d=
+iv></div><div><br></div><div>after building, I run this via</div><div><br><=
+/div><div><div style=3D"color: #d4d4d4;background-color: #1e1e1e;font-famil=
+y: Fira Code;font-weight: normal;font-size: 14px;line-height: 19px;white-sp=
+ace: pre;"><div><span style=3D"color: #d4d4d4;">singularity </span><span st=
+yle=3D"color: #dcdcaa;">exec</span><span style=3D"color: #d4d4d4;"> \</span=
+></div><div><span style=3D"color: #d4d4d4;"> =C2=A0--bind </span><span styl=
+e=3D"color: #9cdcfe;">$PWD</span><span style=3D"color: #d4d4d4;">:/run/user=
+ singularity-container-image.sif \</span></div><div><span style=3D"color: #=
+d4d4d4;"> =C2=A0jupyter notebook \</span></div><div><span style=3D"color: #=
+d4d4d4;"> =C2=A0--ip=3D127.0.0.1 --no-browser</span></div></div><br></div><=
+div>I need to bind /run/user since the image is read only and jupyter serve=
+r needs to write some stuff during execution.</div><div>My problem is that =
+jupyter puts a lot of essential config files in the user home folder (e.g. =
+the kernels). If I understand it correctly, <br></div><div>~ is automatical=
+ly mounted along with a few other directories in singularity. I.e. when I r=
+un my build script the kernels are <br></div><div>actually written in my ho=
+st home folder! <br></div><div>Trying to run my notebook on a different sys=
+tem thenobviously fails du to the kernels not being present in the home fol=
+der.</div><div>I find it extremely convenient that $PWD is mounted by defau=
+lt but how on earth am I ever going to get reproducible results if</div><di=
+v>all the configs in the home directory are by default not taken from insid=
+e the container? <br></div><div><br></div><div>Could somebody shed some lig=
+ht on this for me? Do I need to tweak my singularity config to only auto-bi=
+nd $PWD? <br></div><div>How will that behave with a standard singularity in=
+stallation where the user home is again bound by default?</div><div><br></d=
+iv><div>Any help appreciated, thanks!</div><div><br></div><div>Kevin<br></d=
+iv></div>
+------=_Part_1618_652286319.1554397594828--
+
+------=_Part_1617_1990547161.1554397594828--

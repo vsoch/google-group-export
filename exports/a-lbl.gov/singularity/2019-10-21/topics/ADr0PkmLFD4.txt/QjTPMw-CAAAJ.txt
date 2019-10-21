@@ -1,0 +1,236 @@
+Date: Fri, 1 Mar 2019 10:45:02 -0800 (PST)
+From: Mike Moore <wxdu...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <54a4fb06-9c3c-46f0-bcf8-7d788fb7d381@lbl.gov>
+In-Reply-To: <CAM=pu++geyfoQ+HWGtWVOStYfuH3+b49VLSk6zwQS0pH7V_WCA@mail.gmail.com>
+References: <a94c4768-8cd7-43aa-8bb9-b21b3ccf950c@lbl.gov> <CAApQTTh9E=oNwfTLFmjmH6rAXDH2Q+X29D0Ur_Y3VMXvGvsDtg@mail.gmail.com>
+ <710b4b5e-f209-41da-bfcb-c19043201fa4@lbl.gov>
+ <CAM=pu++geyfoQ+HWGtWVOStYfuH3+b49VLSk6zwQS0pH7V_WCA@mail.gmail.com>
+Subject: Re: [Singularity] Singularity image download syncronization during
+ multiple job startup
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_520_1034404475.1551465902654"
+
+------=_Part_520_1034404475.1551465902654
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_521_91913829.1551465902654"
+
+------=_Part_521_91913829.1551465902654
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi Vanessa,
+
+  There are several issues with a Job dependencies approach.  The first is 
+that the job to download and cache the image would have to be run on all 
+nodes. We don't explicitly assign jobs to a select group of hosts. It's a 
+batch processing environment.  Every CPU compute node can run every CPU 
+compute job, and the same is true for our GPU nodes. There is no guarantee 
+that the node that runs the download job will take the tasks. 
+
+  From the admin side, we are trying to slide in containerization between 
+the existing system image and the applications without requiring a massive 
+change to the user workflows.  A lot of our users are researchers who just 
+run a tool provided to them from the tool builders. They are not cluster 
+aware application developers. We are working with our toolbuilders on this 
+project, but their focus is on new work, not trying to rework old 
+workflows. So we have to make this as seamless as possible to the existing 
+job submission workflows. Introducing job dependencies will likely break 
+these workflows. 
+
+  Our prolog wrapper is how we are going to force the workflows into 
+containerization. We have two "default" container images (one for CPU jobs, 
+one for GPU jobs) that are almost 100% identical to our current images. 
+That 9 GB container image I mentioned in our collection is one of those 
+default. Our toolbuilders have pushed back against the slow download times 
+already. The efforts to enable caching, object storage backends, etc. were 
+attempts to reduce the download times. 
+
+I had hoped that by enabling shub caching in Singularity that it would 
+help, and it does so long as we don't run into this corner case. But 
+knowing our workflows, users, and operational procedures, we are going to 
+hit it regularly.  Thats why I am trying to figure out any alternatives 
+short of putting our containers into a shared directory. The shared 
+directory model would work for today.  But we have to move to the cloud and 
+having a running shared directory that is not object based is costly. 
+
+
+On Thursday, February 28, 2019 at 12:37:43 PM UTC-5, vanessa wrote:
+>
+> What if you used job dependencies, with a job do handle a single pull of 
+> all required containers coming before the batch?
+>
+> https://slurm.schedmd.com/job_array.html#job-dependencies
+>
+> [image: image.png]
+>
+> On Thu, Feb 28, 2019 at 8:36 AM Mike Moore <wx...@gmail.com 
+> <javascript:>> wrote:
+>
+>> Hi Greg,
+>>
+>>   So, our current workloads are batch jobs. There is very little MPI at 
+>> all currently. We use Univa Grid Engine for our scheduler. Our users submit 
+>> job arrays with 100->1000s of tasks per job.  Each task is similar, just on 
+>> different data sets. We do have multiple (up to 20) tasks that can start on 
+>> a node almost simultaneously. 
+>>
+>>   We are deploying singularity images to convert our very large and 
+>> customized bare metal image into a container. This is the first step in 
+>> decoupling our applications from our bare metal installation and start a 
+>> path to computing in the cloud. We went with Singularity because our shared 
+>> environment makes docker a non-starter with our security dept. 
+>>
+>>   I have been trying to get Sregistry working fast enough to move the 
+>> project out of a POC for functional testing and into production use. 
+>> However, the time to download the image to the system is unacceptably 
+>> slow.  I've patched Singularity 3.1.0 to address the missing Shub local 
+>> caching support, which makes everything better if the image is locally 
+>> cached.  If the image is not cached and begins to download by the first 
+>> task on a node, any additional tasks that are released to the node will 
+>> fail when starting singularity because the image is incomplete. I have test 
+>> cases (up to 500 tasks) with only a handful of tasks successfully 
+>> completing because the first tasks are downloading the image and the 
+>> additional tasks die because the download is in progress.  Our image is on 
+>> the order of 1.5-9.0GB depending on the software included and the function 
+>> of the image. So, time to download the image is significant. 
+>>
+>>   So, the way we have essentially been running our jobs are:
+>>
+>> qsub -q all.q -t1-500 singularity run shub://sregistry/image <application>
+>>
+>> Once the scheduler releases the job to the compute node, it starts 
+>> singularity which downloads image from sregistry. We have written a wrapper 
+>> that we will be using to force all jobs to run in singularity once our 
+>> users have completed acceptance testing. But the issue of singularity 
+>> crashing because the cached image is incomplete is a blocker.
+>>
+>> I was trying to get an idea of what others were doing for storing and 
+>> starting their containers in their HPC environments and if they have a 
+>> similar issue with trying to start multiple instances of a container on the 
+>> same system at the same time if the container is not cached yet.
+>>
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_521_91913829.1551465902654
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Vanessa,<br><br>=C2=A0 There are several issues with a =
+Job dependencies approach.=C2=A0 The first is that the job to download and =
+cache the image would have to be run on all nodes. We don&#39;t explicitly =
+assign jobs to a select group of hosts. It&#39;s a batch processing environ=
+ment.=C2=A0 Every CPU compute node can run every CPU compute job, and the s=
+ame is true for our GPU nodes. There is no guarantee that the node that run=
+s the download job will take the tasks. <br><br>=C2=A0 From the admin side,=
+ we are trying to slide in containerization between the existing system ima=
+ge and the applications without requiring a massive change to the user work=
+flows.=C2=A0 A lot of our users are researchers who just run a tool provide=
+d to them from the tool builders. They are not cluster aware application de=
+velopers. We are working with our toolbuilders on this project, but their f=
+ocus is on new work, not trying to rework old workflows. So we have to make=
+ this as seamless as possible to the existing job submission workflows. Int=
+roducing job dependencies will likely break these workflows. <br><br>=C2=A0=
+ Our prolog wrapper is how we are going to force the workflows into contain=
+erization. We have two &quot;default&quot; container images (one for CPU jo=
+bs, one for GPU jobs) that are almost 100% identical to our current images.=
+ That 9 GB container image I mentioned in our collection is one of those de=
+fault. Our toolbuilders have pushed back against the slow download times al=
+ready. The efforts to enable caching, object storage backends, etc. were at=
+tempts to reduce the download times. <br><br>I had hoped that by enabling s=
+hub caching in Singularity that it would help, and it does so long as we do=
+n&#39;t run into this corner case. But knowing our workflows, users, and op=
+erational procedures, we are going to hit it regularly.=C2=A0 Thats why I a=
+m trying to figure out any alternatives short of putting our containers int=
+o a shared directory. The shared directory model would work for today.=C2=
+=A0 But we have to move to the cloud and having a running shared directory =
+that is not object based is costly. <br><br><br>On Thursday, February 28, 2=
+019 at 12:37:43 PM UTC-5, vanessa wrote:<blockquote class=3D"gmail_quote" s=
+tyle=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-le=
+ft: 1ex;"><div dir=3D"ltr"><div dir=3D"ltr">What if you used job dependenci=
+es, with a job do handle a single pull of all required containers coming be=
+fore the batch?<div><br></div><div><a href=3D"https://slurm.schedmd.com/job=
+_array.html#job-dependencies" target=3D"_blank" rel=3D"nofollow" onmousedow=
+n=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fslurm.s=
+chedmd.com%2Fjob_array.html%23job-dependencies\x26sa\x3dD\x26sntz\x3d1\x26u=
+sg\x3dAFQjCNFP0mKlmbYhP8qe0Etrq122exO00w&#39;;return true;" onclick=3D"this=
+.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fslurm.schedmd.co=
+m%2Fjob_array.html%23job-dependencies\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQ=
+jCNFP0mKlmbYhP8qe0Etrq122exO00w&#39;;return true;">https://slurm.schedmd.co=
+m/job_<wbr>array.html#job-dependencies</a><br><div><br></div><div><div><img=
+ src=3D"https://groups.google.com/a/lbl.gov/group/singularity/attach/2fce4b=
+b86bc9/image.png?part=3D0.1&amp;view=3D1&amp;authuser=3D0" alt=3D"image.png=
+" style=3D"margin-right:0px" width=3D"701" height=3D"495"><br></div></div><=
+/div></div></div><br><div class=3D"gmail_quote"><div dir=3D"ltr">On Thu, Fe=
+b 28, 2019 at 8:36 AM Mike Moore &lt;<a href=3D"javascript:" target=3D"_bla=
+nk" gdf-obfuscated-mailto=3D"yWu4S84vAAAJ" rel=3D"nofollow" onmousedown=3D"=
+this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39=
+;javascript:&#39;;return true;">wx...@gmail.com</a>&gt; wrote:<br></div><bl=
+ockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-lef=
+t:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr">Hi Greg,<br=
+><br>=C2=A0 So, our current workloads are batch jobs. There is very little =
+MPI at all currently. We use Univa Grid Engine for our scheduler. Our users=
+ submit job arrays with 100-&gt;1000s of tasks per job.=C2=A0 Each task is =
+similar, just on different data sets. We do have multiple (up to 20) tasks =
+that can start on a node almost simultaneously. <br><br>=C2=A0 We are deplo=
+ying singularity images to convert our very large and customized bare metal=
+ image into a container. This is the first step in decoupling our applicati=
+ons from our bare metal installation and start a path to computing in the c=
+loud. We went with Singularity because our shared environment makes docker =
+a non-starter with our security dept. <br><br>=C2=A0 I have been trying to =
+get Sregistry working fast enough to move the project out of a POC for func=
+tional testing and into production use. However, the time to download the i=
+mage to the system is unacceptably slow.=C2=A0 I&#39;ve patched Singularity=
+ 3.1.0 to address the missing Shub local caching support, which makes every=
+thing better if the image is locally cached.=C2=A0 If the image is not cach=
+ed and begins to download by the first task on a node, any additional tasks=
+ that are released to the node will fail when starting singularity because =
+the image is incomplete. I have test cases (up to 500 tasks) with only a ha=
+ndful of tasks successfully completing because the first tasks are download=
+ing the image and the additional tasks die because the download is in progr=
+ess.=C2=A0 Our image is on the order of 1.5-9.0GB depending on the software=
+ included and the function of the image. So, time to download the image is =
+significant. <br><br>=C2=A0 So, the way we have essentially been running ou=
+r jobs are:<br><br>qsub -q all.q -t1-500 singularity run shub://sregistry/i=
+mage &lt;application&gt;<br><br>Once the scheduler releases the job to the =
+compute node, it starts singularity which downloads image from sregistry. W=
+e have written a wrapper that we will be using to force all jobs to run in =
+singularity once our users have completed acceptance testing. But the issue=
+ of singularity crashing because the cached image is incomplete is a blocke=
+r.<br><br>I was trying to get an idea of what others were doing for storing=
+ and starting their containers in their HPC environments and if they have a=
+ similar issue with trying to start multiple instances of a container on th=
+e same system at the same time if the container is not cached yet.<br><br><=
+br></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+yWu4S84vAAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</blockquote></div><br clear=3D"all"><div><br></div>-- <br><div dir=3D"ltr"=
+>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><div>(=
+603) 321-0676</div></div></div></div>
+</blockquote></div>
+------=_Part_521_91913829.1551465902654--
+
+------=_Part_520_1034404475.1551465902654--

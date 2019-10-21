@@ -1,0 +1,235 @@
+Date: Tue, 17 Jul 2018 13:57:06 -0700 (PDT)
+From: Asoka De Silva <asoka....@computecanada.ca>
+To: singularity <singu...@lbl.gov>
+Message-Id: <141adb40-e644-4882-abbf-d8d07f28604f@lbl.gov>
+Subject: Question on behaviour of exec -H path1 -B path2
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_150329_163168243.1531861026643"
+
+------=_Part_150329_163168243.1531861026643
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_150330_1687058713.1531861026643"
+
+------=_Part_150330_1687058713.1531861026643
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi,
+
+(This is Singularity 2.5.2 and a docker image as shown below).
+
+I am seeing a "non existent bind point" issue if I try to mount two dirs in 
+a container (docker://lukasheinrich/anlaysisbase:alrbtest) where the mount 
+points exist. 
+
+-H <local path1>:/alrb/home -B <local path2>:/alrb/ATLASLocalRootBase # 
+fails
+
+but it works if I mount both with -B
+
+-B <local path1>:/alrb/home -B <local path2>:/alrb/ATLASLocalRootBase  # 
+works
+
+I don't understand why that happens ...
+
+I do need to use the -H option so a workaround I found was to ensure that 
+<local path1> has a dir named ATLASLocalRootBase and then I can do
+-H <local path1>:/alrb -B <local path2>:/alrb/ATLASLocalRootBase  # works
+
+Is this expected behaviour ?  (I am not sure if -H is guaranteed to always 
+mount first prior to others specified by -B so that my workaround will 
+work).
+
+Can you please advise ?
+
+Many thanks !
+
+regards,
+Asoka
+
+eg: fails:
+> ls -la /tmp/desilva/testHome
+total 24
+drwxrwxr-x 3 desilva desilva 4096 Jul 17 12:56 .
+drwxrwxr-x 8 desilva desilva 4096 Jul 17 13:38 ..
+-rw------- 1 desilva desilva  258 Jul 17 13:04 .bash_history
+-rw-r--r-- 1 desilva desilva  176 Jul 17 12:40 .bash_profile
+-rw-r--r-- 1 desilva desilva  124 Jul 17 12:40 .bashrc
+
+> ls -la /tmp/desilva/myALRB/
+total 8
+drwxrwxr-x 2 desilva desilva 4096 Jul 17 13:39 .
+drwxrwxr-x 8 desilva desilva 4096 Jul 17 13:38 ..
+-rw-rw-r-- 1 desilva desilva    0 Jul 17 13:39 ThisDummyFile
+
+> singularity  exec  -e  -H /tmp/desilva/testHome:/alrb/home -B 
+/tmp/desilva/myALRB:/alrb/ATLASLocalRootBase 
+docker://lukasheinrich/anlaysisbase:alrbtest /bin/bash
+Docker image path: index.docker.io/lukasheinrich/anlaysisbase:alrbtest
+Cache folder set to /home/desilva/.singularity/docker
+Creating container runtime...
+Exploding layer: 
+sha256:e8114d4b0d10b33aaaa4fbc3c6da22bbbcf6f0ef0291170837e7c8092b73840a.tar.gz
+Exploding layer: 
+sha256:088b6301757ccb9dce6cf805cd505ab5e928626cb87deb59b20c5f20bb3a6903.tar.gz
+Exploding layer: 
+sha256:b06b5ec9fbeba6cea09894f272b6295a938bb506d0373c06aeebfbafbed88af4.tar.gz
+Exploding layer: 
+sha256:7a2302b652e09bd9542b3f244380628dd30928afe8e55d659ffca84574fa86b5.tar.gz
+Exploding layer: 
+sha256:2624f1a02ce3e50ad972886ed4460a84d22d50f66b11e45490ea92ef9ed90333.tar.gz
+Exploding layer: 
+sha256:421d3bf75d143bdbb01e812c1f28753d6750402f9a009625a7df5d1c2ac7e9bb.tar.gz
+Exploding layer: 
+sha256:a9eb2c658c4ca1095c6475b0c2b469c950e73d14291b50e50739b18eed60b65a.tar.gz
+Exploding layer: 
+sha256:4f9bb514fd963678143ddba5deeeb2aea786320fad4180dfcaf4e216df43461f.tar.gz
+Exploding layer: 
+sha256:7fcb98803531e25ccbde3449c8402dfbde868cb03f0ea0988d00d7dfd3b7e147.tar.gz
+Exploding layer: 
+sha256:861bce1bb4388aa6926c355a4eb9c9d3c195ad9d91ec18b3093a62d463f294a1.tar.gz
+Exploding layer: 
+sha256:2ac8d4c2f675e8c29a7c9969f168c7f5a5eff5799f645465c3c5911670b52e62.tar.gz
+Exploding layer: 
+sha256:3e14e1f0b37833537f21e362c310ddbfe221d27da37652ca2d3dded39fb464d4.tar.gz
+WARNING: Skipping user bind, non existent bind point (directory) in 
+container: '/alrb/ATLASLocalRootBase'
+[bash][desilva]:~ > 
+
+
+
+but this works:
+
+> ls -la /tmp/desilva/testHome
+total 24
+drwxrwxr-x 3 desilva desilva 4096 Jul 17 12:56 .
+drwxrwxr-x 8 desilva desilva 4096 Jul 17 13:38 ..
+drwxrwxr-x 2 desilva desilva 4096 Jul 17 12:56 ATLASLocalRootBase
+-rw------- 1 desilva desilva  268 Jul 17 13:51 .bash_history
+-rw-r--r-- 1 desilva desilva  176 Jul 17 12:40 .bash_profile
+-rw-r--r-- 1 desilva desilva  124 Jul 17 12:40 .bashrc
+
+> singularity  exec  -e  -H /tmp/desilva/testHome:/alrb -B 
+/tmp/desilva/myALRB:/alrb/ATLASLocalRootBase 
+docker://lukasheinrich/anlaysisbase:alrbtest /bin/bash
+Docker image path: index.docker.io/lukasheinrich/anlaysisbase:alrbtest
+Cache folder set to /home/desilva/.singularity/docker
+Creating container runtime...
+Exploding layer: 
+sha256:e8114d4b0d10b33aaaa4fbc3c6da22bbbcf6f0ef0291170837e7c8092b73840a.tar.gz
+Exploding layer: 
+sha256:088b6301757ccb9dce6cf805cd505ab5e928626cb87deb59b20c5f20bb3a6903.tar.gz
+Exploding layer: 
+sha256:b06b5ec9fbeba6cea09894f272b6295a938bb506d0373c06aeebfbafbed88af4.tar.gz
+Exploding layer: 
+sha256:7a2302b652e09bd9542b3f244380628dd30928afe8e55d659ffca84574fa86b5.tar.gz
+Exploding layer: 
+sha256:2624f1a02ce3e50ad972886ed4460a84d22d50f66b11e45490ea92ef9ed90333.tar.gz
+Exploding layer: 
+sha256:421d3bf75d143bdbb01e812c1f28753d6750402f9a009625a7df5d1c2ac7e9bb.tar.gz
+Exploding layer: 
+sha256:a9eb2c658c4ca1095c6475b0c2b469c950e73d14291b50e50739b18eed60b65a.tar.gz
+Exploding layer: 
+sha256:4f9bb514fd963678143ddba5deeeb2aea786320fad4180dfcaf4e216df43461f.tar.gz
+Exploding layer: 
+sha256:7fcb98803531e25ccbde3449c8402dfbde868cb03f0ea0988d00d7dfd3b7e147.tar.gz
+Exploding layer: 
+sha256:861bce1bb4388aa6926c355a4eb9c9d3c195ad9d91ec18b3093a62d463f294a1.tar.gz
+Exploding layer: 
+sha256:2ac8d4c2f675e8c29a7c9969f168c7f5a5eff5799f645465c3c5911670b52e62.tar.gz
+Exploding layer: 
+sha256:3e14e1f0b37833537f21e362c310ddbfe221d27da37652ca2d3dded39fb464d4.tar.gz
+[bash][desilva]:~ > exit
+exit
+
+
+------=_Part_150330_1687058713.1531861026643
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Hi,</div><div><br></div><div>(This is Singularity 2.5=
+.2 and a docker image as shown below).</div><div><br></div><div>I am seeing=
+ a &quot;non existent bind point&quot; issue if I try to mount two dirs in =
+a container (docker://lukasheinrich/anlaysisbase:alrbtest) where the mount =
+points exist.=C2=A0</div><div><br></div><div>-H &lt;local path1&gt;:/alrb/h=
+ome -B &lt;local path2&gt;:/alrb/ATLASLocalRootBase # fails</div><div><br><=
+/div><div>but it works if I mount both with -B</div><div><br></div><div>-B =
+&lt;local path1&gt;:/alrb/home -B &lt;local path2&gt;:/alrb/ATLASLocalRootB=
+ase =C2=A0# works</div><div><br></div><div>I don&#39;t understand why that =
+happens ...</div><div><br></div><div>I do need to use the -H option so a wo=
+rkaround I found was to ensure that=C2=A0</div><div>&lt;local path1&gt; has=
+ a dir named ATLASLocalRootBase and then I can do</div><div>-H &lt;local pa=
+th1&gt;:/alrb -B &lt;local path2&gt;:/alrb/ATLASLocalRootBase =C2=A0# works=
+</div><div><br></div><div>Is this expected behaviour ? =C2=A0(I am not sure=
+ if -H is guaranteed to always mount first prior to others specified by -B =
+so that my workaround will work).</div><div><br></div><div>Can you please a=
+dvise ?</div><div><br></div><div>Many thanks !</div><div><br></div><div>reg=
+ards,</div><div>Asoka</div><div><br></div><div>eg: fails:</div><div>&gt; ls=
+ -la /tmp/desilva/testHome</div><div>total 24</div><div>drwxrwxr-x 3 desilv=
+a desilva 4096 Jul 17 12:56 .</div><div>drwxrwxr-x 8 desilva desilva 4096 J=
+ul 17 13:38 ..</div><div>-rw------- 1 desilva desilva =C2=A0258 Jul 17 13:0=
+4 .bash_history</div><div>-rw-r--r-- 1 desilva desilva =C2=A0176 Jul 17 12:=
+40 .bash_profile</div><div>-rw-r--r-- 1 desilva desilva =C2=A0124 Jul 17 12=
+:40 .bashrc</div><div><br></div><div>&gt; ls -la /tmp/desilva/myALRB/</div>=
+<div>total 8</div><div>drwxrwxr-x 2 desilva desilva 4096 Jul 17 13:39 .</di=
+v><div>drwxrwxr-x 8 desilva desilva 4096 Jul 17 13:38 ..</div><div>-rw-rw-r=
+-- 1 desilva desilva =C2=A0 =C2=A00 Jul 17 13:39 ThisDummyFile</div><div><b=
+r></div><div>&gt; singularity =C2=A0exec =C2=A0-e =C2=A0-H /tmp/desilva/tes=
+tHome:/alrb/home -B /tmp/desilva/myALRB:/alrb/ATLASLocalRootBase docker://l=
+ukasheinrich/anlaysisbase:alrbtest /bin/bash</div><div>Docker image path: i=
+ndex.docker.io/lukasheinrich/anlaysisbase:alrbtest</div><div>Cache folder s=
+et to /home/desilva/.singularity/docker</div><div>Creating container runtim=
+e...</div><div>Exploding layer: sha256:e8114d4b0d10b33aaaa4fbc3c6da22bbbcf6=
+f0ef0291170837e7c8092b73840a.tar.gz</div><div>Exploding layer: sha256:088b6=
+301757ccb9dce6cf805cd505ab5e928626cb87deb59b20c5f20bb3a6903.tar.gz</div><di=
+v>Exploding layer: sha256:b06b5ec9fbeba6cea09894f272b6295a938bb506d0373c06a=
+eebfbafbed88af4.tar.gz</div><div>Exploding layer: sha256:7a2302b652e09bd954=
+2b3f244380628dd30928afe8e55d659ffca84574fa86b5.tar.gz</div><div>Exploding l=
+ayer: sha256:2624f1a02ce3e50ad972886ed4460a84d22d50f66b11e45490ea92ef9ed903=
+33.tar.gz</div><div>Exploding layer: sha256:421d3bf75d143bdbb01e812c1f28753=
+d6750402f9a009625a7df5d1c2ac7e9bb.tar.gz</div><div>Exploding layer: sha256:=
+a9eb2c658c4ca1095c6475b0c2b469c950e73d14291b50e50739b18eed60b65a.tar.gz</di=
+v><div>Exploding layer: sha256:4f9bb514fd963678143ddba5deeeb2aea786320fad41=
+80dfcaf4e216df43461f.tar.gz</div><div>Exploding layer: sha256:7fcb98803531e=
+25ccbde3449c8402dfbde868cb03f0ea0988d00d7dfd3b7e147.tar.gz</div><div>Explod=
+ing layer: sha256:861bce1bb4388aa6926c355a4eb9c9d3c195ad9d91ec18b3093a62d46=
+3f294a1.tar.gz</div><div>Exploding layer: sha256:2ac8d4c2f675e8c29a7c9969f1=
+68c7f5a5eff5799f645465c3c5911670b52e62.tar.gz</div><div>Exploding layer: sh=
+a256:3e14e1f0b37833537f21e362c310ddbfe221d27da37652ca2d3dded39fb464d4.tar.g=
+z</div><div>WARNING: Skipping user bind, non existent bind point (directory=
+) in container: &#39;/alrb/ATLASLocalRootBase&#39;</div><div>[bash][desilva=
+]:~ &gt;=C2=A0</div><div><br></div><div><br></div><div><br></div><div>but t=
+his works:</div><div><br></div><div>&gt; ls -la /tmp/desilva/testHome</div>=
+<div>total 24</div><div>drwxrwxr-x 3 desilva desilva 4096 Jul 17 12:56 .</d=
+iv><div>drwxrwxr-x 8 desilva desilva 4096 Jul 17 13:38 ..</div><div>drwxrwx=
+r-x 2 desilva desilva 4096 Jul 17 12:56 ATLASLocalRootBase</div><div>-rw---=
+---- 1 desilva desilva =C2=A0268 Jul 17 13:51 .bash_history</div><div>-rw-r=
+--r-- 1 desilva desilva =C2=A0176 Jul 17 12:40 .bash_profile</div><div>-rw-=
+r--r-- 1 desilva desilva =C2=A0124 Jul 17 12:40 .bashrc</div><div><br></div=
+><div>&gt; singularity =C2=A0exec =C2=A0-e =C2=A0-H /tmp/desilva/testHome:/=
+alrb -B /tmp/desilva/myALRB:/alrb/ATLASLocalRootBase docker://lukasheinrich=
+/anlaysisbase:alrbtest /bin/bash</div><div>Docker image path: index.docker.=
+io/lukasheinrich/anlaysisbase:alrbtest</div><div>Cache folder set to /home/=
+desilva/.singularity/docker</div><div>Creating container runtime...</div><d=
+iv>Exploding layer: sha256:e8114d4b0d10b33aaaa4fbc3c6da22bbbcf6f0ef02911708=
+37e7c8092b73840a.tar.gz</div><div>Exploding layer: sha256:088b6301757ccb9dc=
+e6cf805cd505ab5e928626cb87deb59b20c5f20bb3a6903.tar.gz</div><div>Exploding =
+layer: sha256:b06b5ec9fbeba6cea09894f272b6295a938bb506d0373c06aeebfbafbed88=
+af4.tar.gz</div><div>Exploding layer: sha256:7a2302b652e09bd9542b3f24438062=
+8dd30928afe8e55d659ffca84574fa86b5.tar.gz</div><div>Exploding layer: sha256=
+:2624f1a02ce3e50ad972886ed4460a84d22d50f66b11e45490ea92ef9ed90333.tar.gz</d=
+iv><div>Exploding layer: sha256:421d3bf75d143bdbb01e812c1f28753d6750402f9a0=
+09625a7df5d1c2ac7e9bb.tar.gz</div><div>Exploding layer: sha256:a9eb2c658c4c=
+a1095c6475b0c2b469c950e73d14291b50e50739b18eed60b65a.tar.gz</div><div>Explo=
+ding layer: sha256:4f9bb514fd963678143ddba5deeeb2aea786320fad4180dfcaf4e216=
+df43461f.tar.gz</div><div>Exploding layer: sha256:7fcb98803531e25ccbde3449c=
+8402dfbde868cb03f0ea0988d00d7dfd3b7e147.tar.gz</div><div>Exploding layer: s=
+ha256:861bce1bb4388aa6926c355a4eb9c9d3c195ad9d91ec18b3093a62d463f294a1.tar.=
+gz</div><div>Exploding layer: sha256:2ac8d4c2f675e8c29a7c9969f168c7f5a5eff5=
+799f645465c3c5911670b52e62.tar.gz</div><div>Exploding layer: sha256:3e14e1f=
+0b37833537f21e362c310ddbfe221d27da37652ca2d3dded39fb464d4.tar.gz</div><div>=
+[bash][desilva]:~ &gt; exit</div><div>exit</div><div><br></div></div>
+------=_Part_150330_1687058713.1531861026643--
+
+------=_Part_150329_163168243.1531861026643--

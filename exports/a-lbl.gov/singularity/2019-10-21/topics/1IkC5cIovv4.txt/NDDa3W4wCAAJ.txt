@@ -1,0 +1,180 @@
+Date: Wed, 6 Dec 2017 09:56:47 -0800 (PST)
+From: Karl Mutch <karl...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <afa0a435-36d1-41fb-9f06-2a05a075b26d@lbl.gov>
+In-Reply-To: <CAN9aCef74JQnpkjxPbuJ7PA9JQ17pXWj46s=3hocmjLwe7cUCw@mail.gmail.com>
+References: <47f7553f-2b32-474f-8103-e5e2cf57bef5@lbl.gov> <02eeea51-f137-4e75-819e-e3f28b8e1eb7@lbl.gov>
+ <08f3fe31-0984-4c06-ae1a-351fce335314@lbl.gov>
+ <CAN9aCef74JQnpkjxPbuJ7PA9JQ17pXWj46s=3hocmjLwe7cUCw@mail.gmail.com>
+Subject: Re: [Singularity] Re: Using --contain(all) options with new nvidia
+ --nv switch
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_44_397308335.1512583008026"
+
+------=_Part_44_397308335.1512583008026
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_45_358381524.1512583008027"
+
+------=_Part_45_358381524.1512583008027
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Thats looks good.  If the change is made I expect to also have standard 
+directory binds working ?  For example:
+
+singularity exec --containall --bind /dev --bind /home/kmutch --nv 
+ubuntu.simg nvidia-smi 
+WARNING: Not mounting requested bind point (already mounted in container): 
+/dev
+WARNING: Not mounting requested bind point (already mounted in container): 
+/home/kmutch
+NVIDIA-SMI has failed because it couldn't communicate with the NVIDIA 
+driver. Make sure that the latest NVIDIA driver is installed and running.
+
+Many Thanks for helping with this,
+Karl
+
+On Wednesday, December 6, 2017 at 9:08:02 AM UTC-8, David Godlove wrote:
+>
+> OK.  That makes sense.  The --contain options make sure that /dev is not 
+> bind-mounted.  Since it is not bind-mounted, there is no nvidia device 
+> inside the container.  When you run nvidia-smi as root it simply creates 
+> the /dev/nvidiaX device for you.  But if you run as non-root, 1) the 
+> device doesn't exist and 2) a measly non-sudo user cannot create it. 
+>
+> I'm not sure of the best way to address this issue.  In theory I believe 
+> the following should work:
+>
+> $ singularity exec --containall --nv --bind /dev ubumtu.simg nvidia-smi
+> WARNING: Not mounting requested bind point (already mounted in container): 
+> /dev
+> NVIDIA-SMI has failed because it couldn't communicate with the NVIDIA 
+> driver. Make sure that the latest NVIDIA driver is installed and running.  
+>  
+>
+> But you can see that it doesn't because Singularity seems to (erroneously) 
+> assume that /dev will be mounted by default.  Seems it's not smart enough 
+> to deduce that the --containall flag has been passed and that it still 
+> must bind-mount dev.  I'm going to assume that's a bug and raise an issue.
+>
+> If that worked properly, would it allow you to do what you are trying to 
+> do?
+>
+> On Wed, Dec 6, 2017 at 11:23 AM, Karl Mutch <ka...@gmail.com 
+> <javascript:>> wrote:
+>
+>> Thanks for the response.
+>>
+>> Some simple attempts, and I traced it down to needing to run the 
+>> container as root in order to have permissions to use /dev/nvidia... with 
+>> the nvidia-smi command when using the --contain options. Using the command 
+>> without the --contain works without needing root.
+>>
+>> Strange I know.
+>>
+>>
+>> <https://lh3.googleusercontent.com/-N7mvfwnVplY/WigYQrLHH9I/AAAAAAAAErc/XNYSw4gRdyscFzbbeTx4XHyUfbjEFUBuQCLcBGAs/s1600/root%2Baccess%2Bfor%2Bnvidia.png>
+>>
+>>
+>> So...
+>>
+>> Fails as non-root :    singularity exec --contain --nv ubuntu.simg 
+>> nvidia-smi
+>>
+>> Works as non-root:  singularity exec --nv ubuntu.simg nvidia-smi
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+------=_Part_45_358381524.1512583008027
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Thats looks good.=C2=A0 If the change is made I expect to =
+also have standard directory binds working ?=C2=A0 For example:<div><br></d=
+iv><div><div>singularity exec --containall --bind /dev --bind /home/kmutch =
+--nv ubuntu.simg nvidia-smi=C2=A0</div><div>WARNING: Not mounting requested=
+ bind point (already mounted in container): /dev</div><div>WARNING: Not mou=
+nting requested bind point (already mounted in container): /home/kmutch</di=
+v><div>NVIDIA-SMI has failed because it couldn&#39;t communicate with the N=
+VIDIA driver. Make sure that the latest NVIDIA driver is installed and runn=
+ing.</div><div><br></div><div>Many Thanks for helping with this,</div><div>=
+Karl</div><br>On Wednesday, December 6, 2017 at 9:08:02 AM UTC-8, David God=
+love wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left=
+: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">OK=
+.=C2=A0 That makes sense.=C2=A0 The <font face=3D"monospace, monospace">--c=
+ontain</font> options make sure that<font face=3D"monospace, monospace"> /d=
+ev</font> is not bind-mounted.=C2=A0 Since it is not bind-mounted, there is=
+ no nvidia device inside the container.=C2=A0 When you run=C2=A0<font face=
+=3D"monospace, monospace">nvidia-smi</font>=C2=A0as root it simply creates =
+the <font face=3D"monospace, monospace">/dev/nvidiaX</font> device for you.=
+=C2=A0 But if you run as non-root, 1) the device doesn&#39;t exist and 2) a=
+ measly non-sudo user cannot create it.=C2=A0<div><br></div><div>I&#39;m no=
+t sure of the best way to address this issue.=C2=A0 In theory I believe the=
+ following should work:</div><div><br></div><div><font face=3D"monospace, m=
+onospace">$ singularity exec --containall --nv --bind /dev ubumtu.simg nvid=
+ia-smi</font></div><div><font face=3D"monospace, monospace">WARNING: Not mo=
+unting requested bind point (already mounted in container): /dev</font></di=
+v><div><font face=3D"monospace, monospace">NVIDIA-SMI has failed because it=
+ couldn&#39;t communicate with the NVIDIA driver. Make sure that the latest=
+ NVIDIA driver is installed and running.=C2=A0 </font>=C2=A0</div><div><br>=
+</div><div>But you can see that it doesn&#39;t because Singularity seems to=
+ (erroneously) assume that <font face=3D"monospace, monospace">/dev</font> =
+will be mounted by default.=C2=A0 Seems it&#39;s not smart enough to deduce=
+ that the <font face=3D"monospace, monospace">--containall</font><font face=
+=3D"arial, helvetica, sans-serif">=C2=A0flag has been passed and that it st=
+ill must bind-mount dev.=C2=A0 I&#39;m going to assume that&#39;s a bug and=
+ raise an issue.</font></div><div><font face=3D"arial, helvetica, sans-seri=
+f"><br></font></div><div><font face=3D"arial, helvetica, sans-serif">If tha=
+t worked properly, would it allow you to do what you are trying to do?</fon=
+t></div></div><div><br><div class=3D"gmail_quote">On Wed, Dec 6, 2017 at 11=
+:23 AM, Karl Mutch <span dir=3D"ltr">&lt;<a href=3D"javascript:" target=3D"=
+_blank" gdf-obfuscated-mailto=3D"CLc_p8UtCAAJ" rel=3D"nofollow" onmousedown=
+=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D=
+&#39;javascript:&#39;;return true;">ka...@gmail.com</a>&gt;</span> wrote:<b=
+r><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:=
+1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Thanks for the response.<=
+div><br></div><div>Some simple attempts, and I traced it down to needing to=
+ run the container as root in order to have permissions to use /dev/nvidia.=
+.. with the nvidia-smi command when using the --contain options. Using the =
+command without the --contain works without needing root.</div><div><br></d=
+iv><div>Strange I know.</div><div><br></div><p style=3D"text-align:center;c=
+lear:both"><a href=3D"https://lh3.googleusercontent.com/-N7mvfwnVplY/WigYQr=
+LHH9I/AAAAAAAAErc/XNYSw4gRdyscFzbbeTx4XHyUfbjEFUBuQCLcBGAs/s1600/root%2Bacc=
+ess%2Bfor%2Bnvidia.png" style=3D"margin-left:1em;margin-right:1em" target=
+=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://lh3.go=
+ogleusercontent.com/-N7mvfwnVplY/WigYQrLHH9I/AAAAAAAAErc/XNYSw4gRdyscFzbbeT=
+x4XHyUfbjEFUBuQCLcBGAs/s1600/root%2Baccess%2Bfor%2Bnvidia.png&#39;;return t=
+rue;" onclick=3D"this.href=3D&#39;https://lh3.googleusercontent.com/-N7mvfw=
+nVplY/WigYQrLHH9I/AAAAAAAAErc/XNYSw4gRdyscFzbbeTx4XHyUfbjEFUBuQCLcBGAs/s160=
+0/root%2Baccess%2Bfor%2Bnvidia.png&#39;;return true;"><img src=3D"https://l=
+h3.googleusercontent.com/-N7mvfwnVplY/WigYQrLHH9I/AAAAAAAAErc/XNYSw4gRdyscF=
+zbbeTx4XHyUfbjEFUBuQCLcBGAs/s320/root%2Baccess%2Bfor%2Bnvidia.png" border=
+=3D"0" width=3D"320" height=3D"179"></a></p><p style=3D"text-align:center;c=
+lear:both"><br></p><p style=3D"text-align:left;clear:both">So...</p><p styl=
+e=3D"text-align:left;clear:both">Fails as non-root :=C2=A0 =C2=A0 singulari=
+ty exec --contain --nv ubuntu.simg nvidia-smi</p><p style=3D"text-align:lef=
+t;clear:both">Works as non-root:=C2=A0 singularity exec --nv ubuntu.simg nv=
+idia-smi</p><div><br></div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+CLc_p8UtCAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br></div>
+</blockquote></div></div>
+------=_Part_45_358381524.1512583008027--
+
+------=_Part_44_397308335.1512583008026--

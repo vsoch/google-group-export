@@ -1,0 +1,509 @@
+Date: Wed, 5 Jul 2017 08:36:15 -0700 (PDT)
+From: =?UTF-8?Q?Jordi_Sol=C3=A0?= <jsmo...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <9c15f31b-59f6-4435-8512-4c24fbebef66@lbl.gov>
+In-Reply-To: <e4643914-d7ed-4b4f-9d0f-5e862b6a6b61@lbl.gov>
+References: <e4643914-d7ed-4b4f-9d0f-5e862b6a6b61@lbl.gov>
+Subject: Re: Issues with MPI
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_3421_1746165478.1499268975596"
+
+------=_Part_3421_1746165478.1499268975596
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_3422_1245822980.1499268975597"
+
+------=_Part_3422_1245822980.1499268975597
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Hi,
+
+Thank you everyone for your answers, I've fixed the problem already.
+
+My problem was caused because, as I don't have root on the  cluster, I was=
+=20
+forced to create the containers on my own laptop and transfer it there.=20
+Also, the support team who installed the singularity installation on the=20
+cluster configured it in order to disable user defined bindings, thus not=
+=20
+allowing me to be able to mount the local libraries on the container and=20
+forcing me to have my own version inside of it.
+
+My problem was due to the version of OpenMPI on the host having support for=
+=20
+Numa architecture and not having it on the version inside the container=20
+(which both were 2.0.1).
+
+I made a quick fix by copying the host OpenMPI libraries and its=20
+dependencies (libnuma and libpciaccess on my case) to my home and loading=
+=20
+them via LD_LIBRARY_PATH, and that fixed my problem.
+
+To sum up, it's not enough to have the same version of OpenMPI, they both=
+=20
+need to be configured and installed on the same environment.
+
+Thanks again,
+Jordi Sol=C3=A0
+
+
+
+
+
+
+El dilluns, 3 juliol de 2017 17:27:06 UTC+2, Jordi Sol=C3=A0 va escriure:
+>
+> Hi,=20
+>
+> I'm having some isues running a simple MPI Hello World, so I'm asking for=
+=20
+> some help to see if I am doing something wrong.
+>
+> Here's the bootstrap script I'm using installing the same version of MPI=
+=20
+> inside the container that I have on the host:
+>
+> Bootstrap: docker
+> From: ubuntu:latest
+>
+>
+> %post
+>     apt-get update
+>     apt-get -y --no-upgrade install gcc build-essential wget
+>
+>
+>     cd /opt
+>     if [ ! -d "./openmpi-2.0.1" ]; then
+>         wget https://
+> www.open-mpi.org/software/ompi/v2.0/downloads/openmpi-2.0.1.tar.gz
+>         tar xfz openmpi-2.0.1.tar.gz
+>         rm openmpi-2.0.1.tar.gz
+>         cd openmpi-2.0.1
+>         mkdir build
+>         mkdir install
+>         cd build
+>         ../configure --prefix=3D$PWD/../install
+>         make -j4
+>         make install -j4
+>         cd ../install
+>     fi
+>
+>
+>
+>
+> %environment
+>     export LD_LIBRARY_PATH=3D$LD_LIBRARY_PATH:/opt/openmpi-2.0.1/install/=
+lib
+>
+>
+> After I've created the container i compile the following code:
+>
+> #include <mpi.h>
+> #include <stdio.h>
+>
+>
+> int main(int argc, char** argv) {
+>
+>
+>     printf("Inside Main\n");
+>
+>
+>   // Initialize the MPI environment. The two arguments to MPI Init are no=
+t
+>   // currently used by MPI implementations, but are there in case future
+>   // implementations might need the arguments.
+>   MPI_Init(NULL, NULL);
+>
+>
+>   printf("MPI Initialized\n");
+>   // Get the number of processes
+>   int world_size;
+>   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+>   printf("MPI size\n");
+>
+>
+>   // Get the rank of the process
+>   int world_rank;
+>   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+>
+>
+>   // Get the name of the processor
+>   char processor_name[MPI_MAX_PROCESSOR_NAME];
+>   int name_len;
+>   MPI_Get_processor_name(processor_name, &name_len);
+>
+>
+>   // Print off a hello world message
+>   printf("Hello world from processor %s, rank %d out of %d processors\n",
+>          processor_name, world_rank, world_size);
+>
+>
+>   // Finalize the MPI environment. No more MPI calls can be made after=20
+> this
+>   MPI_Finalize();
+> }
+>
+> On the host, using:
+>
+> mpicc mpi_hello_world.c -o mpi_hello_world
+>
+> And then I try to execute it using:
+>
+> mpirun -np 2 singularity exec ./ompi_2.0.1.img ./mpi_hello_world
+>
+> And it crashes with the following error:
+>
+> -------------------------------------------------------------------------=
+-
+> It looks like MPI_INIT failed for some reason; your parallel process is
+> likely to abort.  There are many reasons that a parallel process can
+> fail during MPI_INIT; some of which are due to configuration or=20
+> environment
+> problems.  This failure appears to be an internal failure; here's some
+> additional information (which may only be relevant to an Open MPI
+> developer):
+>
+>
+>   ompi_mpi_init: ompi_rte_init failed
+>   --> Returned "(null)" (-43) instead of "Success" (0)
+> -------------------------------------------------------------------------=
+-
+> *** An error occurred in MPI_Init
+> *** on a NULL communicator
+> *** MPI_ERRORS_ARE_FATAL (processes in this communicator will now abort,
+> ***    and potentially your MPI job)
+> [login1:13314] Local abort before MPI_INIT completed completed=20
+> successfully, but am not able to aggregate error messages, and not able t=
+o=20
+> guarantee that all other processes were killed!
+> *** An error occurred in MPI_Init
+> *** on a NULL communicator
+> *** MPI_ERRORS_ARE_FATAL (processes in this communicator will now abort,
+> ***    and potentially your MPI job)
+> [login1:13315] Local abort before MPI_INIT completed completed=20
+> successfully, but am not able to aggregate error messages, and not able t=
+o=20
+> guarantee that all other processes were killed!
+> -------------------------------------------------------------------------=
+-
+> It looks like MPI_INIT failed for some reason; your parallel process is
+> likely to abort.  There are many reasons that a parallel process can
+> fail during MPI_INIT; some of which are due to configuration or environme=
+nt
+> problems.  This failure appears to be an internal failure; here's some
+> additional information (which may only be relevant to an Open MPI
+> developer):
+>
+>
+>   ompi_mpi_init: ompi_rte_init failed
+>   --> Returned "(null)" (-43) instead of "Success" (0)
+> -------------------------------------------------------------------------=
+-
+> -------------------------------------------------------
+> Primary job  terminated normally, but 1 process returned
+> a non-zero exit code.. Per user-direction, the job has been aborted.
+> -------------------------------------------------------
+> -------------------------------------------------------------------------=
+-
+> mpirun detected that one or more processes exited with non-zero status,=
+=20
+> thus causing
+> the job to be terminated. The first process to do so was:
+>
+>
+>   Process name: [[40136,1],0]
+>   Exit code:    1
+> -------------------------------------------------------------------------=
+-
+>
+> Thanks in advance for your help,
+>
+> Jordi Sol=C3=A0
+>
+
+------=_Part_3422_1245822980.1499268975597
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi,<div><br></div><div>Thank you everyone for your answers=
+, I&#39;ve fixed the problem already.</div><div><br></div><div>My problem w=
+as caused because, as I don&#39;t have root on the =C2=A0cluster, I was for=
+ced to create the containers on my own laptop and transfer it there. Also, =
+the support team who installed the singularity installation on the cluster =
+configured it in order to disable user defined bindings, thus not allowing =
+me to be able to mount the local libraries on the container and forcing me =
+to have my own version inside of it.</div><div><br></div><div>My problem wa=
+s due to the version of OpenMPI on the host having support for Numa archite=
+cture and not having it on the version inside the container (which both wer=
+e 2.0.1).</div><div><br></div><div>I made a quick fix by copying the host O=
+penMPI libraries and its dependencies (libnuma and libpciaccess on my case)=
+ to my home and loading them via LD_LIBRARY_PATH, and that fixed my problem=
+.</div><div><br></div><div>To sum up, it&#39;s not enough to have the same =
+version of OpenMPI, they both need to be configured and installed on the sa=
+me environment.</div><div><br></div><div>Thanks again,</div><div>Jordi Sol=
+=C3=A0</div><div><br></div><div><br></div><div><br></div><div><br></div><di=
+v><br></div><div><br>El dilluns, 3 juliol de 2017 17:27:06 UTC+2, Jordi Sol=
+=C3=A0 va escriure:<blockquote class=3D"gmail_quote" style=3D"margin: 0;mar=
+gin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D=
+"ltr">Hi,=C2=A0<div><br></div><div>I&#39;m having some isues running a simp=
+le MPI Hello World, so I&#39;m asking for some help to see if I am doing so=
+mething wrong.</div><div><br></div><div>Here&#39;s the bootstrap script I&#=
+39;m using installing the same version of MPI inside the container that I h=
+ave on the host:</div><div><div style=3D"font-family:monospace;background-c=
+olor:rgb(250,250,250)"><font color=3D"#660066"><br></font></div><div style=
+=3D"background-color:rgb(250,250,250);border-color:rgb(187,187,187);border-=
+style:solid;border-width:1px;word-wrap:break-word"><code><div><span style=
+=3D"color:#606">Bootstrap</span><span style=3D"color:#660">:</span><span st=
+yle=3D"color:#000"> docker<br></span><span style=3D"color:#606">From</span>=
+<span style=3D"color:#660">:</span><span style=3D"color:#000"> ubuntu</span=
+><span style=3D"color:#660">:</span><span style=3D"color:#000">latest<br><b=
+r><br></span><span style=3D"color:#660">%</span><span style=3D"color:#000">=
+post<br>=C2=A0 =C2=A0 apt</span><span style=3D"color:#660">-</span><span st=
+yle=3D"color:#008">get</span><span style=3D"color:#000"> update<br>=C2=A0 =
+=C2=A0 apt</span><span style=3D"color:#660">-</span><span style=3D"color:#0=
+08">get</span><span style=3D"color:#000"> </span><span style=3D"color:#660"=
+>-</span><span style=3D"color:#000">y </span><span style=3D"color:#660">--<=
+/span><span style=3D"color:#008">no</span><span style=3D"color:#660">-</spa=
+n><span style=3D"color:#000">upgrade install gcc build</span><span style=3D=
+"color:#660">-</span><span style=3D"color:#000">essential wget<br><br><br>=
+=C2=A0 =C2=A0 cd </span><span style=3D"color:#660">/</span><span style=3D"c=
+olor:#000">opt<br>=C2=A0 =C2=A0 </span><span style=3D"color:#008">if</span>=
+<span style=3D"color:#000"> </span><span style=3D"color:#660">[</span><span=
+ style=3D"color:#000"> </span><span style=3D"color:#660">!</span><span styl=
+e=3D"color:#000"> </span><span style=3D"color:#660">-</span><span style=3D"=
+color:#000">d </span><span style=3D"color:#080">&quot;./openmpi-2.0.1&quot;=
+</span><span style=3D"color:#000"> </span><span style=3D"color:#660">];</sp=
+an><span style=3D"color:#000"> </span><span style=3D"color:#008">then</span=
+><span style=3D"color:#000"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 wget https</spa=
+n><span style=3D"color:#660">:</span><span style=3D"color:#800">//<a href=
+=3D"http://www.open-mpi.org/software/ompi/v2.0/downloads/openmpi-2.0.1.tar.=
+gz" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http=
+://www.google.com/url?q\x3dhttp%3A%2F%2Fwww.open-mpi.org%2Fsoftware%2Fompi%=
+2Fv2.0%2Fdownloads%2Fopenmpi-2.0.1.tar.gz\x26sa\x3dD\x26sntz\x3d1\x26usg\x3=
+dAFQjCNGoGzYfaxBe9h6qqF0WcypHGft9LQ&#39;;return true;" onclick=3D"this.href=
+=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwww.open-mpi.org%2Fsoft=
+ware%2Fompi%2Fv2.0%2Fdownloads%2Fopenmpi-2.0.1.tar.gz\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNGoGzYfaxBe9h6qqF0WcypHGft9LQ&#39;;return true;">www.open=
+-mpi.org/<wbr>software/ompi/v2.0/downloads/<wbr>openmpi-2.0.1.tar.gz</a></s=
+pan><span style=3D"color:#000"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 tar xfz open=
+mpi</span><span style=3D"color:#660">-</span><span style=3D"color:#066">2.0=
+</span><span style=3D"color:#660">.</span><span style=3D"color:#066">1.tar<=
+/span><span style=3D"color:#660">.</span><span style=3D"color:#000">gz<br>=
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 rm openmpi</span><span style=3D"color:#660">-</=
+span><span style=3D"color:#066">2.0</span><span style=3D"color:#660">.</spa=
+n><span style=3D"color:#066">1.tar</span><span style=3D"color:#660">.</span=
+><span style=3D"color:#000">gz<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 cd openmpi</s=
+pan><span style=3D"color:#660">-</span><span style=3D"color:#066">2.0</span=
+><span style=3D"color:#660">.</span><span style=3D"color:#066">1</span><spa=
+n style=3D"color:#000"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 mkdir build<br>=C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 mkdir install<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 cd bu=
+ild<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 </span><span style=3D"color:#660">../</s=
+pan><span style=3D"color:#000">configure </span><span style=3D"color:#660">=
+--</span><span style=3D"color:#000">prefix</span><span style=3D"color:#660"=
+>=3D</span><span style=3D"color:#000">$PWD</span><span style=3D"color:#660"=
+>/../</span><span style=3D"color:#000">install<br>=C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 make </span><span style=3D"color:#660">-</span><span style=3D"color:#00=
+0">j4<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 make install </span><span style=3D"col=
+or:#660">-</span><span style=3D"color:#000">j4<br>=C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 cd </span><span style=3D"color:#660">../</span><span style=3D"color:#00=
+0">install<br>=C2=A0 =C2=A0 </span><span style=3D"color:#008">fi</span><spa=
+n style=3D"color:#000"><br><br><br><br><br></span><span style=3D"color:#660=
+">%</span><span style=3D"color:#000">environment<br>=C2=A0 =C2=A0 </span><s=
+pan style=3D"color:#008">export</span><span style=3D"color:#000"> LD_LIBRAR=
+Y_PATH</span><span style=3D"color:#660">=3D</span><span style=3D"color:#000=
+">$LD_LIBRARY_<wbr>PATH</span><span style=3D"color:#660">:</span><span styl=
+e=3D"color:#080">/opt/</span><span style=3D"color:#000">openmpi</span><span=
+ style=3D"color:#660">-</span><span style=3D"color:#066">2.0</span><span st=
+yle=3D"color:#660">.</span><span style=3D"color:#066">1</span><span style=
+=3D"color:#660">/</span><span style=3D"color:#000">instal<wbr>l</span><span=
+ style=3D"color:#660">/</span><span style=3D"color:#000">lib</span></div></=
+code></div><div style=3D"font-family:monospace;background-color:rgb(250,250=
+,250)"><font color=3D"#660066"><br></font></div><br></div><div>After I&#39;=
+ve created the container i compile the following code:</div><div><br></div>=
+<div><div style=3D"background-color:rgb(250,250,250);border-color:rgb(187,1=
+87,187);border-style:solid;border-width:1px;word-wrap:break-word"><code><di=
+v><span style=3D"color:#800">#include</span><span style=3D"color:#000"> </s=
+pan><span style=3D"color:#080">&lt;mpi.h&gt;</span><span style=3D"color:#00=
+0"><br></span><span style=3D"color:#800">#include</span><span style=3D"colo=
+r:#000"> </span><span style=3D"color:#080">&lt;stdio.h&gt;</span><span styl=
+e=3D"color:#000"><br><br><br></span><span style=3D"color:#008">int</span><s=
+pan style=3D"color:#000"> main</span><span style=3D"color:#660">(</span><sp=
+an style=3D"color:#008">int</span><span style=3D"color:#000"> argc</span><s=
+pan style=3D"color:#660">,</span><span style=3D"color:#000"> </span><span s=
+tyle=3D"color:#008">char</span><span style=3D"color:#660">**</span><span st=
+yle=3D"color:#000"> argv</span><span style=3D"color:#660">)</span><span sty=
+le=3D"color:#000"> </span><span style=3D"color:#660">{</span><span style=3D=
+"color:#000"><br><br><br>=C2=A0 =C2=A0 printf</span><span style=3D"color:#6=
+60">(</span><span style=3D"color:#080">&quot;Inside Main\n&quot;</span><spa=
+n style=3D"color:#660">);</span><span style=3D"color:#000"><br><br><br>=C2=
+=A0 </span><span style=3D"color:#800">// Initialize the MPI environment. Th=
+e two arguments to MPI Init are not</span><span style=3D"color:#000"><br>=
+=C2=A0 </span><span style=3D"color:#800">// currently used by MPI implement=
+ations, but are there in case future</span><span style=3D"color:#000"><br>=
+=C2=A0 </span><span style=3D"color:#800">// implementations might need the =
+arguments.</span><span style=3D"color:#000"><br>=C2=A0 MPI_Init</span><span=
+ style=3D"color:#660">(</span><span style=3D"color:#000">NULL</span><span s=
+tyle=3D"color:#660">,</span><span style=3D"color:#000"> NULL</span><span st=
+yle=3D"color:#660">);</span><span style=3D"color:#000"><br><br><br>=C2=A0 p=
+rintf</span><span style=3D"color:#660">(</span><span style=3D"color:#080">&=
+quot;MPI Initialized\n&quot;</span><span style=3D"color:#660">);</span><spa=
+n style=3D"color:#000"><br>=C2=A0 </span><span style=3D"color:#800">// Get =
+the number of processes</span><span style=3D"color:#000"><br>=C2=A0 </span>=
+<span style=3D"color:#008">int</span><span style=3D"color:#000"> world_size=
+</span><span style=3D"color:#660">;</span><span style=3D"color:#000"><br>=
+=C2=A0 MPI_Comm_size</span><span style=3D"color:#660">(</span><span style=
+=3D"color:#000">MPI_COMM_WORLD</span><span style=3D"color:#660">,</span><sp=
+an style=3D"color:#000"> </span><span style=3D"color:#660">&amp;</span><spa=
+n style=3D"color:#000">world_size</span><span style=3D"color:#660">);</span=
+><span style=3D"color:#000"><br>=C2=A0 printf</span><span style=3D"color:#6=
+60">(</span><span style=3D"color:#080">&quot;MPI size\n&quot;</span><span s=
+tyle=3D"color:#660">);</span><span style=3D"color:#000"><br><br><br>=C2=A0 =
+</span><span style=3D"color:#800">// Get the rank of the process</span><spa=
+n style=3D"color:#000"><br>=C2=A0 </span><span style=3D"color:#008">int</sp=
+an><span style=3D"color:#000"> world_rank</span><span style=3D"color:#660">=
+;</span><span style=3D"color:#000"><br>=C2=A0 MPI_Comm_rank</span><span sty=
+le=3D"color:#660">(</span><span style=3D"color:#000">MPI_COMM_WORLD</span><=
+span style=3D"color:#660">,</span><span style=3D"color:#000"> </span><span =
+style=3D"color:#660">&amp;</span><span style=3D"color:#000">world_rank</spa=
+n><span style=3D"color:#660">);</span><span style=3D"color:#000"><br><br><b=
+r>=C2=A0 </span><span style=3D"color:#800">// Get the name of the processor=
+</span><span style=3D"color:#000"><br>=C2=A0 </span><span style=3D"color:#0=
+08">char</span><span style=3D"color:#000"> processor_name</span><span style=
+=3D"color:#660">[</span><span style=3D"color:#000">MPI_MAX_<wbr>PROCESSOR_N=
+AME</span><span style=3D"color:#660">];</span><span style=3D"color:#000"><b=
+r>=C2=A0 </span><span style=3D"color:#008">int</span><span style=3D"color:#=
+000"> name_len</span><span style=3D"color:#660">;</span><span style=3D"colo=
+r:#000"><br>=C2=A0 MPI_Get_processor_name</span><span style=3D"color:#660">=
+(</span><span style=3D"color:#000">process<wbr>or_name</span><span style=3D=
+"color:#660">,</span><span style=3D"color:#000"> </span><span style=3D"colo=
+r:#660">&amp;</span><span style=3D"color:#000">name_len</span><span style=
+=3D"color:#660">);</span><span style=3D"color:#000"><br><br><br>=C2=A0 </sp=
+an><span style=3D"color:#800">// Print off a hello world message</span><spa=
+n style=3D"color:#000"><br>=C2=A0 printf</span><span style=3D"color:#660">(=
+</span><span style=3D"color:#080">&quot;Hello world from processor %s, rank=
+ %d out of %d processors\n&quot;</span><span style=3D"color:#660">,</span><=
+span style=3D"color:#000"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0processor_n=
+ame</span><span style=3D"color:#660">,</span><span style=3D"color:#000"> wo=
+rld_rank</span><span style=3D"color:#660">,</span><span style=3D"color:#000=
+"> world_size</span><span style=3D"color:#660">);</span><span style=3D"colo=
+r:#000"><br><br><br>=C2=A0 </span><span style=3D"color:#800">// Finalize th=
+e MPI environment. No more MPI calls can be made after this</span><span sty=
+le=3D"color:#000"><br>=C2=A0 MPI_Finalize</span><span style=3D"color:#660">=
+();</span><span style=3D"color:#000"><br></span><span style=3D"color:#660">=
+}</span></div></code></div><br></div><div>On the host, using:</div><div><br=
+></div><div><div style=3D"background-color:rgb(250,250,250);border-color:rg=
+b(187,187,187);border-style:solid;border-width:1px;word-wrap:break-word"><c=
+ode><div><span style=3D"color:#000">mpicc mpi_hello_world</span><span style=
+=3D"color:#660">.</span><span style=3D"color:#000">c </span><span style=3D"=
+color:#660">-</span><span style=3D"color:#000">o mpi_hello_world</span></di=
+v></code></div><br></div><div><div>And then I try to execute it using:</div=
+><div><br></div><div><div style=3D"background-color:rgb(250,250,250);border=
+-color:rgb(187,187,187);border-style:solid;border-width:1px;word-wrap:break=
+-word"><code><div><span style=3D"color:#000">mpirun </span><span style=3D"c=
+olor:#660">-</span><span style=3D"color:#000">np </span><span style=3D"colo=
+r:#066">2</span><span style=3D"color:#000"> singularity </span><span style=
+=3D"color:#008">exec</span><span style=3D"color:#000"> </span><span style=
+=3D"color:#660">./</span><span style=3D"color:#000">ompi_2</span><span styl=
+e=3D"color:#660">.</span><span style=3D"color:#066">0.1</span><span style=
+=3D"color:#660">.</span><span style=3D"color:#000">img </span><span style=
+=3D"color:#660">./</span><span style=3D"color:#000">mpi_hello_world</span><=
+/div></code></div><br></div><div>And it crashes with the following error:</=
+div><div><br></div><div><div style=3D"background-color:rgb(250,250,250);bor=
+der-color:rgb(187,187,187);border-style:solid;border-width:1px;word-wrap:br=
+eak-word"><code><div><span style=3D"color:#660">---------------------------=
+---<wbr>------------------------------<wbr>--------------</span><span style=
+=3D"color:#000"><br></span><span style=3D"color:#606">It</span><span style=
+=3D"color:#000"> looks like MPI_INIT failed </span><span style=3D"color:#00=
+8">for</span><span style=3D"color:#000"> some reason</span><span style=3D"c=
+olor:#660">;</span><span style=3D"color:#000"> your parallel process </span=
+><span style=3D"color:#008">is</span><span style=3D"color:#000"><br>likely =
+to abort</span><span style=3D"color:#660">.</span><span style=3D"color:#000=
+"> =C2=A0</span><span style=3D"color:#606">There</span><span style=3D"color=
+:#000"> are many reasons that a parallel process can<br>fail during MPI_INI=
+T</span><span style=3D"color:#660">;</span><span style=3D"color:#000"> some=
+ of which are due to configuration </span><span style=3D"color:#008">or</sp=
+an><span style=3D"color:#000"> environment<br>problems</span><span style=3D=
+"color:#660">.</span><span style=3D"color:#000"> =C2=A0</span><span style=
+=3D"color:#606">This</span><span style=3D"color:#000"> failure appears to b=
+e an </span><span style=3D"color:#008">internal</span><span style=3D"color:=
+#000"> failure</span><span style=3D"color:#660">;</span><span style=3D"colo=
+r:#000"> here</span><span style=3D"color:#080">&#39;s some<br>additional in=
+formation (which may only be relevant to an Open MPI<br>developer):<br><br>=
+<br>=C2=A0 ompi_mpi_init: ompi_rte_init failed<br>=C2=A0 --&gt; Returned &q=
+uot;(null)&quot; (-43) instead of &quot;Success&quot; (0)<br>--------------=
+----------------<wbr>------------------------------<wbr>--------------<br>*=
+** An error occurred in MPI_Init<br>*** on a NULL communicator<br>*** MPI_E=
+RRORS_ARE_FATAL (processes in this communicator will now abort,<br>*** =C2=
+=A0 =C2=A0and potentially your MPI job)<br>[login1:13314] Local abort befor=
+e MPI_INIT completed completed successfully, but am not able to aggregate e=
+rror messages, and not able to guarantee that all other processes were kill=
+ed!<br>*** An error occurred in MPI_Init<br>*** on a NULL communicator<br>*=
+** MPI_ERRORS_ARE_FATAL (processes in this communicator will now abort,<br>=
+*** =C2=A0 =C2=A0and potentially your MPI job)<br>[login1:13315] Local abor=
+t before MPI_INIT completed completed successfully, but am not able to aggr=
+egate error messages, and not able to guarantee that all other processes we=
+re killed!<br>------------------------------<wbr>--------------------------=
+----<wbr>--------------<br>It looks like MPI_INIT failed for some reason; y=
+our parallel process is<br>likely to abort. =C2=A0There are many reasons th=
+at a parallel process can<br>fail during MPI_INIT; some of which are due to=
+ configuration or environment<br>problems. =C2=A0This failure appears to be=
+ an internal failure; here&#39;</span><span style=3D"color:#000">s some<br>=
+additional information </span><span style=3D"color:#660">(</span><span styl=
+e=3D"color:#000">which may only be relevant to an </span><span style=3D"col=
+or:#606">Open</span><span style=3D"color:#000"> MPI<br>developer</span><spa=
+n style=3D"color:#660">):</span><span style=3D"color:#000"><br><br><br>=C2=
+=A0 ompi_mpi_init</span><span style=3D"color:#660">:</span><span style=3D"c=
+olor:#000"> ompi_rte_init failed<br>=C2=A0 </span><span style=3D"color:#660=
+">--&gt;</span><span style=3D"color:#000"> </span><span style=3D"color:#606=
+">Returned</span><span style=3D"color:#000"> </span><span style=3D"color:#0=
+80">&quot;(null)&quot;</span><span style=3D"color:#000"> </span><span style=
+=3D"color:#660">(-</span><span style=3D"color:#066">43</span><span style=3D=
+"color:#660">)</span><span style=3D"color:#000"> instead of </span><span st=
+yle=3D"color:#080">&quot;Success&quot;</span><span style=3D"color:#000"> </=
+span><span style=3D"color:#660">(</span><span style=3D"color:#066">0</span>=
+<span style=3D"color:#660">)</span><span style=3D"color:#000"><br></span><s=
+pan style=3D"color:#660">------------------------------<wbr>---------------=
+---------------<wbr>--------------</span><span style=3D"color:#000"><br></s=
+pan><span style=3D"color:#660">------------------------------<wbr>---------=
+----------------</span><span style=3D"color:#000"><br></span><span style=3D=
+"color:#606">Primary</span><span style=3D"color:#000"> job =C2=A0terminated=
+ normally</span><span style=3D"color:#660">,</span><span style=3D"color:#00=
+0"> but </span><span style=3D"color:#066">1</span><span style=3D"color:#000=
+"> process returned<br>a non</span><span style=3D"color:#660">-</span><span=
+ style=3D"color:#000">zero </span><span style=3D"color:#008">exit</span><sp=
+an style=3D"color:#000"> code</span><span style=3D"color:#660">..</span><sp=
+an style=3D"color:#000"> </span><span style=3D"color:#606">Per</span><span =
+style=3D"color:#000"> user</span><span style=3D"color:#660">-</span><span s=
+tyle=3D"color:#000">direction</span><span style=3D"color:#660">,</span><spa=
+n style=3D"color:#000"> the job has been aborted</span><span style=3D"color=
+:#660">.</span><span style=3D"color:#000"><br></span><span style=3D"color:#=
+660">------------------------------<wbr>-------------------------</span><sp=
+an style=3D"color:#000"><br></span><span style=3D"color:#660">-------------=
+-----------------<wbr>------------------------------<wbr>--------------</sp=
+an><span style=3D"color:#000"><br>mpirun detected that one </span><span sty=
+le=3D"color:#008">or</span><span style=3D"color:#000"> more processes exite=
+d </span><span style=3D"color:#008">with</span><span style=3D"color:#000"> =
+non</span><span style=3D"color:#660">-</span><span style=3D"color:#000">zer=
+o status</span><span style=3D"color:#660">,</span><span style=3D"color:#000=
+"> thus causing<br>the job to be terminated</span><span style=3D"color:#660=
+">.</span><span style=3D"color:#000"> </span><span style=3D"color:#606">The=
+</span><span style=3D"color:#000"> first process to </span><span style=3D"c=
+olor:#008">do</span><span style=3D"color:#000"> so was</span><span style=3D=
+"color:#660">:</span><span style=3D"color:#000"><br><br><br>=C2=A0 </span><=
+span style=3D"color:#606">Process</span><span style=3D"color:#000"> name</s=
+pan><span style=3D"color:#660">:</span><span style=3D"color:#000"> </span><=
+span style=3D"color:#660">[[</span><span style=3D"color:#066">40136</span><=
+span style=3D"color:#660">,</span><span style=3D"color:#066">1</span><span =
+style=3D"color:#660">],</span><span style=3D"color:#066">0</span><span styl=
+e=3D"color:#660">]</span><span style=3D"color:#000"><br>=C2=A0 </span><span=
+ style=3D"color:#606">Exit</span><span style=3D"color:#000"> code</span><sp=
+an style=3D"color:#660">:</span><span style=3D"color:#000"> =C2=A0 =C2=A0</=
+span><span style=3D"color:#066">1</span><span style=3D"color:#000"><br></sp=
+an><span style=3D"color:#660">------------------------------<wbr>----------=
+--------------------<wbr>--------------</span></div></code></div><div><br><=
+/div></div><div>Thanks in advance for your help,</div></div><div><br></div>=
+<div>Jordi Sol=C3=A0</div></div></blockquote></div></div>
+------=_Part_3422_1245822980.1499268975597--
+
+------=_Part_3421_1746165478.1499268975596--

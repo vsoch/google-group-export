@@ -1,0 +1,401 @@
+Date: Tue, 16 Apr 2019 16:14:13 -0700 (PDT)
+From: Jason Boles <jason...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <7a09d381-55a4-4215-ba1a-09b638dea0b2@lbl.gov>
+In-Reply-To: <20190415212341.GA49040@fnal.gov>
+References: <c3210c20-2c17-4647-bdff-0873dbe8b673@lbl.gov>
+ <c30cc58c-7f0b-46c1-9efe-448e4d5a50a8@lbl.gov>
+ <CAGfAqt9TkLV3Q=4D6uhrJQ4CKPQfiz23apbrMrKOE0ORG0Dm5w@mail.gmail.com>
+ <20180822223830.GA871@fnal.gov>
+ <6c30220a-0010-4a42-8a1d-3082b9953d30@lbl.gov>
+ <20190415212341.GA49040@fnal.gov>
+Subject: Re: [Singularity] Re: Mount volumes without root permissions using
+ fuse
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2408_1398126365.1555456453498"
+
+------=_Part_2408_1398126365.1555456453498
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2409_1093781565.1555456453499"
+
+------=_Part_2409_1093781565.1555456453499
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+
+Hi Dave,
+  Thanks for the reply, I checked out your links, fuserpremount.c & 
+fuse-premount.c,modified sshfs (release 3.5.2 has your changes), and read 
+the libfuse 3.3.0 release notes that introduce /dev/fd/%u feature, but I 
+think I still have a fundamental misunderstanding of how /dev/fd/* relates 
+to /dev/fuse w.r.t. containers.
+
+I've also tested on Fedora 29 host w/'fedora:latest' Docker container, 
+passing device=/dev/fuse into the container.  When I run it without 
+--privileged, the premount fails in the same way that fusermount3 fails, 
+because setuid root doesn't actually become root.
+
+--: mount failed: Operation not permitted
+fuserpremount: failed to receive fd from fusermount
+
+
+So, does that mean that I'd have to pre-mount (i.e. get a unique file 
+descriptor) then assign that to --device=/dev/fd/blah as a parameter to the 
+container at runtime, then inside the container run the fuse-command?  (If 
+so, this is workable, but not ideal)
+
+Ideally, I'd like to run each container with device=/dev/fuse, then inside 
+the unprivileged container mount the fuse-based filesystem.  Even if that 
+means that the host requires kernel 4.18+ and libfuse3.3+ and the container 
+requires libfuse 3.3+, and the fuse filesystem inside the container must 
+make the function calls to libfuse, rather than exec'ing fusermount3.
+
+Inside my test container, I see this behavior:
+
+[root@f3b78b593c16 ~]# sshfs user@host: /mnt/ssh
+fusermount3: mount failed: Operation not permitted
+[root@f3b78b593c16 ~]# rpm -e --nodeps fuse3
+[root@f3b78b593c16 ~]# sshfs user@host: /mnt/ssh
+fuse: failed to exec fusermount3: No such file or directory
+[root@f3b78b593c16 ~]# fuse-premount sshfs user@host: /mnt/ssh
+fuse-premount: failed to mount -o fd=3,rootmode=40000,user_id=0,group_id=0 
+/dev/fuse /mnt/ssh: Operation not permitted
+
+
+(note above fuse-premount.c commented out "if (geteuid() != 0 || getuid() 
+== 0) {}" test block...)
+
+The use case is automated testing of buggy/unreliable fuse filesystems 
+(student code) in a shared Docker environment where privileged mode is 
+disabled.
+
+Regards,
+--Jason
+
+
+On Monday, April 15, 2019 at 5:24:14 PM UTC-4, Dave Dykstra wrote:
+>
+> Hi Jason, 
+>
+> Yes, I have got it to work.  I tested on a CentOS 7 system and a ELRepo 
+> 4.19 kernel.  libfuse skips running /bin/fusermount when it has the 
+> privileges.  I proved it by removing it with "rpm -e --nodeps fuse". 
+>
+> I also found that libfuse3 has a neat feature that makes it easier to do 
+> mounting with privileges, with older kernels.  It supports pre-mounting 
+> a filesystem and then passing through the an open fuse file descriptor 
+> through as the mountpoint with /dev/fd/N.  More details are in 
+>     https://github.com/sylabs/singularity/issues/2864 
+>
+> Dave 
+>
+> On Fri, Apr 12, 2019 at 03:19:17PM -0700, Jason Boles wrote: 
+> > 
+> > Hi Dave, 
+> >   Have you had any success on kernel 4.18 FUSE w/o privileges? 
+> > 
+> > I just tested on Ubuntu 18.04.2 w/kernel 4.18.0-17, and Docker 18.09.5 
+> > (latest from Docker repo, not ubuntu's) and sshfs, but I get the same 
+> > "operation not permitted" error without --privileged or --cap-add... 
+> > I notice that /bin/fusermount is still setuid root, so perhaps that or 
+> > sshfs haven't been updated to use 'unprivileged mount' that's supposed 
+> to 
+> > be available in 4.18? 
+> > 
+> > I will test again with libfuse3 and sshfs built from latest source, but 
+> > just checking. 
+> > 
+> > regards, 
+> > Jason B. 
+> > 
+> > 
+> > 
+> > 
+> > On Wednesday, August 22, 2018 at 6:38:39 PM UTC-4, Dave Dykstra wrote: 
+> > > 
+> > > Docker behaves the same way.  You can't mount fuse filesystems inside 
+> of 
+> > > a container without giving the container privileged capabilities. 
+> > > 
+> > > This changed however in Linux kernel 4.18 which was released August 
+> 12. 
+> > > It supports FUSE mounts within an unprivileged user namespace. 
+> > >     
+> https://www.phoronix.com/scan.php?page=news_item&px=Linux-4.18-FUSE 
+> > > 
+> > > Dave 
+> > > 
+> > > On Tue, Aug 21, 2018 at 02:01:56PM -0500, Jason Stover wrote: 
+> > > > Hi, 
+> > > > 
+> > > >   > which leads me to believe the problem is something about the 
+> > > > singularity container 
+> > > > 
+> > > >   Correct. You cannot elevate privileges inside of the container. 
+> So, 
+> > > > you can't become root for operations to run like you can outside of 
+> > > > the container. 
+> > > > 
+> > > >   It's by design, not a problem. Once the container starts up, you 
+> > > > can't elevate privileges to do any operations you need root 
+> privilege 
+> > > > for as a normal user. That's it. You're stuck at whatever privileges 
+> > > > you have as your user. 
+> > > > 
+> > > > -J 
+> > > > 
+> > > > On Tue, Aug 21, 2018 at 1:47 PM cschlick <cs...@iu.edu 
+> <javascript:>> 
+> > > wrote: 
+> > > > > 
+> > > > > Thanks for the reply Jason. I tried changing things with setcap 
+> and it 
+> > > didn't help. I also tried 
+> > > > > 
+> > > > > $ chmod 777 /usr/bin/fusermount 
+> > > > > $ chown user:user /usr/bin/fusermount 
+> > > > > 
+> > > > > Just to see what would happen and it still didn't help. Though 
+> like I 
+> > > said before, it works fine on my machine outside of a container, 
+> where: 
+> > > > > 
+> > > > > $ ls -l /usr/bin/fusermount 
+> > > > > -rwsr-xr-x. 1 root root 32008 Apr 11 01:12 /usr/bin/fusermount 
+> > > > > 
+> > > > >  which leads me to believe the problem is something about the 
+> > > singularity container, and not a fundamental limitation of trying to 
+> mount 
+> > > as a regular user. Any other ideas? 
+> > > > > 
+> > > > > -- 
+> > > > > You received this message because you are subscribed to the Google 
+> > > Groups "singularity" group. 
+> > > > > To unsubscribe from this group and stop receiving emails from it, 
+> send 
+> > > an email to si...@lbl.gov <javascript:>. 
+> > > > 
+> > > > -- 
+> > > > You received this message because you are subscribed to the Google 
+> > > Groups "singularity" group. 
+> > > > To unsubscribe from this group and stop receiving emails from it, 
+> send 
+> > > an email to si...@lbl.gov <javascript:>. 
+> > > 
+> > 
+> > -- 
+> > You received this message because you are subscribed to the Google 
+> Groups "singularity" group. 
+> > To unsubscribe from this group and stop receiving emails from it, send 
+> an email to si...@lbl.gov <javascript:>. 
+>
+>
+------=_Part_2409_1093781565.1555456453499
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div><br></div><div>Hi Dave,</div><div>=C2=A0 Thanks for t=
+he reply, I checked out your links, fuserpremount.c &amp; fuse-premount.c,m=
+odified sshfs (release 3.5.2 has your changes), and read the libfuse 3.3.0 =
+release notes that introduce /dev/fd/%u feature, but I think I still have a=
+ fundamental misunderstanding of how /dev/fd/* relates to /dev/fuse w.r.t. =
+containers.</div><div><br></div><div>I&#39;ve also tested on Fedora 29 host=
+ w/&#39;fedora:latest&#39; Docker container, passing device=3D/dev/fuse int=
+o the container.=C2=A0 When I run it without --privileged, the premount fai=
+ls in the same way that fusermount3 fails, because setuid root doesn&#39;t =
+actually become root.</div><blockquote style=3D"margin: 0 0 0 40px; border:=
+ none; padding: 0px;"><div><font face=3D"courier new, monospace">--: mount =
+failed: Operation not permitted</font></div><div><font face=3D"courier new,=
+ monospace">fuserpremount: failed to receive fd from fusermount</font></div=
+></blockquote><div><br></div><div>So, does that mean that I&#39;d have to p=
+re-mount (i.e. get a unique file descriptor) then assign that to --device=
+=3D/dev/fd/blah as a parameter to the container at runtime, then inside the=
+ container run the fuse-command?=C2=A0 (If so, this is workable, but not id=
+eal)</div><div><br></div><div>Ideally, I&#39;d like to run each container w=
+ith device=3D/dev/fuse, then inside the unprivileged container mount the fu=
+se-based filesystem.=C2=A0 Even if that means that the host requires kernel=
+ 4.18+ and libfuse3.3+ and the container requires libfuse 3.3+, and the fus=
+e filesystem inside the container must make the function calls to libfuse, =
+rather than exec&#39;ing fusermount3.</div><div><br></div><div>Inside my te=
+st container, I see this behavior:</div><blockquote style=3D"margin: 0 0 0 =
+40px; border: none; padding: 0px;"><div><div><font face=3D"courier new, mon=
+ospace">[root@f3b78b593c16 ~]# sshfs user@host: /mnt/ssh</font></div></div>=
+<div><div><font face=3D"courier new, monospace">fusermount3: mount failed: =
+Operation not permitted</font></div></div><div><div><font face=3D"courier n=
+ew, monospace">[root@f3b78b593c16 ~]# rpm -e --nodeps fuse3</font></div></d=
+iv><div><div><font face=3D"courier new, monospace">[root@f3b78b593c16 ~]# s=
+shfs user@host: /mnt/ssh</font></div></div><div><div><font face=3D"courier =
+new, monospace">fuse: failed to exec fusermount3: No such file or directory=
+</font></div></div><div><div><font face=3D"courier new, monospace">[root@f3=
+b78b593c16 ~]# fuse-premount sshfs user@host: /mnt/ssh</font></div></div><d=
+iv><div><font face=3D"courier new, monospace">fuse-premount: failed to moun=
+t -o fd=3D3,rootmode=3D40000,user_id=3D0,group_id=3D0 /dev/fuse /mnt/ssh: O=
+peration not permitted</font></div></div></blockquote><div><br></div><div>(=
+note above fuse-premount.c commented out &quot;if (geteuid() !=3D 0 || getu=
+id() =3D=3D 0) {}&quot; test block...)</div><div><br></div><div>The use cas=
+e is automated testing of buggy/unreliable fuse filesystems (student code) =
+in a shared Docker environment where privileged mode is disabled.</div><div=
+><br></div><div>Regards,</div><div>--Jason</div><br><br>On Monday, April 15=
+, 2019 at 5:24:14 PM UTC-4, Dave Dykstra wrote:<blockquote class=3D"gmail_q=
+uote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;pad=
+ding-left: 1ex;">Hi Jason,
+<br>
+<br>Yes, I have got it to work. =C2=A0I tested on a CentOS 7 system and a E=
+LRepo
+<br>4.19 kernel. =C2=A0libfuse skips running /bin/fusermount when it has th=
+e
+<br>privileges. =C2=A0I proved it by removing it with &quot;rpm -e --nodeps=
+ fuse&quot;.
+<br>
+<br>I also found that libfuse3 has a neat feature that makes it easier to d=
+o
+<br>mounting with privileges, with older kernels. =C2=A0It supports pre-mou=
+nting
+<br>a filesystem and then passing through the an open fuse file descriptor
+<br>through as the mountpoint with /dev/fd/N. =C2=A0More details are in
+<br>=C2=A0 =C2=A0 <a href=3D"https://github.com/sylabs/singularity/issues/2=
+864" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;htt=
+ps://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsylabs%2Fsingularit=
+y%2Fissues%2F2864\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEaR9jA40DE8zNI2an=
+YuNija_QRew&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.goog=
+le.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsylabs%2Fsingularity%2Fissues%2F=
+2864\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEaR9jA40DE8zNI2anYuNija_QRew&#=
+39;;return true;">https://github.com/sylabs/<wbr>singularity/issues/2864</a=
+>
+<br>
+<br>Dave
+<br>
+<br>On Fri, Apr 12, 2019 at 03:19:17PM -0700, Jason Boles wrote:
+<br>&gt;=20
+<br>&gt; Hi Dave,
+<br>&gt; =C2=A0 Have you had any success on kernel 4.18 FUSE w/o privileges=
+?
+<br>&gt;=20
+<br>&gt; I just tested on Ubuntu 18.04.2 w/kernel 4.18.0-17, and Docker 18.=
+09.5=20
+<br>&gt; (latest from Docker repo, not ubuntu&#39;s) and sshfs, but I get t=
+he same=20
+<br>&gt; &quot;operation not permitted&quot; error without --privileged or =
+--cap-add...
+<br>&gt; I notice that /bin/fusermount is still setuid root, so perhaps tha=
+t or=20
+<br>&gt; sshfs haven&#39;t been updated to use &#39;unprivileged mount&#39;=
+ that&#39;s supposed to=20
+<br>&gt; be available in 4.18?
+<br>&gt;=20
+<br>&gt; I will test again with libfuse3 and sshfs built from latest source=
+, but=20
+<br>&gt; just checking.
+<br>&gt;=20
+<br>&gt; regards,
+<br>&gt; Jason B.
+<br>&gt;=20
+<br>&gt;=20
+<br>&gt;=20
+<br>&gt;=20
+<br>&gt; On Wednesday, August 22, 2018 at 6:38:39 PM UTC-4, Dave Dykstra wr=
+ote:
+<br>&gt; &gt;
+<br>&gt; &gt; Docker behaves the same way. =C2=A0You can&#39;t mount fuse f=
+ilesystems inside of=20
+<br>&gt; &gt; a container without giving the container privileged capabilit=
+ies.=20
+<br>&gt; &gt;
+<br>&gt; &gt; This changed however in Linux kernel 4.18 which was released =
+August 12.=20
+<br>&gt; &gt; It supports FUSE mounts within an unprivileged user namespace=
+.=20
+<br>&gt; &gt; =C2=A0 =C2=A0 <a href=3D"https://www.phoronix.com/scan.php?pa=
+ge=3Dnews_item&amp;px=3DLinux-4.18-FUSE" target=3D"_blank" rel=3D"nofollow"=
+ onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2=
+F%2Fwww.phoronix.com%2Fscan.php%3Fpage%3Dnews_item%26px%3DLinux-4.18-FUSE\x=
+26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHo2bZhpjulUmQylgLPVISs3GWHgw&#39;;re=
+turn true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhtt=
+ps%3A%2F%2Fwww.phoronix.com%2Fscan.php%3Fpage%3Dnews_item%26px%3DLinux-4.18=
+-FUSE\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHo2bZhpjulUmQylgLPVISs3GWHgw&=
+#39;;return true;">https://www.phoronix.com/scan.<wbr>php?page=3Dnews_item&=
+amp;px=3DLinux-4.<wbr>18-FUSE</a>=20
+<br>&gt; &gt;
+<br>&gt; &gt; Dave=20
+<br>&gt; &gt;
+<br>&gt; &gt; On Tue, Aug 21, 2018 at 02:01:56PM -0500, Jason Stover wrote:=
+=20
+<br>&gt; &gt; &gt; Hi,=20
+<br>&gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; =C2=A0 &gt; which leads me to believe the problem is som=
+ething about the=20
+<br>&gt; &gt; &gt; singularity container=20
+<br>&gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; =C2=A0 Correct. You cannot elevate privileges inside of =
+the container. So,=20
+<br>&gt; &gt; &gt; you can&#39;t become root for operations to run like you=
+ can outside of=20
+<br>&gt; &gt; &gt; the container.=20
+<br>&gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; =C2=A0 It&#39;s by design, not a problem. Once the conta=
+iner starts up, you=20
+<br>&gt; &gt; &gt; can&#39;t elevate privileges to do any operations you ne=
+ed root privilege=20
+<br>&gt; &gt; &gt; for as a normal user. That&#39;s it. You&#39;re stuck at=
+ whatever privileges=20
+<br>&gt; &gt; &gt; you have as your user.=20
+<br>&gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; -J=20
+<br>&gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; On Tue, Aug 21, 2018 at 1:47 PM cschlick &lt;<a>cs...@iu=
+.edu</a> &lt;javascript:&gt;&gt;=20
+<br>&gt; &gt; wrote:=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; Thanks for the reply Jason. I tried changing things=
+ with setcap and it=20
+<br>&gt; &gt; didn&#39;t help. I also tried=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; $ chmod 777 /usr/bin/fusermount=20
+<br>&gt; &gt; &gt; &gt; $ chown user:user /usr/bin/fusermount=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; Just to see what would happen and it still didn&#39=
+;t help. Though like I=20
+<br>&gt; &gt; said before, it works fine on my machine outside of a contain=
+er, where:=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; $ ls -l /usr/bin/fusermount=20
+<br>&gt; &gt; &gt; &gt; -rwsr-xr-x. 1 root root 32008 Apr 11 01:12 /usr/bin=
+/fusermount=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; =C2=A0which leads me to believe the problem is some=
+thing about the=20
+<br>&gt; &gt; singularity container, and not a fundamental limitation of tr=
+ying to mount=20
+<br>&gt; &gt; as a regular user. Any other ideas?=20
+<br>&gt; &gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; &gt; --=20
+<br>&gt; &gt; &gt; &gt; You received this message because you are subscribe=
+d to the Google=20
+<br>&gt; &gt; Groups &quot;singularity&quot; group.=20
+<br>&gt; &gt; &gt; &gt; To unsubscribe from this group and stop receiving e=
+mails from it, send=20
+<br>&gt; &gt; an email to <a>si...@lbl.gov</a> &lt;javascript:&gt;.=20
+<br>&gt; &gt; &gt;=20
+<br>&gt; &gt; &gt; --=20
+<br>&gt; &gt; &gt; You received this message because you are subscribed to =
+the Google=20
+<br>&gt; &gt; Groups &quot;singularity&quot; group.=20
+<br>&gt; &gt; &gt; To unsubscribe from this group and stop receiving emails=
+ from it, send=20
+<br>&gt; &gt; an email to <a>si...@lbl.gov</a> &lt;javascript:&gt;.=20
+<br>&gt; &gt;
+<br>&gt;=20
+<br>&gt; --=20
+<br>&gt; You received this message because you are subscribed to the Google=
+ Groups &quot;singularity&quot; group.
+<br>&gt; To unsubscribe from this group and stop receiving emails from it, =
+send an email to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-m=
+ailto=3D"SOFOjnkoCAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;jav=
+ascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;re=
+turn true;">singu...@lbl.<wbr>gov</a>.
+<br>
+<br></blockquote></div>
+------=_Part_2409_1093781565.1555456453499--
+
+------=_Part_2408_1398126365.1555456453498--

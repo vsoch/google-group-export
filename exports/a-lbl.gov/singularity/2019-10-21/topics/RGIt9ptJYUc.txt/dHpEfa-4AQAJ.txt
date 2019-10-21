@@ -1,0 +1,397 @@
+Date: Wed, 26 Jul 2017 05:28:04 -0700 (PDT)
+From: Luca Cozzuto <lucac...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <a8adb551-64e2-463a-a80e-9a0437605ac3@lbl.gov>
+In-Reply-To: <CAM=pu+JnnNwubQ8mUQ3-_O2DXVzVAbpXHgK=cEhmCNLjc0azEA@mail.gmail.com>
+References: <c9d58389-4a4e-4855-8348-1280cca198be@lbl.gov> <CAM=pu++_ZU=vQn+dEq=A9Jj0J89hxMOf+GL5XyrUDGK=Khni+Q@mail.gmail.com>
+ <401bc521-6000-4b75-850d-44969eecece4@lbl.gov> <CAM=pu++Z2aDnwU_=8hpWo2hijJ5o7RB-Z=QaEQdwiK-StCTE7Q@mail.gmail.com>
+ <1f299fd2-3bba-4e39-a3ed-d2af60b71802@lbl.gov> <0cf5020d-b478-4cb0-bbd6-fa486a363cf7@lbl.gov>
+ <CAM=pu+JnnNwubQ8mUQ3-_O2DXVzVAbpXHgK=cEhmCNLjc0azEA@mail.gmail.com>
+Subject: Re: [Singularity] environment variable
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_5055_399167422.1501072084898"
+
+------=_Part_5055_399167422.1501072084898
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_5056_1462542624.1501072084899"
+
+------=_Part_5056_1462542624.1501072084899
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Many thanks!
+the only thing is that I would like to avoid to use the dockerhub. I'm=20
+wondering if there is another way.
+
+Thanks again.
+
+Luca =20
+
+Il giorno mercoled=C3=AC 26 luglio 2017 13:41:54 UTC+2, vanessa ha scritto:
+>
+> Hey Luca,
+>
+> Ah yes, I know docker2singularity well because I wrote most of the=20
+> runtime script,=20
+> <https://github.com/vsoch/singularity-tools/blob/master/docker/docker2sin=
+gularity.sh> that=20
+> somehow was scraped of any credit via improper use of version control, lo=
+l.=20
+> When you export the docker environment using that script,it writes direct=
+ly=20
+> to a file /environment, which mirrors how the very first singularity imag=
+es=20
+> were set up. Later images (made with singularity proper) store the docker=
+=20
+> environment variables in the image's metadata "env" folder, available via=
+=20
+> shell or exec with a simple source:
+>
+> for script in /.singularity.d/env/*.sh; do
+>>     if [ -f "$script" ]; thenHere is where
+>>         . "$script"
+>>     fi
+>> done
+>
+>
+> so you don't have the environment variables because they aren't being=20
+> sourced. The option with -e would clean the environment from your host, n=
+ot=20
+> what is in the container. Here is where=20
+> <https://github.com/singularityware/singularity/blob/master/src/lib/runti=
+me/environment/environment.c#L57>=20
+> some of this happens, if it helps.
+>
+> I think if you want this to work as expected, you should put your docker=
+=20
+> image on docker hub, and then bootstrap appropriately:
+>
+> singularity create image.img
+>> sudo singularity bootstrap image.img Singularity
+>
+>
+> This will handle the Docker environment to coincide with the current=20
+> implementation that sources it. Give that a go and see if it helps.
+>
+> Best,
+>
+> Vanessa
+>
+> On Wed, Jul 26, 2017 at 3:09 AM, Luca Cozzuto <lu...@gmail.com=20
+> <javascript:>> wrote:
+>
+>> My toy example is with a docker file like this:
+>>
+>> FROM centos:latest
+>> env FOO=3Dhello BAR=3Dworld
+>>
+>> I build the image and then convert it with docker2singularity. Then I se=
+e=20
+>> that with=20
+>>
+>> singularity exec -e test_latest-2017-07-26-ebe796a2e87e.img env|grep PYT=
+=20
+>> I have no problem but when I launch singularity shell -e=20
+>> test_latest-2017-07-26-ebe796a2e87e.img
+>> and type env I still have the environmental variables.
+>>
+>> Best,
+>>
+>> Luca
+>>
+>> Il giorno mercoled=C3=AC 26 luglio 2017 11:40:28 UTC+2, Luca Cozzuto ha=
+=20
+>> scritto:
+>>>
+>>> Hi Vanessa,
+>>> after several attempts I found that launching singularity exec -e=20
+>>> IMAGE.img  env  is removing the unwanted environmental variables but wi=
+th=20
+>>> singularity shell -e IMAGE.img I can still see them.
+>>> I'm wondering if there is something I am doing wrong...=20
+>>>
+>>> Luca
+>>>
+>>> Il giorno marted=C3=AC 25 luglio 2017 16:36:41 UTC+2, vanessa ha scritt=
+o:
+>>>>
+>>>> Hi Luca,
+>>>>
+>>>> If you don't want "every environmental variables not specified in the=
+=20
+>>>> docker image out of it." do you mean removing variables from the=20
+>>>> Docker image, or ones that you have defined in another singularity ima=
+ge?=20
+>>>> Could you please provide a toy example of your issue, with the current=
+=20
+>>>> output and the desired? Thanks!
+>>>>
+>>>> Best,
+>>>>
+>>>> Vanessa
+>>>>
+>>>> On Tue, Jul 25, 2017 at 7:00 AM, Luca Cozzuto <lu...@gmail.com>=20
+>>>> wrote:
+>>>>
+>>>>> Hi Vanessa,
+>>>>> many thanks for your answer.=20
+>>>>> When converting the image with "import" I would like to keep every=20
+>>>>> environmental variables not specified in the docker image out of it.=
+=20
+>>>>> I'm also having problem with singularity shell that even with the=20
+>>>>> option -e is still keeping the ENV variables.=20
+>>>>>
+>>>>> Many thanks.
+>>>>> Luca
+>>>>>
+>>>>> Il giorno marted=C3=AC 25 luglio 2017 14:47:46 UTC+2, vanessa ha scri=
+tto:
+>>>>>>
+>>>>>> Hi Luca,
+>>>>>>
+>>>>>> When you convert from Docker, Singularity will automatically grab th=
+e=20
+>>>>>> ENV variables that you've defined, so you shouldn't need to specify =
+it=20
+>>>>>> twice. Which of the two are you wanting to not use? You can easily r=
+emove=20
+>>>>>> the extra specification from %environment. If you want to disable=20
+>>>>>> singularity adding, we don't have any kind of flag for that (but it =
+could=20
+>>>>>> be easily added).
+>>>>>>
+>>>>>> Best,
+>>>>>>
+>>>>>> Vanessa
+>>>>>>
+>>>>>> On Tue, Jul 25, 2017 at 2:50 AM, Luca Cozzuto <lu...@gmail.com>=20
+>>>>>> wrote:
+>>>>>>
+>>>>>>> Dear developers,
+>>>>>>> I'm trying to convert a docker image to a singularity one but I=20
+>>>>>>> notice that in the final image I got both the environment variable =
+I=20
+>>>>>>> currently have and the one I have set in the docker image with the =
+ENV tag.
+>>>>>>> If I use the -e parameter I strip any environment variable, also th=
+e=20
+>>>>>>> one I would like to have it there since are required to some progra=
+ms.
+>>>>>>> Can you help me in this, please?
+>>>>>>>
+>>>>>>> Many thanks!
+>>>>>>>
+>>>>>>> Luca
+>>>>>>>
+>>>>>>>
+>>>>>>>
+>>>>>>> --=20
+>>>>>>> You received this message because you are subscribed to the Google=
+=20
+>>>>>>> Groups "singularity" group.
+>>>>>>> To unsubscribe from this group and stop receiving emails from it,=
+=20
+>>>>>>> send an email to singu...@lbl.gov.
+>>>>>>>
+>>>>>>
+>>>>>>
+>>>>>>
+>>>>>> --=20
+>>>>>> Vanessa Villamia Sochat
+>>>>>> Stanford University '16
+>>>>>> (603) 321-0676
+>>>>>>
+>>>>> --=20
+>>>>> You received this message because you are subscribed to the Google=20
+>>>>> Groups "singularity" group.
+>>>>> To unsubscribe from this group and stop receiving emails from it, sen=
+d=20
+>>>>> an email to singu...@lbl.gov.
+>>>>>
+>>>>
+>>>>
+>>>>
+>>>> --=20
+>>>> Vanessa Villamia Sochat
+>>>> Stanford University '16
+>>>> (603) 321-0676
+>>>>
+>>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s=20
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n=20
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> --=20
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_5056_1462542624.1501072084899
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Many thanks!<div>the only thing is that I would like to av=
+oid to use the dockerhub. I&#39;m wondering if there is another way.</div><=
+div><br></div><div>Thanks again.</div><div><br></div><div>Luca =C2=A0<br><b=
+r>Il giorno mercoled=C3=AC 26 luglio 2017 13:41:54 UTC+2, vanessa ha scritt=
+o:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;b=
+order-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">Hey Luca,<d=
+iv><br></div><div>Ah yes, I know docker2singularity well because I <a href=
+=3D"https://github.com/vsoch/singularity-tools/blob/master/docker/docker2si=
+ngularity.sh" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=
+=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fvsoch%2F=
+singularity-tools%2Fblob%2Fmaster%2Fdocker%2Fdocker2singularity.sh\x26sa\x3=
+dD\x26sntz\x3d1\x26usg\x3dAFQjCNE6v0a5wAmt3fyQk3nae6ya2AT8Vg&#39;;return tr=
+ue;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2=
+F%2Fgithub.com%2Fvsoch%2Fsingularity-tools%2Fblob%2Fmaster%2Fdocker%2Fdocke=
+r2singularity.sh\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNE6v0a5wAmt3fyQk3na=
+e6ya2AT8Vg&#39;;return true;">wrote most of the runtime script,</a>=C2=A0th=
+at somehow was scraped of any credit via improper use of version control, l=
+ol. When you export the docker environment using that script,it writes dire=
+ctly to a file /environment, which mirrors how the very first singularity i=
+mages were set up. Later images (made with singularity proper) store the do=
+cker environment variables in the image&#39;s metadata &quot;env&quot; fold=
+er, available via shell or exec with a simple source:</div><div><br></div><=
+div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;bor=
+der-left:1px solid rgb(204,204,204);padding-left:1ex">for script in /.singu=
+larity.d/env/*.sh; do<br>=C2=A0 =C2=A0 if [ -f &quot;$script&quot; ]; thenH=
+ere is where<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 . &quot;$script&quot;<br>=C2=A0=
+ =C2=A0 fi<br>done</blockquote></div><div><br></div><div>so you don&#39;t h=
+ave the environment variables because they aren&#39;t being sourced. The op=
+tion with -e would clean the environment from your host, not what is in the=
+ container. <a href=3D"https://github.com/singularityware/singularity/blob/=
+master/src/lib/runtime/environment/environment.c#L57" target=3D"_blank" rel=
+=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\=
+x3dhttps%3A%2F%2Fgithub.com%2Fsingularityware%2Fsingularity%2Fblob%2Fmaster=
+%2Fsrc%2Flib%2Fruntime%2Fenvironment%2Fenvironment.c%23L57\x26sa\x3dD\x26sn=
+tz\x3d1\x26usg\x3dAFQjCNFHFO44Cq4Y2IydIoZdOBFGEJQa5Q&#39;;return true;" onc=
+lick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgith=
+ub.com%2Fsingularityware%2Fsingularity%2Fblob%2Fmaster%2Fsrc%2Flib%2Fruntim=
+e%2Fenvironment%2Fenvironment.c%23L57\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQ=
+jCNFHFO44Cq4Y2IydIoZdOBFGEJQa5Q&#39;;return true;">Here is where</a> some o=
+f this happens, if it helps.</div><div><br></div><div>I think if you want t=
+his to work as expected, you should put your docker image on docker hub, an=
+d then bootstrap appropriately:</div><div><br></div><blockquote class=3D"gm=
+ail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,=
+204,204);padding-left:1ex">singularity create image.img<br>sudo singularity=
+ bootstrap image.img Singularity</blockquote><div><br></div><div>This will =
+handle the Docker environment to coincide with the current implementation t=
+hat sources it. Give that a go and see if it helps.</div><div><br></div><di=
+v>Best,</div><div><br></div><div>Vanessa</div></div><div><br><div class=3D"=
+gmail_quote">On Wed, Jul 26, 2017 at 3:09 AM, Luca Cozzuto <span dir=3D"ltr=
+">&lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"rq=
+szuQFeCQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#3=
+9;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;"=
+>lu...@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote"=
+ style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><d=
+iv dir=3D"ltr">My toy example is with a docker file like this:<div><br></di=
+v><div><div>FROM centos:latest</div><div>env FOO=3Dhello BAR=3Dworld<br></d=
+iv><div><br></div><div>I build the image and then convert it with=C2=A0dock=
+er2singularity. Then I see that with=C2=A0</div><div><br></div><div>singula=
+rity exec -e test_latest-2017-07-26-<wbr>ebe796a2e87e.img env|grep PYT=C2=
+=A0<br></div><div>I have no problem but when I launch singularity shell -e =
+test_latest-2017-07-26-<wbr>ebe796a2e87e.img</div><div>and type env I still=
+ have the environmental variables.</div><div><br></div><div>Best,</div><div=
+><br></div><div>Luca</div><div><div><br>Il giorno mercoled=C3=AC 26 luglio =
+2017 11:40:28 UTC+2, Luca Cozzuto ha scritto:<blockquote class=3D"gmail_quo=
+te" style=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-=
+left:1ex"><div dir=3D"ltr">Hi Vanessa,<div>after several attempts I found t=
+hat launching singularity exec -e IMAGE.img =C2=A0env =C2=A0is removing the=
+ unwanted environmental variables but with singularity shell -e IMAGE.img I=
+ can still see them.</div><div>I&#39;m wondering if there is something I am=
+ doing wrong...=C2=A0</div><div><br></div><div>Luca<br><br>Il giorno marted=
+=C3=AC 25 luglio 2017 16:36:41 UTC+2, vanessa ha scritto:<blockquote class=
+=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc s=
+olid;padding-left:1ex"><div dir=3D"ltr">Hi Luca,<div><br></div><div>If you =
+don&#39;t want &quot;<span style=3D"font-size:12.8px">every environmental v=
+ariables not specified in the docker image out of it.</span>&quot; do you m=
+ean removing variables from the Docker image, or ones that you have defined=
+ in another singularity image? Could you please provide a toy example of yo=
+ur issue, with the current output and the desired? Thanks!</div><div><br></=
+div><div>Best,</div><div><br></div><div>Vanessa</div></div><div><br><div cl=
+ass=3D"gmail_quote">On Tue, Jul 25, 2017 at 7:00 AM, Luca Cozzuto <span dir=
+=3D"ltr">&lt;<a rel=3D"nofollow">lu...@gmail.com</a>&gt;</span> wrote:<br><=
+blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px=
+ #ccc solid;padding-left:1ex"><div dir=3D"ltr">Hi Vanessa,<div>many thanks =
+for your answer.=C2=A0</div><div>When converting the image with &quot;impor=
+t&quot; I would like to keep every environmental variables not specified in=
+ the docker image out of it.=C2=A0</div><div>I&#39;m also having problem wi=
+th singularity shell that even with the option -e is still keeping the ENV =
+variables.=C2=A0</div><div><br></div><div>Many thanks.</div><div>Luca<span>=
+<br><br>Il giorno marted=C3=AC 25 luglio 2017 14:47:46 UTC+2, vanessa ha sc=
+ritto:</span><blockquote class=3D"gmail_quote" style=3D"margin:0;margin-lef=
+t:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><span><div dir=3D"ltr"=
+>Hi Luca,<div><br></div><div>When you convert from Docker, Singularity will=
+ automatically grab the ENV variables that you&#39;ve defined, so you shoul=
+dn&#39;t need to specify it twice. Which of the two are you wanting to not =
+use? You can easily remove the extra specification from %environment. If yo=
+u want to disable singularity adding, we don&#39;t have any kind of flag fo=
+r that (but it could be easily added).</div><div><br></div><div>Best,</div>=
+<div><br></div><div>Vanessa</div></div></span><div><br><div class=3D"gmail_=
+quote"><span>On Tue, Jul 25, 2017 at 2:50 AM, Luca Cozzuto <span dir=3D"ltr=
+">&lt;<a rel=3D"nofollow">lu...@gmail.com</a>&gt;</span> wrote:<br></span><=
+blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px=
+ #ccc solid;padding-left:1ex"><span><div dir=3D"ltr">Dear developers,<div>I=
+&#39;m trying to convert a docker image to a singularity one but I notice t=
+hat in the final image I got both the environment variable I currently have=
+ and the one I have set in the docker image with the ENV tag.</div><div>If =
+I use the -e parameter I strip any environment variable, also the one I wou=
+ld like to have it there since are required to some programs.</div><div>Can=
+ you help me in this, please?</div><div><br></div><div>Many thanks!</div><s=
+pan><font color=3D"#888888"><div><br></div><div>Luca</div><div><br></div><d=
+iv><br></div><div><br></div></font></span></div></span><span><font color=3D=
+"#888888"><span>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br></span>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</font></span></blockquote></div><span><br><br clear=3D"all"><div><br></div=
+>-- <br><div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div=
+><div><div><a value=3D"+16033210676">(603) 321-0676</a></div></div></div></=
+div>
+</span></div>
+</blockquote></div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><d=
+iv><a value=3D"+16033210676">(603) 321-0676</a></div></div></div></div>
+</div>
+</blockquote></div></div></blockquote></div></div></div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+rqszuQFeCQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><d=
+iv>(603) 321-0676</div></div></div></div>
+</div>
+</blockquote></div></div>
+------=_Part_5056_1462542624.1501072084899--
+
+------=_Part_5055_399167422.1501072084898--

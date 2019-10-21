@@ -1,0 +1,226 @@
+X-Received: by 10.31.238.4 with SMTP id m4mr2771810vkh.10.1467939215569;
+        Thu, 07 Jul 2016 17:53:35 -0700 (PDT)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.107.16.232 with SMTP id 101ls322807ioq.41.gmail; Thu, 07 Jul
+ 2016 17:53:35 -0700 (PDT)
+X-Received: by 10.98.101.198 with SMTP id z189mr5077534pfb.53.1467939215031;
+        Thu, 07 Jul 2016 17:53:35 -0700 (PDT)
+Return-Path: <vso...@gmail.com>
+Received: from fe3.lbl.gov (fe3.lbl.gov. [128.3.41.68])
+        by mx.google.com with ESMTPS id yp3si890363pac.27.2016.07.07.17.53.34
+        for <singu...@lbl.gov>
+        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Thu, 07 Jul 2016 17:53:35 -0700 (PDT)
+Received-SPF: pass (google.com: domain of vso...@gmail.com designates 209.85.213.51 as permitted sender) client-ip=209.85.213.51;
+Authentication-Results: mx.google.com;
+       dkim=pass head...@gmail.com;
+       spf=pass (google.com: domain of vso...@gmail.com designates 209.85.213.51 as permitted sender) smtp.mailfrom=vso...@gmail.com
+X-Ironport-SBRS: 3.4
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2BMAQA8+X5XhjPVVdFZA4QUfAamDYdNhjKGfyKCP4M3gSgHPBABAQEBAQEBEgEBAQgLCwkhL4RlER0BGx4DEhA3AiQBEQEFAVAHh3MBAxcFCZ1sggeBMT4xizuBaoJaBYV9ChknDVKDVCkCAQUQiWGFZQwaggILLYJaBY54ihuGC4J6hUWBao1ChliHdRIegQ81gjmBdxwyAYkVAQEB
+X-IronPort-AV: E=Sophos;i="5.28,326,1464678000"; 
+   d="scan'208,217";a="29705875"
+Received: from mail-vk0-f51.google.com ([209.85.213.51])
+  by fe3.lbl.gov with ESMTP; 07 Jul 2016 17:53:33 -0700
+Received: by mail-vk0-f51.google.com with SMTP id b192so42377221vke.0
+        for <singu...@lbl.gov>; Thu, 07 Jul 2016 17:53:33 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=mime-version:from:date:message-id:subject:to;
+        bh=zGeMGpXt9gvem0unygDt0auc/8niuNbm5kVNUbeZTu4=;
+        b=dnyqkTZayhZkOtXw46i9N5W9ETNTyh2/cFCBPvQ6mI4CR730IIhtvLt/U13mFavhz0
+         iQ4+r4MEnJU8rIzeerOyF5aHvm3gKa6QdAJW8MmIyDvQXdMab3EirXoiAxqCARLKJmwt
+         WrL0lhltv83YFzi6M72V/PVhnKfLtw4Z3aXNohGSlb+x+vryBZKFhroOvMoA4mOgYyUu
+         nAQyhZENNtm+jQoR7IX6m55NW8nuTYJn77z+jTL+eiDKTKhvO1y4iMh63CPQFKfLDOYU
+         sReBWHmE6cSUgCWfSMrS45xYghz4PMngviPB8IJD7hCm30YNa2i4S1jlTmRRDdZ5+kJ/
+         vftw==
+X-Gm-Message-State: ALyK8tJvZV4rm7yN2y2Z4RCPRuUhZsJJQZ+r7XsPzqZTwG8pdLmNezz6uZ9mV11/VLTdzpzDeBNWVQRSgiC+Lg==
+X-Received: by 10.176.64.166 with SMTP id i35mr1510716uad.105.1467939213119;
+ Thu, 07 Jul 2016 17:53:33 -0700 (PDT)
+MIME-Version: 1.0
+Received: by 10.31.230.133 with HTTP; Thu, 7 Jul 2016 17:53:13 -0700 (PDT)
+From: vanessa s <vso...@gmail.com>
+Date: Thu, 7 Jul 2016 17:53:13 -0700
+Message-ID: <CAM=pu+KGeNBaBGKbGGcrwLfa6BxsC6jM8tiaLK-e7FuyYMc00Q@mail.gmail.com>
+Subject: Singularity Container Info for Workflows - in the header?
+To: singularity@lbl.gov
+Content-Type: multipart/alternative; boundary=94eb2c1243b25995df0537153bdc
+
+--94eb2c1243b25995df0537153bdc
+Content-Type: text/plain; charset=UTF-8
+
+Hi Everyone,
+
+I want to get conversation started again about representing useful
+"runscript" type information (eg, inputs and outputs) in the header of
+singularity images. This is important to do for applications that will work
+with these containers, and ideally we can know this information without
+needing to mount the image. Let me first walk through an (ideal) example
+use case:
+
+1. user A generates singularity container(s), including python runscript(s)
+2. user A uploads container(s) to some singularity hub
+3. user A makes a workflow
+4. command line tool gets information about workflow, workflow is retrieved
+by user B, downloading images and running on some different cluster
+
+In order for this to be possible, for now, we really just need one primary
+thing:
+
+*A.* acceptable inputs/outputs are extracted from the runscript and
+available for step 3.
+
+The first questions, then for the group, are the following:
+
+- When should this information be extracted?
+- Where should it be stored?
+
+*Assumption #1: We can extract input parameters from the runscript*
+For the time being, let's assume that we have something simple in place
+that, if one exists, we can extract input arguments (both number and type)
+from the runscript itself. For example, simple bash/python templates could
+be provided to users that use standards (for example argparse with inspect
+<https://docs.python.org/3/library/inspect.html#module-inspect>) that will
+make it possible to infer possible options.
+
+
+Here are some starting ideas that I think are reasonable.
+
+*Option #1: *Extract the information during generation of the container
+(eg, when the runscript is added) and store it in the header in whatever
+format is best. This would be ideal for any later applications that use the
+container, because you can learn anything and everything without needing to
+mount the image. It would also mean that any change to the runscript would
+need to update the header.
+
+
+*Option #2: *Extract the information separately, and store it elsewhere
+(with the image). For example, we might have a separate "package"
+functionality that packages the container, runscript, and anything else
+that might be needed (eg, an extracted list of software installed) into a
+compressed file, and this compressed file can be uploaded to the
+"singularity hub." This is an ideal solution to be able to do more
+computationally intensive things (like extracting lists of things) and
+would also provide the entire runscript external to the container, so when
+it's uploaded to "singularity hub," the processing to figure out
+inputs/outputs and other relevant stuffs is done using those raw files.
+What we can't do right now is install singularity inside of a docker image,
+which means that the application I'm building (can't yet) do something like
+mount an image to do these operations on it.
+
+I see pros and cons to both. The first requires more heavy lifting on the
+singularity software side, but is more reliable in terms of keeping the
+container updated with its runscript, etc. The second offers more
+flexibility in providing different kinds of information and files to
+applications that use the containers, but we run the risk of having a
+mismatch between that data and what is in the container.
+
+*Future Use Case /Goal*
+There are two reasons for having some kind of more advanced "package"
+function. *1)* some of this more computationally intensive stuff
+(eg,extracting a list of all software in the container) is likely going to
+be desired, and it doesn't quite map well into a simple "export" use case
+that a user would want to be speedy. And *2)* to develop applications that
+do a lot better to organize, compare, and map the space of containers, we
+need to provide information about the guts of the container, much more than
+could be fit into a header, to be available to python, javascript, any
+other kind of application. In the same way that providing an API to a
+resource empowers others to build tools around/for it, providing data
+structures in some kind of package about the image guts inside (without
+needing to run singularity) will better empower others to do stuff with the
+containers.
+
+Looking forward to hearing everyone's thoughts! I'm still a little bit away
+from needing this information, but wanted to get it up for discussion so we
+have something to try soon :)
+
+Best,
+
+Vanessa
+
+
+
+-- 
+Vanessa Villamia Sochat
+Stanford University '16
+(603) 321-0676
+
+--94eb2c1243b25995df0537153bdc
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Everyone,<div><br></div><div>I want to get conversation=
+ started again about representing useful &quot;runscript&quot; type informa=
+tion (eg, inputs and outputs) in the header of singularity images. This is =
+important to do for applications that will work with these containers, and =
+ideally we can know this information without needing to mount the image. Le=
+t me first walk through=C2=A0an (ideal) example use case:</div><div><br></d=
+iv><div>1. user A generates singularity container(s), including python runs=
+cript(s)</div><div>2. user A uploads container(s) to some singularity hub</=
+div><div>3. user A makes a workflow</div><div>4. command line tool gets inf=
+ormation about workflow, workflow is retrieved by user B, downloading image=
+s and running on some different cluster</div><div><br></div><div>In order f=
+or this to be possible, for now, we really just need one primary thing:</di=
+v><div><br></div><div><b>A.</b> acceptable inputs/outputs are extracted fro=
+m the runscript and available for step 3.</div><div><b><br></b></div><div>T=
+he first questions, then for the group, are the following:<b>=C2=A0</b></di=
+v><div><br></div><div>- When should this information be extracted?</div><di=
+v>- Where should it be stored?</div><div><br></div><div><b>Assumption #1: W=
+e can extract input parameters from the runscript</b><br></div><div>For the=
+ time being, let&#39;s assume that we have something simple in place that, =
+if one exists, we can extract input arguments (both number and type) from t=
+he runscript itself. For example, simple bash/python templates could be pro=
+vided to users that use standards (for example argparse with <a href=3D"htt=
+ps://docs.python.org/3/library/inspect.html#module-inspect">inspect</a>) th=
+at will make it possible to infer possible options.<br clear=3D"all"><div><=
+br></div><div><div><br></div><div>Here are some starting ideas that I think=
+ are reasonable.</div></div><div><br></div><div><b><span style=3D"backgroun=
+d-color:rgb(255,255,0)">Option #1</span>: </b>Extract the information durin=
+g generation of the container (eg, when the runscript is added) and store i=
+t in the header in whatever format is best. This would be ideal for any lat=
+er applications that use the container, because you can learn anything and =
+everything without needing to mount the image. It would also mean that any =
+change to the runscript would need to update the header.</div><div><br></di=
+v><div><br></div><div><div><b><span style=3D"background-color:rgb(255,255,0=
+)">Option #2</span>: </b>Extract the information separately, and store it e=
+lsewhere (with the image). For example, we might have a separate &quot;pack=
+age&quot; functionality that packages the container, runscript, and anythin=
+g else that might be needed (eg, an extracted list of software installed) i=
+nto a compressed file, and this compressed file can be uploaded to the &quo=
+t;singularity hub.&quot; This is an ideal solution to be able to do more co=
+mputationally intensive things (like extracting lists of things) and would =
+also provide the entire runscript external to the container, so when it&#39=
+;s uploaded to &quot;singularity hub,&quot; the processing to figure out in=
+puts/outputs and other relevant stuffs is done using those raw files. What =
+we can&#39;t do right now is install singularity inside of a docker image, =
+which means that the application I&#39;m building (can&#39;t yet) do someth=
+ing like mount an image to do these operations on it.<br></div></div><div><=
+br></div><div>I see pros and cons to both. The first requires more heavy li=
+fting on the singularity software side, but is more reliable in terms of ke=
+eping the container updated with its runscript, etc. The second offers more=
+ flexibility in providing different kinds of information and files to appli=
+cations that use the containers, but we run the risk of having a mismatch b=
+etween that data and what is in the container.</div><div><br></div><div><di=
+v><b>Future Use Case /Goal</b></div><div>There are two reasons for having s=
+ome kind of more advanced &quot;package&quot; function. <b>1)</b> some of t=
+his more computationally intensive stuff (eg,extracting a list of all softw=
+are in the container) is likely going to be desired, and it doesn&#39;t qui=
+te map well into a simple &quot;export&quot; use case that a user would wan=
+t to be speedy. And <b>2)</b> to develop applications that do a lot better =
+to organize, compare, and map the space of containers, we need to provide i=
+nformation about the guts of the container, much more than could be fit int=
+o a header, to be available to python, javascript, any other kind of applic=
+ation. In the same way that providing an API to a resource empowers others =
+to build tools around/for it, providing data structures in some kind of pac=
+kage about the image guts inside (without needing to run singularity) will =
+better empower others to do stuff with the containers.</div></div><div><br>=
+</div><div>Looking forward to hearing everyone&#39;s thoughts! I&#39;m stil=
+l a little bit away from needing this information, but wanted to get it up =
+for discussion so we have something to try soon :)</div><div><br></div><div=
+>Best,</div><div><br></div><div>Vanessa</div><div><br></div><br clear=3D"al=
+l"><div><br></div>-- <br><div class=3D"gmail_signature" data-smartmail=3D"g=
+mail_signature">Vanessa Villamia Sochat<br>Stanford University &#39;16<br><=
+div><div><div>(603) 321-0676</div></div></div></div>
+</div></div>
+
+--94eb2c1243b25995df0537153bdc--

@@ -1,0 +1,838 @@
+X-Received: by 2002:a17:902:7c87:: with SMTP id y7-v6mr2058272pll.8.1523502062492;
+        Wed, 11 Apr 2018 20:01:02 -0700 (PDT)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.98.57.17 with SMTP id g17ls729897pfa.4.gmail; Wed, 11 Apr 2018
+ 20:01:01 -0700 (PDT)
+X-Received: by 10.98.166.196 with SMTP id r65mr6181303pfl.110.1523502061170;
+        Wed, 11 Apr 2018 20:01:01 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1523502061; cv=none;
+        d=google.com; s=arc-20160816;
+        b=sj+wK/+TrTVXJsxYwi0w7QB5NOrwr2rb5+PQBqh0b6spGmeteWvCt/tmnVJQNG+K6+
+         tfCDPGodYeEE94PfRXtO6cIJhkHXPHXU/FomgRzI8YiI4iIjicizw2wjcMELMCIaprae
+         W+XijXDAhSHXNuEh+lkIK74WUcK/3MCBEzflNYiRwA8XTAcZNxvYfZtAyZ/jMig15wYX
+         wEyG2cPyVS/5pIFmF7HRHlwIMPAziJAO9FFQLp4C57UDGUkz0fAo6jnWmddXWSUqzAll
+         ITU44OaYS2wkHP9B345MPs6w8f1/ElMdcKrga+/gfupy8Kv138ra05ouRnxR9OV2Vyjf
+         hh9g==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816;
+        h=content-language:in-reply-to:mime-version:user-agent:date
+         :message-id:from:references:to:subject:dkim-signature
+         :arc-authentication-results;
+        bh=uAhol71ZSbt/WQasmo0UBRrp860UXcClrlXTc7G0le4=;
+        b=sao27ADWVldMtJzMHAWeSHz4DXGBY70xcvxUS7CNjsliXl1cWsh8w9JcdhNbFsD0z4
+         rO2vFNB0EcF+6NQXwPA4asUh1sD7I3rzq6RciiMmJz7crbHxjivSBzU30mQ0bYTImfiD
+         RKgFGOLI43g6ETgAvmM1go1TYaC9jt7XZW2JQXMEQQFRV65fF3+zNVYkWWj2dojMBXvj
+         ExBBxwnG07fzQl/L4e4BE7KA5Np/V+gWKI1rWoCUNNGhR6/4pzWNdSViuQbp8lctCM1P
+         nJlxbdcGPHlvWB4Vk6rZTGj7H98ZGkPmxCILE5yA3xwcv38vSRBgzmIqEraxnZKfkTwB
+         4kvg==
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=pass head...@sylabs.io header.s=google header.b=A9BM7vds;
+       spf=pass (google.com: domain of dtr...@sylabs.io designates 209.85.223.176 as permitted sender) smtp.mailfrom=dtr...@sylabs.io
+Return-Path: <dtr...@sylabs.io>
+Received: from fe3.lbl.gov (fe3.lbl.gov. [128.3.41.68])
+        by mx.google.com with ESMTP id bg1-v6si2433088plb.695.2018.04.11.20.01.00
+        for <singu...@lbl.gov>;
+        Wed, 11 Apr 2018 20:01:01 -0700 (PDT)
+Received-SPF: pass (google.com: domain of dtr...@sylabs.io designates 209.85.223.176 as permitted sender) client-ip=209.85.223.176;
+Authentication-Results: mx.google.com;
+       dkim=pass head...@sylabs.io header.s=google header.b=A9BM7vds;
+       spf=pass (google.com: domain of dtr...@sylabs.io designates 209.85.223.176 as permitted sender) smtp.mailfrom=dtr...@sylabs.io
+X-Ironport-SBRS: 2.7
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: =?us-ascii?q?A2FeBACpy85af7DfVdEZAUIcAQEBBAEBC?=
+ =?us-ascii?q?gEBgxeBD4EUg1wGiAKNFIFLKYEPkmIUgWQCCxgBgRSDVgKCUSE0GAECAQEBAQE?=
+ =?us-ascii?q?BAgEBAhABAQkLCwgmJROCNQUCAxoGgS5bPAECAxoBCB0BAQwsDwkCGCABBgMCA?=
+ =?us-ascii?q?jEDAQUBCwMBDQ4FAgQBAQEBGQSDFYFKDQMCilGBG49/PIoYbYIcH4JPAQEFgWK?=
+ =?us-ascii?q?DbYInCAkBCIdegVQ/gQwigjQuhDcFAQwGAYMfglSMZop4CIgmhgsGgTOGAg8ih?=
+ =?us-ascii?q?F6NGAGCTwIEAgQFAgUPIYEEHGwucU0sDIJ9ghQMF4YpiAxREIwjAQ4XBCyBbwE?=
+ =?us-ascii?q?B?=
+X-IronPort-AV: E=Sophos;i="5.48,439,1517904000"; 
+   d="scan'208,217";a="112008293"
+Received: from mail-io0-f176.google.com ([209.85.223.176])
+  by fe3.lbl.gov with ESMTP; 11 Apr 2018 20:00:52 -0700
+Received: by mail-io0-f176.google.com with SMTP id p139so4713189iod.0
+        for <singu...@lbl.gov>; Wed, 11 Apr 2018 20:00:52 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=sylabs.io; s=google;
+        h=subject:to:references:from:message-id:date:user-agent:mime-version
+         :in-reply-to:content-language;
+        bh=uAhol71ZSbt/WQasmo0UBRrp860UXcClrlXTc7G0le4=;
+        b=A9BM7vdst4vGYMzgmijieGVaqxohPPnr4wGQsPGNy46HLIQtZsQ2VwPxzSTYNXVnK+
+         6vZ/KE8HQsrov/71Ir4/RnNGPPoLMyL5XcyhVZULw98EBn9xjQVIa0jwqsteeSSxp/5X
+         NAOOeOODgxw+GUVvGhOYkK6gd2jTlX6rvqBKZ10NB1n7+ekg5EpzvcubVFLPfER0NsUA
+         ati61mWz1deRqaNLLzijgCRY5yf9gYJwTyhZxVk5FvPaCOcg0BmXYYtCdevDqgVfol50
+         IU1kNWQwxL+Wj5/VgkxF5aHKf9JaX4odajey68RsL7/vkgeKCRV2zGfOsq30S4vDlHyC
+         Rm9w==
+X-Gm-Message-State: ALQs6tDcmjyr0WQBD/4smf3AMDUbv4y5TrF6DHXH6q8tG1hmt63nV5pL
+	oeBtkkzWXmRXmoxPyW7m7vTqEo9IMB0=
+X-Received: by 10.107.114.22 with SMTP id n22mr6863114ioc.41.1523502051614;
+        Wed, 11 Apr 2018 20:00:51 -0700 (PDT)
+Return-Path: <dtr...@sylabs.io>
+Received: from [192.168.1.11] ([47.183.194.73])
+        by smtp.gmail.com with ESMTPSA id f6sm1237798ioj.18.2018.04.11.20.00.51
+        for <singu...@lbl.gov>
+        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Wed, 11 Apr 2018 20:00:51 -0700 (PDT)
+Subject: Re: [Singularity] Singularity in Windows Subsystem for Linux
+To: singularity@lbl.gov
+References: <ea81b8f4-39c5-424f-9eb2-979f73591cd7@lbl.gov>
+From: David Trudgian <dtr...@sylabs.io>
+Message-ID: <d5ab1891-660b-9cd4-4eef-eec3da0c5318@sylabs.io>
+Date: Wed, 11 Apr 2018 22:00:50 -0500
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101
+ Thunderbird/52.7.0
+MIME-Version: 1.0
+In-Reply-To: <ea81b8f4-39c5-424f-9eb2-979f73591cd7@lbl.gov>
+Content-Type: multipart/alternative;
+ boundary="------------36A839B70D0D4D909320E9A9"
+Content-Language: en-US
+
+--------------36A839B70D0D4D909320E9A9
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
+
+Hi Steffen,
+
+Currently the Windows Subsystem for Linux does not support some of the 
+system calls that Singularity requires in order to start containers. 
+Since WSL is not running Linux applications in a Virtual Machine, but 
+instead implements a layer translating from Linux system calls to 
+Windows concepts, some low level functionality does not quite translate 
+yet. There has been a progression in new Windows 10 builds adding more 
+and more features - It's on our radar to monitor this, and look at it in 
+more depth.
+
+Cheers,
+
+Dave Trudgian
+
+On 04/11/2018 09:50 PM, Steffen Bollmann wrote:
+> Dear singularity developers,
+>
+> I wondered if there is a way of getting singularity to work in the 
+> Windows Subsystem for Linux? Installing is fine, but when trying to 
+> run something I get:
+> singularity -d shell CAIsr-qsm-v1.2.3-latest.simg
+> Enabling debugging
+> Ending argument loop
+> Singularity version: 2.4.5-dist
+> Exec'ing: /usr/lib/x86_64-linux-gnu/singularity/cli/shell.exec
+> Evaluating args: 'CAIsr-qsm-v1.2.3-latest.simg'
+> VERBOSE [U=0,P=45] message_init()                            Set 
+> messagelevel to: 5
+> DEBUG   [U=0,P=45] fd_cleanup()                              Cleanup 
+> file descriptor table
+> VERBOSE [U=0,P=45] singularity_config_parse()                
+> Initialize configuration file: /etc/singularity/singularity.conf
+> DEBUG   [U=0,P=45] singularity_config_parse()                Starting 
+> parse of configuration file /etc/singularity/singularity.conf
+> VERBOSE [U=0,P=45] singularity_config_parse()                Got 
+> config key allow setuid = 'yes'
+> VERBOSE [U=0,P=45] singularity_config_parse()                Got 
+> config key max loop devices = '256'
+> VERBOSE [U=0,P=45] singularity_config_parse()                Got 
+> config key allow pid ns = 'yes'
+> VERBOSE [U=0,P=45] singularity_config_parse()                Got 
+> config key config passwd = 'yes'
+> VERBOSE [U=0,P=45] singularity_config_parse()                Got 
+> config key config group = 'yes'
+> VERBOSE [U=0,P=45] singularity_config_parse()                Got 
+> config key config resolv_conf = 'yes'
+> VERBOSE [U=0,P=45] singularity_config_parse()                Got 
+> config key mount proc = 'yes'
+> VERBOSE [U=0,P=45] singularity_config_parse()                Got 
+> config key mount sys = 'yes'
+> VERBOSE [U=0,P=45] singularity_config_parse()                Got 
+> config key mount dev = 'yes'
+> VERBOSE [U=0,P=45] singularity_config_parse()                Got 
+> config key mount devpts = 'yes'
+> VERBOSE [U=0,P=45] singularity_config_parse()                Got 
+> config key mount home = 'yes'
+> VERBOSE [U=0,P=45] singularity_config_parse()                Got 
+> config key mount tmp = 'yes'
+> VERBOSE [U=0,P=45] singularity_config_parse()                Got 
+> config key mount hostfs = 'no'
+> VERBOSE [U=0,P=45] singularity_config_parse()                Got 
+> config key bind path = '/etc/localtime'
+> VERBOSE [U=0,P=45] singularity_config_parse()                Got 
+> config key bind path = '/etc/hosts'
+> VERBOSE [U=0,P=45] singularity_config_parse()                Got 
+> config key user bind control = 'yes'
+> VERBOSE [U=0,P=45] singularity_config_parse()                Got 
+> config key enable overlay = 'try'
+> VERBOSE [U=0,P=45] singularity_config_parse()                Got 
+> config key mount slave = 'yes'
+> VERBOSE [U=0,P=45] singularity_config_parse()                Got 
+> config key sessiondir max size = '16'
+> VERBOSE [U=0,P=45] singularity_config_parse()                Got 
+> config key allow container squashfs = 'yes'
+> VERBOSE [U=0,P=45] singularity_config_parse()                Got 
+> config key allow container extfs = 'yes'
+> VERBOSE [U=0,P=45] singularity_config_parse()                Got 
+> config key allow container dir = 'yes'
+> DEBUG   [U=0,P=45] singularity_config_parse()                Finished 
+> parsing configuration file '/etc/singularity/singularity.conf'
+> VERBOSE [U=0,P=45] singularity_registry_init()               
+> Initializing Singularity Registry
+> VERBOSE [U=0,P=45] singularity_registry_set()                Adding 
+> value to registry: 'LIBEXECDIR' = '/usr/lib/x86_64-linux-gnu'
+> DEBUG   [U=0,P=45] singularity_registry_set()                Returning 
+> singularity_registry_set(libexecdir, /usr/lib/x86_64-linux-gnu) = 0
+> VERBOSE [U=0,P=45] singularity_registry_set()                Adding 
+> value to registry: 'COMMAND' = 'shell'
+> DEBUG   [U=0,P=45] singularity_registry_set()                Returning 
+> singularity_registry_set(COMMAND, shell) = 0
+> VERBOSE [U=0,P=45] singularity_registry_set()                Adding 
+> value to registry: 'MESSAGELEVEL' = '5'
+> DEBUG   [U=0,P=45] singularity_registry_set()                Returning 
+> singularity_registry_set(MESSAGELEVEL, 5) = 0
+> VERBOSE [U=0,P=45] singularity_registry_set()                Adding 
+> value to registry: 'VERSION' = '2.4.5-dist'
+> DEBUG   [U=0,P=45] singularity_registry_set()                Returning 
+> singularity_registry_set(version, 2.4.5-dist) = 0
+> VERBOSE [U=0,P=45] singularity_registry_set()                Adding 
+> value to registry: 'LOCALSTATEDIR' = '/var/lib'
+> DEBUG   [U=0,P=45] singularity_registry_set()                Returning 
+> singularity_registry_set(localstatedir, /var/lib) = 0
+> VERBOSE [U=0,P=45] singularity_registry_set()                Adding 
+> value to registry: 'SYSCONFDIR' = '/etc'
+> DEBUG   [U=0,P=45] singularity_registry_set()                Returning 
+> singularity_registry_set(sysconfdir, /etc) = 0
+> VERBOSE [U=0,P=45] singularity_registry_set()                Adding 
+> value to registry: 'BINDIR' = '/usr/bin'
+> DEBUG   [U=0,P=45] singularity_registry_set()                Returning 
+> singularity_registry_set(bindir, /usr/bin) = 0
+> VERBOSE [U=0,P=45] singularity_registry_set()                Adding 
+> value to registry: 'IMAGE' = 'CAIsr-qsm-v1.2.3-latest.simg'
+> DEBUG   [U=0,P=45] singularity_registry_set()                Returning 
+> singularity_registry_set(IMAGE, CAIsr-qsm-v1.2.3-latest.simg) = 0
+> DEBUG   [U=0,P=45] singularity_registry_get()                Returning 
+> NULL on 'HOME'
+> DEBUG   [U=0,P=45] singularity_registry_get()                Returning 
+> NULL on 'TARGET_UID'
+> DEBUG   [U=0,P=45] singularity_registry_get()                Returning 
+> NULL on 'TARGET_GID'
+> DEBUG   [U=0,P=45] singularity_priv_init()                   
+> Initializing user info
+> DEBUG   [U=0,P=45] singularity_priv_init()                   Set the 
+> calling user's username to: uqsbollm
+> DEBUG   [U=0,P=45] singularity_priv_init()                   Marking 
+> uinfo structure as ready
+> DEBUG   [U=0,P=45] singularity_priv_init()                   Obtaining 
+> home directory
+> VERBOSE [U=0,P=45] singularity_priv_init()                   Set home 
+> (via getpwuid()) to: /home/uqsbollm
+> VERBOSE [U=0,P=45] singularity_suid_init()                   Running 
+> SUID program workflow
+> VERBOSE [U=0,P=45] singularity_suid_init()                   Checking 
+> program has appropriate permissions
+> VERBOSE [U=0,P=45] singularity_suid_init()                   Checking 
+> configuration file is properly owned by root
+> VERBOSE [U=0,P=45] singularity_suid_init()                   Checking 
+> if singularity.conf allows us to run as suid
+> DEBUG   [U=0,P=45] singularity_config_get_bool_char_impl()   Called 
+> singularity_config_get_bool(allow setuid, yes)
+> DEBUG   [U=0,P=45] singularity_config_get_value_impl()       Returning 
+> configuration value allow setuid='yes'
+> DEBUG   [U=0,P=45] singularity_config_get_bool_char_impl()   Return 
+> singularity_config_get_bool(allow setuid, yes) = 1
+> DEBUG   [U=0,P=45] singularity_registry_get()                Returning 
+> NULL on 'NOSUID'
+> VERBOSE [U=0,P=45] singularity_priv_userns()                 Invoking 
+> the user namespace
+> DEBUG   [U=0,P=45] singularity_config_get_bool_char_impl()   Called 
+> singularity_config_get_bool(allow user ns, yes)
+> DEBUG   [U=0,P=45] singularity_config_get_value_impl()       No 
+> configuration entry found for 'allow user ns'; returning default value 
+> 'yes'
+> DEBUG   [U=0,P=45] singularity_config_get_bool_char_impl()   Return 
+> singularity_config_get_bool(allow user ns, yes) = 1
+> VERBOSE [U=0,P=45] singularity_priv_userns()                 Not 
+> virtualizing USER namespace: running as SUID
+> DEBUG   [U=0,P=45] singularity_priv_userns()                 Returning 
+> singularity_priv_init(void)
+> DEBUG   [U=0,P=45] singularity_priv_drop()                   Dropping 
+> privileges to UID=1000, GID=1000 (12 supplementary GIDs)
+> DEBUG   [U=0,P=45] singularity_priv_drop()                   Restoring 
+> supplementary groups
+> DEBUG   [U=1000,P=45] singularity_priv_drop()                   
+> Confirming we have correct UID/GID
+> DEBUG   [U=1000,P=45] singularity_config_get_value_multi_impl() No 
+> configuration entry found for 'autofs bug path'; returning default 
+> value ''
+> VERBOSE [U=1000,P=45] singularity_runtime_autofs()              No 
+> autofs bug path in configuration, skipping
+> DEBUG   [U=1000,P=45] singularity_registry_get()                
+> Returning NULL on 'DAEMON_START'
+> DEBUG   [U=1000,P=45] singularity_registry_get()                
+> Returning NULL on 'DAEMON_JOIN'
+> DEBUG   [U=1000,P=45] singularity_daemon_init()                 Not 
+> joining a daemon, daemon join not set
+> DEBUG   [U=1000,P=45] singularity_registry_get()                
+> Returning NULL on 'WRITABLE'
+> VERBOSE [U=1000,P=45] main()                                    
+> Instantiating read only container image object
+> DEBUG   [U=1000,P=45] singularity_registry_get()                
+> Returning value from registry: 'IMAGE' = 'CAIsr-qsm-v1.2.3-latest.simg'
+> DEBUG   [U=1000,P=45] singularity_image_init()                  
+> Calling image_init for each file system module
+> DEBUG   [U=1000,P=45] singularity_image_dir_init()              
+> Opening file descriptor to directory: 
+> /home/uqsbollm/CAIsr-qsm-v1.2.3-latest.simg
+> DEBUG   [U=1000,P=45] singularity_image_dir_init()              This 
+> is not a directory based image
+> DEBUG   [U=1000,P=45] singularity_image_squashfs_init()         
+> Checking if writable image requested
+> DEBUG   [U=1000,P=45] singularity_image_squashfs_init()         
+> Opening file descriptor to image: 
+> /home/uqsbollm/CAIsr-qsm-v1.2.3-latest.simg
+> VERBOSE [U=1000,P=45] singularity_image_squashfs_init()         
+> Checking that file pointer is a Singularity image
+> DEBUG   [U=1000,P=45] singularity_image_squashfs_init()         
+> Checking for magic in the top of the file
+> VERBOSE [U=1000,P=45] singularity_image_squashfs_init()         File 
+> is a valid SquashFS image
+> DEBUG   [U=1000,P=45] singularity_image_init()                  got 
+> image_init type for squashfs
+> DEBUG   [U=1000,P=45] singularity_config_get_bool_char_impl()   Called 
+> singularity_config_get_bool(allow container squashfs, yes)
+> DEBUG   [U=1000,P=45] singularity_config_get_value_impl()       
+> Returning configuration value allow container squashfs='yes'
+> DEBUG   [U=1000,P=45] singularity_config_get_bool_char_impl()   Return 
+> singularity_config_get_bool(allow container squashfs, yes) = 1
+> DEBUG   [U=1000,P=45] singularity_config_get_value_impl()       No 
+> configuration entry found for 'limit container paths'; returning 
+> default value 'NULL'
+> DEBUG   [U=1000,P=45] singularity_config_get_value_impl()       No 
+> configuration entry found for 'limit container owners'; returning 
+> default value 'NULL'
+> DEBUG   [U=1000,P=45] singularity_registry_get()                
+> Returning NULL on 'DAEMON_JOIN'
+> DEBUG   [U=1000,P=45] singularity_registry_get()                
+> Returning NULL on 'CLEANUPDIR'
+> VERBOSE [U=1000,P=45] singularity_registry_set()                Adding 
+> value to registry: 'CLEANUPD_FD' = '-1'
+> DEBUG   [U=1000,P=45] singularity_registry_set()                
+> Returning singularity_registry_set(CLEANUPD_FD, -1) = 0
+> DEBUG   [U=1000,P=45] singularity_registry_get()                
+> Returning NULL on 'DAEMON_JOIN'
+> DEBUG   [U=1000,P=45] singularity_registry_get()                
+> Returning NULL on 'NOSESSIONCLEANUP'
+> DEBUG   [U=1000,P=45] singularity_registry_get()                
+> Returning NULL on 'NOCLEANUP'
+> DEBUG   [U=1000,P=45] singularity_cleanupd()                    Not 
+> running a cleanup thread, no 'SINGULARITY_CLEANUPDIR' defined
+> DEBUG   [U=1000,P=45] singularity_registry_get()                
+> Returning NULL on 'DAEMON_JOIN'
+> DEBUG   [U=1000,P=45] singularity_runtime_ns()                  
+> Calling: _singularity_runtime_ns_ipc()
+> DEBUG   [U=1000,P=45] singularity_config_get_bool_char_impl()   Called 
+> singularity_config_get_bool(allow ipc ns, yes)
+> DEBUG   [U=1000,P=45] singularity_config_get_value_impl()       No 
+> configuration entry found for 'allow ipc ns'; returning default value 
+> 'yes'
+> DEBUG   [U=1000,P=45] singularity_config_get_bool_char_impl()   Return 
+> singularity_config_get_bool(allow ipc ns, yes) = 1
+> DEBUG   [U=1000,P=45] singularity_registry_get()                
+> Returning NULL on 'UNSHARE_IPC'
+> VERBOSE [U=1000,P=45] singularity_runtime_ns_ipc()              Not 
+> virtualizing IPC namespace on user request
+> DEBUG   [U=1000,P=45] singularity_runtime_ns()                  
+> Calling: _singularity_runtime_ns_pid()
+> DEBUG   [U=1000,P=45] singularity_config_get_bool_char_impl()   Called 
+> singularity_config_get_bool(allow pid ns, yes)
+> DEBUG   [U=1000,P=45] singularity_config_get_value_impl()       
+> Returning configuration value allow pid ns='yes'
+> DEBUG   [U=1000,P=45] singularity_config_get_bool_char_impl()   Return 
+> singularity_config_get_bool(allow pid ns, yes) = 1
+> DEBUG   [U=1000,P=45] singularity_registry_get()                
+> Returning NULL on 'UNSHARE_PID'
+> VERBOSE [U=1000,P=45] singularity_runtime_ns_pid()              Not 
+> virtualizing PID namespace on user request
+> DEBUG   [U=1000,P=45] singularity_runtime_ns()                  
+> Calling: _singularity_runtime_ns_net()
+> DEBUG   [U=1000,P=45] singularity_registry_get()                
+> Returning NULL on 'UNSHARE_NET'
+> VERBOSE [U=1000,P=45] singularity_runtime_ns_net()              Not 
+> virtualizing network namespace on user request
+> DEBUG   [U=1000,P=45] singularity_runtime_ns()                  
+> Calling: _singularity_runtime_ns_mnt()
+> DEBUG   [U=1000,P=45] singularity_config_get_bool_char_impl()   Called 
+> singularity_config_get_bool(mount slave, yes)
+> DEBUG   [U=1000,P=45] singularity_config_get_value_impl()       
+> Returning configuration value mount slave='yes'
+> DEBUG   [U=1000,P=45] singularity_config_get_bool_char_impl()   Return 
+> singularity_config_get_bool(mount slave, yes) = 1
+> DEBUG   [U=1000,P=45] singularity_priv_escalate()               
+> Temporarily escalating privileges (U=1000)
+> DEBUG   [U=0,P=45] singularity_priv_escalate()               Clearing 
+> supplementary GIDs.
+> DEBUG   [U=0,P=45] singularity_runtime_ns_mnt()              
+> Virtualizing FS namespace
+> DEBUG   [U=0,P=45] singularity_runtime_ns_mnt()              
+> Virtualizing mount namespace
+> DEBUG   [U=0,P=45] singularity_priv_drop()                   Dropping 
+> privileges to UID=1000, GID=1000 (12 supplementary GIDs)
+> DEBUG   [U=0,P=45] singularity_priv_drop()                   Restoring 
+> supplementary groups
+> DEBUG   [U=1000,P=45] singularity_priv_drop()                   
+> Confirming we have correct UID/GID
+> DEBUG   [U=1000,P=45] singularity_runtime_ns_mnt()              Making 
+> mounts slave
+> ERROR   [U=1000,P=45] singularity_runtime_ns_mnt()              Could 
+> not make mountspaces slave: Invalid argument
+> ABORT   [U=1000,P=45] singularity_runtime_ns_mnt()              Retval 
+> = 255
+>
+> Thank you for your thoughts on this
+> Best
+> Steffen
+> -- 
+> You received this message because you are subscribed to the Google 
+> Groups "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send 
+> an email to singu...@lbl.gov 
+> <mailto:singu...@lbl.gov>.
+
+
+--------------36A839B70D0D4D909320E9A9
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: 8bit
+
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  </head>
+  <body text="#000000" bgcolor="#FFFFFF">
+    <p>Hi Steffen,</p>
+    <p>Currently the Windows Subsystem for Linux does not support some
+      of the system calls that Singularity requires in order to start
+      containers. Since WSL is not running Linux applications in a
+      Virtual Machine, but instead implements a layer translating from
+      Linux system calls to Windows concepts, some low level
+      functionality does not quite translate yet. There has been a
+      progression in new Windows 10 builds adding more and more features
+      - It's on our radar to monitor this, and look at it in more depth.</p>
+    <p>Cheers,</p>
+    Dave Trudgian<br>
+    <br>
+    <div class="moz-cite-prefix">On 04/11/2018 09:50 PM, Steffen
+      Bollmann wrote:<br>
+    </div>
+    <blockquote type="cite"
+      cite="mid:ea81b8f4-39c5-42...@lbl.gov">
+      <div dir="ltr">Dear singularity developers,<br>
+        <br>
+        I wondered if there is a way of getting singularity to work in
+        the Windows Subsystem for Linux? Installing is fine, but when
+        trying to run something I get:<br>
+        singularity -d shell CAIsr-qsm-v1.2.3-latest.simg<br>
+        Enabling debugging<br>
+        Ending argument loop<br>
+        Singularity version: 2.4.5-dist<br>
+        Exec'ing: /usr/lib/x86_64-linux-gnu/singularity/cli/shell.exec<br>
+        Evaluating args: 'CAIsr-qsm-v1.2.3-latest.simg'<br>
+        VERBOSE [U=0,P=45]        
+        message_init()                            Set messagelevel to: 5<br>
+        DEBUG   [U=0,P=45]        
+        fd_cleanup()                              Cleanup file
+        descriptor table<br>
+        VERBOSE [U=0,P=45]        
+        singularity_config_parse()                Initialize
+        configuration file: /etc/singularity/singularity.conf<br>
+        DEBUG   [U=0,P=45]        
+        singularity_config_parse()                Starting parse of
+        configuration file /etc/singularity/singularity.conf<br>
+        VERBOSE [U=0,P=45]        
+        singularity_config_parse()                Got config key allow
+        setuid = 'yes'<br>
+        VERBOSE [U=0,P=45]        
+        singularity_config_parse()                Got config key max
+        loop devices = '256'<br>
+        VERBOSE [U=0,P=45]        
+        singularity_config_parse()                Got config key allow
+        pid ns = 'yes'<br>
+        VERBOSE [U=0,P=45]        
+        singularity_config_parse()                Got config key config
+        passwd = 'yes'<br>
+        VERBOSE [U=0,P=45]        
+        singularity_config_parse()                Got config key config
+        group = 'yes'<br>
+        VERBOSE [U=0,P=45]        
+        singularity_config_parse()                Got config key config
+        resolv_conf = 'yes'<br>
+        VERBOSE [U=0,P=45]        
+        singularity_config_parse()                Got config key mount
+        proc = 'yes'<br>
+        VERBOSE [U=0,P=45]        
+        singularity_config_parse()                Got config key mount
+        sys = 'yes'<br>
+        VERBOSE [U=0,P=45]        
+        singularity_config_parse()                Got config key mount
+        dev = 'yes'<br>
+        VERBOSE [U=0,P=45]        
+        singularity_config_parse()                Got config key mount
+        devpts = 'yes'<br>
+        VERBOSE [U=0,P=45]        
+        singularity_config_parse()                Got config key mount
+        home = 'yes'<br>
+        VERBOSE [U=0,P=45]        
+        singularity_config_parse()                Got config key mount
+        tmp = 'yes'<br>
+        VERBOSE [U=0,P=45]        
+        singularity_config_parse()                Got config key mount
+        hostfs = 'no'<br>
+        VERBOSE [U=0,P=45]        
+        singularity_config_parse()                Got config key bind
+        path = '/etc/localtime'<br>
+        VERBOSE [U=0,P=45]        
+        singularity_config_parse()                Got config key bind
+        path = '/etc/hosts'<br>
+        VERBOSE [U=0,P=45]        
+        singularity_config_parse()                Got config key user
+        bind control = 'yes'<br>
+        VERBOSE [U=0,P=45]        
+        singularity_config_parse()                Got config key enable
+        overlay = 'try'<br>
+        VERBOSE [U=0,P=45]        
+        singularity_config_parse()                Got config key mount
+        slave = 'yes'<br>
+        VERBOSE [U=0,P=45]        
+        singularity_config_parse()                Got config key
+        sessiondir max size = '16'<br>
+        VERBOSE [U=0,P=45]        
+        singularity_config_parse()                Got config key allow
+        container squashfs = 'yes'<br>
+        VERBOSE [U=0,P=45]        
+        singularity_config_parse()                Got config key allow
+        container extfs = 'yes'<br>
+        VERBOSE [U=0,P=45]        
+        singularity_config_parse()                Got config key allow
+        container dir = 'yes'<br>
+        DEBUG   [U=0,P=45]        
+        singularity_config_parse()                Finished parsing
+        configuration file '/etc/singularity/singularity.conf'<br>
+        VERBOSE [U=0,P=45]        
+        singularity_registry_init()               Initializing
+        Singularity Registry<br>
+        VERBOSE [U=0,P=45]        
+        singularity_registry_set()                Adding value to
+        registry: 'LIBEXECDIR' = '/usr/lib/x86_64-linux-gnu'<br>
+        DEBUG   [U=0,P=45]        
+        singularity_registry_set()                Returning
+        singularity_registry_set(libexecdir, /usr/lib/x86_64-linux-gnu)
+        = 0<br>
+        VERBOSE [U=0,P=45]        
+        singularity_registry_set()                Adding value to
+        registry: 'COMMAND' = 'shell'<br>
+        DEBUG   [U=0,P=45]        
+        singularity_registry_set()                Returning
+        singularity_registry_set(COMMAND, shell) = 0<br>
+        VERBOSE [U=0,P=45]        
+        singularity_registry_set()                Adding value to
+        registry: 'MESSAGELEVEL' = '5'<br>
+        DEBUG   [U=0,P=45]        
+        singularity_registry_set()                Returning
+        singularity_registry_set(MESSAGELEVEL, 5) = 0<br>
+        VERBOSE [U=0,P=45]        
+        singularity_registry_set()                Adding value to
+        registry: 'VERSION' = '2.4.5-dist'<br>
+        DEBUG   [U=0,P=45]        
+        singularity_registry_set()                Returning
+        singularity_registry_set(version, 2.4.5-dist) = 0<br>
+        VERBOSE [U=0,P=45]        
+        singularity_registry_set()                Adding value to
+        registry: 'LOCALSTATEDIR' = '/var/lib'<br>
+        DEBUG   [U=0,P=45]        
+        singularity_registry_set()                Returning
+        singularity_registry_set(localstatedir, /var/lib) = 0<br>
+        VERBOSE [U=0,P=45]        
+        singularity_registry_set()                Adding value to
+        registry: 'SYSCONFDIR' = '/etc'<br>
+        DEBUG   [U=0,P=45]        
+        singularity_registry_set()                Returning
+        singularity_registry_set(sysconfdir, /etc) = 0<br>
+        VERBOSE [U=0,P=45]        
+        singularity_registry_set()                Adding value to
+        registry: 'BINDIR' = '/usr/bin'<br>
+        DEBUG   [U=0,P=45]        
+        singularity_registry_set()                Returning
+        singularity_registry_set(bindir, /usr/bin) = 0<br>
+        VERBOSE [U=0,P=45]        
+        singularity_registry_set()                Adding value to
+        registry: 'IMAGE' = 'CAIsr-qsm-v1.2.3-latest.simg'<br>
+        DEBUG   [U=0,P=45]        
+        singularity_registry_set()                Returning
+        singularity_registry_set(IMAGE, CAIsr-qsm-v1.2.3-latest.simg) =
+        0<br>
+        DEBUG   [U=0,P=45]        
+        singularity_registry_get()                Returning NULL on
+        'HOME'<br>
+        DEBUG   [U=0,P=45]        
+        singularity_registry_get()                Returning NULL on
+        'TARGET_UID'<br>
+        DEBUG   [U=0,P=45]        
+        singularity_registry_get()                Returning NULL on
+        'TARGET_GID'<br>
+        DEBUG   [U=0,P=45]        
+        singularity_priv_init()                   Initializing user info<br>
+        DEBUG   [U=0,P=45]        
+        singularity_priv_init()                   Set the calling user's
+        username to: uqsbollm<br>
+        DEBUG   [U=0,P=45]        
+        singularity_priv_init()                   Marking uinfo
+        structure as ready<br>
+        DEBUG   [U=0,P=45]        
+        singularity_priv_init()                   Obtaining home
+        directory<br>
+        VERBOSE [U=0,P=45]        
+        singularity_priv_init()                   Set home (via
+        getpwuid()) to: /home/uqsbollm<br>
+        VERBOSE [U=0,P=45]        
+        singularity_suid_init()                   Running SUID program
+        workflow<br>
+        VERBOSE [U=0,P=45]        
+        singularity_suid_init()                   Checking program has
+        appropriate permissions<br>
+        VERBOSE [U=0,P=45]        
+        singularity_suid_init()                   Checking configuration
+        file is properly owned by root<br>
+        VERBOSE [U=0,P=45]        
+        singularity_suid_init()                   Checking if
+        singularity.conf allows us to run as suid<br>
+        DEBUG   [U=0,P=45]        
+        singularity_config_get_bool_char_impl()   Called
+        singularity_config_get_bool(allow setuid, yes)<br>
+        DEBUG   [U=0,P=45]        
+        singularity_config_get_value_impl()       Returning
+        configuration value allow setuid='yes'<br>
+        DEBUG   [U=0,P=45]        
+        singularity_config_get_bool_char_impl()   Return
+        singularity_config_get_bool(allow setuid, yes) = 1<br>
+        DEBUG   [U=0,P=45]        
+        singularity_registry_get()                Returning NULL on
+        'NOSUID'<br>
+        VERBOSE [U=0,P=45]        
+        singularity_priv_userns()                 Invoking the user
+        namespace<br>
+        DEBUG   [U=0,P=45]        
+        singularity_config_get_bool_char_impl()   Called
+        singularity_config_get_bool(allow user ns, yes)<br>
+        DEBUG   [U=0,P=45]        
+        singularity_config_get_value_impl()       No configuration entry
+        found for 'allow user ns'; returning default value 'yes'<br>
+        DEBUG   [U=0,P=45]        
+        singularity_config_get_bool_char_impl()   Return
+        singularity_config_get_bool(allow user ns, yes) = 1<br>
+        VERBOSE [U=0,P=45]        
+        singularity_priv_userns()                 Not virtualizing USER
+        namespace: running as SUID<br>
+        DEBUG   [U=0,P=45]        
+        singularity_priv_userns()                 Returning
+        singularity_priv_init(void)<br>
+        DEBUG   [U=0,P=45]        
+        singularity_priv_drop()                   Dropping privileges to
+        UID=1000, GID=1000 (12 supplementary GIDs)<br>
+        DEBUG   [U=0,P=45]        
+        singularity_priv_drop()                   Restoring
+        supplementary groups<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_priv_drop()                   Confirming we have
+        correct UID/GID<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_config_get_value_multi_impl() No configuration entry
+        found for 'autofs bug path'; returning default value ''<br>
+        VERBOSE [U=1000,P=45]     
+        singularity_runtime_autofs()              No autofs bug path in
+        configuration, skipping<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_registry_get()                Returning NULL on
+        'DAEMON_START'<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_registry_get()                Returning NULL on
+        'DAEMON_JOIN'<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_daemon_init()                 Not joining a daemon,
+        daemon join not set<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_registry_get()                Returning NULL on
+        'WRITABLE'<br>
+        VERBOSE [U=1000,P=45]     
+        main()                                    Instantiating read
+        only container image object<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_registry_get()                Returning value from
+        registry: 'IMAGE' = 'CAIsr-qsm-v1.2.3-latest.simg'<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_image_init()                  Calling image_init for
+        each file system module<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_image_dir_init()              Opening file
+        descriptor to directory:
+        /home/uqsbollm/CAIsr-qsm-v1.2.3-latest.simg<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_image_dir_init()              This is not a
+        directory based image<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_image_squashfs_init()         Checking if writable
+        image requested<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_image_squashfs_init()         Opening file
+        descriptor to image: /home/uqsbollm/CAIsr-qsm-v1.2.3-latest.simg<br>
+        VERBOSE [U=1000,P=45]     
+        singularity_image_squashfs_init()         Checking that file
+        pointer is a Singularity image<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_image_squashfs_init()         Checking for magic in
+        the top of the file<br>
+        VERBOSE [U=1000,P=45]     
+        singularity_image_squashfs_init()         File is a valid
+        SquashFS image<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_image_init()                  got image_init type
+        for squashfs<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_config_get_bool_char_impl()   Called
+        singularity_config_get_bool(allow container squashfs, yes)<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_config_get_value_impl()       Returning
+        configuration value allow container squashfs='yes'<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_config_get_bool_char_impl()   Return
+        singularity_config_get_bool(allow container squashfs, yes) = 1<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_config_get_value_impl()       No configuration entry
+        found for 'limit container paths'; returning default value
+        'NULL'<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_config_get_value_impl()       No configuration entry
+        found for 'limit container owners'; returning default value
+        'NULL'<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_registry_get()                Returning NULL on
+        'DAEMON_JOIN'<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_registry_get()                Returning NULL on
+        'CLEANUPDIR'<br>
+        VERBOSE [U=1000,P=45]     
+        singularity_registry_set()                Adding value to
+        registry: 'CLEANUPD_FD' = '-1'<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_registry_set()                Returning
+        singularity_registry_set(CLEANUPD_FD, -1) = 0<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_registry_get()                Returning NULL on
+        'DAEMON_JOIN'<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_registry_get()                Returning NULL on
+        'NOSESSIONCLEANUP'<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_registry_get()                Returning NULL on
+        'NOCLEANUP'<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_cleanupd()                    Not running a cleanup
+        thread, no 'SINGULARITY_CLEANUPDIR' defined<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_registry_get()                Returning NULL on
+        'DAEMON_JOIN'<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_runtime_ns()                  Calling:
+        _singularity_runtime_ns_ipc()<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_config_get_bool_char_impl()   Called
+        singularity_config_get_bool(allow ipc ns, yes)<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_config_get_value_impl()       No configuration entry
+        found for 'allow ipc ns'; returning default value 'yes'<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_config_get_bool_char_impl()   Return
+        singularity_config_get_bool(allow ipc ns, yes) = 1<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_registry_get()                Returning NULL on
+        'UNSHARE_IPC'<br>
+        VERBOSE [U=1000,P=45]     
+        singularity_runtime_ns_ipc()              Not virtualizing IPC
+        namespace on user request<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_runtime_ns()                  Calling:
+        _singularity_runtime_ns_pid()<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_config_get_bool_char_impl()   Called
+        singularity_config_get_bool(allow pid ns, yes)<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_config_get_value_impl()       Returning
+        configuration value allow pid ns='yes'<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_config_get_bool_char_impl()   Return
+        singularity_config_get_bool(allow pid ns, yes) = 1<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_registry_get()                Returning NULL on
+        'UNSHARE_PID'<br>
+        VERBOSE [U=1000,P=45]     
+        singularity_runtime_ns_pid()              Not virtualizing PID
+        namespace on user request<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_runtime_ns()                  Calling:
+        _singularity_runtime_ns_net()<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_registry_get()                Returning NULL on
+        'UNSHARE_NET'<br>
+        VERBOSE [U=1000,P=45]     
+        singularity_runtime_ns_net()              Not virtualizing
+        network namespace on user request<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_runtime_ns()                  Calling:
+        _singularity_runtime_ns_mnt()<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_config_get_bool_char_impl()   Called
+        singularity_config_get_bool(mount slave, yes)<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_config_get_value_impl()       Returning
+        configuration value mount slave='yes'<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_config_get_bool_char_impl()   Return
+        singularity_config_get_bool(mount slave, yes) = 1<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_priv_escalate()               Temporarily escalating
+        privileges (U=1000)<br>
+        DEBUG   [U=0,P=45]        
+        singularity_priv_escalate()               Clearing supplementary
+        GIDs.<br>
+        DEBUG   [U=0,P=45]        
+        singularity_runtime_ns_mnt()              Virtualizing FS
+        namespace<br>
+        DEBUG   [U=0,P=45]        
+        singularity_runtime_ns_mnt()              Virtualizing mount
+        namespace<br>
+        DEBUG   [U=0,P=45]        
+        singularity_priv_drop()                   Dropping privileges to
+        UID=1000, GID=1000 (12 supplementary GIDs)<br>
+        DEBUG   [U=0,P=45]        
+        singularity_priv_drop()                   Restoring
+        supplementary groups<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_priv_drop()                   Confirming we have
+        correct UID/GID<br>
+        DEBUG   [U=1000,P=45]     
+        singularity_runtime_ns_mnt()              Making mounts slave<br>
+        ERROR   [U=1000,P=45]     
+        singularity_runtime_ns_mnt()              Could not make
+        mountspaces slave: Invalid argument<br>
+        ABORT   [U=1000,P=45]     
+        singularity_runtime_ns_mnt()              Retval = 255<br>
+        <br>
+        Thank you for your thoughts on this<br>
+        Best<br>
+        Steffen<br>
+      </div>
+      -- <br>
+      You received this message because you are subscribed to the Google
+      Groups "singularity" group.<br>
+      To unsubscribe from this group and stop receiving emails from it,
+      send an email to <a href="mailto:singu...@lbl.gov"
+        moz-do-not-send="true">singu...@lbl.gov</a>.<br>
+    </blockquote>
+    <br>
+  </body>
+</html>
+
+--------------36A839B70D0D4D909320E9A9--

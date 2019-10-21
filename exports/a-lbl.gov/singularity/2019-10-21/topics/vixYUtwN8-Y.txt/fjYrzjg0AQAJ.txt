@@ -1,0 +1,198 @@
+Date: Thu, 14 Jul 2016 10:56:17 -0700 (PDT)
+From: Steve Mehlberg <sgmeh...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <03a19fb0-27ce-43c4-9400-8e58cf726500@lbl.gov>
+Subject: Image is locked by another process
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_826_1269415664.1468518977738"
+
+------=_Part_826_1269415664.1468518977738
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_827_1353787382.1468518977739"
+
+------=_Part_827_1353787382.1468518977739
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Running mpirun tests, when an abort occurs, my image ends up locked.  Is 
+there a way to clear the lock without rebooting?  I looked for processes 
+that I could kill, but didn't see anything worthy.
+
+I'm using singularity v2.1 on Centos 7.2 (both host and container).
+
+Regards,
+
+Steve
+
+[root@mach0 ~]# mpirun --allow-run-as-root -n 2 -H mach1,mach2 singularity 
+exec c7 /usr/bin/ring
+Process 0 sending 10 to 1, tag 201 (2 processes in ring)
+Process 0 sent to 1
+Process 0 decremented value: 9
+Process 0 decremented value: 8
+Process 0 decremented value: 7
+Process 0 decremented value: 6
+Process 0 decremented value: 5
+Process 0 decremented value: 4
+Process 0 decremented value: 3
+Process 0 decremented value: 2
+Process 0 decremented value: 1
+Process 0 decremented value: 0
+Process 0 exiting
+Process 1 exiting
+[root@mach0 ~]# mpirun --allow-run-as-root -n 3 -H mach0,mach1,mach2 
+singularity exec c7 /usr/bin/ring
+--------------------------------------------------------------------------
+It appears as if there is not enough space for 
+/tmp/ompi.mach0.2291/54935/1/0/vader_segment.mach0.0 (the shared-memory 
+backing
+file). It is likely that your MPI job will now either abort or experience
+performance degradation.
+
+  Local host:  mach0
+  Space Requested: 4194312 B
+  Space Available: 0 B
+--------------------------------------------------------------------------
+[mach0:02308] create_and_attach: unable to create shared memory BTL 
+coordinating structure :: size 134217728
+[mach0:02291] 2 more processes have sent help message 
+help-opal-shmem-mmap.txt / target full
+[mach0:02291] Set MCA parameter "orte_base_help_aggregate" to 0 to see all 
+help / error messages
+^CKilled by signal 2.
+Killed by signal 2.
+Singularity is sending SIGKILL to child pid: 2308
+Singularity is sending SIGKILL to child pid: 2309
+[warn] Epoll ADD(4) on fd 31 failed.  Old events were 0; read change was 0 
+(none); write change was 1 (add): Bad file descriptor
+^C[root@mach0 ~]singularity shell -w c7
+ERROR  : Image is locked by another process
+[root@mach0 ~]# tail -30 /var/log/messages
+Jul 14 10:42:17 mach0 systemd: Started LSB: slurm daemon management.
+Jul 14 10:42:17 mach0 systemd: Reached target Multi-User System.
+Jul 14 10:42:17 mach0 systemd: Starting Multi-User System.
+Jul 14 10:42:17 mach0 systemd: Starting Update UTMP about System Runlevel 
+Changes...
+Jul 14 10:42:17 mach0 systemd: Started Stop Read-Ahead Data Collection 10s 
+After Completed Startup.
+Jul 14 10:42:17 mach0 systemd: Started Update UTMP about System Runlevel 
+Changes.
+Jul 14 10:42:18 mach0 kdumpctl: kexec: loaded kdump kernel
+Jul 14 10:42:18 mach0 kdumpctl: Starting kdump: [OK]
+Jul 14 10:42:18 mach0 systemd: Started Crash recovery kernel arming.
+Jul 14 10:42:18 mach0 systemd: Startup finished in 415ms (kernel) + 1.100s 
+(initrd) + 4.931s (userspace) = 6.446s.
+Jul 14 10:42:34 mach0 systemd: Created slice user-0.slice.
+Jul 14 10:42:34 mach0 systemd: Starting user-0.slice.
+Jul 14 10:42:34 mach0 systemd-logind: New session 1 of user root.
+Jul 14 10:42:34 mach0 systemd: Started Session 1 of user root.
+Jul 14 10:42:34 mach0 systemd: Starting Session 1 of user root.
+Jul 14 10:42:36 mach0 Singularity: sexec (U=0,P=2023)> Command=exec, 
+Container=c7, CWD=/root, Arg1=/usr/bin/ring
+Jul 14 10:42:36 mach0 Singularity: sexec (U=0,P=2024)> Command=exec, 
+Container=c7, CWD=/root, Arg1=/usr/bin/ring
+Jul 14 10:42:36 mach0 Singularity: sexec (U=0,P=2024)> Image is locked by 
+another process
+Jul 14 10:42:36 mach0 kernel: loop: module loaded
+Jul 14 10:43:38 mach0 Singularity: sexec (U=0,P=2050)> Command=shell, 
+Container=c7, CWD=/root, Arg1=(null)
+Jul 14 10:43:38 mach0 kernel: EXT4-fs (loop0): mounted filesystem with 
+ordered data mode. Opts: discard
+Jul 14 10:49:17 mach0 Singularity: sexec (U=0,P=2203)> Command=shell, 
+Container=c7, CWD=/root, Arg1=(null)
+Jul 14 10:49:17 mach0 kernel: EXT4-fs (loop0): mounted filesystem with 
+ordered data mode. Opts: discard
+Jul 14 10:50:39 mach0 Singularity: sexec (U=0,P=2244)> Command=exec, 
+Container=c7, CWD=/root, Arg1=/usr/bin/ring
+Jul 14 10:50:39 mach0 kernel: EXT4-fs (loop0): mounted filesystem with 
+ordered data mode. Opts: discard
+Jul 14 10:51:34 mach0 Singularity: sexec (U=0,P=2299)> Command=exec, 
+Container=c7, CWD=/root, Arg1=/usr/bin/ring
+Jul 14 10:51:34 mach0 Singularity: sexec (U=0,P=2300)> Command=exec, 
+Container=c7, CWD=/root, Arg1=/usr/bin/ring
+Jul 14 10:51:34 mach0 kernel: EXT4-fs (loop0): mounted filesystem with 
+ordered data mode. Opts: discard
+Jul 14 10:51:57 mach0 Singularity: sexec (U=0,P=2322)> Command=shell, 
+Container=c7, CWD=/root, Arg1=(null)
+Jul 14 10:51:57 mach0 Singularity: sexec (U=0,P=2322)> Image is locked by 
+another process
+
+
+
+------=_Part_827_1353787382.1468518977739
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Running mpirun tests, when an abort occurs, my image ends =
+up locked.=C2=A0 Is there a way to clear the lock without rebooting?=C2=A0 =
+I looked for processes that I could kill, but didn&#39;t see anything worth=
+y.<br><br>I&#39;m using singularity v2.1 on Centos 7.2 (both host and conta=
+iner).<br><br>Regards,<br><br>Steve<br><br><span style=3D"font-family: cour=
+ier new,monospace;">[root@mach0 ~]# mpirun --allow-run-as-root -n 2 -H mach=
+1,mach2 singularity exec c7 /usr/bin/ring<br>Process 0 sending 10 to 1, tag=
+ 201 (2 processes in ring)<br>Process 0 sent to 1<br>Process 0 decremented =
+value: 9<br>Process 0 decremented value: 8<br>Process 0 decremented value: =
+7<br>Process 0 decremented value: 6<br>Process 0 decremented value: 5<br>Pr=
+ocess 0 decremented value: 4<br>Process 0 decremented value: 3<br>Process 0=
+ decremented value: 2<br>Process 0 decremented value: 1<br>Process 0 decrem=
+ented value: 0<br>Process 0 exiting<br>Process 1 exiting<br>[root@mach0 ~]#=
+ mpirun --allow-run-as-root -n 3 -H mach0,mach1,mach2 singularity exec c7 /=
+usr/bin/ring<br>-----------------------------------------------------------=
+---------------<br>It appears as if there is not enough space for /tmp/ompi=
+.mach0.2291/54935/1/0/vader_segment.mach0.0 (the shared-memory backing<br>f=
+ile). It is likely that your MPI job will now either abort or experience<br=
+>performance degradation.<br><br>=C2=A0 Local host:=C2=A0 mach0<br>=C2=A0 S=
+pace Requested: 4194312 B<br>=C2=A0 Space Available: 0 B<br>---------------=
+-----------------------------------------------------------<br>[mach0:02308=
+] create_and_attach: unable to create shared memory BTL coordinating struct=
+ure :: size 134217728<br>[mach0:02291] 2 more processes have sent help mess=
+age help-opal-shmem-mmap.txt / target full<br>[mach0:02291] Set MCA paramet=
+er &quot;orte_base_help_aggregate&quot; to 0 to see all help / error messag=
+es<br>^CKilled by signal 2.<br>Killed by signal 2.<br>Singularity is sendin=
+g SIGKILL to child pid: 2308<br>Singularity is sending SIGKILL to child pid=
+: 2309<br>[warn] Epoll ADD(4) on fd 31 failed.=C2=A0 Old events were 0; rea=
+d change was 0 (none); write change was 1 (add): Bad file descriptor<br>^C[=
+root@mach0 ~]singularity shell -w c7<br>ERROR=C2=A0 : Image is locked by an=
+other process<br>[root@mach0 ~]# tail -30 /var/log/messages<br>Jul 14 10:42=
+:17 mach0 systemd: Started LSB: slurm daemon management.<br>Jul 14 10:42:17=
+ mach0 systemd: Reached target Multi-User System.<br>Jul 14 10:42:17 mach0 =
+systemd: Starting Multi-User System.<br>Jul 14 10:42:17 mach0 systemd: Star=
+ting Update UTMP about System Runlevel Changes...<br>Jul 14 10:42:17 mach0 =
+systemd: Started Stop Read-Ahead Data Collection 10s After Completed Startu=
+p.<br>Jul 14 10:42:17 mach0 systemd: Started Update UTMP about System Runle=
+vel Changes.<br>Jul 14 10:42:18 mach0 kdumpctl: kexec: loaded kdump kernel<=
+br>Jul 14 10:42:18 mach0 kdumpctl: Starting kdump: [OK]<br>Jul 14 10:42:18 =
+mach0 systemd: Started Crash recovery kernel arming.<br>Jul 14 10:42:18 mac=
+h0 systemd: Startup finished in 415ms (kernel) + 1.100s (initrd) + 4.931s (=
+userspace) =3D 6.446s.<br>Jul 14 10:42:34 mach0 systemd: Created slice user=
+-0.slice.<br>Jul 14 10:42:34 mach0 systemd: Starting user-0.slice.<br>Jul 1=
+4 10:42:34 mach0 systemd-logind: New session 1 of user root.<br>Jul 14 10:4=
+2:34 mach0 systemd: Started Session 1 of user root.<br>Jul 14 10:42:34 mach=
+0 systemd: Starting Session 1 of user root.<br>Jul 14 10:42:36 mach0 Singul=
+arity: sexec (U=3D0,P=3D2023)&gt; Command=3Dexec, Container=3Dc7, CWD=3D/ro=
+ot, Arg1=3D/usr/bin/ring<br>Jul 14 10:42:36 mach0 Singularity: sexec (U=3D0=
+,P=3D2024)&gt; Command=3Dexec, Container=3Dc7, CWD=3D/root, Arg1=3D/usr/bin=
+/ring<br>Jul 14 10:42:36 mach0 Singularity: sexec (U=3D0,P=3D2024)&gt; Imag=
+e is locked by another process<br>Jul 14 10:42:36 mach0 kernel: loop: modul=
+e loaded<br>Jul 14 10:43:38 mach0 Singularity: sexec (U=3D0,P=3D2050)&gt; C=
+ommand=3Dshell, Container=3Dc7, CWD=3D/root, Arg1=3D(null)<br>Jul 14 10:43:=
+38 mach0 kernel: EXT4-fs (loop0): mounted filesystem with ordered data mode=
+. Opts: discard<br>Jul 14 10:49:17 mach0 Singularity: sexec (U=3D0,P=3D2203=
+)&gt; Command=3Dshell, Container=3Dc7, CWD=3D/root, Arg1=3D(null)<br>Jul 14=
+ 10:49:17 mach0 kernel: EXT4-fs (loop0): mounted filesystem with ordered da=
+ta mode. Opts: discard<br>Jul 14 10:50:39 mach0 Singularity: sexec (U=3D0,P=
+=3D2244)&gt; Command=3Dexec, Container=3Dc7, CWD=3D/root, Arg1=3D/usr/bin/r=
+ing<br>Jul 14 10:50:39 mach0 kernel: EXT4-fs (loop0): mounted filesystem wi=
+th ordered data mode. Opts: discard<br>Jul 14 10:51:34 mach0 Singularity: s=
+exec (U=3D0,P=3D2299)&gt; Command=3Dexec, Container=3Dc7, CWD=3D/root, Arg1=
+=3D/usr/bin/ring<br>Jul 14 10:51:34 mach0 Singularity: sexec (U=3D0,P=3D230=
+0)&gt; Command=3Dexec, Container=3Dc7, CWD=3D/root, Arg1=3D/usr/bin/ring<br=
+>Jul 14 10:51:34 mach0 kernel: EXT4-fs (loop0): mounted filesystem with ord=
+ered data mode. Opts: discard<br>Jul 14 10:51:57 mach0 Singularity: sexec (=
+U=3D0,P=3D2322)&gt; Command=3Dshell, Container=3Dc7, CWD=3D/root, Arg1=3D(n=
+ull)<br>Jul 14 10:51:57 mach0 Singularity: sexec (U=3D0,P=3D2322)&gt; Image=
+ is locked by another process</span><br><br><br></div>
+------=_Part_827_1353787382.1468518977739--
+
+------=_Part_826_1269415664.1468518977738--

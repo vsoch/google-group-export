@@ -1,0 +1,745 @@
+Date: Wed, 6 Jul 2016 01:43:32 -0700 (PDT)
+From: Raimon Bosch <raimo...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Cc: r...@open-mpi.org
+Message-Id: <e8eb3fb2-05cc-4f5e-bbab-91da877b6e1c@lbl.gov>
+In-Reply-To: <15574850-11a7-4317-b784-26631fad4f29@lbl.gov>
+References: <6247ec64-6881-4978-82a0-f7d6e24039e9@lbl.gov> <CAN7etTx+2ETq_aarfJfez_p4YzoNJ49zwO2CQe=KRwSSZkuR5Q@mail.gmail.com>
+ <3998ac67-7f95-475d-ac75-ceb562e19e3b@lbl.gov> <CAN7etTwNG_1G9YuuTQZWSE3SKZjXqNjt8bsZFrVQBJC8_1-mAw@mail.gmail.com>
+ <1403bcbe-c615-4417-a629-f95568b75ee7@lbl.gov> <CAN7etTwnpqqbiF=PAqZKDY0yDtyqJGVg2N3x2_-RHFvd6+Qh8Q@mail.gmail.com>
+ <054d2758-0acd-48f0-a9bd-b0d52ce02f38@lbl.gov> <613ECCC0-A9C9-42D0-9C26-36695C612DA4@open-mpi.org>
+ <007b47f4-0aea-42dc-b871-d653bb7a67a1@lbl.gov>
+ <CAN7etTxOGqMfyg_C2AWisRWCCs2RKkM91s6SbWTcjYb3X5_Aew@mail.gmail.com>
+ <15574850-11a7-4317-b784-26631fad4f29@lbl.gov>
+Subject: Re: [Singularity] Communication between singularity containers
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_4944_1099628976.1467794612336"
+
+------=_Part_4944_1099628976.1467794612336
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_4945_1242058235.1467794612337"
+
+------=_Part_4945_1242058235.1467794612337
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+
+When I do "df -h" I see the singularity container still mounted. Maybe I=20
+need to run a command to unmount it:
+
+> df -h
+Filesystem                 Size  Used Avail Use% Mounted on
+****
+tmpfs                      3.2G     0  3.2G   0% /run/user/1006
+****
+
+El mi=C3=A9rcoles, 6 de julio de 2016, 10:25:24 (UTC+2), Raimon Bosch escri=
+bi=C3=B3:
+>
+>
+> Hi Gregory,
+>
+> It fails depending on your environment. In my Ubuntu 14.04 it worked fine=
+,=20
+> but in this instance of Debian jessie I get the following:
+>
+> > ERROR: Failed to associate image to loop: Device or resource busy
+>
+> Maybe is because we are using a glusterfs shared disk to keep the=20
+> containers?
+>
+> Here you have the entire output:
+>
+> > sudo mpirun -n 1 singularity exec=20
+> /mnt/glusterfs/singularity/nasmpi-1.img /trace.sh=20
+> /NPB/NPB3.3-MPI/bin/bt.C.4 : -n 1 singularity exec=20
+> /mnt/glusterfs/singularity/nasmpi-2.img /trace.sh=20
+> /NPB/NPB3.3-MPI/bin/bt.C.4 : -n 1 singularity exec=20
+> /mnt/glusterfs/singularity/nasmpi-3.img /trace.sh=20
+> /NPB/NPB3.3-MPI/bin/bt.C.4 : -n 1 singularity exec=20
+> /mnt/glusterfs/singularity/nasmpi-4.img /trace.sh /NPB/NPB3.3-MPI/bin/bt.=
+C.4
+> ERROR: Failed to associate image to loop: Device or resource busy
+> ERROR: Failed to associate image to loop: Device or resource busy
+> /bin/bash: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)
+> ERROR: Failed to associate image to loop: Device or resource busy
+> -------------------------------------------------------------------------=
+-
+> mpirun has exited due to process rank 2 with PID 63416 on
+> node bscgrid30 exiting improperly. There are two reasons this could occur=
+:
+>
+> 1. this process did not call "init" before exiting, but others in
+> the job did. This can cause a job to hang indefinitely while it waits
+> for all processes to call "init". By rule, if one process calls "init",
+> then ALL processes must call "init" prior to termination.
+>
+> 2. this process called "init", but exited without calling "finalize".
+> By rule, all processes that call "init" MUST call "finalize" prior to
+> exiting or it will be considered an "abnormal termination"
+>
+> This may have caused other processes in the application to be
+> terminated by signals sent by mpirun (as reported here).
+> -------------------------------------------------------------------------=
+-
+>
+> Thanks in advance,
+>
+> El martes, 5 de julio de 2016, 18:21:48 (UTC+2), Gregory M. Kurtzer=20
+> escribi=C3=B3:
+>>
+>> Hi Raimon,
+>>
+>> I am confused as to what the issue is that you are having. Singularity=
+=20
+>> supports running both across nodes as well as multiple processes per nod=
+e=20
+>> in any number of containers. Can you paste your command and the error yo=
+u=20
+>> are getting, maybe that will help.
+>>
+>> Thanks!
+>>
+>>
+>>
+>> On Tue, Jul 5, 2016 at 8:25 AM, Raimon Bosch <rai...@gmail.com> wrote:
+>>
+>>>
+>>> That solution does not work with nas/mpi benchmark. That's because=20
+>>> bt.C.16 expects 16 processes. When you split processes it throws an=20
+>>> exception because number of processes is lower than 16.=20
+>>>
+>>> I am still trying to figure out how to do this. Let me know if you have=
+=20
+>>> any suggestion.
+>>>
+>>> Cheers,
+>>>
+>>> El jueves, 23 de junio de 2016, 15:09:13 (UTC+2), Ralph Castain escribi=
+=C3=B3:
+>>>>
+>>>> I think you are misunderstanding the basic nature of the Singularity=
+=20
+>>>> =E2=80=9Ccontainer=E2=80=9D. It=E2=80=99s just a file system overlay. =
+So =E2=80=9Csharing=E2=80=9D a container is=20
+>>>> no different than running on a node where the procs all see the same f=
+ile=20
+>>>> system. Thus, having multiple containers that are identical makes no s=
+ense=20
+>>>> - it=E2=80=99s all the same file system.
+>>>>
+>>>> Now if you want to run different containers (e.g., with different=20
+>>>> libraries or OS in them), then you would use mpirun=E2=80=99s MPMD syn=
+tax - for=20
+>>>> example:
+>>>>
+>>>> mpirun -n 1 <container1> : -n 1 <container2>
+>>>>
+>>>> HTH
+>>>> Ralph
+>>>>
+>>>> On Jun 23, 2016, at 1:53 AM, Raimon Bosch <rai...@gmail.com> wrote:
+>>>>
+>>>>
+>>>> One last question: What if I want to execute more than one container i=
+n=20
+>>>> the same host? With this technique I am bounded always to the same=20
+>>>> container. One of our experiments was based in measuring performance o=
+f=20
+>>>> several containers working in parallel in the same node. Also we had=
+=20
+>>>> experiments with N containers per host in a multihost environment.
+>>>>
+>>>> El mi=C3=A9rcoles, 22 de junio de 2016, 16:41:58 (UTC+2), Gregory M. K=
+urtzer=20
+>>>> escribi=C3=B3:
+>>>>>
+>>>>> Hi Raimon,
+>>>>>
+>>>>> Sorry I wasn't clear. I am not yet at my computer and thinking while=
+=20
+>>>>> typing on an iPhone hinders my mental processes. Lol
+>>>>>
+>>>>> If I understand your example properly, you have a docker or VM=20
+>>>>> infrastructure already set up and you are invoking the mpirun command=
+s from=20
+>>>>> within the virtual environment. Singularity works on a very different=
+=20
+>>>>> premis because integrating a virtual cluster into an existing cluster=
+ and=20
+>>>>> scheduling system is a mess.
+>>>>>
+>>>>> So starting from the physical nodes, which already have access to all=
+=20
+>>>>> other nodes in the cluster, and already scheduled properly, and in di=
+rect=20
+>>>>> access to optimized hardware and file systems.... You call mpirun.=20
+>>>>>
+>>>>> The mpirun command will take the standard format as you illustrated=
+=20
+>>>>> with the following change to call Singularity inline:
+>>>>>
+>>>>> $ mpirun -np 4 --hostfile hosts.txt singularity exec ~/container.img=
+=20
+>>>>> trace.sh bt.C.4
+>>>>>
+>>>>> This assumes the following:
+>>>>>
+>>>>> 1. The container image which contains the program's you want to run i=
+s=20
+>>>>> at ~/container.img and accessible at this path on all nodes reference=
+d in=20
+>>>>> hosts.txt
+>>>>> 2. The hosts.txt references other physical nodes you want to run on
+>>>>> 3. The executables trace.sh and bt.C.4 are both inside the container=
+=20
+>>>>> and in a standard path
+>>>>>
+>>>>> In this case we are performing one execution and MPI + singularity is=
+=20
+>>>>> managing all of the communication between processes, nodes and contai=
+ners.=20
+>>>>> Also it is now using any optimized hardware (eg. Infiniband) and exis=
+ting=20
+>>>>> high performance file systems (which should not be accessible via a=
+=20
+>>>>> virtualized or Docker'ized cluster for security reasons).
+>>>>>
+>>>>> This way is actually MUCH simpler then what you are proposing because=
+=20
+>>>>> there is no need to manage any virtual nodes, virtual networks, or re=
+source=20
+>>>>> manager hacks. It really is as easy as just running any other MPI pro=
+cess=20
+>>>>> on an existing cluster.=20
+>>>>>
+>>>>> Hope that helps better!
+>>>>>
+>>>>>
+>>>>>
+>>>>> On Wednesday, June 22, 2016, Raimon Bosch <rai...@gmail.com> wrote:
+>>>>>
+>>>>>>
+>>>>>>
+>>>>>> Hi Gregory,
+>>>>>>
+>>>>>> I'm not sure if I would achieve the same with your commands. In an=
+=20
+>>>>>> environment based on dockers or virtual machines we would do somethi=
+ng like=20
+>>>>>> this [non applicable to Singularity]:
+>>>>>>
+>>>>>> > cd $OPEN_MPI/bin && mpirun -np 4 --hostfile hosts.txt ./trace.sh=
+=20
+>>>>>> ./bt.C.4
+>>>>>>
+>>>>>> where hosts.txt* is:
+>>>>>>
+>>>>>> >vm-ip-01-on-*host01* slots=3D2
+>>>>>> >vm-ip-01-on-*host02* slots=3D2
+>>>>>>
+>>>>>> * vm-ip-XX-on-hostXX are IPs i.e. 172.100.60.XX
+>>>>>>
+>>>>>> and trace.sh is:
+>>>>>>
+>>>>>> >#!/bin/bash
+>>>>>> >
+>>>>>> >export EXTRAE_HOME=3D/opt/extrae/
+>>>>>> >export EXTRAE_CONFIG_FILE=3D/extrae.xml
+>>>>>> >export LD_PRELOAD=3D${EXTRAE_HOME}/lib/libmpitrace.so
+>>>>>> >
+>>>>>> >## Run the desired program
+>>>>>> >$*
+>>>>>>
+>>>>>> As you see we only perform one execution and OpenMPI transparently=
+=20
+>>>>>> manages communication between containers or virtual machines. This c=
+ommand=20
+>>>>>> would work well rather VMs are on the same host or not.
+>>>>>>
+>>>>>> What I understand from your response is that now we should execute=
+=20
+>>>>>> OpenMPI on each host and then merge results manually. I don't know y=
+et how=20
+>>>>>> to do this merge step or if it is any way to centralize everything l=
+ike I=20
+>>>>>> would do with VMs.
+>>>>>>
+>>>>>> Thanks in advance,
+>>>>>>
+>>>>>> El mi=C3=A9rcoles, 22 de junio de 2016, 14:42:54 (UTC+2), Gregory M.=
+=20
+>>>>>> Kurtzer escribi=C3=B3:
+>>>>>>>
+>>>>>>> Hi Raimon,
+>>>>>>>
+>>>>>>> The quick answer is you have mpirun handle that as you would=20
+>>>>>>> normally where the container file lives on a shared file system:
+>>>>>>>
+>>>>>>> $ mpirun singularity exec ~/container.img mpi_prog_in_container
+>>>>>>>
+>>>>>>> Let the MPI outside the container launch the singularity container=
+=20
+>>>>>>> on each host as it would normally launch any MPI program. Then it w=
+ill call=20
+>>>>>>> Singulairty and Singularity will launch the MPI program inside the=
+=20
+>>>>>>> container on each of your hosts/servers.=20
+>>>>>>>
+>>>>>>> Hope that helps!
+>>>>>>>
+>>>>>>>
+>>>>>>>
+>>>>>>> On Wednesday, June 22, 2016, Raimon Bosch <rai...@gmail.com>=20
+>>>>>>> wrote:
+>>>>>>>
+>>>>>>>>
+>>>>>>>> Hi Gregory,
+>>>>>>>>
+>>>>>>>> Thank you for your answer. One of our experiments needs to run=20
+>>>>>>>> OpenMPI among several servers. This means that we should put one o=
+f our=20
+>>>>>>>> containers in host01, another in host02 and another in host03 and =
+collect=20
+>>>>>>>> the results.=20
+>>>>>>>>
+>>>>>>>> How can I do this execution in parallel if I need to communicate=
+=20
+>>>>>>>> with more than one server?
+>>>>>>>>
+>>>>>>>> El martes, 21 de junio de 2016, 16:51:03 (UTC+2), Gregory M.=20
+>>>>>>>> Kurtzer escribi=C3=B3:
+>>>>>>>>>
+>>>>>>>>> Hi Raimon,
+>>>>>>>>>
+>>>>>>>>> The communication model of a Singularity container is very=20
+>>>>>>>>> different from that of a Docker implementation. This is because D=
+ocker for=20
+>>>>>>>>> all practical purposes emulates a virtual machine as each contain=
+er has=20
+>>>>>>>>> it's own IP address and thus it's own ssh server. It also carries=
+ its own=20
+>>>>>>>>> set of complexities, for example networks need to be segregated/V=
+Lan'ed,=20
+>>>>>>>>> DNS/host resolution needs to be dynamic and passed down to the co=
+ntainers=20
+>>>>>>>>> (so they can reach each other), ssh daemons and other process run=
+ning=20
+>>>>>>>>> inside the containers, management via an existing scheduling syst=
+em, and=20
+>>>>>>>>> the list goes on and on.
+>>>>>>>>>
+>>>>>>>>> Think of it this way, Singularity does not do any of that... It=
+=20
+>>>>>>>>> runs a program within the container as if it were running on the =
+host=20
+>>>>>>>>> itself, so to communicate between containers is as easy as commun=
+icating=20
+>>>>>>>>> between programs. So for MPI, it would happen with the MPI on the=
+ physical=20
+>>>>>>>>> host (outside the container) invoking the container subsystem whi=
+ch then=20
+>>>>>>>>> invokes the MPI programs within the container and the MPI program=
+s within=20
+>>>>>>>>> the container communicate back to the MPI (orted) outside the con=
+tainer on=20
+>>>>>>>>> the host to get access to the host resources. In this model all a=
+vailable=20
+>>>>>>>>> resources and infrastructure can be leveraged at full bandwidth b=
+y the=20
+>>>>>>>>> contained processes and all of the aforementioned complexities ak=
+in to=20
+>>>>>>>>> running on a virtualized mini-cluster are circumvented.
+>>>>>>>>>
+>>>>>>>>> There is additional information I have written at:
+>>>>>>>>>
+>>>>>>>>> http://singularity.lbl.gov/#hpc
+>>>>>>>>>
+>>>>>>>>> That page is still coming along, and needs more information still=
+=20
+>>>>>>>>> but if you have any questions, comments or change proposals pleas=
+e let us=20
+>>>>>>>>> know!
+>>>>>>>>>
+>>>>>>>>> Thanks and hope that helps!
+>>>>>>>>>
+>>>>>>>>>
+>>>>>>>>>
+>>>>>>>>> On Tue, Jun 21, 2016 at 7:37 AM, Raimon Bosch <rai...@gmail.com
+>>>>>>>>> > wrote:
+>>>>>>>>>
+>>>>>>>>>>
+>>>>>>>>>>
+>>>>>>>>>> Hi,
+>>>>>>>>>>
+>>>>>>>>>> We are trying to run experiments using singularity containers.=
+=20
+>>>>>>>>>> The idea is to run OpenMPI among several containers and check pe=
+rformance=20
+>>>>>>>>>> results.=20
+>>>>>>>>>>
+>>>>>>>>>> How can I communicate with another container? In docker this is=
+=20
+>>>>>>>>>> clear because every container gets an assigned IP and you can pi=
+ng there,=20
+>>>>>>>>>> but what is the situation in the case of singularity? Is it poss=
+ible to=20
+>>>>>>>>>> assign an IP to each container? Can I connect via ssh to them?
+>>>>>>>>>>
+>>>>>>>>>> Thanks in advance,
+>>>>>>>>>>
+>>>>>>>>>> --=20
+>>>>>>>>>> You received this message because you are subscribed to the=20
+>>>>>>>>>> Google Groups "singularity" group.
+>>>>>>>>>> To unsubscribe from this group and stop receiving emails from it=
+,=20
+>>>>>>>>>> send an email to singu...@lbl.gov.
+>>>>>>>>>>
+>>>>>>>>>
+>>>>>>>>>
+>>>>>>>>>
+>>>>>>>>> --=20
+>>>>>>>>> Gregory M. Kurtzer
+>>>>>>>>> High Performance Computing Services (HPCS)
+>>>>>>>>> University of California
+>>>>>>>>> Lawrence Berkeley National Laboratory
+>>>>>>>>> One Cyclotron Road, Berkeley, CA 94720
+>>>>>>>>>
+>>>>>>>>
+>>>>>>>> --=20
+>>>>>>>> You received this message because you are subscribed to the Google=
+=20
+>>>>>>>> Groups "singularity" group.
+>>>>>>>> To unsubscribe from this group and stop receiving emails from it,=
+=20
+>>>>>>>> send an email to singu...@lbl.gov.
+>>>>>>>>
+>>>>>>>
+>>>>>>>
+>>>>>>> --=20
+>>>>>>> Gregory M. Kurtzer
+>>>>>>> High Performance Computing Services (HPCS)
+>>>>>>> University of California
+>>>>>>> Lawrence Berkeley National Laboratory
+>>>>>>> One Cyclotron Road, Berkeley, CA 94720
+>>>>>>>
+>>>>>>>
+>>>>>> --=20
+>>>>>> You received this message because you are subscribed to the Google=
+=20
+>>>>>> Groups "singularity" group.
+>>>>>> To unsubscribe from this group and stop receiving emails from it,=20
+>>>>>> send an email to singu...@lbl.gov.
+>>>>>>
+>>>>>
+>>>>>
+>>>>> --=20
+>>>>> Gregory M. Kurtzer
+>>>>> High Performance Computing Services (HPCS)
+>>>>> University of California
+>>>>> Lawrence Berkeley National Laboratory
+>>>>> One Cyclotron Road, Berkeley, CA 94720
+>>>>>
+>>>>>
+>>>> --=20
+>>>> You received this message because you are subscribed to the Google=20
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send=
+=20
+>>>> an email to singu...@lbl.gov.
+>>>>
+>>>>
+>>>> --=20
+>>> You received this message because you are subscribed to the Google=20
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send=
+=20
+>>> an email to singu...@lbl.gov.
+>>>
+>>
+>>
+>>
+>> --=20
+>> Gregory M. Kurtzer
+>> High Performance Computing Services (HPCS)
+>> University of California
+>> Lawrence Berkeley National Laboratory
+>> One Cyclotron Road, Berkeley, CA 94720
+>>
+>
+------=_Part_4945_1242058235.1467794612337
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><br>When I do &quot;df -h&quot; I see the singularity cont=
+ainer still mounted. Maybe I need to run a command to unmount it:<br><br>&g=
+t; df -h<br>Filesystem=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 Size=C2=A0 Used Avail Use% Mo=
+unted on<br>****<br>tmpfs=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 3.2G=C2=A0=C2=A0=C2=A0=C2=A0 0=C2=A0 3.2G=C2=A0=C2=A0 0% /run/user/1006=
+<br>****<br><br>El mi=C3=A9rcoles, 6 de julio de 2016, 10:25:24 (UTC+2), Ra=
+imon Bosch  escribi=C3=B3:<blockquote class=3D"gmail_quote" style=3D"margin=
+: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div=
+ dir=3D"ltr"><br>Hi Gregory,<br><br>It fails depending on your environment.=
+ In my Ubuntu 14.04 it worked fine, but in this instance of Debian jessie I=
+ get the following:<br><br>&gt; ERROR: Failed to associate image to loop: D=
+evice or resource busy<br><br>Maybe is because we are using a glusterfs sha=
+red disk to keep the containers?<br><br>Here you have the entire output:<br=
+><br>&gt; sudo mpirun -n 1 singularity exec /mnt/glusterfs/singularity/<wbr=
+>nasmpi-1.img /trace.sh /NPB/NPB3.3-MPI/bin/bt.C.4 : -n 1 singularity exec =
+/mnt/glusterfs/singularity/<wbr>nasmpi-2.img /trace.sh /NPB/NPB3.3-MPI/bin/=
+bt.C.4 : -n 1 singularity exec /mnt/glusterfs/singularity/<wbr>nasmpi-3.img=
+ /trace.sh /NPB/NPB3.3-MPI/bin/bt.C.4 : -n 1 singularity exec /mnt/glusterf=
+s/singularity/<wbr>nasmpi-4.img /trace.sh /NPB/NPB3.3-MPI/bin/bt.C.4<br>ERR=
+OR: Failed to associate image to loop: Device or resource busy<br>ERROR: Fa=
+iled to associate image to loop: Device or resource busy<br>/bin/bash: warn=
+ing: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)<br>ERROR: Failed=
+ to associate image to loop: Device or resource busy<br>-------------------=
+-----------<wbr>------------------------------<wbr>--------------<br>mpirun=
+ has exited due to process rank 2 with PID 63416 on<br>node bscgrid30 exiti=
+ng improperly. There are two reasons this could occur:<br><br>1. this proce=
+ss did not call &quot;init&quot; before exiting, but others in<br>the job d=
+id. This can cause a job to hang indefinitely while it waits<br>for all pro=
+cesses to call &quot;init&quot;. By rule, if one process calls &quot;init&q=
+uot;,<br>then ALL processes must call &quot;init&quot; prior to termination=
+.<br><br>2. this process called &quot;init&quot;, but exited without callin=
+g &quot;finalize&quot;.<br>By rule, all processes that call &quot;init&quot=
+; MUST call &quot;finalize&quot; prior to<br>exiting or it will be consider=
+ed an &quot;abnormal termination&quot;<br><br>This may have caused other pr=
+ocesses in the application to be<br>terminated by signals sent by mpirun (a=
+s reported here).<br>------------------------------<wbr>-------------------=
+-----------<wbr>--------------<br><br>Thanks in advance,<br><br>El martes, =
+5 de julio de 2016, 18:21:48 (UTC+2), Gregory M. Kurtzer  escribi=C3=B3:<bl=
+ockquote class=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-l=
+eft:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Hi Raimon,<div><br></=
+div><div>I am confused as to what the issue is that you are having. Singula=
+rity supports running both across nodes as well as multiple processes per n=
+ode in any number of containers. Can you paste your command and the error y=
+ou are getting, maybe that will help.</div><div><br></div><div>Thanks!</div=
+><div><br></div><div><br></div></div><div><br><div class=3D"gmail_quote">On=
+ Tue, Jul 5, 2016 at 8:25 AM, Raimon Bosch <span dir=3D"ltr">&lt;<a rel=3D"=
+nofollow">rai...@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gm=
+ail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-le=
+ft:1ex"><div dir=3D"ltr"><br>That solution does not work with nas/mpi bench=
+mark. That&#39;s because bt.C.16 expects 16 processes. When you split proce=
+sses it throws an exception because number of processes is lower than 16. <=
+br><br>I am still trying to figure out how to do this. Let me know if you h=
+ave any suggestion.<br><br>Cheers,<span><br><br>El jueves, 23 de junio de 2=
+016, 15:09:13 (UTC+2), Ralph Castain  escribi=C3=B3:</span><blockquote clas=
+s=3D"gmail_quote" style=3D"margin:0;margin-left:0.8ex;border-left:1px #ccc =
+solid;padding-left:1ex"><div style=3D"word-wrap:break-word"><span><div>I th=
+ink you are misunderstanding the basic nature of the Singularity =E2=80=9Cc=
+ontainer=E2=80=9D. It=E2=80=99s just a file system overlay. So =E2=80=9Csha=
+ring=E2=80=9D a container is no different than running on a node where the =
+procs all see the same file system. Thus, having multiple containers that a=
+re identical makes no sense - it=E2=80=99s all the same file system.</div><=
+div><br></div><div>Now if you want to run different containers (e.g., with =
+different libraries or OS in them), then you would use mpirun=E2=80=99s MPM=
+D syntax - for example:</div><div><br></div><div>mpirun -n 1 &lt;container1=
+&gt; : -n 1 &lt;container2&gt;</div><div><br></div><div>HTH</div><div>Ralph=
+</div></span><div><br><blockquote type=3D"cite"><div><div><div>On Jun 23, 2=
+016, at 1:53 AM, Raimon Bosch &lt;<a rel=3D"nofollow">rai...@gmail.com</a>&=
+gt; wrote:</div><br></div></div><div><div><div><div dir=3D"ltr" style=3D"fo=
+nt-family:Helvetica;font-size:12px;font-style:normal;font-weight:normal;let=
+ter-spacing:normal;text-align:start;text-indent:0px;text-transform:none;whi=
+te-space:normal;word-spacing:0px"><br>One last question: What if I want to =
+execute more than one container in the same host? With this technique I am =
+bounded always to the same container. One of our experiments was based in m=
+easuring performance of several containers working in parallel in the same =
+node. Also we had experiments with N containers per host in a multihost env=
+ironment.<br><br>El mi=C3=A9rcoles, 22 de junio de 2016, 16:41:58 (UTC+2), =
+Gregory M. Kurtzer escribi=C3=B3:<blockquote class=3D"gmail_quote" style=3D=
+"margin:0px 0px 0px 0.8ex;border-left-width:1px;border-left-color:rgb(204,2=
+04,204);border-left-style:solid;padding-left:1ex">Hi Raimon,<div><br></div>=
+<div>Sorry I wasn&#39;t clear. I am not yet at my computer and thinking whi=
+le typing on an iPhone hinders my mental processes. Lol</div><div><br></div=
+><div>If I understand your example properly, you have a docker or VM infras=
+tructure already set up and you are invoking the mpirun commands from withi=
+n the virtual environment. Singularity works on a very different premis bec=
+ause integrating a virtual cluster into an existing cluster and scheduling =
+system is a mess.</div><div><br></div><div>So starting from the physical no=
+des, which already have access to all other nodes in the cluster, and alrea=
+dy scheduled properly, and in direct access to optimized hardware and file =
+systems.... You call mpirun.=C2=A0</div><div><br></div><div>The mpirun comm=
+and will take the standard format as you illustrated with the following cha=
+nge to call Singularity inline:</div><div><br></div><div>$ mpirun -np 4 --h=
+ostfile hosts.txt singularity exec ~/container.img trace.sh bt.C.4</div><di=
+v><br></div><div>This assumes the following:</div><div><br></div><div>1. Th=
+e container image which contains the program&#39;s you want to run is at ~/=
+container.img and accessible at this path=C2=A0on all nodes referenced in h=
+osts.txt</div><div>2. The hosts.txt references other physical nodes you wan=
+t to run on</div><div>3. The executables trace.sh and bt.C.4 are both insid=
+e the container and in a standard path</div><br><div>In this case we are pe=
+rforming one execution and MPI + singularity is managing all of the communi=
+cation between processes, nodes and containers. Also it is now using any op=
+timized hardware (eg. Infiniband)=C2=A0and existing high performance=C2=A0f=
+ile systems (which should not be accessible via a virtualized or Docker&#39=
+;ized=C2=A0cluster for security reasons).</div><div><br></div><div>This way=
+ is actually MUCH simpler then what you are proposing because there is no n=
+eed to manage any virtual nodes, virtual networks, or resource manager hack=
+s. It really is as easy as just running any other MPI=C2=A0process on an ex=
+isting cluster.=C2=A0</div><div><br></div><div>Hope that helps better!</div=
+><div><br></div><div><span></span><br><br>On Wednesday, June 22, 2016, Raim=
+on Bosch &lt;<a rel=3D"nofollow">raimon...@</a><a href=3D"http://gmail.com/=
+" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=3D&#39;http:/=
+/gmail.com/&#39;;return true;" onclick=3D"this.href=3D&#39;http://gmail.com=
+/&#39;;return true;">gmail.com</a>&gt; wrote:<br><blockquote class=3D"gmail=
+_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left-width:1px;border-left=
+-color:rgb(204,204,204);border-left-style:solid;padding-left:1ex"><div dir=
+=3D"ltr"><br><br>Hi Gregory,<br><br>I&#39;m not sure if I would achieve the=
+ same with your commands. In an environment based on dockers or virtual mac=
+hines we would do something like this [non applicable to Singularity]:<br><=
+br>&gt; cd $OPEN_MPI/bin &amp;&amp; mpirun -np 4 --hostfile hosts.txt ./tra=
+ce.sh ./bt.C.4<br><br>where hosts.txt* is:<br><br>&gt;vm-ip-01-on-<b>host01=
+</b><span>=C2=A0</span>slots=3D2<br>&gt;vm-ip-01-on-<b>host02</b><span>=C2=
+=A0</span>slots=3D2<br><br>* vm-ip-XX-on-hostXX<b><span>=C2=A0</span></b>ar=
+e IPs i.e. 172.100.60.XX<br><br>and trace.sh is:<br><br>&gt;#!/bin/bash<br>=
+&gt;<br>&gt;export EXTRAE_HOME=3D/opt/extrae/<br>&gt;export EXTRAE_CONFIG_F=
+ILE=3D/extrae.xml<br>&gt;export LD_PRELOAD=3D${EXTRAE_HOME}/lib/<wbr>libmpi=
+trace.so<br>&gt;<br>&gt;## Run the desired program<br>&gt;$*<br><br>As you =
+see we only perform one execution and OpenMPI transparently manages communi=
+cation between containers or virtual machines. This command would work well=
+ rather VMs are on the same host or not.<br><br>What I understand from your=
+ response is that now we should execute OpenMPI on each host and then merge=
+ results manually. I don&#39;t know yet how to do this merge step or if it =
+is any way to centralize everything like I would do with VMs.<br><br>Thanks=
+ in advance,<br><br>El mi=C3=A9rcoles, 22 de junio de 2016, 14:42:54 (UTC+2=
+), Gregory M. Kurtzer escribi=C3=B3:<blockquote class=3D"gmail_quote" style=
+=3D"margin:0px 0px 0px 0.8ex;border-left-width:1px;border-left-color:rgb(20=
+4,204,204);border-left-style:solid;padding-left:1ex">Hi Raimon,<div><br></d=
+iv><div>The quick answer is you have mpirun handle that as you would normal=
+ly where the container file lives on a shared file system:</div><div><br></=
+div><div>$ mpirun singularity exec ~/container.img mpi_prog_in_container</d=
+iv><div><br></div><div>Let the MPI outside the container launch the singula=
+rity container on each host as it would normally launch any MPI program. Th=
+en it will call Singulairty and Singularity will launch the MPI program ins=
+ide the container on each of your hosts/servers.=C2=A0</div><div><br></div>=
+<div>Hope that helps!</div><div><br></div><div><span></span><br><br>On Wedn=
+esday, June 22, 2016, Raimon Bosch &lt;<a rel=3D"nofollow">rai...@gmail.com=
+</a>&gt; wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0px 0p=
+x 0px 0.8ex;border-left-width:1px;border-left-color:rgb(204,204,204);border=
+-left-style:solid;padding-left:1ex"><div dir=3D"ltr"><br>Hi Gregory,<br><br=
+>Thank you for your answer. One of our experiments needs to run OpenMPI amo=
+ng several servers. This means that we should put one of our containers in =
+host01, another in host02 and another in host03 and collect the results.<sp=
+an>=C2=A0</span><br><br>How can I do this execution in parallel if I need t=
+o communicate with more than one server?<br><br>El martes, 21 de junio de 2=
+016, 16:51:03 (UTC+2), Gregory M. Kurtzer escribi=C3=B3:<blockquote class=
+=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left-width:1px;bo=
+rder-left-color:rgb(204,204,204);border-left-style:solid;padding-left:1ex">=
+<div dir=3D"ltr">Hi Raimon,<div><br></div><div>The communication model of a=
+ Singularity container is very different from that of a Docker implementati=
+on. This is because Docker for all practical purposes emulates a virtual ma=
+chine as each container has it&#39;s own IP address and thus it&#39;s own s=
+sh server. It also carries its own set of complexities, for example network=
+s need to be segregated/VLan&#39;ed, DNS/host resolution needs to be dynami=
+c and passed down to the containers (so they can reach each other), ssh dae=
+mons and other process running inside the containers, management via an exi=
+sting scheduling system, and the list goes on and on.</div><div><br></div><=
+div>Think of it this way, Singularity does not do any of that... It runs a =
+program within the container as if it were running on the host itself, so t=
+o communicate between containers is as easy as communicating between progra=
+ms. So for MPI, it would happen with the MPI on the physical host (outside =
+the container) invoking the container subsystem which then invokes the MPI =
+programs within the container and the MPI programs within the container com=
+municate back to the MPI (orted) outside the container on the host to get a=
+ccess to the host resources. In this model all available resources and infr=
+astructure can be leveraged at full bandwidth by the contained processes an=
+d all of the aforementioned complexities akin to running on a virtualized m=
+ini-cluster are circumvented.</div><div><br></div><div>There is additional =
+information I have written at:</div><div><br></div><div><a href=3D"http://s=
+ingularity.lbl.gov/#hpc" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"=
+this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fsingularity.lb=
+l.gov%2F%23hpc\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEKXGCj-HN-lC0phcop4-=
+SUwsYEjw&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.google.c=
+om/url?q\x3dhttp%3A%2F%2Fsingularity.lbl.gov%2F%23hpc\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNEKXGCj-HN-lC0phcop4-SUwsYEjw&#39;;return true;">http://s=
+ingularity.lbl.gov/#<wbr>hpc</a><br></div><div><br></div><div>That page is =
+still coming along, and needs more information still but if you have any qu=
+estions, comments or change proposals please let us know!</div><div><br></d=
+iv><div>Thanks and hope that helps!</div><div><br></div><div><br></div></di=
+v><div><br><div class=3D"gmail_quote">On Tue, Jun 21, 2016 at 7:37 AM, Raim=
+on Bosch<span>=C2=A0</span><span dir=3D"ltr">&lt;<a rel=3D"nofollow">rai...=
+@gmail.com</a>&gt;</span><span>=C2=A0</span>wr<wbr>ote:<br><blockquote clas=
+s=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left-width:1px;b=
+order-left-color:rgb(204,204,204);border-left-style:solid;padding-left:1ex"=
+><div dir=3D"ltr"><br><br>Hi,<br><br>We are trying to run experiments using=
+ singularity containers. The idea is to run OpenMPI among several container=
+s and check performance results.<span>=C2=A0</span><br><br>How can I commun=
+icate with another container? In docker this is clear because every contain=
+er gets an assigned IP and you can ping there, but what is the situation in=
+ the case of singularity? Is it possible to assign an IP to each container?=
+ Can I connect via ssh to them?<br><br>Thanks in advance,<span><font color=
+=3D"#888888"><br></font></span></div><span><font color=3D"#888888"><div><br=
+></div>--<span>=C2=A0</span><br>You received this message because you are s=
+ubscribed to the Google Groups &quot;singularity&quot; group.<br>To unsubsc=
+ribe from this group and stop receiving emails from it, send an email to<sp=
+an>=C2=A0</span><a rel=3D"nofollow">singu...@lbl.gov</a>.<br></font></span>=
+</blockquote></div><br><br clear=3D"all"><div><br></div>--<span>=C2=A0</spa=
+n><br><div><div dir=3D"ltr"><div>Gregory M. Kurtzer<br>High Performance Com=
+puting Services (HPCS)<br>University of California<br>Lawrence Berkeley Nat=
+ional Laboratory<br>One Cyclotron Road, Berkeley, CA 94720</div></div></div=
+></div></blockquote></div><div><br></div>--<span>=C2=A0</span><br>You recei=
+ved this message because you are subscribed to the Google Groups &quot;sing=
+ularity&quot; group.<br>To unsubscribe from this group and stop receiving e=
+mails from it, send an email to<span>=C2=A0</span><a>singularity+unsubscrib=
+e@<wbr>lbl.gov</a>.<br></blockquote></div><br><br>--<span>=C2=A0</span><br>=
+<div dir=3D"ltr"><div>Gregory M. Kurtzer<br>High Performance Computing Serv=
+ices (HPCS)<br>University of California<br>Lawrence Berkeley National Labor=
+atory<br>One Cyclotron Road, Berkeley, CA 94720</div></div><br></blockquote=
+></div><div><br></div>--<span>=C2=A0</span><br>You received this message be=
+cause you are subscribed to the Google Groups &quot;singularity&quot; group=
+.<br>To unsubscribe from this group and stop receiving emails from it, send=
+ an email to<span>=C2=A0</span><a>singularity+unsubscribe@<wbr>lbl.gov</a>.=
+<br></blockquote></div><br><br>--<span>=C2=A0</span><br><div dir=3D"ltr"><d=
+iv>Gregory M. Kurtzer<br>High Performance Computing Services (HPCS)<br>Univ=
+ersity of California<br>Lawrence Berkeley National Laboratory<br>One Cyclot=
+ron Road, Berkeley, CA 94720</div></div><br></blockquote></div><div style=
+=3D"font-family:Helvetica;font-size:12px;font-style:normal;font-weight:norm=
+al;letter-spacing:normal;text-align:start;text-indent:0px;text-transform:no=
+ne;white-space:normal;word-spacing:0px"><br></div><span style=3D"font-famil=
+y:Helvetica;font-size:12px;font-style:normal;font-weight:normal;letter-spac=
+ing:normal;text-align:start;text-indent:0px;text-transform:none;white-space=
+:normal;word-spacing:0px;float:none;display:inline!important">--<span>=C2=
+=A0</span></span><br style=3D"font-family:Helvetica;font-size:12px;font-sty=
+le:normal;font-weight:normal;letter-spacing:normal;text-align:start;text-in=
+dent:0px;text-transform:none;white-space:normal;word-spacing:0px"><span sty=
+le=3D"font-family:Helvetica;font-size:12px;font-style:normal;font-weight:no=
+rmal;letter-spacing:normal;text-align:start;text-indent:0px;text-transform:=
+none;white-space:normal;word-spacing:0px;float:none;display:inline!importan=
+t">You received this message because you are subscribed to the Google Group=
+s &quot;singularity&quot; group.</span><br style=3D"font-family:Helvetica;f=
+ont-size:12px;font-style:normal;font-weight:normal;letter-spacing:normal;te=
+xt-align:start;text-indent:0px;text-transform:none;white-space:normal;word-=
+spacing:0px"></div></div><span style=3D"font-family:Helvetica;font-size:12p=
+x;font-style:normal;font-weight:normal;letter-spacing:normal;text-align:sta=
+rt;text-indent:0px;text-transform:none;white-space:normal;word-spacing:0px;=
+float:none;display:inline!important">To unsubscribe from this group and sto=
+p receiving emails from it, send an email to<span>=C2=A0</span></span><a st=
+yle=3D"font-family:Helvetica;font-size:12px;font-style:normal;font-weight:n=
+ormal;letter-spacing:normal;text-align:start;text-indent:0px;text-transform=
+:none;white-space:normal;word-spacing:0px" rel=3D"nofollow">singu...@lbl.go=
+v</a><span style=3D"font-family:Helvetica;font-size:12px;font-style:normal;=
+font-weight:normal;letter-spacing:normal;text-align:start;text-indent:0px;t=
+ext-transform:none;white-space:normal;word-spacing:0px;float:none;display:i=
+nline!important">.</span></div></blockquote></div><br></div></blockquote></=
+div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div><div dir=3D"ltr"><div>Gregory M. Kurtzer<br>High Performance Computing=
+ Services (HPCS)<br>University of California<br>Lawrence Berkeley National =
+Laboratory<br>One Cyclotron Road, Berkeley, CA 94720</div></div></div>
+</div>
+</blockquote></div></blockquote></div>
+------=_Part_4945_1242058235.1467794612337--
+
+------=_Part_4944_1099628976.1467794612336--

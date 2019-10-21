@@ -1,0 +1,311 @@
+X-Received: by 10.107.173.210 with SMTP id m79mr10712471ioo.45.1487788402502;
+        Wed, 22 Feb 2017 10:33:22 -0800 (PST)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.36.123.10 with SMTP id q10ls544449itc.3.gmail; Wed, 22 Feb
+ 2017 10:33:21 -0800 (PST)
+X-Received: by 10.36.107.194 with SMTP id v185mr3234590itc.59.1487788401840;
+        Wed, 22 Feb 2017 10:33:21 -0800 (PST)
+Return-Path: <gmku...@lbl.gov>
+Received: from fe4.lbl.gov (fe4.lbl.gov. [128.3.41.71])
+        by mx.google.com with ESMTP id c4si2698059iti.91.2017.02.22.10.33.21
+        for <singu...@lbl.gov>;
+        Wed, 22 Feb 2017 10:33:21 -0800 (PST)
+Received-SPF: pass (google.com: domain of gmku...@lbl.gov designates 209.85.213.200 as permitted sender) client-ip=209.85.213.200;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of gmku...@lbl.gov designates 209.85.213.200 as permitted sender) smtp.mailfrom=gmku...@lbl.gov
+X-Ironport-SBRS: 2.7
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2EjAgB42K1Yf8jVVdFeHAEBBAEBCgEBFwEBBAEBCgEBgkSBBD94EQeDTAiKCJFagmSFKId8hSyBShsoHwEGhXwCgwAHPxgBAQEBAQEBAQEBAQIQAQEJCwsKGzGCMwQCAxkFBAQ9CgMvAQEBAQEBAQEBAQEBAQEBGgINMQMqAQQBIyswCwkCCzcCAiEBDwMBBQEcBggHBAETCQSJPAMNCAWRUZEWP4wDgiaHPg2DagEBAQcBAQEBAQEBASASiymCUYFVEQGDIoJfBYkZhzKFG4VwOgGGc4cQhB+CToEHjTuKQYcdFB6BFQ8QgQIvCBkKN00XBYQsAx2CAh81B4dfR4FnAQEB
+X-IronPort-AV: E=Sophos;i="5.35,195,1484035200"; 
+   d="scan'208,217";a="64980787"
+Received: from mail-yb0-f200.google.com ([209.85.213.200])
+  by fe4.lbl.gov with ESMTP; 22 Feb 2017 10:33:20 -0800
+Received: by mail-yb0-f200.google.com with SMTP id n76so11086794ybg.0
+        for <singu...@lbl.gov>; Wed, 22 Feb 2017 10:33:20 -0800 (PST)
+X-Gm-Message-State: AMke39mXW4XgUKAwfv0d1XYVOnPORclvHbllfPrmwIU0DW4Ode5dmdxiaMpB5N+k579twZ9L2AWbgFiVM9Meg2vBWytp+Iju7WqYgpIEC0MzTvxmQNN0AnLE7y9zPI3J3lYsMBiGgRixYrYMJbp36w2dIdQ=
+X-Received: by 10.37.123.69 with SMTP id w66mr25355084ybc.141.1487788399684;
+        Wed, 22 Feb 2017 10:33:19 -0800 (PST)
+X-Received: by 10.37.123.69 with SMTP id w66mr25355064ybc.141.1487788399340;
+ Wed, 22 Feb 2017 10:33:19 -0800 (PST)
+MIME-Version: 1.0
+Received: by 10.129.110.69 with HTTP; Wed, 22 Feb 2017 10:33:18 -0800 (PST)
+In-Reply-To: <d0a10fdc-f912-4e9c-8681-a54f5d53fd72@lbl.gov>
+References: <d0a10fdc-f912-4e9c-8681-a54f5d53fd72@lbl.gov>
+From: "Gregory M. Kurtzer" <gmku...@lbl.gov>
+Date: Wed, 22 Feb 2017 10:33:18 -0800
+Message-ID: <CAN7etTxxeYYxY7aB93H7E686y-8Qru-c_H3t1ANNQ_4oE1C-aA@mail.gmail.com>
+Subject: Re: [Singularity] Performance impact: My experience
+To: singularity <singu...@lbl.gov>
+Content-Type: multipart/alternative; boundary=001a114e57560b4126054922bbd8
+
+--001a114e57560b4126054922bbd8
+Content-Type: text/plain; charset=UTF-8
+
+There are various things that *could* go wrong, and usage of containers
+(any of the technologies) actually introduce complexities in kernel and
+user space alignment that normally we don't consider. For that reason, my
+first suspicion is that your IB fabric is not being properly utilized by
+the MPI within the container. That could be due to anything from build
+errors within the container to IB library/kmod API misalignment.
+
+Things I would look at and check:
+
+* Make sure the MPI inside the container is properly linking against the IB
+libraries
+* Make sure that the IB libraries inside the container are compatible with
+the host kernel
+* Make sure that the MPI configuration is configured to use MPI
+* Make sure you have Singularity configured properly to share the devices
+properly, tmp, and you are *NOT* using the IPC or PID namespaces
+
+Hope that helps.
+
+Greg
+
+On Wed, Feb 22, 2017 at 10:19 AM, Chih-Song Kuo <chihs...@gmail.com>
+wrote:
+
+> Hello,
+>
+> This is again Chih-Song from Fujitsu. I decided to make another post to
+> share my experience of performance impact with two kernel benchmarks: High
+> Performance Linpack (HPL) and the OSU MPI benchmark suit.
+>
+> Overall, there was no noticeable performance difference for benchmarks
+> running on a single node. But for benchmarks running across nodes, I did
+> observe some difference, which was against to the claim of Singularity.
+> Have anybody done any similar exercise? What are your findings? Can you
+> suspect whether I was doing anything wrong?
+>
+> Host configuration:
+> 2x Intel E5-2680v2 (Ivybridge)
+> 64GB memory
+> Mellanox ConnectX-3 FDR adapter (but connects to a Mellanox QDR switch)
+> RHEL 6.7
+> OpenMPI development master branch (8.2.17)
+> Intel MKL 2017.0 community edition
+> gcc 4.4
+>
+> Container:
+> Centos 6 and 7 both tested without noticeable performance difference
+> OpenMPI development master branch (8.2.17)
+> Intel MKL 2017.0 community edition
+> gcc 4.4.7 (Centos-6), gcc 4.8.5 (Centos-7)
+>
+> Benchmarks:
+> 1. LINPACK 2.2
+> 2. OSU 5.3.2
+>
+> <LINPACK>
+> Single node. N=40000, P=5, Q=4
+> Container: 368 GFlops
+> Host: 368 GFLOPS
+> #A single node has 2x Intel E5-2680v2. So we are expecting 2 x 10 x 8 *
+> 2.8 = 448 GFlops
+> Efficiency = 368 / 448 = 82%. Not bad (given the small N (matrix size) and
+> that gcc instead of icc was used, and the executable was dynamically linked
+> -- by purpose)
+>
+> Dual-node, N=60000, P=8, Q=5
+> Container: 702 GFLOPS
+> Host:737 GFLOPS
+> There is roughly 5% of performance degradation with the container.
+>
+> <OSU-P2P-Bandwidth>
+> The container only saw 50-65% of the total bandwidth.
+>
+> Container:
+> Msg size(bytes) BW (MB/s)
+> 65536                2142.28
+> 131072               2363.45
+> 262144               1705.79
+> 524288               1592.56
+> 1048576              1721.88
+> 2097152              1557.42
+> 4194304              1655.90
+>
+> Host:
+> Msg size(bytes) BW (MB/s)
+> 65536                3722.32
+> 131072               3751.33
+> 262144               3771.13
+> 524288               3774.33
+> 1048576              3781.43
+> 2097152              3775.00
+> 4194304              3773.68
+>
+> <OSU-P2P-Latency>
+> Here the container was significantly slower.
+>
+> Container:
+> Msg size(bytes)  Latency (us)
+> 0                      31.59
+> 1                      31.86
+> 2                      31.83
+>
+> Host:
+> Msg size(bytes)  Latency (us)
+> 0                       1.55
+> 1                       1.63
+> 2                       1.63
+>
+> Note 1: Run-to-run variation of performance was much smaller than the
+> difference on the host and in the container.
+> Note 2: When Singularity was used, I could not instruct mpirun to use the
+> ofed by specifying "--mca btl openib,self,vader" in the mpirun parameter
+> list. Doing so would give me an error message stating that the openib
+> component is missing. However, from the bandwidth measured above, the
+> container did seem to be able to use InfiniBand, otherwise the bandwidth
+> would not be so high (the nodes only had InfiniBand and 1G Ethernet). Maybe
+> container was using IPoIB? I did not check that yet.
+>
+> Reference: How the benchmarks were executed:
+> mpirun -n 20 -hostfile hostfile singularity exec /home/chih/containers/container-centos6-demo.img
+> xhpl
+> mpirun -n 2 -hostfile hostfile singularity exec /home/chih/containers/container-centos6-demo.img
+> osu_bw
+> mpirun -n 2 -hostfile hostfile singularity exec /home/chih/containers/container-centos6-demo.img
+> osu_latency
+>
+> Chih-Song
+>
+> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+>
+
+
+
+-- 
+Gregory M. Kurtzer
+HPC Systems Architect and Technology Developer
+Lawrence Berkeley National Laboratory HPCS
+University of California Berkeley Research IT
+Singularity Linux Containers (http://singularity.lbl.gov/)
+Warewulf Cluster Management (http://warewulf.lbl.gov/)
+GitHub: https://github.com/gmkurtzer, Twitter: https://twitter.com/gmkurtzer
+
+--001a114e57560b4126054922bbd8
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">There are various things that *could* go wrong, and usage =
+of containers (any of the technologies) actually introduce complexities in =
+kernel and user space alignment that normally we don&#39;t consider. For th=
+at reason, my first suspicion is that your IB fabric is not being properly =
+utilized by the MPI within the container. That could be due to anything fro=
+m build errors within the container to IB library/kmod API misalignment.<di=
+v><br></div><div>Things I would look at and check:</div><div><br></div><div=
+>* Make sure the MPI inside the container is properly linking against the I=
+B libraries</div><div>* Make sure that the IB libraries inside the containe=
+r are compatible with the host kernel</div><div>* Make sure that the MPI co=
+nfiguration is configured to use MPI</div><div>* Make sure you have Singula=
+rity configured properly to share the devices properly, tmp, and you are *N=
+OT* using the IPC or PID namespaces</div><div><br></div><div>Hope that help=
+s.</div><div><br></div><div>Greg</div></div><div class=3D"gmail_extra"><br>=
+<div class=3D"gmail_quote">On Wed, Feb 22, 2017 at 10:19 AM, Chih-Song Kuo =
+<span dir=3D"ltr">&lt;<a href=3D"mailto:chihs...@gmail.com" target=3D"_blan=
+k">chihs...@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_q=
+uote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1e=
+x"><div dir=3D"ltr">Hello,<br><br>This is again Chih-Song from Fujitsu. I d=
+ecided to make another post to share my experience of performance impact wi=
+th two kernel benchmarks: High Performance Linpack (HPL) and the OSU MPI be=
+nchmark suit.<br><br>Overall, there was no noticeable performance differenc=
+e for benchmarks running on a single node. But for benchmarks running acros=
+s nodes, I did observe some difference, which was against to the claim of S=
+ingularity. Have anybody done any similar exercise? What are your findings?=
+ Can you suspect whether I was doing anything wrong?<br><br>Host configurat=
+ion:<br>2x Intel E5-2680v2 (Ivybridge)<br>64GB memory<br>Mellanox ConnectX-=
+3 FDR adapter (but connects to a Mellanox QDR switch)<br>RHEL 6.7<br>OpenMP=
+I development master branch (8.2.17)<br>Intel MKL 2017.0 community edition<=
+br>gcc 4.4<br><br>Container:<br>Centos 6 and 7 both tested without noticeab=
+le performance difference<br>OpenMPI development master branch (8.2.17)<br>=
+Intel MKL 2017.0 community edition<br>gcc 4.4.7 (Centos-6), gcc 4.8.5 (Cent=
+os-7)<br><br>Benchmarks:<br>1. LINPACK 2.2<br>2. OSU 5.3.2<br><br>&lt;LINPA=
+CK&gt;<br>Single node. N=3D40000, P=3D5, Q=3D4<br>Container: 368 GFlops<br>=
+Host: 368 GFLOPS<br>#A single node has 2x Intel E5-2680v2. So we are expect=
+ing 2 x 10 x 8 * 2.8 =3D 448 GFlops<br>Efficiency =3D 368 / 448 =3D 82%. No=
+t bad (given the small N (matrix size) and that gcc instead of icc was used=
+, and the executable was dynamically linked -- by purpose)<br><br>Dual-node=
+, N=3D60000, P=3D8, Q=3D5<br>Container: 702 GFLOPS<br>Host:737 GFLOPS<br>Th=
+ere is roughly 5% of performance degradation with the container.<br><br>&lt=
+;OSU-P2P-Bandwidth&gt;<br>The container only saw 50-65% of the total bandwi=
+dth.<br><br>Container: <br>Msg size(bytes) BW (MB/s)<br>65536=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 2142.28<br>131072=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 2363.45<br>262144=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 1705.79<br>524288=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0 1592.56<br>1048576=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 1721.88<br>2097152=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 1557.42<br>419430=
+4=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0 1655.90<br><br>Host:<br>Msg size(bytes) BW (MB/s)<br>65536=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0 3722.32<br>131072=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 3751.33<br>262144=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 3771.13<br>524=
+288=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0 3774.33<br>1048576=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 3781.43<br>2097152=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 3775.00<br>419=
+4304=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0 3773.68<br><br>&lt;OSU-P2P-Latency&gt;<br>Here the container was =
+significantly slower.<br><br>Container: <br>Msg size(bytes)=C2=A0 Latency (=
+us)<br>0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 31.59<br>1=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 31.86<br>2=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 31.83<br><br>Host:<br>Msg size(bytes)=
+=C2=A0 Latency (us)<br>0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0 1.55<br>1=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+ 1.63<br>2=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 1.63<=
+br><br>Note 1: Run-to-run variation of performance was much smaller than th=
+e difference on the host and in the container.<br>Note 2: When Singularity =
+was used, I could not instruct mpirun to use the ofed by specifying &quot;-=
+-mca btl openib,self,vader&quot; in the mpirun parameter list. Doing so wou=
+ld give me an error message stating that the openib component is missing. H=
+owever, from the bandwidth measured above, the container did seem to be abl=
+e to use InfiniBand, otherwise the bandwidth would not be so high (the node=
+s only had InfiniBand and 1G Ethernet). Maybe container was using IPoIB? I =
+did not check that yet. <br><br>Reference: How the benchmarks were executed=
+:<br>mpirun -n 20 -hostfile hostfile singularity exec /home/chih/containers=
+/<wbr>container-centos6-demo.img xhpl<br>mpirun -n 2 -hostfile hostfile sin=
+gularity exec /home/chih/containers/<wbr>container-centos6-demo.img osu_bw<=
+br>mpirun -n 2 -hostfile hostfile singularity exec /home/chih/containers/<w=
+br>container-centos6-demo.img osu_latency<span class=3D"HOEnZb"><font color=
+=3D"#888888"><br><br>Chih-Song<br><br></font></span></div><span class=3D"HO=
+EnZb"><font color=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singularity+u=
+nsubscribe@lbl.<wbr>gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div class=3D"gmail_signature" data-smartmail=3D"gmail_signature"><div di=
+r=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr"=
+><div dir=3D"ltr"><div dir=3D"ltr"><div>Gregory M. Kurtzer</div><div>HPC Sy=
+stems Architect and Technology Developer</div><div>Lawrence Berkeley Nation=
+al Laboratory HPCS<br>University of California Berkeley Research IT<br>Sing=
+ularity Linux Containers=C2=A0(<a href=3D"http://singularity.lbl.gov/" targ=
+et=3D"_blank">http://singularity.lbl.gov/</a>)</div><div>Warewulf Cluster M=
+anagement=C2=A0(<a href=3D"http://warewulf.lbl.gov/" target=3D"_blank">http=
+://warewulf.lbl.gov/</a>)</div><div>GitHub:=C2=A0<a href=3D"https://github.=
+com/gmkurtzer" target=3D"_blank">https://github.com/gmkurtzer</a>,=C2=A0<sp=
+an style=3D"font-size:12.8px">Twitter:=C2=A0</span><a href=3D"https://twitt=
+er.com/gmkurtzer" style=3D"font-size:12.8px" target=3D"_blank">https://twit=
+ter.com/gmkurtzer</a></div></div></div></div></div></div></div></div></div>=
+</div></div>
+</div>
+
+--001a114e57560b4126054922bbd8--

@@ -1,0 +1,199 @@
+Date: Wed, 7 Nov 2018 07:13:56 -0800 (PST)
+From: PaulJ <pjo...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Cc: thomas....@desy.de
+Message-Id: <e7fbe743-90eb-458d-8146-69eeb5d5e7bb@lbl.gov>
+In-Reply-To: <3edcb832-a080-2f13-fa31-63e16f24b8c6@desy.de>
+References: <78fbcc43-fe12-4f0b-ade4-65d29783195b@lbl.gov>
+ <3edcb832-a080-2f13-fa31-63e16f24b8c6@desy.de>
+Subject: Re: [Singularity] v3.0.1 /var mounted as read-only filesystem, even
+ when using sudo
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2587_208018018.1541603636811"
+
+------=_Part_2587_208018018.1541603636811
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2588_1958729499.1541603636812"
+
+------=_Part_2588_1958729499.1541603636812
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi Thomas:
+
+I would not be able to use --bind, since my host is Fedora 28, while the 
+guest is CentOS 6, and it would mess up the host if I tried to yum install 
+anything in the guest.
+
+I did try the --writable option, but that gives me a message: WARNING: no 
+overlay partition found
+
+I tried the --writable-tmpfs and this works.  It will allow me to write to 
+/var.  But, the way the /var filesystem shows up in df, it looks like there 
+is 0% space available on it:
+
+> df -kh .
+df: Warning: cannot read table of mounted file system: No such file or 
+directory
+Filesystem          Size     Used     Avail    Use Mounted on
+-                             0           0           0       -   /
+
+And, a "yum install" or "yum update" will fail, since it believe the 
+filesystem is out of space so it can't download the files
+
+thanks,
+Paul
+
+On Wednesday, November 7, 2018 at 2:58:46 AM UTC-6, Thomas Hartmann wrote:
+>
+> Hi Paul, 
+>
+> have you tried to bind /var/abc explicitly in the container? 
+> I.e., 
+>   --bind /var/abc 
+>
+> But mounting your host's /var might be not really desirable as you are 
+> mixing your container's and hots's /var/lib etc. 
+> Probably a sandbox-container or --writable would be safer. 
+>
+> Cheers, 
+>   Thomas 
+>
+>
+> On 2018-11-06 20:44, PaulJ wrote: 
+> > Hi All: 
+> > 
+> > I created my own singularity "container" with the build file: 
+> > 
+> > host> cat test3.script 
+> > 
+> > /BootStrap: yum/ 
+> > /OSVersion: 6/ 
+> > /MirrorURL: http;//localhost/centos/%{OSVERSION}/os/$basearch// 
+> > /Include: yum/ 
+> > / 
+> > / 
+> > After building the image (sudo singularity build test3.sif 
+> > test3.script), I can run it with: 
+> > host> sudo singularity shell test3.sif 
+> > 
+> > in the image, if I attempt to write to /var (and I am the root user 
+> > because I called singularity with sudo), it returns an error message: 
+> > 
+> >> id 
+> > uid=0(root) gid=0(root) groups=0(root) 
+> >> touch /var/abc 
+> > touch: cannot touch '/var/abc': Read-only file system 
+> > 
+> > I discovered this, since I was trying to perform yum commands in the 
+> > image, and they were hanging (because it could not write to 
+> /var/lib/rpm) 
+> > 
+> > thanks, 
+> > Paul 
+> > 
+> > -- 
+> > You received this message because you are subscribed to the Google 
+> > Groups "singularity" group. 
+> > To unsubscribe from this group and stop receiving emails from it, send 
+> > an email to singu...@lbl.gov <javascript:> 
+> > <mailto:singu...@lbl.gov <javascript:>>. 
+>
+>
+------=_Part_2588_1958729499.1541603636812
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Hi Thomas:</div><div><br></div><div>I would not be ab=
+le to use --bind, since my host is Fedora 28, while the guest is CentOS 6, =
+and it would mess up the host if I tried to yum install anything in the gue=
+st.</div><div><br></div><div>I did try the --writable option, but that give=
+s me a message: WARNING: no overlay partition found</div><div><br></div><di=
+v>I tried the --writable-tmpfs and this works.=C2=A0 It will allow me to wr=
+ite to /var.=C2=A0 But, the way the /var filesystem shows up in df, it look=
+s like there is 0% space available on it:</div><div><br></div><div>&gt; df =
+-kh .</div><div>df: Warning: cannot read table of mounted file system: No s=
+uch file or directory</div><div>Filesystem=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0 Size=C2=A0=C2=A0=C2=A0=C2=A0 Used=C2=A0=C2=A0=C2=A0=
+=C2=A0 Avail=C2=A0=C2=A0=C2=A0 Use Mounted on</div><div>-=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+ 0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0 -=C2=A0=C2=A0 /</div><div><br></div><div>And, a &quot;yum i=
+nstall&quot; or &quot;yum update&quot; will fail, since it believe the file=
+system is out of space so it can&#39;t download the files</div><div><br></d=
+iv><div>thanks,</div><div>Paul<br></div><br>On Wednesday, November 7, 2018 =
+at 2:58:46 AM UTC-6, Thomas Hartmann wrote:<blockquote class=3D"gmail_quote=
+" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #ccc solid;padding=
+-left: 1ex;">Hi Paul,
+<br>
+<br>have you tried to bind /var/abc explicitly in the container?
+<br>I.e.,
+<br>=C2=A0 --bind /var/abc
+<br>
+<br>But mounting your host&#39;s /var might be not really desirable as you =
+are
+<br>mixing your container&#39;s and hots&#39;s /var/lib etc.
+<br>Probably a sandbox-container or --writable would be safer.
+<br>
+<br>Cheers,
+<br>=C2=A0 Thomas
+<br>
+<br>
+<br>On 2018-11-06 20:44, PaulJ wrote:
+<br>&gt; Hi All:
+<br>&gt;=20
+<br>&gt; I created my own singularity &quot;container&quot; with the build =
+file:
+<br>&gt;=20
+<br>&gt; host&gt; cat test3.script
+<br>&gt;=20
+<br>&gt; /BootStrap: yum/
+<br>&gt; /OSVersion: 6/
+<br>&gt; /MirrorURL: http;//localhost/centos/%{<wbr>OSVERSION}/os/$basearch=
+//
+<br>&gt; /Include: yum/
+<br>&gt; /
+<br>&gt; /
+<br>&gt; After building the image (sudo singularity build test3.sif
+<br>&gt; test3.script), I can run it with:
+<br>&gt; host&gt; sudo singularity shell test3.sif
+<br>&gt;=20
+<br>&gt; in the image, if I attempt to write to /var (and I am the root use=
+r
+<br>&gt; because I called singularity with sudo), it returns an error messa=
+ge:
+<br>&gt;=20
+<br>&gt;&gt; id
+<br>&gt; uid=3D0(root) gid=3D0(root) groups=3D0(root)
+<br>&gt;&gt; touch /var/abc
+<br>&gt; touch: cannot touch &#39;/var/abc&#39;: Read-only file system
+<br>&gt;=20
+<br>&gt; I discovered this, since I was trying to perform yum commands in t=
+he
+<br>&gt; image, and they were hanging (because it could not write to /var/l=
+ib/rpm)
+<br>&gt;=20
+<br>&gt; thanks,
+<br>&gt; Paul
+<br>&gt;=20
+<br>&gt; --=20
+<br>&gt; You received this message because you are subscribed to the Google
+<br>&gt; Groups &quot;singularity&quot; group.
+<br>&gt; To unsubscribe from this group and stop receiving emails from it, =
+send
+<br>&gt; an email to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscat=
+ed-mailto=3D"rlaXRTVhAAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39=
+;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39=
+;;return true;">singularity...@lbl.<wbr>gov</a>
+<br>&gt; &lt;mailto:<a href=3D"javascript:" target=3D"_blank" gdf-obfuscate=
+d-mailto=3D"rlaXRTVhAAAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;=
+javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;=
+;return true;">singularity+<wbr>unsub...@lbl.gov</a>&gt;.
+<br>
+<br></blockquote></div>
+------=_Part_2588_1958729499.1541603636812--
+
+------=_Part_2587_208018018.1541603636811--

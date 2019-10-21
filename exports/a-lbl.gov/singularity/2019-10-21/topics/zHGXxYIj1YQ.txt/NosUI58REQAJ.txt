@@ -1,0 +1,1356 @@
+Date: Sat, 8 Sep 2018 09:02:10 -0700 (PDT)
+From: =?UTF-8?Q?C=C3=A9dric_Clerget?= <cedric...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <0a3db068-b8ef-4098-890b-612984c60f2a@lbl.gov>
+In-Reply-To: <f74a1005-af27-46a5-9e47-2c6c5cb8fd24@lbl.gov>
+References: <f74a1005-af27-46a5-9e47-2c6c5cb8fd24@lbl.gov>
+Subject: Re: Difference in network namespace behavior between Singularity 2
+ and Singularity 3
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_601_1744437791.1536422530128"
+
+------=_Part_601_1744437791.1536422530128
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_602_1517614058.1536422530131"
+
+------=_Part_602_1517614058.1536422530131
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Hi Sean,
+
+Indeed shell/exec actually just join the requested namespaces during=20
+instance start, so it's not compatible with the use case you demonstrated.
+I opened an issue=20
+https://github.com/singularityware/singularity/issues/1946 to fix that asap=
+.
+
+Thank you very much for your detailed analysis, very helpful ;)
+
+C=C3=A9dric
+
+Le samedi 8 septembre 2018 03:44:46 UTC+2, Sean Mahoney a =C3=A9crit :
+>
+> Hi All,
+>
+> In Singularity 2 (I'm testing with 2.6.0), if you 'shell' or 'exec' to a=
+=20
+> running instance that was started in a custom network namespace (created=
+=20
+> with the 'ip netns add' command, not using the -n|--net Singularity flag)=
+=20
+> the process(es) spawned will also use that custom network namespace.  Thi=
+s=20
+> is highly beneficial because it means that each Singularity container=20
+> instance can use its own 'ip netns' managed custom network namespace and=
+=20
+> that users of each container end up in that custom network namespace by=
+=20
+> default when running 'shell' or 'exec' against the instance, regardless o=
+f=20
+> the network namespace of the user's shell.
+>
+> In Singularity 3 (I'm testing with 3.0.0-alpha.1-144-g345371f, git clone=
+=20
+> from 08/31/2018), it appears that behavior has changed.  If an instance i=
+s=20
+> started in a custom network namespace (created with the 'ip netns add'=20
+> command, not using the -n|--net Singularity flag), the initial processes=
+=20
+> start in the custom network namespace but future process(es) spawned by=
+=20
+> running 'shell' or 'exec' to that instance end up associated with the roo=
+t=20
+> (default) network namespace of the host system instead of the custom=20
+> network namespace.  Since non-root users cannot use 'ip netns exec' or=20
+> 'nsenter' to explicitly start a process in a particular namespace, non-ro=
+ot=20
+> user 'shell' and 'exec' interactions with that Singularity 3 instance wil=
+l=20
+> result in processes that essentially "escape" the custom network namespac=
+e=20
+> and are instead exposed to the root network namespace and everything it=
+=20
+> contains (network interfaces, iptables rules, routing tables, etc)...
+>
+> Are there plans to incorporate Singularity 2's behavior described above=
+=20
+> into Singularity 3?
+>
+> Although I realize that the -n|--net flag can be passed to 'instance=20
+> start' to cause Singularity 3 to generate a new network namespace, using=
+=20
+> 'ip netns add' instead not only creates what is essentially a "named"=20
+> custom network namespace (e.g.=20
+> /var/run/netns/name-of-custom-network-namespace) but also makes it possib=
+le=20
+> to use namespace-specific configuration files in /etc (see=20
+> http://man7.org/linux/man-pages/man8/ip-netns.8.html ).
+>
+> Below I've included two sections ('Examples' and 'Relevant Code') to=20
+> provide examples and references to relevant code, both with an excruciati=
+ng=20
+> (but hopefully helpful) amount of detail. ;)
+>
+> If you have any questions or need additional information, please let me=
+=20
+> know.
+>
+> Thanks!
+> Sean
+>
+>
+> *Examples*
+>
+> *Singularity 2*
+>
+> As an example, consider the following script being run as root when a hos=
+t=20
+> is started:
+>
+> #!/bin/bash
+> ip netns add container1-hostname
+> ip netns exec container1-hostname su -c "singularity instance.start=20
+> /home/nonrootuser/centos.simg container1" - nonrootuser
+>
+> The script above creates a new custom network namespace named=20
+> 'container1-hostname' and starts a Singularity instance named 'container1=
+'=20
+> (running as nonrootuser) inside that custom network namespace.  The resul=
+t=20
+> in Singularity 2 is a single process for the instance=20
+> ('singularity-instance: nonrootuser [container1]') that is using the=20
+> 'container1-hostname' custom network namespace:
+>
+> [root@singularity2 ~]# lsns -t net -o=20
+> NS,PATH,TYPE,NPROCS,PPID,PID,USER,UID,COMMAND
+>         NS PATH              TYPE NPROCS PPID   PID USER        UID COMMA=
+ND
+> 4026531956 /proc/1/ns/net    net      94    0     1 root        0 /usr/li=
+b
+> /systemd/systemd --switched-root --system --deserialize 22
+> 4026532163 /proc/2695/ns/net net       1    1  2695 nonrootuser 1000=20
+> singularity-instance: nonrootuser [container1]
+>
+> [root@singularity2 ~]# ls -i /var/run/netns/container1-hostname
+> 4026532163 /var/run/netns/container1-hostname
+>
+> In this example, 4026531956 is the inode containing the root network=20
+> namespace used by default for all processes running on the host system (9=
+4=20
+> processes in this example) and 4026532163 is the inode containing our=20
+> custom network namespace.  Now let's say nonrootuser shells into the=20
+> running instance that was started as their user when the host system boot=
+ed:
+>
+> [nonrootuser@singularity2 ~]$ singularity instance.list
+> DAEMON NAME      PID      CONTAINER IMAGE
+> container1       2695     /home/nonrootuser/centos.simg
+>
+> [nonrootuser@singularity2 ~]$ singularity shell instance://container1
+> Singularity: Invoking an interactive shell within container...
+>
+> Singularity centos.simg:~> readlink /proc/self/ns/net
+> net:[4026532163]
+>
+> The resulting bash process for the Singularity shell ends up with our=20
+> correct custom network namespace (the network namespace file descriptor f=
+or=20
+> its process refers to inode 4026532163, which we saw earlier as the inode=
+=20
+> containing our 'container1-hostname' custom network namespace in this=20
+> example).  The same behavior applies to exec:
+>
+> [nonrootuser@singularity2 ~]$ singularity exec instance://container1=20
+> readlink /proc/self/ns/net
+> net:[4026532163]
+>
+> This is excellent since it means that all processes resulting from=20
+> nonrootuser's interaction with that instance will use our custom network=
+=20
+> namespace!
+>
+>
+> *Singularity 3*
+>
+> Now let's look at the different behavior in Singularity 3.  Consider the=
+=20
+> following script (identical to the script in the Singularity 2 example=20
+> except for using 'instance start' instead of 'instance.start') being run =
+as=20
+> root when a host is started:
+>
+> #!/bin/bash
+> ip netns add container1-hostname
+> ip netns exec container1-hostname su -c "singularity instance start=20
+> /home/nonrootuser/centos.simg container1" - nonrootuser
+>
+> The script above creates a new custom network namespace named=20
+> 'container1-hostname' and starts a Singularity instance named 'container1=
+'=20
+> (running as nonrootuser) inside that custom network namespace.  The resul=
+t=20
+> in Singularity 3 is two processes for the instance (parent process=20
+> 'Singularity instance: nonrootuser [container1]' and child process 'sinit=
+')=20
+> that are both using the 'container1-hostname' custom network namespace:
+>
+> [root@singularity3 ~]# lsns -t net -o=20
+> NS,PATH,TYPE,NPROCS,PPID,PID,USER,UID,COMMAND
+>         NS PATH              TYPE NPROCS PPID   PID USER        UID COMMA=
+ND
+> 4026531956 /proc/1/ns/net    net      99    0     1 root        0 /usr/li=
+b
+> /systemd/systemd --switched-root --system --deserialize 22
+> 4026532163 /proc/2676/ns/net net       2    1  2676 nonrootuser 1000=20
+> Singularity instance: nonrootuser [container1]
+>
+> [root@singularity3 ~]# ls -i /var/run/netns/container1-hostname
+> 4026532163 /var/run/netns/container1-hostname
+>
+> In this example, 4026531956 is the inode containing the root network=20
+> namespace used by default for all processes running on the host system (9=
+9=20
+> processes in this example) and 4026532163 is the inode containing our=20
+> custom network namespace.  Now let's say nonrootuser shells into the=20
+> running instance that was started as their user when the host system boot=
+ed:
+>
+> [nonrootuser@singularity3 ~]$ singularity instance list
+> INSTANCE NAME    PID      IMAGE
+> container1       2677     /home/nonrootuser/centos.simg
+>
+> [nonrootuser@singularity3 ~]$ singularity shell instance://container1
+> Singularity :~> readlink /proc/self/ns/net
+> net:[4026531956]
+>
+> Instead of the resulting bash process for the Singularity shell ending up=
+=20
+> in our correct custom network namespace like it did in Singularity 2, it=
+=20
+> ends up in the root network namespace (the network namespace file=20
+> descriptor for its process refers to inode 4026531956, which we saw earli=
+er=20
+> as the inode containing the root/default network namespace in this=20
+> example). :(  The same behavior unfortunately applies to exec:
+>
+> [nonrootuser@singularity3 ~]$ singularity exec instance://container1=20
+> readlink /proc/self/ns/net
+> net:[4026531956]
+>
+> The result is that all processes started by a user connecting to that=20
+> instance essentially "escape" the custom network namespace and are instea=
+d=20
+> exposed to the root network namespace and everything it contains (network=
+=20
+> interfaces, iptables rules, routing tables, etc)...
+>
+>
+> *Relevant Code*
+>
+> *Singularity 2*
+>
+> In Singularity 2, when 'singularity exec instance://instancename command'=
+=20
+> is run, my current understanding is that the following occurs:
+>
+> * /usr/bin/singularity (or whatever its path may be on your system) -=20
+> 'exec' is passed as $SINGULARITY_COMMAND to the line 'exec=20
+> $SINGULARITY_libexecdir/singularity/cli/$SINGULARITY_COMMAND.exec "$@"'.
+>     - See=20
+> https://github.com/singularityware/singularity/blob/release-2.6/bin/singu=
+larity.in#L135
+> * /usr/libexec/singularity/cli/exec.exec (or whatever its path may be on=
+=20
+> your system) - The line '.=20
+> "$SINGULARITY_libexecdir/singularity/image-handler.sh"' runs=20
+> image-handler.sh.
+>     - See=20
+> https://github.com/singularityware/singularity/blob/release-2.6/libexec/c=
+li/exec.exec#L74
+>         * /usr/libexec/singularity/image-handler.sh (or whatever its path=
+=20
+> may be on your system) - 'instance://instancename' being passed to exec=
+=20
+> results in the line '.=20
+> "$SINGULARITY_libexecdir/singularity/handlers/image-instance.sh"' being r=
+un.
+>             - See=20
+> https://github.com/singularityware/singularity/blob/release-2.6/libexec/i=
+mage-handler.sh#L44
+>         * /usr/libexec/singularity/handlers/image-instance.sh (or whateve=
+r=20
+> its path may be on your system) - If an instance by that name is indeed=
+=20
+> running, the line 'SINGULARITY_DAEMON_JOIN=3D1' is run and=20
+> SINGULARITY_DAEMON_JOIN is exported as a bash environment variable.
+>             - See=20
+> https://github.com/singularityware/singularity/blob/release-2.6/libexec/h=
+andlers/image-instance.sh#L31
+> * /usr/libexec/singularity/cli/exec.exec (or whatever its path may be on=
+=20
+> your system) - The line 'exec=20
+> "$SINGULARITY_libexecdir/singularity/bin/action-suid" "$@" <&0' is run if=
+=20
+> SINGULARITY_NOSUID isn't set.
+>     - See=20
+> https://github.com/singularityware/singularity/blob/release-2.6/libexec/c=
+li/exec.exec#L79
+>         * /usr/libexec/singularity/bin/action-suid (or whatever its path=
+=20
+> may be on your system) - Regardless of whether or not DAEMON_JOIN was set=
+=20
+> in the "Singularity registry" (i.e. if 'SINGULARITY_DAEMON_JOIN=3D1' was =
+run=20
+> in image-instance.sh), 'singularity_runtime_ns(SR_NS_ALL);' is run.
+>             - See=20
+> https://github.com/singularityware/singularity/blob/release-2.6/src/actio=
+n.c#L109
+>         * /usr/lib64/singularity/libsingularity-runtime.so.1 (or whatever=
+=20
+> its path may be on your system) - In function definition 'int=20
+> singularity_runtime_ns(unsigned int flags)', conditional 'if (=20
+> singularity_registry_get("DAEMON_JOIN")' returns true since DAEMON_JOIN w=
+as=20
+> set to 1 in the "Singularity registry" ('SINGULARITY_DAEMON_JOIN=3D1' was=
+ run=20
+> in image-instance.sh).  As a result, the line=20
+> 'return(_singularity_runtime_ns_join(flags));' is run (with 'flags' being=
+=20
+> an integer representation of SR_NS_ALL at this point).
+>             - See=20
+> https://github.com/singularityware/singularity/blob/release-2.6/src/lib/r=
+untime/runtime.c#L59
+>         * /usr/lib64/singularity/libsingularity-runtime.so.1 (or whatever=
+=20
+> its path may be on your system) - In function definition 'int=20
+> _singularity_runtime_ns_join(unsigned int flags)', conditional 'if ( flag=
+s=20
+> & SR_NS_NET )' returns true since SR_NS_NET is part of SR_NS_ALL (passed=
+=20
+> earlier) and the line 'retval +=3D _singularity_runtime_ns_net_join();' i=
+s=20
+> run.
+>             - See=20
+> https://github.com/singularityware/singularity/blob/release-2.6/src/lib/r=
+untime/ns/ns.c#L86
+>         * /usr/lib64/singularity/libsingularity-runtime.so.1 (or whatever=
+=20
+> its path may be on your system) - In function definition 'int=20
+> _singularity_runtime_ns_net_join(void)', the file descriptor for the=20
+> running instance's network namespace is opened and 'setns(net_fd,=20
+> CLONE_NEWNET)' is ran as part of a conditional.  The setns system call (s=
+ee=20
+> http://man7.org/linux/man-pages/man2/setns.2.html ) associates the=20
+> calling thread (in our case, the exec process) with a particular namespac=
+e=20
+> of the file descriptor its passed.  In this case, the file descriptor for=
+=20
+> the running instance's network namespace is passed in along with=20
+> 'CLONE_NEWNET' (used for network namespaces) as the namespace type.  The=
+=20
+> end result is that the process created from running 'singularity exec=20
+> instance://instancename command' is assigned to whatever network namespac=
+e=20
+> the process of the running instance is in.  Cool! :)
+>             - See=20
+> https://github.com/singularityware/singularity/blob/release-2.6/src/lib/r=
+untime/ns/net/net.c#L100
+>
+>
+> *Singularity 3*
+>
+> I haven't yet had time to examine the code execution steps for the same=
+=20
+> example command ('singularity exec instance://instancename command') in=
+=20
+> Singularity 3, but I have determined that it does indeed have code that=
+=20
+> supports a 'shell' or 'exec' process being assigned to a custom network=
+=20
+> namespace of a running instance.  The issue is that the aforementioned=20
+> behavior (assignment of a 'shell' or 'exec' process to a running instance=
+'s=20
+> custom network namespace) only occurs if that instance was started with t=
+he=20
+> -n|--net Singularity flag (which of course instructs Singularity to creat=
+e=20
+> its own custom network namespace).  If the instance was started without=
+=20
+> that flag from a custom network namespace that was instead created with '=
+ip=20
+> netns add', 'shell' and 'exec' processes run against an instance end up i=
+n=20
+> the root network namespace instead of the desired custom network namespac=
+e.
+>
+> One fundamental difference is that the JSON configuration for the running=
+=20
+> instance located at=20
+> /var/run/singularity/instances/${USER}/nameofinstance.json only includes=
+=20
+> 'network' in its list of namespaces if that instance was started with the=
+=20
+> -n|--net Singularity flag.  If that instance was started without that fla=
+g=20
+> from a custom network namespace that was instead created with 'ip netns=
+=20
+> add', 'network' is not included in the list of namespaces...
+>
+> For example, consider the following script being run as root:
+>
+> #!/bin/bash
+> ip netns add container1-hostname
+> ip netns exec container1-hostname su -c "singularity instance start=20
+> /home/nonrootuser/centos.simg container1" - nonrootuser
+> su -c "singularity instance start --net /home/nonrootuser/centos.simg=20
+> container2" - nonrootuser
+>
+> The result is two Singularity instances, container1 and container2. =20
+> container1 was started inside of the 'container1-hostname' custom network=
+=20
+> namespace that was created with the 'ip netns add' command and the two=20
+> resulting initial processes (parent process 'Singularity instance:=20
+> nonrootuser [container1]' and child process 'sinit') are both using that=
+=20
+> namespace.  container2 was instead started with the -n|--net Singularity=
+=20
+> flag to instruct Singularity to create its own custom network namespace. =
+=20
+> container2 also starts with two initial processes (parent process=20
+> 'Singularity instance: nonrootuser [container2]' and child process 'sinit=
+')=20
+> but only the 'sinit' process ends up using the custom network namespace=
+=20
+> that Singularity created.  The parent process 'Singularity instance:=20
+> nonrootuser [container2]' ends up in the root (default) network namespace=
+=20
+> instead of the custom network namespace.  Consider the following four=20
+> processes:
+>
+> nonrootuser   1157  Singularity instance: vagrant [container1]
+> nonrootuser   1158  \_ sinit
+> nonrootuser   1205  Singularity instance: vagrant [container2]
+> nonrootuser   1206  \_ sinit
+>
+> PIDs 1157 and 1158 are the initial parent and child processes for=20
+> container1 and PIDs 1205 and 1206 are the initial parent and child=20
+> processes for container2.  Let's confirm which network namespaces those=
+=20
+> processes are using:
+>
+> [root@singularity3 ~]# lsns -t net -o=20
+> NS,PATH,TYPE,NPROCS,PPID,PID,USER,UID,COMMAND
+>         NS PATH              TYPE NPROCS  PPID   PID USER        UID=20
+> COMMAND
+> 4026531956 /proc/1/ns/net    net      99     0     1 root        0 /usr/
+> lib/systemd/systemd --switched-root --system --deserialize 22
+> 4026532163 /proc/1157/ns/net net       2     1  1157 nonrootuser 1000=20
+> Singularity instance: nonrootuser [container1]
+> 4026532242 /proc/1206/ns/net net       1  1205  1206 nonrootuser 1000=20
+> sinit
+>
+> In this example, 4026531956 is the inode containing the root network=20
+> namespace used by default for all processes running on the host system (9=
+9=20
+> processes in this example), 4026532163 is the inode containing the=20
+> 'container1-hostname' custom network namespace we created with 'ip netns=
+=20
+> add', and 4026532242 is the inode containing the custom network namespace=
+=20
+> that Singularity created when the container2 instance was started with th=
+e=20
+> --net flag.
+>
+> [root@singularity3 ~]# ls -i /var/run/netns/container1-hostname
+> 4026532163 /var/run/netns/container1-hostname
+>
+> [root@singularity3 ~]# readlink /proc/1157/ns/net
+> net:[4026532163]
+>
+> [root@singularity3 ~]# readlink /proc/1158/ns/net
+> net:[4026532163]
+>
+> [root@singularity3 ~]# readlink /proc/1205/ns/net
+> net:[4026531956]
+>
+> [root@singularity3 ~]# readlink /proc/1206/ns/net
+> net:[4026532242]
+>
+> Now let's compare the JSON configuration of both running instances,=20
+> specifically the values from '.engineConfig.ociConfig.linux.namespaces':
+>
+> [nonrootuser@singularity3 ~]$ cat /var/run/singularity/instances/
+> nonrootuser/container1.json | jq '.config' | perl -pi -e "s/\"//g" |=20
+> base64 --decode | jq '.engineConfig.ociConfig.linux.namespaces'
+> [
+>   {
+>     "type": "pid",
+>     "path": "/proc/1158/ns/pid"
+>   },
+>   {
+>     "type": "ipc",
+>     "path": "/proc/1158/ns/ipc"
+>   },
+>   {
+>     "type": "mount",
+>     "path": "/proc/1158/ns/mnt"
+>   }
+> ]
+>
+> [nonrootuser@singularity3 ~]$ cat /var/run/singularity/instances/
+> nonrootuser/container2.json | jq '.config' | perl -pi -e "s/\"//g" |=20
+> base64 --decode | jq '.engineConfig.ociConfig.linux.namespaces'
+> [
+>   {
+>     "type": "network",
+>     "path": "/proc/1206/ns/net"
+>   },
+>   {
+>     "type": "pid",
+>     "path": "/proc/1206/ns/pid"
+>   },
+>   {
+>     "type": "ipc",
+>     "path": "/proc/1206/ns/ipc"
+>   },
+>   {
+>     "type": "mount",
+>     "path": "/proc/1206/ns/mnt"
+>   }
+> ]
+>
+> As you can see, the 'network' namespace only appears in the JSON=20
+> configuration for a running instance if that instance was started with th=
+e=20
+> -n|--net Singularity flag.  Now let's test and see what network namespace=
+=20
+> ends up being assigned to 'exec' processes run against both of those=20
+> running instances:
+>
+> [nonrootuser@singularity3 ~]$ singularity exec instance://container1=20
+> readlink /proc/self/ns/net
+> net:[4026531956]
+>
+> [nonrootuser@singularity3 ~]$ singularity exec instance://container2=20
+> readlink /proc/self/ns/net
+> net:[4026532242]
+>
+> 'exec' (and 'shell') processes run against container1 end up in the root=
+=20
+> (default) network namespace of the host system instead of the desired=20
+> 'container1-hostname' custom network namespace we created with 'ip netns=
+=20
+> add' earlier, even though both of the container1 processes are in that=20
+> custom namespace!  'exec' (and 'shell') processes run against container2=
+=20
+> end up in the custom network namespace created by Singularity.
+>
+> It would be highly beneficial if Singularity 3 could be updated such that=
+=20
+> 'shell' and 'exec' processes run against an instance automatically receiv=
+e=20
+> the network namespace of the instance itself.  That would be consistent=
+=20
+> with the behavior of Singularity 2 and would prevent 'shell' and 'exec'=
+=20
+> processes run against an instance from "escaping" a custom network=20
+> namespace and ending up with completely different interfaces, iptables=20
+> rules, routing tables, etc than anticipated.
+>
+
+------=_Part_602_1517614058.1536422530131
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Hi Sean,</div><div><br></div><div>Indeed shell/exec a=
+ctually just join the requested namespaces during instance start, so it&#39=
+;s not compatible with the use case you demonstrated.</div><div> I opened a=
+n issue https://github.com/singularityware/singularity/issues/1946 to fix t=
+hat asap.<br></div><div><br></div><div>Thank you very much for your detaile=
+d analysis, very helpful ;)</div><div><br></div><div>C=C3=A9dric<br></div><=
+br>Le samedi 8 septembre 2018 03:44:46 UTC+2, Sean Mahoney a =C3=A9crit=C2=
+=A0:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex=
+;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr"><div>Hi A=
+ll,</div><div><br></div><div>In Singularity 2 (I&#39;m testing with 2.6.0),=
+ if you &#39;shell&#39; or &#39;exec&#39; to a running instance that was st=
+arted in a custom network namespace (created with the &#39;ip netns add&#39=
+; command, not using the -n|--net Singularity flag) the process(es) spawned=
+ will also use that custom network namespace.=C2=A0 This is highly benefici=
+al because it means that each Singularity container instance can use its ow=
+n &#39;ip netns&#39; managed custom network namespace and that users of eac=
+h container end up in that custom network namespace by default when running=
+ &#39;shell&#39; or &#39;exec&#39; against the instance, regardless of the =
+network namespace of the user&#39;s shell.</div><div><br></div><div>In Sing=
+ularity 3 (I&#39;m testing with 3.0.0-alpha.1-144-g345371f, git clone from =
+08/31/2018), it appears that behavior has changed.=C2=A0 If an instance is =
+started in a custom network namespace (created with the &#39;ip netns add&#=
+39; command, not using the -n|--net Singularity flag), the initial processe=
+s start in the custom network namespace but future process(es) spawned by r=
+unning &#39;shell&#39; or &#39;exec&#39; to that instance end up associated=
+ with the root (default) network namespace of the host system instead of th=
+e custom network namespace.=C2=A0 Since non-root users cannot use &#39;ip n=
+etns exec&#39; or &#39;nsenter&#39; to explicitly start a process in a part=
+icular namespace, non-root user &#39;shell&#39; and &#39;exec&#39; interact=
+ions with that Singularity 3 instance will result in processes that essenti=
+ally &quot;escape&quot; the custom network namespace and are instead expose=
+d to the root network namespace and everything it contains (network interfa=
+ces, iptables rules, routing tables, etc)...</div><div><br></div><div>Are t=
+here plans to incorporate Singularity 2&#39;s behavior described above into=
+ Singularity 3?</div><div><br></div><div>Although I realize that the -n|--n=
+et flag can be passed to &#39;instance start&#39; to cause Singularity 3 to=
+ generate a new network namespace, using &#39;ip netns add&#39; instead not=
+ only creates what is essentially a &quot;named&quot; custom network namesp=
+ace (e.g. /var/run/netns/name-of-custom-<wbr>network-namespace) but also ma=
+kes it possible to use namespace-specific configuration files in /etc (see =
+<a href=3D"http://man7.org/linux/man-pages/man8/ip-netns.8.html" target=3D"=
+_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://www.google.=
+com/url?q\x3dhttp%3A%2F%2Fman7.org%2Flinux%2Fman-pages%2Fman8%2Fip-netns.8.=
+html\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHsvCyNV0bFrP7TGZsmlQycZXLWhA&#=
+39;;return true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x=
+3dhttp%3A%2F%2Fman7.org%2Flinux%2Fman-pages%2Fman8%2Fip-netns.8.html\x26sa\=
+x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHsvCyNV0bFrP7TGZsmlQycZXLWhA&#39;;return =
+true;">http://man7.org/linux/man-<wbr>pages/man8/ip-netns.8.html</a> ).</di=
+v><div><br></div><div>Below I&#39;ve included two sections (&#39;Examples&#=
+39; and &#39;Relevant Code&#39;) to provide examples and references to rele=
+vant code, both with an excruciating (but hopefully helpful) amount of deta=
+il. ;)</div><div><br></div><div>If you have any questions or need additiona=
+l information, please let me know.</div><div><br></div><div>Thanks!</div><d=
+iv>Sean</div><div><br></div><div><br></div><div><b><font size=3D"4">Example=
+s</font></b></div><div><br></div><div><b>Singularity 2</b></div><div><br></=
+div><div>As an example, consider the following script being run as root whe=
+n a host is started:</div><div><br></div><div style=3D"background-color:rgb=
+(250,250,250);border-color:rgb(187,187,187);border-style:solid;border-width=
+:1px;word-wrap:break-word"><code><div><span style=3D"color:#800">#!/bin/bas=
+h</span><span style=3D"color:#000"><br>ip netns add container1</span><span =
+style=3D"color:#660">-</span><span style=3D"color:#000">hostname<br>ip netn=
+s </span><span style=3D"color:#008">exec</span><span style=3D"color:#000"> =
+container1</span><span style=3D"color:#660">-</span><span style=3D"color:#0=
+00">hostname su </span><span style=3D"color:#660">-</span><span style=3D"co=
+lor:#000">c </span><span style=3D"color:#080">&quot;singularity instance.st=
+art /home/nonrootuser/centos.simg container1&quot;</span><span style=3D"col=
+or:#000"> </span><span style=3D"color:#660">-</span><span style=3D"color:#0=
+00"> nonrootuser</span></div></code></div><div><br></div><div>The script ab=
+ove creates a new custom network namespace named &#39;container1-hostname&#=
+39; and starts a Singularity instance named &#39;container1&#39; (running a=
+s nonrootuser) inside that custom network namespace.=C2=A0 The result in Si=
+ngularity 2 is a single process for the instance (&#39;singularity-instance=
+: nonrootuser [container1]&#39;) that is using the &#39;container1-hostname=
+&#39; custom network namespace:</div><div><br></div><div style=3D"backgroun=
+d-color:rgb(250,250,250);border-color:rgb(187,187,187);border-style:solid;b=
+order-width:1px;word-wrap:break-word"><code><div><span style=3D"color:#660"=
+>[</span><span style=3D"color:#000">root@singularity2 </span><span style=3D=
+"color:#660">~]</span><span style=3D"color:#800"># lsns -t net -o NS,PATH,T=
+YPE,NPROCS,PPID,PID,<wbr>USER,UID,COMMAND</span><span style=3D"color:#000">=
+<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 NS PATH =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0TYPE NPROCS PPID =C2=A0 PID USER =C2=A0 =C2=A0 =C2=A0 =C2=A0UI=
+D COMMAND<br></span><span style=3D"color:#066">4026531956</span><span style=
+=3D"color:#000"> </span><span style=3D"color:#660">/</span><span style=3D"c=
+olor:#000">proc</span><span style=3D"color:#660">/</span><span style=3D"col=
+or:#066">1</span><span style=3D"color:#660">/</span><span style=3D"color:#0=
+00">ns</span><span style=3D"color:#660">/</span><span style=3D"color:#000">=
+net =C2=A0 =C2=A0net =C2=A0 =C2=A0 =C2=A0</span><span style=3D"color:#066">=
+94</span><span style=3D"color:#000"> =C2=A0 =C2=A0</span><span style=3D"col=
+or:#066">0</span><span style=3D"color:#000"> =C2=A0 =C2=A0 </span><span sty=
+le=3D"color:#066">1</span><span style=3D"color:#000"> root =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0</span><span style=3D"color:#066">0</span><span style=3D"color=
+:#000"> </span><span style=3D"color:#660">/</span><span style=3D"color:#000=
+">usr</span><span style=3D"color:#660">/</span><span style=3D"color:#000">l=
+ib</span><span style=3D"color:#660">/</span><span style=3D"color:#000">syst=
+emd</span><span style=3D"color:#660">/</span><span style=3D"color:#000">sys=
+temd </span><span style=3D"color:#660">--</span><span style=3D"color:#000">=
+switched</span><span style=3D"color:#660">-</span><span style=3D"color:#000=
+">root </span><span style=3D"color:#660">--</span><span style=3D"color:#000=
+">system </span><span style=3D"color:#660">--</span><span style=3D"color:#0=
+00">deserialize </span><span style=3D"color:#066">22</span><span style=3D"c=
+olor:#000"><br></span><span style=3D"color:#066">4026532163</span><span sty=
+le=3D"color:#000"> </span><span style=3D"color:#660">/</span><span style=3D=
+"color:#000">proc</span><span style=3D"color:#660">/</span><span style=3D"c=
+olor:#066">2695</span><span style=3D"color:#660">/</span><span style=3D"col=
+or:#000">ns</span><span style=3D"color:#660">/</span><span style=3D"color:#=
+000">net net =C2=A0 =C2=A0 =C2=A0 </span><span style=3D"color:#066">1</span=
+><span style=3D"color:#000"> =C2=A0 =C2=A0</span><span style=3D"color:#066"=
+>1</span><span style=3D"color:#000"> =C2=A0</span><span style=3D"color:#066=
+">2695</span><span style=3D"color:#000"> nonrootuser </span><span style=3D"=
+color:#066">1000</span><span style=3D"color:#000"> singularity</span><span =
+style=3D"color:#660">-</span><span style=3D"color:#000">instance</span><spa=
+n style=3D"color:#660">:</span><span style=3D"color:#000"> nonrootuser </sp=
+an><span style=3D"color:#660">[</span><span style=3D"color:#000">container1=
+</span><span style=3D"color:#660">]</span></div></code></div><div><br></div=
+><div style=3D"background-color:rgb(250,250,250);border-color:rgb(187,187,1=
+87);border-style:solid;border-width:1px;word-wrap:break-word"><code><div><s=
+pan style=3D"color:#660">[</span><span style=3D"color:#000">root@singularit=
+y2 </span><span style=3D"color:#660">~]</span><span style=3D"color:#800"># =
+ls -i /var/run/netns/container1-<wbr>hostname</span><span style=3D"color:#0=
+00"><br></span><span style=3D"color:#066">4026532163</span><span style=3D"c=
+olor:#000"> </span><span style=3D"color:#660">/</span><span style=3D"color:=
+#008">var</span><span style=3D"color:#660">/</span><span style=3D"color:#00=
+0">run</span><span style=3D"color:#660">/</span><span style=3D"color:#000">=
+netns</span><span style=3D"color:#660">/</span><span style=3D"color:#000">c=
+ontainer1</span><span style=3D"color:#660">-</span><span style=3D"color:#00=
+0">host<wbr>name</span></div></code></div><div><br></div><div>In this examp=
+le, 4026531956 is the inode containing the root network namespace used by d=
+efault for all processes running on the host system (94 processes in this e=
+xample) and 4026532163 is the inode containing our custom network namespace=
+.=C2=A0 Now let&#39;s say nonrootuser shells into the running instance that=
+ was started as their user when the host system booted:</div><div><br></div=
+><div style=3D"background-color:rgb(250,250,250);border-color:rgb(187,187,1=
+87);border-style:solid;border-width:1px;word-wrap:break-word"><code><div><s=
+pan style=3D"color:#660">[</span><span style=3D"color:#000">nonrootuser@sin=
+gularity2 </span><span style=3D"color:#660">~]</span><span style=3D"color:#=
+000">$ singularity instance</span><span style=3D"color:#660">.</span><span =
+style=3D"color:#000">list<br>DAEMON NAME =C2=A0 =C2=A0 =C2=A0PID =C2=A0 =C2=
+=A0 =C2=A0CONTAINER IMAGE<br>container1 =C2=A0 =C2=A0 =C2=A0 </span><span s=
+tyle=3D"color:#066">2695</span><span style=3D"color:#000"> =C2=A0 =C2=A0 </=
+span><span style=3D"color:#660">/</span><span style=3D"color:#000">home</sp=
+an><span style=3D"color:#660">/</span><span style=3D"color:#000">nonrootuse=
+r</span><span style=3D"color:#660">/</span><span style=3D"color:#000">cento=
+s</span><span style=3D"color:#660">.</span><span style=3D"color:#000">simg<=
+/span></div></code></div><div><br></div><div style=3D"background-color:rgb(=
+250,250,250);border-color:rgb(187,187,187);border-style:solid;border-width:=
+1px;word-wrap:break-word"><code><div><span style=3D"color:#660">[</span><sp=
+an style=3D"color:#000">nonrootuser@singularity2 </span><span style=3D"colo=
+r:#660">~]</span><span style=3D"color:#000">$ singularity shell instance</s=
+pan><span style=3D"color:#660">:</span><span style=3D"color:#800">//contain=
+er1</span><span style=3D"color:#000"><br></span><span style=3D"color:#606">=
+Singularity</span><span style=3D"color:#660">:</span><span style=3D"color:#=
+000"> </span><span style=3D"color:#606">Invoking</span><span style=3D"color=
+:#000"> an interactive shell within container</span><span style=3D"color:#6=
+60">...</span><span style=3D"color:#000"><br><br></span><span style=3D"colo=
+r:#606">Singularity</span><span style=3D"color:#000"> centos</span><span st=
+yle=3D"color:#660">.</span><span style=3D"color:#000">simg</span><span styl=
+e=3D"color:#660">:~&gt;</span><span style=3D"color:#000"> readlink </span><=
+span style=3D"color:#660">/</span><span style=3D"color:#000">proc</span><sp=
+an style=3D"color:#660">/</span><span style=3D"color:#008">self</span><span=
+ style=3D"color:#660">/</span><span style=3D"color:#000">ns</span><span sty=
+le=3D"color:#660">/</span><span style=3D"color:#000">net<br>net</span><span=
+ style=3D"color:#660">:[</span><span style=3D"color:#066">4026532163</span>=
+<span style=3D"color:#660">]</span></div></code></div><div><br></div><div>T=
+he resulting bash process for the Singularity shell ends up with our correc=
+t custom network namespace (the network namespace file descriptor for its p=
+rocess refers to inode 4026532163, which we saw earlier as the inode contai=
+ning our &#39;container1-hostname&#39; custom network namespace in this exa=
+mple).=C2=A0 The same behavior applies to exec:</div><div><br></div><div st=
+yle=3D"background-color:rgb(250,250,250);border-color:rgb(187,187,187);bord=
+er-style:solid;border-width:1px;word-wrap:break-word"><code><div><span styl=
+e=3D"color:#660">[</span><span style=3D"color:#000">nonrootuser@singularity=
+2 </span><span style=3D"color:#660">~]</span><span style=3D"color:#000">$ s=
+ingularity </span><span style=3D"color:#008">exec</span><span style=3D"colo=
+r:#000"> instance</span><span style=3D"color:#660">:</span><span style=3D"c=
+olor:#800">//container1 readlink /proc/self/ns/net</span><span style=3D"col=
+or:#000"><br>net</span><span style=3D"color:#660">:[</span><span style=3D"c=
+olor:#066">4026532163</span><span style=3D"color:#660">]</span></div></code=
+></div><div><br></div><div>This is excellent since it means that all proces=
+ses resulting from nonrootuser&#39;s interaction with that instance will us=
+e our custom network namespace!</div><div><br></div><div><br></div><div><b>=
+Singularity 3</b></div><div><br></div><div>Now let&#39;s look at the differ=
+ent behavior in Singularity 3.=C2=A0 Consider the following script (identic=
+al to the script in the Singularity 2 example except for using &#39;instanc=
+e start&#39; instead of &#39;instance.start&#39;) being run as root when a =
+host is started:</div><div><br></div><div style=3D"background-color:rgb(250=
+,250,250);border-color:rgb(187,187,187);border-style:solid;border-width:1px=
+;word-wrap:break-word"><code><div><span style=3D"color:#800">#!/bin/bash</s=
+pan><span style=3D"color:#000"><br>ip netns add container1</span><span styl=
+e=3D"color:#660">-</span><span style=3D"color:#000">hostname<br>ip netns </=
+span><span style=3D"color:#008">exec</span><span style=3D"color:#000"> cont=
+ainer1</span><span style=3D"color:#660">-</span><span style=3D"color:#000">=
+hostname su </span><span style=3D"color:#660">-</span><span style=3D"color:=
+#000">c </span><span style=3D"color:#080">&quot;singularity instance start =
+/home/nonrootuser/centos.simg container1&quot;</span><span style=3D"color:#=
+000"> </span><span style=3D"color:#660">-</span><span style=3D"color:#000">=
+ nonrootuser</span></div></code></div><div><br></div><div>The script above =
+creates a new custom network namespace named &#39;container1-hostname&#39; =
+and starts a Singularity instance named &#39;container1&#39; (running as no=
+nrootuser) inside that custom network namespace.=C2=A0 The result in Singul=
+arity 3 is two processes for the instance (parent process &#39;Singularity =
+instance: nonrootuser [container1]&#39; and child process &#39;sinit&#39;) =
+that are both using the &#39;container1-hostname&#39; custom network namesp=
+ace:</div><div><br></div><div style=3D"background-color:rgb(250,250,250);bo=
+rder-color:rgb(187,187,187);border-style:solid;border-width:1px;word-wrap:b=
+reak-word"><code><div><span style=3D"color:#660">[</span><span style=3D"col=
+or:#000">root@singularity3 </span><span style=3D"color:#660">~]</span><span=
+ style=3D"color:#800"># lsns -t net -o NS,PATH,TYPE,NPROCS,PPID,PID,<wbr>US=
+ER,UID,COMMAND</span><span style=3D"color:#000"><br>=C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 NS PATH =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0TYPE NPROCS =
+PPID =C2=A0 PID USER =C2=A0 =C2=A0 =C2=A0 =C2=A0UID COMMAND<br></span><span=
+ style=3D"color:#066">4026531956</span><span style=3D"color:#000"> </span><=
+span style=3D"color:#660">/</span><span style=3D"color:#000">proc</span><sp=
+an style=3D"color:#660">/</span><span style=3D"color:#066">1</span><span st=
+yle=3D"color:#660">/</span><span style=3D"color:#000">ns</span><span style=
+=3D"color:#660">/</span><span style=3D"color:#000">net =C2=A0 =C2=A0net =C2=
+=A0 =C2=A0 =C2=A0</span><span style=3D"color:#066">99</span><span style=3D"=
+color:#000"> =C2=A0 =C2=A0</span><span style=3D"color:#066">0</span><span s=
+tyle=3D"color:#000"> =C2=A0 =C2=A0 </span><span style=3D"color:#066">1</spa=
+n><span style=3D"color:#000"> root =C2=A0 =C2=A0 =C2=A0 =C2=A0</span><span =
+style=3D"color:#066">0</span><span style=3D"color:#000"> </span><span style=
+=3D"color:#660">/</span><span style=3D"color:#000">usr</span><span style=3D=
+"color:#660">/</span><span style=3D"color:#000">lib</span><span style=3D"co=
+lor:#660">/</span><span style=3D"color:#000">systemd</span><span style=3D"c=
+olor:#660">/</span><span style=3D"color:#000">systemd </span><span style=3D=
+"color:#660">--</span><span style=3D"color:#000">switched</span><span style=
+=3D"color:#660">-</span><span style=3D"color:#000">root </span><span style=
+=3D"color:#660">--</span><span style=3D"color:#000">system </span><span sty=
+le=3D"color:#660">--</span><span style=3D"color:#000">deserialize </span><s=
+pan style=3D"color:#066">22</span><span style=3D"color:#000"><br></span><sp=
+an style=3D"color:#066">4026532163</span><span style=3D"color:#000"> </span=
+><span style=3D"color:#660">/</span><span style=3D"color:#000">proc</span><=
+span style=3D"color:#660">/</span><span style=3D"color:#066">2676</span><sp=
+an style=3D"color:#660">/</span><span style=3D"color:#000">ns</span><span s=
+tyle=3D"color:#660">/</span><span style=3D"color:#000">net net =C2=A0 =C2=
+=A0 =C2=A0 </span><span style=3D"color:#066">2</span><span style=3D"color:#=
+000"> =C2=A0 =C2=A0</span><span style=3D"color:#066">1</span><span style=3D=
+"color:#000"> =C2=A0</span><span style=3D"color:#066">2676</span><span styl=
+e=3D"color:#000"> nonrootuser </span><span style=3D"color:#066">1000</span>=
+<span style=3D"color:#000"> </span><span style=3D"color:#606">Singularity</=
+span><span style=3D"color:#000"> instance</span><span style=3D"color:#660">=
+:</span><span style=3D"color:#000"> nonrootuser </span><span style=3D"color=
+:#660">[</span><span style=3D"color:#000">container1</span><span style=3D"c=
+olor:#660">]</span></div></code></div><div><br></div><div style=3D"backgrou=
+nd-color:rgb(250,250,250);border-color:rgb(187,187,187);border-style:solid;=
+border-width:1px;word-wrap:break-word"><code><div><span style=3D"color:#660=
+">[</span><span style=3D"color:#000">root@singularity3 </span><span style=
+=3D"color:#660">~]</span><span style=3D"color:#800"># ls -i /var/run/netns/=
+container1-<wbr>hostname</span><span style=3D"color:#000"><br></span><span =
+style=3D"color:#066">4026532163</span><span style=3D"color:#000"> </span><s=
+pan style=3D"color:#660">/</span><span style=3D"color:#008">var</span><span=
+ style=3D"color:#660">/</span><span style=3D"color:#000">run</span><span st=
+yle=3D"color:#660">/</span><span style=3D"color:#000">netns</span><span sty=
+le=3D"color:#660">/</span><span style=3D"color:#000">container1</span><span=
+ style=3D"color:#660">-</span><span style=3D"color:#000">host<wbr>name</spa=
+n></div></code></div><div><br></div><div>In this example, 4026531956 is the=
+ inode containing the root network namespace used by default for all proces=
+ses running on the host system (99 processes in this example) and 402653216=
+3 is the inode containing our custom network namespace.=C2=A0 Now let&#39;s=
+ say nonrootuser shells into the running instance that was started as their=
+ user when the host system booted:</div><div><br></div><div style=3D"backgr=
+ound-color:rgb(250,250,250);border-color:rgb(187,187,187);border-style:soli=
+d;border-width:1px;word-wrap:break-word"><code><div><span style=3D"color:#6=
+60">[</span><span style=3D"color:#000">nonrootuser@singularity3 </span><spa=
+n style=3D"color:#660">~]</span><span style=3D"color:#000">$ singularity in=
+stance list<br>INSTANCE NAME =C2=A0 =C2=A0PID =C2=A0 =C2=A0 =C2=A0IMAGE<br>=
+container1 =C2=A0 =C2=A0 =C2=A0 </span><span style=3D"color:#066">2677</spa=
+n><span style=3D"color:#000"> =C2=A0 =C2=A0 </span><span style=3D"color:#66=
+0">/</span><span style=3D"color:#000">home</span><span style=3D"color:#660"=
+>/</span><span style=3D"color:#000">nonrootuser</span><span style=3D"color:=
+#660">/</span><span style=3D"color:#000">centos</span><span style=3D"color:=
+#660">.</span><span style=3D"color:#000">simg</span></div></code></div><div=
+><br></div><div style=3D"background-color:rgb(250,250,250);border-color:rgb=
+(187,187,187);border-style:solid;border-width:1px;word-wrap:break-word"><co=
+de><div><span style=3D"color:#660">[</span><span style=3D"color:#000">nonro=
+otuser@singularity3 </span><span style=3D"color:#660">~]</span><span style=
+=3D"color:#000">$ singularity shell instance</span><span style=3D"color:#66=
+0">:</span><span style=3D"color:#800">//container1</span><span style=3D"col=
+or:#000"><br></span><span style=3D"color:#606">Singularity</span><span styl=
+e=3D"color:#000"> </span><span style=3D"color:#660">:~&gt;</span><span styl=
+e=3D"color:#000"> readlink </span><span style=3D"color:#660">/</span><span =
+style=3D"color:#000">proc</span><span style=3D"color:#660">/</span><span st=
+yle=3D"color:#008">self</span><span style=3D"color:#660">/</span><span styl=
+e=3D"color:#000">ns</span><span style=3D"color:#660">/</span><span style=3D=
+"color:#000">net<br>net</span><span style=3D"color:#660">:[</span><span sty=
+le=3D"color:#066">4026531956</span><span style=3D"color:#660">]</span></div=
+></code></div><div><br></div><div>Instead of the resulting bash process for=
+ the Singularity shell ending up in our correct custom network namespace li=
+ke it did in Singularity 2, it ends up in the root network namespace (the n=
+etwork namespace file descriptor for its process refers to inode 4026531956=
+, which we saw earlier as the inode containing the root/default network nam=
+espace in this example). :(=C2=A0 The same behavior unfortunately applies t=
+o exec:</div><div><br></div><div style=3D"background-color:rgb(250,250,250)=
+;border-color:rgb(187,187,187);border-style:solid;border-width:1px;word-wra=
+p:break-word"><code><div><span style=3D"color:#660">[</span><span style=3D"=
+color:#000">nonrootuser@singularity3 </span><span style=3D"color:#660">~]</=
+span><span style=3D"color:#000">$ singularity </span><span style=3D"color:#=
+008">exec</span><span style=3D"color:#000"> instance</span><span style=3D"c=
+olor:#660">:</span><span style=3D"color:#800">//container1 readlink /proc/s=
+elf/ns/net</span><span style=3D"color:#000"><br>net</span><span style=3D"co=
+lor:#660">:[</span><span style=3D"color:#066">4026531956</span><span style=
+=3D"color:#660">]</span></div></code></div><div><br></div><div>The result i=
+s that all processes started by a user connecting to that instance essentia=
+lly &quot;escape&quot; the custom network namespace and are instead exposed=
+ to the root network namespace and everything it contains (network interfac=
+es, iptables rules, routing tables, etc)...</div><div><br></div><div><br></=
+div><div><b><font size=3D"4">Relevant Code</font></b></div><div><br></div><=
+div><b>Singularity 2</b></div><div><br></div><div>In Singularity 2, when &#=
+39;singularity exec instance://instancename command&#39; is run, my current=
+ understanding is that the following occurs:</div><div><br></div><div>* /us=
+r/bin/singularity (or whatever its path may be on your system) - &#39;exec&=
+#39; is passed as $SINGULARITY_COMMAND to the line &#39;exec $SINGULARITY_l=
+ibexecdir/<wbr>singularity/cli/$SINGULARITY_<wbr>COMMAND.exec &quot;$@&quot=
+;&#39;.</div><div>=C2=A0 =C2=A0 - See <a href=3D"https://github.com/singula=
+rityware/singularity/blob/release-2.6/bin/singularity.in#L135" target=3D"_b=
+lank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.google.c=
+om/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsingularityware%2Fsingularity%2Fblob=
+%2Frelease-2.6%2Fbin%2Fsingularity.in%23L135\x26sa\x3dD\x26sntz\x3d1\x26usg=
+\x3dAFQjCNErHpFVghZflNCM4lJPyTpoHvVzuA&#39;;return true;" onclick=3D"this.h=
+ref=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsingu=
+larityware%2Fsingularity%2Fblob%2Frelease-2.6%2Fbin%2Fsingularity.in%23L135=
+\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNErHpFVghZflNCM4lJPyTpoHvVzuA&#39;;=
+return true;">https://github.com/<wbr>singularityware/singularity/<wbr>blob=
+/release-2.6/bin/<wbr>singularity.in#L135</a></div><div>* /usr/libexec/sing=
+ularity/cli/<wbr>exec.exec (or whatever its path may be on your system) - T=
+he line &#39;. &quot;$SINGULARITY_libexecdir/<wbr>singularity/image-handler=
+.sh&quot;&#39; runs image-handler.sh.</div><div>=C2=A0 =C2=A0 - See <a href=
+=3D"https://github.com/singularityware/singularity/blob/release-2.6/libexec=
+/cli/exec.exec#L74" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.=
+href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsing=
+ularityware%2Fsingularity%2Fblob%2Frelease-2.6%2Flibexec%2Fcli%2Fexec.exec%=
+23L74\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEwQeN_XMijzaCkjsx2-RJCsxqwPQ&=
+#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q=
+\x3dhttps%3A%2F%2Fgithub.com%2Fsingularityware%2Fsingularity%2Fblob%2Frelea=
+se-2.6%2Flibexec%2Fcli%2Fexec.exec%23L74\x26sa\x3dD\x26sntz\x3d1\x26usg\x3d=
+AFQjCNEwQeN_XMijzaCkjsx2-RJCsxqwPQ&#39;;return true;">https://github.com/<w=
+br>singularityware/singularity/<wbr>blob/release-2.6/libexec/cli/<wbr>exec.=
+exec#L74</a></div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 * /usr/libexec/singulari=
+ty/<wbr>image-handler.sh (or whatever its path may be on your system) - &#3=
+9;instance://instancename&#39; being passed to exec results in the line &#3=
+9;. &quot;$SINGULARITY_libexecdir/<wbr>singularity/handlers/image-<wbr>inst=
+ance.sh&quot;&#39; being run.</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 - See <a href=3D"https://github.com/singularityware/singularity/blob=
+/release-2.6/libexec/image-handler.sh#L44" target=3D"_blank" rel=3D"nofollo=
+w" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A=
+%2F%2Fgithub.com%2Fsingularityware%2Fsingularity%2Fblob%2Frelease-2.6%2Flib=
+exec%2Fimage-handler.sh%23L44\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGgjon=
+kQYV7IKEk7kz9odkQHwr9bA&#39;;return true;" onclick=3D"this.href=3D&#39;http=
+s://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsingularityware%2Fsi=
+ngularity%2Fblob%2Frelease-2.6%2Flibexec%2Fimage-handler.sh%23L44\x26sa\x3d=
+D\x26sntz\x3d1\x26usg\x3dAFQjCNGgjonkQYV7IKEk7kz9odkQHwr9bA&#39;;return tru=
+e;">https://github.com/<wbr>singularityware/singularity/<wbr>blob/release-2=
+.6/libexec/<wbr>image-handler.sh#L44</a></div><div>=C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 * /usr/libexec/singularity/<wbr>handlers/image-instance.sh (or whatever=
+ its path may be on your system) - If an instance by that name is indeed ru=
+nning, the line &#39;SINGULARITY_DAEMON_JOIN=3D1&#39; is run and SINGULARIT=
+Y_DAEMON_JOIN is exported as a bash environment variable.</div><div>=C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 - See <a href=3D"https://github.com/sing=
+ularityware/singularity/blob/release-2.6/libexec/handlers/image-instance.sh=
+#L31" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;ht=
+tps://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsingularityware%2F=
+singularity%2Fblob%2Frelease-2.6%2Flibexec%2Fhandlers%2Fimage-instance.sh%2=
+3L31\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNF_9dIzP12hJhjdNPq4JFhwFdH1gg&#=
+39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\=
+x3dhttps%3A%2F%2Fgithub.com%2Fsingularityware%2Fsingularity%2Fblob%2Freleas=
+e-2.6%2Flibexec%2Fhandlers%2Fimage-instance.sh%23L31\x26sa\x3dD\x26sntz\x3d=
+1\x26usg\x3dAFQjCNF_9dIzP12hJhjdNPq4JFhwFdH1gg&#39;;return true;">https://g=
+ithub.com/<wbr>singularityware/singularity/<wbr>blob/release-2.6/libexec/<w=
+br>handlers/image-instance.sh#L31</a></div><div>* /usr/libexec/singularity/=
+cli/<wbr>exec.exec (or whatever its path may be on your system) - The line =
+&#39;exec &quot;$SINGULARITY_libexecdir/<wbr>singularity/bin/action-suid&qu=
+ot; &quot;$@&quot; &lt;&amp;0&#39; is run if SINGULARITY_NOSUID isn&#39;t s=
+et.</div><div>=C2=A0 =C2=A0 - See <a href=3D"https://github.com/singularity=
+ware/singularity/blob/release-2.6/libexec/cli/exec.exec#L79" target=3D"_bla=
+nk" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.google.com=
+/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsingularityware%2Fsingularity%2Fblob%2=
+Frelease-2.6%2Flibexec%2Fcli%2Fexec.exec%23L79\x26sa\x3dD\x26sntz\x3d1\x26u=
+sg\x3dAFQjCNFeCZBmZrGXKxcp4zy0nBiCydATkw&#39;;return true;" onclick=3D"this=
+.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsin=
+gularityware%2Fsingularity%2Fblob%2Frelease-2.6%2Flibexec%2Fcli%2Fexec.exec=
+%23L79\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFeCZBmZrGXKxcp4zy0nBiCydATkw=
+&#39;;return true;">https://github.com/<wbr>singularityware/singularity/<wb=
+r>blob/release-2.6/libexec/cli/<wbr>exec.exec#L79</a></div><div>=C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 * /usr/libexec/singularity/bin/<wbr>action-suid (or whate=
+ver its path may be on your system) - Regardless of whether or not DAEMON_J=
+OIN was set in the &quot;Singularity registry&quot; (i.e. if &#39;SINGULARI=
+TY_DAEMON_JOIN=3D1&#39; was run in image-instance.sh), &#39;singularity_run=
+time_ns(SR_NS_<wbr>ALL);&#39; is run.</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 - See <a href=3D"https://github.com/singularityware/singular=
+ity/blob/release-2.6/src/action.c#L109" target=3D"_blank" rel=3D"nofollow" =
+onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F=
+%2Fgithub.com%2Fsingularityware%2Fsingularity%2Fblob%2Frelease-2.6%2Fsrc%2F=
+action.c%23L109\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHJP83GM008Ho1F03azv=
+tT6g6cT8w&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google=
+.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsingularityware%2Fsingularity%2Fbl=
+ob%2Frelease-2.6%2Fsrc%2Faction.c%23L109\x26sa\x3dD\x26sntz\x3d1\x26usg\x3d=
+AFQjCNHJP83GM008Ho1F03azvtT6g6cT8w&#39;;return true;">https://github.com/<w=
+br>singularityware/singularity/<wbr>blob/release-2.6/src/action.c#<wbr>L109=
+</a></div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 * /usr/lib64/singularity/<wbr>li=
+bsingularity-runtime.so.1 (or whatever its path may be on your system) - In=
+ function definition &#39;int singularity_runtime_ns(<wbr>unsigned int flag=
+s)&#39;, conditional &#39;if ( singularity_registry_get(&quot;<wbr>DAEMON_J=
+OIN&quot;)&#39; returns true since DAEMON_JOIN was set to 1 in the &quot;Si=
+ngularity registry&quot; (&#39;SINGULARITY_DAEMON_JOIN=3D1&#39; was run in =
+image-instance.sh).=C2=A0 As a result, the line &#39;return(_singularity_ru=
+ntime_<wbr>ns_join(flags));&#39; is run (with &#39;flags&#39; being an inte=
+ger representation of SR_NS_ALL at this point).</div><div>=C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 - See <a href=3D"https://github.com/singularitywar=
+e/singularity/blob/release-2.6/src/lib/runtime/runtime.c#L59" target=3D"_bl=
+ank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.google.co=
+m/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsingularityware%2Fsingularity%2Fblob%=
+2Frelease-2.6%2Fsrc%2Flib%2Fruntime%2Fruntime.c%23L59\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNEAhoyvQMTCdB4oYMnLPoNJpq9aeQ&#39;;return true;" onclick=
+=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.c=
+om%2Fsingularityware%2Fsingularity%2Fblob%2Frelease-2.6%2Fsrc%2Flib%2Frunti=
+me%2Fruntime.c%23L59\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEAhoyvQMTCdB4o=
+YMnLPoNJpq9aeQ&#39;;return true;">https://github.com/<wbr>singularityware/s=
+ingularity/<wbr>blob/release-2.6/src/lib/<wbr>runtime/runtime.c#L59</a></di=
+v><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 * /usr/lib64/singularity/<wbr>libsingula=
+rity-runtime.so.1 (or whatever its path may be on your system) - In functio=
+n definition &#39;int _singularity_runtime_ns_join(<wbr>unsigned int flags)=
+&#39;, conditional &#39;if ( flags &amp; SR_NS_NET )&#39; returns true sinc=
+e SR_NS_NET is part of SR_NS_ALL (passed earlier) and the line &#39;retval =
++=3D _singularity_runtime_ns_net_<wbr>join();&#39; is run.</div><div>=C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 - See <a href=3D"https://github.com/sin=
+gularityware/singularity/blob/release-2.6/src/lib/runtime/ns/ns.c#L86" targ=
+et=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.=
+google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fsingularityware%2Fsingularit=
+y%2Fblob%2Frelease-2.6%2Fsrc%2Flib%2Fruntime%2Fns%2Fns.c%23L86\x26sa\x3dD\x=
+26sntz\x3d1\x26usg\x3dAFQjCNFjw3TwOEiJlWyQ3IGCS_VOxg_2oA&#39;;return true;"=
+ onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2F=
+github.com%2Fsingularityware%2Fsingularity%2Fblob%2Frelease-2.6%2Fsrc%2Flib=
+%2Fruntime%2Fns%2Fns.c%23L86\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFjw3Tw=
+OEiJlWyQ3IGCS_VOxg_2oA&#39;;return true;">https://github.com/<wbr>singulari=
+tyware/singularity/<wbr>blob/release-2.6/src/lib/<wbr>runtime/ns/ns.c#L86</=
+a></div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 * /usr/lib64/singularity/<wbr>libs=
+ingularity-runtime.so.1 (or whatever its path may be on your system) - In f=
+unction definition &#39;int _singularity_runtime_ns_net_<wbr>join(void)&#39=
+;, the file descriptor for the running instance&#39;s network namespace is =
+opened and &#39;setns(net_fd, CLONE_NEWNET)&#39; is ran as part of a condit=
+ional.=C2=A0 The setns system call (see <a href=3D"http://man7.org/linux/ma=
+n-pages/man2/setns.2.html" target=3D"_blank" rel=3D"nofollow" onmousedown=
+=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fman7.org%2=
+Flinux%2Fman-pages%2Fman2%2Fsetns.2.html\x26sa\x3dD\x26sntz\x3d1\x26usg\x3d=
+AFQjCNF5EB9UACHIsc-uc04BSC6qg3XViA&#39;;return true;" onclick=3D"this.href=
+=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fman7.org%2Flinux%2Fman-=
+pages%2Fman2%2Fsetns.2.html\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNF5EB9UA=
+CHIsc-uc04BSC6qg3XViA&#39;;return true;">http://man7.org/linux/man-<wbr>pag=
+es/man2/setns.2.html</a> ) associates the calling thread (in our case, the =
+exec process) with a particular namespace of the file descriptor its passed=
+.=C2=A0 In this case, the file descriptor for the running instance&#39;s ne=
+twork namespace is passed in along with &#39;CLONE_NEWNET&#39; (used for ne=
+twork namespaces) as the namespace type.=C2=A0 The end result is that the p=
+rocess created from running &#39;singularity exec instance://instancename c=
+ommand&#39; is assigned to whatever network namespace the process of the ru=
+nning instance is in.=C2=A0 Cool! :)</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 - See <a href=3D"https://github.com/singularityware/singulari=
+ty/blob/release-2.6/src/lib/runtime/ns/net/net.c#L100" target=3D"_blank" re=
+l=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.google.com/url?q=
+\x3dhttps%3A%2F%2Fgithub.com%2Fsingularityware%2Fsingularity%2Fblob%2Frelea=
+se-2.6%2Fsrc%2Flib%2Fruntime%2Fns%2Fnet%2Fnet.c%23L100\x26sa\x3dD\x26sntz\x=
+3d1\x26usg\x3dAFQjCNF4g71Y7bmha5fRa3hwp-acJ33p8w&#39;;return true;" onclick=
+=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.c=
+om%2Fsingularityware%2Fsingularity%2Fblob%2Frelease-2.6%2Fsrc%2Flib%2Frunti=
+me%2Fns%2Fnet%2Fnet.c%23L100\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNF4g71Y=
+7bmha5fRa3hwp-acJ33p8w&#39;;return true;">https://github.com/<wbr>singulari=
+tyware/singularity/<wbr>blob/release-2.6/src/lib/<wbr>runtime/ns/net/net.c#=
+L100</a></div><div><br></div><div><br></div><div><b>Singularity 3</b></div>=
+<div><br></div><div>I haven&#39;t yet had time to examine the code executio=
+n steps for the same example command (&#39;singularity exec instance://inst=
+ancename command&#39;) in Singularity 3, but I have determined that it does=
+ indeed have code that supports a &#39;shell&#39; or &#39;exec&#39; process=
+ being assigned to a custom network namespace of a running instance.=C2=A0 =
+The issue is that the aforementioned behavior (assignment of a &#39;shell&#=
+39; or &#39;exec&#39; process to a running instance&#39;s custom network na=
+mespace) only occurs if that instance was started with the -n|--net Singula=
+rity flag (which of course instructs Singularity to create its own custom n=
+etwork namespace).=C2=A0 If the instance was started without that flag from=
+ a custom network namespace that was instead created with &#39;ip netns add=
+&#39;, &#39;shell&#39; and &#39;exec&#39; processes run against an instance=
+ end up in the root network namespace instead of the desired custom network=
+ namespace.</div><div><br></div><div>One fundamental difference is that the=
+ JSON configuration for the running instance located at /var/run/singularit=
+y/<wbr>instances/${USER}/<wbr>nameofinstance.json only includes &#39;networ=
+k&#39; in its list of namespaces if that instance was started with the -n|-=
+-net Singularity flag.=C2=A0 If that instance was started without that flag=
+ from a custom network namespace that was instead created with &#39;ip netn=
+s add&#39;, &#39;network&#39; is not included in the list of namespaces...<=
+/div><div><br></div><div>For example, consider the following script being r=
+un as root:</div><div><br></div><div style=3D"background-color:rgb(250,250,=
+250);border-color:rgb(187,187,187);border-style:solid;border-width:1px;word=
+-wrap:break-word"><code><div><span style=3D"color:#800">#!/bin/bash</span><=
+span style=3D"color:#000"><br>ip netns add container1</span><span style=3D"=
+color:#660">-</span><span style=3D"color:#000">hostname<br>ip netns </span>=
+<span style=3D"color:#008">exec</span><span style=3D"color:#000"> container=
+1</span><span style=3D"color:#660">-</span><span style=3D"color:#000">hostn=
+ame su </span><span style=3D"color:#660">-</span><span style=3D"color:#000"=
+>c </span><span style=3D"color:#080">&quot;singularity instance start /home=
+/nonrootuser/centos.simg container1&quot;</span><span style=3D"color:#000">=
+ </span><span style=3D"color:#660">-</span><span style=3D"color:#000"> nonr=
+ootuser<br>su </span><span style=3D"color:#660">-</span><span style=3D"colo=
+r:#000">c </span><span style=3D"color:#080">&quot;singularity instance star=
+t --net /home/nonrootuser/centos.simg container2&quot;</span><span style=3D=
+"color:#000"> </span><span style=3D"color:#660">-</span><span style=3D"colo=
+r:#000"> nonrootuser</span></div></code></div><div><br></div><div>The resul=
+t is two Singularity instances, container1 and container2.=C2=A0 container1=
+ was started inside of the &#39;container1-hostname&#39; custom network nam=
+espace that was created with the &#39;ip netns add&#39; command and the two=
+ resulting initial processes (parent process &#39;Singularity instance: non=
+rootuser [container1]&#39; and child process &#39;sinit&#39;) are both usin=
+g that namespace.=C2=A0 container2 was instead started with the -n|--net Si=
+ngularity flag to instruct Singularity to create its own custom network nam=
+espace.=C2=A0 container2 also starts with two initial processes (parent pro=
+cess &#39;Singularity instance: nonrootuser [container2]&#39; and child pro=
+cess &#39;sinit&#39;) but only the &#39;sinit&#39; process ends up using th=
+e custom network namespace that Singularity created.=C2=A0 The parent proce=
+ss &#39;Singularity instance: nonrootuser [container2]&#39; ends up in the =
+root (default) network namespace instead of the custom network namespace.=
+=C2=A0 Consider the following four processes:</div><div><br></div><div styl=
+e=3D"background-color:rgb(250,250,250);border-color:rgb(187,187,187);border=
+-style:solid;border-width:1px;word-wrap:break-word"><code><div><span style=
+=3D"color:#000">nonrootuser =C2=A0 </span><span style=3D"color:#066">1157</=
+span><span style=3D"color:#000"> =C2=A0</span><span style=3D"color:#606">Si=
+ngularity</span><span style=3D"color:#000"> instance</span><span style=3D"c=
+olor:#660">:</span><span style=3D"color:#000"> vagrant </span><span style=
+=3D"color:#660">[</span><span style=3D"color:#000">container1</span><span s=
+tyle=3D"color:#660">]</span><span style=3D"color:#000"><br>nonrootuser =C2=
+=A0 </span><span style=3D"color:#066">1158</span><span style=3D"color:#000"=
+> =C2=A0</span><span style=3D"color:#660">\</span><span style=3D"color:#000=
+">_ sinit<br>nonrootuser =C2=A0 </span><span style=3D"color:#066">1205</spa=
+n><span style=3D"color:#000"> =C2=A0</span><span style=3D"color:#606">Singu=
+larity</span><span style=3D"color:#000"> instance</span><span style=3D"colo=
+r:#660">:</span><span style=3D"color:#000"> vagrant </span><span style=3D"c=
+olor:#660">[</span><span style=3D"color:#000">container2</span><span style=
+=3D"color:#660">]</span><span style=3D"color:#000"><br>nonrootuser =C2=A0 <=
+/span><span style=3D"color:#066">1206</span><span style=3D"color:#000"> =C2=
+=A0</span><span style=3D"color:#660">\</span><span style=3D"color:#000">_ s=
+init</span></div></code></div><div><br></div><div>PIDs 1157 and 1158 are th=
+e initial parent and child processes for container1 and PIDs 1205 and 1206 =
+are the initial parent and child processes for container2.=C2=A0 Let&#39;s =
+confirm which network namespaces those processes are using:</div><div><br><=
+/div><div style=3D"background-color:rgb(250,250,250);border-color:rgb(187,1=
+87,187);border-style:solid;border-width:1px;word-wrap:break-word"><code><di=
+v><span style=3D"color:#660">[</span><span style=3D"color:#000">root@singul=
+arity3 </span><span style=3D"color:#660">~]</span><span style=3D"color:#800=
+"># lsns -t net -o NS,PATH,TYPE,NPROCS,PPID,PID,<wbr>USER,UID,COMMAND</span=
+><span style=3D"color:#000"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 NS PATH =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0TYPE NPROCS =C2=A0PPID =C2=A0 PID =
+USER =C2=A0 =C2=A0 =C2=A0 =C2=A0UID COMMAND<br></span><span style=3D"color:=
+#066">4026531956</span><span style=3D"color:#000"> </span><span style=3D"co=
+lor:#660">/</span><span style=3D"color:#000">proc</span><span style=3D"colo=
+r:#660">/</span><span style=3D"color:#066">1</span><span style=3D"color:#66=
+0">/</span><span style=3D"color:#000">ns</span><span style=3D"color:#660">/=
+</span><span style=3D"color:#000">net =C2=A0 =C2=A0net =C2=A0 =C2=A0 =C2=A0=
+</span><span style=3D"color:#066">99</span><span style=3D"color:#000"> =C2=
+=A0 =C2=A0 </span><span style=3D"color:#066">0</span><span style=3D"color:#=
+000"> =C2=A0 =C2=A0 </span><span style=3D"color:#066">1</span><span style=
+=3D"color:#000"> root =C2=A0 =C2=A0 =C2=A0 =C2=A0</span><span style=3D"colo=
+r:#066">0</span><span style=3D"color:#000"> </span><span style=3D"color:#66=
+0">/</span><span style=3D"color:#000">usr</span><span style=3D"color:#660">=
+/</span><span style=3D"color:#000">lib</span><span style=3D"color:#660">/</=
+span><span style=3D"color:#000">systemd</span><span style=3D"color:#660">/<=
+/span><span style=3D"color:#000">systemd </span><span style=3D"color:#660">=
+--</span><span style=3D"color:#000">switched</span><span style=3D"color:#66=
+0">-</span><span style=3D"color:#000">root </span><span style=3D"color:#660=
+">--</span><span style=3D"color:#000">system </span><span style=3D"color:#6=
+60">--</span><span style=3D"color:#000">deserialize </span><span style=3D"c=
+olor:#066">22</span><span style=3D"color:#000"><br></span><span style=3D"co=
+lor:#066">4026532163</span><span style=3D"color:#000"> </span><span style=
+=3D"color:#660">/</span><span style=3D"color:#000">proc</span><span style=
+=3D"color:#660">/</span><span style=3D"color:#066">1157</span><span style=
+=3D"color:#660">/</span><span style=3D"color:#000">ns</span><span style=3D"=
+color:#660">/</span><span style=3D"color:#000">net net =C2=A0 =C2=A0 =C2=A0=
+ </span><span style=3D"color:#066">2</span><span style=3D"color:#000"> =C2=
+=A0 =C2=A0 </span><span style=3D"color:#066">1</span><span style=3D"color:#=
+000"> =C2=A0</span><span style=3D"color:#066">1157</span><span style=3D"col=
+or:#000"> nonrootuser </span><span style=3D"color:#066">1000</span><span st=
+yle=3D"color:#000"> </span><span style=3D"color:#606">Singularity</span><sp=
+an style=3D"color:#000"> instance</span><span style=3D"color:#660">:</span>=
+<span style=3D"color:#000"> nonrootuser </span><span style=3D"color:#660">[=
+</span><span style=3D"color:#000">container1</span><span style=3D"color:#66=
+0">]</span><span style=3D"color:#000"><br></span><span style=3D"color:#066"=
+>4026532242</span><span style=3D"color:#000"> </span><span style=3D"color:#=
+660">/</span><span style=3D"color:#000">proc</span><span style=3D"color:#66=
+0">/</span><span style=3D"color:#066">1206</span><span style=3D"color:#660"=
+>/</span><span style=3D"color:#000">ns</span><span style=3D"color:#660">/</=
+span><span style=3D"color:#000">net net =C2=A0 =C2=A0 =C2=A0 </span><span s=
+tyle=3D"color:#066">1</span><span style=3D"color:#000"> =C2=A0</span><span =
+style=3D"color:#066">1205</span><span style=3D"color:#000"> =C2=A0</span><s=
+pan style=3D"color:#066">1206</span><span style=3D"color:#000"> nonrootuser=
+ </span><span style=3D"color:#066">1000</span><span style=3D"color:#000"> s=
+init</span></div></code></div><div><br></div><div>In this example, 40265319=
+56 is the inode containing the root network namespace used by default for a=
+ll processes running on the host system (99 processes in this example), 402=
+6532163 is the inode containing the &#39;container1-hostname&#39; custom ne=
+twork namespace we created with &#39;ip netns add&#39;, and 4026532242 is t=
+he inode containing the custom network namespace that Singularity created w=
+hen the container2 instance was started with the --net flag.</div><div><br>=
+</div><div style=3D"background-color:rgb(250,250,250);border-color:rgb(187,=
+187,187);border-style:solid;border-width:1px;word-wrap:break-word"><code><d=
+iv><span style=3D"color:#660">[</span><span style=3D"color:#000">root@singu=
+larity3 </span><span style=3D"color:#660">~]</span><span style=3D"color:#80=
+0"># ls -i /var/run/netns/container1-<wbr>hostname</span><span style=3D"col=
+or:#000"><br></span><span style=3D"color:#066">4026532163</span><span style=
+=3D"color:#000"> </span><span style=3D"color:#660">/</span><span style=3D"c=
+olor:#008">var</span><span style=3D"color:#660">/</span><span style=3D"colo=
+r:#000">run</span><span style=3D"color:#660">/</span><span style=3D"color:#=
+000">netns</span><span style=3D"color:#660">/</span><span style=3D"color:#0=
+00">container1</span><span style=3D"color:#660">-</span><span style=3D"colo=
+r:#000">host<wbr>name</span></div></code></div><div><br></div><div style=3D=
+"background-color:rgb(250,250,250);border-color:rgb(187,187,187);border-sty=
+le:solid;border-width:1px;word-wrap:break-word"><code><div><span style=3D"c=
+olor:#660">[</span><span style=3D"color:#000">root@singularity3 </span><spa=
+n style=3D"color:#660">~]</span><span style=3D"color:#800"># readlink /proc=
+/1157/ns/net</span><span style=3D"color:#000"><br>net</span><span style=3D"=
+color:#660">:[</span><span style=3D"color:#066">4026532163</span><span styl=
+e=3D"color:#660">]</span></div></code></div><div><br></div><div style=3D"ba=
+ckground-color:rgb(250,250,250);border-color:rgb(187,187,187);border-style:=
+solid;border-width:1px;word-wrap:break-word"><code><div><span style=3D"colo=
+r:#660">[</span><span style=3D"color:#000">root@singularity3 </span><span s=
+tyle=3D"color:#660">~]</span><span style=3D"color:#800"># readlink /proc/11=
+58/ns/net</span><span style=3D"color:#000"><br>net</span><span style=3D"col=
+or:#660">:[</span><span style=3D"color:#066">4026532163</span><span style=
+=3D"color:#660">]</span></div></code></div><div><br></div><div style=3D"bac=
+kground-color:rgb(250,250,250);border-color:rgb(187,187,187);border-style:s=
+olid;border-width:1px;word-wrap:break-word"><code><div><span style=3D"color=
+:#660">[</span><span style=3D"color:#000">root@singularity3 </span><span st=
+yle=3D"color:#660">~]</span><span style=3D"color:#800"># readlink /proc/120=
+5/ns/net</span><span style=3D"color:#000"><br>net</span><span style=3D"colo=
+r:#660">:[</span><span style=3D"color:#066">4026531956</span><span style=3D=
+"color:#660">]</span></div></code></div><div><br></div><div style=3D"backgr=
+ound-color:rgb(250,250,250);border-color:rgb(187,187,187);border-style:soli=
+d;border-width:1px;word-wrap:break-word"><code><div><span style=3D"color:#6=
+60">[</span><span style=3D"color:#000">root@singularity3 </span><span style=
+=3D"color:#660">~]</span><span style=3D"color:#800"># readlink /proc/1206/n=
+s/net</span><span style=3D"color:#000"><br>net</span><span style=3D"color:#=
+660">:[</span><span style=3D"color:#066">4026532242</span><span style=3D"co=
+lor:#660">]</span></div></code></div><div><br></div><div>Now let&#39;s comp=
+are the JSON configuration of both running instances, specifically the valu=
+es from &#39;.engineConfig.ociConfig.<wbr>linux.namespaces&#39;:</div><div>=
+<br></div><div style=3D"background-color:rgb(250,250,250);border-color:rgb(=
+187,187,187);border-style:solid;border-width:1px;word-wrap:break-word"><cod=
+e><div><span style=3D"color:#660">[</span><span style=3D"color:#000">nonroo=
+tuser@singularity3 </span><span style=3D"color:#660">~]</span><span style=
+=3D"color:#000">$ cat </span><span style=3D"color:#660">/</span><span style=
+=3D"color:#008">var</span><span style=3D"color:#660">/</span><span style=3D=
+"color:#000">run</span><span style=3D"color:#660">/</span><span style=3D"co=
+lor:#000">singularity</span><span style=3D"color:#660">/</span><span style=
+=3D"color:#000">instances</span><span style=3D"color:#660"><wbr>/</span><sp=
+an style=3D"color:#000">nonrootuser</span><span style=3D"color:#660">/</spa=
+n><span style=3D"color:#000">container1</span><span style=3D"color:#660">.<=
+/span><span style=3D"color:#000">json </span><span style=3D"color:#660">|</=
+span><span style=3D"color:#000"> jq </span><span style=3D"color:#080">&#39;=
+.config&#39;</span><span style=3D"color:#000"> </span><span style=3D"color:=
+#660">|</span><span style=3D"color:#000"> perl </span><span style=3D"color:=
+#660">-</span><span style=3D"color:#000">pi </span><span style=3D"color:#66=
+0">-</span><span style=3D"color:#000">e </span><span style=3D"color:#080">&=
+quot;s/\&quot;//g&quot;</span><span style=3D"color:#000"> </span><span styl=
+e=3D"color:#660">|</span><span style=3D"color:#000"> base64 </span><span st=
+yle=3D"color:#660">--</span><span style=3D"color:#000">decode </span><span =
+style=3D"color:#660">|</span><span style=3D"color:#000"> jq </span><span st=
+yle=3D"color:#080">&#39;.engineConfig.ociConfig.<wbr>linux.namespaces&#39;<=
+/span><span style=3D"color:#000"><br></span><span style=3D"color:#660">[</s=
+pan><span style=3D"color:#000"><br>=C2=A0 </span><span style=3D"color:#660"=
+>{</span><span style=3D"color:#000"><br>=C2=A0 =C2=A0 </span><span style=3D=
+"color:#080">&quot;type&quot;</span><span style=3D"color:#660">:</span><spa=
+n style=3D"color:#000"> </span><span style=3D"color:#080">&quot;pid&quot;</=
+span><span style=3D"color:#660">,</span><span style=3D"color:#000"><br>=C2=
+=A0 =C2=A0 </span><span style=3D"color:#080">&quot;path&quot;</span><span s=
+tyle=3D"color:#660">:</span><span style=3D"color:#000"> </span><span style=
+=3D"color:#080">&quot;/proc/1158/ns/pid&quot;</span><span style=3D"color:#0=
+00"><br>=C2=A0 </span><span style=3D"color:#660">},</span><span style=3D"co=
+lor:#000"><br>=C2=A0 </span><span style=3D"color:#660">{</span><span style=
+=3D"color:#000"><br>=C2=A0 =C2=A0 </span><span style=3D"color:#080">&quot;t=
+ype&quot;</span><span style=3D"color:#660">:</span><span style=3D"color:#00=
+0"> </span><span style=3D"color:#080">&quot;ipc&quot;</span><span style=3D"=
+color:#660">,</span><span style=3D"color:#000"><br>=C2=A0 =C2=A0 </span><sp=
+an style=3D"color:#080">&quot;path&quot;</span><span style=3D"color:#660">:=
+</span><span style=3D"color:#000"> </span><span style=3D"color:#080">&quot;=
+/proc/1158/ns/ipc&quot;</span><span style=3D"color:#000"><br>=C2=A0 </span>=
+<span style=3D"color:#660">},</span><span style=3D"color:#000"><br>=C2=A0 <=
+/span><span style=3D"color:#660">{</span><span style=3D"color:#000"><br>=C2=
+=A0 =C2=A0 </span><span style=3D"color:#080">&quot;type&quot;</span><span s=
+tyle=3D"color:#660">:</span><span style=3D"color:#000"> </span><span style=
+=3D"color:#080">&quot;mount&quot;</span><span style=3D"color:#660">,</span>=
+<span style=3D"color:#000"><br>=C2=A0 =C2=A0 </span><span style=3D"color:#0=
+80">&quot;path&quot;</span><span style=3D"color:#660">:</span><span style=
+=3D"color:#000"> </span><span style=3D"color:#080">&quot;/proc/1158/ns/mnt&=
+quot;</span><span style=3D"color:#000"><br>=C2=A0 </span><span style=3D"col=
+or:#660">}</span><span style=3D"color:#000"><br></span><span style=3D"color=
+:#660">]</span></div></code></div><div><br></div><div style=3D"background-c=
+olor:rgb(250,250,250);border-color:rgb(187,187,187);border-style:solid;bord=
+er-width:1px;word-wrap:break-word"><code><div><span style=3D"color:#660">[<=
+/span><span style=3D"color:#000">nonrootuser@singularity3 </span><span styl=
+e=3D"color:#660">~]</span><span style=3D"color:#000">$ cat </span><span sty=
+le=3D"color:#660">/</span><span style=3D"color:#008">var</span><span style=
+=3D"color:#660">/</span><span style=3D"color:#000">run</span><span style=3D=
+"color:#660">/</span><span style=3D"color:#000">singularity</span><span sty=
+le=3D"color:#660">/</span><span style=3D"color:#000">instances</span><span =
+style=3D"color:#660"><wbr>/</span><span style=3D"color:#000">nonrootuser</s=
+pan><span style=3D"color:#660">/</span><span style=3D"color:#000">container=
+2</span><span style=3D"color:#660">.</span><span style=3D"color:#000">json =
+</span><span style=3D"color:#660">|</span><span style=3D"color:#000"> jq </=
+span><span style=3D"color:#080">&#39;.config&#39;</span><span style=3D"colo=
+r:#000"> </span><span style=3D"color:#660">|</span><span style=3D"color:#00=
+0"> perl </span><span style=3D"color:#660">-</span><span style=3D"color:#00=
+0">pi </span><span style=3D"color:#660">-</span><span style=3D"color:#000">=
+e </span><span style=3D"color:#080">&quot;s/\&quot;//g&quot;</span><span st=
+yle=3D"color:#000"> </span><span style=3D"color:#660">|</span><span style=
+=3D"color:#000"> base64 </span><span style=3D"color:#660">--</span><span st=
+yle=3D"color:#000">decode </span><span style=3D"color:#660">|</span><span s=
+tyle=3D"color:#000"> jq </span><span style=3D"color:#080">&#39;.engineConfi=
+g.ociConfig.<wbr>linux.namespaces&#39;</span><span style=3D"color:#000"><br=
+></span><span style=3D"color:#660">[</span><span style=3D"color:#000"><br>=
+=C2=A0 </span><span style=3D"color:#660">{</span><span style=3D"color:#000"=
+><br>=C2=A0 =C2=A0 </span><span style=3D"color:#080">&quot;type&quot;</span=
+><span style=3D"color:#660">:</span><span style=3D"color:#000"> </span><spa=
+n style=3D"color:#080">&quot;network&quot;</span><span style=3D"color:#660"=
+>,</span><span style=3D"color:#000"><br>=C2=A0 =C2=A0 </span><span style=3D=
+"color:#080">&quot;path&quot;</span><span style=3D"color:#660">:</span><spa=
+n style=3D"color:#000"> </span><span style=3D"color:#080">&quot;/proc/1206/=
+ns/net&quot;</span><span style=3D"color:#000"><br>=C2=A0 </span><span style=
+=3D"color:#660">},</span><span style=3D"color:#000"><br>=C2=A0 </span><span=
+ style=3D"color:#660">{</span><span style=3D"color:#000"><br>=C2=A0 =C2=A0 =
+</span><span style=3D"color:#080">&quot;type&quot;</span><span style=3D"col=
+or:#660">:</span><span style=3D"color:#000"> </span><span style=3D"color:#0=
+80">&quot;pid&quot;</span><span style=3D"color:#660">,</span><span style=3D=
+"color:#000"><br>=C2=A0 =C2=A0 </span><span style=3D"color:#080">&quot;path=
+&quot;</span><span style=3D"color:#660">:</span><span style=3D"color:#000">=
+ </span><span style=3D"color:#080">&quot;/proc/1206/ns/pid&quot;</span><spa=
+n style=3D"color:#000"><br>=C2=A0 </span><span style=3D"color:#660">},</spa=
+n><span style=3D"color:#000"><br>=C2=A0 </span><span style=3D"color:#660">{=
+</span><span style=3D"color:#000"><br>=C2=A0 =C2=A0 </span><span style=3D"c=
+olor:#080">&quot;type&quot;</span><span style=3D"color:#660">:</span><span =
+style=3D"color:#000"> </span><span style=3D"color:#080">&quot;ipc&quot;</sp=
+an><span style=3D"color:#660">,</span><span style=3D"color:#000"><br>=C2=A0=
+ =C2=A0 </span><span style=3D"color:#080">&quot;path&quot;</span><span styl=
+e=3D"color:#660">:</span><span style=3D"color:#000"> </span><span style=3D"=
+color:#080">&quot;/proc/1206/ns/ipc&quot;</span><span style=3D"color:#000">=
+<br>=C2=A0 </span><span style=3D"color:#660">},</span><span style=3D"color:=
+#000"><br>=C2=A0 </span><span style=3D"color:#660">{</span><span style=3D"c=
+olor:#000"><br>=C2=A0 =C2=A0 </span><span style=3D"color:#080">&quot;type&q=
+uot;</span><span style=3D"color:#660">:</span><span style=3D"color:#000"> <=
+/span><span style=3D"color:#080">&quot;mount&quot;</span><span style=3D"col=
+or:#660">,</span><span style=3D"color:#000"><br>=C2=A0 =C2=A0 </span><span =
+style=3D"color:#080">&quot;path&quot;</span><span style=3D"color:#660">:</s=
+pan><span style=3D"color:#000"> </span><span style=3D"color:#080">&quot;/pr=
+oc/1206/ns/mnt&quot;</span><span style=3D"color:#000"><br>=C2=A0 </span><sp=
+an style=3D"color:#660">}</span><span style=3D"color:#000"><br></span><span=
+ style=3D"color:#660">]</span></div></code></div><div><br></div><div>As you=
+ can see, the &#39;network&#39; namespace only appears in the JSON configur=
+ation for a running instance if that instance was started with the -n|--net=
+ Singularity flag.=C2=A0 Now let&#39;s test and see what network namespace =
+ends up being assigned to &#39;exec&#39; processes run against both of thos=
+e running instances:</div><div><br></div><div style=3D"background-color:rgb=
+(250,250,250);border-color:rgb(187,187,187);border-style:solid;border-width=
+:1px;word-wrap:break-word"><code><div><span style=3D"color:#660">[</span><s=
+pan style=3D"color:#000">nonrootuser@singularity3 </span><span style=3D"col=
+or:#660">~]</span><span style=3D"color:#000">$ singularity </span><span sty=
+le=3D"color:#008">exec</span><span style=3D"color:#000"> instance</span><sp=
+an style=3D"color:#660">:</span><span style=3D"color:#800">//container1 rea=
+dlink /proc/self/ns/net</span><span style=3D"color:#000"><br>net</span><spa=
+n style=3D"color:#660">:[</span><span style=3D"color:#066">4026531956</span=
+><span style=3D"color:#660">]</span></div></code></div><div><br></div><div =
+style=3D"background-color:rgb(250,250,250);border-color:rgb(187,187,187);bo=
+rder-style:solid;border-width:1px;word-wrap:break-word"><code><div><span st=
+yle=3D"color:#660">[</span><span style=3D"color:#000">nonrootuser@singulari=
+ty3 </span><span style=3D"color:#660">~]</span><span style=3D"color:#000">$=
+ singularity </span><span style=3D"color:#008">exec</span><span style=3D"co=
+lor:#000"> instance</span><span style=3D"color:#660">:</span><span style=3D=
+"color:#800">//container2 readlink /proc/self/ns/net</span><span style=3D"c=
+olor:#000"><br>net</span><span style=3D"color:#660">:[</span><span style=3D=
+"color:#066">4026532242</span><span style=3D"color:#660">]</span></div></co=
+de></div><div><br></div><div>&#39;exec&#39; (and &#39;shell&#39;) processes=
+ run against container1 end up in the root (default) network namespace of t=
+he host system instead of the desired &#39;container1-hostname&#39; custom =
+network namespace we created with &#39;ip netns add&#39; earlier, even thou=
+gh both of the container1 processes are in that custom namespace!=C2=A0 &#3=
+9;exec&#39; (and &#39;shell&#39;) processes run against container2 end up i=
+n the custom network namespace created by Singularity.</div><div><br></div>=
+<div>It would be highly beneficial if Singularity 3 could be updated such t=
+hat &#39;shell&#39; and &#39;exec&#39; processes run against an instance au=
+tomatically receive the network namespace of the instance itself.=C2=A0 Tha=
+t would be consistent with the behavior of Singularity 2 and would prevent =
+&#39;shell&#39; and &#39;exec&#39; processes run against an instance from &=
+quot;escaping&quot; a custom network namespace and ending up with completel=
+y different interfaces, iptables rules, routing tables, etc than anticipate=
+d.</div></div></blockquote></div>
+------=_Part_602_1517614058.1536422530131--
+
+------=_Part_601_1744437791.1536422530128--

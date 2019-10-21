@@ -1,0 +1,410 @@
+Date: Sat, 20 Jul 2019 00:39:31 -0700 (PDT)
+From: Yilong Li <yil...@stanford.edu>
+To: singularity <singu...@lbl.gov>
+Message-Id: <a7fb6487-4c8b-42f9-8b17-da2642176ce5@lbl.gov>
+In-Reply-To: <CAPqNE2XrB4_4y5ptzhLM6HXxt2Rn1hVFh2Xx2Fg4tcokgp4uuQ@mail.gmail.com>
+References: <ee186118-1e09-4068-86a7-72e4c9743037@lbl.gov> <CAPw58N5BAaDXopt-Nye-x9DzpgC3WKsZnUVExc7yv2_SaRSspw@mail.gmail.com>
+ <8a99269e-78dd-4568-8c04-6fe13878e9e6@lbl.gov> <CAGfAqt9ziO4pEkBrKCV4paYOgkk6qkk0Emz=j4_EXafG+ybsTg@mail.gmail.com>
+ <CAPqNE2XrB4_4y5ptzhLM6HXxt2Rn1hVFh2Xx2Fg4tcokgp4uuQ@mail.gmail.com>
+Subject: Re: [Singularity] Weird interaction between NFS and singularity?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_4857_15896933.1563608371801"
+
+------=_Part_4857_15896933.1563608371801
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_4858_1123579964.1563608371802"
+
+------=_Part_4858_1123579964.1563608371802
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi Jason and John,
+
+Outside the container, I have CentOS 7:
+[yilongl@n592 ~]$ uname -a
+Linux n592 3.10.0-514.21.2.el7.735g0000.x86_64 #1 SMP Wed Jun 21 02:03:38 
+UTC 2017 x86_64 x86_64 x86_64 GNU/Linux
+[yilongl@n592 ~]$ lsb_release -a
+LSB Version:
+Distributor ID: CentOS
+Description:    CentOS Linux release 7.3.1611 (Core) 
+Release:        7.3.1611
+Codename:       Core
+
+
+Inside the container, I have Ubuntu 18.04:
+Singularity rb-5d313adc7615c12d83388aed_latest.sif:~/work> uname -a
+Linux n592 3.10.0-514.21.2.el7.735g0000.x86_64 #1 SMP Wed Jun 21 02:03:38 
+UTC 2017 x86_64 x86_64 x86_64 GNU/Linux
+
+Singularity rb-5d313adc7615c12d83388aed_latest.sif:~/work> cat 
+/etc/os-release 
+NAME="Ubuntu"
+VERSION="18.04.2 LTS (Bionic Beaver)"
+ID=ubuntu
+ID_LIKE=debian
+PRETTY_NAME="Ubuntu 18.04.2 LTS"
+VERSION_ID="18.04"
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+VERSION_CODENAME=bionic
+UBUNTU_CODENAME=bionic
+
+I also tried a few more commands inside the container:
+Singularity rb-5d313adc7615c12d83388aed_latest.sif:~/work> ldd /bin/mkdir
+        linux-vdso.so.1 (0x00007ffc3fffc000)
+        libselinux.so.1 => /lib/x86_64-linux-gnu/libselinux.so.1 
+(0x00002b1cdb0f8000)
+        libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00002b1cdb320000)
+        libpcre.so.3 => /lib/x86_64-linux-gnu/libpcre.so.3 
+(0x00002b1cdb711000)
+        libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00002b1cdb983000)
+        /lib64/ld-linux-x86-64.so.2 (0x00002b1cdacba000)
+        libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 
+(0x00002b1cdbb87000)
+
+Singularity rb-5d313adc7615c12d83388aed_latest.sif:~/work> ldd 
+/usr/bin/mkdir
+ldd: /usr/bin/mkdir: No such file or directory
+
+Singularity rb-5d313adc7615c12d83388aed_latest.sif:~/work> /usr/bin/mkdir
+Segmentation fault (core dumped)
+
+And there is no /rootfs inside the container:
+Singularity rb-5d313adc7615c12d83388aed_latest.sif:~/work> cd /rootfs
+bash: cd: /rootfs: No such file or directory
+
+As Randy suggested earlier, segfault is not really the problem. I wouldn't 
+be surprised if it's a libc issue because the `mkdir` outside the container 
+is pretty old. The real problem is why I can execute /usr/bin/mkdir even 
+though such binary doesn't even exist under /usr/bin/ inside the container. 
+And why `env mkdir` will resolve to this non-existent binary.
+
+Thanks,
+Yilong
+
+On Friday, July 19, 2019 at 11:42:43 PM UTC-7, John Hearns wrote:
+>
+> This also might help:                       ldd  /bin/mkdir
+>
+> On Sat, 20 Jul 2019 at 06:38, Jason Stover <ja...@gmail.com 
+> <javascript:>> wrote:
+>
+>> Hi Yilong,
+>>
+>>   What is the Host OS version, and what are you running in the container?
+>>
+>>   The NFS server is pretty much irrelevant, except that you have it
+>> all mounted under `/rootfs`. It looks like your $HOME isn't mounted
+>> off any of those NFSv4 mounts. So unless in you're image you're have a
+>> symlink like:
+>>
+>>     /bin -> /rootfs/bin
+>>     /usr/bin -> /rootfs/usr/bin
+>>
+>>   etc... you're running the `mkdir` from whatever your container OS
+>> is. To see if there's a difference you can try running:
+>> /rootfs/bin/mkdir
+>>
+>>   I'm going to guess that will fail though. It almost looks like to me
+>> is a libc mismatch. Is there any way you can get strace output of a
+>> mkdir segfault? Segfaults are... ... fun to debug. Yeah, lets go with
+>> fun.
+>>
+>> -J
+>>
+>> On Fri, Jul 19, 2019 at 11:13 PM Yilong Li <y...@stanford.edu 
+>> <javascript:>> wrote:
+>> >
+>> > Hi Randy,
+>> >
+>> > Yes, I am in a directory that I have write permission. It has nothing 
+>> to do with the segfault though. I run a few more commands and here is the 
+>> output:
+>> >
+>> > [yilongl@n629 work]$ singularity shell 
+>> rb-5d313adc7615c12d83388aed_latest.sif
+>> > Singularity rb-5d313adc7615c12d83388aed_latest.sif:~/work> which mkdir
+>> > /bin/mkdir
+>> > Singularity rb-5d313adc7615c12d83388aed_latest.sif:~/work> env mkdir
+>> > Segmentation fault (core dumped)
+>> > Singularity rb-5d313adc7615c12d83388aed_latest.sif:~/work> env 
+>> PATH=/usr/bin:/bin mkdir
+>> > Segmentation fault (core dumped)
+>> > Singularity rb-5d313adc7615c12d83388aed_latest.sif:~/work> env 
+>> PATH=/bin:/usr/bin mkdir
+>> > mkdir: missing operand
+>> > Try 'mkdir --help' for more information.
+>> > Singularity rb-5d313adc7615c12d83388aed_latest.sif:~/work> ls -l 
+>> /usr/bin/ | grep mkdir
+>> > Singularity rb-5d313adc7615c12d83388aed_latest.sif:~/work> ls -l /bin/ 
+>> | grep mkdir
+>> > -rwxr-xr-x 1 root root   80056 Jul 19 03:37 mkdir
+>> > Singularity rb-5d313adc7615c12d83388aed_latest.sif:~/work> cat 
+>> /proc/mounts | grep nfs
+>> > 10.54.0.21:/opt /rootfs/opt nfs4 
+>> rw,relatime,vers=4.0,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,port=0,timeo=600,retrans=2,sec=sys,clientaddr=10.54.52.117,local_lock=none,addr=10.54.0.21 
+>> 0 0
+>> > 10.54.0.21:/etc/pki /rootfs/etc/pki nfs4 
+>> rw,relatime,vers=4.0,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,port=0,timeo=600,retrans=2,sec=sys,clientaddr=10.54.52.117,local_lock=none,addr=10.54.0.21 
+>> 0 0
+>> > 10.54.0.21:/etc/ssl /rootfs/etc/ssl nfs4 
+>> rw,relatime,vers=4.0,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,port=0,timeo=600,retrans=2,sec=sys,clientaddr=10.54.52.117,local_lock=none,addr=10.54.0.21 
+>> 0 0
+>> > 10.54.0.21:/usr/bin /rootfs/usr/bin nfs4 
+>> rw,relatime,vers=4.0,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,port=0,timeo=600,retrans=2,sec=sys,clientaddr=10.54.52.117,local_lock=none,addr=10.54.0.21 
+>> 0 0
+>> > 10.54.0.21:/usr/include /rootfs/usr/include nfs4 
+>> rw,relatime,vers=4.0,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,port=0,timeo=600,retrans=2,sec=sys,clientaddr=10.54.52.117,local_lock=none,addr=10.54.0.21 
+>> 0 0
+>> > 10.54.0.21:/usr/sbin /rootfs/usr/sbin nfs4 
+>> rw,relatime,vers=4.0,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,port=0,timeo=600,retrans=2,sec=sys,clientaddr=10.54.52.117,local_lock=none,addr=10.54.0.21 
+>> 0 0
+>> > 10.54.0.21:/usr/share /rootfs/usr/share nfs4 
+>> rw,relatime,vers=4.0,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,port=0,timeo=600,retrans=2,sec=sys,clientaddr=10.54.52.117,local_lock=none,addr=10.54.0.21 
+>> 0 0
+>> > 10.54.0.21:/usr/lib64/perl5 /rootfs/usr/lib64/perl5 nfs4 
+>> rw,relatime,vers=4.0,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,port=0,timeo=600,retrans=2,sec=sys,clientaddr=10.54.52.117,local_lock=none,addr=10.54.0.21 
+>> 0 0
+>> > 10.54.0.21:/usr/lib64/python2.7 /rootfs/usr/lib64/python2.7 nfs4 
+>> rw,relatime,vers=4.0,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,port=0,timeo=600,retrans=2,sec=sys,clientaddr=10.54.52.117,local_lock=none,addr=10.54.0.21 
+>> 0 0
+>> > 10.54.0.21:/usr/local/bin /rootfs/usr/local/bin nfs4 
+>> rw,relatime,vers=4.0,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,port=0,timeo=600,retrans=2,sec=sys,clientaddr=10.54.52.117,local_lock=none,addr=10.54.0.21 
+>> 0 0
+>> >
+>> >
+>> > Thanks,
+>> > Yilong
+>> >
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to si...@lbl.gov <javascript:>.
+>> To view this discussion on the web visit 
+>> https://groups.google.com/a/lbl.gov/d/msgid/singularity/CAGfAqt9ziO4pEkBrKCV4paYOgkk6qkk0Emz%3Dj4_EXafG%2BybsTg%40mail.gmail.com
+>> .
+>>
+>
+------=_Part_4858_1123579964.1563608371802
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Hi Jason and John,</div><div><br></div><div>Outside t=
+he container, I have CentOS 7:</div><div><div class=3D"prettyprint" style=
+=3D"background-color: rgb(250, 250, 250); border-color: rgb(187, 187, 187);=
+ border-style: solid; border-width: 1px; overflow-wrap: break-word;"><code =
+class=3D"prettyprint"><div class=3D"subprettyprint"><div class=3D"subpretty=
+print">[yilongl@n592 ~]$ uname -a</div><div class=3D"subprettyprint">Linux =
+n592 3.10.0-514.21.2.el7.735g0000.x86_64 #1 SMP Wed Jun 21 02:03:38 UTC 201=
+7 x86_64 x86_64 x86_64 GNU/Linux</div><div class=3D"subprettyprint">[yilong=
+l@n592 ~]$ lsb_release -a</div><div class=3D"subprettyprint">LSB Version:</=
+div><div class=3D"subprettyprint">Distributor ID: CentOS</div><div class=3D=
+"subprettyprint">Description:=C2=A0 =C2=A0 CentOS Linux release 7.3.1611 (C=
+ore)=C2=A0</div><div class=3D"subprettyprint">Release:=C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 7.3.1611</div><div class=3D"subprettyprint">Codename:=C2=A0 =C2=A0 =
+=C2=A0 =C2=A0Core</div></div></code></div><br><br></div><div>Inside the con=
+tainer, I have Ubuntu 18.04:</div><div><div class=3D"prettyprint" style=3D"=
+background-color: rgb(250, 250, 250); border-color: rgb(187, 187, 187); bor=
+der-style: solid; border-width: 1px; overflow-wrap: break-word;"><code clas=
+s=3D"prettyprint"><div class=3D"subprettyprint"><font color=3D"#660066"><di=
+v class=3D"subprettyprint">Singularity rb-5d313adc7615c12d83388aed_latest.s=
+if:~/work&gt; uname -a</div><div class=3D"subprettyprint">Linux n592 3.10.0=
+-514.21.2.el7.735g0000.x86_64 #1 SMP Wed Jun 21 02:03:38 UTC 2017 x86_64 x8=
+6_64 x86_64 GNU/Linux</div><div class=3D"subprettyprint"><br></div><div cla=
+ss=3D"subprettyprint">Singularity rb-5d313adc7615c12d83388aed_latest.sif:~/=
+work&gt; cat /etc/os-release=C2=A0</div><div class=3D"subprettyprint">NAME=
+=3D&quot;Ubuntu&quot;</div><div class=3D"subprettyprint">VERSION=3D&quot;18=
+.04.2 LTS (Bionic Beaver)&quot;</div><div class=3D"subprettyprint">ID=3Dubu=
+ntu</div><div class=3D"subprettyprint">ID_LIKE=3Ddebian</div><div class=3D"=
+subprettyprint">PRETTY_NAME=3D&quot;Ubuntu 18.04.2 LTS&quot;</div><div clas=
+s=3D"subprettyprint">VERSION_ID=3D&quot;18.04&quot;</div><div class=3D"subp=
+rettyprint">HOME_URL=3D&quot;https://www.ubuntu.com/&quot;</div><div class=
+=3D"subprettyprint">SUPPORT_URL=3D&quot;https://help.ubuntu.com/&quot;</div=
+><div class=3D"subprettyprint">BUG_REPORT_URL=3D&quot;https://bugs.launchpa=
+d.net/ubuntu/&quot;</div><div class=3D"subprettyprint">PRIVACY_POLICY_URL=
+=3D&quot;https://www.ubuntu.com/legal/terms-and-policies/privacy-policy&quo=
+t;</div><div class=3D"subprettyprint">VERSION_CODENAME=3Dbionic</div><div c=
+lass=3D"subprettyprint">UBUNTU_CODENAME=3Dbionic</div></font></div></code><=
+/div><br></div><div>I also tried a few more commands inside the container:<=
+/div><div><div class=3D"prettyprint" style=3D"background-color: rgb(250, 25=
+0, 250); border-color: rgb(187, 187, 187); border-style: solid; border-widt=
+h: 1px; overflow-wrap: break-word;"><code class=3D"prettyprint"><div class=
+=3D"subprettyprint"><div class=3D"subprettyprint">Singularity rb-5d313adc76=
+15c12d83388aed_latest.sif:~/work&gt; ldd /bin/mkdir</div><div class=3D"subp=
+rettyprint">=C2=A0 =C2=A0 =C2=A0 =C2=A0 linux-vdso.so.1 (0x00007ffc3fffc000=
+)</div><div class=3D"subprettyprint">=C2=A0 =C2=A0 =C2=A0 =C2=A0 libselinux=
+.so.1 =3D&gt; /lib/x86_64-linux-gnu/libselinux.so.1 (0x00002b1cdb0f8000)</d=
+iv><div class=3D"subprettyprint">=C2=A0 =C2=A0 =C2=A0 =C2=A0 libc.so.6 =3D&=
+gt; /lib/x86_64-linux-gnu/libc.so.6 (0x00002b1cdb320000)</div><div class=3D=
+"subprettyprint">=C2=A0 =C2=A0 =C2=A0 =C2=A0 libpcre.so.3 =3D&gt; /lib/x86_=
+64-linux-gnu/libpcre.so.3 (0x00002b1cdb711000)</div><div class=3D"subpretty=
+print">=C2=A0 =C2=A0 =C2=A0 =C2=A0 libdl.so.2 =3D&gt; /lib/x86_64-linux-gnu=
+/libdl.so.2 (0x00002b1cdb983000)</div><div class=3D"subprettyprint">=C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 /lib64/ld-linux-x86-64.so.2 (0x00002b1cdacba000)</div>=
+<div class=3D"subprettyprint">=C2=A0 =C2=A0 =C2=A0 =C2=A0 libpthread.so.0 =
+=3D&gt; /lib/x86_64-linux-gnu/libpthread.so.0 (0x00002b1cdbb87000)<br><br><=
+/div><div class=3D"subprettyprint">Singularity rb-5d313adc7615c12d83388aed_=
+latest.sif:~/work&gt; ldd /usr/bin/mkdir</div><div class=3D"subprettyprint"=
+>ldd: /usr/bin/mkdir: No such file or directory<br><br></div><div class=3D"=
+subprettyprint">Singularity rb-5d313adc7615c12d83388aed_latest.sif:~/work&g=
+t; /usr/bin/mkdir</div><div class=3D"subprettyprint">Segmentation fault (co=
+re dumped)</div></div></code></div><br></div>And there is no /rootfs inside=
+ the container:<div><div class=3D"prettyprint" style=3D"background-color: r=
+gb(250, 250, 250); border-color: rgb(187, 187, 187); border-style: solid; b=
+order-width: 1px; overflow-wrap: break-word;"><code class=3D"prettyprint"><=
+div class=3D"subprettyprint"><div class=3D"subprettyprint">Singularity rb-5=
+d313adc7615c12d83388aed_latest.sif:~/work&gt; cd /rootfs</div><div class=3D=
+"subprettyprint">bash: cd: /rootfs: No such file or directory</div></div></=
+code></div><br>As Randy suggested earlier, segfault is not really the probl=
+em. I wouldn&#39;t be surprised if it&#39;s a libc issue because the `mkdir=
+` outside the container is pretty old. The real problem is why I can execut=
+e /usr/bin/mkdir even though such binary doesn&#39;t even exist under /usr/=
+bin/ inside the container. And why `env mkdir` will resolve to this non-exi=
+stent binary.</div><div><br></div><div>Thanks,</div><div>Yilong<br><br>On F=
+riday, July 19, 2019 at 11:42:43 PM UTC-7, John Hearns wrote:<blockquote cl=
+ass=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px =
+#ccc solid;padding-left: 1ex;"><div dir=3D"ltr">This also might help:=C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0ldd=C2=A0 /bin/mkdir</div><br><div class=3D"gmail_quote"><div dir=3D"ltr=
+">On Sat, 20 Jul 2019 at 06:38, Jason Stover &lt;<a href=3D"javascript:" ta=
+rget=3D"_blank" gdf-obfuscated-mailto=3D"pFeCM2kYDQAJ" rel=3D"nofollow" onm=
+ousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this=
+.href=3D&#39;javascript:&#39;;return true;">ja...@gmail.com</a>&gt; wrote:<=
+br></div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8e=
+x;border-left:1px solid rgb(204,204,204);padding-left:1ex">Hi Yilong,<br>
+<br>
+=C2=A0 What is the Host OS version, and what are you running in the contain=
+er?<br>
+<br>
+=C2=A0 The NFS server is pretty much irrelevant, except that you have it<br=
+>
+all mounted under `/rootfs`. It looks like your $HOME isn&#39;t mounted<br>
+off any of those NFSv4 mounts. So unless in you&#39;re image you&#39;re hav=
+e a<br>
+symlink like:<br>
+<br>
+=C2=A0 =C2=A0 /bin -&gt; /rootfs/bin<br>
+=C2=A0 =C2=A0 /usr/bin -&gt; /rootfs/usr/bin<br>
+<br>
+=C2=A0 etc... you&#39;re running the `mkdir` from whatever your container O=
+S<br>
+is. To see if there&#39;s a difference you can try running:<br>
+/rootfs/bin/mkdir<br>
+<br>
+=C2=A0 I&#39;m going to guess that will fail though. It almost looks like t=
+o me<br>
+is a libc mismatch. Is there any way you can get strace output of a<br>
+mkdir segfault? Segfaults are... ... fun to debug. Yeah, lets go with<br>
+fun.<br>
+<br>
+-J<br>
+<br>
+On Fri, Jul 19, 2019 at 11:13 PM Yilong Li &lt;<a href=3D"javascript:" targ=
+et=3D"_blank" gdf-obfuscated-mailto=3D"pFeCM2kYDQAJ" rel=3D"nofollow" onmou=
+sedown=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.h=
+ref=3D&#39;javascript:&#39;;return true;">y...@stanford.edu</a>&gt; wrote:<=
+br>
+&gt;<br>
+&gt; Hi Randy,<br>
+&gt;<br>
+&gt; Yes, I am in a directory that I have write permission. It has nothing =
+to do with the segfault though. I run a few more commands and here is the o=
+utput:<br>
+&gt;<br>
+&gt; [yilongl@n629 work]$ singularity shell rb-5d313adc7615c12d83388aed_<wb=
+r>latest.sif<br>
+&gt; Singularity rb-5d313adc7615c12d83388aed_<wbr>latest.sif:~/work&gt; whi=
+ch mkdir<br>
+&gt; /bin/mkdir<br>
+&gt; Singularity rb-5d313adc7615c12d83388aed_<wbr>latest.sif:~/work&gt; env=
+ mkdir<br>
+&gt; Segmentation fault (core dumped)<br>
+&gt; Singularity rb-5d313adc7615c12d83388aed_<wbr>latest.sif:~/work&gt; env=
+ PATH=3D/usr/bin:/bin mkdir<br>
+&gt; Segmentation fault (core dumped)<br>
+&gt; Singularity rb-5d313adc7615c12d83388aed_<wbr>latest.sif:~/work&gt; env=
+ PATH=3D/bin:/usr/bin mkdir<br>
+&gt; mkdir: missing operand<br>
+&gt; Try &#39;mkdir --help&#39; for more information.<br>
+&gt; Singularity rb-5d313adc7615c12d83388aed_<wbr>latest.sif:~/work&gt; ls =
+-l /usr/bin/ | grep mkdir<br>
+&gt; Singularity rb-5d313adc7615c12d83388aed_<wbr>latest.sif:~/work&gt; ls =
+-l /bin/ | grep mkdir<br>
+&gt; -rwxr-xr-x 1 root root=C2=A0 =C2=A080056 Jul 19 03:37 mkdir<br>
+&gt; Singularity rb-5d313adc7615c12d83388aed_<wbr>latest.sif:~/work&gt; cat=
+ /proc/mounts | grep nfs<br>
+&gt; 10.54.0.21:/opt /rootfs/opt nfs4 rw,relatime,vers=3D4.0,rsize=3D<wbr>1=
+048576,wsize=3D1048576,namlen=3D<wbr>255,hard,proto=3Dtcp,port=3D0,<wbr>tim=
+eo=3D600,retrans=3D2,sec=3Dsys,<wbr>clientaddr=3D10.54.52.117,local_<wbr>lo=
+ck=3Dnone,addr=3D10.54.0.21 0 0<br>
+&gt; 10.54.0.21:/etc/pki /rootfs/etc/pki nfs4 rw,relatime,vers=3D4.0,rsize=
+=3D<wbr>1048576,wsize=3D1048576,namlen=3D<wbr>255,hard,proto=3Dtcp,port=3D0=
+,<wbr>timeo=3D600,retrans=3D2,sec=3Dsys,<wbr>clientaddr=3D10.54.52.117,loca=
+l_<wbr>lock=3Dnone,addr=3D10.54.0.21 0 0<br>
+&gt; 10.54.0.21:/etc/ssl /rootfs/etc/ssl nfs4 rw,relatime,vers=3D4.0,rsize=
+=3D<wbr>1048576,wsize=3D1048576,namlen=3D<wbr>255,hard,proto=3Dtcp,port=3D0=
+,<wbr>timeo=3D600,retrans=3D2,sec=3Dsys,<wbr>clientaddr=3D10.54.52.117,loca=
+l_<wbr>lock=3Dnone,addr=3D10.54.0.21 0 0<br>
+&gt; 10.54.0.21:/usr/bin /rootfs/usr/bin nfs4 rw,relatime,vers=3D4.0,rsize=
+=3D<wbr>1048576,wsize=3D1048576,namlen=3D<wbr>255,hard,proto=3Dtcp,port=3D0=
+,<wbr>timeo=3D600,retrans=3D2,sec=3Dsys,<wbr>clientaddr=3D10.54.52.117,loca=
+l_<wbr>lock=3Dnone,addr=3D10.54.0.21 0 0<br>
+&gt; 10.54.0.21:/usr/include /rootfs/usr/include nfs4 rw,relatime,vers=3D4.=
+0,rsize=3D<wbr>1048576,wsize=3D1048576,namlen=3D<wbr>255,hard,proto=3Dtcp,p=
+ort=3D0,<wbr>timeo=3D600,retrans=3D2,sec=3Dsys,<wbr>clientaddr=3D10.54.52.1=
+17,local_<wbr>lock=3Dnone,addr=3D10.54.0.21 0 0<br>
+&gt; 10.54.0.21:/usr/sbin /rootfs/usr/sbin nfs4 rw,relatime,vers=3D4.0,rsiz=
+e=3D<wbr>1048576,wsize=3D1048576,namlen=3D<wbr>255,hard,proto=3Dtcp,port=3D=
+0,<wbr>timeo=3D600,retrans=3D2,sec=3Dsys,<wbr>clientaddr=3D10.54.52.117,loc=
+al_<wbr>lock=3Dnone,addr=3D10.54.0.21 0 0<br>
+&gt; 10.54.0.21:/usr/share /rootfs/usr/share nfs4 rw,relatime,vers=3D4.0,rs=
+ize=3D<wbr>1048576,wsize=3D1048576,namlen=3D<wbr>255,hard,proto=3Dtcp,port=
+=3D0,<wbr>timeo=3D600,retrans=3D2,sec=3Dsys,<wbr>clientaddr=3D10.54.52.117,=
+local_<wbr>lock=3Dnone,addr=3D10.54.0.21 0 0<br>
+&gt; 10.54.0.21:/usr/lib64/perl5 /rootfs/usr/lib64/perl5 nfs4 rw,relatime,v=
+ers=3D4.0,rsize=3D<wbr>1048576,wsize=3D1048576,namlen=3D<wbr>255,hard,proto=
+=3Dtcp,port=3D0,<wbr>timeo=3D600,retrans=3D2,sec=3Dsys,<wbr>clientaddr=3D10=
+.54.52.117,local_<wbr>lock=3Dnone,addr=3D10.54.0.21 0 0<br>
+&gt; 10.54.0.21:/usr/lib64/python2.<wbr>7 /rootfs/usr/lib64/python2.7 nfs4 =
+rw,relatime,vers=3D4.0,rsize=3D<wbr>1048576,wsize=3D1048576,namlen=3D<wbr>2=
+55,hard,proto=3Dtcp,port=3D0,<wbr>timeo=3D600,retrans=3D2,sec=3Dsys,<wbr>cl=
+ientaddr=3D10.54.52.117,local_<wbr>lock=3Dnone,addr=3D10.54.0.21 0 0<br>
+&gt; 10.54.0.21:/usr/local/bin /rootfs/usr/local/bin nfs4 rw,relatime,vers=
+=3D4.0,rsize=3D<wbr>1048576,wsize=3D1048576,namlen=3D<wbr>255,hard,proto=3D=
+tcp,port=3D0,<wbr>timeo=3D600,retrans=3D2,sec=3Dsys,<wbr>clientaddr=3D10.54=
+.52.117,local_<wbr>lock=3Dnone,addr=3D10.54.0.21 0 0<br>
+&gt;<br>
+&gt;<br>
+&gt; Thanks,<br>
+&gt; Yilong<br>
+&gt;<br>
+<br>
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+pFeCM2kYDQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singu...@lbl.<wbr>gov</a>.<br>
+To view this discussion on the web visit <a href=3D"https://groups.google.c=
+om/a/lbl.gov/d/msgid/singularity/CAGfAqt9ziO4pEkBrKCV4paYOgkk6qkk0Emz%3Dj4_=
+EXafG%2BybsTg%40mail.gmail.com" rel=3D"nofollow" target=3D"_blank" onmoused=
+own=3D"this.href=3D&#39;https://groups.google.com/a/lbl.gov/d/msgid/singula=
+rity/CAGfAqt9ziO4pEkBrKCV4paYOgkk6qkk0Emz%3Dj4_EXafG%2BybsTg%40mail.gmail.c=
+om&#39;;return true;" onclick=3D"this.href=3D&#39;https://groups.google.com=
+/a/lbl.gov/d/msgid/singularity/CAGfAqt9ziO4pEkBrKCV4paYOgkk6qkk0Emz%3Dj4_EX=
+afG%2BybsTg%40mail.gmail.com&#39;;return true;">https://groups.google.com/a=
+/<wbr>lbl.gov/d/msgid/singularity/<wbr>CAGfAqt9ziO4pEkBrKCV4paYOgkk6q<wbr>k=
+k0Emz%3Dj4_EXafG%2BybsTg%<wbr>40mail.gmail.com</a>.<br>
+</blockquote></div>
+</blockquote></div></div>
+------=_Part_4858_1123579964.1563608371802--
+
+------=_Part_4857_15896933.1563608371801--

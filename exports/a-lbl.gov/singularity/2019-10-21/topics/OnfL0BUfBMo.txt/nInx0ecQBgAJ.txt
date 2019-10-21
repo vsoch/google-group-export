@@ -1,0 +1,366 @@
+Date: Tue, 20 Feb 2018 14:14:20 -0800 (PST)
+From: Richard Powell <blacksbu...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <bc36a5ca-d639-4a0c-923e-318e4b83b233@lbl.gov>
+Subject: Enabling direct rendering inside a RHEL6.9 container hosted on
+ RHEL6.4 server...
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_18011_413344156.1519164860727"
+
+------=_Part_18011_413344156.1519164860727
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_18012_475005459.1519164860727"
+
+------=_Part_18012_475005459.1519164860727
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+I created a clean RHEL6.9 Singularity container which is hosted on a 
+RHEL6.4 server.  I extracted NVidia driver to match host driver.  Driver 
+was extracted to /usr/local/NVidia inside the container and this path was 
+added to both PATH and LD_LIBRARY_PATH.  Since I cannot use the -nv switch 
+with my RHEL6.4 singularity host servers, I manually extracted drivers into 
+the container...
+Result is:
+Singularity rhel69_ansys182:/scratch/sandboxes_temp> nvidia-smi
+Tue Feb 20 17:05:36 2018  
++-----------------------------------------------------------------------------+
+| NVIDIA-SMI 361.45.18  Driver Version: 361.45.18  |
+|-------------------------------+----------------------+----------------------+
+| GPU  Name  Persistence-M| Bus-Id  Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|  Memory-Usage | GPU-Util  Compute M. |
+|===============================+======================+======================|
+|  0  GRID K2  Off  | 0000:05:00.0  Off |  Off |
+| N/A  28C  P8  17W / 117W |  28MiB /  4095MiB |  0%  Default |
++-------------------------------+----------------------+----------------------+
+|  1  GRID K2  Off  | 0000:06:00.0  Off |  Off |
+| N/A  26C  P8  17W / 117W |  98MiB /  4095MiB |  0%  Default |
++-------------------------------+----------------------+----------------------+
+|  2  GRID K2  Off  | 0000:84:00.0  Off |  Off |
+| N/A  28C  P8  17W / 117W |  33MiB /  4095MiB |  0%  Default |
++-------------------------------+----------------------+----------------------+
+|  3  GRID K2  Off  | 0000:85:00.0  Off |  Off |
+| N/A  26C  P8  17W / 117W |  33MiB /  4095MiB |  0%  Default |
++-------------------------------+----------------------+----------------------+
+  
++-----------------------------------------------------------------------------+
+| Processes:  GPU Memory |
+|  GPU  PID  Type  Process name  Usage  |
+|=============================================================================|
++-----------------------------------------------------------------------------+
+
+After this, I run glxinfo and still no success with direct rendering set to 
+"yes".  My goal is direct rendering = yes...
+
+Singularity rhel69_ansys182:/nfs/system/installs/nice_linux> ldd 
+/usr/bin/glxinfo
+ linux-vdso.so.1 =>  (0x00007fffa8fff000)
+ libGLU.so.1 => /usr/lib64/libGLU.so.1 (0x00002b6195329000)
+ libGL.so.1 => /usr/local/nvidia/libGL.so.1 (0x00002b61955a8000)
+ libm.so.6 => /lib64/libm.so.6 (0x00002b61958e2000)
+ libX11.so.6 => /usr/lib64/libX11.so.6 (0x00002b6195b66000)
+ libXext.so.6 => /usr/lib64/libXext.so.6 (0x00002b6195ea4000)
+ libc.so.6 => /lib64/libc.so.6 (0x00002b61960b6000)
+ libstdc++.so.6 => /usr/lib64/libstdc++.so.6 (0x00002b619644a000)
+ libgcc_s.so.1 => /lib64/libgcc_s.so.1 (0x00002b6196751000)
+ libnvidia-tls.so.361.45.18 => 
+/usr/local/nvidia/tls/libnvidia-tls.so.361.45.18 (0x00002b6196967000)
+ libnvidia-glcore.so.361.45.18 => 
+/usr/local/nvidia/libnvidia-glcore.so.361.45.18 (0x00002b6196b6b000)
+ libdl.so.2 => /lib64/libdl.so.2 (0x00002b61987fc000)
+ libxcb.so.1 => /usr/lib64/libxcb.so.1 (0x00002b6198a00000)
+ /lib64/ld-linux-x86-64.so.2 (0x00002b6195106000)
+ libXau.so.6 => /usr/lib64/libXau.so.6 (0x00002b6198c26000)
+Singularity rhel69_ansys182:/nfs/system/installs/nice_linux> rpm -qa | grep 
+nice
+nice-dcv-server-2016.0-16811.i686
+nice-dcv-server-2016.0-16811.x86_64
+Singularity rhel69_ansys182:/nfs/system/installs/nice_linux> exit
+exit
+[root@auslynchpci09 sandboxes_temp]# singularity shell --writable 
+rhel69_ansys182/
+Singularity: Invoking an interactive shell within container...
+Singularity rhel69_ansys182:/scratch/sandboxes_temp> glxinfo
+name of display: :3.0
+display: :3  screen: 0
+direct rendering: No (If you want to find out why, try setting 
+LIBGL_DEBUG=verbose)
+server glx vendor string: SGI
+server glx version string: 1.2
+server glx extensions:
+  GLX_ARB_multisample, GLX_EXT_visual_info, GLX_EXT_visual_rating, 
+  GLX_EXT_import_context, GLX_OML_swap_method, GLX_SGI_make_current_read, 
+  GLX_SGIS_multisample, GLX_SGIX_hyperpipe, GLX_SGIX_swap_barrier, 
+  GLX_SGIX_fbconfig
+client glx vendor string: NVIDIA Corporation
+client glx version string: 1.4
+client glx extensions:
+  GLX_ARB_get_proc_address, GLX_ARB_multisample, GLX_EXT_visual_info, 
+  GLX_EXT_visual_rating, GLX_EXT_import_context, GLX_SGI_video_sync, 
+  GLX_NV_swap_group, GLX_NV_video_out, GLX_SGIX_fbconfig, GLX_SGIX_pbuffer, 
+  GLX_SGI_swap_control, GLX_EXT_swap_control, GLX_EXT_swap_control_tear, 
+  GLX_EXT_buffer_age, GLX_ARB_create_context, 
+  GLX_ARB_create_context_profile, GLX_NV_float_buffer, 
+  GLX_ARB_fbconfig_float, GLX_EXT_fbconfig_packed_float, 
+  GLX_EXT_texture_from_pixmap, GLX_EXT_framebuffer_sRGB, 
+  GLX_NV_present_video, GLX_NV_copy_image, GLX_NV_copy_buffer, 
+  GLX_NV_multisample_coverage, GLX_NV_video_capture, 
+  GLX_EXT_create_context_es_profile, GLX_EXT_create_context_es2_profile, 
+  GLX_ARB_create_context_robustness, GLX_NV_delay_before_swap, 
+  GLX_EXT_stereo_tree, GLX_ARB_context_flush_control
+GLX version: 1.2
+GLX extensions:
+  GLX_ARB_multisample, GLX_EXT_visual_info, GLX_EXT_visual_rating, 
+  GLX_EXT_import_context, GLX_SGIX_fbconfig, GLX_ARB_get_proc_address
+OpenGL vendor string: Mesa project: *www.mesa3d.org* 
+<http://www.mesa3d.org/>
+OpenGL renderer string: Mesa GLX Indirect
+OpenGL version string: 1.2 (1.5 Mesa 6.4.1)
+OpenGL extensions:
+  GL_ARB_depth_texture, GL_ARB_imaging, GL_ARB_multitexture, 
+  GL_ARB_point_parameters, GL_ARB_point_sprite, GL_ARB_shadow, 
+  GL_ARB_texture_border_clamp, GL_ARB_texture_cube_map, 
+  GL_ARB_texture_env_add, GL_ARB_texture_env_combine, 
+  GL_ARB_texture_env_crossbar, GL_ARB_texture_env_dot3, 
+  GL_ARB_texture_mirrored_repeat, GL_ARB_transpose_matrix, 
+  GL_ARB_window_pos, GL_EXT_abgr, GL_EXT_bgra, GL_EXT_blend_color, 
+  GL_EXT_blend_func_separate, GL_EXT_blend_minmax, GL_EXT_blend_subtract, 
+  GL_EXT_draw_range_elements, GL_EXT_fog_coord, GL_EXT_multi_draw_arrays, 
+  GL_EXT_packed_pixels, GL_EXT_rescale_normal, GL_EXT_secondary_color, 
+  GL_EXT_separate_specular_color, GL_EXT_shadow_funcs, 
+  GL_EXT_stencil_two_side, GL_EXT_stencil_wrap, GL_EXT_texture3D, 
+  GL_EXT_texture_edge_clamp, GL_EXT_texture_env_add, 
+  GL_EXT_texture_env_combine, GL_EXT_texture_env_dot3, 
+  GL_EXT_texture_lod_bias, GL_EXT_texture_object, GL_EXT_vertex_array, 
+  GL_ATI_texture_mirror_once, GL_IBM_texture_mirrored_repeat, 
+  GL_NV_blend_square, GL_NV_point_sprite, GL_NV_texgen_reflection, 
+  GL_NV_texture_rectangle, GL_SGIS_generate_mipmap, GL_SGIS_texture_lod, 
+  GL_SGIX_depth_texture, GL_SGIX_shadow
+8 GLX Visuals
+  visual  x  bf lv rg d st  colorbuffer  sr ax dp st accumbuffer  ms  cav
+  id dep cl sp  sz l  ci b ro  r  g  b  a F gb bf th cl  r  g  b  a ns b eat
+----------------------------------------------------------------------------
+0x023 24 tc  0  24  0 r  y .  8  8  8  0 .  .  0 16  0  0  0  0  0  0 0 None
+0x024 24 tc  0  24  0 r  y .  8  8  8  0 .  .  0 16  8 16 16 16  0  0 0 None
+0x025 24 tc  0  32  0 r  y .  8  8  8  8 .  .  0 16  8 16 16 16 16  0 0 None
+0x026 24 tc  0  32  0 r  . .  8  8  8  8 .  .  0 16  8 16 16 16 16  0 0 None
+0x027 24 dc  0  24  0 r  y .  8  8  8  0 .  .  0 16  0  0  0  0  0  0 0 None
+0x028 24 dc  0  24  0 r  y .  8  8  8  0 .  .  0 16  8 16 16 16  0  0 0 None
+0x029 24 dc  0  32  0 r  y .  8  8  8  8 .  .  0 16  8 16 16 16 16  0 0 None
+0x02a 24 dc  0  32  0 r  . .  8  8  8  8 .  .  0 16  8 16 16 16 16  0 0 None
+8 GLXFBConfigs:
+  visual  x  bf lv rg d st  colorbuffer  sr ax dp st accumbuffer  ms  cav
+  id dep cl sp  sz l  ci b ro  r  g  b  a F gb bf th cl  r  g  b  a ns b eat
+----------------------------------------------------------------------------
+0x023 24 tc  0  24  0 r  y .  8  8  8  0 .  .  0 16  0  0  0  0  0  0 0 None
+0x024 24 tc  0  24  0 r  y .  8  8  8  0 .  .  0 16  8 16 16 16  0  0 0 None
+0x025 24 tc  0  32  0 r  y .  8  8  8  8 .  .  0 16  8 16 16 16 16  0 0 None
+0x026 24 tc  0  32  0 r  . .  8  8  8  8 .  .  0 16  8 16 16 16 16  0 0 None
+0x027 24 dc  0  24  0 r  y .  8  8  8  0 .  .  0 16  0  0  0  0  0  0 0 None
+0x028 24 dc  0  24  0 r  y .  8  8  8  0 .  .  0 16  8 16 16 16  0  0 0 None
+0x029 24 dc  0  32  0 r  y .  8  8  8  8 .  .  0 16  8 16 16 16 16  0 0 None
+0x02a 24 dc  0  32  0 r  . .  8  8  8  8 .  .  0 16  8 16 16 16 16  0 0 None
+
+Singularity rhel69_ansys182:/scratch/sandboxes_temp> ldd /usr/bin/glxinfo 
+ linux-vdso.so.1 =>  (0x00007fffd83bd000)
+ libGLU.so.1 => /usr/lib64/libGLU.so.1 (0x00002afafe5a4000)
+ libGL.so.1 => /usr/local/nvidia/libGL.so.1 (0x00002afafe823000)
+ libm.so.6 => /lib64/libm.so.6 (0x00002afafeb5d000)
+ libX11.so.6 => /usr/lib64/libX11.so.6 (0x00002afafede1000)
+ libXext.so.6 => /usr/lib64/libXext.so.6 (0x00002afaff11f000)
+ libc.so.6 => /lib64/libc.so.6 (0x00002afaff331000)
+ libstdc++.so.6 => /usr/lib64/libstdc++.so.6 (0x00002afaff6c5000)
+ libgcc_s.so.1 => /lib64/libgcc_s.so.1 (0x00002afaff9cc000)
+ libnvidia-tls.so.361.45.18 => 
+/usr/local/nvidia/tls/libnvidia-tls.so.361.45.18 (0x00002afaffbe2000)
+ libnvidia-glcore.so.361.45.18 => 
+/usr/local/nvidia/libnvidia-glcore.so.361.45.18 (0x00002afaffde6000)
+ libdl.so.2 => /lib64/libdl.so.2 (0x00002afb01a77000)
+ libxcb.so.1 => /usr/lib64/libxcb.so.1 (0x00002afb01c7b000)
+ /lib64/ld-linux-x86-64.so.2 (0x00002afafe381000)
+ libXau.so.6 => /usr/lib64/libXau.so.6 (0x00002afb01ea1000)
+
+Singularity rhel69_ansys182:/scratch/sandboxes_temp> ldconfig -p | grep 
+libGL.so.1
+ libGL.so.1 (libc6,x86-64) => /usr/lib64/libGL.so.1
+ libGL.so.1 (libc6) => /usr/lib/libGL.so.1
+
+
+------=_Part_18012_475005459.1519164860727
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>I created a clean RHEL6.9 Singularity container which=
+ is hosted on a RHEL6.4 server.=C2=A0 I extracted NVidia driver to match ho=
+st driver.=C2=A0 Driver was extracted to /usr/local/NVidia inside the conta=
+iner and this path was added to both PATH and LD_LIBRARY_PATH.=C2=A0 Since =
+I cannot use the -nv switch with my RHEL6.4 singularity host servers, I man=
+ually extracted drivers into the container...</div><div>Result is:</div><di=
+v>Singularity rhel69_ansys182:/scratch/sandboxes_temp&gt; nvidia-smi<br>Tue=
+ Feb 20 17:05:36 2018=C2=A0 <br>+------------------------------------------=
+-----------------------------------+<br>| NVIDIA-SMI 361.45.18=C2=A0 Driver=
+ Version: 361.45.18=C2=A0 |<br>|-------------------------------+-----------=
+-----------+----------------------+<br>| GPU=C2=A0 Name=C2=A0 Persistence-M=
+| Bus-Id=C2=A0 Disp.A | Volatile Uncorr. ECC |<br>| Fan=C2=A0 Temp=C2=A0 Pe=
+rf=C2=A0 Pwr:Usage/Cap|=C2=A0 Memory-Usage | GPU-Util=C2=A0 Compute M. |<br=
+>|=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D|<br>|=C2=A0 0=C2=A0 GRID K2=C2=A0 Off=C2=A0 | 0000:05:00.0=C2=A0 =
+Off |=C2=A0 Off |<br>| N/A=C2=A0 28C=C2=A0 P8=C2=A0 17W / 117W |=C2=A0 28Mi=
+B /=C2=A0 4095MiB |=C2=A0 0%=C2=A0 Default |<br>+--------------------------=
+-----+----------------------+----------------------+<br>|=C2=A0 1=C2=A0 GRI=
+D K2=C2=A0 Off=C2=A0 | 0000:06:00.0=C2=A0 Off |=C2=A0 Off |<br>| N/A=C2=A0 =
+26C=C2=A0 P8=C2=A0 17W / 117W |=C2=A0 98MiB /=C2=A0 4095MiB |=C2=A0 0%=C2=
+=A0 Default |<br>+-------------------------------+----------------------+--=
+--------------------+<br>|=C2=A0 2=C2=A0 GRID K2=C2=A0 Off=C2=A0 | 0000:84:=
+00.0=C2=A0 Off |=C2=A0 Off |<br>| N/A=C2=A0 28C=C2=A0 P8=C2=A0 17W / 117W |=
+=C2=A0 33MiB /=C2=A0 4095MiB |=C2=A0 0%=C2=A0 Default |<br>+---------------=
+----------------+----------------------+----------------------+<br>|=C2=A0 =
+3=C2=A0 GRID K2=C2=A0 Off=C2=A0 | 0000:85:00.0=C2=A0 Off |=C2=A0 Off |<br>|=
+ N/A=C2=A0 26C=C2=A0 P8=C2=A0 17W / 117W |=C2=A0 33MiB /=C2=A0 4095MiB |=C2=
+=A0 0%=C2=A0 Default |<br>+-------------------------------+----------------=
+------+----------------------+<br>=C2=A0 <br>+-----------------------------=
+------------------------------------------------+<br>| Processes:=C2=A0 GPU=
+ Memory |<br>|=C2=A0 GPU=C2=A0 PID=C2=A0 Type=C2=A0 Process name=C2=A0 Usag=
+e=C2=A0 |<br>|=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D|<br>+------------------------------------------------=
+-----------------------------+<br></div><div><br></div><div>After this, I r=
+un glxinfo and still no success with direct rendering set to &quot;yes&quot=
+;.=C2=A0 My goal is direct rendering =3D yes...</div><div><br></div><div></=
+div><div>Singularity rhel69_ansys182:/nfs/system/installs/nice_linux&gt; ld=
+d /usr/bin/glxinfo<br>=C2=A0linux-vdso.so.1 =3D&gt;=C2=A0 (0x00007fffa8fff0=
+00)<br>=C2=A0libGLU.so.1 =3D&gt; /usr/lib64/libGLU.so.1 (0x00002b6195329000=
+)<br>=C2=A0libGL.so.1 =3D&gt; /usr/local/nvidia/libGL.so.1 (0x00002b61955a8=
+000)<br>=C2=A0libm.so.6 =3D&gt; /lib64/libm.so.6 (0x00002b61958e2000)<br>=
+=C2=A0libX11.so.6 =3D&gt; /usr/lib64/libX11.so.6 (0x00002b6195b66000)<br>=
+=C2=A0libXext.so.6 =3D&gt; /usr/lib64/libXext.so.6 (0x00002b6195ea4000)<br>=
+=C2=A0libc.so.6 =3D&gt; /lib64/libc.so.6 (0x00002b61960b6000)<br>=C2=A0libs=
+tdc++.so.6 =3D&gt; /usr/lib64/libstdc++.so.6 (0x00002b619644a000)<br>=C2=A0=
+libgcc_s.so.1 =3D&gt; /lib64/libgcc_s.so.1 (0x00002b6196751000)<br>=C2=A0li=
+bnvidia-tls.so.361.45.18 =3D&gt; /usr/local/nvidia/tls/libnvidia-tls.so.361=
+.45.18 (0x00002b6196967000)<br>=C2=A0libnvidia-glcore.so.361.45.18 =3D&gt; =
+/usr/local/nvidia/libnvidia-glcore.so.361.45.18 (0x00002b6196b6b000)<br>=C2=
+=A0libdl.so.2 =3D&gt; /lib64/libdl.so.2 (0x00002b61987fc000)<br>=C2=A0libxc=
+b.so.1 =3D&gt; /usr/lib64/libxcb.so.1 (0x00002b6198a00000)<br>=C2=A0/lib64/=
+ld-linux-x86-64.so.2 (0x00002b6195106000)<br>=C2=A0libXau.so.6 =3D&gt; /usr=
+/lib64/libXau.so.6 (0x00002b6198c26000)<br>Singularity rhel69_ansys182:/nfs=
+/system/installs/nice_linux&gt; rpm -qa | grep nice<br>nice-dcv-server-2016=
+.0-16811.i686<br>nice-dcv-server-2016.0-16811.x86_64<br>Singularity rhel69_=
+ansys182:/nfs/system/installs/nice_linux&gt; exit<br>exit<br>[root@auslynch=
+pci09 sandboxes_temp]# singularity shell --writable rhel69_ansys182/<br>Sin=
+gularity: Invoking an interactive shell within container...</div><div>Singu=
+larity rhel69_ansys182:/scratch/sandboxes_temp&gt; glxinfo<br>name of displ=
+ay: :3.0<br>display: :3=C2=A0 screen: 0<br><font style=3D"background-color:=
+ rgb(255, 0, 0);">direct rendering: No</font> (If you want to find out why,=
+ try setting LIBGL_DEBUG=3Dverbose)<br>server glx vendor string: SGI<br>ser=
+ver glx version string: 1.2<br>server glx extensions:<br>=C2=A0 GLX_ARB_mul=
+tisample, GLX_EXT_visual_info, GLX_EXT_visual_rating, <br>=C2=A0 GLX_EXT_im=
+port_context, GLX_OML_swap_method, GLX_SGI_make_current_read, <br>=C2=A0 GL=
+X_SGIS_multisample, GLX_SGIX_hyperpipe, GLX_SGIX_swap_barrier, <br>=C2=A0 G=
+LX_SGIX_fbconfig<br>client glx vendor string: NVIDIA Corporation<br>client =
+glx version string: 1.4<br>client glx extensions:<br>=C2=A0 GLX_ARB_get_pro=
+c_address, GLX_ARB_multisample, GLX_EXT_visual_info, <br>=C2=A0 GLX_EXT_vis=
+ual_rating, GLX_EXT_import_context, GLX_SGI_video_sync, <br>=C2=A0 GLX_NV_s=
+wap_group, GLX_NV_video_out, GLX_SGIX_fbconfig, GLX_SGIX_pbuffer, <br>=C2=
+=A0 GLX_SGI_swap_control, GLX_EXT_swap_control, GLX_EXT_swap_control_tear, =
+<br>=C2=A0 GLX_EXT_buffer_age, GLX_ARB_create_context, <br>=C2=A0 GLX_ARB_c=
+reate_context_profile, GLX_NV_float_buffer, <br>=C2=A0 GLX_ARB_fbconfig_flo=
+at, GLX_EXT_fbconfig_packed_float, <br>=C2=A0 GLX_EXT_texture_from_pixmap, =
+GLX_EXT_framebuffer_sRGB, <br>=C2=A0 GLX_NV_present_video, GLX_NV_copy_imag=
+e, GLX_NV_copy_buffer, <br>=C2=A0 GLX_NV_multisample_coverage, GLX_NV_video=
+_capture, <br>=C2=A0 GLX_EXT_create_context_es_profile, GLX_EXT_create_cont=
+ext_es2_profile, <br>=C2=A0 GLX_ARB_create_context_robustness, GLX_NV_delay=
+_before_swap, <br>=C2=A0 GLX_EXT_stereo_tree, GLX_ARB_context_flush_control=
+<br>GLX version: 1.2<br>GLX extensions:<br>=C2=A0 GLX_ARB_multisample, GLX_=
+EXT_visual_info, GLX_EXT_visual_rating, <br>=C2=A0 GLX_EXT_import_context, =
+GLX_SGIX_fbconfig, GLX_ARB_get_proc_address<br>OpenGL vendor string: Mesa p=
+roject: <a href=3D"http://www.mesa3d.org/" rel=3D"noreferrer"><u><font colo=
+r=3D"#0066cc">www.mesa3d.org</font></u></a><br>OpenGL renderer string: Mesa=
+ GLX Indirect<br>OpenGL version string: 1.2 (1.5 Mesa 6.4.1)<br>OpenGL exte=
+nsions:<br>=C2=A0 GL_ARB_depth_texture, GL_ARB_imaging, GL_ARB_multitexture=
+, <br>=C2=A0 GL_ARB_point_parameters, GL_ARB_point_sprite, GL_ARB_shadow, <=
+br>=C2=A0 GL_ARB_texture_border_clamp, GL_ARB_texture_cube_map, <br>=C2=A0 =
+GL_ARB_texture_env_add, GL_ARB_texture_env_combine, <br>=C2=A0 GL_ARB_textu=
+re_env_crossbar, GL_ARB_texture_env_dot3, <br>=C2=A0 GL_ARB_texture_mirrore=
+d_repeat, GL_ARB_transpose_matrix, <br>=C2=A0 GL_ARB_window_pos, GL_EXT_abg=
+r, GL_EXT_bgra, GL_EXT_blend_color, <br>=C2=A0 GL_EXT_blend_func_separate, =
+GL_EXT_blend_minmax, GL_EXT_blend_subtract, <br>=C2=A0 GL_EXT_draw_range_el=
+ements, GL_EXT_fog_coord, GL_EXT_multi_draw_arrays, <br>=C2=A0 GL_EXT_packe=
+d_pixels, GL_EXT_rescale_normal, GL_EXT_secondary_color, <br>=C2=A0 GL_EXT_=
+separate_specular_color, GL_EXT_shadow_funcs, <br>=C2=A0 GL_EXT_stencil_two=
+_side, GL_EXT_stencil_wrap, GL_EXT_texture3D, <br>=C2=A0 GL_EXT_texture_edg=
+e_clamp, GL_EXT_texture_env_add, <br>=C2=A0 GL_EXT_texture_env_combine, GL_=
+EXT_texture_env_dot3, <br>=C2=A0 GL_EXT_texture_lod_bias, GL_EXT_texture_ob=
+ject, GL_EXT_vertex_array, <br>=C2=A0 GL_ATI_texture_mirror_once, GL_IBM_te=
+xture_mirrored_repeat, <br>=C2=A0 GL_NV_blend_square, GL_NV_point_sprite, G=
+L_NV_texgen_reflection, <br>=C2=A0 GL_NV_texture_rectangle, GL_SGIS_generat=
+e_mipmap, GL_SGIS_texture_lod, <br>=C2=A0 GL_SGIX_depth_texture, GL_SGIX_sh=
+adow</div><div>8 GLX Visuals<br>=C2=A0 visual=C2=A0 x=C2=A0 bf lv rg d st=
+=C2=A0 colorbuffer=C2=A0 sr ax dp st accumbuffer=C2=A0 ms=C2=A0 cav<br>=C2=
+=A0 id dep cl sp=C2=A0 sz l=C2=A0 ci b ro=C2=A0 r=C2=A0 g=C2=A0 b=C2=A0 a F=
+ gb bf th cl=C2=A0 r=C2=A0 g=C2=A0 b=C2=A0 a ns b eat<br>------------------=
+----------------------------------------------------------<br>0x023 24 tc=
+=C2=A0 0=C2=A0 24=C2=A0 0 r=C2=A0 y .=C2=A0 8=C2=A0 8=C2=A0 8=C2=A0 0 .=C2=
+=A0 .=C2=A0 0 16=C2=A0 0=C2=A0 0=C2=A0 0=C2=A0 0=C2=A0 0=C2=A0 0 0 None<br>=
+0x024 24 tc=C2=A0 0=C2=A0 24=C2=A0 0 r=C2=A0 y .=C2=A0 8=C2=A0 8=C2=A0 8=C2=
+=A0 0 .=C2=A0 .=C2=A0 0 16=C2=A0 8 16 16 16=C2=A0 0=C2=A0 0 0 None<br>0x025=
+ 24 tc=C2=A0 0=C2=A0 32=C2=A0 0 r=C2=A0 y .=C2=A0 8=C2=A0 8=C2=A0 8=C2=A0 8=
+ .=C2=A0 .=C2=A0 0 16=C2=A0 8 16 16 16 16=C2=A0 0 0 None<br>0x026 24 tc=C2=
+=A0 0=C2=A0 32=C2=A0 0 r=C2=A0 . .=C2=A0 8=C2=A0 8=C2=A0 8=C2=A0 8 .=C2=A0 =
+.=C2=A0 0 16=C2=A0 8 16 16 16 16=C2=A0 0 0 None<br>0x027 24 dc=C2=A0 0=C2=
+=A0 24=C2=A0 0 r=C2=A0 y .=C2=A0 8=C2=A0 8=C2=A0 8=C2=A0 0 .=C2=A0 .=C2=A0 =
+0 16=C2=A0 0=C2=A0 0=C2=A0 0=C2=A0 0=C2=A0 0=C2=A0 0 0 None<br>0x028 24 dc=
+=C2=A0 0=C2=A0 24=C2=A0 0 r=C2=A0 y .=C2=A0 8=C2=A0 8=C2=A0 8=C2=A0 0 .=C2=
+=A0 .=C2=A0 0 16=C2=A0 8 16 16 16=C2=A0 0=C2=A0 0 0 None<br>0x029 24 dc=C2=
+=A0 0=C2=A0 32=C2=A0 0 r=C2=A0 y .=C2=A0 8=C2=A0 8=C2=A0 8=C2=A0 8 .=C2=A0 =
+.=C2=A0 0 16=C2=A0 8 16 16 16 16=C2=A0 0 0 None<br>0x02a 24 dc=C2=A0 0=C2=
+=A0 32=C2=A0 0 r=C2=A0 . .=C2=A0 8=C2=A0 8=C2=A0 8=C2=A0 8 .=C2=A0 .=C2=A0 =
+0 16=C2=A0 8 16 16 16 16=C2=A0 0 0 None</div><div>8 GLXFBConfigs:<br>=C2=A0=
+ visual=C2=A0 x=C2=A0 bf lv rg d st=C2=A0 colorbuffer=C2=A0 sr ax dp st acc=
+umbuffer=C2=A0 ms=C2=A0 cav<br>=C2=A0 id dep cl sp=C2=A0 sz l=C2=A0 ci b ro=
+=C2=A0 r=C2=A0 g=C2=A0 b=C2=A0 a F gb bf th cl=C2=A0 r=C2=A0 g=C2=A0 b=C2=
+=A0 a ns b eat<br>---------------------------------------------------------=
+-------------------<br>0x023 24 tc=C2=A0 0=C2=A0 24=C2=A0 0 r=C2=A0 y .=C2=
+=A0 8=C2=A0 8=C2=A0 8=C2=A0 0 .=C2=A0 .=C2=A0 0 16=C2=A0 0=C2=A0 0=C2=A0 0=
+=C2=A0 0=C2=A0 0=C2=A0 0 0 None<br>0x024 24 tc=C2=A0 0=C2=A0 24=C2=A0 0 r=
+=C2=A0 y .=C2=A0 8=C2=A0 8=C2=A0 8=C2=A0 0 .=C2=A0 .=C2=A0 0 16=C2=A0 8 16 =
+16 16=C2=A0 0=C2=A0 0 0 None<br>0x025 24 tc=C2=A0 0=C2=A0 32=C2=A0 0 r=C2=
+=A0 y .=C2=A0 8=C2=A0 8=C2=A0 8=C2=A0 8 .=C2=A0 .=C2=A0 0 16=C2=A0 8 16 16 =
+16 16=C2=A0 0 0 None<br>0x026 24 tc=C2=A0 0=C2=A0 32=C2=A0 0 r=C2=A0 . .=C2=
+=A0 8=C2=A0 8=C2=A0 8=C2=A0 8 .=C2=A0 .=C2=A0 0 16=C2=A0 8 16 16 16 16=C2=
+=A0 0 0 None<br>0x027 24 dc=C2=A0 0=C2=A0 24=C2=A0 0 r=C2=A0 y .=C2=A0 8=C2=
+=A0 8=C2=A0 8=C2=A0 0 .=C2=A0 .=C2=A0 0 16=C2=A0 0=C2=A0 0=C2=A0 0=C2=A0 0=
+=C2=A0 0=C2=A0 0 0 None<br>0x028 24 dc=C2=A0 0=C2=A0 24=C2=A0 0 r=C2=A0 y .=
+=C2=A0 8=C2=A0 8=C2=A0 8=C2=A0 0 .=C2=A0 .=C2=A0 0 16=C2=A0 8 16 16 16=C2=
+=A0 0=C2=A0 0 0 None<br>0x029 24 dc=C2=A0 0=C2=A0 32=C2=A0 0 r=C2=A0 y .=C2=
+=A0 8=C2=A0 8=C2=A0 8=C2=A0 8 .=C2=A0 .=C2=A0 0 16=C2=A0 8 16 16 16 16=C2=
+=A0 0 0 None<br>0x02a 24 dc=C2=A0 0=C2=A0 32=C2=A0 0 r=C2=A0 . .=C2=A0 8=C2=
+=A0 8=C2=A0 8=C2=A0 8 .=C2=A0 .=C2=A0 0 16=C2=A0 8 16 16 16 16=C2=A0 0 0 No=
+ne</div><div><br></div><div>Singularity rhel69_ansys182:/scratch/sandboxes_=
+temp&gt; ldd /usr/bin/glxinfo <br>=C2=A0linux-vdso.so.1 =3D&gt;=C2=A0 (0x00=
+007fffd83bd000)<br>=C2=A0libGLU.so.1 =3D&gt; /usr/lib64/libGLU.so.1 (0x0000=
+2afafe5a4000)<br>=C2=A0libGL.so.1 =3D&gt; /usr/local/nvidia/libGL.so.1 (0x0=
+0002afafe823000)<br>=C2=A0libm.so.6 =3D&gt; /lib64/libm.so.6 (0x00002afafeb=
+5d000)<br>=C2=A0libX11.so.6 =3D&gt; /usr/lib64/libX11.so.6 (0x00002afafede1=
+000)<br>=C2=A0libXext.so.6 =3D&gt; /usr/lib64/libXext.so.6 (0x00002afaff11f=
+000)<br>=C2=A0libc.so.6 =3D&gt; /lib64/libc.so.6 (0x00002afaff331000)<br>=
+=C2=A0libstdc++.so.6 =3D&gt; /usr/lib64/libstdc++.so.6 (0x00002afaff6c5000)=
+<br>=C2=A0libgcc_s.so.1 =3D&gt; /lib64/libgcc_s.so.1 (0x00002afaff9cc000)<b=
+r>=C2=A0libnvidia-tls.so.361.45.18 =3D&gt; /usr/local/nvidia/tls/libnvidia-=
+tls.so.361.45.18 (0x00002afaffbe2000)<br>=C2=A0libnvidia-glcore.so.361.45.1=
+8 =3D&gt; /usr/local/nvidia/libnvidia-glcore.so.361.45.18 (0x00002afaffde60=
+00)<br>=C2=A0libdl.so.2 =3D&gt; /lib64/libdl.so.2 (0x00002afb01a77000)<br>=
+=C2=A0libxcb.so.1 =3D&gt; /usr/lib64/libxcb.so.1 (0x00002afb01c7b000)<br>=
+=C2=A0/lib64/ld-linux-x86-64.so.2 (0x00002afafe381000)<br>=C2=A0libXau.so.6=
+ =3D&gt; /usr/lib64/libXau.so.6 (0x00002afb01ea1000)</div><div><br></div><d=
+iv>Singularity rhel69_ansys182:/scratch/sandboxes_temp&gt; ldconfig -p | gr=
+ep libGL.so.1<br>=C2=A0libGL.so.1 (libc6,x86-64) =3D&gt; /usr/lib64/libGL.s=
+o.1<br>=C2=A0libGL.so.1 (libc6) =3D&gt; /usr/lib/libGL.so.1<br></div><div><=
+br></div></div>
+------=_Part_18012_475005459.1519164860727--
+
+------=_Part_18011_413344156.1519164860727--

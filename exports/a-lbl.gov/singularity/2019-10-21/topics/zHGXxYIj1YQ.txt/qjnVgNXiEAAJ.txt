@@ -1,0 +1,1438 @@
+Date: Fri, 7 Sep 2018 18:44:46 -0700 (PDT)
+From: Sean Mahoney <se...@seanpatrickmahoney.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <f74a1005-af27-46a5-9e47-2c6c5cb8fd24@lbl.gov>
+Subject: Difference in network namespace behavior between Singularity 2 and
+ Singularity 3
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_434_745957112.1536371086593"
+
+------=_Part_434_745957112.1536371086593
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_435_1301289395.1536371086596"
+
+------=_Part_435_1301289395.1536371086596
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Hi All,
+
+In Singularity 2 (I'm testing with 2.6.0), if you 'shell' or 'exec' to a 
+running instance that was started in a custom network namespace (created 
+with the 'ip netns add' command, not using the -n|--net Singularity flag) 
+the process(es) spawned will also use that custom network namespace.  This 
+is highly beneficial because it means that each Singularity container 
+instance can use its own 'ip netns' managed custom network namespace and 
+that users of each container end up in that custom network namespace by 
+default when running 'shell' or 'exec' against the instance, regardless of 
+the network namespace of the user's shell.
+
+In Singularity 3 (I'm testing with 3.0.0-alpha.1-144-g345371f, git clone 
+from 08/31/2018), it appears that behavior has changed.  If an instance is 
+started in a custom network namespace (created with the 'ip netns add' 
+command, not using the -n|--net Singularity flag), the initial processes 
+start in the custom network namespace but future process(es) spawned by 
+running 'shell' or 'exec' to that instance end up associated with the root 
+(default) network namespace of the host system instead of the custom 
+network namespace.  Since non-root users cannot use 'ip netns exec' or 
+'nsenter' to explicitly start a process in a particular namespace, non-root 
+user 'shell' and 'exec' interactions with that Singularity 3 instance will 
+result in processes that essentially "escape" the custom network namespace 
+and are instead exposed to the root network namespace and everything it 
+contains (network interfaces, iptables rules, routing tables, etc)...
+
+Are there plans to incorporate Singularity 2's behavior described above 
+into Singularity 3?
+
+Although I realize that the -n|--net flag can be passed to 'instance start' 
+to cause Singularity 3 to generate a new network namespace, using 'ip netns 
+add' instead not only creates what is essentially a "named" custom network 
+namespace (e.g. /var/run/netns/name-of-custom-network-namespace) but also 
+makes it possible to use namespace-specific configuration files in /etc 
+(see http://man7.org/linux/man-pages/man8/ip-netns.8.html ).
+
+Below I've included two sections ('Examples' and 'Relevant Code') to 
+provide examples and references to relevant code, both with an excruciating 
+(but hopefully helpful) amount of detail. ;)
+
+If you have any questions or need additional information, please let me 
+know.
+
+Thanks!
+Sean
+
+
+*Examples*
+
+*Singularity 2*
+
+As an example, consider the following script being run as root when a host 
+is started:
+
+#!/bin/bash
+ip netns add container1-hostname
+ip netns exec container1-hostname su -c "singularity instance.start 
+/home/nonrootuser/centos.simg container1" - nonrootuser
+
+The script above creates a new custom network namespace named 
+'container1-hostname' and starts a Singularity instance named 'container1' 
+(running as nonrootuser) inside that custom network namespace.  The result 
+in Singularity 2 is a single process for the instance 
+('singularity-instance: nonrootuser [container1]') that is using the 
+'container1-hostname' custom network namespace:
+
+[root@singularity2 ~]# lsns -t net -o 
+NS,PATH,TYPE,NPROCS,PPID,PID,USER,UID,COMMAND
+        NS PATH              TYPE NPROCS PPID   PID USER        UID COMMAND
+4026531956 /proc/1/ns/net    net      94    0     1 root        0 /usr/lib/
+systemd/systemd --switched-root --system --deserialize 22
+4026532163 /proc/2695/ns/net net       1    1  2695 nonrootuser 1000 
+singularity-instance: nonrootuser [container1]
+
+[root@singularity2 ~]# ls -i /var/run/netns/container1-hostname
+4026532163 /var/run/netns/container1-hostname
+
+In this example, 4026531956 is the inode containing the root network 
+namespace used by default for all processes running on the host system (94 
+processes in this example) and 4026532163 is the inode containing our 
+custom network namespace.  Now let's say nonrootuser shells into the 
+running instance that was started as their user when the host system booted:
+
+[nonrootuser@singularity2 ~]$ singularity instance.list
+DAEMON NAME      PID      CONTAINER IMAGE
+container1       2695     /home/nonrootuser/centos.simg
+
+[nonrootuser@singularity2 ~]$ singularity shell instance://container1
+Singularity: Invoking an interactive shell within container...
+
+Singularity centos.simg:~> readlink /proc/self/ns/net
+net:[4026532163]
+
+The resulting bash process for the Singularity shell ends up with our 
+correct custom network namespace (the network namespace file descriptor for 
+its process refers to inode 4026532163, which we saw earlier as the inode 
+containing our 'container1-hostname' custom network namespace in this 
+example).  The same behavior applies to exec:
+
+[nonrootuser@singularity2 ~]$ singularity exec instance://container1 
+readlink /proc/self/ns/net
+net:[4026532163]
+
+This is excellent since it means that all processes resulting from 
+nonrootuser's interaction with that instance will use our custom network 
+namespace!
+
+
+*Singularity 3*
+
+Now let's look at the different behavior in Singularity 3.  Consider the 
+following script (identical to the script in the Singularity 2 example 
+except for using 'instance start' instead of 'instance.start') being run as 
+root when a host is started:
+
+#!/bin/bash
+ip netns add container1-hostname
+ip netns exec container1-hostname su -c "singularity instance start 
+/home/nonrootuser/centos.simg container1" - nonrootuser
+
+The script above creates a new custom network namespace named 
+'container1-hostname' and starts a Singularity instance named 'container1' 
+(running as nonrootuser) inside that custom network namespace.  The result 
+in Singularity 3 is two processes for the instance (parent process 
+'Singularity instance: nonrootuser [container1]' and child process 'sinit') 
+that are both using the 'container1-hostname' custom network namespace:
+
+[root@singularity3 ~]# lsns -t net -o 
+NS,PATH,TYPE,NPROCS,PPID,PID,USER,UID,COMMAND
+        NS PATH              TYPE NPROCS PPID   PID USER        UID COMMAND
+4026531956 /proc/1/ns/net    net      99    0     1 root        0 /usr/lib/
+systemd/systemd --switched-root --system --deserialize 22
+4026532163 /proc/2676/ns/net net       2    1  2676 nonrootuser 1000 
+Singularity instance: nonrootuser [container1]
+
+[root@singularity3 ~]# ls -i /var/run/netns/container1-hostname
+4026532163 /var/run/netns/container1-hostname
+
+In this example, 4026531956 is the inode containing the root network 
+namespace used by default for all processes running on the host system (99 
+processes in this example) and 4026532163 is the inode containing our 
+custom network namespace.  Now let's say nonrootuser shells into the 
+running instance that was started as their user when the host system booted:
+
+[nonrootuser@singularity3 ~]$ singularity instance list
+INSTANCE NAME    PID      IMAGE
+container1       2677     /home/nonrootuser/centos.simg
+
+[nonrootuser@singularity3 ~]$ singularity shell instance://container1
+Singularity :~> readlink /proc/self/ns/net
+net:[4026531956]
+
+Instead of the resulting bash process for the Singularity shell ending up 
+in our correct custom network namespace like it did in Singularity 2, it 
+ends up in the root network namespace (the network namespace file 
+descriptor for its process refers to inode 4026531956, which we saw earlier 
+as the inode containing the root/default network namespace in this 
+example). :(  The same behavior unfortunately applies to exec:
+
+[nonrootuser@singularity3 ~]$ singularity exec instance://container1 
+readlink /proc/self/ns/net
+net:[4026531956]
+
+The result is that all processes started by a user connecting to that 
+instance essentially "escape" the custom network namespace and are instead 
+exposed to the root network namespace and everything it contains (network 
+interfaces, iptables rules, routing tables, etc)...
+
+
+*Relevant Code*
+
+*Singularity 2*
+
+In Singularity 2, when 'singularity exec instance://instancename command' 
+is run, my current understanding is that the following occurs:
+
+* /usr/bin/singularity (or whatever its path may be on your system) - 
+'exec' is passed as $SINGULARITY_COMMAND to the line 'exec 
+$SINGULARITY_libexecdir/singularity/cli/$SINGULARITY_COMMAND.exec "$@"'.
+    - See 
+https://github.com/singularityware/singularity/blob/release-2.6/bin/singularity.in#L135
+* /usr/libexec/singularity/cli/exec.exec (or whatever its path may be on 
+your system) - The line '. 
+"$SINGULARITY_libexecdir/singularity/image-handler.sh"' runs 
+image-handler.sh.
+    - See 
+https://github.com/singularityware/singularity/blob/release-2.6/libexec/cli/exec.exec#L74
+        * /usr/libexec/singularity/image-handler.sh (or whatever its path 
+may be on your system) - 'instance://instancename' being passed to exec 
+results in the line '. 
+"$SINGULARITY_libexecdir/singularity/handlers/image-instance.sh"' being run.
+            - See 
+https://github.com/singularityware/singularity/blob/release-2.6/libexec/image-handler.sh#L44
+        * /usr/libexec/singularity/handlers/image-instance.sh (or whatever 
+its path may be on your system) - If an instance by that name is indeed 
+running, the line 'SINGULARITY_DAEMON_JOIN=1' is run and 
+SINGULARITY_DAEMON_JOIN is exported as a bash environment variable.
+            - See 
+https://github.com/singularityware/singularity/blob/release-2.6/libexec/handlers/image-instance.sh#L31
+* /usr/libexec/singularity/cli/exec.exec (or whatever its path may be on 
+your system) - The line 'exec 
+"$SINGULARITY_libexecdir/singularity/bin/action-suid" "$@" <&0' is run if 
+SINGULARITY_NOSUID isn't set.
+    - See 
+https://github.com/singularityware/singularity/blob/release-2.6/libexec/cli/exec.exec#L79
+        * /usr/libexec/singularity/bin/action-suid (or whatever its path 
+may be on your system) - Regardless of whether or not DAEMON_JOIN was set 
+in the "Singularity registry" (i.e. if 'SINGULARITY_DAEMON_JOIN=1' was run 
+in image-instance.sh), 'singularity_runtime_ns(SR_NS_ALL);' is run.
+            - See 
+https://github.com/singularityware/singularity/blob/release-2.6/src/action.c#L109
+        * /usr/lib64/singularity/libsingularity-runtime.so.1 (or whatever 
+its path may be on your system) - In function definition 'int 
+singularity_runtime_ns(unsigned int flags)', conditional 'if ( 
+singularity_registry_get("DAEMON_JOIN")' returns true since DAEMON_JOIN was 
+set to 1 in the "Singularity registry" ('SINGULARITY_DAEMON_JOIN=1' was run 
+in image-instance.sh).  As a result, the line 
+'return(_singularity_runtime_ns_join(flags));' is run (with 'flags' being 
+an integer representation of SR_NS_ALL at this point).
+            - See 
+https://github.com/singularityware/singularity/blob/release-2.6/src/lib/runtime/runtime.c#L59
+        * /usr/lib64/singularity/libsingularity-runtime.so.1 (or whatever 
+its path may be on your system) - In function definition 'int 
+_singularity_runtime_ns_join(unsigned int flags)', conditional 'if ( flags 
+& SR_NS_NET )' returns true since SR_NS_NET is part of SR_NS_ALL (passed 
+earlier) and the line 'retval += _singularity_runtime_ns_net_join();' is 
+run.
+            - See 
+https://github.com/singularityware/singularity/blob/release-2.6/src/lib/runtime/ns/ns.c#L86
+        * /usr/lib64/singularity/libsingularity-runtime.so.1 (or whatever 
+its path may be on your system) - In function definition 'int 
+_singularity_runtime_ns_net_join(void)', the file descriptor for the 
+running instance's network namespace is opened and 'setns(net_fd, 
+CLONE_NEWNET)' is ran as part of a conditional.  The setns system call (see 
+http://man7.org/linux/man-pages/man2/setns.2.html ) associates the calling 
+thread (in our case, the exec process) with a particular namespace of the 
+file descriptor its passed.  In this case, the file descriptor for the 
+running instance's network namespace is passed in along with 'CLONE_NEWNET' 
+(used for network namespaces) as the namespace type.  The end result is 
+that the process created from running 'singularity exec 
+instance://instancename command' is assigned to whatever network namespace 
+the process of the running instance is in.  Cool! :)
+            - See 
+https://github.com/singularityware/singularity/blob/release-2.6/src/lib/runtime/ns/net/net.c#L100
+
+
+*Singularity 3*
+
+I haven't yet had time to examine the code execution steps for the same 
+example command ('singularity exec instance://instancename command') in 
+Singularity 3, but I have determined that it does indeed have code that 
+supports a 'shell' or 'exec' process being assigned to a custom network 
+namespace of a running instance.  The issue is that the aforementioned 
+behavior (assignment of a 'shell' or 'exec' process to a running instance's 
+custom network namespace) only occurs if that instance was started with the 
+-n|--net Singularity flag (which of course instructs Singularity to create 
+its own custom network namespace).  If the instance was started without 
+that flag from a custom network namespace that was instead created with 'ip 
+netns add', 'shell' and 'exec' processes run against an instance end up in 
+the root network namespace instead of the desired custom network namespace.
+
+One fundamental difference is that the JSON configuration for the running 
+instance located at 
+/var/run/singularity/instances/${USER}/nameofinstance.json only includes 
+'network' in its list of namespaces if that instance was started with the 
+-n|--net Singularity flag.  If that instance was started without that flag 
+from a custom network namespace that was instead created with 'ip netns 
+add', 'network' is not included in the list of namespaces...
+
+For example, consider the following script being run as root:
+
+#!/bin/bash
+ip netns add container1-hostname
+ip netns exec container1-hostname su -c "singularity instance start 
+/home/nonrootuser/centos.simg container1" - nonrootuser
+su -c "singularity instance start --net /home/nonrootuser/centos.simg 
+container2" - nonrootuser
+
+The result is two Singularity instances, container1 and container2.  
+container1 was started inside of the 'container1-hostname' custom network 
+namespace that was created with the 'ip netns add' command and the two 
+resulting initial processes (parent process 'Singularity instance: 
+nonrootuser [container1]' and child process 'sinit') are both using that 
+namespace.  container2 was instead started with the -n|--net Singularity 
+flag to instruct Singularity to create its own custom network namespace.  
+container2 also starts with two initial processes (parent process 
+'Singularity instance: nonrootuser [container2]' and child process 'sinit') 
+but only the 'sinit' process ends up using the custom network namespace 
+that Singularity created.  The parent process 'Singularity instance: 
+nonrootuser [container2]' ends up in the root (default) network namespace 
+instead of the custom network namespace.  Consider the following four 
+processes:
+
+nonrootuser   1157  Singularity instance: vagrant [container1]
+nonrootuser   1158  \_ sinit
+nonrootuser   1205  Singularity instance: vagrant [container2]
+nonrootuser   1206  \_ sinit
+
+PIDs 1157 and 1158 are the initial parent and child processes for 
+container1 and PIDs 1205 and 1206 are the initial parent and child 
+processes for container2.  Let's confirm which network namespaces those 
+processes are using:
+
+[root@singularity3 ~]# lsns -t net -o 
+NS,PATH,TYPE,NPROCS,PPID,PID,USER,UID,COMMAND
+        NS PATH              TYPE NPROCS  PPID   PID USER        UID COMMAND
+4026531956 /proc/1/ns/net    net      99     0     1 root        0 /usr/lib/
+systemd/systemd --switched-root --system --deserialize 22
+4026532163 /proc/1157/ns/net net       2     1  1157 nonrootuser 1000 
+Singularity instance: nonrootuser [container1]
+4026532242 /proc/1206/ns/net net       1  1205  1206 nonrootuser 1000 sinit
+
+In this example, 4026531956 is the inode containing the root network 
+namespace used by default for all processes running on the host system (99 
+processes in this example), 4026532163 is the inode containing the 
+'container1-hostname' custom network namespace we created with 'ip netns 
+add', and 4026532242 is the inode containing the custom network namespace 
+that Singularity created when the container2 instance was started with the 
+--net flag.
+
+[root@singularity3 ~]# ls -i /var/run/netns/container1-hostname
+4026532163 /var/run/netns/container1-hostname
+
+[root@singularity3 ~]# readlink /proc/1157/ns/net
+net:[4026532163]
+
+[root@singularity3 ~]# readlink /proc/1158/ns/net
+net:[4026532163]
+
+[root@singularity3 ~]# readlink /proc/1205/ns/net
+net:[4026531956]
+
+[root@singularity3 ~]# readlink /proc/1206/ns/net
+net:[4026532242]
+
+Now let's compare the JSON configuration of both running instances, 
+specifically the values from '.engineConfig.ociConfig.linux.namespaces':
+
+[nonrootuser@singularity3 ~]$ cat /var/run/singularity/instances/nonrootuser
+/container1.json | jq '.config' | perl -pi -e "s/\"//g" | base64 --decode | 
+jq '.engineConfig.ociConfig.linux.namespaces'
+[
+  {
+    "type": "pid",
+    "path": "/proc/1158/ns/pid"
+  },
+  {
+    "type": "ipc",
+    "path": "/proc/1158/ns/ipc"
+  },
+  {
+    "type": "mount",
+    "path": "/proc/1158/ns/mnt"
+  }
+]
+
+[nonrootuser@singularity3 ~]$ cat /var/run/singularity/instances/nonrootuser
+/container2.json | jq '.config' | perl -pi -e "s/\"//g" | base64 --decode | 
+jq '.engineConfig.ociConfig.linux.namespaces'
+[
+  {
+    "type": "network",
+    "path": "/proc/1206/ns/net"
+  },
+  {
+    "type": "pid",
+    "path": "/proc/1206/ns/pid"
+  },
+  {
+    "type": "ipc",
+    "path": "/proc/1206/ns/ipc"
+  },
+  {
+    "type": "mount",
+    "path": "/proc/1206/ns/mnt"
+  }
+]
+
+As you can see, the 'network' namespace only appears in the JSON 
+configuration for a running instance if that instance was started with the 
+-n|--net Singularity flag.  Now let's test and see what network namespace 
+ends up being assigned to 'exec' processes run against both of those 
+running instances:
+
+[nonrootuser@singularity3 ~]$ singularity exec instance://container1 
+readlink /proc/self/ns/net
+net:[4026531956]
+
+[nonrootuser@singularity3 ~]$ singularity exec instance://container2 
+readlink /proc/self/ns/net
+net:[4026532242]
+
+'exec' (and 'shell') processes run against container1 end up in the root 
+(default) network namespace of the host system instead of the desired 
+'container1-hostname' custom network namespace we created with 'ip netns 
+add' earlier, even though both of the container1 processes are in that 
+custom namespace!  'exec' (and 'shell') processes run against container2 
+end up in the custom network namespace created by Singularity.
+
+It would be highly beneficial if Singularity 3 could be updated such that 
+'shell' and 'exec' processes run against an instance automatically receive 
+the network namespace of the instance itself.  That would be consistent 
+with the behavior of Singularity 2 and would prevent 'shell' and 'exec' 
+processes run against an instance from "escaping" a custom network 
+namespace and ending up with completely different interfaces, iptables 
+rules, routing tables, etc than anticipated.
+
+------=_Part_435_1301289395.1536371086596
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Hi All,</div><div><br></div><div>In Singularity 2 (I&=
+#39;m testing with 2.6.0), if you &#39;shell&#39; or &#39;exec&#39; to a ru=
+nning instance that was started in a custom network namespace (created with=
+ the &#39;ip netns add&#39; command, not using the -n|--net Singularity fla=
+g) the process(es) spawned will also use that custom network namespace.=C2=
+=A0 This is highly beneficial because it means that each Singularity contai=
+ner instance can use its own &#39;ip netns&#39; managed custom network name=
+space and that users of each container end up in that custom network namesp=
+ace by default when running &#39;shell&#39; or &#39;exec&#39; against the i=
+nstance, regardless of the network namespace of the user&#39;s shell.</div>=
+<div><br></div><div>In Singularity 3 (I&#39;m testing with 3.0.0-alpha.1-14=
+4-g345371f, git clone from 08/31/2018), it appears that behavior has change=
+d.=C2=A0 If an instance is started in a custom network namespace (created w=
+ith the &#39;ip netns add&#39; command, not using the -n|--net Singularity =
+flag), the initial processes start in the custom network namespace but futu=
+re process(es) spawned by running &#39;shell&#39; or &#39;exec&#39; to that=
+ instance end up associated with the root (default) network namespace of th=
+e host system instead of the custom network namespace.=C2=A0 Since non-root=
+ users cannot use &#39;ip netns exec&#39; or &#39;nsenter&#39; to explicitl=
+y start a process in a particular namespace, non-root user &#39;shell&#39; =
+and &#39;exec&#39; interactions with that Singularity 3 instance will resul=
+t in processes that essentially &quot;escape&quot; the custom network names=
+pace and are instead exposed to the root network namespace and everything i=
+t contains (network interfaces, iptables rules, routing tables, etc)...</di=
+v><div><br></div><div>Are there plans to incorporate Singularity 2&#39;s be=
+havior described above into Singularity 3?</div><div><br></div><div>Althoug=
+h I realize that the -n|--net flag can be passed to &#39;instance start&#39=
+; to cause Singularity 3 to generate a new network namespace, using &#39;ip=
+ netns add&#39; instead not only creates what is essentially a &quot;named&=
+quot; custom network namespace (e.g. /var/run/netns/name-of-custom-network-=
+namespace) but also makes it possible to use namespace-specific configurati=
+on files in /etc (see http://man7.org/linux/man-pages/man8/ip-netns.8.html =
+).</div><div><br></div><div>Below I&#39;ve included two sections (&#39;Exam=
+ples&#39; and &#39;Relevant Code&#39;) to provide examples and references t=
+o relevant code, both with an excruciating (but hopefully helpful) amount o=
+f detail. ;)</div><div><br></div><div>If you have any questions or need add=
+itional information, please let me know.</div><div><br></div><div>Thanks!</=
+div><div>Sean</div><div><br></div><div><br></div><div><b><font size=3D"4">E=
+xamples</font></b></div><div><br></div><div><b>Singularity 2</b></div><div>=
+<br></div><div>As an example, consider the following script being run as ro=
+ot when a host is started:</div><div><br></div><div class=3D"prettyprint" s=
+tyle=3D"background-color: rgb(250, 250, 250); border-color: rgb(187, 187, 1=
+87); border-style: solid; border-width: 1px; word-wrap: break-word;"><code =
+class=3D"prettyprint"><div class=3D"subprettyprint"><span style=3D"color: #=
+800;" class=3D"styled-by-prettify">#!/bin/bash</span><span style=3D"color: =
+#000;" class=3D"styled-by-prettify"><br>ip netns add container1</span><span=
+ style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D=
+"color: #000;" class=3D"styled-by-prettify">hostname<br>ip netns </span><sp=
+an style=3D"color: #008;" class=3D"styled-by-prettify">exec</span><span sty=
+le=3D"color: #000;" class=3D"styled-by-prettify"> container1</span><span st=
+yle=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"co=
+lor: #000;" class=3D"styled-by-prettify">hostname su </span><span style=3D"=
+color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #0=
+00;" class=3D"styled-by-prettify">c </span><span style=3D"color: #080;" cla=
+ss=3D"styled-by-prettify">&quot;singularity instance.start /home/nonrootuse=
+r/centos.simg container1&quot;</span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify"> </span><span style=3D"color: #660;" class=3D"styled-by=
+-prettify">-</span><span style=3D"color: #000;" class=3D"styled-by-prettify=
+"> nonrootuser</span></div></code></div><div><br></div><div>The script abov=
+e creates a new custom network namespace named &#39;container1-hostname&#39=
+; and starts a Singularity instance named &#39;container1&#39; (running as =
+nonrootuser) inside that custom network namespace.=C2=A0 The result in Sing=
+ularity 2 is a single process for the instance (&#39;singularity-instance: =
+nonrootuser [container1]&#39;) that is using the &#39;container1-hostname&#=
+39; custom network namespace:</div><div><br></div><div class=3D"prettyprint=
+" style=3D"background-color: rgb(250, 250, 250); border-color: rgb(187, 187=
+, 187); border-style: solid; border-width: 1px; word-wrap: break-word;"><co=
+de class=3D"prettyprint"><div class=3D"subprettyprint"><span style=3D"color=
+: #660;" class=3D"styled-by-prettify">[</span><span style=3D"color: #000;" =
+class=3D"styled-by-prettify">root@singularity2 </span><span style=3D"color:=
+ #660;" class=3D"styled-by-prettify">~]</span><span style=3D"color: #800;" =
+class=3D"styled-by-prettify"># lsns -t net -o NS,PATH,TYPE,NPROCS,PPID,PID,=
+USER,UID,COMMAND</span><span style=3D"color: #000;" class=3D"styled-by-pret=
+tify"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 NS PATH =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0TYPE NPROCS PPID =C2=A0 PID USER =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0UID COMMAND<br></span><span style=3D"color: #066;" class=3D"styled-by=
+-prettify">4026531956</span><span style=3D"color: #000;" class=3D"styled-by=
+-prettify"> </span><span style=3D"color: #660;" class=3D"styled-by-prettify=
+">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">proc</s=
+pan><span style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span=
+ style=3D"color: #066;" class=3D"styled-by-prettify">1</span><span style=3D=
+"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify">ns</span><span style=3D"color: #660;" cl=
+ass=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"st=
+yled-by-prettify">net =C2=A0 =C2=A0net =C2=A0 =C2=A0 =C2=A0</span><span sty=
+le=3D"color: #066;" class=3D"styled-by-prettify">94</span><span style=3D"co=
+lor: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0</span><span style=
+=3D"color: #066;" class=3D"styled-by-prettify">0</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 </span><span style=3D"=
+color: #066;" class=3D"styled-by-prettify">1</span><span style=3D"color: #0=
+00;" class=3D"styled-by-prettify"> root =C2=A0 =C2=A0 =C2=A0 =C2=A0</span><=
+span style=3D"color: #066;" class=3D"styled-by-prettify">0</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"colo=
+r: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #000;"=
+ class=3D"styled-by-prettify">usr</span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify">lib</span><span style=3D"color: #660;" class=3D"styled-by-pr=
+ettify">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">s=
+ystemd</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</s=
+pan><span style=3D"color: #000;" class=3D"styled-by-prettify">systemd </spa=
+n><span style=3D"color: #660;" class=3D"styled-by-prettify">--</span><span =
+style=3D"color: #000;" class=3D"styled-by-prettify">switched</span><span st=
+yle=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"co=
+lor: #000;" class=3D"styled-by-prettify">root </span><span style=3D"color: =
+#660;" class=3D"styled-by-prettify">--</span><span style=3D"color: #000;" c=
+lass=3D"styled-by-prettify">system </span><span style=3D"color: #660;" clas=
+s=3D"styled-by-prettify">--</span><span style=3D"color: #000;" class=3D"sty=
+led-by-prettify">deserialize </span><span style=3D"color: #066;" class=3D"s=
+tyled-by-prettify">22</span><span style=3D"color: #000;" class=3D"styled-by=
+-prettify"><br></span><span style=3D"color: #066;" class=3D"styled-by-prett=
+ify">4026532163</span><span style=3D"color: #000;" class=3D"styled-by-prett=
+ify"> </span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</s=
+pan><span style=3D"color: #000;" class=3D"styled-by-prettify">proc</span><s=
+pan style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=
+=3D"color: #066;" class=3D"styled-by-prettify">2695</span><span style=3D"co=
+lor: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #000=
+;" class=3D"styled-by-prettify">ns</span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify">net net =C2=A0 =C2=A0 =C2=A0 </span><span style=3D"color: #0=
+66;" class=3D"styled-by-prettify">1</span><span style=3D"color: #000;" clas=
+s=3D"styled-by-prettify"> =C2=A0 =C2=A0</span><span style=3D"color: #066;" =
+class=3D"styled-by-prettify">1</span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify"> =C2=A0</span><span style=3D"color: #066;" class=3D"sty=
+led-by-prettify">2695</span><span style=3D"color: #000;" class=3D"styled-by=
+-prettify"> nonrootuser </span><span style=3D"color: #066;" class=3D"styled=
+-by-prettify">1000</span><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify"> singularity</span><span style=3D"color: #660;" class=3D"styled-by-=
+prettify">-</span><span style=3D"color: #000;" class=3D"styled-by-prettify"=
+>instance</span><span style=3D"color: #660;" class=3D"styled-by-prettify">:=
+</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> nonrootus=
+er </span><span style=3D"color: #660;" class=3D"styled-by-prettify">[</span=
+><span style=3D"color: #000;" class=3D"styled-by-prettify">container1</span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">]</span></div></=
+code></div><div><br></div><div class=3D"prettyprint" style=3D"background-co=
+lor: rgb(250, 250, 250); border-color: rgb(187, 187, 187); border-style: so=
+lid; border-width: 1px; word-wrap: break-word;"><code class=3D"prettyprint"=
+><div class=3D"subprettyprint"><span style=3D"color: #660;" class=3D"styled=
+-by-prettify">[</span><span style=3D"color: #000;" class=3D"styled-by-prett=
+ify">root@singularity2 </span><span style=3D"color: #660;" class=3D"styled-=
+by-prettify">~]</span><span style=3D"color: #800;" class=3D"styled-by-prett=
+ify"># ls -i /var/run/netns/container1-hostname</span><span style=3D"color:=
+ #000;" class=3D"styled-by-prettify"><br></span><span style=3D"color: #066;=
+" class=3D"styled-by-prettify">4026532163</span><span style=3D"color: #000;=
+" class=3D"styled-by-prettify"> </span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">/</span><span style=3D"color: #008;" class=3D"style=
+d-by-prettify">var</span><span style=3D"color: #660;" class=3D"styled-by-pr=
+ettify">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">r=
+un</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</span>=
+<span style=3D"color: #000;" class=3D"styled-by-prettify">netns</span><span=
+ style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D=
+"color: #000;" class=3D"styled-by-prettify">container1</span><span style=3D=
+"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify">hostname</span></div></code></div><div><=
+br></div><div>In this example, 4026531956 is the inode containing the root =
+network namespace used by default for all processes running on the host sys=
+tem (94 processes in this example) and 4026532163 is the inode containing o=
+ur custom network namespace.=C2=A0 Now let&#39;s say nonrootuser shells int=
+o the running instance that was started as their user when the host system =
+booted:</div><div><br></div><div class=3D"prettyprint" style=3D"background-=
+color: rgb(250, 250, 250); border-color: rgb(187, 187, 187); border-style: =
+solid; border-width: 1px; word-wrap: break-word;"><code class=3D"prettyprin=
+t"><div class=3D"subprettyprint"><span style=3D"color: #660;" class=3D"styl=
+ed-by-prettify">[</span><span style=3D"color: #000;" class=3D"styled-by-pre=
+ttify">nonrootuser@singularity2 </span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">~]</span><span style=3D"color: #000;" class=3D"styl=
+ed-by-prettify">$ singularity instance</span><span style=3D"color: #660;" c=
+lass=3D"styled-by-prettify">.</span><span style=3D"color: #000;" class=3D"s=
+tyled-by-prettify">list<br>DAEMON NAME =C2=A0 =C2=A0 =C2=A0PID =C2=A0 =C2=
+=A0 =C2=A0CONTAINER IMAGE<br>container1 =C2=A0 =C2=A0 =C2=A0 </span><span s=
+tyle=3D"color: #066;" class=3D"styled-by-prettify">2695</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 </span><span =
+style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D"=
+color: #000;" class=3D"styled-by-prettify">home</span><span style=3D"color:=
+ #660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" c=
+lass=3D"styled-by-prettify">nonrootuser</span><span style=3D"color: #660;" =
+class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify">centos</span><span style=3D"color: #660;" class=3D"styl=
+ed-by-prettify">.</span><span style=3D"color: #000;" class=3D"styled-by-pre=
+ttify">simg</span></div></code></div><div><br></div><div class=3D"prettypri=
+nt" style=3D"background-color: rgb(250, 250, 250); border-color: rgb(187, 1=
+87, 187); border-style: solid; border-width: 1px; word-wrap: break-word;"><=
+code class=3D"prettyprint"><div class=3D"subprettyprint"><span style=3D"col=
+or: #660;" class=3D"styled-by-prettify">[</span><span style=3D"color: #000;=
+" class=3D"styled-by-prettify">nonrootuser@singularity2 </span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">~]</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify">$ singularity shell instance</span><=
+span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span styl=
+e=3D"color: #800;" class=3D"styled-by-prettify">//container1</span><span st=
+yle=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span style=3D=
+"color: #606;" class=3D"styled-by-prettify">Singularity</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #606;" =
+class=3D"styled-by-prettify">Invoking</span><span style=3D"color: #000;" cl=
+ass=3D"styled-by-prettify"> an interactive shell within container</span><sp=
+an style=3D"color: #660;" class=3D"styled-by-prettify">...</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify"><br><br></span><span style=
+=3D"color: #606;" class=3D"styled-by-prettify">Singularity</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify"> centos</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">.</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify">simg</span><span style=3D"color: #660=
+;" class=3D"styled-by-prettify">:~&gt;</span><span style=3D"color: #000;" c=
+lass=3D"styled-by-prettify"> readlink </span><span style=3D"color: #660;" c=
+lass=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"s=
+tyled-by-prettify">proc</span><span style=3D"color: #660;" class=3D"styled-=
+by-prettify">/</span><span style=3D"color: #008;" class=3D"styled-by-pretti=
+fy">self</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/<=
+/span><span style=3D"color: #000;" class=3D"styled-by-prettify">ns</span><s=
+pan style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify">net<br>net</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">:[</span><span style=3D"colo=
+r: #066;" class=3D"styled-by-prettify">4026532163</span><span style=3D"colo=
+r: #660;" class=3D"styled-by-prettify">]</span></div></code></div><div><br>=
+</div><div>The resulting bash process for the Singularity shell ends up wit=
+h our correct custom network namespace (the network namespace file descript=
+or for its process refers to inode 4026532163, which we saw earlier as the =
+inode containing our &#39;container1-hostname&#39; custom network namespace=
+ in this example).=C2=A0 The same behavior applies to exec:</div><div><br><=
+/div><div class=3D"prettyprint" style=3D"background-color: rgb(250, 250, 25=
+0); border-color: rgb(187, 187, 187); border-style: solid; border-width: 1p=
+x; word-wrap: break-word;"><code class=3D"prettyprint"><div class=3D"subpre=
+ttyprint"><span style=3D"color: #660;" class=3D"styled-by-prettify">[</span=
+><span style=3D"color: #000;" class=3D"styled-by-prettify">nonrootuser@sing=
+ularity2 </span><span style=3D"color: #660;" class=3D"styled-by-prettify">~=
+]</span><span style=3D"color: #000;" class=3D"styled-by-prettify">$ singula=
+rity </span><span style=3D"color: #008;" class=3D"styled-by-prettify">exec<=
+/span><span style=3D"color: #000;" class=3D"styled-by-prettify"> instance</=
+span><span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><spa=
+n style=3D"color: #800;" class=3D"styled-by-prettify">//container1 readlink=
+ /proc/self/ns/net</span><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify"><br>net</span><span style=3D"color: #660;" class=3D"styled-by-prett=
+ify">:[</span><span style=3D"color: #066;" class=3D"styled-by-prettify">402=
+6532163</span><span style=3D"color: #660;" class=3D"styled-by-prettify">]</=
+span></div></code></div><div><br></div><div>This is excellent since it mean=
+s that all processes resulting from nonrootuser&#39;s interaction with that=
+ instance will use our custom network namespace!</div><div><br></div><div><=
+br></div><div><b>Singularity 3</b></div><div><br></div><div>Now let&#39;s l=
+ook at the different behavior in Singularity 3.=C2=A0 Consider the followin=
+g script (identical to the script in the Singularity 2 example except for u=
+sing &#39;instance start&#39; instead of &#39;instance.start&#39;) being ru=
+n as root when a host is started:</div><div><br></div><div class=3D"prettyp=
+rint" style=3D"background-color: rgb(250, 250, 250); border-color: rgb(187,=
+ 187, 187); border-style: solid; border-width: 1px; word-wrap: break-word;"=
+><code class=3D"prettyprint"><div class=3D"subprettyprint"><span style=3D"c=
+olor: #800;" class=3D"styled-by-prettify">#!/bin/bash</span><span style=3D"=
+color: #000;" class=3D"styled-by-prettify"><br>ip netns add container1</spa=
+n><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span s=
+tyle=3D"color: #000;" class=3D"styled-by-prettify">hostname<br>ip netns </s=
+pan><span style=3D"color: #008;" class=3D"styled-by-prettify">exec</span><s=
+pan style=3D"color: #000;" class=3D"styled-by-prettify"> container1</span><=
+span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify">hostname su </span><span st=
+yle=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"co=
+lor: #000;" class=3D"styled-by-prettify">c </span><span style=3D"color: #08=
+0;" class=3D"styled-by-prettify">&quot;singularity instance start /home/non=
+rootuser/centos.simg container1&quot;</span><span style=3D"color: #000;" cl=
+ass=3D"styled-by-prettify"> </span><span style=3D"color: #660;" class=3D"st=
+yled-by-prettify">-</span><span style=3D"color: #000;" class=3D"styled-by-p=
+rettify"> nonrootuser</span></div></code></div><div><br></div><div>The scri=
+pt above creates a new custom network namespace named &#39;container1-hostn=
+ame&#39; and starts a Singularity instance named &#39;container1&#39; (runn=
+ing as nonrootuser) inside that custom network namespace.=C2=A0 The result =
+in Singularity 3 is two processes for the instance (parent process &#39;Sin=
+gularity instance: nonrootuser [container1]&#39; and child process &#39;sin=
+it&#39;) that are both using the &#39;container1-hostname&#39; custom netwo=
+rk namespace:</div><div><br></div><div class=3D"prettyprint" style=3D"backg=
+round-color: rgb(250, 250, 250); border-color: rgb(187, 187, 187); border-s=
+tyle: solid; border-width: 1px; word-wrap: break-word;"><code class=3D"pret=
+typrint"><div class=3D"subprettyprint"><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">[</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify">root@singularity3 </span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">~]</span><span style=3D"color: #800;" class=3D"styl=
+ed-by-prettify"># lsns -t net -o NS,PATH,TYPE,NPROCS,PPID,PID,USER,UID,COMM=
+AND</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 NS PATH =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0TYPE NPROCS PPID =C2=A0 PID USER =C2=A0 =C2=A0 =C2=A0 =C2=A0UID COMMA=
+ND<br></span><span style=3D"color: #066;" class=3D"styled-by-prettify">4026=
+531956</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> </s=
+pan><span style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span=
+ style=3D"color: #000;" class=3D"styled-by-prettify">proc</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color=
+: #066;" class=3D"styled-by-prettify">1</span><span style=3D"color: #660;" =
+class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify">ns</span><span style=3D"color: #660;" class=3D"styled-b=
+y-prettify">/</span><span style=3D"color: #000;" class=3D"styled-by-prettif=
+y">net =C2=A0 =C2=A0net =C2=A0 =C2=A0 =C2=A0</span><span style=3D"color: #0=
+66;" class=3D"styled-by-prettify">99</span><span style=3D"color: #000;" cla=
+ss=3D"styled-by-prettify"> =C2=A0 =C2=A0</span><span style=3D"color: #066;"=
+ class=3D"styled-by-prettify">0</span><span style=3D"color: #000;" class=3D=
+"styled-by-prettify"> =C2=A0 =C2=A0 </span><span style=3D"color: #066;" cla=
+ss=3D"styled-by-prettify">1</span><span style=3D"color: #000;" class=3D"sty=
+led-by-prettify"> root =C2=A0 =C2=A0 =C2=A0 =C2=A0</span><span style=3D"col=
+or: #066;" class=3D"styled-by-prettify">0</span><span style=3D"color: #000;=
+" class=3D"styled-by-prettify"> </span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify">usr</span><span style=3D"color: #660;" class=3D"styled-by-pr=
+ettify">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">l=
+ib</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</span>=
+<span style=3D"color: #000;" class=3D"styled-by-prettify">systemd</span><sp=
+an style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify">systemd </span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">--</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify">switched</span><span style=3D"color:=
+ #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #000;" c=
+lass=3D"styled-by-prettify">root </span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">--</span><span style=3D"color: #000;" class=3D"styl=
+ed-by-prettify">system </span><span style=3D"color: #660;" class=3D"styled-=
+by-prettify">--</span><span style=3D"color: #000;" class=3D"styled-by-prett=
+ify">deserialize </span><span style=3D"color: #066;" class=3D"styled-by-pre=
+ttify">22</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><=
+br></span><span style=3D"color: #066;" class=3D"styled-by-prettify">4026532=
+163</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> </span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span st=
+yle=3D"color: #000;" class=3D"styled-by-prettify">proc</span><span style=3D=
+"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #=
+066;" class=3D"styled-by-prettify">2676</span><span style=3D"color: #660;" =
+class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify">ns</span><span style=3D"color: #660;" class=3D"styled-b=
+y-prettify">/</span><span style=3D"color: #000;" class=3D"styled-by-prettif=
+y">net net =C2=A0 =C2=A0 =C2=A0 </span><span style=3D"color: #066;" class=
+=3D"styled-by-prettify">2</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify"> =C2=A0 =C2=A0</span><span style=3D"color: #066;" class=3D"s=
+tyled-by-prettify">1</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify"> =C2=A0</span><span style=3D"color: #066;" class=3D"styled-by-pre=
+ttify">2676</span><span style=3D"color: #000;" class=3D"styled-by-prettify"=
+> nonrootuser </span><span style=3D"color: #066;" class=3D"styled-by-pretti=
+fy">1000</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> <=
+/span><span style=3D"color: #606;" class=3D"styled-by-prettify">Singularity=
+</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> instance<=
+/span><span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><sp=
+an style=3D"color: #000;" class=3D"styled-by-prettify"> nonrootuser </span>=
+<span style=3D"color: #660;" class=3D"styled-by-prettify">[</span><span sty=
+le=3D"color: #000;" class=3D"styled-by-prettify">container1</span><span sty=
+le=3D"color: #660;" class=3D"styled-by-prettify">]</span></div></code></div=
+><div><br></div><div class=3D"prettyprint" style=3D"background-color: rgb(2=
+50, 250, 250); border-color: rgb(187, 187, 187); border-style: solid; borde=
+r-width: 1px; word-wrap: break-word;"><code class=3D"prettyprint"><div clas=
+s=3D"subprettyprint"><span style=3D"color: #660;" class=3D"styled-by-pretti=
+fy">[</span><span style=3D"color: #000;" class=3D"styled-by-prettify">root@=
+singularity3 </span><span style=3D"color: #660;" class=3D"styled-by-prettif=
+y">~]</span><span style=3D"color: #800;" class=3D"styled-by-prettify"># ls =
+-i /var/run/netns/container1-hostname</span><span style=3D"color: #000;" cl=
+ass=3D"styled-by-prettify"><br></span><span style=3D"color: #066;" class=3D=
+"styled-by-prettify">4026532163</span><span style=3D"color: #000;" class=3D=
+"styled-by-prettify"> </span><span style=3D"color: #660;" class=3D"styled-b=
+y-prettify">/</span><span style=3D"color: #008;" class=3D"styled-by-prettif=
+y">var</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</s=
+pan><span style=3D"color: #000;" class=3D"styled-by-prettify">run</span><sp=
+an style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify">netns</span><span style=3D"c=
+olor: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify">container1</span><span style=3D"color: #66=
+0;" class=3D"styled-by-prettify">-</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">hostname</span></div></code></div><div><br></div><d=
+iv>In this example, 4026531956 is the inode containing the root network nam=
+espace used by default for all processes running on the host system (99 pro=
+cesses in this example) and 4026532163 is the inode containing our custom n=
+etwork namespace.=C2=A0 Now let&#39;s say nonrootuser shells into the runni=
+ng instance that was started as their user when the host system booted:</di=
+v><div><br></div><div class=3D"prettyprint" style=3D"background-color: rgb(=
+250, 250, 250); border-color: rgb(187, 187, 187); border-style: solid; bord=
+er-width: 1px; word-wrap: break-word;"><code class=3D"prettyprint"><div cla=
+ss=3D"subprettyprint"><span style=3D"color: #660;" class=3D"styled-by-prett=
+ify">[</span><span style=3D"color: #000;" class=3D"styled-by-prettify">nonr=
+ootuser@singularity3 </span><span style=3D"color: #660;" class=3D"styled-by=
+-prettify">~]</span><span style=3D"color: #000;" class=3D"styled-by-prettif=
+y">$ singularity instance list<br>INSTANCE NAME =C2=A0 =C2=A0PID =C2=A0 =C2=
+=A0 =C2=A0IMAGE<br>container1 =C2=A0 =C2=A0 =C2=A0 </span><span style=3D"co=
+lor: #066;" class=3D"styled-by-prettify">2677</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify"> =C2=A0 =C2=A0 </span><span style=3D"col=
+or: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #000;=
+" class=3D"styled-by-prettify">home</span><span style=3D"color: #660;" clas=
+s=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"styl=
+ed-by-prettify">nonrootuser</span><span style=3D"color: #660;" class=3D"sty=
+led-by-prettify">/</span><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify">centos</span><span style=3D"color: #660;" class=3D"styled-by-pretti=
+fy">.</span><span style=3D"color: #000;" class=3D"styled-by-prettify">simg<=
+/span></div></code></div><div><br></div><div class=3D"prettyprint" style=3D=
+"background-color: rgb(250, 250, 250); border-color: rgb(187, 187, 187); bo=
+rder-style: solid; border-width: 1px; word-wrap: break-word;"><code class=
+=3D"prettyprint"><div class=3D"subprettyprint"><span style=3D"color: #660;"=
+ class=3D"styled-by-prettify">[</span><span style=3D"color: #000;" class=3D=
+"styled-by-prettify">nonrootuser@singularity3 </span><span style=3D"color: =
+#660;" class=3D"styled-by-prettify">~]</span><span style=3D"color: #000;" c=
+lass=3D"styled-by-prettify">$ singularity shell instance</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color=
+: #800;" class=3D"styled-by-prettify">//container1</span><span style=3D"col=
+or: #000;" class=3D"styled-by-prettify"><br></span><span style=3D"color: #6=
+06;" class=3D"styled-by-prettify">Singularity</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #660;" cla=
+ss=3D"styled-by-prettify">:~&gt;</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> readlink </span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify">proc</span><span style=3D"color: #660;" class=3D"styled-by-p=
+rettify">/</span><span style=3D"color: #008;" class=3D"styled-by-prettify">=
+self</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify">ns</span><span =
+style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D"=
+color: #000;" class=3D"styled-by-prettify">net<br>net</span><span style=3D"=
+color: #660;" class=3D"styled-by-prettify">:[</span><span style=3D"color: #=
+066;" class=3D"styled-by-prettify">4026531956</span><span style=3D"color: #=
+660;" class=3D"styled-by-prettify">]</span></div></code></div><div><br></di=
+v><div>Instead of the resulting bash process for the Singularity shell endi=
+ng up in our correct custom network namespace like it did in Singularity 2,=
+ it ends up in the root network namespace (the network namespace file descr=
+iptor for its process refers to inode 4026531956, which we saw earlier as t=
+he inode containing the root/default network namespace in this example). :(=
+=C2=A0 The same behavior unfortunately applies to exec:</div><div><br></div=
+><div class=3D"prettyprint" style=3D"background-color: rgb(250, 250, 250); =
+border-color: rgb(187, 187, 187); border-style: solid; border-width: 1px; w=
+ord-wrap: break-word;"><code class=3D"prettyprint"><div class=3D"subprettyp=
+rint"><span style=3D"color: #660;" class=3D"styled-by-prettify">[</span><sp=
+an style=3D"color: #000;" class=3D"styled-by-prettify">nonrootuser@singular=
+ity3 </span><span style=3D"color: #660;" class=3D"styled-by-prettify">~]</s=
+pan><span style=3D"color: #000;" class=3D"styled-by-prettify">$ singularity=
+ </span><span style=3D"color: #008;" class=3D"styled-by-prettify">exec</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify"> instance</span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span st=
+yle=3D"color: #800;" class=3D"styled-by-prettify">//container1 readlink /pr=
+oc/self/ns/net</span><span style=3D"color: #000;" class=3D"styled-by-pretti=
+fy"><br>net</span><span style=3D"color: #660;" class=3D"styled-by-prettify"=
+>:[</span><span style=3D"color: #066;" class=3D"styled-by-prettify">4026531=
+956</span><span style=3D"color: #660;" class=3D"styled-by-prettify">]</span=
+></div></code></div><div><br></div><div>The result is that all processes st=
+arted by a user connecting to that instance essentially &quot;escape&quot; =
+the custom network namespace and are instead exposed to the root network na=
+mespace and everything it contains (network interfaces, iptables rules, rou=
+ting tables, etc)...</div><div><br></div><div><br></div><div><b><font size=
+=3D"4">Relevant Code</font></b></div><div><br></div><div><b>Singularity 2</=
+b></div><div><br></div><div>In Singularity 2, when &#39;singularity exec in=
+stance://instancename command&#39; is run, my current understanding is that=
+ the following occurs:</div><div><br></div><div>* /usr/bin/singularity (or =
+whatever its path may be on your system) - &#39;exec&#39; is passed as $SIN=
+GULARITY_COMMAND to the line &#39;exec $SINGULARITY_libexecdir/singularity/=
+cli/$SINGULARITY_COMMAND.exec &quot;$@&quot;&#39;.</div><div>=C2=A0 =C2=A0 =
+- See <a href=3D"https://github.com/singularityware/singularity/blob/releas=
+e-2.6/bin/singularity.in#L135">https://github.com/singularityware/singulari=
+ty/blob/release-2.6/bin/singularity.in#L135</a></div><div>* /usr/libexec/si=
+ngularity/cli/exec.exec (or whatever its path may be on your system) - The =
+line &#39;. &quot;$SINGULARITY_libexecdir/singularity/image-handler.sh&quot=
+;&#39; runs image-handler.sh.</div><div>=C2=A0 =C2=A0 - See <a href=3D"http=
+s://github.com/singularityware/singularity/blob/release-2.6/libexec/cli/exe=
+c.exec#L74">https://github.com/singularityware/singularity/blob/release-2.6=
+/libexec/cli/exec.exec#L74</a></div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 * /usr=
+/libexec/singularity/image-handler.sh (or whatever its path may be on your =
+system) - &#39;instance://instancename&#39; being passed to exec results in=
+ the line &#39;. &quot;$SINGULARITY_libexecdir/singularity/handlers/image-i=
+nstance.sh&quot;&#39; being run.</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 - See <a href=3D"https://github.com/singularityware/singularity/=
+blob/release-2.6/libexec/image-handler.sh#L44">https://github.com/singulari=
+tyware/singularity/blob/release-2.6/libexec/image-handler.sh#L44</a></div><=
+div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 * /usr/libexec/singularity/handlers/image-i=
+nstance.sh (or whatever its path may be on your system) - If an instance by=
+ that name is indeed running, the line &#39;SINGULARITY_DAEMON_JOIN=3D1&#39=
+; is run and SINGULARITY_DAEMON_JOIN is exported as a bash environment vari=
+able.</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 - See <a href=3D"=
+https://github.com/singularityware/singularity/blob/release-2.6/libexec/han=
+dlers/image-instance.sh#L31">https://github.com/singularityware/singularity=
+/blob/release-2.6/libexec/handlers/image-instance.sh#L31</a></div><div>* /u=
+sr/libexec/singularity/cli/exec.exec (or whatever its path may be on your s=
+ystem) - The line &#39;exec &quot;$SINGULARITY_libexecdir/singularity/bin/a=
+ction-suid&quot; &quot;$@&quot; &lt;&amp;0&#39; is run if SINGULARITY_NOSUI=
+D isn&#39;t set.</div><div>=C2=A0 =C2=A0 - See <a href=3D"https://github.co=
+m/singularityware/singularity/blob/release-2.6/libexec/cli/exec.exec#L79">h=
+ttps://github.com/singularityware/singularity/blob/release-2.6/libexec/cli/=
+exec.exec#L79</a></div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 * /usr/libexec/sing=
+ularity/bin/action-suid (or whatever its path may be on your system) - Rega=
+rdless of whether or not DAEMON_JOIN was set in the &quot;Singularity regis=
+try&quot; (i.e. if &#39;SINGULARITY_DAEMON_JOIN=3D1&#39; was run in image-i=
+nstance.sh), &#39;singularity_runtime_ns(SR_NS_ALL);&#39; is run.</div><div=
+>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 - See <a href=3D"https://github.=
+com/singularityware/singularity/blob/release-2.6/src/action.c#L109">https:/=
+/github.com/singularityware/singularity/blob/release-2.6/src/action.c#L109<=
+/a></div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 * /usr/lib64/singularity/libsingu=
+larity-runtime.so.1 (or whatever its path may be on your system) - In funct=
+ion definition &#39;int singularity_runtime_ns(unsigned int flags)&#39;, co=
+nditional &#39;if ( singularity_registry_get(&quot;DAEMON_JOIN&quot;)&#39; =
+returns true since DAEMON_JOIN was set to 1 in the &quot;Singularity regist=
+ry&quot; (&#39;SINGULARITY_DAEMON_JOIN=3D1&#39; was run in image-instance.s=
+h).=C2=A0 As a result, the line &#39;return(_singularity_runtime_ns_join(fl=
+ags));&#39; is run (with &#39;flags&#39; being an integer representation of=
+ SR_NS_ALL at this point).</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 - See <a href=3D"https://github.com/singularityware/singularity/blob/re=
+lease-2.6/src/lib/runtime/runtime.c#L59">https://github.com/singularityware=
+/singularity/blob/release-2.6/src/lib/runtime/runtime.c#L59</a></div><div>=
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 * /usr/lib64/singularity/libsingularity-runtime=
+.so.1 (or whatever its path may be on your system) - In function definition=
+ &#39;int _singularity_runtime_ns_join(unsigned int flags)&#39;, conditiona=
+l &#39;if ( flags &amp; SR_NS_NET )&#39; returns true since SR_NS_NET is pa=
+rt of SR_NS_ALL (passed earlier) and the line &#39;retval +=3D _singularity=
+_runtime_ns_net_join();&#39; is run.</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 - See <a href=3D"https://github.com/singularityware/singulari=
+ty/blob/release-2.6/src/lib/runtime/ns/ns.c#L86">https://github.com/singula=
+rityware/singularity/blob/release-2.6/src/lib/runtime/ns/ns.c#L86</a></div>=
+<div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 * /usr/lib64/singularity/libsingularity-ru=
+ntime.so.1 (or whatever its path may be on your system) - In function defin=
+ition &#39;int _singularity_runtime_ns_net_join(void)&#39;, the file descri=
+ptor for the running instance&#39;s network namespace is opened and &#39;se=
+tns(net_fd, CLONE_NEWNET)&#39; is ran as part of a conditional.=C2=A0 The s=
+etns system call (see http://man7.org/linux/man-pages/man2/setns.2.html ) a=
+ssociates the calling thread (in our case, the exec process) with a particu=
+lar namespace of the file descriptor its passed.=C2=A0 In this case, the fi=
+le descriptor for the running instance&#39;s network namespace is passed in=
+ along with &#39;CLONE_NEWNET&#39; (used for network namespaces) as the nam=
+espace type.=C2=A0 The end result is that the process created from running =
+&#39;singularity exec instance://instancename command&#39; is assigned to w=
+hatever network namespace the process of the running instance is in.=C2=A0 =
+Cool! :)</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 - See <a href=
+=3D"https://github.com/singularityware/singularity/blob/release-2.6/src/lib=
+/runtime/ns/net/net.c#L100">https://github.com/singularityware/singularity/=
+blob/release-2.6/src/lib/runtime/ns/net/net.c#L100</a></div><div><br></div>=
+<div><br></div><div><b>Singularity 3</b></div><div><br></div><div>I haven&#=
+39;t yet had time to examine the code execution steps for the same example =
+command (&#39;singularity exec instance://instancename command&#39;) in Sin=
+gularity 3, but I have determined that it does indeed have code that suppor=
+ts a &#39;shell&#39; or &#39;exec&#39; process being assigned to a custom n=
+etwork namespace of a running instance.=C2=A0 The issue is that the aforeme=
+ntioned behavior (assignment of a &#39;shell&#39; or &#39;exec&#39; process=
+ to a running instance&#39;s custom network namespace) only occurs if that =
+instance was started with the -n|--net Singularity flag (which of course in=
+structs Singularity to create its own custom network namespace).=C2=A0 If t=
+he instance was started without that flag from a custom network namespace t=
+hat was instead created with &#39;ip netns add&#39;, &#39;shell&#39; and &#=
+39;exec&#39; processes run against an instance end up in the root network n=
+amespace instead of the desired custom network namespace.</div><div><br></d=
+iv><div>One fundamental difference is that the JSON configuration for the r=
+unning instance located at /var/run/singularity/instances/${USER}/nameofins=
+tance.json only includes &#39;network&#39; in its list of namespaces if tha=
+t instance was started with the -n|--net Singularity flag.=C2=A0 If that in=
+stance was started without that flag from a custom network namespace that w=
+as instead created with &#39;ip netns add&#39;, &#39;network&#39; is not in=
+cluded in the list of namespaces...</div><div><br></div><div>For example, c=
+onsider the following script being run as root:</div><div><br></div><div cl=
+ass=3D"prettyprint" style=3D"background-color: rgb(250, 250, 250); border-c=
+olor: rgb(187, 187, 187); border-style: solid; border-width: 1px; word-wrap=
+: break-word;"><code class=3D"prettyprint"><div class=3D"subprettyprint"><s=
+pan style=3D"color: #800;" class=3D"styled-by-prettify">#!/bin/bash</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify"><br>ip netns add c=
+ontainer1</span><span style=3D"color: #660;" class=3D"styled-by-prettify">-=
+</span><span style=3D"color: #000;" class=3D"styled-by-prettify">hostname<b=
+r>ip netns </span><span style=3D"color: #008;" class=3D"styled-by-prettify"=
+>exec</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> cont=
+ainer1</span><span style=3D"color: #660;" class=3D"styled-by-prettify">-</s=
+pan><span style=3D"color: #000;" class=3D"styled-by-prettify">hostname su <=
+/span><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><sp=
+an style=3D"color: #000;" class=3D"styled-by-prettify">c </span><span style=
+=3D"color: #080;" class=3D"styled-by-prettify">&quot;singularity instance s=
+tart /home/nonrootuser/centos.simg container1&quot;</span><span style=3D"co=
+lor: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #660=
+;" class=3D"styled-by-prettify">-</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> nonrootuser<br>su </span><span style=3D"color: #66=
+0;" class=3D"styled-by-prettify">-</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">c </span><span style=3D"color: #080;" class=3D"styl=
+ed-by-prettify">&quot;singularity instance start --net /home/nonrootuser/ce=
+ntos.simg container2&quot;</span><span style=3D"color: #000;" class=3D"styl=
+ed-by-prettify"> </span><span style=3D"color: #660;" class=3D"styled-by-pre=
+ttify">-</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> n=
+onrootuser</span></div></code></div><div><br></div><div>The result is two S=
+ingularity instances, container1 and container2.=C2=A0 container1 was start=
+ed inside of the &#39;container1-hostname&#39; custom network namespace tha=
+t was created with the &#39;ip netns add&#39; command and the two resulting=
+ initial processes (parent process &#39;Singularity instance: nonrootuser [=
+container1]&#39; and child process &#39;sinit&#39;) are both using that nam=
+espace.=C2=A0 container2 was instead started with the -n|--net Singularity =
+flag to instruct Singularity to create its own custom network namespace.=C2=
+=A0 container2 also starts with two initial processes (parent process &#39;=
+Singularity instance: nonrootuser [container2]&#39; and child process &#39;=
+sinit&#39;) but only the &#39;sinit&#39; process ends up using the custom n=
+etwork namespace that Singularity created.=C2=A0 The parent process &#39;Si=
+ngularity instance: nonrootuser [container2]&#39; ends up in the root (defa=
+ult) network namespace instead of the custom network namespace.=C2=A0 Consi=
+der the following four processes:</div><div><br></div><div class=3D"prettyp=
+rint" style=3D"background-color: rgb(250, 250, 250); border-color: rgb(187,=
+ 187, 187); border-style: solid; border-width: 1px; word-wrap: break-word;"=
+><code class=3D"prettyprint"><div class=3D"subprettyprint"><span style=3D"c=
+olor: #000;" class=3D"styled-by-prettify">nonrootuser =C2=A0 </span><span s=
+tyle=3D"color: #066;" class=3D"styled-by-prettify">1157</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0</span><span style=3D=
+"color: #606;" class=3D"styled-by-prettify">Singularity</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"> instance</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify"> vagrant </span><span style=3D"color:=
+ #660;" class=3D"styled-by-prettify">[</span><span style=3D"color: #000;" c=
+lass=3D"styled-by-prettify">container1</span><span style=3D"color: #660;" c=
+lass=3D"styled-by-prettify">]</span><span style=3D"color: #000;" class=3D"s=
+tyled-by-prettify"><br>nonrootuser =C2=A0 </span><span style=3D"color: #066=
+;" class=3D"styled-by-prettify">1158</span><span style=3D"color: #000;" cla=
+ss=3D"styled-by-prettify"> =C2=A0</span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">\</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify">_ sinit<br>nonrootuser =C2=A0 </span><span style=3D"color: #=
+066;" class=3D"styled-by-prettify">1205</span><span style=3D"color: #000;" =
+class=3D"styled-by-prettify"> =C2=A0</span><span style=3D"color: #606;" cla=
+ss=3D"styled-by-prettify">Singularity</span><span style=3D"color: #000;" cl=
+ass=3D"styled-by-prettify"> instance</span><span style=3D"color: #660;" cla=
+ss=3D"styled-by-prettify">:</span><span style=3D"color: #000;" class=3D"sty=
+led-by-prettify"> vagrant </span><span style=3D"color: #660;" class=3D"styl=
+ed-by-prettify">[</span><span style=3D"color: #000;" class=3D"styled-by-pre=
+ttify">container2</span><span style=3D"color: #660;" class=3D"styled-by-pre=
+ttify">]</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><b=
+r>nonrootuser =C2=A0 </span><span style=3D"color: #066;" class=3D"styled-by=
+-prettify">1206</span><span style=3D"color: #000;" class=3D"styled-by-prett=
+ify"> =C2=A0</span><span style=3D"color: #660;" class=3D"styled-by-prettify=
+">\</span><span style=3D"color: #000;" class=3D"styled-by-prettify">_ sinit=
+</span></div></code></div><div><br></div><div>PIDs 1157 and 1158 are the in=
+itial parent and child processes for container1 and PIDs 1205 and 1206 are =
+the initial parent and child processes for container2.=C2=A0 Let&#39;s conf=
+irm which network namespaces those processes are using:</div><div><br></div=
+><div class=3D"prettyprint" style=3D"background-color: rgb(250, 250, 250); =
+border-color: rgb(187, 187, 187); border-style: solid; border-width: 1px; w=
+ord-wrap: break-word;"><code class=3D"prettyprint"><div class=3D"subprettyp=
+rint"><span style=3D"color: #660;" class=3D"styled-by-prettify">[</span><sp=
+an style=3D"color: #000;" class=3D"styled-by-prettify">root@singularity3 </=
+span><span style=3D"color: #660;" class=3D"styled-by-prettify">~]</span><sp=
+an style=3D"color: #800;" class=3D"styled-by-prettify"># lsns -t net -o NS,=
+PATH,TYPE,NPROCS,PPID,PID,USER,UID,COMMAND</span><span style=3D"color: #000=
+;" class=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 NS PATH =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0TYPE NPROCS =C2=A0PPID =C2=A0 =
+PID USER =C2=A0 =C2=A0 =C2=A0 =C2=A0UID COMMAND<br></span><span style=3D"co=
+lor: #066;" class=3D"styled-by-prettify">4026531956</span><span style=3D"co=
+lor: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #660=
+;" class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">proc</span><span style=3D"color: #660;" class=3D"st=
+yled-by-prettify">/</span><span style=3D"color: #066;" class=3D"styled-by-p=
+rettify">1</span><span style=3D"color: #660;" class=3D"styled-by-prettify">=
+/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">ns</span>=
+<span style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span sty=
+le=3D"color: #000;" class=3D"styled-by-prettify">net =C2=A0 =C2=A0net =C2=
+=A0 =C2=A0 =C2=A0</span><span style=3D"color: #066;" class=3D"styled-by-pre=
+ttify">99</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> =
+=C2=A0 =C2=A0 </span><span style=3D"color: #066;" class=3D"styled-by-pretti=
+fy">0</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=
+=A0 =C2=A0 </span><span style=3D"color: #066;" class=3D"styled-by-prettify"=
+>1</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> root =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0</span><span style=3D"color: #066;" class=3D"sty=
+led-by-prettify">0</span><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify"> </span><span style=3D"color: #660;" class=3D"styled-by-prettify">/=
+</span><span style=3D"color: #000;" class=3D"styled-by-prettify">usr</span>=
+<span style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span sty=
+le=3D"color: #000;" class=3D"styled-by-prettify">lib</span><span style=3D"c=
+olor: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify">systemd</span><span style=3D"color: #660;"=
+ class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D=
+"styled-by-prettify">systemd </span><span style=3D"color: #660;" class=3D"s=
+tyled-by-prettify">--</span><span style=3D"color: #000;" class=3D"styled-by=
+-prettify">switched</span><span style=3D"color: #660;" class=3D"styled-by-p=
+rettify">-</span><span style=3D"color: #000;" class=3D"styled-by-prettify">=
+root </span><span style=3D"color: #660;" class=3D"styled-by-prettify">--</s=
+pan><span style=3D"color: #000;" class=3D"styled-by-prettify">system </span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">--</span><span s=
+tyle=3D"color: #000;" class=3D"styled-by-prettify">deserialize </span><span=
+ style=3D"color: #066;" class=3D"styled-by-prettify">22</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"><br></span><span style=3D"co=
+lor: #066;" class=3D"styled-by-prettify">4026532163</span><span style=3D"co=
+lor: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #660=
+;" class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">proc</span><span style=3D"color: #660;" class=3D"st=
+yled-by-prettify">/</span><span style=3D"color: #066;" class=3D"styled-by-p=
+rettify">1157</span><span style=3D"color: #660;" class=3D"styled-by-prettif=
+y">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">ns</sp=
+an><span style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span =
+style=3D"color: #000;" class=3D"styled-by-prettify">net net =C2=A0 =C2=A0 =
+=C2=A0 </span><span style=3D"color: #066;" class=3D"styled-by-prettify">2</=
+span><span style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0 =C2=
+=A0 </span><span style=3D"color: #066;" class=3D"styled-by-prettify">1</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0</span><=
+span style=3D"color: #066;" class=3D"styled-by-prettify">1157</span><span s=
+tyle=3D"color: #000;" class=3D"styled-by-prettify"> nonrootuser </span><spa=
+n style=3D"color: #066;" class=3D"styled-by-prettify">1000</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"colo=
+r: #606;" class=3D"styled-by-prettify">Singularity</span><span style=3D"col=
+or: #000;" class=3D"styled-by-prettify"> instance</span><span style=3D"colo=
+r: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color: #000;"=
+ class=3D"styled-by-prettify"> nonrootuser </span><span style=3D"color: #66=
+0;" class=3D"styled-by-prettify">[</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">container1</span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">]</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify"><br></span><span style=3D"color: #066;" class=3D"styled-by-p=
+rettify">4026532242</span><span style=3D"color: #000;" class=3D"styled-by-p=
+rettify"> </span><span style=3D"color: #660;" class=3D"styled-by-prettify">=
+/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">proc</spa=
+n><span style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span s=
+tyle=3D"color: #066;" class=3D"styled-by-prettify">1206</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify">ns</span><span style=3D"color: #660;"=
+ class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D=
+"styled-by-prettify">net net =C2=A0 =C2=A0 =C2=A0 </span><span style=3D"col=
+or: #066;" class=3D"styled-by-prettify">1</span><span style=3D"color: #000;=
+" class=3D"styled-by-prettify"> =C2=A0</span><span style=3D"color: #066;" c=
+lass=3D"styled-by-prettify">1205</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> =C2=A0</span><span style=3D"color: #066;" class=3D=
+"styled-by-prettify">1206</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify"> nonrootuser </span><span style=3D"color: #066;" class=3D"st=
+yled-by-prettify">1000</span><span style=3D"color: #000;" class=3D"styled-b=
+y-prettify"> sinit</span></div></code></div><div><br></div><div>In this exa=
+mple, 4026531956 is the inode containing the root network namespace used by=
+ default for all processes running on the host system (99 processes in this=
+ example), 4026532163 is the inode containing the &#39;container1-hostname&=
+#39; custom network namespace we created with &#39;ip netns add&#39;, and 4=
+026532242 is the inode containing the custom network namespace that Singula=
+rity created when the container2 instance was started with the --net flag.<=
+/div><div><br></div><div class=3D"prettyprint" style=3D"background-color: r=
+gb(250, 250, 250); border-color: rgb(187, 187, 187); border-style: solid; b=
+order-width: 1px; word-wrap: break-word;"><code class=3D"prettyprint"><div =
+class=3D"subprettyprint"><span style=3D"color: #660;" class=3D"styled-by-pr=
+ettify">[</span><span style=3D"color: #000;" class=3D"styled-by-prettify">r=
+oot@singularity3 </span><span style=3D"color: #660;" class=3D"styled-by-pre=
+ttify">~]</span><span style=3D"color: #800;" class=3D"styled-by-prettify">#=
+ ls -i /var/run/netns/container1-hostname</span><span style=3D"color: #000;=
+" class=3D"styled-by-prettify"><br></span><span style=3D"color: #066;" clas=
+s=3D"styled-by-prettify">4026532163</span><span style=3D"color: #000;" clas=
+s=3D"styled-by-prettify"> </span><span style=3D"color: #660;" class=3D"styl=
+ed-by-prettify">/</span><span style=3D"color: #008;" class=3D"styled-by-pre=
+ttify">var</span><span style=3D"color: #660;" class=3D"styled-by-prettify">=
+/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">run</span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span st=
+yle=3D"color: #000;" class=3D"styled-by-prettify">netns</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify">container1</span><span style=3D"color=
+: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #000;" =
+class=3D"styled-by-prettify">hostname</span></div></code></div><div><br></d=
+iv><div class=3D"prettyprint" style=3D"background-color: rgb(250, 250, 250)=
+; border-color: rgb(187, 187, 187); border-style: solid; border-width: 1px;=
+ word-wrap: break-word;"><code class=3D"prettyprint"><div class=3D"subprett=
+yprint"><span style=3D"color: #660;" class=3D"styled-by-prettify">[</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify">root@singularity3 =
+</span><span style=3D"color: #660;" class=3D"styled-by-prettify">~]</span><=
+span style=3D"color: #800;" class=3D"styled-by-prettify"># readlink /proc/1=
+157/ns/net</span><span style=3D"color: #000;" class=3D"styled-by-prettify">=
+<br>net</span><span style=3D"color: #660;" class=3D"styled-by-prettify">:[<=
+/span><span style=3D"color: #066;" class=3D"styled-by-prettify">4026532163<=
+/span><span style=3D"color: #660;" class=3D"styled-by-prettify">]</span></d=
+iv></code></div><div><br></div><div class=3D"prettyprint" style=3D"backgrou=
+nd-color: rgb(250, 250, 250); border-color: rgb(187, 187, 187); border-styl=
+e: solid; border-width: 1px; word-wrap: break-word;"><code class=3D"prettyp=
+rint"><div class=3D"subprettyprint"><span style=3D"color: #660;" class=3D"s=
+tyled-by-prettify">[</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify">root@singularity3 </span><span style=3D"color: #660;" class=3D"st=
+yled-by-prettify">~]</span><span style=3D"color: #800;" class=3D"styled-by-=
+prettify"># readlink /proc/1158/ns/net</span><span style=3D"color: #000;" c=
+lass=3D"styled-by-prettify"><br>net</span><span style=3D"color: #660;" clas=
+s=3D"styled-by-prettify">:[</span><span style=3D"color: #066;" class=3D"sty=
+led-by-prettify">4026532163</span><span style=3D"color: #660;" class=3D"sty=
+led-by-prettify">]</span></div></code></div><div><br></div><div class=3D"pr=
+ettyprint" style=3D"background-color: rgb(250, 250, 250); border-color: rgb=
+(187, 187, 187); border-style: solid; border-width: 1px; word-wrap: break-w=
+ord;"><code class=3D"prettyprint"><div class=3D"subprettyprint"><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">[</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify">root@singularity3 </span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">~]</span><span style=3D"colo=
+r: #800;" class=3D"styled-by-prettify"># readlink /proc/1205/ns/net</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify"><br>net</span><spa=
+n style=3D"color: #660;" class=3D"styled-by-prettify">:[</span><span style=
+=3D"color: #066;" class=3D"styled-by-prettify">4026531956</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">]</span></div></code></div><=
+div><br></div><div class=3D"prettyprint" style=3D"background-color: rgb(250=
+, 250, 250); border-color: rgb(187, 187, 187); border-style: solid; border-=
+width: 1px; word-wrap: break-word;"><code class=3D"prettyprint"><div class=
+=3D"subprettyprint"><span style=3D"color: #660;" class=3D"styled-by-prettif=
+y">[</span><span style=3D"color: #000;" class=3D"styled-by-prettify">root@s=
+ingularity3 </span><span style=3D"color: #660;" class=3D"styled-by-prettify=
+">~]</span><span style=3D"color: #800;" class=3D"styled-by-prettify"># read=
+link /proc/1206/ns/net</span><span style=3D"color: #000;" class=3D"styled-b=
+y-prettify"><br>net</span><span style=3D"color: #660;" class=3D"styled-by-p=
+rettify">:[</span><span style=3D"color: #066;" class=3D"styled-by-prettify"=
+>4026532242</span><span style=3D"color: #660;" class=3D"styled-by-prettify"=
+>]</span></div></code></div><div><br></div><div>Now let&#39;s compare the J=
+SON configuration of both running instances, specifically the values from &=
+#39;.engineConfig.ociConfig.linux.namespaces&#39;:</div><div><br></div><div=
+ class=3D"prettyprint" style=3D"background-color: rgb(250, 250, 250); borde=
+r-color: rgb(187, 187, 187); border-style: solid; border-width: 1px; word-w=
+rap: break-word;"><code class=3D"prettyprint"><div class=3D"subprettyprint"=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">[</span><span st=
+yle=3D"color: #000;" class=3D"styled-by-prettify">nonrootuser@singularity3 =
+</span><span style=3D"color: #660;" class=3D"styled-by-prettify">~]</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify">$ cat </span><span=
+ style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D=
+"color: #008;" class=3D"styled-by-prettify">var</span><span style=3D"color:=
+ #660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" c=
+lass=3D"styled-by-prettify">run</span><span style=3D"color: #660;" class=3D=
+"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"styled-b=
+y-prettify">singularity</span><span style=3D"color: #660;" class=3D"styled-=
+by-prettify">/</span><span style=3D"color: #000;" class=3D"styled-by-pretti=
+fy">instances</span><span style=3D"color: #660;" class=3D"styled-by-prettif=
+y">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">nonroo=
+tuser</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</sp=
+an><span style=3D"color: #000;" class=3D"styled-by-prettify">container1</sp=
+an><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><span =
+style=3D"color: #000;" class=3D"styled-by-prettify">json </span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">|</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify"> jq </span><span style=3D"color: #080=
+;" class=3D"styled-by-prettify">&#39;.config&#39;</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #660;"=
+ class=3D"styled-by-prettify">|</span><span style=3D"color: #000;" class=3D=
+"styled-by-prettify"> perl </span><span style=3D"color: #660;" class=3D"sty=
+led-by-prettify">-</span><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify">pi </span><span style=3D"color: #660;" class=3D"styled-by-prettify"=
+>-</span><span style=3D"color: #000;" class=3D"styled-by-prettify">e </span=
+><span style=3D"color: #080;" class=3D"styled-by-prettify">&quot;s/\&quot;/=
+/g&quot;</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> <=
+/span><span style=3D"color: #660;" class=3D"styled-by-prettify">|</span><sp=
+an style=3D"color: #000;" class=3D"styled-by-prettify"> base64 </span><span=
+ style=3D"color: #660;" class=3D"styled-by-prettify">--</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify">decode </span><span style=3D=
+"color: #660;" class=3D"styled-by-prettify">|</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify"> jq </span><span style=3D"color: #080;" =
+class=3D"styled-by-prettify">&#39;.engineConfig.ociConfig.linux.namespaces&=
+#39;</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br></=
+span><span style=3D"color: #660;" class=3D"styled-by-prettify">[</span><spa=
+n style=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 </span><sp=
+an style=3D"color: #660;" class=3D"styled-by-prettify">{</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 </span><sp=
+an style=3D"color: #080;" class=3D"styled-by-prettify">&quot;type&quot;</sp=
+an><span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span =
+style=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"=
+color: #080;" class=3D"styled-by-prettify">&quot;pid&quot;</span><span styl=
+e=3D"color: #660;" class=3D"styled-by-prettify">,</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 </span><span style=
+=3D"color: #080;" class=3D"styled-by-prettify">&quot;path&quot;</span><span=
+ style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D=
+"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #=
+080;" class=3D"styled-by-prettify">&quot;/proc/1158/ns/pid&quot;</span><spa=
+n style=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 </span><sp=
+an style=3D"color: #660;" class=3D"styled-by-prettify">},</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 </span><span styl=
+e=3D"color: #660;" class=3D"styled-by-prettify">{</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 </span><span style=
+=3D"color: #080;" class=3D"styled-by-prettify">&quot;type&quot;</span><span=
+ style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D=
+"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #=
+080;" class=3D"styled-by-prettify">&quot;ipc&quot;</span><span style=3D"col=
+or: #660;" class=3D"styled-by-prettify">,</span><span style=3D"color: #000;=
+" class=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 </span><span style=3D"colo=
+r: #080;" class=3D"styled-by-prettify">&quot;path&quot;</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #080;" =
+class=3D"styled-by-prettify">&quot;/proc/1158/ns/ipc&quot;</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 </span><span sty=
+le=3D"color: #660;" class=3D"styled-by-prettify">},</span><span style=3D"co=
+lor: #000;" class=3D"styled-by-prettify"><br>=C2=A0 </span><span style=3D"c=
+olor: #660;" class=3D"styled-by-prettify">{</span><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 </span><span style=3D"co=
+lor: #080;" class=3D"styled-by-prettify">&quot;type&quot;</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #080;" =
+class=3D"styled-by-prettify">&quot;mount&quot;</span><span style=3D"color: =
+#660;" class=3D"styled-by-prettify">,</span><span style=3D"color: #000;" cl=
+ass=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 </span><span style=3D"color: #=
+080;" class=3D"styled-by-prettify">&quot;path&quot;</span><span style=3D"co=
+lor: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color: #000=
+;" class=3D"styled-by-prettify"> </span><span style=3D"color: #080;" class=
+=3D"styled-by-prettify">&quot;/proc/1158/ns/mnt&quot;</span><span style=3D"=
+color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 </span><span style=3D=
+"color: #660;" class=3D"styled-by-prettify">}</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify"><br></span><span style=3D"color: #660;" =
+class=3D"styled-by-prettify">]</span></div></code></div><div><br></div><div=
+ class=3D"prettyprint" style=3D"background-color: rgb(250, 250, 250); borde=
+r-color: rgb(187, 187, 187); border-style: solid; border-width: 1px; word-w=
+rap: break-word;"><code class=3D"prettyprint"><div class=3D"subprettyprint"=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">[</span><span st=
+yle=3D"color: #000;" class=3D"styled-by-prettify">nonrootuser@singularity3 =
+</span><span style=3D"color: #660;" class=3D"styled-by-prettify">~]</span><=
+span style=3D"color: #000;" class=3D"styled-by-prettify">$ cat </span><span=
+ style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D=
+"color: #008;" class=3D"styled-by-prettify">var</span><span style=3D"color:=
+ #660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" c=
+lass=3D"styled-by-prettify">run</span><span style=3D"color: #660;" class=3D=
+"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"styled-b=
+y-prettify">singularity</span><span style=3D"color: #660;" class=3D"styled-=
+by-prettify">/</span><span style=3D"color: #000;" class=3D"styled-by-pretti=
+fy">instances</span><span style=3D"color: #660;" class=3D"styled-by-prettif=
+y">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">nonroo=
+tuser</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</sp=
+an><span style=3D"color: #000;" class=3D"styled-by-prettify">container2</sp=
+an><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><span =
+style=3D"color: #000;" class=3D"styled-by-prettify">json </span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">|</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify"> jq </span><span style=3D"color: #080=
+;" class=3D"styled-by-prettify">&#39;.config&#39;</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #660;"=
+ class=3D"styled-by-prettify">|</span><span style=3D"color: #000;" class=3D=
+"styled-by-prettify"> perl </span><span style=3D"color: #660;" class=3D"sty=
+led-by-prettify">-</span><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify">pi </span><span style=3D"color: #660;" class=3D"styled-by-prettify"=
+>-</span><span style=3D"color: #000;" class=3D"styled-by-prettify">e </span=
+><span style=3D"color: #080;" class=3D"styled-by-prettify">&quot;s/\&quot;/=
+/g&quot;</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> <=
+/span><span style=3D"color: #660;" class=3D"styled-by-prettify">|</span><sp=
+an style=3D"color: #000;" class=3D"styled-by-prettify"> base64 </span><span=
+ style=3D"color: #660;" class=3D"styled-by-prettify">--</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify">decode </span><span style=3D=
+"color: #660;" class=3D"styled-by-prettify">|</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify"> jq </span><span style=3D"color: #080;" =
+class=3D"styled-by-prettify">&#39;.engineConfig.ociConfig.linux.namespaces&=
+#39;</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br></=
+span><span style=3D"color: #660;" class=3D"styled-by-prettify">[</span><spa=
+n style=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 </span><sp=
+an style=3D"color: #660;" class=3D"styled-by-prettify">{</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 </span><sp=
+an style=3D"color: #080;" class=3D"styled-by-prettify">&quot;type&quot;</sp=
+an><span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span =
+style=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"=
+color: #080;" class=3D"styled-by-prettify">&quot;network&quot;</span><span =
+style=3D"color: #660;" class=3D"styled-by-prettify">,</span><span style=3D"=
+color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 </span><span s=
+tyle=3D"color: #080;" class=3D"styled-by-prettify">&quot;path&quot;</span><=
+span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"colo=
+r: #080;" class=3D"styled-by-prettify">&quot;/proc/1206/ns/net&quot;</span>=
+<span style=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 </span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">},</span><span s=
+tyle=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 </span><span =
+style=3D"color: #660;" class=3D"styled-by-prettify">{</span><span style=3D"=
+color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 </span><span s=
+tyle=3D"color: #080;" class=3D"styled-by-prettify">&quot;type&quot;</span><=
+span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"colo=
+r: #080;" class=3D"styled-by-prettify">&quot;pid&quot;</span><span style=3D=
+"color: #660;" class=3D"styled-by-prettify">,</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 </span><span style=3D"=
+color: #080;" class=3D"styled-by-prettify">&quot;path&quot;</span><span sty=
+le=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D"col=
+or: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #080;=
+" class=3D"styled-by-prettify">&quot;/proc/1206/ns/pid&quot;</span><span st=
+yle=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 </span><span s=
+tyle=3D"color: #660;" class=3D"styled-by-prettify">},</span><span style=3D"=
+color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 </span><span style=3D=
+"color: #660;" class=3D"styled-by-prettify">{</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 </span><span style=3D"=
+color: #080;" class=3D"styled-by-prettify">&quot;type&quot;</span><span sty=
+le=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=3D"col=
+or: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #080;=
+" class=3D"styled-by-prettify">&quot;ipc&quot;</span><span style=3D"color: =
+#660;" class=3D"styled-by-prettify">,</span><span style=3D"color: #000;" cl=
+ass=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 </span><span style=3D"color: #=
+080;" class=3D"styled-by-prettify">&quot;path&quot;</span><span style=3D"co=
+lor: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color: #000=
+;" class=3D"styled-by-prettify"> </span><span style=3D"color: #080;" class=
+=3D"styled-by-prettify">&quot;/proc/1206/ns/ipc&quot;</span><span style=3D"=
+color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 </span><span style=3D=
+"color: #660;" class=3D"styled-by-prettify">},</span><span style=3D"color: =
+#000;" class=3D"styled-by-prettify"><br>=C2=A0 </span><span style=3D"color:=
+ #660;" class=3D"styled-by-prettify">{</span><span style=3D"color: #000;" c=
+lass=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 </span><span style=3D"color: =
+#080;" class=3D"styled-by-prettify">&quot;type&quot;</span><span style=3D"c=
+olor: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify"> </span><span style=3D"color: #080;" class=
+=3D"styled-by-prettify">&quot;mount&quot;</span><span style=3D"color: #660;=
+" class=3D"styled-by-prettify">,</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"><br>=C2=A0 =C2=A0 </span><span style=3D"color: #080=
+;" class=3D"styled-by-prettify">&quot;path&quot;</span><span style=3D"color=
+: #660;" class=3D"styled-by-prettify">:</span><span style=3D"color: #000;" =
+class=3D"styled-by-prettify"> </span><span style=3D"color: #080;" class=3D"=
+styled-by-prettify">&quot;/proc/1206/ns/mnt&quot;</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify"><br>=C2=A0 </span><span style=3D"col=
+or: #660;" class=3D"styled-by-prettify">}</span><span style=3D"color: #000;=
+" class=3D"styled-by-prettify"><br></span><span style=3D"color: #660;" clas=
+s=3D"styled-by-prettify">]</span></div></code></div><div><br></div><div>As =
+you can see, the &#39;network&#39; namespace only appears in the JSON confi=
+guration for a running instance if that instance was started with the -n|--=
+net Singularity flag.=C2=A0 Now let&#39;s test and see what network namespa=
+ce ends up being assigned to &#39;exec&#39; processes run against both of t=
+hose running instances:</div><div><br></div><div class=3D"prettyprint" styl=
+e=3D"background-color: rgb(250, 250, 250); border-color: rgb(187, 187, 187)=
+; border-style: solid; border-width: 1px; word-wrap: break-word;"><code cla=
+ss=3D"prettyprint"><div class=3D"subprettyprint"><span style=3D"color: #660=
+;" class=3D"styled-by-prettify">[</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">nonrootuser@singularity3 </span><span style=3D"colo=
+r: #660;" class=3D"styled-by-prettify">~]</span><span style=3D"color: #000;=
+" class=3D"styled-by-prettify">$ singularity </span><span style=3D"color: #=
+008;" class=3D"styled-by-prettify">exec</span><span style=3D"color: #000;" =
+class=3D"styled-by-prettify"> instance</span><span style=3D"color: #660;" c=
+lass=3D"styled-by-prettify">:</span><span style=3D"color: #800;" class=3D"s=
+tyled-by-prettify">//container1 readlink /proc/self/ns/net</span><span styl=
+e=3D"color: #000;" class=3D"styled-by-prettify"><br>net</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">:[</span><span style=3D"colo=
+r: #066;" class=3D"styled-by-prettify">4026531956</span><span style=3D"colo=
+r: #660;" class=3D"styled-by-prettify">]</span></div></code></div><div><br>=
+</div><div class=3D"prettyprint" style=3D"background-color: rgb(250, 250, 2=
+50); border-color: rgb(187, 187, 187); border-style: solid; border-width: 1=
+px; word-wrap: break-word;"><code class=3D"prettyprint"><div class=3D"subpr=
+ettyprint"><span style=3D"color: #660;" class=3D"styled-by-prettify">[</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify">nonrootuser@sin=
+gularity3 </span><span style=3D"color: #660;" class=3D"styled-by-prettify">=
+~]</span><span style=3D"color: #000;" class=3D"styled-by-prettify">$ singul=
+arity </span><span style=3D"color: #008;" class=3D"styled-by-prettify">exec=
+</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> instance<=
+/span><span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><sp=
+an style=3D"color: #800;" class=3D"styled-by-prettify">//container2 readlin=
+k /proc/self/ns/net</span><span style=3D"color: #000;" class=3D"styled-by-p=
+rettify"><br>net</span><span style=3D"color: #660;" class=3D"styled-by-pret=
+tify">:[</span><span style=3D"color: #066;" class=3D"styled-by-prettify">40=
+26532242</span><span style=3D"color: #660;" class=3D"styled-by-prettify">]<=
+/span></div></code></div><div><br></div><div>&#39;exec&#39; (and &#39;shell=
+&#39;) processes run against container1 end up in the root (default) networ=
+k namespace of the host system instead of the desired &#39;container1-hostn=
+ame&#39; custom network namespace we created with &#39;ip netns add&#39; ea=
+rlier, even though both of the container1 processes are in that custom name=
+space!=C2=A0 &#39;exec&#39; (and &#39;shell&#39;) processes run against con=
+tainer2 end up in the custom network namespace created by Singularity.</div=
+><div><br></div><div>It would be highly beneficial if Singularity 3 could b=
+e updated such that &#39;shell&#39; and &#39;exec&#39; processes run agains=
+t an instance automatically receive the network namespace of the instance i=
+tself.=C2=A0 That would be consistent with the behavior of Singularity 2 an=
+d would prevent &#39;shell&#39; and &#39;exec&#39; processes run against an=
+ instance from &quot;escaping&quot; a custom network namespace and ending u=
+p with completely different interfaces, iptables rules, routing tables, etc=
+ than anticipated.</div></div>
+------=_Part_435_1301289395.1536371086596--
+
+------=_Part_434_745957112.1536371086593--

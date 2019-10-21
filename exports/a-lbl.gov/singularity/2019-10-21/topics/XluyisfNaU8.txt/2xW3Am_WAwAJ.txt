@@ -1,0 +1,361 @@
+Date: Fri, 23 Jun 2017 14:23:04 -0700 (PDT)
+From: John Galt <spe...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <f7b5ce58-169a-4ff6-bc12-c118ebe4c3dd@lbl.gov>
+In-Reply-To: <CAM=pu++C8U7g113XCepjzgmN=-_v_uHpsrDmmQTotG2Ha+i0Jg@mail.gmail.com>
+References: <8073395e-e1da-4751-b26b-2cbbfd89c391@lbl.gov>
+ <CAM=pu++C8U7g113XCepjzgmN=-_v_uHpsrDmmQTotG2Ha+i0Jg@mail.gmail.com>
+Subject: Re: [Singularity] Auto-remove indentation for %runscript
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_785_940968956.1498252984355"
+
+------=_Part_785_940968956.1498252984355
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_786_2106440819.1498252984356"
+
+------=_Part_786_2106440819.1498252984356
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Hi Vanessa,=20
+
+Thanks for your reply. Please see the example below. Technically it does=20
+not create any issue but it would still make sense to remove the first=20
+level of indentation of the %runscript to align everything with the=20
+*#!/bin/bash* of the */.singularity.d/runscript.*
+On the other hand, having this indentation in the definition file really=20
+helps to distinguish the different sections "=C3=A0 la Python".=20
+What do you think ?
+
+By the way, regarding the runscript, by default the shell is sh (*#!/bin/sh=
+*).=20
+Is there a way to indicate which interpreter to use ? (bash, csh, Python?).=
+=20
+Perhaps *#!/usr/bin/env INTERPRETER* could be an alternative (or similar)=
+=20
+but I am not sure of the portability. Or adding a keyword after the=20
+*%runscript* definition ? (such as *%runscript /bin/bash* or *%runscript=20
+/bin/python*)
+Any comment ?
+
+
+The definition file
+
+%runscript
+  # If used through a batch (SLURM, LSF...) do not use temp but a scratch
+  # space by providing the SINGULARITY_TMPDIR variable to Singularity
+  TEMPDIR=3D$(mktemp -p "${TMPDIR:-/tmp}" -d tmp.XXXX)
+
+  echo "Creating and relocating into temporary directory $TEMPDIR..."
+  cd $TEMPDIR
+  export WINEPREFIX=3D$TEMPDIR/wineprefix
+  export WINEARCH=3Dwin32
+
+  echo "Restoring wineprefix..."
+  tar -xzf /apps/wineprefix.tar.gz
+
+  echo "Executing software..."
+  wine "c:Local\my.exe"
+
+  echo "Clean session"
+  wineboot --end-session
+
+
+%files
+  ./wineprefix.tar.gz /apps/wineprefix.tar.gz
+
+%post
+  dpkg --add-architecture i386
+  apt update
+  apt install -y wine
+
+  # add directories for HPC systems
+  mkdir -p /gpfs
+  mkdir /lustre
+
+  # for for the wineprefix
+  mkdir /apps
+
+
+The resulting */.singularity.d/runscript*
+
+#!/bin/sh
+
+
+  # If used through a batch (SLURM, LSF...) do not use temp but a scratch
+  # space by providing the SINGULARITY_TMPDIR variable to Singularity
+  TEMPDIR=3D$(mktemp -p "${TMPDIR:-/tmp}" -d tmp.XXXX)
+
+
+  echo "Creating and relocating into temporary directory $TEMPDIR..."
+  cd $TEMPDIR
+
+
+  export WINEPREFIX=3D$TEMPDIR/wineprefix
+  export WINEARCH=3Dwin32
+
+
+  echo "Restoring wineprefix..."
+  tar -xzf /apps/wineprefix.tar.gz
+
+
+  echo "Executing software..."
+  wine "c:Local\GRTMPS\HSI\grtRunHPC.exe"
+
+
+  echo "Clean session"
+  wineboot --end-session
+
+
+
+
+
+On Friday, June 23, 2017 at 3:17:42 PM UTC-5, vanessa wrote:
+>
+> What is the concern with having an indentation?
+>
+> On Fri, Jun 23, 2017 at 1:10 PM, John Galt <s...@gmail.com <javascript:>
+> > wrote:
+>
+>> Hi,
+>>
+>> I just noticed that the %runscript code added to the definition file was=
+=20
+>> indented also in the images /.singularity.d/runscript.
+>>
+>> Would this make sense to remove the first level of indentation when=20
+>> building the container ?
+>>
+>> Thanks !
+>>
+>> John
+>>
+>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s=20
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n=20
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> --=20
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_786_2106440819.1498252984356
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Hi Vanessa,=C2=A0</div><div><br></div><div>Thanks for=
+ your reply. Please see the example below. Technically it does not create a=
+ny issue but it would still make sense to remove the first level of indenta=
+tion of the %runscript to align everything with the <i>#!/bin/bash</i> of t=
+he=C2=A0<i>/.singularity.d/runscript.</i></div><div>On the other hand, havi=
+ng this indentation in the definition file really helps to distinguish the =
+different sections &quot;=C3=A0 la Python&quot;.=C2=A0</div><div>What do yo=
+u think ?</div><div><br></div><div>By the way, regarding the runscript, by =
+default the shell is sh (<i>#!/bin/sh</i>). Is there a way to indicate whic=
+h interpreter to use ? (bash, csh, Python?). Perhaps <i>#!/usr/bin/env INTE=
+RPRETER</i>=C2=A0could be an alternative (or similar) but I am not sure of =
+the portability. Or adding a keyword after the <i>%runscript</i> definition=
+ ? (such as <i>%runscript /bin/bash</i> or <i>%runscript /bin/python</i>)</=
+div><div>Any comment ?</div><div><br></div><div><br></div><div>The definiti=
+on file</div><br><div class=3D"prettyprint" style=3D"background-color: rgb(=
+250, 250, 250); border-color: rgb(187, 187, 187); border-style: solid; bord=
+er-width: 1px; word-wrap: break-word;"><code class=3D"prettyprint"><div cla=
+ss=3D"subprettyprint"><span style=3D"color: #660;" class=3D"styled-by-prett=
+ify">%</span><span style=3D"color: #000;" class=3D"styled-by-prettify">runs=
+cript<br>=C2=A0 </span><span style=3D"color: #800;" class=3D"styled-by-pret=
+tify"># If used through a batch (SLURM, LSF...) do not use temp but a scrat=
+ch</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=
+=A0 </span><span style=3D"color: #800;" class=3D"styled-by-prettify"># spac=
+e by providing the SINGULARITY_TMPDIR variable to Singularity</span><span s=
+tyle=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 TEMPDIR</span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">=3D</span><span =
+style=3D"color: #000;" class=3D"styled-by-prettify">$</span><span style=3D"=
+color: #660;" class=3D"styled-by-prettify">(</span><span style=3D"color: #0=
+00;" class=3D"styled-by-prettify">mktemp </span><span style=3D"color: #660;=
+" class=3D"styled-by-prettify">-</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">p </span><span style=3D"color: #080;" class=3D"styl=
+ed-by-prettify">&quot;${TMPDIR:-/tmp}&quot;</span><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify"> </span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">-</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify">d tmp</span><span style=3D"color: #660;" class=3D"styled-by-=
+prettify">.</span><span style=3D"color: #000;" class=3D"styled-by-prettify"=
+>XXXX</span><span style=3D"color: #660;" class=3D"styled-by-prettify">)</sp=
+an><span style=3D"color: #000;" class=3D"styled-by-prettify"><br><br>=C2=A0=
+ echo </span><span style=3D"color: #080;" class=3D"styled-by-prettify">&quo=
+t;Creating and relocating into temporary directory $TEMPDIR...&quot;</span>=
+<span style=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 cd $TE=
+MPDIR<br>=C2=A0 </span><span style=3D"color: #008;" class=3D"styled-by-pret=
+tify">export</span><span style=3D"color: #000;" class=3D"styled-by-prettify=
+"> WINEPREFIX</span><span style=3D"color: #660;" class=3D"styled-by-prettif=
+y">=3D</span><span style=3D"color: #000;" class=3D"styled-by-prettify">$TEM=
+PDIR</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify">wineprefix<br>=
+=C2=A0 </span><span style=3D"color: #008;" class=3D"styled-by-prettify">exp=
+ort</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> WINEAR=
+CH</span><span style=3D"color: #660;" class=3D"styled-by-prettify">=3D</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify">win32<br><br>=
+=C2=A0 echo </span><span style=3D"color: #080;" class=3D"styled-by-prettify=
+">&quot;Restoring wineprefix...&quot;</span><span style=3D"color: #000;" cl=
+ass=3D"styled-by-prettify"><br>=C2=A0 tar </span><span style=3D"color: #660=
+;" class=3D"styled-by-prettify">-</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">xzf </span><span style=3D"color: #660;" class=3D"st=
+yled-by-prettify">/</span><span style=3D"color: #000;" class=3D"styled-by-p=
+rettify">apps</span><span style=3D"color: #660;" class=3D"styled-by-prettif=
+y">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">winepr=
+efix</span><span style=3D"color: #660;" class=3D"styled-by-prettify">.</spa=
+n><span style=3D"color: #000;" class=3D"styled-by-prettify">tar</span><span=
+ style=3D"color: #660;" class=3D"styled-by-prettify">.</span><span style=3D=
+"color: #000;" class=3D"styled-by-prettify">gz<br><br>=C2=A0 echo </span><s=
+pan style=3D"color: #080;" class=3D"styled-by-prettify">&quot;Executing sof=
+tware...&quot;</span><span style=3D"color: #000;" class=3D"styled-by-pretti=
+fy"><br>=C2=A0 wine </span><span style=3D"color: #080;" class=3D"styled-by-=
+prettify">&quot;c:Local\my.exe&quot;</span><span style=3D"color: #000;" cla=
+ss=3D"styled-by-prettify"><br><br>=C2=A0 echo </span><span style=3D"color: =
+#080;" class=3D"styled-by-prettify">&quot;Clean session&quot;</span><span s=
+tyle=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 wineboot </sp=
+an><span style=3D"color: #660;" class=3D"styled-by-prettify">--</span><span=
+ style=3D"color: #008;" class=3D"styled-by-prettify">end</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify">session<br><br><br></span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">%</span><span style=3D"color=
+: #000;" class=3D"styled-by-prettify">files<br>=C2=A0 </span><span style=3D=
+"color: #660;" class=3D"styled-by-prettify">./</span><span style=3D"color: =
+#000;" class=3D"styled-by-prettify">wineprefix</span><span style=3D"color: =
+#660;" class=3D"styled-by-prettify">.</span><span style=3D"color: #000;" cl=
+ass=3D"styled-by-prettify">tar</span><span style=3D"color: #660;" class=3D"=
+styled-by-prettify">.</span><span style=3D"color: #000;" class=3D"styled-by=
+-prettify">gz </span><span style=3D"color: #660;" class=3D"styled-by-pretti=
+fy">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">apps<=
+/span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</span><sp=
+an style=3D"color: #000;" class=3D"styled-by-prettify">wineprefix</span><sp=
+an style=3D"color: #660;" class=3D"styled-by-prettify">.</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify">tar</span><span style=3D"col=
+or: #660;" class=3D"styled-by-prettify">.</span><span style=3D"color: #000;=
+" class=3D"styled-by-prettify">gz<br><br></span><span style=3D"color: #660;=
+" class=3D"styled-by-prettify">%</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify">post<br>=C2=A0 dpkg </span><span style=3D"color: #6=
+60;" class=3D"styled-by-prettify">--</span><span style=3D"color: #000;" cla=
+ss=3D"styled-by-prettify">add</span><span style=3D"color: #660;" class=3D"s=
+tyled-by-prettify">-</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify">architecture i386<br>=C2=A0 apt update<br>=C2=A0 apt install </sp=
+an><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span =
+style=3D"color: #000;" class=3D"styled-by-prettify">y wine<br><br>=C2=A0 </=
+span><span style=3D"color: #800;" class=3D"styled-by-prettify"># add direct=
+ories for HPC systems</span><span style=3D"color: #000;" class=3D"styled-by=
+-prettify"><br>=C2=A0 mkdir </span><span style=3D"color: #660;" class=3D"st=
+yled-by-prettify">-</span><span style=3D"color: #000;" class=3D"styled-by-p=
+rettify">p </span><span style=3D"color: #660;" class=3D"styled-by-prettify"=
+>/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">gpfs<br>=
+=C2=A0 mkdir </span><span style=3D"color: #660;" class=3D"styled-by-prettif=
+y">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">lustre=
+<br><br>=C2=A0 </span><span style=3D"color: #800;" class=3D"styled-by-prett=
+ify"># for for the wineprefix</span><span style=3D"color: #000;" class=3D"s=
+tyled-by-prettify"><br>=C2=A0 mkdir </span><span style=3D"color: #660;" cla=
+ss=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"sty=
+led-by-prettify">apps</span></div></code></div><div><br></div><div><br></di=
+v><div>The resulting <i>/.singularity.d/runscript</i></div><div><br></div><=
+div><div class=3D"prettyprint" style=3D"background-color: rgb(250, 250, 250=
+); border-color: rgb(187, 187, 187); border-style: solid; border-width: 1px=
+; word-wrap: break-word;"><code class=3D"prettyprint"><div class=3D"subpret=
+typrint"><span style=3D"color: #800;" class=3D"styled-by-prettify">#!/bin/s=
+h</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br><br><=
+br>=C2=A0 </span><span style=3D"color: #800;" class=3D"styled-by-prettify">=
+# If used through a batch (SLURM, LSF...) do not use temp but a scratch</sp=
+an><span style=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 </s=
+pan><span style=3D"color: #800;" class=3D"styled-by-prettify"># space by pr=
+oviding the SINGULARITY_TMPDIR variable to Singularity</span><span style=3D=
+"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 TEMPDIR</span><span =
+style=3D"color: #660;" class=3D"styled-by-prettify">=3D</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify">$</span><span style=3D"color=
+: #660;" class=3D"styled-by-prettify">(</span><span style=3D"color: #000;" =
+class=3D"styled-by-prettify">mktemp </span><span style=3D"color: #660;" cla=
+ss=3D"styled-by-prettify">-</span><span style=3D"color: #000;" class=3D"sty=
+led-by-prettify">p </span><span style=3D"color: #080;" class=3D"styled-by-p=
+rettify">&quot;${TMPDIR:-/tmp}&quot;</span><span style=3D"color: #000;" cla=
+ss=3D"styled-by-prettify"> </span><span style=3D"color: #660;" class=3D"sty=
+led-by-prettify">-</span><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify">d tmp</span><span style=3D"color: #660;" class=3D"styled-by-prettif=
+y">.</span><span style=3D"color: #000;" class=3D"styled-by-prettify">XXXX</=
+span><span style=3D"color: #660;" class=3D"styled-by-prettify">)</span><spa=
+n style=3D"color: #000;" class=3D"styled-by-prettify"><br><br><br>=C2=A0 ec=
+ho </span><span style=3D"color: #080;" class=3D"styled-by-prettify">&quot;C=
+reating and relocating into temporary directory $TEMPDIR...&quot;</span><sp=
+an style=3D"color: #000;" class=3D"styled-by-prettify"><br>=C2=A0 cd $TEMPD=
+IR<br><br><br>=C2=A0 </span><span style=3D"color: #008;" class=3D"styled-by=
+-prettify">export</span><span style=3D"color: #000;" class=3D"styled-by-pre=
+ttify"> WINEPREFIX</span><span style=3D"color: #660;" class=3D"styled-by-pr=
+ettify">=3D</span><span style=3D"color: #000;" class=3D"styled-by-prettify"=
+>$TEMPDIR</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/=
+</span><span style=3D"color: #000;" class=3D"styled-by-prettify">wineprefix=
+<br>=C2=A0 </span><span style=3D"color: #008;" class=3D"styled-by-prettify"=
+>export</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> WI=
+NEARCH</span><span style=3D"color: #660;" class=3D"styled-by-prettify">=3D<=
+/span><span style=3D"color: #000;" class=3D"styled-by-prettify">win32<br><b=
+r><br>=C2=A0 echo </span><span style=3D"color: #080;" class=3D"styled-by-pr=
+ettify">&quot;Restoring wineprefix...&quot;</span><span style=3D"color: #00=
+0;" class=3D"styled-by-prettify"><br>=C2=A0 tar </span><span style=3D"color=
+: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #000;" =
+class=3D"styled-by-prettify">xzf </span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify">apps</span><span style=3D"color: #660;" class=3D"styled-by-p=
+rettify">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">=
+wineprefix</span><span style=3D"color: #660;" class=3D"styled-by-prettify">=
+.</span><span style=3D"color: #000;" class=3D"styled-by-prettify">tar</span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><span st=
+yle=3D"color: #000;" class=3D"styled-by-prettify">gz<br><br><br>=C2=A0 echo=
+ </span><span style=3D"color: #080;" class=3D"styled-by-prettify">&quot;Exe=
+cuting software...&quot;</span><span style=3D"color: #000;" class=3D"styled=
+-by-prettify"><br>=C2=A0 wine </span><span style=3D"color: #080;" class=3D"=
+styled-by-prettify">&quot;c:Local\GRTMPS\HSI\grtRunHPC.exe&quot;</span><spa=
+n style=3D"color: #000;" class=3D"styled-by-prettify"><br><br><br>=C2=A0 ec=
+ho </span><span style=3D"color: #080;" class=3D"styled-by-prettify">&quot;C=
+lean session&quot;</span><span style=3D"color: #000;" class=3D"styled-by-pr=
+ettify"><br>=C2=A0 wineboot </span><span style=3D"color: #660;" class=3D"st=
+yled-by-prettify">--</span><span style=3D"color: #008;" class=3D"styled-by-=
+prettify">end</span><span style=3D"color: #660;" class=3D"styled-by-prettif=
+y">-</span><span style=3D"color: #000;" class=3D"styled-by-prettify">sessio=
+n</span></div></code></div><div><br></div></div><div><br></div><div><br></d=
+iv><div><br></div><div><br></div>On Friday, June 23, 2017 at 3:17:42 PM UTC=
+-5, vanessa wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;marg=
+in-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"=
+ltr">What is the concern with having an indentation?</div><div><br><div cla=
+ss=3D"gmail_quote">On Fri, Jun 23, 2017 at 1:10 PM, John Galt <span dir=3D"=
+ltr">&lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D=
+"bBmlmK0dAgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:=
+&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return tru=
+e;">s...@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quot=
+e" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">=
+<div dir=3D"ltr">Hi,<div><br></div><div>I just noticed that the %runscript =
+code added to the definition file was indented also in the images /.singula=
+rity.d/runscript.</div><div><br></div><div>Would this make sense to remove =
+the first level of indentation when building the container ?</div><div><br>=
+</div><div>Thanks !</div><span><font color=3D"#888888"><div><br></div><div>=
+John</div></font></span></div><span><font color=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+bBmlmK0dAgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div>=
+<div>(603) 321-0676</div></div></div></div>
+</div>
+</blockquote></div>
+------=_Part_786_2106440819.1498252984356--
+
+------=_Part_785_940968956.1498252984355--

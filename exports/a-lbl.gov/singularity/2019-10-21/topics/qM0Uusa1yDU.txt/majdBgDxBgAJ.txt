@@ -1,0 +1,242 @@
+Date: Tue, 25 Sep 2018 14:04:41 -0700 (PDT)
+From: Steve <skbi...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <eeffb9fa-7edd-45eb-871d-bb156ceeb2d1@lbl.gov>
+In-Reply-To: <1dd34fee-79d9-49c4-9360-06ee9ef27137@lbl.gov>
+References: <1dd34fee-79d9-49c4-9360-06ee9ef27137@lbl.gov>
+Subject: Re: tar: This does not look like a tar archive tar: Exiting with
+ failure status due to previous errors. Singularity 2-4 on vagrant on
+ windows10
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_2352_847551797.1537909482057"
+
+------=_Part_2352_847551797.1537909482057
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_2353_1115067807.1537909482057"
+
+------=_Part_2353_1115067807.1537909482057
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+I was getting the same error. I think this is related to the same issue 
+reported here:
+
+https://github.com/sylabs/singularity/issues/1939
+
+I resolved the issue by simply deleting the '.vagrant' directory in the 
+folder I was working out of, which causes a new Vagrant virtual machine to 
+be created. After this, the container built fine. Just keep in mind that 
+the old VM is still going to be running in VirtualBox, you will want to 
+remove it there as well. 
+
+On Tuesday, July 24, 2018 at 3:38:19 PM UTC-4, Aaron Dickey wrote:
+>
+> Hi,
+>
+> Things had been going swimmingly until a few weeks ago. This set of 
+> image.create and build commands used to go off without a hitch. Now I am 
+> not able to use my favorite docker image as a singularity image base 
+> anymore:
+> cd .\singularity-2.4\
+> vagrant init singularityware/singularity-2.4
+> vagrant up
+> vagrant ssh
+> sudo singularity image.create --size 3000 drvm.img
+> sudo singularity build --writable drvm.img docker://990210oliver/drvm 
+> --debug
+>
+> ###Failure###
+> #Building into existing container: drvm.img
+> #Docker image path: index.docker.io/990210oliver/drvm:latest
+> #Cache folder set to /root/.singularity/docker
+> #[22/22] |===================================| 100.0%
+> #Importing: base Singularity environment
+> #Importing: 
+> /root/.singularity/docker/sha256:e190868d63f8f8b85b026e53b5724c3c2a4548e1d642953442559cfa5f79b2c9.tar.gz
+> #Importing: 
+> /root/.singularity/docker/sha256:909cd34c6fd77d398af1d93e9d4f7f76104903f237be3d4db7b345a19631f291.tar.gz
+> #Importing: 
+> /root/.singularity/docker/sha256:0b9bfabab7c119abe303f22a146ff78be4ab0abdc798b0a0e97e94e80238a7e8.tar.gz
+> #Importing: 
+> /root/.singularity/docker/sha256:a3ed95caeb02ffe68cdd9fd84406680ae93d633cb16422d00e8a7c22955b46d4.tar.gz
+> #Importing: 
+> /root/.singularity/docker/sha256:88ac4362f7a101fcdb62eb60e0b75b84b94cfe6a3b45d90266acf1c902cf8e36.tar.gz
+> #
+> #gzip: 
+> /root/.singularity/docker/sha256:88ac4362f7a101fcdb62eb60e0b75b84b94cfe6a3b45d90266acf1c902cf8e36.tar.gz: 
+> not in gzip format
+> #tar: This does not look like a tar archive
+> #tar: Exiting with failure status due to previous errors
+> #Cleaning up...
+> ###Failure###
+>
+> Also tried with singularity pull:
+> sudo singularity pull docker://990210oliver/drvm --size 3000 --name 
+> drvm.img --writable --debug
+> ###Error###
+> WARNING: pull for Docker Hub is not guaranteed to produce the
+> WARNING: same image on repeated pull. Use Singularity Registry
+> WARNING: (shub://) to pull exactly equivalent images.
+> Traceback (most recent call last):
+>   File "/usr/local/libexec/singularity/python/import.py", line 109, in 
+> <module>
+>     main()
+>   File "/usr/local/libexec/singularity/python/import.py", line 86, in main
+>     layerfile=LAYERFILE)
+>   File "/usr/local/libexec/singularity/python/docker/main.py", line 83, in 
+> IMPORT
+>     client = DockerApiConnection(image=image, auth=auth)
+>   File "/usr/local/libexec/singularity/python/docker/api.py", line 89, in 
+> __init__
+>     self.load_image(kwargs['image'])
+>   File "/usr/local/libexec/singularity/python/docker/api.py", line 141, in 
+> load_image
+>     self.update_token()
+>   File "/usr/local/libexec/singularity/python/docker/api.py", line 152, in 
+> update_token
+>     response = self.get_tags(return_response=True)
+>   File "/usr/local/libexec/singularity/python/docker/api.py", line 271, in 
+> get_tags
+>     return_response=return_response)
+>   File "/usr/local/libexec/singularity/python/base.py", line 262, in get
+>     return_response=return_response)
+>   File "/usr/local/libexec/singularity/python/base.py", line 291, in 
+> submit_request
+>     response = urlopen(request)
+>   File "/usr/lib/python2.7/urllib2.py", line 154, in urlopen
+>     return opener.open(url, data, timeout)
+>   File "/usr/lib/python2.7/urllib2.py", line 429, in open
+>     response = self._open(req, data)
+>   File "/usr/lib/python2.7/urllib2.py", line 447, in _open
+>     '_open', req)
+>   File "/usr/lib/python2.7/urllib2.py", line 407, in _call_chain
+>     result = func(*args)
+>   File "/usr/lib/python2.7/urllib2.py", line 1241, in https_open
+>     context=self._context)
+>   File "/usr/lib/python2.7/urllib2.py", line 1201, in do_open
+>     r = h.getresponse(buffering=True)
+>   File "/usr/lib/python2.7/httplib.py", line 1136, in getresponse
+>     response.begin()
+>   File "/usr/lib/python2.7/httplib.py", line 453, in begin
+>     version, status, reason = self._read_status()
+>   File "/usr/lib/python2.7/httplib.py", line 409, in _read_status
+>     line = self.fp.readline(_MAXLINE + 1)
+>   File "/usr/lib/python2.7/socket.py", line 480, in readline
+>     data = self._sock.recv(self._rbufsize)
+>   File "/usr/lib/python2.7/ssl.py", line 756, in recv
+>     return self.read(buflen)
+>   File "/usr/lib/python2.7/ssl.py", line 643, in read
+>     v = self._sslobj.read(len)
+> socket.error: [Errno 104] Connection reset by peer
+> Cleaning up...
+> ###Error###
+>
+> Please help!
+>
+
+------=_Part_2353_1115067807.1537909482057
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>I was getting the same error. I think this is related=
+ to the same issue reported here:</div><div><br></div><div>https://github.c=
+om/sylabs/singularity/issues/1939</div><div><br></div><div>I resolved the i=
+ssue by simply deleting the &#39;.vagrant&#39; directory in the folder I wa=
+s working out of, which causes a new Vagrant virtual machine to be created.=
+ After this, the container built fine. Just keep in mind that the old VM is=
+ still going to be running in VirtualBox, you will want to remove it there =
+as well. <br></div><br>On Tuesday, July 24, 2018 at 3:38:19 PM UTC-4, Aaron=
+ Dickey wrote:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-l=
+eft: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr"=
+>Hi,<div><br></div><div>Things had been going swimmingly until a few weeks =
+ago. This set of image.create and build commands used to go off without a h=
+itch. Now I am not able to use my favorite docker image as a singularity im=
+age base anymore:</div><div>cd .\singularity-2.4\<br></div><div><div>vagran=
+t init singularityware/singularity-2.<wbr>4</div><div>vagrant up</div><div>=
+vagrant ssh</div></div><div>sudo singularity image.create --size 3000 drvm.=
+img<br></div><div>sudo singularity build --writable drvm.img docker://99021=
+0oliver/drvm --debug<br></div><div><br></div><div>###Failure###</div><div><=
+div>#Building into existing container: drvm.img</div><div>#Docker image pat=
+h: <a href=3D"http://index.docker.io/990210oliver/drvm:latest" target=3D"_b=
+lank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://www.google.co=
+m/url?q\x3dhttp%3A%2F%2Findex.docker.io%2F990210oliver%2Fdrvm%3Alatest\x26s=
+a\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHB70I0F8H3RA1gHkm0SbZ9quGuEw&#39;;retur=
+n true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A=
+%2F%2Findex.docker.io%2F990210oliver%2Fdrvm%3Alatest\x26sa\x3dD\x26sntz\x3d=
+1\x26usg\x3dAFQjCNHB70I0F8H3RA1gHkm0SbZ9quGuEw&#39;;return true;">index.doc=
+ker.io/990210oliver/<wbr>drvm:latest</a></div><div>#Cache folder set to /ro=
+ot/.singularity/docker</div><div>#[22/22] |=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=3D=
+=3D=3D| 100.0%</div><div>#Importing: base Singularity environment</div><div=
+>#Importing: /root/.singularity/docker/<wbr>sha256:<wbr>e190868d63f8f8b85b0=
+26e53b5724c<wbr>3c2a4548e1d642953442559cfa5f79<wbr>b2c9.tar.gz</div><div>#I=
+mporting: /root/.singularity/docker/<wbr>sha256:<wbr>909cd34c6fd77d398af1d9=
+3e9d4f7f<wbr>76104903f237be3d4db7b345a19631<wbr>f291.tar.gz</div><div>#Impo=
+rting: /root/.singularity/docker/<wbr>sha256:<wbr>0b9bfabab7c119abe303f22a1=
+46ff7<wbr>8be4ab0abdc798b0a0e97e94e80238<wbr>a7e8.tar.gz</div><div>#Importi=
+ng: /root/.singularity/docker/<wbr>sha256:<wbr>a3ed95caeb02ffe68cdd9fd84406=
+68<wbr>0ae93d633cb16422d00e8a7c22955b<wbr>46d4.tar.gz</div><div>#Importing:=
+ /root/.singularity/docker/<wbr>sha256:<wbr>88ac4362f7a101fcdb62eb60e0b75b<=
+wbr>84b94cfe6a3b45d90266acf1c902cf<wbr>8e36.tar.gz</div><div>#</div><div>#g=
+zip: /root/.singularity/docker/<wbr>sha256:<wbr>88ac4362f7a101fcdb62eb60e0b=
+75b<wbr>84b94cfe6a3b45d90266acf1c902cf<wbr>8e36.tar.gz: not in gzip format<=
+/div><div>#tar: This does not look like a tar archive</div><div>#tar: Exiti=
+ng with failure status due to previous errors</div><div>#Cleaning up...</di=
+v></div><div>###Failure###<br></div><div><br></div><div>Also tried with sin=
+gularity pull:</div><div>sudo singularity pull docker://990210oliver/drvm -=
+-size 3000 --name drvm.img --writable --debug<br></div><div>###Error###<br>=
+</div><div><div>WARNING: pull for Docker Hub is not guaranteed to produce t=
+he</div><div>WARNING: same image on repeated pull. Use Singularity Registry=
+</div><div>WARNING: (shub://) to pull exactly equivalent images.</div><div>=
+Traceback (most recent call last):</div><div>=C2=A0 File &quot;/usr/local/l=
+ibexec/<wbr>singularity/python/import.py&quot;, line 109, in &lt;module&gt;=
+</div><div>=C2=A0 =C2=A0 main()</div><div>=C2=A0 File &quot;/usr/local/libe=
+xec/<wbr>singularity/python/import.py&quot;, line 86, in main</div><div>=C2=
+=A0 =C2=A0 layerfile=3DLAYERFILE)</div><div>=C2=A0 File &quot;/usr/local/li=
+bexec/<wbr>singularity/python/docker/<wbr>main.py&quot;, line 83, in IMPORT=
+</div><div>=C2=A0 =C2=A0 client =3D DockerApiConnection(image=3D<wbr>image,=
+ auth=3Dauth)</div><div>=C2=A0 File &quot;/usr/local/libexec/<wbr>singulari=
+ty/python/docker/api.<wbr>py&quot;, line 89, in __init__</div><div>=C2=A0 =
+=C2=A0 self.load_image(kwargs[&#39;image&#39;<wbr>])</div><div>=C2=A0 File =
+&quot;/usr/local/libexec/<wbr>singularity/python/docker/api.<wbr>py&quot;, =
+line 141, in load_image</div><div>=C2=A0 =C2=A0 self.update_token()</div><d=
+iv>=C2=A0 File &quot;/usr/local/libexec/<wbr>singularity/python/docker/api.=
+<wbr>py&quot;, line 152, in update_token</div><div>=C2=A0 =C2=A0 response =
+=3D self.get_tags(return_response=3D<wbr>True)</div><div>=C2=A0 File &quot;=
+/usr/local/libexec/<wbr>singularity/python/docker/api.<wbr>py&quot;, line 2=
+71, in get_tags</div><div>=C2=A0 =C2=A0 return_response=3Dreturn_<wbr>respo=
+nse)</div><div>=C2=A0 File &quot;/usr/local/libexec/<wbr>singularity/python=
+/base.py&quot;, line 262, in get</div><div>=C2=A0 =C2=A0 return_response=3D=
+return_<wbr>response)</div><div>=C2=A0 File &quot;/usr/local/libexec/<wbr>s=
+ingularity/python/base.py&quot;, line 291, in submit_request</div><div>=C2=
+=A0 =C2=A0 response =3D urlopen(request)</div><div>=C2=A0 File &quot;/usr/l=
+ib/python2.7/urllib2.<wbr>py&quot;, line 154, in urlopen</div><div>=C2=A0 =
+=C2=A0 return opener.open(url, data, timeout)</div><div>=C2=A0 File &quot;/=
+usr/lib/python2.7/urllib2.<wbr>py&quot;, line 429, in open</div><div>=C2=A0=
+ =C2=A0 response =3D self._open(req, data)</div><div>=C2=A0 File &quot;/usr=
+/lib/python2.7/urllib2.<wbr>py&quot;, line 447, in _open</div><div>=C2=A0 =
+=C2=A0 &#39;_open&#39;, req)</div><div>=C2=A0 File &quot;/usr/lib/python2.7=
+/urllib2.<wbr>py&quot;, line 407, in _call_chain</div><div>=C2=A0 =C2=A0 re=
+sult =3D func(*args)</div><div>=C2=A0 File &quot;/usr/lib/python2.7/urllib2=
+.<wbr>py&quot;, line 1241, in https_open</div><div>=C2=A0 =C2=A0 context=3D=
+self._context)</div><div>=C2=A0 File &quot;/usr/lib/python2.7/urllib2.<wbr>=
+py&quot;, line 1201, in do_open</div><div>=C2=A0 =C2=A0 r =3D h.getresponse=
+(buffering=3DTrue)</div><div>=C2=A0 File &quot;/usr/lib/python2.7/httplib.<=
+wbr>py&quot;, line 1136, in getresponse</div><div>=C2=A0 =C2=A0 response.be=
+gin()</div><div>=C2=A0 File &quot;/usr/lib/python2.7/httplib.<wbr>py&quot;,=
+ line 453, in begin</div><div>=C2=A0 =C2=A0 version, status, reason =3D sel=
+f._read_status()</div><div>=C2=A0 File &quot;/usr/lib/python2.7/httplib.<wb=
+r>py&quot;, line 409, in _read_status</div><div>=C2=A0 =C2=A0 line =3D self=
+.fp.readline(_MAXLINE + 1)</div><div>=C2=A0 File &quot;/usr/lib/python2.7/s=
+ocket.py&quot;<wbr>, line 480, in readline</div><div>=C2=A0 =C2=A0 data =3D=
+ self._sock.recv(self._<wbr>rbufsize)</div><div>=C2=A0 File &quot;/usr/lib/=
+python2.7/ssl.py&quot;, line 756, in recv</div><div>=C2=A0 =C2=A0 return se=
+lf.read(buflen)</div><div>=C2=A0 File &quot;/usr/lib/python2.7/ssl.py&quot;=
+, line 643, in read</div><div>=C2=A0 =C2=A0 v =3D self._sslobj.read(len)</d=
+iv><div>socket.error: [Errno 104] Connection reset by peer</div><div>Cleani=
+ng up...</div></div><div>###Error###<br></div><div><br></div><div>Please he=
+lp!</div></div></blockquote></div>
+------=_Part_2353_1115067807.1537909482057--
+
+------=_Part_2352_847551797.1537909482057--

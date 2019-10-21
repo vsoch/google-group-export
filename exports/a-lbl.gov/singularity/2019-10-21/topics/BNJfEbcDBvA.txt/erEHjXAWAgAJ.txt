@@ -1,0 +1,347 @@
+Date: Mon, 19 Feb 2018 13:04:20 -0800 (PST)
+From: Richard Powell <blacksbu...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <9d96276e-7452-462a-a9d1-4b767770de88@lbl.gov>
+In-Reply-To: <CAHpBHzBYahOpc8t7-s4VQ+L1nVq4XNo7tr6bU_e0g5v5FKH-WA@mail.gmail.com>
+References: <26eecb75-37aa-4b67-90a3-8ceb43bd3729@lbl.gov>
+ <CAHpBHzBYahOpc8t7-s4VQ+L1nVq4XNo7tr6bU_e0g5v5FKH-WA@mail.gmail.com>
+Subject: Re: [Singularity] Containerization of NICE-DCV...
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_4455_183919944.1519074261231"
+
+------=_Part_4455_183919944.1519074261231
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_4456_1420986940.1519074261232"
+
+------=_Part_4456_1420986940.1519074261232
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Many thanks Will...I'll check this out.
+
+Richard
+
+On Monday, February 19, 2018 at 3:52:26 PM UTC-5, Will Furnass wrote:
+
+> Hi,
+>
+> Do you have 32-bit mesa/opengl libs installed inside your container?  
+>
+> Not sure if it's helpful but here are some notes on how I installed Abaqus 
+> + VirtualGL in a Singularity container:
+>
+> http://learningpatterns.me/posts-output/2018-01-30-abaqus-singularity/
+>
+> Cheers,
+>
+> Will
+>
+>
+>
+> On 19 February 2018 at 20:30, Richard Powell <blac...@gmail.com 
+> <javascript:>> wrote:
+>
+>> Hello all, I've hit a road block on attempts to containerize NICE-DCV 
+>> alongside my NVidia drivers.  Because my cluster is "strategically stuck" 
+>> at RHEL6.4, I'm hoping to use a RHEL6.9 container to offer ANSYS v18.1 with 
+>> 3D NVidia/Nice-enabled graphics.  I was at least successful at centralizing 
+>> the matching version of our K2 NVidia driver to an nfs mount point and get 
+>> successful output from nvidia-smi output as follows:
+>> Singularity rhel69_ansys182:/scratch/sandboxes_temp> nvidia-smi
+>> Mon Feb 19 15:07:56 2018       
+>>
+>> +-----------------------------------------------------------------------------+
+>> | NVIDIA-SMI 361.45.18              Driver Version: 
+>> 361.45.18                 |
+>>
+>> |-------------------------------+----------------------+----------------------+
+>> | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. 
+>> ECC |
+>> | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  
+>> Compute M. |
+>>
+>> |===============================+======================+======================|
+>> |   0  GRID K2             Off  | 0000:05:00.0     Off |                  
+>> Off |
+>> | N/A   29C    P8    17W / 117W |     28MiB /  4095MiB |      0%      
+>> Default |
+>>
+>> +-------------------------------+----------------------+----------------------+
+>> |   1  GRID K2             Off  | 0000:06:00.0     Off |                  
+>> Off |
+>> | N/A   27C    P8    17W / 117W |     98MiB /  4095MiB |      0%      
+>> Default |
+>>
+>> +-------------------------------+----------------------+----------------------+
+>> |   2  GRID K2             Off  | 0000:84:00.0     Off |                  
+>> Off |
+>> | N/A   30C    P8    17W / 117W |     33MiB /  4095MiB |      0%      
+>> Default |
+>>
+>> +-------------------------------+----------------------+----------------------+
+>> |   3  GRID K2             Off  | 0000:85:00.0     Off |                  
+>> Off |
+>> | N/A   28C    P8    17W / 117W |     33MiB /  4095MiB |      0%      
+>> Default |
+>>
+>> +-------------------------------+----------------------+----------------------+
+>>                                                                                
+>>
+>>
+>> +-----------------------------------------------------------------------------+
+>> | Processes:                                                       GPU 
+>> Memory |
+>> |  GPU       PID  Type  Process name                               
+>> Usage      |
+>>
+>> |=============================================================================|
+>>
+>> +-----------------------------------------------------------------------------+
+>>
+>> I then attempted to install NICE-DCV server inside this same RHEL6.9 
+>> container.  The container is hosted on a RHEL6.4 interactive node which has 
+>> a working installation of this dame NVidia driver installed, plus a working 
+>> installation of NICE-DCV server.  After installation of NICE in the 
+>> container, I set some bind points in singularity.conf as follows with 
+>> directories associated with NICE-DCV underlined below in hopes to capture 
+>> my NICE license server and other files associated with NICE.:
+>>
+>> Section from my singularity.conf file ....
+>> # BIND PATH: [STRING]
+>> # DEFAULT: Undefined
+>> # Define a list of files/directories that should be made available from 
+>> within
+>> # the container. The file or directory must exist within the container on
+>> # which to attach to. you can specify a different source and destination
+>> # path (respectively) with a colon; otherwise source and dest are the 
+>> same.
+>> #bind path = /etc/singularity/default-nsswitch.conf:/etc/nsswitch.conf
+>> *bind path = /opt/nice*
+>> *bind path = /etc/vnc*
+>> *bind path = /var/lib/dcv*
+>> *bind path = /usr/lib64*
+>> bind path = /etc/localtime
+>> bind path = /etc/hosts
+>> bind path = /scratch
+>> bind path = /nfs/system
+>> bind path = /nfs/prod/users
+>> bind path = /nfs/home
+>>
+>> When I enter my sandbox as root and attempt to enable dcv as follows, it 
+>> fails with inability to find 32bit OpenGL library...
+>> Singularity rhel69_ansys182:/scratch/sandboxes_temp> dcvadmin enable
+>> ERROR: cannot find system 32 bit OpenGL library.
+>>
+>> Since dcv must be enabled by root, am I chasing a false hope that NICE 
+>> can work within a container for non-root container users?
+>> Non-root user in container...
+>> Singularity rhel69_ansys182:/scratch/sandboxes_temp> dcvadmin enable
+>> ERROR: Only root can enable DCV.
+>>
+>> Looking below at glxinfo inside container on the left and outside the 
+>> container on the right, shows that my Nice opengl is not working properly 
+>> inside the container...
+>>
+>>
+>> Has anyone in this Singularity user group had success a getting 
+>> NVidia/Nice enabled graphics to work in a container?
+>>
+>> Thanks for any input to help.  I've reached out to the vendor of NICE 
+>> also, but no helpful information has been provided yet from them.
+>>
+>> Richard
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> -- 
+> Dr Will Furnass | Research Software Engineer
+> Dept of Computer Science | University of Sheffield
+> +44 (0) 114 22 21903 | http://rse.shef.ac.uk
+> @willfurnass | http://learningpatterns.me
+> Works for Insigneo.org: Mon, Tues, Fri
+>
+
+------=_Part_4456_1420986940.1519074261232
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Many thanks Will...I&#39;ll check this out.</div><div=
+><br></div><div>Richard<br><br>On Monday, February 19, 2018 at 3:52:26 PM U=
+TC-5, Will Furnass wrote:</div><blockquote class=3D"gmail_quote" style=3D"m=
+argin: 0px 0px 0px 0.8ex; padding-left: 1ex; border-left-color: rgb(204, 20=
+4, 204); border-left-width: 1px; border-left-style: solid;"><div dir=3D"ltr=
+"><div style=3D"font-family: arial,helvetica,sans-serif;">Hi,<br><br></div>=
+<div style=3D"font-family: arial,helvetica,sans-serif;">Do you have 32-bit =
+mesa/opengl libs installed inside your container?=C2=A0 <br><br></div><div =
+style=3D"font-family: arial,helvetica,sans-serif;">Not sure if it&#39;s hel=
+pful but here are some notes on how I installed Abaqus + VirtualGL in a Sin=
+gularity container:<br><br><a onmousedown=3D"this.href=3D&#39;http://www.go=
+ogle.com/url?q\x3dhttp%3A%2F%2Flearningpatterns.me%2Fposts-output%2F2018-01=
+-30-abaqus-singularity%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNH_4cA-RYM=
+X53NWDBQTcwOtQSk4fA&#39;;return true;" onclick=3D"this.href=3D&#39;http://w=
+ww.google.com/url?q\x3dhttp%3A%2F%2Flearningpatterns.me%2Fposts-output%2F20=
+18-01-30-abaqus-singularity%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNH_4c=
+A-RYMX53NWDBQTcwOtQSk4fA&#39;;return true;" href=3D"http://learningpatterns=
+.me/posts-output/2018-01-30-abaqus-singularity/" target=3D"_blank" rel=3D"n=
+ofollow">http://learningpatterns.me/<wbr>posts-output/2018-01-30-<wbr>abaqu=
+s-singularity/</a><br><br></div><div style=3D"font-family: arial,helvetica,=
+sans-serif;">Cheers,<br><br></div><div style=3D"font-family: arial,helvetic=
+a,sans-serif;">Will<br></div><div style=3D"font-family: arial,helvetica,san=
+s-serif;"><br><br></div></div><div><br><div class=3D"gmail_quote">On 19 Feb=
+ruary 2018 at 20:30, Richard Powell <span dir=3D"ltr">&lt;<a onmousedown=3D=
+"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#3=
+9;javascript:&#39;;return true;" href=3D"javascript:" target=3D"_blank" rel=
+=3D"nofollow" gdf-obfuscated-mailto=3D"Fg6Nq3cJAgAJ">blac...@gmail.com</a>&=
+gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin: 0px=
+ 0px 0px 0.8ex; padding-left: 1ex; border-left-color: rgb(204, 204, 204); b=
+order-left-width: 1px; border-left-style: solid;"><div dir=3D"ltr"><div>Hel=
+lo all, I&#39;ve hit a road block on attempts to containerize NICE-DCV alon=
+gside my NVidia drivers.=C2=A0 Because my cluster is &quot;strategically st=
+uck&quot; at RHEL6.4, I&#39;m hoping to use a RHEL6.9 container to offer AN=
+SYS v18.1 with 3D NVidia/Nice-enabled graphics.=C2=A0 I was at least succes=
+sful at centralizing the matching version of our K2 NVidia driver to an nfs=
+ mount point and get successful output from nvidia-smi output as follows:</=
+div><div>Singularity rhel69_ansys182:/scratch/<wbr>sandboxes_temp&gt; nvidi=
+a-smi<br>Mon Feb 19 15:07:56 2018=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 <br>+=
+-----------------------------<wbr>------------------------------<wbr>------=
+------------+<br>| NVIDIA-SMI 361.45.18=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 Driver Version: 361.45.18=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0 |<br>|-----------------------------<wbr>--+----------------=
+------+----<wbr>------------------+<br>| GPU=C2=A0 Name=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0 Persistence-M| Bus-Id=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0 Disp.A | Volatile Uncorr. ECC |<br>| Fan=C2=A0 Temp=C2=A0 P=
+erf=C2=A0 Pwr:Usage/Cap|=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 Me=
+mory-Usage | GPU-Util=C2=A0 Compute M. |<br>|=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D+=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D+=3D=3D=3D=3D<w=
+br>=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D|<br>|=C2=A0=C2=A0=
+ 0=C2=A0 GRID K2=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0 Off=C2=A0 | 0000:05:00.0=C2=A0=C2=A0=C2=A0=C2=A0 Off |=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0 Off |<br>| N/A=C2=A0=C2=A0 29C=C2=A0=C2=A0=C2=A0 P=
+8=C2=A0=C2=A0=C2=A0 17W / 117W |=C2=A0=C2=A0=C2=A0=C2=A0 28MiB /=C2=A0 4095=
+MiB |=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 0%=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 Defaul=
+t |<br>+-----------------------------<wbr>--+----------------------+----<wb=
+r>------------------+<br>|=C2=A0=C2=A0 1=C2=A0 GRID K2=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 Off=C2=A0 | 0000:06:00.=
+0=C2=A0=C2=A0=C2=A0=C2=A0 Off |=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 Off |<br>| N/A=
+=C2=A0=C2=A0 27C=C2=A0=C2=A0=C2=A0 P8=C2=A0=C2=A0=C2=A0 17W / 117W |=C2=A0=
+=C2=A0=C2=A0=C2=A0 98MiB /=C2=A0 4095MiB |=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 0%=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 Default |<br>+-----------------------------<=
+wbr>--+----------------------+----<wbr>------------------+<br>|=C2=A0=C2=A0=
+ 2=C2=A0 GRID K2=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0 Off=C2=A0 | 0000:84:00.0=C2=A0=C2=A0=C2=A0=C2=A0 Off |=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0 Off |<br>| N/A=C2=A0=C2=A0 30C=C2=A0=C2=A0=C2=A0 P=
+8=C2=A0=C2=A0=C2=A0 17W / 117W |=C2=A0=C2=A0=C2=A0=C2=A0 33MiB /=C2=A0 4095=
+MiB |=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 0%=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 Defaul=
+t |<br>+-----------------------------<wbr>--+----------------------+----<wb=
+r>------------------+<br>|=C2=A0=C2=A0 3=C2=A0 GRID K2=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 Off=C2=A0 | 0000:85:00.=
+0=C2=A0=C2=A0=C2=A0=C2=A0 Off |=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 Off |<br>| N/A=
+=C2=A0=C2=A0 28C=C2=A0=C2=A0=C2=A0 P8=C2=A0=C2=A0=C2=A0 17W / 117W |=C2=A0=
+=C2=A0=C2=A0=C2=A0 33MiB /=C2=A0 4095MiB |=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 0%=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 Default |<br>+-----------------------------<=
+wbr>--+----------------------+----<wbr>------------------+<br>=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0 <br>+-----------------------------<wbr>-----------------=
+-------------<wbr>------------------+<br>| Processes:=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=
+=A0=C2=A0=C2=A0 GPU Memory |<br>|=C2=A0 GPU=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0 PID=C2=A0 Type=C2=A0 Process name=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=C2=A0=C2=
+=A0 Usage=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |<br>|=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<wbr>=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D<wbr>=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D|<br>+----=
+-------------------------<wbr>------------------------------<wbr>----------=
+--------+</div><div><br></div><div>I then attempted to install NICE-DCV ser=
+ver inside this same RHEL6.9 container.=C2=A0 The container is hosted on a =
+RHEL6.4 interactive node which has a working installation of this dame NVid=
+ia driver installed, plus a working installation of NICE-DCV server.=C2=A0 =
+After installation of NICE in the container, I set some bind points in sing=
+ularity.conf as follows with directories associated with NICE-DCV underline=
+d below in hopes to capture my NICE license server and other files associat=
+ed with NICE.:</div><div><br></div><div><div>Section from my singularity.co=
+nf file ....</div><div># BIND PATH: [STRING]<br># DEFAULT: Undefined<br># D=
+efine a list of files/directories that should be made available from within=
+<br># the container. The file or directory must exist within the container =
+on<br># which to attach to. you can specify a different source and destinat=
+ion<br># path (respectively) with a colon; otherwise source and dest are th=
+e same.<br>#bind path =3D /etc/singularity/default-<wbr>nsswitch.conf:/etc/=
+nsswitch.<wbr>conf<br><u>bind path =3D /opt/nice</u><br><u>bind path =3D /e=
+tc/vnc</u><br><u>bind path =3D /var/lib/dcv</u><br><u>bind path =3D /usr/li=
+b64</u><br>bind path =3D /etc/localtime<br>bind path =3D /etc/hosts<br>bind=
+ path =3D /scratch<br>bind path =3D /nfs/system<br>bind path =3D /nfs/prod/=
+users<br>bind path =3D /nfs/home</div><div><br></div><div>When I enter my s=
+andbox as root and attempt to enable dcv as follows, it fails with inabilit=
+y to find 32bit OpenGL library...</div><div>Singularity rhel69_ansys182:/sc=
+ratch/<wbr>sandboxes_temp&gt; dcvadmin enable<br>ERROR: cannot find system =
+32 bit OpenGL library.</div><div><br></div><div>Since dcv must be enabled b=
+y root, am I chasing a false hope that NICE can work within a container for=
+ non-root container users?</div><div>Non-root user in container...</div><di=
+v>Singularity rhel69_ansys182:/scratch/<wbr>sandboxes_temp&gt; dcvadmin ena=
+ble<br>ERROR: Only root can enable DCV.</div><div><br></div><div>Looking be=
+low at glxinfo inside container on the left and outside the container on th=
+e right, shows that my Nice opengl is not working properly inside the conta=
+iner...</div><div><img src=3D"https://groups.google.com/a/lbl.gov/group/sin=
+gularity/attach/20977ab8d0e16/Auto%20Generated%20Inline%20Image%201?part=3D=
+0.1&amp;authuser=3D0"><br></div><div><br></div><div>Has anyone in this Sing=
+ularity user group had success a getting NVidia/Nice enabled graphics to wo=
+rk in a container?</div><div><br></div><div>Thanks for any input to help.=
+=C2=A0 I&#39;ve reached out to the vendor of NICE also, but no helpful info=
+rmation has been provided yet from them.</div><span><font color=3D"#888888"=
+><div><br></div><div>Richard<br></div></font></span></div></div><span><font=
+ color=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" o=
+nclick=3D"this.href=3D&#39;javascript:&#39;;return true;" href=3D"javascrip=
+t:" target=3D"_blank" rel=3D"nofollow" gdf-obfuscated-mailto=3D"Fg6Nq3cJAgA=
+J">singularity...@lbl.<wbr>gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><br>-- <br><div>Dr W=
+ill Furnass | Research Software Engineer<br>Dept of Computer Science | Univ=
+ersity of Sheffield<br>+44 (0) 114 22 21903 | <a onmousedown=3D"this.href=
+=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Frse.shef.ac.uk\x26sa\x3=
+dD\x26sntz\x3d1\x26usg\x3dAFQjCNENSP_hhi8_LRFmeCG5TgVyUrBztw&#39;;return tr=
+ue;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%=
+2Frse.shef.ac.uk\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNENSP_hhi8_LRFmeCG5=
+TgVyUrBztw&#39;;return true;" href=3D"http://rse.shef.ac.uk" target=3D"_bla=
+nk" rel=3D"nofollow">http://rse.shef.ac.uk</a><br>@willfurnass | <a onmouse=
+down=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Flearni=
+ngpatterns.me\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEG6j1BGdCHzy-lhPGmXV8=
+5sBo6sg&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.google.co=
+m/url?q\x3dhttp%3A%2F%2Flearningpatterns.me\x26sa\x3dD\x26sntz\x3d1\x26usg\=
+x3dAFQjCNEG6j1BGdCHzy-lhPGmXV85sBo6sg&#39;;return true;" href=3D"http://lea=
+rningpatterns.me" target=3D"_blank" rel=3D"nofollow">http://learningpattern=
+s.me</a><br>Works for Insigneo.org: Mon, Tues, Fri</div>
+</div>
+</blockquote></div>
+------=_Part_4456_1420986940.1519074261232--
+
+------=_Part_4455_183919944.1519074261231--

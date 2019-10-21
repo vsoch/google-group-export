@@ -1,0 +1,345 @@
+Date: Tue, 5 Mar 2019 00:39:27 -0800 (PST)
+From: Lars Bilke <ne...@bilke.co>
+To: singularity <singu...@lbl.gov>
+Message-Id: <252104d3-a407-45cd-a305-927355fb7492@lbl.gov>
+In-Reply-To: <7bb2ddd5-0de0-5bbd-0fa2-d60c36966e57@lal.in2p3.fr>
+References: <7bb2ddd5-0de0-5bbd-0fa2-d60c36966e57@lal.in2p3.fr>
+Subject: Re: Thoughts from a Docker -> Singularity conversion attempt
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_858_549928418.1551775167538"
+
+------=_Part_858_549928418.1551775167538
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_859_1007705112.1551775167539"
+
+------=_Part_859_1007705112.1551775167539
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Dear Hadrien,
+
+I just want to draw your attention to the project hpc-container-maker=20
+<https://github.com/NVIDIA/hpc-container-maker> which allows to script=20
+container definitions with Python. It supports both Singularity and Docker=
+=20
+output but I found creating Docker images with a subsequent conversion step=
+=20
+to Singularity (e.g. via docker2singularity=20
+<https://github.com/singularityware/docker2singularity>) most useful for=20
+development (by leveraging Dockers layer caching). I think a lot of your=20
+issues can be solved by simple scripting the whole image definition process=
+.
+
+Best,
+Lars
+
+Am Montag, 4. M=C3=A4rz 2019 16:34:56 UTC+1 schrieb Hadrien Grasland:
+>
+> Dear Singularity users,
+>
+> I've been packaging HEP software and development environments using a=20
+> combination of Spack and Docker for a while.
+>
+>    - Spack gives me customizable and ergonomic software builds, with=20
+>    automated dependency management and peaceful coexistence between diffe=
+rent=20
+>    build configurations.=20
+>    - Docker gives me cross-OS binary + environment portability, and a way=
+=20
+>    to "freeze" a snapshot of my rolling Linux distribution of choice in o=
+rder=20
+>    to momentarily prevent Spack from rebuilding everything over and over =
+again=20
+>    the way it loves to.=20
+>
+> This is what the end result currently looks like:=20
+> https://github.com/HadrienG2/spack-based-docker .
+>
+> A problem with using Docker for this purpose, though, is that it does too=
+=20
+> much container/host isolation for my use case. I don't really care for=20
+> Docker masquerading as a VM by hiding the host filesystem and processes=
+=20
+> from the container, but I do care about the cumbersome side of rememberin=
+g=20
+> to bind mount everything, ending up with root-owned files in these bind=
+=20
+> mounts if I'm not very careful, and ptrace rights being taken away from m=
+e=20
+> unless I take care to pass the magical "I don't care, I trust this=20
+> container" flags to the docker run command line. From this perspective, I=
+=20
+> sometimes feel like I'm fighting Docker's cloud-oriented design a bit too=
+=20
+> much.
+>
+> Which is what led me to investigate Singularity, an experience which I no=
+w=20
+> feel ready to report on.
+> ------------------------------
+>
+> Having some previous bad experience from the Docker -> Singularity image=
+=20
+> conversion machinery, I decided for this attempt to try to stick with a=
+=20
+> pure Singularity workflow, without Docker getting in the way at any time.=
+=20
+> This was easier than expected: bootstrapping a zypper-based image actuall=
+y=20
+> proved very smooth.
+>
+> My feeling from translating my Docker recipes afterwards is that=20
+> Singularity does deliver beautifully on the final image usability front=
+=20
+> (hurray for the simple CLI, ptrace privileges, proper file permissions, a=
+nd=20
+> /home mounting by default), but feels quite a bit more painful than Docke=
+r=20
+> on the image builder's side. Here are some particular pain points that I=
+=20
+> encountered, maybe they have some well-known solutions / workarounds ?
+>
+>    - I miss Docker's build arguments a lot.
+>    - A typical use case is building an image twice, once with debug=20
+>       software builds (for debugging) and once with release builds (for e=
+nd usage=20
+>       and profiling)=20
+>       - Another use case is controlling from remote which version of some=
+=20
+>       software gets built, and to synchronize that with the output image'=
+s file=20
+>       name.=20
+>       - A third use case is synchronizing the directory where image files=
+=20
+>       are written across multiple Singularity definition file, and making=
+ it=20
+>       externally configurable.
+>       - I appreciate Singuarity's attempt to cautiously separate build=20
+>    environment from runtime environment, but find that it makes build=20
+>    environment management difficult:=20
+>       - I often have to write each environment-altering statement three=
+=20
+>       times, once in %post, once in %test, and once in ${SINGULARITY_ENVI=
+RONMENT}=20
+>       - Build environment not being carried over from one parent image to=
+=20
+>       a child image often makes me give up and just write my whole build =
+setup in=20
+>       ${SINGULARITY_ENVIRONMENT} so that I can source that at the beginni=
+ng of=20
+>       the next image.=20
+>       - %environment is almost never usable for me because most of the=20
+>       time I need some environment to be set both for runtime and for chi=
+ld=20
+>       images.
+>       - The idea of separating a build in clear-cut %build, %post, %test=
+=20
+>    phases is nice in theory, but limiting for complex recipes=20
+>       - The folder to which I want to copy files may be created during=20
+>       %post, in which case I need to move files to a temporary directory =
+during=20
+>       %copy and re-move them later.=20
+>       - Some tests can only be run at some stages during the build=20
+>       process, because they rely on a build folder which must be cleaned =
+up at=20
+>       the end of the recipe.=20
+>       - SINGULARITY_ENVIRONMENT not being sourced before %test is painful=
+=20
+>       and uncalled for.
+>       - A replacement to Docker layers for build snapshots would be much=
+=20
+>    appreciated.=20
+>       - I certainly don't miss the build performance/size vs recipe=20
+>       readability compromise of Docker saving a layer after every RUN sta=
+tement...=20
+>       - ...but I do miss being able to quickly investigate a failed build=
+=20
+>       and restart it without going through my whole %post section all ove=
+r again.=20
+>   =20
+> In short, I would be longing for....
+>
+>    - A way to use some externally configurable environment in a=20
+>    singularity definition file (including, and I guess that's the difficu=
+lt=20
+>    part, in the "From:" statement)=20
+>    - An alternative to SINGULARITY_ENVIRONMENT for configuring build=20
+>    environment instead of runtime environment=20
+>    - A less hacky way to pass environment to childe images' build recipes=
+=20
+>    (may or may not be merged with the above)
+>    - A way to check if tests are enabled in %post as a more flexible=20
+>    alternative to the %test section=20
+>       - ...and runtime environment being sourced before the %test section=
+=20
+>       begins.=20
+>    - Faster / easier ways to debug failed Singularity builds than=20
+>    modifying the recipe and restarting it from the beginning.=20
+>
+> ...but some of that may be an XY problem coming from my Docker user habit=
+s=20
+> :)
+>
+> Cheers,
+> Hadrien
+>
+
+------=_Part_859_1007705112.1551775167539
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Dear Hadrien,<div><br></div><div>I just want to draw your =
+attention to the project <a href=3D"https://github.com/NVIDIA/hpc-container=
+-maker">hpc-container-maker</a>=C2=A0which allows to script container defin=
+itions with Python. It supports both Singularity and Docker output but I fo=
+und creating Docker images with a subsequent conversion step to Singularity=
+ (e.g. via <a href=3D"https://github.com/singularityware/docker2singularity=
+">docker2singularity</a>) most useful for development (by leveraging Docker=
+s layer caching). I think a lot of your issues can be solved by simple scri=
+pting the whole image definition process.</div><div><br></div><div>Best,</d=
+iv><div>Lars<br><br>Am Montag, 4. M=C3=A4rz 2019 16:34:56 UTC+1 schrieb Had=
+rien Grasland:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-l=
+eft: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;">
+ =20
+
+   =20
+ =20
+  <div text=3D"#000000" bgcolor=3D"#FFFFFF">
+    <p>Dear Singularity users,</p>
+    <p>I&#39;ve been packaging HEP software and development environments
+      using a combination of Spack and Docker for a while.</p>
+    <ul>
+      <li>Spack gives me customizable and ergonomic software builds,
+        with automated dependency management and peaceful coexistence
+        between different build configurations.</li>
+      <li>Docker gives me cross-OS binary + environment portability, and
+        a way to &quot;freeze&quot; a snapshot of my rolling Linux distribu=
+tion of
+        choice in order to momentarily prevent Spack from rebuilding
+        everything over and over again the way it loves to.</li>
+    </ul>
+    <p>This is what the end result currently looks like:
+      <a href=3D"https://github.com/HadrienG2/spack-based-docker" target=3D=
+"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://www.googl=
+e.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2FHadrienG2%2Fspack-based-docker\x2=
+6sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNEVMJfmHq79fmBcSLUbYN2KFtTJFw&#39;;ret=
+urn true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\x3dhttp=
+s%3A%2F%2Fgithub.com%2FHadrienG2%2Fspack-based-docker\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNEVMJfmHq79fmBcSLUbYN2KFtTJFw&#39;;return true;">https://=
+github.com/HadrienG2/<wbr>spack-based-docker</a> .</p>
+    <p>A problem with using Docker for this purpose, though, is that it
+      does too much container/host isolation for my use case. I don&#39;t
+      really care for Docker masquerading as a VM by hiding the host
+      filesystem and processes from the container, but I do care about
+      the cumbersome side of remembering to bind mount everything,
+      ending up with root-owned files in these bind mounts if I&#39;m not
+      very careful, and ptrace rights being taken away from me unless I
+      take care to pass the magical &quot;I don&#39;t care, I trust this
+      container&quot; flags to the docker run command line. From this
+      perspective, I sometimes feel like I&#39;m fighting Docker&#39;s
+      cloud-oriented design a bit too much.</p>
+    <p>Which is what led me to investigate Singularity, an experience
+      which I now feel ready to report on.</p>
+    <hr width=3D"100%" size=3D"2">
+    <p>Having some previous bad experience from the Docker -&gt;
+      Singularity image conversion machinery, I decided for this attempt
+      to try to stick with a pure Singularity workflow, without Docker
+      getting in the way at any time. This was easier than expected:
+      bootstrapping a zypper-based image actually proved very smooth.<br>
+    </p>
+    <p>My feeling from translating my Docker recipes afterwards is that
+      Singularity does deliver beautifully on the final image usability
+      front (hurray for the simple CLI, ptrace privileges, proper file
+      permissions, and /home mounting by default), but feels quite a bit
+      more painful than Docker on the image builder&#39;s side. Here are
+      some particular pain points that I encountered, maybe they have
+      some well-known solutions / workarounds ?</p>
+    <ul>
+      <li>I miss Docker&#39;s build arguments a lot.<br>
+      </li>
+      <ul>
+        <li>A typical use case is building an image twice, once with
+          debug software builds (for debugging) and once with release
+          builds (for end usage and profiling)</li>
+        <li>Another use case is controlling from remote which version of
+          some software gets built, and to synchronize that with the
+          output image&#39;s file name.</li>
+        <li>A third use case is synchronizing the directory where image
+          files are written across multiple Singularity definition file,
+          and making it externally configurable.<br>
+        </li>
+      </ul>
+      <li>I appreciate Singuarity&#39;s attempt to cautiously separate buil=
+d
+        environment from runtime environment, but find that it makes
+        build environment management difficult:</li>
+      <ul>
+        <li>I often have to write each environment-altering statement
+          three times, once in %post, once in %test, and once in
+          ${SINGULARITY_ENVIRONMENT}</li>
+        <li>Build environment not being carried over from one parent
+          image to a child image often makes me give up and just write
+          my whole build setup in ${SINGULARITY_ENVIRONMENT} so that I
+          can source that at the beginning of the next image.</li>
+        <li>%environment is almost never usable for me because most of
+          the time I need some environment to be set both for runtime
+          and for child images.<br>
+        </li>
+      </ul>
+      <li>The idea of separating a build in clear-cut %build, %post,
+        %test phases is nice in theory, but limiting for complex recipes</l=
+i>
+      <ul>
+        <li>The folder to which I want to copy files may be created
+          during %post, in which case I need to move files to a
+          temporary directory during %copy and re-move them later.</li>
+        <li>Some tests can only be run at some stages during the build
+          process, because they rely on a build folder which must be
+          cleaned up at the end of the recipe.</li>
+        <li>SINGULARITY_ENVIRONMENT not being sourced before %test is
+          painful and uncalled for.<br>
+        </li>
+      </ul>
+      <li>A replacement to Docker layers for build snapshots would be
+        much appreciated.</li>
+      <ul>
+        <li>I certainly don&#39;t miss the build performance/size vs recipe
+          readability compromise of Docker saving a layer after every
+          RUN statement...</li>
+        <li>...but I do miss being able to quickly investigate a failed
+          build and restart it without going through my whole %post
+          section all over again.</li>
+      </ul>
+    </ul>
+    <p>In short, I would be longing for....</p>
+    <ul>
+      <li>A way to use some externally configurable environment in a
+        singularity definition file (including, and I guess that&#39;s the
+        difficult part, in the &quot;From:&quot; statement)</li>
+      <li>An alternative to SINGULARITY_ENVIRONMENT for configuring
+        build environment instead of runtime environment</li>
+      <li>A less hacky way to pass environment to childe images&#39; build
+        recipes (may or may not be merged with the above)<br>
+      </li>
+      <li>A way to check if tests are enabled in %post as a more
+        flexible alternative to the %test section</li>
+      <ul>
+        <li>...and runtime environment being sourced before the %test
+          section begins.</li>
+      </ul>
+      <li>Faster / easier ways to debug failed Singularity builds than
+        modifying the recipe and restarting it from the beginning.</li>
+    </ul>
+    <p>...but some of that may be an XY problem coming from my Docker
+      user habits :)<br>
+    </p>
+    <p>Cheers,<br>
+      Hadrien<br>
+    </p>
+  </div>
+
+</blockquote></div></div>
+------=_Part_859_1007705112.1551775167539--
+
+------=_Part_858_549928418.1551775167538--

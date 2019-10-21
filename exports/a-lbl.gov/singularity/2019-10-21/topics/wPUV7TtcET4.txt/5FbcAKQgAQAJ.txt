@@ -1,0 +1,807 @@
+X-Received: by 10.98.139.66 with SMTP id j63mr2694365pfe.35.1495895326051;
+        Sat, 27 May 2017 07:28:46 -0700 (PDT)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.36.31.136 with SMTP id d130ls1059756itd.15.gmail; Sat, 27 May
+ 2017 07:28:45 -0700 (PDT)
+X-Received: by 10.99.154.18 with SMTP id o18mr8662327pge.59.1495895325110;
+        Sat, 27 May 2017 07:28:45 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1495895325; cv=none;
+        d=google.com; s=arc-20160816;
+        b=t4BMyKQyP1a/c336GROacFyxNm6n0lY54Julb098PkugLwmtRO3/6EgixrVQ5rh3ew
+         GAxBzaefubfdfbvzwn8RdXgsP7GznlhKVPSBYtyb2fmYAZ+1drBOzwfqarSoLkUqzRFW
+         DUwYcFnXPK3vrQSBzWR3zrh4WmlOiMGQUtzRKyPVBUKPCGxUDhiXEYa2hcTiE2/UxZtM
+         E72oKLSC2VKueJbXl5uVIFDkUOeUhFSccMg33pxtpqnezGE/rEg7OVyNBxzaegCJ6rRv
+         zWA6f3oGHc2oC2cP+/ZTWPVS06L9It6FmXMGgwWQS+LpCpc+KtNhtIHrRwnpJlCd/ryt
+         yYhA==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816;
+        h=to:subject:message-id:date:from:references:in-reply-to:mime-version
+         :dkim-signature:arc-authentication-results;
+        bh=tIx7vCY4EMhFwy1zzjOATWN3RUWSAYn4xc8dYKvvVFA=;
+        b=oTjSi2BwIlmaz68/dgK9s2HtcL5baBbIrGaFXOGeMrI4/d6D8cFzUokHfKJIDjvgi0
+         OC5ZJYGf7HlT8y4a9vTpeRBkHdqzmBS1OgLLqkUhyjO5K3RE//8DRQJF0pVQXaykOVs6
+         XpyUlobe6wxQxbrh1QOXX6un//a1Y2bG0F2gl8+LwFOR45oeyGkrQa8y7vVlC/wnQeuD
+         MtZ3Zi6/ips65dCFPlbQsi0A+eniiE5BIjadLK3ryWJsBRQO7Tl+SpIZI/iJi0sgRZ2w
+         vX1jFEj3AbaZLh4a2fu83988H97WnWt56Bt9QQSXxB5FYy7/KDpDCjkYdoZbXw1S6Duv
+         Bk9Q==
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=pass head...@gmail.com;
+       spf=pass (google.com: domain of rem...@gmail.com designates 209.85.220.169 as permitted sender) smtp.mailfrom=rem...@gmail.com
+Return-Path: <rem...@gmail.com>
+Received: from fe3.lbl.gov (fe3.lbl.gov. [128.3.41.68])
+        by mx.google.com with ESMTP id m17si4553280pge.5.2017.05.27.07.28.44
+        for <singu...@lbl.gov>;
+        Sat, 27 May 2017 07:28:45 -0700 (PDT)
+Received-SPF: pass (google.com: domain of rem...@gmail.com designates 209.85.220.169 as permitted sender) client-ip=209.85.220.169;
+Authentication-Results: mx.google.com;
+       dkim=pass head...@gmail.com;
+       spf=pass (google.com: domain of rem...@gmail.com designates 209.85.220.169 as permitted sender) smtp.mailfrom=rem...@gmail.com
+X-Ironport-SBRS: 3.4
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: =?us-ascii?q?A2FQAQAhjClZhqncVdFZAxwBAQQBAQoBA?=
+ =?us-ascii?q?RcBAQQBAQoBAYMBgQuBDQeDYwiBNlCZdpV5gUxDIQEKgkKBXIFaAoMDB0AXAQE?=
+ =?us-ascii?q?BAQEBAQEBAQECEAEBAQgLCwgoL4IzBQIDGgYIRikvAQEBAQEBAQEBAR8CDR4lA?=
+ =?us-ascii?q?QEYAQEBAQIBIx0BDQ4eAwELBgMCCwoDKgICIQEBDgMBBQEcDgcEAQcTAgSIN4E?=
+ =?us-ascii?q?5AQMNCAULjTWRGj+MB4IEBQEcgwoFg1EKGScNVoM7AQoBAQEBAQEZAgEFEogvg?=
+ =?us-ascii?q?x+CWIFiEgE9DBqCS4JgAQSBLAGIIZQaOQKBRIVcgzYFg3WEWIIGgWKOD4kBgjG?=
+ =?us-ascii?q?HVBQfgRUhAoEBMwtRI3RYg1kqDxAMgWU+NgEGhwlHgWcBAQE?=
+X-IronPort-AV: E=Sophos;i="5.38,403,1491289200"; 
+   d="scan'208,217";a="76536705"
+Received: from mail-qk0-f169.google.com ([209.85.220.169])
+  by fe3.lbl.gov with ESMTP; 27 May 2017 07:28:42 -0700
+Received: by mail-qk0-f169.google.com with SMTP id k74so24808797qke.1
+        for <singu...@lbl.gov>; Sat, 27 May 2017 07:28:43 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=mime-version:in-reply-to:references:from:date:message-id:subject:to;
+        bh=tIx7vCY4EMhFwy1zzjOATWN3RUWSAYn4xc8dYKvvVFA=;
+        b=afQNVQQXu0Eg3v6GEo6LIZYwhla1S92VeB8Tf9FfwiOMH7Y2bp2Bf1F130jgO8Sz+t
+         7ARN/5NdYzbbI+p8T4wwYti/+UGmlGFg/I0QjdkzKHn1xJKqqxYLZsgPEQgnrjzC01Ar
+         AlM3LIhvjSeMOSOUNEtEARiQFGPSD7TD9TJBRpMA4L68RdmYkijPPF5OFFyHX0twRYZ5
+         aqqNJaQL4qiSNmK/tlCTOzHg4eTez6si13bCJbyBikUCGaWPn3TePfMUdEtkeFNOIPGH
+         lTHLnhJW2naz6WuzkwKDcrLeUBC6m8TADkAE999RmRXJg5380XbIRRd+Fzr3Ta8bU9x0
+         Fh7w==
+X-Gm-Message-State: AODbwcAfDD5i1Z5HfzlVEvLtydY2e4cqZuoVDqcCPskKPDa5GRdH/Q9R
+	svS79Cy2vbJ6Gvua8C8cUC+wIyc8tQ==
+X-Received: by 10.55.52.79 with SMTP id b76mr6193410qka.140.1495895322005;
+ Sat, 27 May 2017 07:28:42 -0700 (PDT)
+MIME-Version: 1.0
+Received: by 10.237.62.100 with HTTP; Sat, 27 May 2017 07:28:40 -0700 (PDT)
+Received: by 10.237.62.100 with HTTP; Sat, 27 May 2017 07:28:40 -0700 (PDT)
+In-Reply-To: <CAA6Bz=dT+EKHhTCV4T8=Hw-8jYM6FGTjcpUYuxM_fxayz1ZkmQ@mail.gmail.com>
+References: <CABmXgEHsT97RgL9Hzp70=3YeF0Nfq-aut4ESRJzsTjzyq6RV+Q@mail.gmail.com>
+ <CAM=pu+KZ5Bfantj=9beoa9saq6NzZrnP+xaBmqELw+HS=t7mxQ@mail.gmail.com>
+ <CAApQTThFRUZ6OAK3HCd0Q7FNeyuANf3V63R3-kf-PS8FEmeEpA@mail.gmail.com>
+ <CAA6Bz=ef4FzQVswyif-1h=kdyUBvdjN8zurRUyc20ukKfPMLJw@mail.gmail.com>
+ <C7FC6D61-7C36-4D8A-AE9E-23E7392B9821@lanl.gov> <CABmXgEEn4KZt8Oe-VMLCZybg8cG-cfhjhv12Cat-hXxGYmPQGQ@mail.gmail.com>
+ <CAApQTTjEy0NBrLVC5nwbSGgzhLitm-DfQ6wh_4b7xHgQedQP8w@mail.gmail.com>
+ <CABmXgEGgG=4RcReHCe1dmppU0vW7EcLP9pSht0pC2mRq_nW2XA@mail.gmail.com>
+ <CAM=pu+JQY=6mjvHzs9WhUb4x96M=BSnE8=67UHPoXQhctA8LBQ@mail.gmail.com>
+ <CABmXgEGKycR9dCwsxrc_=xYUOcNbZuvOnM_rwwJnVhSADqjVpQ@mail.gmail.com>
+ <CABmXgEEKvPphM48n+AA03toV0=Gjx2bPj-=+_HdBnvJVsmzTGA@mail.gmail.com>
+ <CAApQTTjT-dcr-SLnJa_GiS+qGyUjHErRo+HX+xZf8UvQPqzWwQ@mail.gmail.com> <CAA6Bz=dT+EKHhTCV4T8=Hw-8jYM6FGTjcpUYuxM_fxayz1ZkmQ@mail.gmail.com>
+From: =?UTF-8?B?UsOpbXkgRGVybmF0?= <rem...@gmail.com>
+Date: Sat, 27 May 2017 16:28:40 +0200
+Message-ID: <CAA6Bz=dMSesjK-E86-LGmGdnUcLiUjp3jCg1vNHy1dSc0wAGjg@mail.gmail.com>
+Subject: Re: [Singularity] Singularity and "development mode" python package
+To: singularity@lbl.gov
+Content-Type: multipart/alternative; boundary="001a114901d84a16a3055082455d"
+
+--001a114901d84a16a3055082455d
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+Hi Laurent
+
+You can also change your PYTHONHOME or your PYTHONPATH...:
+https://docs.python.org/2/using/cmdline.html
+
+Best regards
+R=C3=A9my.
+
+Le 26 mai 2017 20:19, "Gregory M. Kurtzer" <gmku...@gmail.com> a =C3=A9crit=
+ :
+
+How about the usage of the `-H` option to create a virtual home?
+
+On Fri, May 26, 2017 at 10:56 AM, Laurent C. <lrn...@gmail.com> wrote:
+
+> Hello,
+>
+> Some more test.
+> When running the container with --contain it launches the software
+> installed in the container, and not the one in the host $HOME.
+> But none of the host $HOME is available. This is not desirable if
+> needed to run the software on host data, which is the likely use case.
+> It seems like the solution might be to create a virtualenv inside the
+> container.
+>
+> Regards,
+> Laurent
+>
+> 2017-05-23 15:38 GMT-05:00 Laurent C. <lrn...@gmail.com>:
+> > Hello Vanessa,
+> >
+> > Thanks for your answer. The problem is that the executable of the
+> > "development version" of itzi is actually in /usr/local/bin/itzi.
+> > This executable is a Python script that call the python files inside
+> > the user HOME directory.
+> >
+> > cat /usr/local/bin/itzi
+> >
+> > #!/usr/bin/python
+> > # EASY-INSTALL-ENTRY-SCRIPT: 'itzi','console_scripts','itzi'
+> > __requires__ =3D 'itzi'
+> > import sys
+> > from pkg_resources import load_entry_point
+> >
+> > if __name__ =3D=3D '__main__':
+> >     sys.exit(
+> >         load_entry_point('itzi', 'console_scripts', 'itzi')()
+> >
+> >
+> > So it seems that the trouble happen because pkg_resources says where
+> > are the actual files to be executed.
+> > Unfortunately I haven't found information on how to circumvent this.
+> > My guess is that is defined by some kind of Python environment.
+> >
+> > Regards,
+> > Laurent
+> >
+> >
+> > 2017-05-19 15:34 GMT-05:00 vanessa s <vso...@gmail.com>:
+> >> Hey Laurent,
+> >>
+> >> I think best practice is to just be very specific about the executable
+> that
+> >> is called, and rely on path variables as minimally as possible. If the
+> itzi
+> >> that is installed to your container is reliably importing modules from
+> it's
+> >> same installed python (if not we again need to check pythonpath) then
+> you
+> >> would just be specific to have your spec file look like this:
+> >>
+> >>
+> >>> BootStrap: docker
+> >>> From: ubuntu:16.10
+> >>> %setup
+> >>> %post
+> >>>     apt-get update && apt-get install -y \
+> >>>     grass-core \
+> >>>     python-pip
+> >>>     pip install --disable-pip-version-check --upgrade pip
+> >>>     pip install itzi
+> >>
+> >>
+> >>>
+> >>>
+> >>> %runscript
+> >>>     exec /usr/local/bin/itzi "$@"
+> >>
+> >>
+> >>
+> >> and then running:
+> >>
+> >>>
+> >>> ./itzi.img --help
+> >>> usage: itzi [-h] {run,version} ...
+> >>> A dynamic, fully distributed hydraulic and hydrologic model.
+> >>> positional arguments:
+> >>>   {run,version}
+> >>>     run          run a simulation
+> >>>     version      display software version number
+> >>> optional arguments:
+> >>>   -h, --help     show this help message and exit
+> >>
+> >>
+> >>
+> >> Of course the only difference is calling the itzi in the container
+> directly!
+> >> to check this, I just added "which itzi" to the %post section to see t=
+he
+> >> version installed, and then added that path to the runscript. I ran in=
+to
+> >> this exact issue when I started using Singularity, and I've found this
+> to be
+> >> the most straightforward approach. It should actually be taken for mos=
+t
+> >> executable calls, because you can never be sure if/when the person usi=
+ng
+> >> your container has the same executable somewhere within the containers
+> >> sight.
+> >>
+> >> Best,
+> >>
+> >> Vanessa
+> >>
+> >>
+> >> On Fri, May 19, 2017 at 12:31 PM, Laurent C. <lrn...@gmail.com> wrote:
+> >>>
+> >>> Hello,
+> >>>
+> >>> I believe that which program is run is influenced by the PATH variabl=
+e.
+> >>>
+> >>> On the host:
+> >>>
+> >>> /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+> :/usr/games:/usr/local/games:/snap/bin
+> >>>
+> >>> In the container:
+> >>> /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+> >>>
+> >>> On the host, ~/.local/bin/ is not in the PATH. So when running my
+> >>> software from the command line on the host, it actually call
+> >>> /usr/local/bin/itzi, but then, through Python's entry points system,
+> >>> run the files on my development folder in my home directory.
+> >>> This for the Python thing. I still don't understand how to circumvent
+> >>> this behaviour and make sure that when running the container, it does
+> >>> not run the file from $HOME.
+> >>>
+> >>> Regards,
+> >>> Laurent
+> >>>
+> >>>
+> >>>
+> >>> 2017-05-19 10:06 GMT-05:00 Gregory M. Kurtzer <gmku...@gmail.com>:
+> >>> > I am not much of a Python programmer, but if the path which include=
+s
+> >>> > `~/.local/bin` can be influenced by an environment variable, you ca=
+n
+> do
+> >>> > this
+> >>> > by setting (or unsetting) it in `/etc/singularity/init` or
+> >>> > `~/.singularity-init` or you can variable transposition within
+> >>> > Singularity
+> >>> > to do things like:
+> >>> >
+> >>> > on the host:
+> >>> >
+> >>> > SINGULARITYENV_HELLO=3DWORLD
+> >>> > export SINGULARITYENV_HELLO
+> >>> >
+> >>> > within the container, that will be transposed to `HELLO=3DWORLD`. A=
+nd
+> if
+> >>> > you
+> >>> > set a variable to nothing `...=3D""` it will unset it from within t=
+he
+> host
+> >>> > as
+> >>> > follows:
+> >>> >
+> >>> > HELLO=3DWORLD
+> >>> > SINGULARITYENV_HELLO=3D""
+> >>> > export HELLO SINGULARITYENV_HELLO
+> >>> >
+> >>> > Within the container, neither "HELLO" nor "SINGULARITYENV_HELLO"
+> will be
+> >>> > defined.
+> >>> >
+> >>> > Hope that helps!
+> >>> >
+> >>> > On Fri, May 19, 2017 at 7:54 AM, Laurent C. <lrn...@gmail.com>
+> wrote:
+> >>> >>
+> >>> >> Hello all,
+> >>> >>
+> >>> >> Thanks for all your answers. I'll try to give the information you'=
+ve
+> >>> >> asked.
+> >>> >>
+> >>> >> $ singularity --version
+> >>> >> 2.2.99-development.g26e35168
+> >>> >>
+> >>> >> Bootstrap file:
+> >>> >>
+> >>> >> BootStrap: docker
+> >>> >> From: ubuntu:16.10
+> >>> >>
+> >>> >> %setup
+> >>> >>
+> >>> >> %post
+> >>> >>     apt-get update && apt-get install -y \
+> >>> >>     grass-core \
+> >>> >>     python-pip
+> >>> >>     pip install --disable-pip-version-check --upgrade pip
+> >>> >>     pip install itzi
+> >>> >>
+> >>> >> %runscript
+> >>> >>     exec itzi "$@"
+> >>> >>
+> >>> >>
+> >>> >>
+> >>> >> I now think the main point here is that on the host, I've installe=
+d
+> >>> >> the development version of itzi as a user. It resides in
+> ~/.local/bin/
+> >>> >> on the host.
+> >>> >> On the container, it is installed as root (see def file above).
+> >>> >>
+> >>> >> Therefore, as mentioned by R=C3=A9my, it might be the shared $HOME=
+ that
+> >>> >> create the issue. So, if I want to make sure that the python
+> packages
+> >>> >> installed on the host by the user do not interfere with packages
+> >>> >> inside the container, should I create a virtualenv inside the
+> >>> >> container?
+> >>> >>
+> >>> >> Regards,
+> >>> >> Laurent
+> >>> >>
+> >>> >>
+> >>> >>
+> >>> >> 2017-05-19 9:24 GMT-05:00 Priedhorsky, Reid <rei...@lanl.gov>:
+> >>> >> >
+> >>> >> >> On May 19, 2017, at 12:02 AM, R=C3=A9my Dernat <rem...@gmail.co=
+m>
+> wrote:
+> >>> >> >>
+> >>> >> >> Did you add the flag '--user' to your pip install or do you use
+> >>> >> >> pyenv
+> >>> >> >> or virtualenv or another thing (conda ?) ?
+> >>> >> >
+> >>> >> > pip can have =E2=80=9Cinteresting=E2=80=9D ideas about things at=
+ times. IIRC,
+> --user
+> >>> >> > is
+> >>> >> > the default in recent versions and there=E2=80=99s no opposite s=
+uch as
+> >>> >> > --system.
+> >>> >> > There are alternative options similar to --prefix but last time =
+I
+> >>> >> > tinkered
+> >>> >> > with it a little I couldn=E2=80=99t get it to work.
+> >>> >> >
+> >>> >> > HTH,
+> >>> >> > Reid
+> >>> >> >
+> >>> >> > --
+> >>> >> > You received this message because you are subscribed to the Goog=
+le
+> >>> >> > Groups "singularity" group.
+> >>> >> > To unsubscribe from this group and stop receiving emails from it=
+,
+> >>> >> > send
+> >>> >> > an email to singu...@lbl.gov.
+> >>> >>
+> >>> >> --
+> >>> >> You received this message because you are subscribed to the Google
+> >>> >> Groups
+> >>> >> "singularity" group.
+> >>> >> To unsubscribe from this group and stop receiving emails from it,
+> send
+> >>> >> an
+> >>> >> email to singu...@lbl.gov.
+> >>> >
+> >>> >
+> >>> > --
+> >>> > You received this message because you are subscribed to the Google
+> >>> > Groups
+> >>> > "singularity" group.
+> >>> > To unsubscribe from this group and stop receiving emails from it,
+> send
+> >>> > an
+> >>> > email to singu...@lbl.gov.
+> >>>
+> >>> --
+> >>> You received this message because you are subscribed to the Google
+> Groups
+> >>> "singularity" group.
+> >>> To unsubscribe from this group and stop receiving emails from it, sen=
+d
+> an
+> >>> email to singu...@lbl.gov.
+> >>
+> >>
+> >>
+> >>
+> >> --
+> >> Vanessa Villamia Sochat
+> >> Stanford University '16
+> >> (603) 321-0676
+> >>
+> >> --
+> >> You received this message because you are subscribed to the Google
+> Groups
+> >> "singularity" group.
+> >> To unsubscribe from this group and stop receiving emails from it, send
+> an
+> >> email to singu...@lbl.gov.
+>
+> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+>
+
+--=20
+You received this message because you are subscribed to the Google Groups
+"singularity" group.
+To unsubscribe from this group and stop receiving emails from it, send an
+email to singu...@lbl.gov.
+
+--001a114901d84a16a3055082455d
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"auto">Hi Laurent<div dir=3D"auto"><br></div><div dir=3D"auto">Y=
+ou can also change your PYTHONHOME or your PYTHONPATH...:</div><div dir=3D"=
+auto"><a href=3D"https://docs.python.org/2/using/cmdline.html">https://docs=
+.python.org/2/using/cmdline.html</a><br></div><div dir=3D"auto"><br></div><=
+div dir=3D"auto">Best regards</div><div dir=3D"auto">R=C3=A9my.</div></div>=
+<div class=3D"gmail_extra"><br><div class=3D"gmail_quote">Le=C2=A026 mai 20=
+17 20:19, &quot;Gregory M. Kurtzer&quot; &lt;<a href=3D"mailto:gmku...@gmai=
+l.com">gmku...@gmail.com</a>&gt; a =C3=A9crit=C2=A0:<br type=3D"attribution=
+"><blockquote class=3D"quote" style=3D"margin:0 0 0 .8ex;border-left:1px #c=
+cc solid;padding-left:1ex"><div dir=3D"ltr">How about the usage of the `-H`=
+ option to create a virtual home?</div><div class=3D"elided-text"><div clas=
+s=3D"gmail_extra"><br><div class=3D"gmail_quote">On Fri, May 26, 2017 at 10=
+:56 AM, Laurent C. <span dir=3D"ltr">&lt;<a href=3D"mailto:lrn...@gmail.com=
+" target=3D"_blank">lrn...@gmail.com</a>&gt;</span> wrote:<br><blockquote c=
+lass=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;=
+padding-left:1ex">Hello,<br>
+<br>
+Some more test.<br>
+When running the container with --contain it launches the software<br>
+installed in the container, and not the one in the host $HOME.<br>
+But none of the host $HOME is available. This is not desirable if<br>
+needed to run the software on host data, which is the likely use case.<br>
+It seems like the solution might be to create a virtualenv inside the conta=
+iner.<br>
+<br>
+Regards,<br>
+Laurent<br>
+<div class=3D"m_-6397558296147122493HOEnZb"><div class=3D"m_-63975582961471=
+22493h5"><br>
+2017-05-23 15:38 GMT-05:00 Laurent C. &lt;<a href=3D"mailto:lrn...@gmail.co=
+m" target=3D"_blank">lrn...@gmail.com</a>&gt;:<br>
+&gt; Hello Vanessa,<br>
+&gt;<br>
+&gt; Thanks for your answer. The problem is that the executable of the<br>
+&gt; &quot;development version&quot; of itzi is actually in /usr/local/bin/=
+itzi.<br>
+&gt; This executable is a Python script that call the python files inside<b=
+r>
+&gt; the user HOME directory.<br>
+&gt;<br>
+&gt; cat /usr/local/bin/itzi<br>
+&gt;<br>
+&gt; #!/usr/bin/python<br>
+&gt; # EASY-INSTALL-ENTRY-SCRIPT: &#39;itzi&#39;,&#39;console_scripts&#39;,=
+&#39;itzi<wbr>&#39;<br>
+&gt; __requires__ =3D &#39;itzi&#39;<br>
+&gt; import sys<br>
+&gt; from pkg_resources import load_entry_point<br>
+&gt;<br>
+&gt; if __name__ =3D=3D &#39;__main__&#39;:<br>
+&gt;=C2=A0 =C2=A0 =C2=A0sys.exit(<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0load_entry_point(&#39;itzi&#39;, &#39=
+;console_scripts&#39;, &#39;itzi&#39;)()<br>
+&gt;<br>
+&gt;<br>
+&gt; So it seems that the trouble happen because pkg_resources says where<b=
+r>
+&gt; are the actual files to be executed.<br>
+&gt; Unfortunately I haven&#39;t found information on how to circumvent thi=
+s.<br>
+&gt; My guess is that is defined by some kind of Python environment.<br>
+&gt;<br>
+&gt; Regards,<br>
+&gt; Laurent<br>
+&gt;<br>
+&gt;<br>
+&gt; 2017-05-19 15:34 GMT-05:00 vanessa s &lt;<a href=3D"mailto:vso...@gmai=
+l.com" target=3D"_blank">vso...@gmail.com</a>&gt;:<br>
+&gt;&gt; Hey Laurent,<br>
+&gt;&gt;<br>
+&gt;&gt; I think best practice is to just be very specific about the execut=
+able that<br>
+&gt;&gt; is called, and rely on path variables as minimally as possible. If=
+ the itzi<br>
+&gt;&gt; that is installed to your container is reliably importing modules =
+from it&#39;s<br>
+&gt;&gt; same installed python (if not we again need to check pythonpath) t=
+hen you<br>
+&gt;&gt; would just be specific to have your spec file look like this:<br>
+&gt;&gt;<br>
+&gt;&gt;<br>
+&gt;&gt;&gt; BootStrap: docker<br>
+&gt;&gt;&gt; From: ubuntu:16.10<br>
+&gt;&gt;&gt; %setup<br>
+&gt;&gt;&gt; %post<br>
+&gt;&gt;&gt;=C2=A0 =C2=A0 =C2=A0apt-get update &amp;&amp; apt-get install -=
+y \<br>
+&gt;&gt;&gt;=C2=A0 =C2=A0 =C2=A0grass-core \<br>
+&gt;&gt;&gt;=C2=A0 =C2=A0 =C2=A0python-pip<br>
+&gt;&gt;&gt;=C2=A0 =C2=A0 =C2=A0pip install --disable-pip-version-check --u=
+pgrade pip<br>
+&gt;&gt;&gt;=C2=A0 =C2=A0 =C2=A0pip install itzi<br>
+&gt;&gt;<br>
+&gt;&gt;<br>
+&gt;&gt;&gt;<br>
+&gt;&gt;&gt;<br>
+&gt;&gt;&gt; %runscript<br>
+&gt;&gt;&gt;=C2=A0 =C2=A0 =C2=A0exec /usr/local/bin/itzi &quot;$@&quot;<br>
+&gt;&gt;<br>
+&gt;&gt;<br>
+&gt;&gt;<br>
+&gt;&gt; and then running:<br>
+&gt;&gt;<br>
+&gt;&gt;&gt;<br>
+&gt;&gt;&gt; ./itzi.img --help<br>
+&gt;&gt;&gt; usage: itzi [-h] {run,version} ...<br>
+&gt;&gt;&gt; A dynamic, fully distributed hydraulic and hydrologic model.<b=
+r>
+&gt;&gt;&gt; positional arguments:<br>
+&gt;&gt;&gt;=C2=A0 =C2=A0{run,version}<br>
+&gt;&gt;&gt;=C2=A0 =C2=A0 =C2=A0run=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 run a=
+ simulation<br>
+&gt;&gt;&gt;=C2=A0 =C2=A0 =C2=A0version=C2=A0 =C2=A0 =C2=A0 display softwar=
+e version number<br>
+&gt;&gt;&gt; optional arguments:<br>
+&gt;&gt;&gt;=C2=A0 =C2=A0-h, --help=C2=A0 =C2=A0 =C2=A0show this help messa=
+ge and exit<br>
+&gt;&gt;<br>
+&gt;&gt;<br>
+&gt;&gt;<br>
+&gt;&gt; Of course the only difference is calling the itzi in the container=
+ directly!<br>
+&gt;&gt; to check this, I just added &quot;which itzi&quot; to the %post se=
+ction to see the<br>
+&gt;&gt; version installed, and then added that path to the runscript. I ra=
+n into<br>
+&gt;&gt; this exact issue when I started using Singularity, and I&#39;ve fo=
+und this to be<br>
+&gt;&gt; the most straightforward approach. It should actually be taken for=
+ most<br>
+&gt;&gt; executable calls, because you can never be sure if/when the person=
+ using<br>
+&gt;&gt; your container has the same executable somewhere within the contai=
+ners<br>
+&gt;&gt; sight.<br>
+&gt;&gt;<br>
+&gt;&gt; Best,<br>
+&gt;&gt;<br>
+&gt;&gt; Vanessa<br>
+&gt;&gt;<br>
+&gt;&gt;<br>
+&gt;&gt; On Fri, May 19, 2017 at 12:31 PM, Laurent C. &lt;<a href=3D"mailto=
+:lrn...@gmail.com" target=3D"_blank">lrn...@gmail.com</a>&gt; wrote:<br>
+&gt;&gt;&gt;<br>
+&gt;&gt;&gt; Hello,<br>
+&gt;&gt;&gt;<br>
+&gt;&gt;&gt; I believe that which program is run is influenced by the PATH =
+variable.<br>
+&gt;&gt;&gt;<br>
+&gt;&gt;&gt; On the host:<br>
+&gt;&gt;&gt;<br>
+&gt;&gt;&gt; /usr/local/sbin:/usr/local/bin<wbr>:/usr/sbin:/usr/bin:/sbin:/=
+bin<wbr>:/usr/games:/usr/local/games:/<wbr>snap/bin<br>
+&gt;&gt;&gt;<br>
+&gt;&gt;&gt; In the container:<br>
+&gt;&gt;&gt; /usr/local/sbin:/usr/local/bin<wbr>:/usr/sbin:/usr/bin:/sbin:/=
+bin<br>
+&gt;&gt;&gt;<br>
+&gt;&gt;&gt; On the host, ~/.local/bin/ is not in the PATH. So when running=
+ my<br>
+&gt;&gt;&gt; software from the command line on the host, it actually call<b=
+r>
+&gt;&gt;&gt; /usr/local/bin/itzi, but then, through Python&#39;s entry poin=
+ts system,<br>
+&gt;&gt;&gt; run the files on my development folder in my home directory.<b=
+r>
+&gt;&gt;&gt; This for the Python thing. I still don&#39;t understand how to=
+ circumvent<br>
+&gt;&gt;&gt; this behaviour and make sure that when running the container, =
+it does<br>
+&gt;&gt;&gt; not run the file from $HOME.<br>
+&gt;&gt;&gt;<br>
+&gt;&gt;&gt; Regards,<br>
+&gt;&gt;&gt; Laurent<br>
+&gt;&gt;&gt;<br>
+&gt;&gt;&gt;<br>
+&gt;&gt;&gt;<br>
+&gt;&gt;&gt; 2017-05-19 10:06 GMT-05:00 Gregory M. Kurtzer &lt;<a href=3D"m=
+ailto:gmku...@gmail.com" target=3D"_blank">gmku...@gmail.com</a>&gt;:<br>
+&gt;&gt;&gt; &gt; I am not much of a Python programmer, but if the path whi=
+ch includes<br>
+&gt;&gt;&gt; &gt; `~/.local/bin` can be influenced by an environment variab=
+le, you can do<br>
+&gt;&gt;&gt; &gt; this<br>
+&gt;&gt;&gt; &gt; by setting (or unsetting) it in `/etc/singularity/init` o=
+r<br>
+&gt;&gt;&gt; &gt; `~/.singularity-init` or you can variable transposition w=
+ithin<br>
+&gt;&gt;&gt; &gt; Singularity<br>
+&gt;&gt;&gt; &gt; to do things like:<br>
+&gt;&gt;&gt; &gt;<br>
+&gt;&gt;&gt; &gt; on the host:<br>
+&gt;&gt;&gt; &gt;<br>
+&gt;&gt;&gt; &gt; SINGULARITYENV_HELLO=3DWORLD<br>
+&gt;&gt;&gt; &gt; export SINGULARITYENV_HELLO<br>
+&gt;&gt;&gt; &gt;<br>
+&gt;&gt;&gt; &gt; within the container, that will be transposed to `HELLO=
+=3DWORLD`. And if<br>
+&gt;&gt;&gt; &gt; you<br>
+&gt;&gt;&gt; &gt; set a variable to nothing `...=3D&quot;&quot;` it will un=
+set it from within the host<br>
+&gt;&gt;&gt; &gt; as<br>
+&gt;&gt;&gt; &gt; follows:<br>
+&gt;&gt;&gt; &gt;<br>
+&gt;&gt;&gt; &gt; HELLO=3DWORLD<br>
+&gt;&gt;&gt; &gt; SINGULARITYENV_HELLO=3D&quot;&quot;<br>
+&gt;&gt;&gt; &gt; export HELLO SINGULARITYENV_HELLO<br>
+&gt;&gt;&gt; &gt;<br>
+&gt;&gt;&gt; &gt; Within the container, neither &quot;HELLO&quot; nor &quot=
+;SINGULARITYENV_HELLO&quot; will be<br>
+&gt;&gt;&gt; &gt; defined.<br>
+&gt;&gt;&gt; &gt;<br>
+&gt;&gt;&gt; &gt; Hope that helps!<br>
+&gt;&gt;&gt; &gt;<br>
+&gt;&gt;&gt; &gt; On Fri, May 19, 2017 at 7:54 AM, Laurent C. &lt;<a href=
+=3D"mailto:lrn...@gmail.com" target=3D"_blank">lrn...@gmail.com</a>&gt; wro=
+te:<br>
+&gt;&gt;&gt; &gt;&gt;<br>
+&gt;&gt;&gt; &gt;&gt; Hello all,<br>
+&gt;&gt;&gt; &gt;&gt;<br>
+&gt;&gt;&gt; &gt;&gt; Thanks for all your answers. I&#39;ll try to give the=
+ information you&#39;ve<br>
+&gt;&gt;&gt; &gt;&gt; asked.<br>
+&gt;&gt;&gt; &gt;&gt;<br>
+&gt;&gt;&gt; &gt;&gt; $ singularity --version<br>
+&gt;&gt;&gt; &gt;&gt; 2.2.99-development.g26e35168<br>
+&gt;&gt;&gt; &gt;&gt;<br>
+&gt;&gt;&gt; &gt;&gt; Bootstrap file:<br>
+&gt;&gt;&gt; &gt;&gt;<br>
+&gt;&gt;&gt; &gt;&gt; BootStrap: docker<br>
+&gt;&gt;&gt; &gt;&gt; From: ubuntu:16.10<br>
+&gt;&gt;&gt; &gt;&gt;<br>
+&gt;&gt;&gt; &gt;&gt; %setup<br>
+&gt;&gt;&gt; &gt;&gt;<br>
+&gt;&gt;&gt; &gt;&gt; %post<br>
+&gt;&gt;&gt; &gt;&gt;=C2=A0 =C2=A0 =C2=A0apt-get update &amp;&amp; apt-get =
+install -y \<br>
+&gt;&gt;&gt; &gt;&gt;=C2=A0 =C2=A0 =C2=A0grass-core \<br>
+&gt;&gt;&gt; &gt;&gt;=C2=A0 =C2=A0 =C2=A0python-pip<br>
+&gt;&gt;&gt; &gt;&gt;=C2=A0 =C2=A0 =C2=A0pip install --disable-pip-version-=
+check --upgrade pip<br>
+&gt;&gt;&gt; &gt;&gt;=C2=A0 =C2=A0 =C2=A0pip install itzi<br>
+&gt;&gt;&gt; &gt;&gt;<br>
+&gt;&gt;&gt; &gt;&gt; %runscript<br>
+&gt;&gt;&gt; &gt;&gt;=C2=A0 =C2=A0 =C2=A0exec itzi &quot;$@&quot;<br>
+&gt;&gt;&gt; &gt;&gt;<br>
+&gt;&gt;&gt; &gt;&gt;<br>
+&gt;&gt;&gt; &gt;&gt;<br>
+&gt;&gt;&gt; &gt;&gt; I now think the main point here is that on the host, =
+I&#39;ve installed<br>
+&gt;&gt;&gt; &gt;&gt; the development version of itzi as a user. It resides=
+ in ~/.local/bin/<br>
+&gt;&gt;&gt; &gt;&gt; on the host.<br>
+&gt;&gt;&gt; &gt;&gt; On the container, it is installed as root (see def fi=
+le above).<br>
+&gt;&gt;&gt; &gt;&gt;<br>
+&gt;&gt;&gt; &gt;&gt; Therefore, as mentioned by R=C3=A9my, it might be the=
+ shared $HOME that<br>
+&gt;&gt;&gt; &gt;&gt; create the issue. So, if I want to make sure that the=
+ python packages<br>
+&gt;&gt;&gt; &gt;&gt; installed on the host by the user do not interfere wi=
+th packages<br>
+&gt;&gt;&gt; &gt;&gt; inside the container, should I create a virtualenv in=
+side the<br>
+&gt;&gt;&gt; &gt;&gt; container?<br>
+&gt;&gt;&gt; &gt;&gt;<br>
+&gt;&gt;&gt; &gt;&gt; Regards,<br>
+&gt;&gt;&gt; &gt;&gt; Laurent<br>
+&gt;&gt;&gt; &gt;&gt;<br>
+&gt;&gt;&gt; &gt;&gt;<br>
+&gt;&gt;&gt; &gt;&gt;<br>
+&gt;&gt;&gt; &gt;&gt; 2017-05-19 9:24 GMT-05:00 Priedhorsky, Reid &lt;<a hr=
+ef=3D"mailto:rei...@lanl.gov" target=3D"_blank">rei...@lanl.gov</a>&gt;:<br=
+>
+&gt;&gt;&gt; &gt;&gt; &gt;<br>
+&gt;&gt;&gt; &gt;&gt; &gt;&gt; On May 19, 2017, at 12:02 AM, R=C3=A9my Dern=
+at &lt;<a href=3D"mailto:rem...@gmail.com" target=3D"_blank">rem...@gmail.c=
+om</a>&gt; wrote:<br>
+&gt;&gt;&gt; &gt;&gt; &gt;&gt;<br>
+&gt;&gt;&gt; &gt;&gt; &gt;&gt; Did you add the flag &#39;--user&#39; to you=
+r pip install or do you use<br>
+&gt;&gt;&gt; &gt;&gt; &gt;&gt; pyenv<br>
+&gt;&gt;&gt; &gt;&gt; &gt;&gt; or virtualenv or another thing (conda ?) ?<b=
+r>
+&gt;&gt;&gt; &gt;&gt; &gt;<br>
+&gt;&gt;&gt; &gt;&gt; &gt; pip can have =E2=80=9Cinteresting=E2=80=9D ideas=
+ about things at times. IIRC, --user<br>
+&gt;&gt;&gt; &gt;&gt; &gt; is<br>
+&gt;&gt;&gt; &gt;&gt; &gt; the default in recent versions and there=E2=80=
+=99s no opposite such as<br>
+&gt;&gt;&gt; &gt;&gt; &gt; --system.<br>
+&gt;&gt;&gt; &gt;&gt; &gt; There are alternative options similar to --prefi=
+x but last time I<br>
+&gt;&gt;&gt; &gt;&gt; &gt; tinkered<br>
+&gt;&gt;&gt; &gt;&gt; &gt; with it a little I couldn=E2=80=99t get it to wo=
+rk.<br>
+&gt;&gt;&gt; &gt;&gt; &gt;<br>
+&gt;&gt;&gt; &gt;&gt; &gt; HTH,<br>
+&gt;&gt;&gt; &gt;&gt; &gt; Reid<br>
+&gt;&gt;&gt; &gt;&gt; &gt;<br>
+&gt;&gt;&gt; &gt;&gt; &gt; --<br>
+&gt;&gt;&gt; &gt;&gt; &gt; You received this message because you are subscr=
+ibed to the Google<br>
+&gt;&gt;&gt; &gt;&gt; &gt; Groups &quot;singularity&quot; group.<br>
+&gt;&gt;&gt; &gt;&gt; &gt; To unsubscribe from this group and stop receivin=
+g emails from it,<br>
+&gt;&gt;&gt; &gt;&gt; &gt; send<br>
+&gt;&gt;&gt; &gt;&gt; &gt; an email to <a href=3D"mailto:singularity%...@lb=
+l.gov" target=3D"_blank">singularity+unsubscribe@lbl.go<wbr>v</a>.<br>
+&gt;&gt;&gt; &gt;&gt;<br>
+&gt;&gt;&gt; &gt;&gt; --<br>
+&gt;&gt;&gt; &gt;&gt; You received this message because you are subscribed =
+to the Google<br>
+&gt;&gt;&gt; &gt;&gt; Groups<br>
+&gt;&gt;&gt; &gt;&gt; &quot;singularity&quot; group.<br>
+&gt;&gt;&gt; &gt;&gt; To unsubscribe from this group and stop receiving ema=
+ils from it, send<br>
+&gt;&gt;&gt; &gt;&gt; an<br>
+&gt;&gt;&gt; &gt;&gt; email to <a href=3D"mailto:singularity%...@lbl.gov" t=
+arget=3D"_blank">singularity+unsubscribe@lbl.go<wbr>v</a>.<br>
+&gt;&gt;&gt; &gt;<br>
+&gt;&gt;&gt; &gt;<br>
+&gt;&gt;&gt; &gt; --<br>
+&gt;&gt;&gt; &gt; You received this message because you are subscribed to t=
+he Google<br>
+&gt;&gt;&gt; &gt; Groups<br>
+&gt;&gt;&gt; &gt; &quot;singularity&quot; group.<br>
+&gt;&gt;&gt; &gt; To unsubscribe from this group and stop receiving emails =
+from it, send<br>
+&gt;&gt;&gt; &gt; an<br>
+&gt;&gt;&gt; &gt; email to <a href=3D"mailto:singularity%...@lbl.gov" targe=
+t=3D"_blank">singularity+unsubscribe@lbl.go<wbr>v</a>.<br>
+&gt;&gt;&gt;<br>
+&gt;&gt;&gt; --<br>
+&gt;&gt;&gt; You received this message because you are subscribed to the Go=
+ogle Groups<br>
+&gt;&gt;&gt; &quot;singularity&quot; group.<br>
+&gt;&gt;&gt; To unsubscribe from this group and stop receiving emails from =
+it, send an<br>
+&gt;&gt;&gt; email to <a href=3D"mailto:singularity%...@lbl.gov" target=3D"=
+_blank">singularity+unsubscribe@lbl.go<wbr>v</a>.<br>
+&gt;&gt;<br>
+&gt;&gt;<br>
+&gt;&gt;<br>
+&gt;&gt;<br>
+&gt;&gt; --<br>
+&gt;&gt; Vanessa Villamia Sochat<br>
+&gt;&gt; Stanford University &#39;16<br>
+&gt;&gt; <a href=3D"tel:%28603%29%20321-0676" value=3D"+16033210676" target=
+=3D"_blank">(603) 321-0676</a><br>
+&gt;&gt;<br>
+&gt;&gt; --<br>
+&gt;&gt; You received this message because you are subscribed to the Google=
+ Groups<br>
+&gt;&gt; &quot;singularity&quot; group.<br>
+&gt;&gt; To unsubscribe from this group and stop receiving emails from it, =
+send an<br>
+&gt;&gt; email to <a href=3D"mailto:singularity%...@lbl.gov" target=3D"_bla=
+nk">singularity+unsubscribe@lbl.go<wbr>v</a>.<br>
+<br>
+--<br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singularity%...@lbl.gov" target=3D"_blank">singul=
+arity+unsubscribe@lbl.go<wbr>v</a>.<br>
+</div></div></blockquote></div><br></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singularity+u=
+nsubscribe@lbl.<wbr>gov</a>.<br>
+</div></blockquote></div><br></div>
+
+--001a114901d84a16a3055082455d--

@@ -1,0 +1,175 @@
+Date: Thu, 3 Nov 2016 11:44:52 -0700 (PDT)
+From: Tyler Trafford <ttra...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <3b6e1f8e-5d3f-4c90-805f-6ad0ccfe5be1@lbl.gov>
+In-Reply-To: <CAM=pu+JvEF_qGwb1ELw7E1sTsAz6skmGmZ7DB8A6LWQsT5NZiQ@mail.gmail.com>
+References: <02b27dd5-dcc4-4800-97f6-7dcfcc85afd8@lbl.gov> <CAA8GL6Bsyt5oHK8O9GrDS6F=USv-aP0K9a+m8Q+jfOJ8kpxrhA@mail.gmail.com>
+ <CAA8GL6DP3KhfbWV7nK5JGxNn4S+=M0=vEV0mACsoRrd6Ag2GpQ@mail.gmail.com>
+ <718cb7c4-524f-4b08-bde9-3a36013fba59@lbl.gov> <4e52c56a-5475-4075-a3c7-2ae22191b544@lbl.gov>
+ <CAA8GL6BdE1TRBaPD-oM7qcj8QK1cBsmJsUzYyrvkRPBP9CX+hQ@mail.gmail.com>
+ <CAMfmYehdPLtiouQqMGqOx4ZbEXFbbPRL5QOxsP_vQo0us1QLuA@mail.gmail.com>
+ <B927B7F6-3CFB-452D-92AB-866F9B8024E4@gmail.com> <CAMfmYeiSvcReO4jvSGJkavnex64wGZ8Phxva2kAxJ7pcp48YiA@mail.gmail.com>
+ <CAMfmYeiaTxVQSNqwprHe5ckcDHPcJXy3imdepiRL+KkDh12TCQ@mail.gmail.com>
+ <65CD778F-6CD1-4DB4-9668-4D89839B7053@gmail.com> <CAMfmYeg_pnJcyKGetK7WVChToaWCgGYH-nrYY9v=2+RSkuWZuQ@mail.gmail.com>
+ <C5AE54CB-2BA1-4E59-88FC-D20224A46086@gmail.com> <CAMfmYeg2rR9-U-zyviCeDXRt_QgKv_K0p9pf-+qgoGPQAjxjXA@mail.gmail.com>
+ <95039222-908B-4AE8-8844-551646C9733C@gmail.com> <CAMfmYeh9m_Z7N5KQy5f5ocumCrG7bX33OjpsT4jh9KgOekWcWg@mail.gmail.com>
+ <CAMfmYegA2BbQ6V-ZmUDRgm35GSoBXiMh82K7bAhZLvynGce7Cw@mail.gmail.com>
+ <CAMfmYeg=OkyMa5_b5K30==3ww_sS1ONeA7oaNO-gU8B=yRnmUg@mail.gmail.com>
+ <68d76dc9-db97-406a-acc8-41fa057d2cbe@lbl.gov> <6EC1A210-1B0D-482C-A1D4-95B08047D3CD@gmail.com>
+ <a4e01874-db59-43fa-8c26-7dcbe41c2264@lbl.gov>
+ <CAM=pu+JvEF_qGwb1ELw7E1sTsAz6skmGmZ7DB8A6LWQsT5NZiQ@mail.gmail.com>
+Subject: Re: [Singularity] How to use GPU in singularity?
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_512_1625407609.1478198692542"
+
+------=_Part_512_1625407609.1478198692542
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_513_304281402.1478198692542"
+
+------=_Part_513_304281402.1478198692542
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+I just noticed this thread.  What I have working is to start with a Docker 
+imported image, and then run (with overlays enabled):
+
+singularity exec -B /usr/lib64/libcuda.so.$(/sbin/modinfo -F version 
+nvidia):/usr/lib/libcuda.so.1 -B 
+/usr/lib64/libnvidia-fatbinaryloader.so.$(/sbin/modinfo -F version 
+nvidia):/usr/lib/libnvidia-fatbinaryloader.so.$(/sbin/modinfo -F version 
+nvidia) project/tensorflow.img ipython
+
+-Tyler
+
+
+On Saturday, October 8, 2016 at 8:12:10 PM UTC-4, vanessa wrote:
+>
+> I think you would need to add the tensorflow.sh (and other dependencies) 
+> to the image first. I know we used to have some kind of add command, but 
+> I'm not sure we do with the new %post section (note that Greg is actively 
+> working on docs and this will come out soon!). What I would do (and this 
+> might be silly, but it's worth a go) is to clone your repo in the %post 
+> section, and move the files to where you need them in the image. That way, 
+> you can continue testing (and tensorflow.sh should be found!)
+>
+> Just out of curiosity - did you try generating from the tensorflow gpu 
+> docker image?
+>
+> It could be a good base to start with, something like this:
+>
+>
+> https://github.com/radinformatics/singularity-environments/blob/master/tensorflow/gpu/tensorflow-gpu.def
+>
+> and then make tweaks to it in %post. At least for regular cpu, we had to 
+> change permissions of the wdl files first.
+>
+>
+> On Sat, Oct 8, 2016 at 4:56 PM, Jianxiong Dong <jd...@gmail.com 
+> <javascript:>> wrote:
+>
+>> Hi, Vanessa,
+>>      > Did you try adding the tensorflow.sh stuffs to the actual 
+>> bootstrap, when you would have sudo?
+>> No.  In build.sh, it contains one line:
+>>
+>> singularity exec -w ubuntu_tensorflow_GPU.img sh ./tensorflow.sh
+>>
+>> where tensorflow.sh is in current folder of host machine.  When I ran it 
+>> under root account and the current folder was not /root,
+>> I got error:  "tensorflow.sh" could not be found.  Do you know how to fix 
+>> it?
+>>
+>> Thanks
+>>
+>> Jianxiong
+>>
+>> --
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_513_304281402.1478198692542
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">I just noticed this thread.=C2=A0 What I have working is t=
+o start with a Docker imported image, and then run (with overlays enabled):=
+<br><br>singularity exec -B /usr/lib64/libcuda.so.$(/sbin/modinfo -F versio=
+n nvidia):/usr/lib/libcuda.so.1 -B /usr/lib64/libnvidia-fatbinaryloader.so.=
+$(/sbin/modinfo -F version nvidia):/usr/lib/libnvidia-fatbinaryloader.so.$(=
+/sbin/modinfo -F version nvidia) project/tensorflow.img ipython<br><br>-Tyl=
+er<br><br><br>On Saturday, October 8, 2016 at 8:12:10 PM UTC-4, vanessa wro=
+te:<blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;=
+border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr"><div>I thi=
+nk you would need to add the tensorflow.sh (and other dependencies) to the =
+image first. I know we used to have some kind of add command, but I&#39;m n=
+ot sure we do with the new %post section (note that Greg is actively workin=
+g on docs and this will come out soon!). What I would do (and this might be=
+ silly, but it&#39;s worth a go) is to clone your repo in the %post section=
+, and move the files to where you need them in the image. That way, you can=
+ continue testing (and tensorflow.sh should be found!)</div><div><br></div>=
+Just out of curiosity - did you try generating from the tensorflow gpu dock=
+er image?<div><br></div><div>It could be a good base to start with, somethi=
+ng like this:</div><div><br></div><div><a href=3D"https://github.com/radinf=
+ormatics/singularity-environments/blob/master/tensorflow/gpu/tensorflow-gpu=
+.def" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;ht=
+tps://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fradinformatics%2Fs=
+ingularity-environments%2Fblob%2Fmaster%2Ftensorflow%2Fgpu%2Ftensorflow-gpu=
+.def\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHPpqYbuZF9czX0Y5UtDAaguZGi_g&#=
+39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.com/url?q\=
+x3dhttps%3A%2F%2Fgithub.com%2Fradinformatics%2Fsingularity-environments%2Fb=
+lob%2Fmaster%2Ftensorflow%2Fgpu%2Ftensorflow-gpu.def\x26sa\x3dD\x26sntz\x3d=
+1\x26usg\x3dAFQjCNHPpqYbuZF9czX0Y5UtDAaguZGi_g&#39;;return true;">https://g=
+ithub.com/<wbr>radinformatics/singularity-<wbr>environments/blob/master/<wb=
+r>tensorflow/gpu/tensorflow-gpu.<wbr>def</a><br></div><div><br></div><div>a=
+nd then make tweaks to it in %post. At least for regular cpu, we had to cha=
+nge permissions of the wdl files first.</div><div><br></div></div><div><br>=
+<div class=3D"gmail_quote">On Sat, Oct 8, 2016 at 4:56 PM, Jianxiong Dong <=
+span dir=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscat=
+ed-mailto=3D"hFO4m6fQAQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39=
+;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39=
+;;return true;">jd...@gmail.com</a>&gt;</span> wrote:<br><blockquote class=
+=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padd=
+ing-left:1ex">Hi, Vanessa,<br>
+<span>=C2=A0 =C2=A0 =C2=A0&gt; Did you try adding the tensorflow.sh stuffs =
+to the actual bootstrap, when you would have sudo?<br>
+</span>No.=C2=A0 In build.sh, it contains one line:<br>
+<br>
+singularity exec -w ubuntu_tensorflow_GPU.img sh ./tensorflow.sh<br>
+<br>
+where tensorflow.sh is in current folder of host machine.=C2=A0 When I ran =
+it under root account and the current folder was not /root,<br>
+I got error:=C2=A0 &quot;tensorflow.sh&quot; could not be found.=C2=A0 Do y=
+ou know how to fix it?<br>
+<br>
+Thanks<br>
+<span><font color=3D"#888888"><br>
+Jianxiong<br>
+</font></span><div><div><br>
+--<br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+hFO4m6fQAQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div><d=
+iv>(603) 321-0676</div></div></div></div>
+</div>
+</blockquote></div>
+------=_Part_513_304281402.1478198692542--
+
+------=_Part_512_1625407609.1478198692542--

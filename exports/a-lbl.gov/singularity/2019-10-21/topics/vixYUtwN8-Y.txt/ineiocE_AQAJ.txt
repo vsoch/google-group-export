@@ -1,0 +1,883 @@
+Date: Thu, 14 Jul 2016 14:27:39 -0700 (PDT)
+From: Steve Mehlberg <sgmeh...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <c4e5864c-cbaa-4269-9522-db61d63d7cff@lbl.gov>
+In-Reply-To: <CAN7etTz09uzfP-NpZ3-+HnijfrC+u+=pOuBQDTShXG+unxgOVg@mail.gmail.com>
+References: <03a19fb0-27ce-43c4-9400-8e58cf726500@lbl.gov> <CAN7etTwRbSe1MMh9wdQAMYoKVJTb_SGJeHto+WrZ=aU7NoBmhQ@mail.gmail.com>
+ <90295845-ad9b-4670-97f2-91a76798ef5d@lbl.gov> <CAN7etTyqGkWy1P57-cVJgyru5BT_DvnhwDzLe1p38BV8z_PPww@mail.gmail.com>
+ <66b82c74-2778-44f2-ae5c-87e01ec8885d@lbl.gov>
+ <CAN7etTz09uzfP-NpZ3-+HnijfrC+u+=pOuBQDTShXG+unxgOVg@mail.gmail.com>
+Subject: Re: [Singularity] Image is locked by another process
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_925_360119301.1468531659805"
+
+------=_Part_925_360119301.1468531659805
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_926_2098685499.1468531659806"
+
+------=_Part_926_2098685499.1468531659806
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Seems that process isn't running any more.  I did find this in the 
+/var/log/messages file:
+
+[root@mach0 ~]# cat /var/log/messages | grep 2299
+Jul 14 10:51:34 mach0 Singularity: sexec (U=0,P=2299)> Command=exec, 
+Container=c7, CWD=/root, Arg1=/usr/bin/ring
+Jul 14 11:37:17 mach0 kernel: Buffer I/O error on device loop1, logical 
+block 22299
+Jul 14 11:37:17 mach0 kernel: Buffer I/O error on device loop1, logical 
+block 22990
+...
+
+[root@mach0 ~]# ps -ef |grep 2299
+root     10545  2002  0 14:15 pts/0    00:00:00 grep --color=auto 2299
+[root@mach0 ~]# ps |grep 2299
+
+On Thursday, July 14, 2016 at 2:59:26 PM UTC-6, Gregory M. Kurtzer wrote:
+
+> What is running at PID 2299?
+>
+> On Thu, Jul 14, 2016 at 1:35 PM, Steve Mehlberg <sg...@gmail.com 
+> <javascript:>> wrote:
+>
+>> Ok, I see my error with shell vs exec.  I'm running on a VM with my own 
+>> space, no NFS involved.  Here is the debug command run and lsofl
+>>
+>> [root@mach0 ~]# df -h
+>> Filesystem             Size  Used Avail Use% Mounted on
+>> /dev/mapper/vg1-lv001  5.7G  4.3G  1.1G  80% /
+>> devtmpfs               911M     0  911M   0% /dev
+>> tmpfs                  920M     0  920M   0% /dev/shm
+>> tmpfs                  920M   41M  880M   5% /run
+>> tmpfs                  920M     0  920M   0% /sys/fs/cgroup
+>> /dev/vda1              190M  110M   67M  63% /boot
+>> /dev/mapper/vg1-lv002   12G  203M   11G   2% /var
+>> tmpfs                  184M     0  184M   0% /run/user/0
+>> [root@mach0 ~]# singularity --debug shell -w c7
+>> enabling debugging
+>> ending argument loop
+>> Exec'ing: /usr/local/libexec/singularity/cli/shell.exec -w+ '[' -f 
+>> /usr/local/etc/singularity/init ']'
+>> + . /usr/local/etc/singularity/init
+>> ++ unset module
+>> ++ 
+>> PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin:/bin:/sbin:/usr/bin:/usr/sbin
+>> ++ HISTFILE=/dev/null
+>> ++ export PATH HISTFILE
+>> ++ '[' -n '' ']'
+>> ++ '[' -n '' ']'
+>> ++ '[' -n '' ']'
+>> ++ '[' -n '' ']'
+>> ++ '[' -n '' ']'
+>> ++ '[' -n '' ']'
+>> ++ '[' -n '' ']'
+>> ++ '[' -n '' ']'
+>> + true
+>> + case ${1:-} in
+>> + shift
+>> + SINGULARITY_WRITABLE=1
+>> + export SINGULARITY_WRITABLE
+>> + true
+>> + case ${1:-} in
+>> + break
+>> + '[' -z c7 ']'
+>> + SINGULARITY_IMAGE=c7
+>> + export SINGULARITY_IMAGE
+>> + shift
+>> + exec /usr/local/libexec/singularity/sexec
+>> VERBOSE [U=0,P=8045]       message.c:52:init()                        : 
+>> Set messagelevel to: 5
+>> DEBUG   [U=0,P=8045]       sexec.c:127:main()                         : 
+>> Gathering and caching user info.
+>> DEBUG   [U=0,P=8045]       privilege.c:43:get_user_privs()            : 
+>> Called get_user_privs(struct s_privinfo *uinfo)
+>> DEBUG   [U=0,P=8045]       privilege.c:54:get_user_privs()            : 
+>> Returning get_user_privs(struct s_privinfo *uinfo) = 0
+>> DEBUG   [U=0,P=8045]       sexec.c:134:main()                         : 
+>> Checking if we can escalate privs properly.
+>> DEBUG   [U=0,P=8045]       privilege.c:61:escalate_privs()            : 
+>> Called escalate_privs(void)
+>> DEBUG   [U=0,P=8045]       privilege.c:73:escalate_privs()            : 
+>> Returning escalate_privs(void) = 0
+>> DEBUG   [U=0,P=8045]       sexec.c:141:main()                         : 
+>> Setting privs to calling user
+>> DEBUG   [U=0,P=8045]       privilege.c:79:drop_privs()                : 
+>> Called drop_privs(struct s_privinfo *uinfo)
+>> DEBUG   [U=0,P=8045]       privilege.c:87:drop_privs()                : 
+>> Dropping privileges to GID = '0'
+>> DEBUG   [U=0,P=8045]       privilege.c:93:drop_privs()                : 
+>> Dropping privileges to UID = '0'
+>> DEBUG   [U=0,P=8045]       privilege.c:103:drop_privs()               : 
+>> Confirming we have correct GID
+>> DEBUG   [U=0,P=8045]       privilege.c:109:drop_privs()               : 
+>> Confirming we have correct UID
+>> DEBUG   [U=0,P=8045]       privilege.c:115:drop_privs()               : 
+>> Returning drop_privs(struct s_privinfo *uinfo) = 0
+>> DEBUG   [U=0,P=8045]       sexec.c:146:main()                         : 
+>> Obtaining user's homedir
+>> DEBUG   [U=0,P=8045]       sexec.c:150:main()                         : 
+>> Obtaining file descriptor to current directory
+>> DEBUG   [U=0,P=8045]       sexec.c:155:main()                         : 
+>> Getting current working directory path string
+>> DEBUG   [U=0,P=8045]       sexec.c:161:main()                         : 
+>> Obtaining SINGULARITY_COMMAND from environment
+>> DEBUG   [U=0,P=8045]       sexec.c:168:main()                         : 
+>> Obtaining SINGULARITY_IMAGE from environment
+>> DEBUG   [U=0,P=8045]       sexec.c:174:main()                         : 
+>> Checking container image is a file: c7
+>> DEBUG   [U=0,P=8045]       sexec.c:180:main()                         : 
+>> Building configuration file location
+>> DEBUG   [U=0,P=8045]       sexec.c:183:main()                         : 
+>> Config location: /usr/local/etc/singularity/singularity.conf
+>> DEBUG   [U=0,P=8045]       sexec.c:185:main()                         : 
+>> Checking Singularity configuration is a file: 
+>> /usr/local/etc/singularity/singularity.conf
+>> DEBUG   [U=0,P=8045]       sexec.c:191:main()                         : 
+>> Checking Singularity configuration file is owned by root
+>> DEBUG   [U=0,P=8045]       sexec.c:197:main()                         : 
+>> Opening Singularity configuration file
+>> DEBUG   [U=0,P=8045]       sexec.c:210:main()                         : 
+>> Checking Singularity configuration for 'sessiondir prefix'
+>> DEBUG   [U=0,P=8045]       config_parser.c:47:config_get_key_value()  : 
+>> Called config_get_key_value(fp, sessiondir prefix)
+>> DEBUG   [U=0,P=8045]       config_parser.c:66:config_get_key_value()  : 
+>> Return config_get_key_value(fp, sessiondir prefix) = NULL
+>> DEBUG   [U=0,P=8045]       file.c:48:file_id()                        : 
+>> Called file_id(c7)
+>> VERBOSE [U=0,P=8045]       file.c:58:file_id()                        : 
+>> Generated file_id: 0.64768.26052
+>> DEBUG   [U=0,P=8045]       file.c:60:file_id()                        : 
+>> Returning file_id(c7) = 0.64768.26052
+>> DEBUG   [U=0,P=8045]       sexec.c:217:main()                         : 
+>> Set sessiondir to: /tmp/.singularity-session-0.64768.26052
+>> DEBUG   [U=0,P=8045]       sexec.c:221:main()                         : 
+>> Set containername to: c7
+>> DEBUG   [U=0,P=8045]       sexec.c:223:main()                         : 
+>> Setting loop_dev_* paths
+>> DEBUG   [U=0,P=8045]       config_parser.c:47:config_get_key_value()  : 
+>> Called config_get_key_value(fp, container dir)
+>> DEBUG   [U=0,P=8045]       config_parser.c:58:config_get_key_value()  : 
+>> Return config_get_key_value(fp, container dir) = /var/singularity/mnt
+>> DEBUG   [U=0,P=8045]       sexec.c:232:main()                         : 
+>> Set image mount path to: /var/singularity/mnt
+>> LOG     [U=0,P=8045]       sexec.c:234:main()                         : 
+>> Command=shell, Container=c7, CWD=/root, Arg1=(null)
+>> DEBUG   [U=0,P=8045]       sexec.c:247:main()                         : 
+>> Set prompt to: Singularity.c7>
+>> DEBUG   [U=0,P=8045]       sexec.c:249:main()                         : 
+>> Checking if we are opening image as read/write
+>> DEBUG   [U=0,P=8045]       sexec.c:264:main()                         : 
+>> Opening image as read/write only: c7
+>> DEBUG   [U=0,P=8045]       sexec.c:271:main()                         : 
+>> Setting exclusive lock on file descriptor: 6
+>> ERROR   [U=0,P=8045]       sexec.c:273:main()                         : 
+>> Image is locked by another process
+>> [root@mach0 ~]# lsof c7
+>> [root@mach0 ~]# lslocks
+>> COMMAND           PID  TYPE SIZE MODE  M START END PATH
+>> crond             601 FLOCK   4B WRITE 0     0   0 /run/crond.pid
+>> master            826 FLOCK  33B WRITE 0     0   0 
+>> /var/spool/postfix/pid/master.pid
+>> master            826 FLOCK  33B WRITE 0     0   0 
+>> /var/lib/postfix/master.lock
+>> lvmetad           478 POSIX   4B WRITE 0     0   0 /run/lvmetad.pid
+>> slurmctld         940 POSIX   4B WRITE 0     0   0 /run/slurmctld.pid
+>> slurmd            966 POSIX   4B WRITE 0     0   0 /run/slurmd.pid
+>> (unknown)        2299 FLOCK   0B READ  0     0   0 /
+>>
+>>
+>> On Thursday, July 14, 2016 at 1:03:50 PM UTC-6, Gregory M. Kurtzer wrote:
+>>
+>>>
+>>>
+>>> On Thu, Jul 14, 2016 at 11:50 AM, Steve Mehlberg <sg...@gmail.com> 
+>>> wrote:
+>>>
+>>>> Gregory,
+>>>>
+>>>> Thanks for the quick suggestions.  There don't seem to be any processes 
+>>>> attached to the container and I can't seem to run other commands (in read 
+>>>> mode). I'm not sure what's going on.
+>>>>
+>>>> Just lazy with root right now, I need to create a normal uid.
+>>>>
+>>>
+>>> Ahh, ok. Been there, done that! lol
+>>>  
+>>>
+>>>>
+>>>> Steve
+>>>>
+>>>> [root@mach0 ~]# ls -la c7
+>>>> -rwxr-xr-x 1 root root 1610612769 Jul 14 10:49 c7
+>>>> [root@mach0 ~]# singularity shell -w c7
+>>>> ERROR  : Image is locked by another process
+>>>>
+>>>
+>>> Can you run this command again in --debug mode (singularity --debug ....)
+>>>  
+>>>
+>>>> [root@mach0 ~]# lsof c7
+>>>>
+>>>
+>>> What about the command "lslocks"?
+>>>  
+>>>
+>>>> [root@mach0 ~]# singularity shell c7 whoami
+>>>> /usr/bin/whoami: /usr/bin/whoami: cannot execute binary file
+>>>>
+>>>
+>>> Ahh, this is normal. You are asking the shell script to read in 
+>>> /usr/bin/whoami. If you want to use shell to run whoami, you must prefix it 
+>>> with the -c (e.g. -c "whoami [args]"), or use the 'exec' Singularity 
+>>> subcommand: "singularity exec c7 whoami"
+>>>  
+>>>
+>>>> [root@mach0 ~]#
+>>>> [root@mach0 ~]# ps -ef |grep c7
+>>>> root      7479  2002  0 11:49 pts/0    00:00:00 grep --color=auto c7
+>>>> [root@mach0 ~]#
+>>>>
+>>>
+>>> What kind of file system does your image exist on? Is it NFS by chance? 
+>>> I wonder if there is a host issue with a locking daemon or something else 
+>>> weird going on where it is not giving the exclusive lock properly. If this 
+>>> is NFS or other non local file system, can you copy the image to /tmp, 
+>>> rerun the MPI command to get it to fail again, and try again? 
+>>>
+>>> Thanks!
+>>>
+>>>
+>>>  
+>>>
+>>>>
+>>>>
+>>>>
+>>>>
+>>>> On Thursday, July 14, 2016 at 12:30:01 PM UTC-6, Gregory M. Kurtzer 
+>>>> wrote:
+>>>>>
+>>>>> Hi Steve,
+>>>>>
+>>>>> That means there is an active file descriptor/process still running 
+>>>>> and attached to the container maintaining a shared lock. You can run other 
+>>>>> commands against the container as long as long as the container is not 
+>>>>> being requested as --writable(-w), because that will try and obtain an 
+>>>>> exclusive lock and it will fail if there are any active shared locks. Try 
+>>>>> an "lsof /path/to/c7" to see what processes are attached to it. You may see 
+>>>>> a list like:
+>>>>>
+>>>>> # lsof /tmp/Demo-2.img 
+>>>>> COMMAND    PID USER   FD   TYPE DEVICE   SIZE/OFF      NODE NAME
+>>>>> sexec   107975 root    6rR  REG  253,0 1073741856 202112247 
+>>>>> /tmp/Demo-2.img
+>>>>> sexec   107977 root    6r   REG  253,0 1073741856 202112247 
+>>>>> /tmp/Demo-2.img
+>>>>> bash    107982 root    6r   REG  253,0 1073741856 202112247 
+>>>>> /tmp/Demo-2.img
+>>>>>
+>>>>> Notice the two top ones are 'sexec' which are part of the Singularity 
+>>>>> process stack. Kill the bottom one, and those should go away naturally.
+>>>>>
+>>>>> BTW, as long as you have installed Singularity as root, there is no 
+>>>>> need to run Singularity commands as root (unless you want to make system 
+>>>>> changes within the container).
+>>>>>
+>>>>> Hope that helps!
+>>>>>
+>>>>>
+>>>>> On Thu, Jul 14, 2016 at 10:56 AM, Steve Mehlberg <sg...@gmail.com> 
+>>>>> wrote:
+>>>>>
+>>>>>> Running mpirun tests, when an abort occurs, my image ends up locked.  
+>>>>>> Is there a way to clear the lock without rebooting?  I looked for processes 
+>>>>>> that I could kill, but didn't see anything worthy.
+>>>>>>
+>>>>>> I'm using singularity v2.1 on Centos 7.2 (both host and container).
+>>>>>>
+>>>>>> Regards,
+>>>>>>
+>>>>>> Steve
+>>>>>>
+>>>>>> [root@mach0 ~]# mpirun --allow-run-as-root -n 2 -H mach1,mach2 
+>>>>>> singularity exec c7 /usr/bin/ring
+>>>>>> Process 0 sending 10 to 1, tag 201 (2 processes in ring)
+>>>>>> Process 0 sent to 1
+>>>>>> Process 0 decremented value: 9
+>>>>>> Process 0 decremented value: 8
+>>>>>> Process 0 decremented value: 7
+>>>>>> Process 0 decremented value: 6
+>>>>>> Process 0 decremented value: 5
+>>>>>> Process 0 decremented value: 4
+>>>>>> Process 0 decremented value: 3
+>>>>>> Process 0 decremented value: 2
+>>>>>> Process 0 decremented value: 1
+>>>>>> Process 0 decremented value: 0
+>>>>>> Process 0 exiting
+>>>>>> Process 1 exiting
+>>>>>> [root@mach0 ~]# mpirun --allow-run-as-root -n 3 -H mach0,mach1,mach2 
+>>>>>> singularity exec c7 /usr/bin/ring
+>>>>>>
+>>>>>> --------------------------------------------------------------------------
+>>>>>> It appears as if there is not enough space for 
+>>>>>> /tmp/ompi.mach0.2291/54935/1/0/vader_segment.mach0.0 (the shared-memory 
+>>>>>> backing
+>>>>>> file). It is likely that your MPI job will now either abort or 
+>>>>>> experience
+>>>>>> performance degradation.
+>>>>>>
+>>>>>>   Local host:  mach0
+>>>>>>   Space Requested: 4194312 B
+>>>>>>   Space Available: 0 B
+>>>>>>
+>>>>>> --------------------------------------------------------------------------
+>>>>>> [mach0:02308] create_and_attach: unable to create shared memory BTL 
+>>>>>> coordinating structure :: size 134217728
+>>>>>> [mach0:02291] 2 more processes have sent help message 
+>>>>>> help-opal-shmem-mmap.txt / target full
+>>>>>> [mach0:02291] Set MCA parameter "orte_base_help_aggregate" to 0 to 
+>>>>>> see all help / error messages
+>>>>>> ^CKilled by signal 2.
+>>>>>> Killed by signal 2.
+>>>>>> Singularity is sending SIGKILL to child pid: 2308
+>>>>>> Singularity is sending SIGKILL to child pid: 2309
+>>>>>> [warn] Epoll ADD(4) on fd 31 failed.  Old events were 0; read change 
+>>>>>> was 0 (none); write change was 1 (add): Bad file descriptor
+>>>>>> ^C[root@mach0 ~]singularity shell -w c7
+>>>>>> ERROR  : Image is locked by another process
+>>>>>> [root@mach0 ~]# tail -30 /var/log/messages
+>>>>>> Jul 14 10:42:17 mach0 systemd: Started LSB: slurm daemon management.
+>>>>>> Jul 14 10:42:17 mach0 systemd: Reached target Multi-User System.
+>>>>>> Jul 14 10:42:17 mach0 systemd: Starting Multi-User System.
+>>>>>> Jul 14 10:42:17 mach0 systemd: Starting Update UTMP about System 
+>>>>>> Runlevel Changes...
+>>>>>> Jul 14 10:42:17 mach0 systemd: Started Stop Read-Ahead Data 
+>>>>>> Collection 10s After Completed Startup.
+>>>>>> Jul 14 10:42:17 mach0 systemd: Started Update UTMP about System 
+>>>>>> Runlevel Changes.
+>>>>>> Jul 14 10:42:18 mach0 kdumpctl: kexec: loaded kdump kernel
+>>>>>> Jul 14 10:42:18 mach0 kdumpctl: Starting kdump: [OK]
+>>>>>> Jul 14 10:42:18 mach0 systemd: Started Crash recovery kernel arming.
+>>>>>> Jul 14 10:42:18 mach0 systemd: Startup finished in 415ms (kernel) + 
+>>>>>> 1.100s (initrd) + 4.931s (userspace) = 6.446s.
+>>>>>> Jul 14 10:42:34 mach0 systemd: Created slice user-0.slice.
+>>>>>> Jul 14 10:42:34 mach0 systemd: Starting user-0.slice.
+>>>>>> Jul 14 10:42:34 mach0 systemd-logind: New session 1 of user root.
+>>>>>> Jul 14 10:42:34 mach0 systemd: Started Session 1 of user root.
+>>>>>> Jul 14 10:42:34 mach0 systemd: Starting Session 1 of user root.
+>>>>>> Jul 14 10:42:36 mach0 Singularity: sexec (U=0,P=2023)> Command=exec, 
+>>>>>> Container=c7, CWD=/root, Arg1=/usr/bin/ring
+>>>>>> Jul 14 10:42:36 mach0 Singularity: sexec (U=0,P=2024)> Command=exec, 
+>>>>>> Container=c7, CWD=/root, Arg1=/usr/bin/ring
+>>>>>> Jul 14 10:42:36 mach0 Singularity: sexec (U=0,P=2024)> Image is 
+>>>>>> locked by another process
+>>>>>> Jul 14 10:42:36 mach0 kernel: loop: module loaded
+>>>>>> Jul 14 10:43:38 mach0 Singularity: sexec (U=0,P=2050)> Command=shell, 
+>>>>>> Container=c7, CWD=/root, Arg1=(null)
+>>>>>> Jul 14 10:43:38 mach0 kernel: EXT4-fs (loop0): mounted filesystem 
+>>>>>> with ordered data mode. Opts: discard
+>>>>>> Jul 14 10:49:17 mach0 Singularity: sexec (U=0,P=2203)> Command=shell, 
+>>>>>> Container=c7, CWD=/root, Arg1=(null)
+>>>>>> Jul 14 10:49:17 mach0 kernel: EXT4-fs (loop0): mounted filesystem 
+>>>>>> with ordered data mode. Opts: discard
+>>>>>> Jul 14 10:50:39 mach0 Singularity: sexec (U=0,P=2244)> Command=exec, 
+>>>>>> Container=c7, CWD=/root, Arg1=/usr/bin/ring
+>>>>>> Jul 14 10:50:39 mach0 kernel: EXT4-fs (loop0): mounted filesystem 
+>>>>>> with ordered data mode. Opts: discard
+>>>>>> Jul 14 10:51:34 mach0 Singularity: sexec (U=0,P=2299)> Command=exec, 
+>>>>>> Container=c7, CWD=/root, Arg1=/usr/bin/ring
+>>>>>> Jul 14 10:51:34 mach0 Singularity: sexec (U=0,P=2300)> Command=exec, 
+>>>>>> Container=c7, CWD=/root, Arg1=/usr/bin/ring
+>>>>>> Jul 14 10:51:34 mach0 kernel: EXT4-fs (loop0): mounted filesystem 
+>>>>>> with ordered data mode. Opts: discard
+>>>>>> Jul 14 10:51:57 mach0 Singularity: sexec (U=0,P=2322)> Command=shell, 
+>>>>>> Container=c7, CWD=/root, Arg1=(null)
+>>>>>> Jul 14 10:51:57 mach0 Singularity: sexec (U=0,P=2322)> Image is 
+>>>>>> locked by another process
+>>>>>>
+>>>>>>
+>>>>>> -- 
+>>>>>> You received this message because you are subscribed to the Google 
+>>>>>> Groups "singularity" group.
+>>>>>> To unsubscribe from this group and stop receiving emails from it, 
+>>>>>> send an email to singu...@lbl.gov.
+>>>>>>
+>>>>>
+>>>>>
+>>>>>
+>>>>> -- 
+>>>>> Gregory M. Kurtzer
+>>>>> High Performance Computing Services (HPCS)
+>>>>> University of California
+>>>>> Lawrence Berkeley National Laboratory
+>>>>> One Cyclotron Road, Berkeley, CA 94720
+>>>>>
+>>>> -- 
+>>>> You received this message because you are subscribed to the Google 
+>>>> Groups "singularity" group.
+>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>> an email to singu...@lbl.gov.
+>>>>
+>>>
+>>>
+>>>
+>>> -- 
+>>> Gregory M. Kurtzer
+>>> High Performance Computing Services (HPCS)
+>>> University of California
+>>> Lawrence Berkeley National Laboratory
+>>> One Cyclotron Road, Berkeley, CA 94720
+>>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> -- 
+> Gregory M. Kurtzer
+> High Performance Computing Services (HPCS)
+> University of California
+> Lawrence Berkeley National Laboratory
+> One Cyclotron Road, Berkeley, CA 94720
+>
+
+------=_Part_926_2098685499.1468531659806
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Seems that process isn&#39;t running any more.=C2=A0 =
+I did find this in the /var/log/messages file:</div><div><br></div><div><fo=
+nt face=3D"courier new,monospace">[root@mach0 ~]# cat /var/log/messages | g=
+rep 2299<br>Jul 14 10:51:34 mach0 Singularity: sexec (U=3D0,P=3D2299)&gt; C=
+ommand=3Dexec, Container=3Dc7, CWD=3D/root, Arg1=3D/usr/bin/ring<br>Jul 14 =
+11:37:17 mach0 kernel: Buffer I/O error on device loop1, logical block 2229=
+9<br>Jul 14 11:37:17 mach0 kernel: Buffer I/O error on device loop1, logica=
+l block 22990<br>...</font></div><div><font face=3D"courier new,monospace">=
+<br></font></div><div><font face=3D"courier new,monospace">[root@mach0 ~]# =
+ps -ef |grep 2299<br>root=C2=A0=C2=A0=C2=A0=C2=A0 10545=C2=A0 2002=C2=A0 0 =
+14:15 pts/0=C2=A0=C2=A0=C2=A0 00:00:00 grep --color=3Dauto 2299<br>[root@ma=
+ch0 ~]# ps |grep 2299</font><br></div><div><br>On Thursday, July 14, 2016 a=
+t 2:59:26 PM UTC-6, Gregory M. Kurtzer wrote:</div><blockquote class=3D"gma=
+il_quote" style=3D"margin: 0px 0px 0px 0.8ex; padding-left: 1ex; border-lef=
+t-color: rgb(204, 204, 204); border-left-width: 1px; border-left-style: sol=
+id;"><div dir=3D"ltr">What is running at PID=C2=A0<span style=3D"font-size:=
+ 12.8px;">2299?</span></div><div><br><div class=3D"gmail_quote">On Thu, Jul=
+ 14, 2016 at 1:35 PM, Steve Mehlberg <span dir=3D"ltr">&lt;<a onmousedown=
+=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D=
+&#39;javascript:&#39;;return true;" href=3D"javascript:" target=3D"_blank" =
+rel=3D"nofollow" gdf-obfuscated-mailto=3D"E4-7Rzc-AQAJ">sg...@gmail.com</a>=
+&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin: 0p=
+x 0px 0px 0.8ex; padding-left: 1ex; border-left-color: rgb(204, 204, 204); =
+border-left-width: 1px; border-left-style: solid;"><div dir=3D"ltr">Ok, I s=
+ee my error with shell vs exec.=C2=A0 I&#39;m running on a VM with my own s=
+pace, no NFS involved.=C2=A0 Here is the debug command run and lsofl<br><br=
+>[root@mach0 ~]# df -h<br>Filesystem=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 Size=C2=A0 Used Avail Use% Mounted on<br>=
+/dev/mapper/vg1-lv001=C2=A0 5.7G=C2=A0 4.3G=C2=A0 1.1G=C2=A0 80% /<br>devtm=
+pfs=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0 911M=C2=A0=C2=A0=C2=A0=C2=A0 0=C2=A0 911M=C2=A0=C2=A0 0% /dev<=
+br>tmpfs=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 920M=C2=A0=C2=A0=C2=A0=C2=A0 0=C2=A0 9=
+20M=C2=A0=C2=A0 0% /dev/shm<br>tmpfs=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 920M=C2=A0=
+=C2=A0 41M=C2=A0 880M=C2=A0=C2=A0 5% /run<br>tmpfs=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 920M=C2=A0=C2=A0=C2=A0=C2=A0 0=C2=A0 920M=C2=A0=C2=A0 0% /sys/fs/cgroup=
+<br>/dev/vda1=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0 190M=C2=A0 110M=C2=A0=C2=A0 67M=C2=A0 63% /boot<br>/dev/=
+mapper/vg1-lv002=C2=A0=C2=A0 12G=C2=A0 203M=C2=A0=C2=A0 11G=C2=A0=C2=A0 2% =
+/var<br>tmpfs=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 184M=C2=A0=C2=A0=C2=A0=C2=A0 0=
+=C2=A0 184M=C2=A0=C2=A0 0% /run/user/0<br>[root@mach0 ~]# singularity --deb=
+ug shell -w c7<br>enabling debugging<br>ending argument loop<br>Exec&#39;in=
+g: /usr/local/libexec/<wbr>singularity/cli/shell.exec -w+ &#39;[&#39; -f /u=
+sr/local/etc/singularity/<wbr>init &#39;]&#39;<br>+ . /usr/local/etc/singul=
+arity/<wbr>init<br>++ unset module<br>++ PATH=3D/usr/local/sbin:/usr/<wbr>l=
+ocal/bin:/usr/sbin:/usr/bin:/<wbr>root/bin:/bin:/sbin:/usr/bin:/<wbr>usr/sb=
+in<br>++ HISTFILE=3D/dev/null<br>++ export PATH HISTFILE<br>++ &#39;[&#39; =
+-n &#39;&#39; &#39;]&#39;<br>++ &#39;[&#39; -n &#39;&#39; &#39;]&#39;<br>++=
+ &#39;[&#39; -n &#39;&#39; &#39;]&#39;<br>++ &#39;[&#39; -n &#39;&#39; &#39=
+;]&#39;<br>++ &#39;[&#39; -n &#39;&#39; &#39;]&#39;<br>++ &#39;[&#39; -n &#=
+39;&#39; &#39;]&#39;<br>++ &#39;[&#39; -n &#39;&#39; &#39;]&#39;<br>++ &#39=
+;[&#39; -n &#39;&#39; &#39;]&#39;<br>+ true<br>+ case ${1:-} in<br>+ shift<=
+br>+ SINGULARITY_WRITABLE=3D1<br>+ export SINGULARITY_WRITABLE<br>+ true<br=
+>+ case ${1:-} in<br>+ break<br>+ &#39;[&#39; -z c7 &#39;]&#39;<br>+ SINGUL=
+ARITY_IMAGE=3Dc7<br>+ export SINGULARITY_IMAGE<br>+ shift<br>+ exec /usr/lo=
+cal/libexec/<wbr>singularity/sexec<br>VERBOSE [U=3D0,P=3D8045]=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0 message.c:52:init()=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 : Set messagelevel to: 5<br>DEBUG=
+=C2=A0=C2=A0 [U=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 sexec.c:1=
+27:main()=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0<wbr>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0 : Gathering and caching user info.<br>DEBUG=C2=A0=C2=A0 [U=3D0,P=
+=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 privilege.c:43:get_user_privs(=
+<wbr>)=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 : =
+Called get_user_privs(struct s_privinfo *uinfo)<br>DEBUG=C2=A0=C2=A0 [U=3D0=
+,P=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 privilege.c:54:get_user_priv=
+s(<wbr>)=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =
+: Returning get_user_privs(struct s_privinfo *uinfo) =3D 0<br>DEBUG=C2=A0=
+=C2=A0 [U=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 sexec.c:134:mai=
+n()=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+<wbr>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 : Checking if we can escalate privs properly.<br>DEBUG=C2=A0=C2=A0 [U=
+=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 privilege.c:61:escalate_=
+privs(<wbr>)=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 : Called escalate_privs(void)<br>DEBUG=C2=A0=C2=A0 [U=3D0,P=3D8045]=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 privilege.c:73:escalate_privs(<wbr>)=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 : Returning=
+ escalate_privs(void) =3D 0<br>DEBUG=C2=A0=C2=A0 [U=3D0,P=3D8045]=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0 sexec.c:141:main()=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 : Setting privs to calling=
+ user<br>DEBUG=C2=A0=C2=A0 [U=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0 privilege.c:79:drop_privs()=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 : Called drop_privs(=
+struct s_privinfo *uinfo)<br>DEBUG=C2=A0=C2=A0 [U=3D0,P=3D8045]=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0 privilege.c:87:drop_privs()=C2=A0=C2=A0=C2=A0<wbr>=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 : =
+Dropping privileges to GID =3D &#39;0&#39;<br>DEBUG=C2=A0=C2=A0 [U=3D0,P=3D=
+8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 privilege.c:93:drop_privs()=C2=A0=
+=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0 : Dropping privileges to UID =3D &#39;0&#39;<br>DEBUG=C2=A0=
+=C2=A0 [U=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 privilege.c:103=
+:drop_privs()=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0 : Confirming we have correct GID<br>DEBUG=C2=A0=
+=C2=A0 [U=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 privilege.c:109=
+:drop_privs()=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0 : Confirming we have correct UID<br>DEBUG=C2=A0=
+=C2=A0 [U=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 privilege.c:115=
+:drop_privs()=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0 : Returning drop_privs(struct s_privinfo *uinfo=
+) =3D 0<br>DEBUG=C2=A0=C2=A0 [U=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0 sexec.c:146:main()=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0 : Obtaining user&#39;s homedir<br>DEBUG=C2=A0=
+=C2=A0 [U=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 sexec.c:150:mai=
+n()=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+<wbr>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 : Obtaining file descriptor to current directory<br>DEBUG=C2=A0=C2=A0 [=
+U=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 sexec.c:155:main()=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 : =
+Getting current working directory path string<br>DEBUG=C2=A0=C2=A0 [U=3D0,P=
+=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 sexec.c:161:main()=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 : Obtaining=
+ SINGULARITY_COMMAND from environment<br>DEBUG=C2=A0=C2=A0 [U=3D0,P=3D8045]=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 sexec.c:168:main()=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 : Obtaining SINGU=
+LARITY_IMAGE from environment<br>DEBUG=C2=A0=C2=A0 [U=3D0,P=3D8045]=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 sexec.c:174:main()=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 : Checking container im=
+age is a file: c7<br>DEBUG=C2=A0=C2=A0 [U=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0 sexec.c:180:main()=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 : Building configuration file locat=
+ion<br>DEBUG=C2=A0=C2=A0 [U=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 sexec.c:183:main()=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0 : Config location: /usr/local/etc/singularity/<wbr=
+>singularity.conf<br>DEBUG=C2=A0=C2=A0 [U=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0 sexec.c:185:main()=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 : Checking Singularity configuratio=
+n is a file: /usr/local/etc/singularity/<wbr>singularity.conf<br>DEBUG=C2=
+=A0=C2=A0 [U=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 sexec.c:191:=
+main()=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0<wbr>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0 : Checking Singularity configuration file is owned by root<br>DEBUG=
+=C2=A0=C2=A0 [U=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 sexec.c:1=
+97:main()=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0<wbr>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0 : Opening Singularity configuration file<br>DEBUG=C2=A0=C2=A0 [U=
+=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 sexec.c:210:main()=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 : Che=
+cking Singularity configuration for &#39;sessiondir prefix&#39;<br>DEBUG=C2=
+=A0=C2=A0 [U=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 config_parse=
+r.c:47:config_get_<wbr>key_value()=C2=A0 : Called config_get_key_value(fp, =
+sessiondir prefix)<br>DEBUG=C2=A0=C2=A0 [U=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0 config_parser.c:66:config_get_<wbr>key_value()=C2=A0 : R=
+eturn config_get_key_value(fp, sessiondir prefix) =3D NULL<br>DEBUG=C2=A0=
+=C2=A0 [U=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 file.c:48:file_=
+id()=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 : =
+Called file_id(c7)<br>VERBOSE [U=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0 file.c:58:file_id()=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0 : Generated file_id: 0.64768.26052<br>DEBUG=C2=A0=
+=C2=A0 [U=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 file.c:60:file_=
+id()=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 : =
+Returning file_id(c7) =3D 0.64768.26052<br>DEBUG=C2=A0=C2=A0 [U=3D0,P=3D804=
+5]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 sexec.c:217:main()=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 : Set sessiondir =
+to: /tmp/.singularity-session-0.<wbr>64768.26052<br>DEBUG=C2=A0=C2=A0 [U=3D=
+0,P=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 sexec.c:221:main()=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 : Set co=
+ntainername to: c7<br>DEBUG=C2=A0=C2=A0 [U=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0 sexec.c:223:main()=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 : Setting loop_dev_* paths<br>DEBUG=
+=C2=A0=C2=A0 [U=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 config_pa=
+rser.c:47:config_get_<wbr>key_value()=C2=A0 : Called config_get_key_value(f=
+p, container dir)<br>DEBUG=C2=A0=C2=A0 [U=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0 config_parser.c:58:config_get_<wbr>key_value()=C2=A0 : R=
+eturn config_get_key_value(fp, container dir) =3D /var/singularity/mnt<br>D=
+EBUG=C2=A0=C2=A0 [U=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 sexec=
+.c:232:main()=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0 : Set image mount path to: /var/singularity/mnt<br>LOG=C2=
+=A0=C2=A0=C2=A0=C2=A0 [U=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =
+sexec.c:234:main()=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0 : Command=3Dshell, Container=3Dc7, CWD=3D/root, Arg1=3D(=
+null)<br>DEBUG=C2=A0=C2=A0 [U=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0 sexec.c:247:main()=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0 : Set prompt to: Singularity.c7&gt;<br>DEBUG=C2=
+=A0=C2=A0 [U=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 sexec.c:249:=
+main()=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0<wbr>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0 : Checking if we are opening image as read/write<br>DEBUG=C2=A0=C2=
+=A0 [U=3D0,P=3D8045]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 sexec.c:264:main()=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wb=
+r>=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =
+: Opening image as read/write only: c7<br>DEBUG=C2=A0=C2=A0 [U=3D0,P=3D8045=
+]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 sexec.c:271:main()=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 : Setting exclusi=
+ve lock on file descriptor: 6<br>ERROR=C2=A0=C2=A0 [U=3D0,P=3D8045]=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 sexec.c:273:main()=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0<wbr>=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 : Image is locked by an=
+other process<span><br>[root@mach0 ~]# lsof c7<br></span>[root@mach0 ~]# ls=
+locks<br>COMMAND=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 PID=C2=A0 TYPE SIZE MODE=C2=A0 M START END PATH<br>crond=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 601 FLOCK=C2=A0=
+=C2=A0 4B WRITE 0=C2=A0=C2=A0=C2=A0=C2=A0 0=C2=A0=C2=A0 0 /run/crond.pid<br=
+>master=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 8=
+26 FLOCK=C2=A0 33B WRITE 0=C2=A0=C2=A0=C2=A0=C2=A0 0=C2=A0=C2=A0 0 /var/spo=
+ol/postfix/pid/master.<wbr>pid<br>master=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 826 FLOCK=C2=A0 33B WRITE 0=C2=A0=C2=A0=
+=C2=A0=C2=A0 0=C2=A0=C2=A0 0 /var/lib/postfix/master.lock<br>lvmetad=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 478 POSIX=C2=A0=C2=
+=A0 4B WRITE 0=C2=A0=C2=A0=C2=A0=C2=A0 0=C2=A0=C2=A0 0 /run/lvmetad.pid<br>=
+slurmctld=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 940 POSIX=C2=A0=
+=C2=A0 4B WRITE 0=C2=A0=C2=A0=C2=A0=C2=A0 0=C2=A0=C2=A0 0 /run/slurmctld.pi=
+d<br>slurmd=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 966 POSIX=C2=A0=C2=A0 4B WRITE 0=C2=A0=C2=A0=C2=A0=C2=A0 0=C2=A0=C2=A0 =
+0 /run/slurmd.pid<br>(unknown)=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 22=
+99 FLOCK=C2=A0=C2=A0 0B READ=C2=A0 0=C2=A0=C2=A0=C2=A0=C2=A0 0=C2=A0=C2=A0 =
+0 /<br><br><br>On Thursday, July 14, 2016 at 1:03:50 PM UTC-6, Gregory M. K=
+urtzer wrote:<div><div><blockquote class=3D"gmail_quote" style=3D"margin: 0=
+px 0px 0px 0.8ex; padding-left: 1ex; border-left-color: rgb(204, 204, 204);=
+ border-left-width: 1px; border-left-style: solid;"><div dir=3D"ltr"><br><d=
+iv><br><div class=3D"gmail_quote">On Thu, Jul 14, 2016 at 11:50 AM, Steve M=
+ehlberg <span dir=3D"ltr">&lt;<a rel=3D"nofollow">sg...@gmail.com</a>&gt;</=
+span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin: 0px 0px =
+0px 0.8ex; padding-left: 1ex; border-left-color: rgb(204, 204, 204); border=
+-left-width: 1px; border-left-style: solid;"><div dir=3D"ltr">Gregory,<br><=
+br>Thanks for the quick suggestions.=C2=A0 There don&#39;t seem to be any p=
+rocesses attached to the container and I can&#39;t seem to run other comman=
+ds (in read mode). I&#39;m not sure what&#39;s going on.<br><br>Just lazy w=
+ith root right now, I need to create a normal uid.<br></div></blockquote><d=
+iv><br></div><div>Ahh, ok. Been there, done that! lol</div><div>=C2=A0</div=
+><blockquote class=3D"gmail_quote" style=3D"margin: 0px 0px 0px 0.8ex; padd=
+ing-left: 1ex; border-left-color: rgb(204, 204, 204); border-left-width: 1p=
+x; border-left-style: solid;"><div dir=3D"ltr"><br>Steve<br><br><span style=
+=3D"font-family: courier new,monospace;">[root@mach0 ~]# ls -la c7<br>-rwxr=
+-xr-x 1 root root 1610612769 Jul 14 10:49 c7<br>[root@mach0 ~]# singularity=
+ shell -w c7<span><br>ERROR=C2=A0 : Image is locked by another process<br><=
+/span></span></div></blockquote><div><br></div><div>Can you run this comman=
+d again in --debug mode (singularity --debug ....)</div><div>=C2=A0</div><b=
+lockquote class=3D"gmail_quote" style=3D"margin: 0px 0px 0px 0.8ex; padding=
+-left: 1ex; border-left-color: rgb(204, 204, 204); border-left-width: 1px; =
+border-left-style: solid;"><div dir=3D"ltr"><span style=3D"font-family: cou=
+rier new,monospace;"><span></span>[root@mach0 ~]# lsof c7<br></span></div><=
+/blockquote><div><br></div><div>What about the command &quot;lslocks&quot;?=
+</div><div>=C2=A0</div><blockquote class=3D"gmail_quote" style=3D"margin: 0=
+px 0px 0px 0.8ex; padding-left: 1ex; border-left-color: rgb(204, 204, 204);=
+ border-left-width: 1px; border-left-style: solid;"><div dir=3D"ltr"><span =
+style=3D"font-family: courier new,monospace;">[root@mach0 ~]# singularity s=
+hell c7 whoami<br>/usr/bin/whoami: /usr/bin/whoami: cannot execute binary f=
+ile<br></span></div></blockquote><div><br></div><div>Ahh, this is normal. Y=
+ou are asking the shell script to read in /usr/bin/whoami. If you want to u=
+se shell to run whoami, you must prefix it with the -c (e.g. -c &quot;whoam=
+i [args]&quot;), or use the &#39;exec&#39; Singularity subcommand: &quot;si=
+ngularity exec c7 whoami&quot;</div><div>=C2=A0</div><blockquote class=3D"g=
+mail_quote" style=3D"margin: 0px 0px 0px 0.8ex; padding-left: 1ex; border-l=
+eft-color: rgb(204, 204, 204); border-left-width: 1px; border-left-style: s=
+olid;"><div dir=3D"ltr"><span style=3D"font-family: courier new,monospace;"=
+>[root@mach0 ~]#<br>[root@mach0 ~]# ps -ef |grep c7<br>root=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0 7479=C2=A0 2002=C2=A0 0 11:49 pts/0=C2=A0=C2=A0=C2=A0 00:00=
+:00 grep --color=3Dauto c7<br>[root@mach0 ~]#</span></div></blockquote><div=
+><br></div><div>What kind of file system does your image exist on? Is it NF=
+S by chance? I wonder if there is a host issue with a locking daemon or som=
+ething else weird going on where it is not giving the exclusive lock proper=
+ly. If this is NFS or other non local file system, can you copy the image t=
+o /tmp, rerun the MPI command to get it to fail again, and try again?=C2=A0=
+</div><div><br></div><div>Thanks!</div><div><br></div><div><br></div><div>=
+=C2=A0</div><blockquote class=3D"gmail_quote" style=3D"margin: 0px 0px 0px =
+0.8ex; padding-left: 1ex; border-left-color: rgb(204, 204, 204); border-lef=
+t-width: 1px; border-left-style: solid;"><div dir=3D"ltr"><span><br><br><br=
+><br>On Thursday, July 14, 2016 at 12:30:01 PM UTC-6, Gregory M. Kurtzer wr=
+ote:</span><blockquote class=3D"gmail_quote" style=3D"margin: 0px 0px 0px 0=
+.8ex; padding-left: 1ex; border-left-color: rgb(204, 204, 204); border-left=
+-width: 1px; border-left-style: solid;"><span><div dir=3D"ltr">Hi Steve,<di=
+v><br></div><div>That means there is an active file descriptor/process stil=
+l running and attached to the container maintaining a shared lock. You can =
+run other commands against the container as long as long as the container i=
+s not being requested as --writable(-w), because that will try and obtain a=
+n exclusive lock and it will fail if there are any active shared locks. Try=
+ an &quot;lsof /path/to/c7&quot; to see what processes are attached to it. =
+You may see a list like:</div><div><br></div><div><div># lsof /tmp/Demo-2.i=
+mg=C2=A0</div><div>COMMAND =C2=A0 =C2=A0PID USER =C2=A0 FD =C2=A0 TYPE DEVI=
+CE =C2=A0 SIZE/OFF =C2=A0 =C2=A0 =C2=A0NODE NAME</div><div>sexec =C2=A0 107=
+975 root =C2=A0 =C2=A06rR =C2=A0REG =C2=A0253,0 1073741856 202112247 /tmp/D=
+emo-2.img</div><div>sexec =C2=A0 107977 root =C2=A0 =C2=A06r =C2=A0 REG =C2=
+=A0253,0 1073741856 202112247 /tmp/Demo-2.img</div><div>bash =C2=A0 =C2=A01=
+07982 root =C2=A0 =C2=A06r =C2=A0 REG =C2=A0253,0 1073741856 202112247 /tmp=
+/Demo-2.img</div></div><div><br></div><div>Notice the two top ones are &#39=
+;sexec&#39; which are part of the Singularity process stack. Kill the botto=
+m one, and those should go away naturally.</div><div><br></div><div>BTW, as=
+ long as you have installed Singularity as root, there is no need to run Si=
+ngularity commands as root (unless you want to make system changes within t=
+he container).</div><div><br></div><div>Hope that helps!</div><div><br></di=
+v></div></span><div><br><div class=3D"gmail_quote"><div><div>On Thu, Jul 14=
+, 2016 at 10:56 AM, Steve Mehlberg <span dir=3D"ltr">&lt;<a rel=3D"nofollow=
+">sg...@gmail.com</a>&gt;</span> wrote:<br></div></div><blockquote class=3D=
+"gmail_quote" style=3D"margin: 0px 0px 0px 0.8ex; padding-left: 1ex; border=
+-left-color: rgb(204, 204, 204); border-left-width: 1px; border-left-style:=
+ solid;"><div><div><div dir=3D"ltr">Running mpirun tests, when an abort occ=
+urs, my image ends up locked.=C2=A0 Is there a way to clear the lock withou=
+t rebooting?=C2=A0 I looked for processes that I could kill, but didn&#39;t=
+ see anything worthy.<br><br>I&#39;m using singularity v2.1 on Centos 7.2 (=
+both host and container).<br><br>Regards,<br><br>Steve<br><br><span style=
+=3D"font-family: courier new,monospace;">[root@mach0 ~]# mpirun --allow-run=
+-as-root -n 2 -H mach1,mach2 singularity exec c7 /usr/bin/ring<br>Process 0=
+ sending 10 to 1, tag 201 (2 processes in ring)<br>Process 0 sent to 1<br>P=
+rocess 0 decremented value: 9<br>Process 0 decremented value: 8<br>Process =
+0 decremented value: 7<br>Process 0 decremented value: 6<br>Process 0 decre=
+mented value: 5<br>Process 0 decremented value: 4<br>Process 0 decremented =
+value: 3<br>Process 0 decremented value: 2<br>Process 0 decremented value: =
+1<br>Process 0 decremented value: 0<br>Process 0 exiting<br>Process 1 exiti=
+ng<br>[root@mach0 ~]# mpirun --allow-run-as-root -n 3 -H mach0,mach1,mach2 =
+singularity exec c7 /usr/bin/ring<br>------------------------------<wbr>---=
+---------------------------<wbr>--------------<br>It appears as if there is=
+ not enough space for /tmp/ompi.mach0.2291/54935/1/<wbr>0/vader_segment.mac=
+h0.0 (the shared-memory backing<br>file). It is likely that your MPI job wi=
+ll now either abort or experience<br>performance degradation.<br><br>=C2=A0=
+ Local host:=C2=A0 mach0<br>=C2=A0 Space Requested: 4194312 B<br>=C2=A0 Spa=
+ce Available: 0 B<br>------------------------------<wbr>-------------------=
+-----------<wbr>--------------<br>[mach0:02308] create_and_attach: unable t=
+o create shared memory BTL coordinating structure :: size 134217728<br>[mac=
+h0:02291] 2 more processes have sent help message help-opal-shmem-mmap.txt =
+/ target full<br>[mach0:02291] Set MCA parameter &quot;orte_base_help_aggre=
+gate&quot; to 0 to see all help / error messages<br>^CKilled by signal 2.<b=
+r>Killed by signal 2.<br>Singularity is sending SIGKILL to child pid: 2308<=
+br>Singularity is sending SIGKILL to child pid: 2309<br>[warn] Epoll ADD(4)=
+ on fd 31 failed.=C2=A0 Old events were 0; read change was 0 (none); write =
+change was 1 (add): Bad file descriptor<br>^C[root@mach0 ~]singularity shel=
+l -w c7<br>ERROR=C2=A0 : Image is locked by another process<br>[root@mach0 =
+~]# tail -30 /var/log/messages<br>Jul 14 10:42:17 mach0 systemd: Started LS=
+B: slurm daemon management.<br>Jul 14 10:42:17 mach0 systemd: Reached targe=
+t Multi-User System.<br>Jul 14 10:42:17 mach0 systemd: Starting Multi-User =
+System.<br>Jul 14 10:42:17 mach0 systemd: Starting Update UTMP about System=
+ Runlevel Changes...<br>Jul 14 10:42:17 mach0 systemd: Started Stop Read-Ah=
+ead Data Collection 10s After Completed Startup.<br>Jul 14 10:42:17 mach0 s=
+ystemd: Started Update UTMP about System Runlevel Changes.<br>Jul 14 10:42:=
+18 mach0 kdumpctl: kexec: loaded kdump kernel<br>Jul 14 10:42:18 mach0 kdum=
+pctl: Starting kdump: [OK]<br>Jul 14 10:42:18 mach0 systemd: Started Crash =
+recovery kernel arming.<br>Jul 14 10:42:18 mach0 systemd: Startup finished =
+in 415ms (kernel) + 1.100s (initrd) + 4.931s (userspace) =3D 6.446s.<br>Jul=
+ 14 10:42:34 mach0 systemd: Created slice user-0.slice.<br>Jul 14 10:42:34 =
+mach0 systemd: Starting user-0.slice.<br>Jul 14 10:42:34 mach0 systemd-logi=
+nd: New session 1 of user root.<br>Jul 14 10:42:34 mach0 systemd: Started S=
+ession 1 of user root.<br>Jul 14 10:42:34 mach0 systemd: Starting Session 1=
+ of user root.<br>Jul 14 10:42:36 mach0 Singularity: sexec (U=3D0,P=3D2023)=
+&gt; Command=3Dexec, Container=3Dc7, CWD=3D/root, Arg1=3D/usr/bin/ring<br>J=
+ul 14 10:42:36 mach0 Singularity: sexec (U=3D0,P=3D2024)&gt; Command=3Dexec=
+, Container=3Dc7, CWD=3D/root, Arg1=3D/usr/bin/ring<br>Jul 14 10:42:36 mach=
+0 Singularity: sexec (U=3D0,P=3D2024)&gt; Image is locked by another proces=
+s<br>Jul 14 10:42:36 mach0 kernel: loop: module loaded<br>Jul 14 10:43:38 m=
+ach0 Singularity: sexec (U=3D0,P=3D2050)&gt; Command=3Dshell, Container=3Dc=
+7, CWD=3D/root, Arg1=3D(null)<br>Jul 14 10:43:38 mach0 kernel: EXT4-fs (loo=
+p0): mounted filesystem with ordered data mode. Opts: discard<br>Jul 14 10:=
+49:17 mach0 Singularity: sexec (U=3D0,P=3D2203)&gt; Command=3Dshell, Contai=
+ner=3Dc7, CWD=3D/root, Arg1=3D(null)<br>Jul 14 10:49:17 mach0 kernel: EXT4-=
+fs (loop0): mounted filesystem with ordered data mode. Opts: discard<br>Jul=
+ 14 10:50:39 mach0 Singularity: sexec (U=3D0,P=3D2244)&gt; Command=3Dexec, =
+Container=3Dc7, CWD=3D/root, Arg1=3D/usr/bin/ring<br>Jul 14 10:50:39 mach0 =
+kernel: EXT4-fs (loop0): mounted filesystem with ordered data mode. Opts: d=
+iscard<br>Jul 14 10:51:34 mach0 Singularity: sexec (U=3D0,P=3D2299)&gt; Com=
+mand=3Dexec, Container=3Dc7, CWD=3D/root, Arg1=3D/usr/bin/ring<br>Jul 14 10=
+:51:34 mach0 Singularity: sexec (U=3D0,P=3D2300)&gt; Command=3Dexec, Contai=
+ner=3Dc7, CWD=3D/root, Arg1=3D/usr/bin/ring<br>Jul 14 10:51:34 mach0 kernel=
+: EXT4-fs (loop0): mounted filesystem with ordered data mode. Opts: discard=
+<br>Jul 14 10:51:57 mach0 Singularity: sexec (U=3D0,P=3D2322)&gt; Command=
+=3Dshell, Container=3Dc7, CWD=3D/root, Arg1=3D(null)<br>Jul 14 10:51:57 mac=
+h0 Singularity: sexec (U=3D0,P=3D2322)&gt; Image is locked by another proce=
+ss</span><span><font color=3D"#888888"><br><br><br></font></span></div></di=
+v></div><span><font color=3D"#888888"><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br></div></div>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</font></span></blockquote></div><span><br><br clear=3D"all"><div><br></div=
+>-- <br><div><div dir=3D"ltr"><div>Gregory M. Kurtzer<br>High Performance C=
+omputing Services (HPCS)<br>University of California<br>Lawrence Berkeley N=
+ational Laboratory<br>One Cyclotron Road, Berkeley, CA 94720</div></div></d=
+iv>
+</span></div>
+</blockquote></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div><div dir=3D"ltr"><div>Gregory M. Kurtzer<br>High Performance Computing=
+ Services (HPCS)<br>University of California<br>Lawrence Berkeley National =
+Laboratory<br>One Cyclotron Road, Berkeley, CA 94720</div></div></div>
+</div></div>
+</blockquote></div></div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a onmousedown=3D"this.href=3D&#39;javascript:&#39;;return true;" o=
+nclick=3D"this.href=3D&#39;javascript:&#39;;return true;" href=3D"javascrip=
+t:" target=3D"_blank" rel=3D"nofollow" gdf-obfuscated-mailto=3D"E4-7Rzc-AQA=
+J">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>=
+<div><div dir=3D"ltr"><div>Gregory M. Kurtzer<br>High Performance Computing=
+ Services (HPCS)<br>University of California<br>Lawrence Berkeley National =
+Laboratory<br>One Cyclotron Road, Berkeley, CA 94720</div></div></div>
+</div>
+</blockquote></div>
+------=_Part_926_2098685499.1468531659806--
+
+------=_Part_925_360119301.1468531659805--

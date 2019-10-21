@@ -1,0 +1,276 @@
+X-Received: by 10.98.64.205 with SMTP id f74mr14663116pfd.4.1449253932318;
+        Fri, 04 Dec 2015 10:32:12 -0800 (PST)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.50.59.244 with SMTP id c20ls235490igr.12.canary; Fri, 04 Dec
+ 2015 10:32:11 -0800 (PST)
+X-Received: by 10.98.72.156 with SMTP id q28mr23929494pfi.117.1449253931648;
+        Fri, 04 Dec 2015 10:32:11 -0800 (PST)
+Return-Path: <gmku...@lbl.gov>
+Received: from fe4.lbl.gov (fe4.lbl.gov. [128.3.41.71])
+        by mx.google.com with ESMTPS id xo14si20785482pac.167.2015.12.04.10.32.11
+        for <singu...@lbl.gov>
+        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Fri, 04 Dec 2015 10:32:11 -0800 (PST)
+Received-SPF: pass (google.com: domain of gmku...@lbl.gov designates 74.125.82.53 as permitted sender) client-ip=74.125.82.53;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of gmku...@lbl.gov designates 74.125.82.53 as permitted sender) smtp.mailfrom=gmku...@lbl.gov
+X-Ironport-SBRS: 4.8
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2ESBgBK22FWlDVSfUpeg1k0Xw8GrA6BfwEBjwYrAQ2BbhmBc4UnBzgUAQEBAQEBAQMOAQEBAQcLCwkfMIMdLC8EIDERBHg3AiQSAQUBPRqIDQWfSYIIgTE+MYtIkRAKhkuMc4FEBY0pdoRYg2oBgQOEKYgPgiSSeIYEEiSBFxEOAQGCUBkHgXcdNIVvAQEB
+X-IronPort-AV: E=Sophos;i="5.20,380,1444719600"; 
+   d="scan'208";a="6849028"
+Received: from mail-wm0-f53.google.com ([74.125.82.53])
+  by fe4.lbl.gov with ESMTP; 04 Dec 2015 10:32:03 -0800
+Received: by wmvv187 with SMTP id v187so87131067wmv.1
+        for <singu...@lbl.gov>; Fri, 04 Dec 2015 10:32:03 -0800 (PST)
+X-Gm-Message-State: ALoCoQnNsL1+wIrTG9vZzHAEgK4e62fxy9Yjc70cCgDryxIsg1SxpTpFSGKZhZ7JyJgzSAIOqHSWGLqsCQPkXXVe1GW6KM5bPekxvMONIdq1HP0mVilm6svEWINJ8j9b+7zp6GqRU9QDpxRH+oByOx8pWdZHjnyujt0rWSoTHzyiPbIrfQ3evDg=
+X-Received: by 10.28.86.196 with SMTP id k187mr6569941wmb.61.1449253923344;
+        Fri, 04 Dec 2015 10:32:03 -0800 (PST)
+MIME-Version: 1.0
+X-Received: by 10.28.86.196 with SMTP id k187mr6569916wmb.61.1449253923079;
+ Fri, 04 Dec 2015 10:32:03 -0800 (PST)
+Received: by 10.28.229.83 with HTTP; Fri, 4 Dec 2015 10:32:03 -0800 (PST)
+Date: Fri, 4 Dec 2015 10:32:03 -0800
+Message-ID: <CAN7etTywCBAjNEiTSi_POC3gjc6sKqafNafY1sFYrBgUL0DzKg@mail.gmail.com>
+Subject: Perl dependency check example
+From: "Gregory M. Kurtzer" <gmku...@lbl.gov>
+To: singularity@lbl.gov
+Content-Type: multipart/alternative; boundary=001a11452ca8469165052616b922
+
+--001a11452ca8469165052616b922
+Content-Type: text/plain; charset=UTF-8
+
+Here is a quick example of a perl script which uses the CGI module (CGI
+because it is huge and triggers a huge dependency loop which you can follow
+in the output below) and of course demonstrates it working.
+
+Here the example perl code:
+
+[gmk@centos7-x64 demo]$ cat foo.pl
+#!/usr/bin/perl
+use CGI;
+print CGI->header();
+
+And the simplest Singularity specfile you can imagine:
+
+[gmk@centos7-x64 demo]$ cat example.sspec
+Name: perl-example
+Exec: /home/gmk/demo/foo.pl
+
+
+Here is the build:
+
+
+[gmk@centos7-x64 demo]$ singularity build example.sspec
+Building: perl-example
+Checking paths...
+Checking writable...
+Evaluating: %packages
+Creating template configs
+  /etc/nsswitch.conf
+  /etc/resolv.conf
+  /etc/hosts
+Evaluating: hard requirements
+Installing file: /bin/sh
+Evaluating: Exec
+Installing file: /home/gmk/demo/foo.pl
+Evaluating: %files
+Starting dependency loop...
+Installing file: /lib64/libnss_files.so.2
+Installing file: /lib64/libnss_dns.so.2
+Installing file: /lib64/libresolv.so.2
+Installing file: /lib64/libtinfo.so.5
+Installing file: /lib64/libdl.so.2
+Installing file: /lib64/libc.so.6
+Installing file: /lib64/ld-linux-x86-64.so.2
+Installing file: /usr/share/perl5/vendor_perl/CGI.pm
+Installing file: /usr/bin/perl
+Rechecking new files for dependencies...
+Installing file: /usr/lib64/perl5/CORE/libperl.so
+Installing file: /lib64/libnsl.so.1
+Installing file: /lib64/libm.so.6
+Installing file: /lib64/libcrypt.so.1
+Installing file: /lib64/libutil.so.1
+Installing file: /lib64/libpthread.so.0
+Installing file: /lib64/libfreebl3.so
+Installing file: /usr/share/perl5/vendor_perl/Carp.pm
+Installing file: /usr/share/perl5/vendor_perl/CGI/Util.pm
+Installing file: /usr/share/perl5/vendor_perl/constant.pm
+Installing file: /usr/share/perl5/overload.pm
+Installing file: /usr/lib64/perl5/vendor_perl/Encode.pm
+Installing file: /usr/share/perl5/vendor_perl/CGI/Carp.pm
+Installing file: /usr/lib64/perl5/Config.pod
+Installing file: /usr/lib64/perl5/vendor_perl/Apache2/Response.pm
+Installing file: /usr/lib64/perl5/vendor_perl/Apache2/RequestRec.pm
+Installing file: /usr/lib64/perl5/vendor_perl/Apache2/RequestUtil.pm
+Installing file: /usr/lib64/perl5/vendor_perl/Apache2/RequestIO.pm
+Installing file: /usr/lib64/perl5/vendor_perl/APR/Pool.pm
+Installing file: /usr/share/perl5/vendor_perl/CGI/Cookie.pm
+Installing file: /usr/share/perl5/vendor_perl/Text/ParseWords.pm
+Installing file: /usr/lib64/perl5/Fcntl.pm
+Rechecking new files for dependencies...
+Installing file: /usr/share/perl5/strict.pm
+Installing file: /usr/share/perl5/warnings.pm
+Installing file: /usr/share/perl5/vars.pm
+Installing file: /usr/share/perl5/vendor_perl/Exporter.pm
+Installing file: /usr/share/perl5/base.pm
+Installing file: /usr/lib64/perl5/vendor_perl/File/Spec.pm
+Installing file: /usr/lib64/perl5/vendor_perl/ModPerl/Util.pm
+Installing file: /usr/lib64/perl5/vendor_perl/APR/Table.pm
+Installing file: /usr/share/perl5/warnings/register.pm
+Installing file: /usr/share/perl5/overloading.pm
+Installing file: /usr/lib64/perl5/vendor_perl/Scalar/Util.pm
+Installing file: /usr/lib64/perl5/mro.pm
+Installing file: /usr/share/perl5/XSLoader.pm
+Installing file: /usr/lib64/perl5/vendor_perl/Encode/Alias.pm
+Installing file: /usr/share/perl5/bytes.pm
+Installing file: /usr/lib64/perl5/vendor_perl/Encode/Config.pm
+Installing file: /usr/lib64/perl5/vendor_perl/Encode/Encoding.pm
+Installing file: /usr/lib64/perl5/vendor_perl/Apache2/Const.pm
+Installing file: /usr/lib64/perl5/vendor_perl/APR/Finfo.pm
+Installing file: /usr/lib64/perl5/vendor_perl/APR/Const.pm
+Installing file: /usr/lib64/perl5/vendor_perl/APR/Brigade.pm
+Installing file: /usr/lib64/perl5/vendor_perl/APR/Bucket.pm
+Installing file: /usr/lib64/perl5/vendor_perl/Apache2/Filter.pm
+Installing file: /usr/share/perl5/Compress/Zlib.pm
+Installing file: /usr/lib64/perl5/vendor_perl/Apache2/Access.pm
+Installing file: /usr/lib64/perl5/vendor_perl/APR.pm
+Installing file: /usr/share/perl5/pod/perldata.pod
+Dependency checks completed
+Including SAPPFILE
+Calculating container size
+Calculating checksums
+Writing metadata
+Building primary singularity exec driver
+Building singularity test runscript
+Building singularity main runscript
+Cleaning up unpackaged files
+Creating output SAPP container
+WROTE: perl-example.sapp
+
+
+And lastly, here is the Singularity container being executed:
+
+[gmk@centos7-x64 demo]$ ./perl-example.sapp
+Content-Type: text/html
+
+[gmk@centos7-x64 demo] $ singularity list
+SAPPNAME     SIZE (k) S SUMMARY
+perl-example       8308
+
+
+
+This is using the currently committed code. What other features are needed
+before I release the first version?
+
+Thanks!
+
+-- 
+Gregory M. Kurtzer
+Technical Lead and HPC Systems Architect
+High Performance Computing Services (HPCS)
+University of California
+Lawrence Berkeley National Laboratory
+One Cyclotron Road, Berkeley, CA 94720
+
+--001a11452ca8469165052616b922
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Here is a quick example of a perl script which uses the CG=
+I module (CGI because it is huge and triggers a huge dependency loop which =
+you can follow in the output below) and of course demonstrates it working.<=
+div><br></div><div>Here the example perl code:</div><div><br></div><div>
+
+
+
+
+
+
+
+[gmk@centos7-x64 demo]$ cat <a href=3D"http://foo.pl">foo.pl</a> <br>#!/usr=
+/bin/perl<br>use CGI;<br>print CGI-&gt;header();</div><div><br></div><div>A=
+nd the simplest Singularity specfile you can imagine:</div><div><br></div>[=
+gmk@centos7-x64 demo]$ cat example.sspec <br>Name: perl-example<br>Exec: /h=
+ome/gmk/demo/<a href=3D"http://foo.pl">foo.pl</a><div><br></div><div><br></=
+div><div>Here is the build:</div><div><br></div><div><br></div>[gmk@centos7=
+-x64 demo]$ singularity build example.sspec <br>Building: perl-example<br>C=
+hecking paths...<br>Checking writable...<br>Evaluating: %packages<br>Creati=
+ng template configs<br>=C2=A0 /etc/nsswitch.conf<br>=C2=A0 /etc/resolv.conf=
+<br>=C2=A0 /etc/hosts<br>Evaluating: hard requirements<br>Installing file: =
+/bin/sh<br>Evaluating: Exec<br>Installing file: /home/gmk/demo/<a href=3D"h=
+ttp://foo.pl">foo.pl</a><br>Evaluating: %files<br>Starting dependency loop.=
+..<br>Installing file: /lib64/libnss_files.so.2<br>Installing file: /lib64/=
+libnss_dns.so.2<br>Installing file: /lib64/libresolv.so.2<br>Installing fil=
+e: /lib64/libtinfo.so.5<br>Installing file: /lib64/libdl.so.2<br>Installing=
+ file: /lib64/libc.so.6<br>Installing file: /lib64/ld-linux-x86-64.so.2<br>=
+Installing file: /usr/share/perl5/vendor_perl/CGI.pm<br>Installing file: /u=
+sr/bin/perl<br>Rechecking new files for dependencies...<br>Installing file:=
+ /usr/lib64/perl5/CORE/libperl.so<br>Installing file: /lib64/libnsl.so.1<br=
+>Installing file: /lib64/libm.so.6<br>Installing file: /lib64/libcrypt.so.1=
+<br>Installing file: /lib64/libutil.so.1<br>Installing file: /lib64/libpthr=
+ead.so.0<br>Installing file: /lib64/libfreebl3.so<br>Installing file: /usr/=
+share/perl5/vendor_perl/Carp.pm<br>Installing file: /usr/share/perl5/vendor=
+_perl/CGI/Util.pm<br>Installing file: /usr/share/perl5/vendor_perl/<a href=
+=3D"http://constant.pm">constant.pm</a><br>Installing file: /usr/share/perl=
+5/<a href=3D"http://overload.pm">overload.pm</a><br>Installing file: /usr/l=
+ib64/perl5/vendor_perl/Encode.pm<br>Installing file: /usr/share/perl5/vendo=
+r_perl/CGI/Carp.pm<br>Installing file: /usr/lib64/perl5/Config.pod<br>Insta=
+lling file: /usr/lib64/perl5/vendor_perl/Apache2/Response.pm<br>Installing =
+file: /usr/lib64/perl5/vendor_perl/Apache2/RequestRec.pm<br>Installing file=
+: /usr/lib64/perl5/vendor_perl/Apache2/RequestUtil.pm<br>Installing file: /=
+usr/lib64/perl5/vendor_perl/Apache2/RequestIO.pm<br>Installing file: /usr/l=
+ib64/perl5/vendor_perl/APR/Pool.pm<br>Installing file: /usr/share/perl5/ven=
+dor_perl/CGI/Cookie.pm<br>Installing file: /usr/share/perl5/vendor_perl/Tex=
+t/ParseWords.pm<br>Installing file: /usr/lib64/perl5/Fcntl.pm<br>Rechecking=
+ new files for dependencies...<br>Installing file: /usr/share/perl5/<a href=
+=3D"http://strict.pm">strict.pm</a><br>Installing file: /usr/share/perl5/<a=
+ href=3D"http://warnings.pm">warnings.pm</a><br>Installing file: /usr/share=
+/perl5/<a href=3D"http://vars.pm">vars.pm</a><br>Installing file: /usr/shar=
+e/perl5/vendor_perl/Exporter.pm<br>Installing file: /usr/share/perl5/<a hre=
+f=3D"http://base.pm">base.pm</a><br>Installing file: /usr/lib64/perl5/vendo=
+r_perl/File/Spec.pm<br>Installing file: /usr/lib64/perl5/vendor_perl/ModPer=
+l/Util.pm<br>Installing file: /usr/lib64/perl5/vendor_perl/APR/Table.pm<br>=
+Installing file: /usr/share/perl5/warnings/<a href=3D"http://register.pm">r=
+egister.pm</a><br>Installing file: /usr/share/perl5/<a href=3D"http://overl=
+oading.pm">overloading.pm</a><br>Installing file: /usr/lib64/perl5/vendor_p=
+erl/Scalar/Util.pm<br>Installing file: /usr/lib64/perl5/<a href=3D"http://m=
+ro.pm">mro.pm</a><br>Installing file: /usr/share/perl5/XSLoader.pm<br>Insta=
+lling file: /usr/lib64/perl5/vendor_perl/Encode/Alias.pm<br>Installing file=
+: /usr/share/perl5/<a href=3D"http://bytes.pm">bytes.pm</a><br>Installing f=
+ile: /usr/lib64/perl5/vendor_perl/Encode/Config.pm<br>Installing file: /usr=
+/lib64/perl5/vendor_perl/Encode/Encoding.pm<br>Installing file: /usr/lib64/=
+perl5/vendor_perl/Apache2/Const.pm<br>Installing file: /usr/lib64/perl5/ven=
+dor_perl/APR/Finfo.pm<br>Installing file: /usr/lib64/perl5/vendor_perl/APR/=
+Const.pm<br>Installing file: /usr/lib64/perl5/vendor_perl/APR/Brigade.pm<br=
+>Installing file: /usr/lib64/perl5/vendor_perl/APR/Bucket.pm<br>Installing =
+file: /usr/lib64/perl5/vendor_perl/Apache2/Filter.pm<br>Installing file: /u=
+sr/share/perl5/Compress/Zlib.pm<br>Installing file: /usr/lib64/perl5/vendor=
+_perl/Apache2/Access.pm<br>Installing file: /usr/lib64/perl5/vendor_perl/AP=
+R.pm<br>Installing file: /usr/share/perl5/pod/perldata.pod<br>Dependency ch=
+ecks completed<br>Including SAPPFILE<br>Calculating container size<br>Calcu=
+lating checksums<br>Writing metadata<br>Building primary singularity exec d=
+river<br>Building singularity test runscript<br>Building singularity main r=
+unscript<br>Cleaning up unpackaged files<br>Creating output SAPP container<=
+br>WROTE: perl-example.sapp<div><br></div><div><br></div><div>And lastly, h=
+ere is the Singularity container being executed:</div><div><br></div>[gmk@c=
+entos7-x64 demo]$ ./perl-example.sapp <br>Content-Type: text/html<br><br>[g=
+mk@centos7-x64 demo]
+
+
+
+
+
+
+
+$ singularity list<br>SAPPNAME =C2=A0 =C2=A0 SIZE (k) S SUMMARY<br>perl-exa=
+mple =C2=A0 =C2=A0 =C2=A0 8308 =C2=A0 <div><br></div><div><br></div><div><b=
+r></div><div>This is using the currently committed code. What other feature=
+s are needed before I release the first version?</div><div><br></div><div>T=
+hanks!<br>=C2=A0 <div>-- <br><div class=3D"gmail_signature">Gregory M. Kurt=
+zer<br>Technical Lead and HPC Systems Architect<br>High Performance Computi=
+ng Services (HPCS)<br>University of California<br>Lawrence Berkeley Nationa=
+l Laboratory<br>One Cyclotron Road, Berkeley, CA 94720</div>
+</div></div></div>
+
+--001a11452ca8469165052616b922--

@@ -1,0 +1,601 @@
+Date: Thu, 20 Jul 2017 13:57:33 -0700 (PDT)
+From: Sheena <sheena....@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <dc42de68-90df-4479-b912-0addf1a841e0@lbl.gov>
+In-Reply-To: <CAM=pu++FGixDGCvwSggcCrZG+Gx5kv89vyKEumwzE4abUQw42Q@mail.gmail.com>
+References: <CAMsNfVvcjW=U3Ng64o2HUrTk1L61goqNVkOmMfAqzBdmrM7NQA@mail.gmail.com>
+ <CAM=pu++FGixDGCvwSggcCrZG+Gx5kv89vyKEumwzE4abUQw42Q@mail.gmail.com>
+Subject: Re: [Singularity] Program's INSTALL script sending exit code?
+ Manual install works, bootstrap does not
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_960_1011310508.1500584253159"
+
+------=_Part_960_1011310508.1500584253159
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_961_333667184.1500584253161"
+
+------=_Part_961_333667184.1500584253161
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+I tried both:
+
+1. Edit the bootstrap to: 
+/bin/bash ./INSTALL /opt/samtools-0.1.18/
+
+2. Manually run with sh:
+sudo singularity shell --writable pindel-0.2.5.img
+Singularity: Invoking an interactive shell within container...
+
+Singularity pindel-0.2.5.img:~> cd /opt/pindel-0.2.5/
+Singularity pindel-0.2.5.img:/opt/pindel-0.2.5> /bin/sh ./INSTALL /opt/
+samtools-0.1.18/
+path is now: /opt/samtools-0.1.18/
+WARNING: Created default Makefile.local; please review it.
+make: *** No rule to make target `Makefile.local', needed by `pindel'. 
+ Stop.
+If this is the first time you're running this install script please wait a 
+moment as we create the Makefile.local
+make -C src pindel
+
+So, its not the shell program because again, the manual install works. 
+
+Also of note, the message that is coming out of bootstrap :
+INSTALL
+    purpose:  builds the pindel executable
+    usage:    ./INSTALL [samtoolsdirectory]
+    example:  ./INSTALL /home/user/tools/samtools-0.1.18/
+
+does not come out in the manual run unless I ONLY type "./INSTALL". Am I 
+feeding the arguments to the INSTALL command wrong when I use:
+cp /opt/pindel-0.2.5/
+/bin/bash ./INSTALL /opt/samtools-0.1.18/ 
+
+
+Is there a way to have to bootstrap be more verbose in what it is doing? I 
+can't tell why exactly its dying. 
+
+Thanks,
+Sheena 
+
+
+
+
+On Thursday, July 20, 2017 at 1:32:38 PM UTC-7, vanessa wrote:
+>
+> I think it might be an issue with the shell that the bootstrap uses. For 
+> example, when you shell in you are probably using bash, and in %post you 
+> are using sh. Have you tried calling the install script with the 
+> interpreter directly?
+>
+> On Thu, Jul 20, 2017 at 4:26 PM, Sheena T <she...@gmail.com 
+> <javascript:>> wrote:
+>
+>> I'm running Singularity 2.3.1, trying to install an older tool (pindel 
+>> 0.2.5), which requires an older version of another program, (samtools 
+>> 0.1.18). Here's my Singularity file:
+>> Bootstrap: docker
+>> From: ubuntu:14.04
+>>
+>> %post
+>> samtools_version=0.1.18
+>> pindel_version=0.2.5
+>> # this will install all necessary packages and prepare the container
+>> apt-get -y update
+>> apt-get -y install make gcc zlib1g-dev libncurses5-dev wget g++
+>> #Install samtools first 
+>> cd /opt \
+>>     && wget https://
+>> sourceforge.net/projects/samtools/files/samtools/${samtools_version}/samtools-${samtools_version}.tar.bz2 
+>> <http://sourceforge.net/projects/samtools/files/samtools/$%7Bsamtools_version%7D/samtools-$%7Bsamtools_version%7D.tar.bz2> 
+>> \
+>>     && tar -xf samtools-${samtools_version}.tar.bz2 \
+>>     && make CFLAGS='-g -Wall -O2 -fPIC' -C samtools-${samtools_version} \
+>>     && cp samtools-${samtools_version}/samtools /usr/bin \
+>>     && rm /opt/samtools-${samtools_version}.tar.bz2
+>> #Now install Pindel 
+>> cd /opt \
+>>     && wget -N https://
+>> github.com/genome/pindel/archive/v${pindel_version}.tar.gz 
+>> <http://github.com/genome/pindel/archive/v$%7Bpindel_version%7D.tar.gz> \
+>>     && tar -xzf v${pindel_version}.tar.gz \
+>>     && cd pindel-${pindel_version} \
+>>     && ./INSTALL /opt/samtools-${samtools_version}/ \
+>>     && cp *pindel* /usr/bin \
+>>     && rm /opt/v${pindel_version}.tar.gz
+>>
+>> %runscript
+>> #This program is called with 'pindel' and 'pindel2vcf'
+>> exec $@
+>>
+>> Here's how I'm creating the image/bootstrapping:
+>> (size 4000 because it was running out of space at smaller sizes) 
+>> singularity create --size 4000 pindel-0.2.5.img && sudo singularity 
+>> bootstrap pindel-0.2.5.img Singularity-pindel-0.2.5
+>>
+>> However, this line dies when I run the bootstrap script :
+>> (NOTE: yes, it needs to point to the directory of /opt/samtools-0.1.18/, 
+>> not the program itself) 
+>>
+>> + ./INSTALL /opt/samtools-0.1.18/
+>>
+>> INSTALL
+>>     purpose:  builds the pindel executable
+>>     usage:    ./INSTALL [samtoolsdirectory]
+>>     example:  ./INSTALL /home/user/tools/samtools-0.1.18/
+>>
+>> ABORT: Aborting with RETVAL=255
+>>
+>> I can manually take over the shell and do the install:
+>> sudo singularity shell --writable pindel-0.2.5.img
+>> Singularity: Invoking an interactive shell within container...
+>>
+>> Singularity pindel-0.2.5.img:~> cd /opt/pindel-0.2.5/
+>> Singularity pindel-0.2.5.img:/opt/pindel-0.2.5>  ./INSTALL 
+>> /opt/samtools-0.1.18/
+>> path is now: /opt/samtools-0.1.18/
+>> WARNING: Created default Makefile.local; please review it.
+>> make: *** No rule to make target `Makefile.local', needed by `pindel'.  
+>> Stop.
+>> If this is the first time you're running this install script please wait 
+>> a moment as we create the Makefile.local
+>> make -C src pindel
+>>
+>> ..... continues to successfully install pindel 
+>>
+>> Image usable after manual install:
+>>
+>> ./pindel-0.2.5.img pindel 
+>>  ....help screen ....
+>> ./pindel-0.2.5.img pindel2vcf
+>>  ....help screen ....
+>>
+>>
+>> I'm not positive, but it appears that the singularity bootstrap is seeing 
+>> the 'WARNING' and exiting? How can I get around this? 
+>>
+>> Thanks,
+>> Sheena 
+>>
+>>
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>
+>
+>
+> -- 
+> Vanessa Villamia Sochat
+> Stanford University '16
+> (603) 321-0676
+>
+
+------=_Part_961_333667184.1500584253161
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">I tried both:<br><br>1. Edit the bootstrap to: <div style=
+=3D"background-color: rgb(250, 250, 250); border-color: rgb(187, 187, 187);=
+ border-style: solid; border-width: 1px; overflow-wrap: break-word;" class=
+=3D"prettyprint"><code class=3D"prettyprint"><div class=3D"subprettyprint">=
+<span style=3D"color: #080;" class=3D"styled-by-prettify">/bin/</span><span=
+ style=3D"color: #000;" class=3D"styled-by-prettify">bash </span><span styl=
+e=3D"color: #660;" class=3D"styled-by-prettify">./</span><span style=3D"col=
+or: #000;" class=3D"styled-by-prettify">INSTALL </span><span style=3D"color=
+: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" =
+class=3D"styled-by-prettify">opt</span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"style=
+d-by-prettify">samtools</span><span style=3D"color: #660;" class=3D"styled-=
+by-prettify">-</span><span style=3D"color: #066;" class=3D"styled-by-pretti=
+fy">0.1</span><span style=3D"color: #660;" class=3D"styled-by-prettify">.</=
+span><span style=3D"color: #066;" class=3D"styled-by-prettify">18</span><sp=
+an style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"><br></span></div></code></di=
+v><br>2. Manually run with sh:<br><code><div style=3D"background-color: rgb=
+(250, 250, 250); border-color: rgb(187, 187, 187); border-style: solid; bor=
+der-width: 1px; overflow-wrap: break-word;" class=3D"prettyprint"><code cla=
+ss=3D"prettyprint"><div class=3D"subprettyprint"><span style=3D"color: #000=
+;" class=3D"styled-by-prettify">sudo singularity shell </span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">--</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify">writable pindel</span><span style=3D=
+"color: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #=
+066;" class=3D"styled-by-prettify">0.2</span><span style=3D"color: #660;" c=
+lass=3D"styled-by-prettify">.</span><span style=3D"color: #066;" class=3D"s=
+tyled-by-prettify">5.img</span><span style=3D"color: #000;" class=3D"styled=
+-by-prettify"><br></span><span style=3D"color: #606;" class=3D"styled-by-pr=
+ettify">Singularity</span><span style=3D"color: #660;" class=3D"styled-by-p=
+rettify">:</span><span style=3D"color: #000;" class=3D"styled-by-prettify">=
+ </span><span style=3D"color: #606;" class=3D"styled-by-prettify">Invoking<=
+/span><span style=3D"color: #000;" class=3D"styled-by-prettify"> an interac=
+tive shell within container</span><span style=3D"color: #660;" class=3D"sty=
+led-by-prettify">...</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify"><br><br></span><span style=3D"color: #606;" class=3D"styled-by-pr=
+ettify">Singularity</span><span style=3D"color: #000;" class=3D"styled-by-p=
+rettify"> pindel</span><span style=3D"color: #660;" class=3D"styled-by-pret=
+tify">-</span><span style=3D"color: #066;" class=3D"styled-by-prettify">0.2=
+</span><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span><s=
+pan style=3D"color: #066;" class=3D"styled-by-prettify">5.img</span><span s=
+tyle=3D"color: #660;" class=3D"styled-by-prettify">:~&gt;</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"> cd </span><span style=3D"co=
+lor: #660;" class=3D"styled-by-prettify">/</span><span style=3D"color: #000=
+;" class=3D"styled-by-prettify">opt</span><span style=3D"color: #660;" clas=
+s=3D"styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"styl=
+ed-by-prettify">pindel</span><span style=3D"color: #660;" class=3D"styled-b=
+y-prettify">-</span><span style=3D"color: #066;" class=3D"styled-by-prettif=
+y">0.2</span><span style=3D"color: #660;" class=3D"styled-by-prettify">.</s=
+pan><span style=3D"color: #066;" class=3D"styled-by-prettify">5</span><span=
+ style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D=
+"color: #000;" class=3D"styled-by-prettify"><br></span><span style=3D"color=
+: #606;" class=3D"styled-by-prettify">Singularity</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify"> pindel</span><span style=3D"color: =
+#660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #066;" cl=
+ass=3D"styled-by-prettify">0.2</span><span style=3D"color: #660;" class=3D"=
+styled-by-prettify">.</span><span style=3D"color: #066;" class=3D"styled-by=
+-prettify">5.img</span><span style=3D"color: #660;" class=3D"styled-by-pret=
+tify">:</span><span style=3D"color: #080;" class=3D"styled-by-prettify">/op=
+t/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">pindel</=
+span><span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><spa=
+n style=3D"color: #066;" class=3D"styled-by-prettify">0.2</span><span style=
+=3D"color: #660;" class=3D"styled-by-prettify">.</span><span style=3D"color=
+: #066;" class=3D"styled-by-prettify">5</span><span style=3D"color: #660;" =
+class=3D"styled-by-prettify">&gt;</span><span style=3D"color: #000;" class=
+=3D"styled-by-prettify"> </span><span style=3D"color: #080;" class=3D"style=
+d-by-prettify">/bin/</span><span style=3D"color: #000;" class=3D"styled-by-=
+prettify">sh </span><span style=3D"color: #660;" class=3D"styled-by-prettif=
+y">./</span><span style=3D"color: #000;" class=3D"styled-by-prettify">INSTA=
+LL </span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</span=
+><span style=3D"color: #000;" class=3D"styled-by-prettify">opt</span><span =
+style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D"=
+color: #000;" class=3D"styled-by-prettify">samtools</span><span style=3D"co=
+lor: #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #066=
+;" class=3D"styled-by-prettify">0.1</span><span style=3D"color: #660;" clas=
+s=3D"styled-by-prettify">.</span><span style=3D"color: #066;" class=3D"styl=
+ed-by-prettify">18</span><span style=3D"color: #660;" class=3D"styled-by-pr=
+ettify">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><=
+br>path </span><span style=3D"color: #008;" class=3D"styled-by-prettify">is=
+</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> now</span=
+><span style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span st=
+yle=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"co=
+lor: #080;" class=3D"styled-by-prettify">/opt/</span><span style=3D"color: =
+#000;" class=3D"styled-by-prettify">samtools</span><span style=3D"color: #6=
+60;" class=3D"styled-by-prettify">-</span><span style=3D"color: #066;" clas=
+s=3D"styled-by-prettify">0.1</span><span style=3D"color: #660;" class=3D"st=
+yled-by-prettify">.</span><span style=3D"color: #066;" class=3D"styled-by-p=
+rettify">18</span><span style=3D"color: #660;" class=3D"styled-by-prettify"=
+>/</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br>WARN=
+ING</span><span style=3D"color: #660;" class=3D"styled-by-prettify">:</span=
+><span style=3D"color: #000;" class=3D"styled-by-prettify"> </span><span st=
+yle=3D"color: #606;" class=3D"styled-by-prettify">Created</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color=
+: #008;" class=3D"styled-by-prettify">default</span><span style=3D"color: #=
+000;" class=3D"styled-by-prettify"> </span><span style=3D"color: #606;" cla=
+ss=3D"styled-by-prettify">Makefile</span><span style=3D"color: #660;" class=
+=3D"styled-by-prettify">.</span><span style=3D"color: #008;" class=3D"style=
+d-by-prettify">local</span><span style=3D"color: #660;" class=3D"styled-by-=
+prettify">;</span><span style=3D"color: #000;" class=3D"styled-by-prettify"=
+> please review it</span><span style=3D"color: #660;" class=3D"styled-by-pr=
+ettify">.</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><=
+br>make</span><span style=3D"color: #660;" class=3D"styled-by-prettify">:</=
+span><span style=3D"color: #000;" class=3D"styled-by-prettify"> </span><spa=
+n style=3D"color: #660;" class=3D"styled-by-prettify">***</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"> </span><span style=3D"color=
+: #606;" class=3D"styled-by-prettify">No</span><span style=3D"color: #000;"=
+ class=3D"styled-by-prettify"> rule to make target </span><span style=3D"co=
+lor: #080;" class=3D"styled-by-prettify">`Makefile.local&#39;, needed by `<=
+/span><span style=3D"color: #000;" class=3D"styled-by-prettify">pindel</spa=
+n><span style=3D"color: #080;" class=3D"styled-by-prettify">&#39;. =C2=A0St=
+op.<br>If this is the first time you&#39;</span><span style=3D"color: #000;=
+" class=3D"styled-by-prettify">re running </span><span style=3D"color: #008=
+;" class=3D"styled-by-prettify">this</span><span style=3D"color: #000;" cla=
+ss=3D"styled-by-prettify"> install script please wait a moment </span><span=
+ style=3D"color: #008;" class=3D"styled-by-prettify">as</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"> we create the </span><span =
+style=3D"color: #606;" class=3D"styled-by-prettify">Makefile</span><span st=
+yle=3D"color: #660;" class=3D"styled-by-prettify">.</span><span style=3D"co=
+lor: #008;" class=3D"styled-by-prettify">local</span><span style=3D"color: =
+#000;" class=3D"styled-by-prettify"><br>make </span><span style=3D"color: #=
+660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #000;" cla=
+ss=3D"styled-by-prettify">C src pindel<br></span></div></code></div><br>So,=
+ its not the shell program because again, the manual install works. <br><br=
+>Also of note, the message that is coming out of bootstrap :<br><div style=
+=3D"background-color: rgb(250, 250, 250); border-color: rgb(187, 187, 187);=
+ border-style: solid; border-width: 1px; overflow-wrap: break-word;" class=
+=3D"prettyprint"><code class=3D"prettyprint"><div class=3D"subprettyprint">=
+<code><code><span style=3D"color:rgb(102,102,0)"><span style=3D"color: #000=
+;" class=3D"styled-by-prettify">INSTALL<br>=C2=A0 =C2=A0 purpose</span><spa=
+n style=3D"color: #660;" class=3D"styled-by-prettify">:</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"> =C2=A0builds the pindel exe=
+cutable<br>=C2=A0 =C2=A0 usage</span><span style=3D"color: #660;" class=3D"=
+styled-by-prettify">:</span><span style=3D"color: #000;" class=3D"styled-by=
+-prettify"> =C2=A0 =C2=A0</span><span style=3D"color: #660;" class=3D"style=
+d-by-prettify">./</span><span style=3D"color: #000;" class=3D"styled-by-pre=
+ttify">INSTALL </span><span style=3D"color: #660;" class=3D"styled-by-prett=
+ify">[</span><span style=3D"color: #000;" class=3D"styled-by-prettify">samt=
+oolsdirectory</span><span style=3D"color: #660;" class=3D"styled-by-prettif=
+y">]</span><span style=3D"color: #000;" class=3D"styled-by-prettify"><br>=
+=C2=A0 =C2=A0 example</span><span style=3D"color: #660;" class=3D"styled-by=
+-prettify">:</span><span style=3D"color: #000;" class=3D"styled-by-prettify=
+"> =C2=A0</span><span style=3D"color: #660;" class=3D"styled-by-prettify">.=
+/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">INSTALL <=
+/span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</span><sp=
+an style=3D"color: #000;" class=3D"styled-by-prettify">home</span><span sty=
+le=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D"col=
+or: #000;" class=3D"styled-by-prettify">user</span><span style=3D"color: #6=
+60;" class=3D"styled-by-prettify">/</span><span style=3D"color: #000;" clas=
+s=3D"styled-by-prettify">tools</span><span style=3D"color: #660;" class=3D"=
+styled-by-prettify">/</span><span style=3D"color: #000;" class=3D"styled-by=
+-prettify">samtools</span><span style=3D"color: #660;" class=3D"styled-by-p=
+rettify">-</span><span style=3D"color: #066;" class=3D"styled-by-prettify">=
+0.1</span><span style=3D"color: #660;" class=3D"styled-by-prettify">.</span=
+><wbr><span style=3D"color: #066;" class=3D"styled-by-prettify">18</span><s=
+pan style=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=
+=3D"color: #000;" class=3D"styled-by-prettify"><br><br></span></span></code=
+></code></div></code></div>does not come out in the manual run unless I ONL=
+Y type &quot;./INSTALL&quot;. Am I feeding the arguments to the INSTALL com=
+mand wrong when I use:<br><div style=3D"background-color: rgb(250, 250, 250=
+); border-color: rgb(187, 187, 187); border-style: solid; border-width: 1px=
+; overflow-wrap: break-word;" class=3D"prettyprint"><code class=3D"prettypr=
+int"><div class=3D"subprettyprint"><span style=3D"color: #000;" class=3D"st=
+yled-by-prettify">cp </span><span style=3D"color: #660;" class=3D"styled-by=
+-prettify">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify=
+">opt</span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</sp=
+an><span style=3D"color: #000;" class=3D"styled-by-prettify">pindel</span><=
+span style=3D"color: #660;" class=3D"styled-by-prettify">-</span><span styl=
+e=3D"color: #066;" class=3D"styled-by-prettify">0.2</span><span style=3D"co=
+lor: #660;" class=3D"styled-by-prettify">.</span><span style=3D"color: #066=
+;" class=3D"styled-by-prettify">5</span><span style=3D"color: #080;" class=
+=3D"styled-by-prettify">/<br>/</span><span style=3D"color: #000;" class=3D"=
+styled-by-prettify">bin</span><span style=3D"color: #660;" class=3D"styled-=
+by-prettify">/</span><span style=3D"color: #000;" class=3D"styled-by-pretti=
+fy">bash </span><span style=3D"color: #660;" class=3D"styled-by-prettify">.=
+/</span><span style=3D"color: #000;" class=3D"styled-by-prettify">INSTALL <=
+/span><span style=3D"color: #660;" class=3D"styled-by-prettify">/</span><sp=
+an style=3D"color: #000;" class=3D"styled-by-prettify">opt</span><span styl=
+e=3D"color: #660;" class=3D"styled-by-prettify">/</span><span style=3D"colo=
+r: #000;" class=3D"styled-by-prettify">samtools</span><span style=3D"color:=
+ #660;" class=3D"styled-by-prettify">-</span><span style=3D"color: #066;" c=
+lass=3D"styled-by-prettify">0.1</span><span style=3D"color: #660;" class=3D=
+"styled-by-prettify">.</span><span style=3D"color: #066;" class=3D"styled-b=
+y-prettify">18</span><span style=3D"color: #660;" class=3D"styled-by-pretti=
+fy">/</span><span style=3D"color: #000;" class=3D"styled-by-prettify"> <br>=
+</span></div></code></div><br></code><br><code><code>Is there a way to have=
+ to bootstrap be more verbose in what it is doing? I can&#39;t tell why exa=
+ctly its dying. <br><br></code>Thanks,<br>Sheena <br><br><br></code><br><br=
+>On Thursday, July 20, 2017 at 1:32:38 PM UTC-7, vanessa wrote:<blockquote =
+class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1p=
+x #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">I think it might be an is=
+sue with the shell that the bootstrap uses. For example, when you shell in =
+you are probably using bash, and in %post you are using sh. Have you tried =
+calling the install script with the interpreter directly?</div><div><br><di=
+v class=3D"gmail_quote">On Thu, Jul 20, 2017 at 4:26 PM, Sheena T <span dir=
+=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailt=
+o=3D"jzDWfvwkCQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascr=
+ipt:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return=
+ true;">she...@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmai=
+l_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left=
+:1ex"><div dir=3D"ltr">I&#39;m running Singularity 2.3.1, trying to install=
+ an older tool (pindel=20
+0.2.5), which requires an older version of another program, (samtools=20
+0.1.18). Here&#39;s my Singularity file:<br><div style=3D"background-color:=
+rgb(250,250,250);border-color:rgb(187,187,187);border-style:solid;border-wi=
+dth:1px"><code><div><span style=3D"color:rgb(102,0,102)">Bootstrap</span><s=
+pan style=3D"color:rgb(102,102,0)">:</span><span style=3D"color:rgb(0,0,0)"=
+> docker<br></span><span style=3D"color:rgb(102,0,102)">From</span><span st=
+yle=3D"color:rgb(102,102,0)">:</span><span style=3D"color:rgb(0,0,0)"> ubun=
+tu</span><span style=3D"color:rgb(102,102,0)">:</span><span style=3D"color:=
+rgb(0,102,102)">14.04</span><span style=3D"color:rgb(0,0,0)"><br><br></span=
+><span style=3D"color:rgb(102,102,0)">%</span><span style=3D"color:rgb(0,0,=
+0)">post<br>samtools_version</span><span style=3D"color:rgb(102,102,0)">=3D=
+</span><span style=3D"color:rgb(0,102,102)">0.1</span><span style=3D"color:=
+rgb(102,102,0)">.</span><span style=3D"color:rgb(0,102,102)">18</span><span=
+ style=3D"color:rgb(0,0,0)"><br>pindel_version</span><span style=3D"color:r=
+gb(102,102,0)">=3D</span><span style=3D"color:rgb(0,102,102)">0.2</span><sp=
+an style=3D"color:rgb(102,102,0)">.</span><span style=3D"color:rgb(0,102,10=
+2)">5</span><span style=3D"color:rgb(0,0,0)"><br></span><span style=3D"colo=
+r:rgb(136,0,0)"># this will install all necessary packages and prepare the =
+container</span><span style=3D"color:rgb(0,0,0)"><br>apt</span><span style=
+=3D"color:rgb(102,102,0)">-</span><span style=3D"color:rgb(0,0,136)">get</s=
+pan><span style=3D"color:rgb(0,0,0)"> </span><span style=3D"color:rgb(102,1=
+02,0)">-</span><span style=3D"color:rgb(0,0,0)">y update<br>apt</span><span=
+ style=3D"color:rgb(102,102,0)">-</span><span style=3D"color:rgb(0,0,136)">=
+get</span><span style=3D"color:rgb(0,0,0)"> </span><span style=3D"color:rgb=
+(102,102,0)">-</span><span style=3D"color:rgb(0,0,0)">y install make gcc zl=
+ib1g</span><span style=3D"color:rgb(102,102,0)">-</span><span style=3D"colo=
+r:rgb(0,0,0)">dev libncurses5</span><span style=3D"color:rgb(102,102,0)">-<=
+/span><span style=3D"color:rgb(0,0,0)">dev wget g</span><span style=3D"colo=
+r:rgb(102,102,0)">++</span><span style=3D"color:rgb(0,0,0)"><br></span><spa=
+n style=3D"color:rgb(136,0,0)">#Install samtools first </span><span style=
+=3D"color:rgb(0,0,0)"><br>cd </span><span style=3D"color:rgb(102,102,0)">/<=
+/span><span style=3D"color:rgb(0,0,0)">opt </span><span style=3D"color:rgb(=
+102,102,0)">\</span><span style=3D"color:rgb(0,0,0)"><br>=C2=A0 =C2=A0 </sp=
+an><span style=3D"color:rgb(102,102,0)">&amp;&amp;</span><span style=3D"col=
+or:rgb(0,0,0)"> wget https</span><span style=3D"color:rgb(102,102,0)">:</sp=
+an><span style=3D"color:rgb(136,0,0)">//<a href=3D"http://sourceforge.net/p=
+rojects/samtools/files/samtools/$%7Bsamtools_version%7D/samtools-$%7Bsamtoo=
+ls_version%7D.tar.bz2" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"th=
+is.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fsourceforge.net%=
+2Fprojects%2Fsamtools%2Ffiles%2Fsamtools%2F%24%257Bsamtools_version%257D%2F=
+samtools-%24%257Bsamtools_version%257D.tar.bz2\x26sa\x3dD\x26sntz\x3d1\x26u=
+sg\x3dAFQjCNFR36lrGxfZdVt7A2r0p1HVY82yxw&#39;;return true;" onclick=3D"this=
+.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fsourceforge.net%2F=
+projects%2Fsamtools%2Ffiles%2Fsamtools%2F%24%257Bsamtools_version%257D%2Fsa=
+mtools-%24%257Bsamtools_version%257D.tar.bz2\x26sa\x3dD\x26sntz\x3d1\x26usg=
+\x3dAFQjCNFR36lrGxfZdVt7A2r0p1HVY82yxw&#39;;return true;">sourceforge.net/<=
+wbr>projects/samtools/files/<wbr>samtools/${samtools_version}/<wbr>samtools=
+-${samtools_version}.<wbr>tar.bz2</a> \</span><span style=3D"color:rgb(0,0,=
+0)"><br>=C2=A0 =C2=A0 </span><span style=3D"color:rgb(102,102,0)">&amp;&amp=
+;</span><span style=3D"color:rgb(0,0,0)"> tar </span><span style=3D"color:r=
+gb(102,102,0)">-</span><span style=3D"color:rgb(0,0,0)">xf samtools</span><=
+span style=3D"color:rgb(102,102,0)">-</span><span style=3D"color:rgb(0,0,0)=
+">$</span><span style=3D"color:rgb(102,102,0)">{</span><span style=3D"color=
+:rgb(0,0,0)">samtools_version</span><span style=3D"color:rgb(102,102,0)">}.=
+</span><span style=3D"color:rgb(0,0,0)">t<wbr>ar</span><span style=3D"color=
+:rgb(102,102,0)">.</span><span style=3D"color:rgb(0,0,0)">bz2 </span><span =
+style=3D"color:rgb(102,102,0)">\</span><span style=3D"color:rgb(0,0,0)"><br=
+>=C2=A0 =C2=A0 </span><span style=3D"color:rgb(102,102,0)">&amp;&amp;</span=
+><span style=3D"color:rgb(0,0,0)"> make CFLAGS</span><span style=3D"color:r=
+gb(102,102,0)">=3D</span><span style=3D"color:rgb(0,136,0)">&#39;-g -Wall -=
+O2 -fPIC&#39;</span><span style=3D"color:rgb(0,0,0)"> </span><span style=3D=
+"color:rgb(102,102,0)">-</span><span style=3D"color:rgb(0,0,0)">C samtools<=
+/span><span style=3D"color:rgb(102,102,0)">-</span><span style=3D"color:rgb=
+(0,0,0)">$</span><span style=3D"color:rgb(102,102,0)">{</span><span style=
+=3D"color:rgb(0,0,0)">samtools_version</span><span style=3D"color:rgb(102,1=
+02,0)">}</span><span style=3D"color:rgb(0,0,0)"> </span><span style=3D"colo=
+r:rgb(102,102,0)">\</span><span style=3D"color:rgb(0,0,0)"><br>=C2=A0 =C2=
+=A0 </span><span style=3D"color:rgb(102,102,0)">&amp;&amp;</span><span styl=
+e=3D"color:rgb(0,0,0)"> cp samtools</span><span style=3D"color:rgb(102,102,=
+0)">-</span><span style=3D"color:rgb(0,0,0)">$</span><span style=3D"color:r=
+gb(102,102,0)">{</span><span style=3D"color:rgb(0,0,0)">samtools_version</s=
+pan><span style=3D"color:rgb(102,102,0)">}/</span><span style=3D"color:rgb(=
+0,0,0)">s<wbr>amtools </span><span style=3D"color:rgb(102,102,0)">/</span><=
+span style=3D"color:rgb(0,0,0)">usr</span><span style=3D"color:rgb(102,102,=
+0)">/</span><span style=3D"color:rgb(0,0,0)">bin </span><span style=3D"colo=
+r:rgb(102,102,0)">\</span><span style=3D"color:rgb(0,0,0)"><br>=C2=A0 =C2=
+=A0 </span><span style=3D"color:rgb(102,102,0)">&amp;&amp;</span><span styl=
+e=3D"color:rgb(0,0,0)"> rm </span><span style=3D"color:rgb(102,102,0)">/</s=
+pan><span style=3D"color:rgb(0,0,0)">opt</span><span style=3D"color:rgb(102=
+,102,0)">/</span><span style=3D"color:rgb(0,0,0)">samtools</span><span styl=
+e=3D"color:rgb(102,102,0)">-</span><span style=3D"color:rgb(0,0,0)">$</span=
+><span style=3D"color:rgb(102,102,0)">{</span><span style=3D"color:rgb(0,0,=
+0)">samtools_<wbr>version</span><span style=3D"color:rgb(102,102,0)">}.</sp=
+an><span style=3D"color:rgb(0,0,0)">tar</span><span style=3D"color:rgb(102,=
+102,0)">.</span><span style=3D"color:rgb(0,0,0)">bz2<br></span><span style=
+=3D"color:rgb(136,0,0)">#Now install Pindel </span><span style=3D"color:rgb=
+(0,0,0)"><br>cd </span><span style=3D"color:rgb(102,102,0)">/</span><span s=
+tyle=3D"color:rgb(0,0,0)">opt </span><span style=3D"color:rgb(102,102,0)">\=
+</span><span style=3D"color:rgb(0,0,0)"><br>=C2=A0 =C2=A0 </span><span styl=
+e=3D"color:rgb(102,102,0)">&amp;&amp;</span><span style=3D"color:rgb(0,0,0)=
+"> wget </span><span style=3D"color:rgb(102,102,0)">-</span><span style=3D"=
+color:rgb(0,0,0)">N https</span><span style=3D"color:rgb(102,102,0)">:</spa=
+n><span style=3D"color:rgb(136,0,0)">//<a href=3D"http://github.com/genome/=
+pindel/archive/v$%7Bpindel_version%7D.tar.gz" target=3D"_blank" rel=3D"nofo=
+llow" onmousedown=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3=
+A%2F%2Fgithub.com%2Fgenome%2Fpindel%2Farchive%2Fv%24%257Bpindel_version%257=
+D.tar.gz\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGgWJijJ7cbfVAUwFtNfgn0r70y=
+Nw&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.google.com/url=
+?q\x3dhttp%3A%2F%2Fgithub.com%2Fgenome%2Fpindel%2Farchive%2Fv%24%257Bpindel=
+_version%257D.tar.gz\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGgWJijJ7cbfVAU=
+wFtNfgn0r70yNw&#39;;return true;">github.com/genome/<wbr>pindel/archive/v${=
+pindel_<wbr>version}.tar.gz</a> \</span><span style=3D"color:rgb(0,0,0)"><b=
+r>=C2=A0 =C2=A0 </span><span style=3D"color:rgb(102,102,0)">&amp;&amp;</spa=
+n><span style=3D"color:rgb(0,0,0)"> tar </span><span style=3D"color:rgb(102=
+,102,0)">-</span><span style=3D"color:rgb(0,0,0)">xzf v$</span><span style=
+=3D"color:rgb(102,102,0)">{</span><span style=3D"color:rgb(0,0,0)">pindel_v=
+ersion</span><span style=3D"color:rgb(102,102,0)">}.</span><span style=3D"c=
+olor:rgb(0,0,0)">tar</span><span style=3D"color:rgb(102,102,0)">.</span><sp=
+an style=3D"color:rgb(0,0,0)">gz </span><span style=3D"color:rgb(102,102,0)=
+">\</span><span style=3D"color:rgb(0,0,0)"><br>=C2=A0 =C2=A0 </span><span s=
+tyle=3D"color:rgb(102,102,0)">&amp;&amp;</span><span style=3D"color:rgb(0,0=
+,0)"> cd pindel</span><span style=3D"color:rgb(102,102,0)">-</span><span st=
+yle=3D"color:rgb(0,0,0)">$</span><span style=3D"color:rgb(102,102,0)">{</sp=
+an><span style=3D"color:rgb(0,0,0)">pindel_version</span><span style=3D"col=
+or:rgb(102,102,0)">}</span><span style=3D"color:rgb(0,0,0)"> </span><span s=
+tyle=3D"color:rgb(102,102,0)">\</span><span style=3D"color:rgb(0,0,0)"><br>=
+=C2=A0 =C2=A0 </span><span style=3D"color:rgb(102,102,0)">&amp;&amp;</span>=
+<span style=3D"color:rgb(0,0,0)"> </span><span style=3D"color:rgb(102,102,0=
+)">./</span><span style=3D"color:rgb(0,0,0)">INSTALL </span><span style=3D"=
+color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">opt</span><s=
+pan style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)"=
+>samtools</span><span style=3D"color:rgb(102,102,0)">-</span><span style=3D=
+"color:rgb(0,0,0)">$</span><span style=3D"color:rgb(102,102,0)">{</span><sp=
+an style=3D"color:rgb(0,0,0)">samtools_<wbr>version</span><span style=3D"co=
+lor:rgb(102,102,0)">}/</span><span style=3D"color:rgb(0,0,0)"> </span><span=
+ style=3D"color:rgb(102,102,0)">\</span><span style=3D"color:rgb(0,0,0)"><b=
+r>=C2=A0 =C2=A0 </span><span style=3D"color:rgb(102,102,0)">&amp;&amp;</spa=
+n><span style=3D"color:rgb(0,0,0)"> cp </span><span style=3D"color:rgb(102,=
+102,0)">*</span><span style=3D"color:rgb(0,0,0)">pindel</span><span style=
+=3D"color:rgb(102,102,0)">*</span><span style=3D"color:rgb(0,0,0)"> </span>=
+<span style=3D"color:rgb(0,136,0)">/usr/</span><span style=3D"color:rgb(0,0=
+,0)">bin </span><span style=3D"color:rgb(102,102,0)">\</span><span style=3D=
+"color:rgb(0,0,0)"><br>=C2=A0 =C2=A0 </span><span style=3D"color:rgb(102,10=
+2,0)">&amp;&amp;</span><span style=3D"color:rgb(0,0,0)"> rm </span><span st=
+yle=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(0,0,0)">opt</=
+span><span style=3D"color:rgb(102,102,0)">/</span><span style=3D"color:rgb(=
+0,0,0)">v$</span><span style=3D"color:rgb(102,102,0)">{</span><span style=
+=3D"color:rgb(0,0,0)">pindel_version</span><span style=3D"color:rgb(102,102=
+,0)">}.</span><span style=3D"color:rgb(0,0,0)">tar</span><span style=3D"col=
+or:rgb(102,102,0)">.</span><span style=3D"color:rgb(0,0,0)">gz<br><br></spa=
+n><span style=3D"color:rgb(102,102,0)">%</span><span style=3D"color:rgb(0,0=
+,0)">runscript<br></span><span style=3D"color:rgb(136,0,0)">#This program i=
+s called with &#39;pindel&#39; and &#39;pindel2vcf&#39;</span><span style=
+=3D"color:rgb(0,0,0)"><br></span><span style=3D"color:rgb(0,0,136)">exec</s=
+pan><span style=3D"color:rgb(0,0,0)"> $@</span></div></code></div><br>Here&=
+#39;s how I&#39;m creating the image/bootstrapping:<br>(size 4000 because i=
+t was running out of space at smaller sizes) <br><div style=3D"background-c=
+olor:rgb(250,250,250);border-color:rgb(187,187,187);border-style:solid;bord=
+er-width:1px"><code><div><span style=3D"color:rgb(0,0,0)">singularity creat=
+e </span><span style=3D"color:rgb(102,102,0)">--</span><span style=3D"color=
+:rgb(0,0,0)">size </span><span style=3D"color:rgb(0,102,102)">4000</span><s=
+pan style=3D"color:rgb(0,0,0)"> pindel</span><span style=3D"color:rgb(102,1=
+02,0)">-</span><span style=3D"color:rgb(0,102,102)">0.2</span><span style=
+=3D"color:rgb(102,102,0)">.</span><span style=3D"color:rgb(0,102,102)">5.im=
+g</span><span style=3D"color:rgb(0,0,0)"> </span><span style=3D"color:rgb(1=
+02,102,0)">&amp;&amp;</span><span style=3D"color:rgb(0,0,0)"> sudo singular=
+ity bootstrap pindel</span><span style=3D"color:rgb(102,102,0)">-</span><sp=
+an style=3D"color:rgb(0,102,102)">0.2</span><span style=3D"color:rgb(102,10=
+2,0)">.</span><span style=3D"color:rgb(0,102,102)">5.img</span><span style=
+=3D"color:rgb(0,0,0)"> </span><span style=3D"color:rgb(102,0,102)">Singular=
+ity</span><span style=3D"color:rgb(102,102,0)">-</span><span style=3D"color=
+:rgb(0,0,0)">pindel</span><span style=3D"color:rgb(102,102,0)">-</span><spa=
+n style=3D"color:rgb(0,102,102)">0.2</span><span style=3D"color:rgb(102,102=
+,0)">.</span><span style=3D"color:rgb(0,102,102)">5</span><span style=3D"co=
+lor:rgb(0,0,0)"><br></span></div></code></div><br>However, this line dies w=
+hen I run the bootstrap script :<br>(NOTE: yes, it needs to point to the di=
+rectory of <code><code><span style=3D"color:rgb(102,102,0)">/opt/samtools-0=
+.1.18/</span></code></code>, not the program itself) <code><span style=3D"c=
+olor:rgb(102,102,0)"></span></code><br><code><span style=3D"color:rgb(102,1=
+02,0)"></span></code><div style=3D"background-color:rgb(250,250,250);border=
+-color:rgb(187,187,187);border-style:solid;border-width:1px"><code><div><co=
+de><span style=3D"color:rgb(102,102,0)"><br>+ ./INSTALL /opt/samtools-0.1.1=
+8/<br><br>INSTALL<br>=C2=A0=C2=A0=C2=A0 purpose:=C2=A0 builds the pindel ex=
+ecutable<br>=C2=A0=C2=A0=C2=A0 usage:=C2=A0=C2=A0=C2=A0 ./INSTALL [samtools=
+directory]<br>=C2=A0=C2=A0=C2=A0 example:=C2=A0 ./INSTALL /home/user/tools/=
+samtools-0.1.<wbr>18/<br><br>ABORT: Aborting with RETVAL=3D255<br></span><s=
+pan style=3D"color:rgb(0,0,0)"></span></code></div></code></div><br>I can m=
+anually take over the shell and do the install:<br><div style=3D"background=
+-color:rgb(250,250,250);border-color:rgb(187,187,187);border-style:solid;bo=
+rder-width:1px"><code><div>sudo singularity shell --writable pindel-0.2.5.i=
+mg<br>Singularity: Invoking an interactive shell within container...<br><br=
+>Singularity pindel-0.2.5.img:~&gt; cd /opt/pindel-0.2.5/<br>Singularity pi=
+ndel-0.2.5.img:/opt/pindel-<wbr>0.2.5&gt;=C2=A0 ./INSTALL /opt/samtools-0.1=
+.18/<br>path is now: /opt/samtools-0.1.18/<br>WARNING: Created default Make=
+file.local; please review it.<br>make: *** No rule to make target `Makefile=
+.local&#39;, needed by `pindel&#39;.=C2=A0 Stop.<br>If this is the first ti=
+me you&#39;re running this install script please wait a moment as we create=
+ the Makefile.local<br>make -C src pindel<br><br></div></code></div><code>.=
+.... continues to successfully install pindel </code><br><br>Image usable a=
+fter manual install:<br><div style=3D"background-color:rgb(250,250,250);bor=
+der-color:rgb(187,187,187);border-style:solid;border-width:1px"><code><div>=
+<br><span style=3D"color:rgb(102,0,102)">./pindel-0.2.5.img pindel <br>=C2=
+=A0....help screen ....<br></span><code><span style=3D"color:rgb(102,0,102)=
+">./pindel-0.2.5.img</span><span style=3D"color:rgb(102,102,0)"></span></co=
+de><span style=3D"color:rgb(102,102,0)"></span> pindel2vcf<br>=C2=A0....hel=
+p screen ....<br></div></code></div><br><br>I&#39;m not positive, but it ap=
+pears that the singularity bootstrap is seeing the &#39;WARNING&#39; and ex=
+iting? How can I get around this? <br><br>Thanks,<br>Sheena <br><span><font=
+ color=3D"#888888"><br><br><br></font></span></div><span><font color=3D"#88=
+8888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+jzDWfvwkCQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div>Vanessa Villamia Sochat<br>Stanford University &#39;16<br><div><div>=
+<div>(603) 321-0676</div></div></div></div>
+</div>
+</blockquote></div>
+------=_Part_961_333667184.1500584253161--
+
+------=_Part_960_1011310508.1500584253159--

@@ -1,0 +1,161 @@
+Date: Thu, 22 Mar 2018 05:26:10 -0700 (PDT)
+From: Trey Dockendorf <tdock...@osc.edu>
+To: singularity <singu...@lbl.gov>
+Message-Id: <2c15278c-380c-4360-9c92-30492ee23ab4@lbl.gov>
+Subject: Singularity container log messages end up in host syslog
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_5985_1308655888.1521721570131"
+
+------=_Part_5985_1308655888.1521721570131
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_5986_1303398916.1521721570131"
+
+------=_Part_5986_1303398916.1521721570131
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+I don't know if this expected behavior, but when I run a singularity build 
+via sudo I discovered that the log messages I would expect in the container 
+are also showing up on the underlying host [1].  The messages we saw [1] 
+are from actions being taken inside the singularity container I was 
+building.  The fact systemd is logging to the host caused some confusion 
+here because this host is RHEL 6.  My build is very simple [2] example I 
+think I pulled from docs and is used by me after Singularity upgrades to 
+verify basic functionality on all our systems.  Just curious if seeing a 
+container log to the host is expected.
+
+Thanks,
+- Trey
+
+[1]:
+2018-03-20T09:29:17.670073-04:00 n0593 sudo: tdockendorf : TTY=pts/0 ; 
+PWD=/users/sysp/tdockendorf/singularity ; USER=root ; 
+COMMAND=/opt/singularity/bin/singularity build 
+/tmp/pbstmp.10702008/centos7-demo.img centos7-demo.def
+2018-03-20T09:29:17.793392-04:00 n0593 Singularity: image-type (U=0,P=653)> 
+Unknown image format/type: centos7-demo.def
+2018-03-20T09:29:17.793412-04:00 n0593 Singularity: image-type (U=0,P=653)> 
+Retval = 255
+2018-03-20T09:29:33.487973-04:00 n0593 yum[715]: Updated: 
+libgcc-4.8.5-16.el7_4.2.x86_64
+2018-03-20T09:29:34.098226-04:00 n0593 yum[715]: Updated: 
+systemd-libs-219-42.el7_4.10.x86_64
+2018-03-20T09:29:36.559291-04:00 n0593 kernel: <27>systemd-tmpfiles[789]: 
+Failed to fstat() file /run/systemd/machines: Invalid argument
+2018-03-20T09:29:36.594666-04:00 n0593 kernel: <27>systemd-tmpfiles[789]: 
+Failed to fstat() file /tmp: Invalid argument
+2018-03-20T09:29:36.656945-04:00 n0593 kernel: <27>systemd-tmpfiles[789]: 
+Failed to fstat() file /tmp/.font-unix: Invalid argument
+2018-03-20T09:29:36.694953-04:00 n0593 kernel: <27>systemd-tmpfiles[789]: 
+Failed to fstat() file /var: Invalid argument
+2018-03-20T09:29:36.736095-04:00 n0593 kernel: <27>systemd-tmpfiles[789]: 
+Failed to fstat() file /var/cache: Invalid argument
+2018-03-20T09:29:36.779588-04:00 n0593 kernel: <27>systemd-tmpfiles[789]: 
+Failed to fstat() file /run/log: Invalid argument
+2018-03-20T09:29:36.823227-04:00 n0593 kernel: <27>systemd-tmpfiles[789]: 
+Failed to fstat() file /run/lock: Invalid argument
+2018-03-20T09:29:36.870334-04:00 n0593 kernel: <27>systemd-tmpfiles[789]: 
+Failed to fstat() file /run/lock/subsys: Invalid argument
+...
+2018-03-20T09:29:40.397735-04:00 n0593 kernel: <27>systemd-tmpfiles[789]: 
+Failed to fstat() file /tmp/.Test-unix: Invalid argument
+2018-03-20T09:29:40.416967-04:00 n0593 yum[715]: Updated: 
+systemd-219-42.el7_4.10.x86_64
+2018-03-20T09:29:41.155220-04:00 n0593 yum[715]: Updated: 
+libstdc++-4.8.5-16.el7_4.2.x86_64
+2018-03-20T09:29:46.831966-04:00 n0593 yum[819]: Installed: 
+epel-release-7-9.noarch
+2018-03-20T09:29:58.121175-04:00 n0593 yum[822]: Installed: 
+groff-base-1.22.2-8.el7.x86_64
+2018-03-20T09:30:01.986852-04:00 n0593 yum[822]: Installed: 
+1:perl-parent-0.225-244.el7.noarch
+2018-03-20T09:30:02.378397-04:00 n0593 yum[822]: Installed: 
+perl-HTTP-Tiny-0.033-3.el7.noarch
+2018-03-20T09:30:02.861649-04:00 n0593 yum[822]: Installed: 
+perl-podlators-2.5.1-3.el7.noarch
+
+[2]:
+$ cat ~/singularity/centos7-demo.def 
+BootStrap: docker
+From: centos:7
+
+%post
+    yum -y update
+    yum -y install epel-release
+    yum -y install fortune-mod cowsay
+
+#%environment
+
+%runscript
+    fortune | cowsay
+ 
+$ module load singularity
+$ export SINGULARITY_CACHEDIR=$TMPDIR
+$ sudo singularity build ${TMPDIR}/centos7-demo.img centos7-demo.def 
+$ singularity run ${TMPDIR}/centos7-demo.img 
+
+
+------=_Part_5986_1303398916.1521721570131
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">I don&#39;t know if this expected behavior, but when I run=
+ a singularity build via sudo I discovered that the log messages I would ex=
+pect in the container are also showing up on the underlying host [1].=C2=A0=
+ The messages we saw [1] are from actions being taken inside the singularit=
+y container I was building.=C2=A0 The fact systemd is logging to the host c=
+aused some confusion here because this host is RHEL 6.=C2=A0 My build is ve=
+ry simple [2] example I think I pulled from docs and is used by me after Si=
+ngularity upgrades to verify basic functionality on all our systems.=C2=A0 =
+Just curious if seeing a container log to the host is expected.<div><br></d=
+iv><div>Thanks,</div><div>- Trey<br><div><br></div><div>[1]:</div><div><div=
+>2018-03-20T09:29:17.670073-04:00 n0593 sudo: tdockendorf : TTY=3Dpts/0 ; P=
+WD=3D/users/sysp/tdockendorf/singularity ; USER=3Droot ; COMMAND=3D/opt/sin=
+gularity/bin/singularity build /tmp/pbstmp.10702008/centos7-demo.img centos=
+7-demo.def</div><div>2018-03-20T09:29:17.793392-04:00 n0593 Singularity: im=
+age-type (U=3D0,P=3D653)&gt; Unknown image format/type: centos7-demo.def</d=
+iv><div>2018-03-20T09:29:17.793412-04:00 n0593 Singularity: image-type (U=
+=3D0,P=3D653)&gt; Retval =3D 255</div><div>2018-03-20T09:29:33.487973-04:00=
+ n0593 yum[715]: Updated: libgcc-4.8.5-16.el7_4.2.x86_64</div><div>2018-03-=
+20T09:29:34.098226-04:00 n0593 yum[715]: Updated: systemd-libs-219-42.el7_4=
+.10.x86_64</div><div>2018-03-20T09:29:36.559291-04:00 n0593 kernel: &lt;27&=
+gt;systemd-tmpfiles[789]: Failed to fstat() file /run/systemd/machines: Inv=
+alid argument</div><div>2018-03-20T09:29:36.594666-04:00 n0593 kernel: &lt;=
+27&gt;systemd-tmpfiles[789]: Failed to fstat() file /tmp: Invalid argument<=
+/div><div>2018-03-20T09:29:36.656945-04:00 n0593 kernel: &lt;27&gt;systemd-=
+tmpfiles[789]: Failed to fstat() file /tmp/.font-unix: Invalid argument</di=
+v><div>2018-03-20T09:29:36.694953-04:00 n0593 kernel: &lt;27&gt;systemd-tmp=
+files[789]: Failed to fstat() file /var: Invalid argument</div><div>2018-03=
+-20T09:29:36.736095-04:00 n0593 kernel: &lt;27&gt;systemd-tmpfiles[789]: Fa=
+iled to fstat() file /var/cache: Invalid argument</div><div>2018-03-20T09:2=
+9:36.779588-04:00 n0593 kernel: &lt;27&gt;systemd-tmpfiles[789]: Failed to =
+fstat() file /run/log: Invalid argument</div><div>2018-03-20T09:29:36.82322=
+7-04:00 n0593 kernel: &lt;27&gt;systemd-tmpfiles[789]: Failed to fstat() fi=
+le /run/lock: Invalid argument</div><div>2018-03-20T09:29:36.870334-04:00 n=
+0593 kernel: &lt;27&gt;systemd-tmpfiles[789]: Failed to fstat() file /run/l=
+ock/subsys: Invalid argument</div><div>...</div><div>2018-03-20T09:29:40.39=
+7735-04:00 n0593 kernel: &lt;27&gt;systemd-tmpfiles[789]: Failed to fstat()=
+ file /tmp/.Test-unix: Invalid argument</div><div>2018-03-20T09:29:40.41696=
+7-04:00 n0593 yum[715]: Updated: systemd-219-42.el7_4.10.x86_64</div><div>2=
+018-03-20T09:29:41.155220-04:00 n0593 yum[715]: Updated: libstdc++-4.8.5-16=
+.el7_4.2.x86_64</div><div>2018-03-20T09:29:46.831966-04:00 n0593 yum[819]: =
+Installed: epel-release-7-9.noarch</div><div>2018-03-20T09:29:58.121175-04:=
+00 n0593 yum[822]: Installed: groff-base-1.22.2-8.el7.x86_64</div><div>2018=
+-03-20T09:30:01.986852-04:00 n0593 yum[822]: Installed: 1:perl-parent-0.225=
+-244.el7.noarch</div><div>2018-03-20T09:30:02.378397-04:00 n0593 yum[822]: =
+Installed: perl-HTTP-Tiny-0.033-3.el7.noarch<br></div><div>2018-03-20T09:30=
+:02.861649-04:00 n0593 yum[822]: Installed: perl-podlators-2.5.1-3.el7.noar=
+ch</div></div><div><br></div><div>[2]:</div><div><div>$ cat ~/singularity/c=
+entos7-demo.def=C2=A0</div><div>BootStrap: docker</div><div>From: centos:7<=
+/div><div><br></div><div>%post</div><div>=C2=A0 =C2=A0 yum -y update</div><=
+div>=C2=A0 =C2=A0 yum -y install epel-release</div><div>=C2=A0 =C2=A0 yum -=
+y install fortune-mod cowsay</div><div><br></div><div>#%environment</div><d=
+iv><br></div><div>%runscript</div><div>=C2=A0 =C2=A0 fortune | cowsay</div>=
+<div>=C2=A0</div></div><div><div>$ module load singularity</div><div>$ expo=
+rt SINGULARITY_CACHEDIR=3D$TMPDIR</div><div>$ sudo singularity build ${TMPD=
+IR}/centos7-demo.img centos7-demo.def=C2=A0</div><div>$ singularity run ${T=
+MPDIR}/centos7-demo.img=C2=A0</div></div><div><br></div></div></div>
+------=_Part_5986_1303398916.1521721570131--
+
+------=_Part_5985_1308655888.1521721570131--

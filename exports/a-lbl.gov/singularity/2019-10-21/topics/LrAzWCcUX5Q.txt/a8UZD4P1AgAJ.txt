@@ -1,0 +1,338 @@
+Date: Fri, 17 May 2019 14:35:57 -0700 (PDT)
+From: Robert Lugg <rober...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <e02c02be-f7db-4b6e-8953-7b4ce50f0fca@lbl.gov>
+In-Reply-To: <CAPw58N5v5yMD4h2s6Xn4VMs9YAiyceqqctir_F2DKho4OJ03nw@mail.gmail.com>
+References: <5409942d-4e52-4023-ae61-5b30894c4605@lbl.gov> <CAHNsURvboCSe_=jphJuo+_d+fSOeCVfRu=PCjSMa8ZGQm4iydQ@mail.gmail.com>
+ <CAPw58N5v5yMD4h2s6Xn4VMs9YAiyceqqctir_F2DKho4OJ03nw@mail.gmail.com>
+Subject: Re: [Singularity] Multi-stage builds theoretical understanding
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_1115_1200350346.1558128957353"
+
+------=_Part_1115_1200350346.1558128957353
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1116_75475640.1558128957353"
+
+------=_Part_1116_75475640.1558128957353
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+Thanks all.  It still isn't what I had in mind but perhaps I am projecting 
+how I think something like this should work..  Thanks Vanessa for the 
+docker demo though I would like to use singularity.
+
+Randy, Ian,  I understand.  What I thought I wanted to do be able to run 
+pretty much all the commands in that second stage (such as %post).
+
+The idea would be that I could "prep" an install in the first stage (such 
+as zip'ing up all the files).  Then, in the next block I would have access 
+to the first block's file system where I could copy files, run scripts.  
+But thinking about it, it is the portable app problem.  I don't know which 
+files go in the second stage and without that, I wouldn't be able to create 
+the image I want.
+
+
+
+On Tuesday, May 14, 2019 at 12:54:41 PM UTC-7, Randy Herban wrote:
+
+> Robert,
+> The official docs for this are pending review, but the multi-stage build 
+> pieces are located here:
+>
+> https://github.com/rherban/singularity-userdocs/blob/add_stage_to_def/definition_files.rst#multi-stage-builds
+>
+>
+> --
+> Randy Herban
+> Solutions Architect, Sylabs, Inc.
+> www.sylabs.io
+>
+>
+>
+>
+> On Tue, May 14, 2019 at 3:39 PM Ian Kaneshiro <i...@sylabs.io 
+> <javascript:>> wrote:
+>
+>> Hi Robert,
+>>
+>> First you will need to name your first stage through its header, lets 
+>> assume you call the first one "devel" and add "Stage: devel" to the header 
+>> of your first stage.
+>> Then you would leave the script sections where you build gvim the same so 
+>> that it builds from source in your "devel" stage.
+>>
+>> After building from source you will need to identify the relevant 
+>> artifacts from that build process to copy into your final container in 
+>> order for gvim to work correctly. For this example I'm going to assume it 
+>> is just /opt/vim_8.1/bin/gvim. Then you would create another header in your 
+>> definition indicating the base you want to use for your second stage and 
+>> after that header specify a %files section to copy that artifact from the 
+>> "devel' stage into the second stage. Your second stage will probably like 
+>> something like this:
+>>
+>> Bootstrap: whatever base you are using
+>>
+>> %files from devel
+>>     /opt/vim_8.1/bin/gvim
+>>
+>> %runscript
+>> /opt/vim_8.1/bin/gvim $@
+>>
+>> This will copy this file to your final container and create the runscript 
+>> to launch the program.
+>>
+>> Best,
+>> Ian
+>>
+>> On Tue, May 14, 2019 at 3:03 PM Robert Lugg <ro...@gmail.com 
+>> <javascript:>> wrote:
+>>
+>>> Hi All,  I'm trying to make use of multi-stage builds recently 
+>>> introduced.  For instance, I want to provide a vim container which I build 
+>>> from sources.  The bottom part of my recipe looks like this:
+>>>
+>>> git clone https://github.com/vim/vim.git
+>>> cd vim
+>>>
+>>> ./configure --with-features=huge \
+>>>             --enable-multibyte \
+>>>     --enable-rubyinterp=yes \
+>>>     --enable-pythoninterp=yes \
+>>>     --with-python-config-dir=/lib64/python2.7/config \
+>>>     --enable-python3interp=yes \
+>>>     
+>>> --with-python3-config-dir=/opt/rh/rh-python36/root/lib64/python3.6/config-3.6m-x86_64-linux-gnu 
+>>> \
+>>>     --enable-perlinterp=yes \
+>>>     --enable-luainterp=yes \
+>>>             --enable-gui=gtk2 \
+>>>             --enable-cscope \
+>>>     --prefix=/opt/vim_8.1
+>>>
+>>> make VIMRUNTIMEDIR=/opt/vim_8.1/share/vim/vim81
+>>> make install
+>>>
+>>> %runscript
+>>> /opt/vim_8.1/bin/gvim $@
+>>>
+>>>
+>>> My end goal is to have a container that is as small as possible (ie 
+>>> doesn't include the build tools that aren't needed when running gvim).
+>>>
+>>> How might a construct a two stage build to do what I would like?
+>>>
+>>>
+>>> Robert
+>>>
+>>> -- 
+>>> You received this message because you are subscribed to the Google 
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>> an email to si...@lbl.gov <javascript:>.
+>>> To view this discussion on the web visit 
+>>> https://groups.google.com/a/lbl.gov/d/msgid/singularity/5409942d-4e52-4023-ae61-5b30894c4605%40lbl.gov 
+>>> <https://groups.google.com/a/lbl.gov/d/msgid/singularity/5409942d-4e52-4023-ae61-5b30894c4605%40lbl.gov?utm_medium=email&utm_source=footer>
+>>> .
+>>>
+>>
+>>
+>> -- 
+>> Ian Kaneshiro
+>> Software Engineer, Sylabs, Inc.
+>> www.sylabs.io
+>>
+>> -- 
+>> You received this message because you are subscribed to the Google Groups 
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send an 
+>> email to si...@lbl.gov <javascript:>.
+>> To view this discussion on the web visit 
+>> https://groups.google.com/a/lbl.gov/d/msgid/singularity/CAHNsURvboCSe_%3DjphJuo%2B_d%2BfSOeCVfRu%3DPCjSMa8ZGQm4iydQ%40mail.gmail.com 
+>> <https://groups.google.com/a/lbl.gov/d/msgid/singularity/CAHNsURvboCSe_%3DjphJuo%2B_d%2BfSOeCVfRu%3DPCjSMa8ZGQm4iydQ%40mail.gmail.com?utm_medium=email&utm_source=footer>
+>> .
+>>
+>
+------=_Part_1116_75475640.1558128957353
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Thanks all.=C2=A0 It still isn&#39;t what I had in mind bu=
+t perhaps I am projecting how I think something like this should work..=C2=
+=A0 Thanks Vanessa for the docker demo though I would like to use singulari=
+ty.<div><br></div><div>Randy, Ian,=C2=A0 I understand.=C2=A0 What I thought=
+ I wanted to do be able to run pretty much all the commands in that second =
+stage (such as %post).</div><div><br></div><div>The idea would be that I co=
+uld &quot;prep&quot; an install in the first stage (such as zip&#39;ing up =
+all the files).=C2=A0 Then, in the next block I would have access to the fi=
+rst block&#39;s file system where I could copy files, run scripts.=C2=A0 Bu=
+t thinking about it, it is the portable app problem.=C2=A0 I don&#39;t know=
+ which files go in the second stage and without that, I wouldn&#39;t be abl=
+e to create the image I want.</div><div><br></div><div><br></div><div><br><=
+/div><div>On Tuesday, May 14, 2019 at 12:54:41 PM UTC-7, Randy Herban wrote=
+:<br></div><div><blockquote class=3D"gmail_quote" style=3D"margin: 0;margin=
+-left: 0.8ex;border-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"lt=
+r">Robert,<div>The official docs for this are pending review, but the multi=
+-stage build pieces are located here:</div><div><a href=3D"https://github.c=
+om/rherban/singularity-userdocs/blob/add_stage_to_def/definition_files.rst#=
+multi-stage-builds" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.=
+href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Frher=
+ban%2Fsingularity-userdocs%2Fblob%2Fadd_stage_to_def%2Fdefinition_files.rst=
+%23multi-stage-builds\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHDi1-QOq-q84w=
+5IK-JngxlhTtI3A&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.=
+google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Frherban%2Fsingularity-userdo=
+cs%2Fblob%2Fadd_stage_to_def%2Fdefinition_files.rst%23multi-stage-builds\x2=
+6sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHDi1-QOq-q84w5IK-JngxlhTtI3A&#39;;ret=
+urn true;">https://github.com/rherban/<wbr>singularity-userdocs/blob/add_<w=
+br>stage_to_def/definition_files.<wbr>rst#multi-stage-builds</a></div><div>=
+<br clear=3D"all"><div><div dir=3D"ltr"><div dir=3D"ltr"><div><div dir=3D"l=
+tr"><div><div dir=3D"ltr"><div dir=3D"ltr"><div><br></div><div>--</div>Rand=
+y Herban<div>Solutions Architect, Sylabs, Inc.</div><div><a href=3D"http://=
+www.sylabs.io" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=
+=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwww.sylabs.io\x26sa\x3d=
+D\x26sntz\x3d1\x26usg\x3dAFQjCNGUqI0Hm7SpiDdx6jbRPkKUi9qUJg&#39;;return tru=
+e;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2=
+Fwww.sylabs.io\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNGUqI0Hm7SpiDdx6jbRPk=
+KUi9qUJg&#39;;return true;">www.sylabs.io</a><br></div><div><br><br></div><=
+/div></div></div></div></div></div></div></div><br></div></div><br><div cla=
+ss=3D"gmail_quote"><div dir=3D"ltr">On Tue, May 14, 2019 at 3:39 PM Ian Kan=
+eshiro &lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=
+=3D"MYM-JxUDAwAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascri=
+pt:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return =
+true;">i...@sylabs.io</a>&gt; wrote:<br></div><blockquote class=3D"gmail_qu=
+ote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,20=
+4);padding-left:1ex"><div dir=3D"ltr">Hi Robert,<div><br></div><div>First y=
+ou will need to name your first stage through its header, lets assume you c=
+all the first one &quot;devel&quot; and add &quot;Stage: devel&quot; to the=
+ header of your first stage.</div><div>Then you would leave the script sect=
+ions where you build gvim the same so that it builds from source in your &q=
+uot;devel&quot; stage.</div><div><br></div><div>After building from source =
+you will need to identify the relevant artifacts from that build process to=
+ copy into your final container in order for gvim to work correctly. For th=
+is example I&#39;m going to assume it is just /opt/vim_8.1/bin/gvim. Then y=
+ou would create another header in your definition indicating the base you w=
+ant to use for your second stage and after that header specify a %files sec=
+tion to copy that artifact from the &quot;devel&#39; stage into the second =
+stage. Your second stage will probably like something like this:</div><div>=
+<br></div><div>Bootstrap: whatever base you are using</div><div><br></div><=
+div>%files from devel</div><div>=C2=A0 =C2=A0 /opt/vim_8.1/bin/gvim</div><d=
+iv><br></div><div>%runscript</div><div>/opt/vim_8.1/bin/gvim $@<br></div><d=
+iv><br></div><div>This will copy this file to your final container and crea=
+te the runscript to launch the program.</div><div><br></div><div>Best,</div=
+><div>Ian</div><br><div class=3D"gmail_quote"><div dir=3D"ltr">On Tue, May =
+14, 2019 at 3:03 PM Robert Lugg &lt;<a href=3D"javascript:" target=3D"_blan=
+k" gdf-obfuscated-mailto=3D"MYM-JxUDAwAJ" rel=3D"nofollow" onmousedown=3D"t=
+his.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;=
+javascript:&#39;;return true;">ro...@gmail.com</a>&gt; wrote:<br></div><blo=
+ckquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left=
+:1px solid rgb(204,204,204);padding-left:1ex"><div dir=3D"ltr">Hi All,=C2=
+=A0 I&#39;m trying to make use of multi-stage builds recently introduced.=
+=C2=A0 For instance, I want to provide a vim container which I build from s=
+ources.=C2=A0 The bottom part of my recipe looks like this:<div><br></div><=
+div><div><font face=3D"courier new, monospace">git clone <a href=3D"https:/=
+/github.com/vim/vim.git" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"=
+this.href=3D&#39;https://www.google.com/url?q\x3dhttps%3A%2F%2Fgithub.com%2=
+Fvim%2Fvim.git\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNErw1D7j8SrOpV3wnL_0u=
+Rf3cO9VQ&#39;;return true;" onclick=3D"this.href=3D&#39;https://www.google.=
+com/url?q\x3dhttps%3A%2F%2Fgithub.com%2Fvim%2Fvim.git\x26sa\x3dD\x26sntz\x3=
+d1\x26usg\x3dAFQjCNErw1D7j8SrOpV3wnL_0uRf3cO9VQ&#39;;return true;">https://=
+github.com/vim/vim.git</a></font></div><div><font face=3D"courier new, mono=
+space">cd vim</font></div><div><font face=3D"courier new, monospace"><br></=
+font></div><div><font face=3D"courier new, monospace">./configure --with-fe=
+atures=3Dhuge \</font></div><div><font face=3D"courier new, monospace">=C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 --enable-multibyte \</font></div><di=
+v><font face=3D"courier new, monospace"><span style=3D"white-space:pre-wrap=
+">=09</span>=C2=A0 =C2=A0 --enable-rubyinterp=3Dyes \</font></div><div><fon=
+t face=3D"courier new, monospace"><span style=3D"white-space:pre-wrap">=09<=
+/span>=C2=A0 =C2=A0 --enable-pythoninterp=3Dyes \</font></div><div><font fa=
+ce=3D"courier new, monospace"><span style=3D"white-space:pre-wrap">=09</spa=
+n>=C2=A0 =C2=A0 --with-python-config-dir=3D/<wbr>lib64/python2.7/config \</=
+font></div><div><font face=3D"courier new, monospace"><span style=3D"white-=
+space:pre-wrap">=09</span>=C2=A0 =C2=A0 --enable-python3interp=3Dyes \</fon=
+t></div><div><font face=3D"courier new, monospace"><span style=3D"white-spa=
+ce:pre-wrap">=09</span>=C2=A0 =C2=A0 --with-python3-config-dir=3D/<wbr>opt/=
+rh/rh-python36/root/lib64/<wbr>python3.6/config-3.6m-x86_64-<wbr>linux-gnu =
+\</font></div><div><font face=3D"courier new, monospace"><span style=3D"whi=
+te-space:pre-wrap">=09</span>=C2=A0 =C2=A0 --enable-perlinterp=3Dyes \</fon=
+t></div><div><font face=3D"courier new, monospace"><span style=3D"white-spa=
+ce:pre-wrap">=09</span>=C2=A0 =C2=A0 --enable-luainterp=3Dyes \</font></div=
+><div><font face=3D"courier new, monospace">=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 --enable-gui=3Dgtk2 \</font></div><div><font face=3D"courier new=
+, monospace">=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 --enable-cscope \</f=
+ont></div><div><font face=3D"courier new, monospace"><span style=3D"white-s=
+pace:pre-wrap">=09</span>=C2=A0 =C2=A0 --prefix=3D/opt/vim_8.1</font></div>=
+<div><font face=3D"courier new, monospace"><br></font></div><div><font face=
+=3D"courier new, monospace">make VIMRUNTIMEDIR=3D/opt/vim_8.1/<wbr>share/vi=
+m/vim81</font></div><div><font face=3D"courier new, monospace">make install=
+</font></div><div><font face=3D"courier new, monospace"><br></font></div><d=
+iv><font face=3D"courier new, monospace">%runscript</font></div><div><font =
+face=3D"courier new, monospace">/opt/vim_8.1/bin/gvim $@</font></div></div>=
+<div><br></div><div><br></div><div>My end goal is to have a container that =
+is as small as possible (ie doesn&#39;t include the build tools that aren&#=
+39;t needed when running gvim).</div><div><br></div><div>How might a constr=
+uct a two stage build to do what I would like?</div><div><br></div><div><br=
+></div><div>Robert</div></div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+MYM-JxUDAwAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singu...@lbl.<wbr>gov</a>.<br>
+To view this discussion on the web visit <a href=3D"https://groups.google.c=
+om/a/lbl.gov/d/msgid/singularity/5409942d-4e52-4023-ae61-5b30894c4605%40lbl=
+.gov?utm_medium=3Demail&amp;utm_source=3Dfooter" target=3D"_blank" rel=3D"n=
+ofollow" onmousedown=3D"this.href=3D&#39;https://groups.google.com/a/lbl.go=
+v/d/msgid/singularity/5409942d-4e52-4023-ae61-5b30894c4605%40lbl.gov?utm_me=
+dium\x3demail\x26utm_source\x3dfooter&#39;;return true;" onclick=3D"this.hr=
+ef=3D&#39;https://groups.google.com/a/lbl.gov/d/msgid/singularity/5409942d-=
+4e52-4023-ae61-5b30894c4605%40lbl.gov?utm_medium\x3demail\x26utm_source\x3d=
+footer&#39;;return true;">https://groups.google.com/a/<wbr>lbl.gov/d/msgid/=
+singularity/<wbr>5409942d-4e52-4023-ae61-<wbr>5b30894c4605%40lbl.gov</a>.<b=
+r>
+</blockquote></div></div><br clear=3D"all"><div><br></div>-- <br><div dir=
+=3D"ltr"><div dir=3D"ltr"><div><div dir=3D"ltr"><div style=3D"color:rgb(80,=
+0,80);font-size:12.8px"><div><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"=
+ltr"><div style=3D"color:rgb(34,34,34);font-size:12.8px">Ian Kaneshiro</div=
+><div style=3D"color:rgb(34,34,34);font-size:12.8px">Software Engineer, Syl=
+abs, Inc.</div><div style=3D"color:rgb(34,34,34);font-size:12.8px"><a href=
+=3D"http://www.sylabs.io/" style=3D"color:rgb(17,85,204)" target=3D"_blank"=
+ rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http://www.google.com/url=
+?q\x3dhttp%3A%2F%2Fwww.sylabs.io%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjC=
+NGirTgGyyK0oh9nntTZkfNN4-q5YQ&#39;;return true;" onclick=3D"this.href=3D&#3=
+9;http://www.google.com/url?q\x3dhttp%3A%2F%2Fwww.sylabs.io%2F\x26sa\x3dD\x=
+26sntz\x3d1\x26usg\x3dAFQjCNGirTgGyyK0oh9nntTZkfNN4-q5YQ&#39;;return true;"=
+>www.sylabs.io</a></div></div></div></div></div></div></div></div></div></d=
+iv>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+MYM-JxUDAwAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singu...@lbl.<wbr>gov</a>.<br>
+To view this discussion on the web visit <a href=3D"https://groups.google.c=
+om/a/lbl.gov/d/msgid/singularity/CAHNsURvboCSe_%3DjphJuo%2B_d%2BfSOeCVfRu%3=
+DPCjSMa8ZGQm4iydQ%40mail.gmail.com?utm_medium=3Demail&amp;utm_source=3Dfoot=
+er" target=3D"_blank" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;http=
+s://groups.google.com/a/lbl.gov/d/msgid/singularity/CAHNsURvboCSe_%3DjphJuo=
+%2B_d%2BfSOeCVfRu%3DPCjSMa8ZGQm4iydQ%40mail.gmail.com?utm_medium\x3demail\x=
+26utm_source\x3dfooter&#39;;return true;" onclick=3D"this.href=3D&#39;https=
+://groups.google.com/a/lbl.gov/d/msgid/singularity/CAHNsURvboCSe_%3DjphJuo%=
+2B_d%2BfSOeCVfRu%3DPCjSMa8ZGQm4iydQ%40mail.gmail.com?utm_medium\x3demail\x2=
+6utm_source\x3dfooter&#39;;return true;">https://groups.google.com/a/<wbr>l=
+bl.gov/d/msgid/singularity/<wbr>CAHNsURvboCSe_%3DjphJuo%2B_d%<wbr>2BfSOeCVf=
+Ru%<wbr>3DPCjSMa8ZGQm4iydQ%40mail.<wbr>gmail.com</a>.<br>
+</blockquote></div>
+</blockquote></div></div>
+------=_Part_1116_75475640.1558128957353--
+
+------=_Part_1115_1200350346.1558128957353--

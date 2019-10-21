@@ -1,0 +1,404 @@
+Date: Tue, 12 Dec 2017 13:52:59 -0800 (PST)
+From: Jeff Kriske <jekr...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <f936a34e-4a82-45eb-851a-24486e5d8ad6@lbl.gov>
+In-Reply-To: <CANjHi9pLiA+h3XvoUjVQRK17y3MHxTvYoZS9Enuzh_4fPpdgTg@mail.gmail.com>
+References: <03f2ef4e-b773-4d05-9d7f-ce2f2b53d7a9@lbl.gov> <0a6d57e5-1c8f-4a40-951d-53e6fd86567f@lbl.gov>
+ <c0660606-db16-4988-95dc-f1a7eb8fa51d@lbl.gov> <CANjHi9rKapn-1gm8J3TZ0gyfhGYmf0odMS5ULo69g8=JHU7gyg@mail.gmail.com>
+ <98982686-dd2b-45b0-8278-ab23901906e1@lbl.gov> <CANjHi9oVB9RVaXi7Sy==s-X8ZCnETQOW3hFUii6EY4fT98DO8A@mail.gmail.com>
+ <CANjHi9pLiA+h3XvoUjVQRK17y3MHxTvYoZS9Enuzh_4fPpdgTg@mail.gmail.com>
+Subject: Re: [Singularity] Re: Clarifications on singularity run
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_10076_2122542103.1513115579299"
+
+------=_Part_10076_2122542103.1513115579299
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_10077_1779649577.1513115579299"
+
+------=_Part_10077_1779649577.1513115579299
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+2.4.2 makes life a lot easier and you don't have to worry about creating 
+your image ahead of time with a specific size. 
+
+On Tuesday, December 12, 2017 at 4:32:03 PM UTC-5, Kushal Datta wrote:
+>
+> Jeff, any benefit in using Singularity-2.4.2?
+>
+> ----
+> Best,
+> -Kushal.
+>
+> On Tue, Dec 12, 2017 at 1:30 PM, Kushal Datta <kus...@gmail.com 
+> <javascript:>> wrote:
+>
+>> Hunh! I think I found the error. I created the image on an Intel Xeon 
+>> Gold 6148 CPU (skylake) and tested it on Intel Xeon E5-2680 (sandybridge). 
+>> TF was compiled to use AVX2, not present in SandyBridge.
+>>
+>> ----
+>> Best,
+>> -Kushal.
+>>
+>> On Tue, Dec 12, 2017 at 12:11 PM, Jeff Kriske <je...@gmail.com 
+>> <javascript:>> wrote:
+>>
+>>> Ah so you aren't running Singularity 2.4.x
+>>>
+>>> I installed 2.3.2 and tested with your script substituting in the 
+>>> correct string for the tensorflow wheel name 
+>>> (tensorflow-1.4.0-cp27-cp27mu-linux_x86_64.whl instead of tensorflow.whl) 
+>>> and I also added gcc again due to a compilation error that happens during 
+>>> installation and this worked fine.
+>>>
+>>> You're saying it only works on the newer machines but not the older 
+>>> xeons... how old are we talking? I just tested on a 2010 Xeon E5620 
+>>> (westmere) and it worked great.
+>>>
+>>>
+>>> On Tuesday, December 12, 2017 at 2:11:12 PM UTC-5, Kushal Datta wrote:
+>>>>
+>>>> Don't want to digress too much, but I added a TF whl file using %files 
+>>>> in the definition file and called pip install --upgrade tensorflow.whl, but 
+>>>> singularity complained that it couldn't find it. hence, I used a shell 
+>>>> script to install TF. here's the script:
+>>>>
+>>>> TF_WHEEL_FILE=tensorflow.whl
+>>>> TF_WHEEL_FILE_SRC=/home/user/$TF_WHEEL_FILE
+>>>> IMAGENAME=test.img
+>>>> sudo singularity create --size 2000 $IMAGENAME
+>>>> sudo singularity bootstrap $IMAGENAME ./test.def
+>>>> sudo singularity copy $IMAGENAME $TF_WHEEL_FILE_SRC /opt/
+>>>> sudo singularity exec --writable $IMAGENAME pip install --upgrade 
+>>>> /opt/$TF_WHEEL_FILE
+>>>> singularity test $IMAGENAME
+>>>>
+>>>> I pasted the contents of test.def in the initial email.
+>>>>
+>>>> ----
+>>>> Best,
+>>>> -Kushal.
+>>>>
+>>>> On Tue, Dec 12, 2017 at 10:49 AM, Jeff Kriske <je...@gmail.com> 
+>>>> wrote:
+>>>>
+>>>>> Oh, and make sure you don't have python libraries installed in your 
+>>>>> home directory inside a .local folder interfering with this test.
+>>>>>
+>>>>>
+>>>>> On Tuesday, December 12, 2017 at 1:46:07 PM UTC-5, Jeff Kriske wrote:
+>>>>>>
+>>>>>> I don't have your scripts to copy over and I'm not seeing where you 
+>>>>>> install gcc or install tensorflow...but can you do this:
+>>>>>>
+>>>>>> Bootstrap: docker
+>>>>>> From: centos:latest
+>>>>>>
+>>>>>> %labels
+>>>>>>
+>>>>>> %setup
+>>>>>>
+>>>>>> %environment
+>>>>>>
+>>>>>> %post -c /bin/bash
+>>>>>>     echo "Hello from inside the container"
+>>>>>>     yum -y install epel-release
+>>>>>>     yum -y install python-devel python-pip git numactl vim-minimal
+>>>>>>     yum -y install nethogs gcc
+>>>>>>     pip install --upgrade pip
+>>>>>>     pip install --upgrade pysocks
+>>>>>>     pip --no-cache-dir install \
+>>>>>>             h5py \
+>>>>>>             jupyter \
+>>>>>>             matplotlib \
+>>>>>>             numpy \
+>>>>>>             pandas \
+>>>>>>             Pillow \
+>>>>>>             scipy \
+>>>>>>             sklearn \
+>>>>>>             tensorflow
+>>>>>>     mkdir -p /data
+>>>>>>
+>>>>>> %test
+>>>>>>     python -c 'import tensorflow as tf; print tf.__version__'
+>>>>>>
+>>>>>> %runscript
+>>>>>>     python -c 'import tensorflow as tf; print tf.__version__'
+>>>>>>
+>>>>>>
+>>>>>>
+>>>>>> On Tuesday, December 12, 2017 at 12:27:04 PM UTC-5, Kushal Datta 
+>>>>>> wrote:
+>>>>>>>
+>>>>>>> Hi,
+>>>>>>>
+>>>>>>> Objective: To create singularity containers with Tensorflow and some 
+>>>>>>> applications which will run on multiple servers with different generation 
+>>>>>>> of Intel processors.
+>>>>>>> Done already: Created a container an on an Intel Xeon server with 
+>>>>>>> Centos 7 and TF-1.3.0.
+>>>>>>> Questions:
+>>>>>>> 1) When I run the container on an older generation of Intel 
+>>>>>>> processor, my application died with just an 'Aborted' message. Dug a little 
+>>>>>>> further to find that even 'singularity run test.img python -c 'import 
+>>>>>>> tensorflow as tf; tf.Session()' dies with the same message. Probably this 
+>>>>>>> occurs due to incompatibility of libc or other dpdt libraries, but the 
+>>>>>>> error message is cryptic! What's the best way to debug this?
+>>>>>>> 2) If the OS, Python and TF versions are same between the host CPU 
+>>>>>>> where I created the container and target CPU where I'm running it, the 
+>>>>>>> container should work, right?
+>>>>>>> 3) Singularity is complaining that some of the applications are not 
+>>>>>>> in the host machine where I am running the container. The specific error is 
+>>>>>>> with on nethogs. I installed nethogs in the container, but singnularity 
+>>>>>>> couldn't find it. Had to install nethogs in the host. I should be able to 
+>>>>>>> run all applications installed inside the container, right?
+>>>>>>>
+>>>>>>> Definition File:
+>>>>>>> BootStrap: yum
+>>>>>>> OSVersion: 7
+>>>>>>> MirrorURL: 
+>>>>>>> http://mirror.centos.org/centos-%{OSVERSION}/%{OSVERSION}/os/$basearch/
+>>>>>>> UpdateURL: 
+>>>>>>> http://mirror.centos.org/centos-%{OSVERSION}/%{OSVERSION}/updates/$basearch
+>>>>>>> Include: yum
+>>>>>>>
+>>>>>>> %labels
+>>>>>>>
+>>>>>>> %setup
+>>>>>>>
+>>>>>>> %environment
+>>>>>>>
+>>>>>>> %files
+>>>>>>>     /home/bduser/tensorflow-1.4.0-cp27-cp27mu-linux_x86_64.whl /opt/
+>>>>>>>     /home/user/run_my_training.py /opt/run_my_training.py
+>>>>>>>
+>>>>>>> %post -c /bin/bash
+>>>>>>>     echo "Hello from inside the container"
+>>>>>>>     yum -y install epel-release
+>>>>>>>     yum -y install python-devel python-pip git numactl vim-minimal
+>>>>>>>     yum -y install nethogs
+>>>>>>>     pip install --upgrade pip
+>>>>>>>     pip install --upgrade pysocks
+>>>>>>>     pip --no-cache-dir install \
+>>>>>>>             h5py \
+>>>>>>>             jupyter \
+>>>>>>>             matplotlib \
+>>>>>>>             numpy \
+>>>>>>>             pandas \
+>>>>>>>             Pillow \
+>>>>>>>             scipy \
+>>>>>>>             sklearn
+>>>>>>>     mkdir -p /data
+>>>>>>>
+>>>>>>> %test
+>>>>>>>     python -c 'import tensorflow as tf; print tf.__version__'
+>>>>>>>
+>>>>>>> %runscript
+>>>>>>>     /opt/run_my_training.py
+>>>>>>>
+>>>>>>> Thanks,
+>>>>>>> -Kushal.
+>>>>>>>
+>>>>>> -- 
+>>>>> You received this message because you are subscribed to the Google 
+>>>>> Groups "singularity" group.
+>>>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>>>> an email to singu...@lbl.gov.
+>>>>>
+>>>>
+>>>> -- 
+>>> You received this message because you are subscribed to the Google 
+>>> Groups "singularity" group.
+>>> To unsubscribe from this group and stop receiving emails from it, send 
+>>> an email to singu...@lbl.gov <javascript:>.
+>>>
+>>
+>>
+>
+------=_Part_10077_1779649577.1513115579299
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">2.4.2 makes life a lot easier and you don&#39;t have to wo=
+rry about creating your image ahead of time with a specific size.=C2=A0<br>=
+<br>On Tuesday, December 12, 2017 at 4:32:03 PM UTC-5, Kushal Datta wrote:<=
+blockquote class=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;bord=
+er-left: 1px #ccc solid;padding-left: 1ex;"><div dir=3D"ltr">Jeff, any bene=
+fit in using Singularity-2.4.2?</div><div><br clear=3D"all"><div><div><div =
+dir=3D"ltr"><div><div dir=3D"ltr"><div style=3D"font-size:12.8000001907349p=
+x">----</div><div style=3D"font-size:12.8000001907349px">Best,</div><div st=
+yle=3D"font-size:12.8000001907349px">-Kushal.</div></div></div></div></div>=
+</div>
+<br><div class=3D"gmail_quote">On Tue, Dec 12, 2017 at 1:30 PM, Kushal Datt=
+a <span dir=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfus=
+cated-mailto=3D"HoeXkxCzCQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&=
+#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&=
+#39;;return true;">kus...@gmail.com</a>&gt;</span> wrote:<br><blockquote cl=
+ass=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;p=
+adding-left:1ex"><div dir=3D"ltr">Hunh! I think I found the error. I create=
+d the image on an Intel Xeon Gold 6148 CPU (skylake) and tested it on Intel=
+ Xeon E5-2680 (sandybridge). TF was compiled to use AVX2, not present in Sa=
+ndyBridge.</div><div><br clear=3D"all"><div><div><div dir=3D"ltr"><div><div=
+ dir=3D"ltr"><div style=3D"font-size:12.8000001907349px">----</div><div sty=
+le=3D"font-size:12.8000001907349px">Best,</div><div style=3D"font-size:12.8=
+000001907349px">-Kushal.</div></div></div></div></div></div><div><div>
+<br><div class=3D"gmail_quote">On Tue, Dec 12, 2017 at 12:11 PM, Jeff Krisk=
+e <span dir=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_blank" gdf-obfus=
+cated-mailto=3D"HoeXkxCzCQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&=
+#39;javascript:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&=
+#39;;return true;">je...@gmail.com</a>&gt;</span> wrote:<br><blockquote cla=
+ss=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;pa=
+dding-left:1ex"><div dir=3D"ltr">Ah so you aren&#39;t running Singularity 2=
+.4.x<div><br></div><div>I installed 2.3.2 and tested with your script subst=
+ituting in the correct string for the tensorflow wheel name (tensorflow-1.4=
+.0-cp27-cp27mu-<wbr>linux_x86_64.whl instead of tensorflow.whl) and I also =
+added gcc again due to a compilation error that happens during installation=
+ and this worked fine.</div><div><br></div><div>You&#39;re saying it only w=
+orks on the newer machines but not the older xeons... how old are we talkin=
+g? I just tested on a 2010 Xeon E5620 (westmere) and it worked great.</div>=
+<div><br></div><div><span><br>On Tuesday, December 12, 2017 at 2:11:12 PM U=
+TC-5, Kushal Datta wrote:</span><blockquote class=3D"gmail_quote" style=3D"=
+margin:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><sp=
+an><div dir=3D"ltr">Don&#39;t want to digress too much, but I added a TF wh=
+l file using %files in the definition file and called pip install --upgrade=
+ tensorflow.whl, but singularity complained that it couldn&#39;t find it. h=
+ence, I used a shell script to install TF. here&#39;s the script:<div><div>=
+<br></div><div>TF_WHEEL_FILE=3Dtensorflow.whl</div><div>TF_WHEEL_FILE_SRC=
+=3D/home/user/$<wbr>TF_WHEEL_FILE</div><div>IMAGENAME=3Dtest.img</div><div>=
+sudo singularity create --size 2000 $IMAGENAME</div><div>sudo singularity b=
+ootstrap $IMAGENAME ./test.def</div><div>sudo singularity copy $IMAGENAME $=
+TF_WHEEL_FILE_SRC /opt/</div><div>sudo singularity exec --writable $IMAGENA=
+ME pip install --upgrade /opt/$TF_WHEEL_FILE</div><div>singularity test $IM=
+AGENAME</div></div><div><br></div><div>I pasted the contents of test.def in=
+ the initial email.</div></div></span><div><br clear=3D"all"><div><div><div=
+ dir=3D"ltr"><div><div dir=3D"ltr"><div style=3D"font-size:12.8000001907349=
+px">----</div><div style=3D"font-size:12.8000001907349px">Best,</div><div s=
+tyle=3D"font-size:12.8000001907349px">-Kushal.</div></div></div></div></div=
+></div>
+<br><div class=3D"gmail_quote"><div><div>On Tue, Dec 12, 2017 at 10:49 AM, =
+Jeff Kriske <span dir=3D"ltr">&lt;<a rel=3D"nofollow">je...@gmail.com</a>&g=
+t;</span> wrote:<br></div></div><blockquote class=3D"gmail_quote" style=3D"=
+margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div><div><d=
+iv dir=3D"ltr">Oh, and make sure you don&#39;t have python libraries instal=
+led in your home directory inside a .local folder interfering with this tes=
+t.<div><div><br><br>On Tuesday, December 12, 2017 at 1:46:07 PM UTC-5, Jeff=
+ Kriske wrote:<blockquote class=3D"gmail_quote" style=3D"margin:0;margin-le=
+ft:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">I do=
+n&#39;t have your scripts to copy over and I&#39;m not seeing where you ins=
+tall gcc or install tensorflow...but can you do this:<div><br></div><div><d=
+iv style=3D"background-color:rgb(250,250,250);border-color:rgb(187,187,187)=
+;border-style:solid;border-width:1px;word-wrap:break-word"><code><div><font=
+ color=3D"#660066"><div>Bootstrap: docker</div><div>From: centos:latest</di=
+v><div><br></div><div>%labels</div><div><br></div><div>%setup</div><div><br=
+></div><div>%environment</div><div><br></div><div>%post -c /bin/bash</div><=
+div>=C2=A0 =C2=A0 echo &quot;Hello from inside the container&quot;</div><di=
+v>=C2=A0 =C2=A0 yum -y install epel-release</div><div>=C2=A0 =C2=A0 yum -y =
+install python-devel python-pip git numactl vim-minimal</div><div>=C2=A0 =
+=C2=A0 yum -y install nethogs gcc</div><div>=C2=A0 =C2=A0 pip install --upg=
+rade pip</div><div>=C2=A0 =C2=A0 pip install --upgrade pysocks</div><div>=
+=C2=A0 =C2=A0 pip --no-cache-dir install \</div><div>=C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 h5py \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 jupyter \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 matplo=
+tlib \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 numpy \</div><di=
+v>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 pandas \</div><div>=C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Pillow \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 scipy \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 sklearn \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 tensorflo=
+w</div><div>=C2=A0 =C2=A0 mkdir -p /data</div><div><br></div><div>%test</di=
+v><div>=C2=A0 =C2=A0 python -c &#39;import tensorflow as tf; print tf.__ver=
+sion__&#39;</div><div><br></div><div>%runscript</div><div>=C2=A0 =C2=A0 pyt=
+hon -c &#39;import tensorflow as tf; print tf.__version__&#39;</div></font>=
+</div></code></div><br><br><br>On Tuesday, December 12, 2017 at 12:27:04 PM=
+ UTC-5, Kushal Datta wrote:<blockquote class=3D"gmail_quote" style=3D"margi=
+n:0;margin-left:0.8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=
+=3D"ltr">Hi,<div><br></div><div>Objective: To create singularity containers=
+ with Tensorflow and some applications which will run on multiple servers w=
+ith different generation of Intel processors.</div><div>Done already: Creat=
+ed a container an on an Intel Xeon server with Centos 7 and TF-1.3.0.</div>=
+<div>Questions:</div><div>1) When I run the container on an older generatio=
+n of Intel processor, my application died with just an &#39;Aborted&#39; me=
+ssage. Dug a little further to find that even &#39;singularity run test.img=
+ python -c &#39;import tensorflow as tf; tf.Session()&#39; dies with the sa=
+me message. Probably this occurs due to incompatibility of libc or other dp=
+dt libraries, but the error message is cryptic! What&#39;s the best way to =
+debug this?</div><div>2) If the OS, Python and TF versions are same between=
+ the host CPU where I created the container and target CPU where I&#39;m ru=
+nning it, the container should work, right?</div><div>3) Singularity is com=
+plaining that some of the applications are not in the host machine where I =
+am running the container. The specific error is with on nethogs. I installe=
+d nethogs in the container, but singnularity couldn&#39;t find it. Had to i=
+nstall nethogs in the host. I should be able to run all applications instal=
+led inside the container, right?</div><div><br></div><div>Definition File:<=
+/div><div><div>BootStrap: yum</div><div>OSVersion: 7</div><div>MirrorURL: <=
+a href=3D"http://mirror.centos.org/centos-%%7BOSVERSION%7D/%%7BOSVERSION%7D=
+/os/$basearch/" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"this.href=
+=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fmirror.centos.org%2Fcen=
+tos-%25%257BOSVERSION%257D%2F%25%257BOSVERSION%257D%2Fos%2F%24basearch%2F\x=
+26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHfH2HjUXZK-hJjm03wlVLzlhIsAw&#39;;re=
+turn true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q\x3dhttp=
+%3A%2F%2Fmirror.centos.org%2Fcentos-%25%257BOSVERSION%257D%2F%25%257BOSVERS=
+ION%257D%2Fos%2F%24basearch%2F\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNHfH2=
+HjUXZK-hJjm03wlVLzlhIsAw&#39;;return true;">http://mirror.centos.org/<wbr>c=
+entos-%{OSVERSION}/%{<wbr>OSVERSION}/os/$basearch/</a></div><div>UpdateURL:=
+ <a href=3D"http://mirror.centos.org/centos-%%7BOSVERSION%7D/%%7BOSVERSION%=
+7D/updates/$basearch" rel=3D"nofollow" target=3D"_blank" onmousedown=3D"thi=
+s.href=3D&#39;http://www.google.com/url?q\x3dhttp%3A%2F%2Fmirror.centos.org=
+%2Fcentos-%25%257BOSVERSION%257D%2F%25%257BOSVERSION%257D%2Fupdates%2F%24ba=
+search\x26sa\x3dD\x26sntz\x3d1\x26usg\x3dAFQjCNFCZO1oH55q2sT08wn7wBHFzRnOkQ=
+&#39;;return true;" onclick=3D"this.href=3D&#39;http://www.google.com/url?q=
+\x3dhttp%3A%2F%2Fmirror.centos.org%2Fcentos-%25%257BOSVERSION%257D%2F%25%25=
+7BOSVERSION%257D%2Fupdates%2F%24basearch\x26sa\x3dD\x26sntz\x3d1\x26usg\x3d=
+AFQjCNFCZO1oH55q2sT08wn7wBHFzRnOkQ&#39;;return true;">http://mirror.centos.=
+org/<wbr>centos-%{OSVERSION}/%{<wbr>OSVERSION}/updates/$basearch</a></div><=
+div>Include: yum</div><div><br></div><div>%labels</div><div><br></div><div>=
+%setup</div><div><br></div><div>%environment</div><div><br></div><div>%file=
+s</div><div>=C2=A0 =C2=A0 /home/bduser/tensorflow-1.4.0-<wbr>cp27-cp27mu-li=
+nux_x86_64.whl /opt/</div><div>=C2=A0 =C2=A0 /home/user/run_my_training.py =
+/opt/run_my_training.py<br></div><div><br></div><div>%post -c /bin/bash</di=
+v><div>=C2=A0 =C2=A0 echo &quot;Hello from inside the container&quot;</div>=
+<div>=C2=A0 =C2=A0 yum -y install epel-release</div><div>=C2=A0 =C2=A0 yum =
+-y install python-devel python-pip git numactl vim-minimal</div><div>=C2=A0=
+ =C2=A0 yum -y install nethogs</div><div>=C2=A0 =C2=A0 pip install --upgrad=
+e pip</div><div>=C2=A0 =C2=A0 pip install --upgrade pysocks</div><div>=C2=
+=A0 =C2=A0 pip --no-cache-dir install \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 h5py \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 jupyter \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 matplotli=
+b \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 numpy \</div><div>=
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 pandas \</div><div>=C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 Pillow \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 scipy \</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 s=
+klearn</div><div>=C2=A0 =C2=A0 mkdir -p /data</div><div><br></div><div>%tes=
+t</div><div>=C2=A0 =C2=A0 python -c &#39;import tensorflow as tf; print tf.=
+__version__&#39;<br></div><div><br></div><div>%runscript</div><div>=C2=A0 =
+=C2=A0 /opt/run_my_training.py</div></div><div><br></div><div>Thanks,</div>=
+<div>-Kushal.</div></div></blockquote></div></div></blockquote></div></div>=
+</div></div></div><div><div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br></div></div>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a rel=3D"nofollow">singu...@lbl.gov</a>.<br>
+</div></div></blockquote></div><br></div>
+</blockquote></div></div><div><div>
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"=
+HoeXkxCzCQAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&=
+#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true=
+;">singularity...@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br></div></div></div>
+</blockquote></div><br></div>
+</blockquote></div>
+------=_Part_10077_1779649577.1513115579299--
+
+------=_Part_10076_2122542103.1513115579299--

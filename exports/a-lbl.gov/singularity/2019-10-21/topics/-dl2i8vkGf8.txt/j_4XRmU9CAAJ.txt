@@ -1,0 +1,219 @@
+X-Received: by 10.140.101.111 with SMTP id t102mr10522181qge.11.1464366763679;
+        Fri, 27 May 2016 09:32:43 -0700 (PDT)
+X-BeenThere: singularity@lbl.gov
+Received: by 10.50.50.68 with SMTP id a4ls447912igo.18.canary; Fri, 27 May
+ 2016 09:32:43 -0700 (PDT)
+X-Received: by 10.98.152.142 with SMTP id d14mr23749305pfk.105.1464366763188;
+        Fri, 27 May 2016 09:32:43 -0700 (PDT)
+Return-Path: <gmku...@lbl.gov>
+Received: from fe3.lbl.gov (fe3.lbl.gov. [128.3.41.68])
+        by mx.google.com with ESMTPS id t21si15289409pfa.108.2016.05.27.09.32.43
+        for <singu...@lbl.gov>
+        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Fri, 27 May 2016 09:32:43 -0700 (PDT)
+Received-SPF: pass (google.com: domain of gmku...@lbl.gov designates 209.85.215.71 as permitted sender) client-ip=209.85.215.71;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of gmku...@lbl.gov designates 209.85.215.71 as permitted sender) smtp.mailfrom=gmku...@lbl.gov
+X-Ironport-SBRS: 2.7
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: A2ELAQDCdUhXf0fXVdFcgmyBI24PBoM1qkWGdoUHgTZCFwEGhXMCgSoHOhIBAQEBAQEBAw8BAQkLCwkhL4I3ATk8AQEBAQEBIwINXwEBAwESESswCwsLNwICIQEPAwEFARwGCAcEARoCBAGHcwMPCAUJpRyBMT4xizuNEQ2EGQEBAQEGAQEBAQEdBRCJYIEDgkOBThEBgx2CWQWOWYkrMwGFf4YngXmPHIdkhikSHoEPJwaCOxyBaxwyB4hMgTUBAQE
+X-IronPort-AV: E=Sophos;i="5.26,374,1459839600"; 
+   d="scan'208,217";a="25417750"
+Received: from mail-lf0-f71.google.com ([209.85.215.71])
+  by fe3.lbl.gov with ESMTP; 27 May 2016 09:32:41 -0700
+Received: by mail-lf0-f71.google.com with SMTP id 132so27870329lfz.3
+        for <singu...@lbl.gov>; Fri, 27 May 2016 09:32:41 -0700 (PDT)
+X-Gm-Message-State: ALyK8tJKaES2Hvl5TnSoxMNgJbQPsp0nqjSQD7wUtrX/GS+QdavtifPnWLAwSZlH/cFUt9zqIzEciKTRVpYFcaVO7HEMNARm4XlwW7Prtiw1VFwjalEbks6AujiDA3YoYNCaiXZAjlI1z/NYy4C0VWomDcM=
+X-Received: by 10.28.44.87 with SMTP id s84mr9727718wms.61.1464366760253;
+        Fri, 27 May 2016 09:32:40 -0700 (PDT)
+MIME-Version: 1.0
+X-Received: by 10.28.44.87 with SMTP id s84mr9727697wms.61.1464366760011; Fri,
+ 27 May 2016 09:32:40 -0700 (PDT)
+Received: by 10.28.194.139 with HTTP; Fri, 27 May 2016 09:32:39 -0700 (PDT)
+In-Reply-To: <CAAS-_CB2KXwy5KYyg5ZCxrjGA5C-zBCm=c1f9pZjCtAhboQY5g@mail.gmail.com>
+References: <CAAS-_CB2KXwy5KYyg5ZCxrjGA5C-zBCm=c1f9pZjCtAhboQY5g@mail.gmail.com>
+Date: Fri, 27 May 2016 09:32:39 -0700
+Message-ID: <CAN7etTx3v3RLigA6diOo92kS_HQbtJN=Ggg0X+KpeMeMMTgjgQ@mail.gmail.com>
+Subject: Re: [Singularity] Singularity and runC
+From: "Gregory M. Kurtzer" <gmku...@lbl.gov>
+To: singularity <singu...@lbl.gov>
+Content-Type: multipart/alternative; boundary=001a1143b8c48d61830533d57414
+
+--001a1143b8c48d61830533d57414
+Content-Type: text/plain; charset=UTF-8
+
+Hi Taras,
+
+There are a number of reasons why runC will not work on my shared
+multi-tenant environments:
+
+- requires root to run (there is however a submitted patch to allow
+non-root, but it has not been accepted at this point)
+- even with the proposed patch, no mitigation of user escalation within the
+container
+- the container files themselves are owned by root, thus a user can not
+"bring their own environment"
+- no facility or optimizations for MPI or parallel job launch
+- requires a very recent host operating system (RHEL7 and compats, and
+similar vintage Debian derivatives)
+- no automatic control of which namespaces to use (e.g. automatic disable
+PID namespace separation for OMPI shared memory optimizations)
+- it is not a "mobility of compute" solution (it is an example
+implementation of the OCI)
+
+Singularity on the other hand addresses these issues and more:
+
+- Because Singularity uses a single file for the container, that single
+file can be owned by a user but contain root owned files inside (thus a
+user can copy from another system)
+- Single file also optimizes parallel runs with lots of open()s (large
+python runs can take 10-30 minutes to start on a big system, but not in a
+container image)
+- Designed for: mobility/portability, speed, HPC, application
+virtualization (running apps within the container as if they are running on
+the host)
+- Works on all currently maintained vintages of Linux (e.g. RHEL 5 and
+compats)
+- No limitations on vintage of Container OS (e.g. I have a 17 year old
+install (RHL8) running in a Singularity image)
+
+I think there are a number more, but this should frame some of the primary
+bits. Anybody else have any differentiators of runC and Singularity?
+
+This might make a great FAQ entry! I will work on that...
+
+Greg
+
+
+
+On Fri, May 27, 2016 at 6:45 AM, Taras Shapovalov <shapov...@gmail.com>
+wrote:
+
+> Hi guys,
+>
+> Could you help me to understand the difference (from user prospective)
+> between Singularity and runC <https://github.com/opencontainers/runc>.
+>
+> In case of runC you need to have some unpacked bundle in a filesystem
+> directory, then you go inside it and run runc command (you need to have
+> some spec file inside the directory that describes the container). And runC
+> starts a new container for you. It seems that Singularity does almost the
+> same. The only difference I see is how Singularity helps to package the
+> bundle (resolves dependencies) + how it is integrated with OpenMPI + in
+> v2.0 the image is not unpackaged into a cache. Is my understanding correct?
+>
+> Have you ever considered using runC as a backend of Singularity?
+>
+> Best regards,
+>
+> Taras
+>
+> --
+> You received this message because you are subscribed to the Google Groups
+> "singularity" group.
+> To unsubscribe from this group and stop receiving emails from it, send an
+> email to singu...@lbl.gov.
+>
+
+
+
+-- 
+Gregory M. Kurtzer
+High Performance Computing Services (HPCS)
+University of California
+Lawrence Berkeley National Laboratory
+One Cyclotron Road, Berkeley, CA 94720
+
+--001a1143b8c48d61830533d57414
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Taras,<div><br></div><div>There are a number of reasons=
+ why runC will not work on my shared multi-tenant environments:</div><div><=
+br></div><div>- requires root to run (there is however a submitted patch to=
+ allow non-root, but it has not been accepted at this point)</div><div>- ev=
+en with the proposed patch, no mitigation of user escalation within the con=
+tainer</div><div>- the container files themselves are owned by root, thus a=
+ user can not &quot;bring their own environment&quot;</div><div>- no facili=
+ty or optimizations for MPI or parallel job launch</div><div>- requires a v=
+ery recent host operating system (RHEL7 and compats, and similar vintage De=
+bian derivatives)</div><div>- no automatic control of which namespaces to u=
+se (e.g. automatic disable PID namespace separation for OMPI shared memory =
+optimizations)</div><div>- it is not a &quot;mobility of compute&quot; solu=
+tion (it is an example implementation of the OCI)</div><div><br></div><div>=
+Singularity on the other hand addresses these issues and more:</div><div><b=
+r></div><div>- Because Singularity uses a single file for the container, th=
+at single file can be owned by a user but contain root owned files inside (=
+thus a user can copy from another system)</div><div>- Single file also opti=
+mizes parallel runs with lots of open()s (large python runs can take 10-30 =
+minutes to start on a big system, but not in a container image)</div><div>-=
+ Designed for: mobility/portability, speed, HPC, application virtualization=
+ (running apps within the container as if they are running on the host)</di=
+v><div>- Works on all currently maintained vintages of Linux (e.g. RHEL 5 a=
+nd compats)</div><div>- No limitations on vintage of Container OS (e.g. I h=
+ave a 17 year old install (RHL8) running in a Singularity image)</div><div>=
+<br></div><div>I think there are a number more, but this should frame some =
+of the primary bits. Anybody else have any differentiators of runC and Sing=
+ularity?</div><div><br></div><div>This might make a great FAQ entry! I will=
+ work on that...</div><div><br></div><div>Greg</div><div><br></div><div><br=
+></div></div><div class=3D"gmail_extra"><br><div class=3D"gmail_quote">On F=
+ri, May 27, 2016 at 6:45 AM, Taras Shapovalov <span dir=3D"ltr">&lt;<a href=
+=3D"mailto:shapov...@gmail.com" target=3D"_blank">shapov...@gmail.com</a>&g=
+t;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0=
+ .8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr"><div><d=
+iv><div><span style=3D"color:rgb(26,28,30);font-family:Roboto,Helvetica,Tah=
+oma,sans-serif;font-size:16px;font-style:normal;font-variant:normal;font-we=
+ight:normal;letter-spacing:normal;line-height:24px;text-align:start;text-in=
+dent:0px;text-transform:none;white-space:normal;word-spacing:0px;display:in=
+line!important;float:none;background-color:rgb(255,255,255)">Hi guys,<br><b=
+r>Could you help me to understand the difference (from user prospective) be=
+tween Singularity and <a href=3D"https://github.com/opencontainers/runc" ta=
+rget=3D"_blank">runC</a>. <br><br>In case of runC you need to have some unp=
+acked bundle in a filesystem directory, then you go inside it and run runc =
+command (you need to have some spec file inside the directory that describe=
+s the container). And runC starts a new container for you. It seems that Si=
+ngularity does almost the same. The only difference I see is how Singularit=
+y helps to package the bundle (resolves dependencies) + how it is integrate=
+d with OpenMPI + in v2.0 the image is not unpackaged into a cache. Is my un=
+derstanding correct?<br><br></span></div><span style=3D"color:rgb(26,28,30)=
+;font-family:Roboto,Helvetica,Tahoma,sans-serif;font-size:16px;font-style:n=
+ormal;font-variant:normal;font-weight:normal;letter-spacing:normal;line-hei=
+ght:24px;text-align:start;text-indent:0px;text-transform:none;white-space:n=
+ormal;word-spacing:0px;display:inline!important;float:none;background-color=
+:rgb(255,255,255)">Have you ever considered using runC as a backend of Sing=
+ularity?<br><br></span></div><span style=3D"color:rgb(26,28,30);font-family=
+:Roboto,Helvetica,Tahoma,sans-serif;font-size:16px;font-style:normal;font-v=
+ariant:normal;font-weight:normal;letter-spacing:normal;line-height:24px;tex=
+t-align:start;text-indent:0px;text-transform:none;white-space:normal;word-s=
+pacing:0px;display:inline!important;float:none;background-color:rgb(255,255=
+,255)">Best regards,<br><br></span></div><span style=3D"color:rgb(26,28,30)=
+;font-family:Roboto,Helvetica,Tahoma,sans-serif;font-size:16px;font-style:n=
+ormal;font-variant:normal;font-weight:normal;letter-spacing:normal;line-hei=
+ght:24px;text-align:start;text-indent:0px;text-transform:none;white-space:n=
+ormal;word-spacing:0px;display:inline!important;float:none;background-color=
+:rgb(255,255,255)">Taras<span class=3D"HOEnZb"><font color=3D"#888888"><br>=
+</font></span></span><span class=3D"HOEnZb"><font color=3D"#888888"><div><d=
+iv><div><div><span style=3D"color:rgb(26,28,30);font-family:Roboto,Helvetic=
+a,Tahoma,sans-serif;font-size:16px;font-style:normal;font-variant:normal;fo=
+nt-weight:normal;letter-spacing:normal;line-height:24px;text-align:start;te=
+xt-indent:0px;text-transform:none;white-space:normal;word-spacing:0px;displ=
+ay:inline!important;float:none;background-color:rgb(255,255,255)"><br></spa=
+n></div></div></div></div></font></span></div><span class=3D"HOEnZb"><font =
+color=3D"#888888">
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to <a href=3D"mailto:singu...@lbl.gov" target=3D"_blank">singu...@lbl.=
+gov</a>.<br>
+</font></span></blockquote></div><br><br clear=3D"all"><div><br></div>-- <b=
+r><div class=3D"gmail_signature"><div dir=3D"ltr"><div>Gregory M. Kurtzer<b=
+r>High Performance Computing Services (HPCS)<br>University of California<br=
+>Lawrence Berkeley National Laboratory<br>One Cyclotron Road, Berkeley, CA =
+94720</div></div></div>
+</div>
+
+--001a1143b8c48d61830533d57414--

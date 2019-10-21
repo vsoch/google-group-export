@@ -1,0 +1,910 @@
+Date: Sat, 4 Nov 2017 09:06:10 -0700 (PDT)
+From: Dave Trudgian <dtr...@gmail.com>
+To: singularity <singu...@lbl.gov>
+Message-Id: <30bbafef-0bda-4141-9a6e-ef023ee252df@lbl.gov>
+In-Reply-To: <CAJuraoj5536i33zn6O-HJCVrN+UONHkohqcdgHcbX-nTc7u6zg@mail.gmail.com>
+References: <dc630f79-37fc-4c83-a358-b9e8e9b39d1f@lbl.gov> <CAEBt5ZK5xzzWcSt2WSd7G624kGvoMBN=KzGh=f=mx0cd_+i+mw@mail.gmail.com>
+ <CAJuraoh6E_JA_fEonQDPgA5ped-eSbDfYQNLEMAfWmcnu5QKjA@mail.gmail.com> <d48c9d64e2ac41a4848b18e4194ca771@SWMS13MAIL01.swmed.org>
+ <CAJuraoj5536i33zn6O-HJCVrN+UONHkohqcdgHcbX-nTc7u6zg@mail.gmail.com>
+Subject: Re: [Singularity] Panasas on Singularity
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_5467_1783831734.1509811570504"
+
+------=_Part_5467_1783831734.1509811570504
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_5468_1773066936.1509811570506"
+
+------=_Part_5468_1773066936.1509811570506
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Hi Nick,
+
+I've come up with some stuff which injects the $HOME and any `bind paths`=
+=20
+into the docker container as it is extracted. This is good enough to allow=
+=20
+people to use most docker containers unmodified on our RHEL6.9 systems that=
+=20
+don't have overlayfs.
+
+Not sure whether it'll be considered for merging into Singularity, but the=
+=20
+PR is here if you are interested:
+
+https://github.com/singularityware/singularity/pull/1124
+
+Cheers,
+
+DT
+
+
+On Wednesday, November 1, 2017 at 9:55:04 AM UTC-5, Nick Eggleston wrote:
+>
+> @David,
+>
+> Thanks so much for your help, that worked. My only problem is, we've=20
+> promised the users that this will be a way for them to download any of th=
+e=20
+> images they want and run them without us having to install the software f=
+or=20
+> them. With this method the root user still needs to do the building to=20
+> apply the definition file for them. Is there a way around this that I'm=
+=20
+> missing?=20
+>
+> Thanks
+> Nick
+>
+> --
+> Nick Eggleston
+> University of Kansas, Center for Research Computing
+> High Performance Compute Cluster Administrator
+>
+> On Tue, Oct 31, 2017 at 11:27 AM, David Trudgian <
+> Dav...@utsouthwestern.edu <javascript:>> wrote:
+>
+>> Hi Nick,
+>>
+>> =20
+>>
+>> On RHEL6.9 where the is no overlay we have to build images to account fo=
+r=20
+>> our non-standard /home2 home directories, and other cluster-fs we might=
+=20
+>> want to mount. We have to mkdir /home2  so that there is some target=20
+>> singularity can bind to. You=E2=80=99d need to `singularity build` image=
+s with a=20
+>> definition file that mkdirs /panfs/pfs.local in %post%. We have a lot of=
+=20
+>> simple Singularity definition files looking similar to below, that we ha=
+ve=20
+>> to create and build into images.
+>>
+>> =20
+>>
+>> Bootstrap: docker
+>>
+>> From: nvidia/digits:6.0
+>>
+>> =20
+>>
+>> %post
+>>
+>>     mkdir /home2
+>>
+>>     mkdir /project
+>>
+>>     mkdir /work
+>>
+>>     mkdir /archive
+>>
+>> =20
+>>
+>> =20
+>>
+>> =E2=80=A6 to make docker or 3rd party singularity images work on RHEL6.9=
+ until=20
+>> we go up to 7.x with overlay support.
+>>
+>> =20
+>>
+>> --
+>>
+>> David Trudgian Ph.D.
+>> Computational Scientist, BioHPC
+>>
+>> Lyda Hill Department of Bioinformatics
+>> UT Southwestern Medical Center
+>> Dallas, TX 75390-9365
+>>
+>> =20
+>>
+>> *From:* Nick Eggleston [mailto:ni...@gmail.com <javascript:>]=20
+>> *Sent:* Tuesday, October 31, 2017 11:21 AM
+>> *To:* si...@lbl.gov <javascript:>
+>> *Subject:* Re: [Singularity] Panasas on Singularity
+>>
+>> =20
+>>
+>> Yes, I think you're absolutely right. /home works because it's already i=
+n=20
+>> the image whereas /panfs/pfs.local (the realm) doesn't because it's not=
+=20
+>> already in the image. So far I haven't had much luck with bind but I'm=
+=20
+>> working on that. Since I downloaded this particular image from a reposit=
+ory=20
+>> that hosts biology specific images for one of our users I'm not really s=
+ure=20
+>> about modifying it. The Singularity docs say something about using=20
+>> --writable but I haven't found a permutation of commands that recognizes=
+=20
+>> --writable as a real thing and the docs don't give any examples of where=
+ or=20
+>> how it's actually supposed to be used (or more likely I haven't found th=
+e=20
+>> right page yet).=20
+>>
+>> =20
+>>
+>> Yes I've discovered overlay doesn't exist in our kernel and feel foolish=
+=20
+>> for not realizing that earlier, although I think it would probably solve=
+ my=20
+>> problem, upgrading to RHEL 7 isn't on the roadmap until next year.
+>>
+>> =20
+>>
+>> On Tue, Oct 31, 2017 at 11:14 AM, Gabe Turner <eb...@gmail.com=20
+>> <javascript:>> wrote:
+>>
+>> Nick:
+>>
+>> I'm skeptical that the Panasas has anything to do with the problems=20
+>> you've mentioned. I've used Singularity with user homes, scratches, and=
+=20
+>> share application spaces on Panasas. You will need to bind all of the=20
+>> volumes that your users need to access, or bind the whole realm (which=
+=20
+>> might be your /panfs/pfs.local above), and ensure that any symlinks to=
+=20
+>> anything in the realm exist in your other bound filesystems or in the im=
+age=20
+>> itself (whichever is applicable).
+>>
+>> Lastly, disable overlay, as it's not support in RHEL 6.
+>>
+>> Gabe
+>>
+>> =20
+>>
+>> On Mon, Oct 30, 2017 at 1:16 PM, Nick Eggleston <ni...@gmail.com=20
+>> <javascript:>> wrote:
+>>
+>> Hey All,
+>>
+>> =20
+>>
+>> I'm one of the HPC Sysadmins for University of Kansas. We use Panasas fo=
+r=20
+>> our cluster file storage, and I'm having a bit of an issue getting=20
+>> Singularity to play nice with some of our Panasas. As is standard with a=
+=20
+>> lot of compute clusters, we give users a home, work, and scratch directo=
+ry=20
+>> to play in. Home is accessible under /home/<username> as would be expect=
+ed,=20
+>> and we do this with a symlink to the home volume under our Panasas mount=
+.=20
+>> Like I said before we also give a work and scratch directory to every us=
+er=20
+>> and these directories have higher space limitations than the home direct=
+ory=20
+>> so that's where most everyone puts their files. When I start a Singulari=
+ty=20
+>> container, I don't have any issues with /home, that just seems to work.=
+=20
+>> What doesn't seem to work is anything else that needs to reach out to th=
+e=20
+>> Panasas. Users all have a symlink in their homedir that points to their=
+=20
+>> work and scratch and those links appear to be broken, and that Panasas=
+=20
+>> doesn't show up at all, even though I've enabled what I think would be t=
+he=20
+>> relevant settings in my singularity.conf file (which I'll paste a conden=
+sed=20
+>> version of below in case you all see something I don't). Does anyone hav=
+e=20
+>> any experience with using Panasas in this context with Singularity? So f=
+ar=20
+>> the people I know that use both only use the homedir as the only link to=
+=20
+>> the outside world so to speak, but that's not enough for our users. Also=
+,=20
+>> just for a relevant info include, we run RHEL 6.4 with a 2.6 kernel.
+>>
+>> =20
+>>
+>> Thanks!
+>>
+>> =20
+>>
+>> =20
+>>
+>> # SINGULARITY.CONF
+>>
+>> # This is the global configuration file for Singularity. This file=20
+>> controls
+>>
+>> # what the container is allowed to do on a particular host, and as a=20
+>> result
+>>
+>> # this file must be owned by root.
+>>
+>> =20
+>>
+>> allow setuid =3D yes
+>>
+>> =20
+>>
+>> max loop devices =3D 256
+>>
+>> =20
+>>
+>> allow pid ns =3D yes
+>>
+>> =20
+>>
+>> config passwd =3D yes
+>>
+>> =20
+>>
+>> config group =3D yes
+>>
+>> =20
+>>
+>> config resolv_conf =3D yes
+>>
+>> =20
+>>
+>> mount proc =3D yes
+>>
+>> =20
+>>
+>> mount sys =3D yes
+>>
+>> =20
+>>
+>> mount dev =3D yes
+>>
+>> =20
+>>
+>> mount devpts =3D yes
+>>
+>> =20
+>>
+>> mount home =3D yes
+>>
+>> =20
+>>
+>> mount tmp =3D yes
+>>
+>> =20
+>>
+>> #mount hostfs =3D no
+>>
+>> mount hostfs =3D yes
+>>
+>> =20
+>>
+>> #bind path =3D /etc/singularity/default-nsswitch.conf:/etc/nsswitch.conf
+>>
+>> #bind path =3D /opt
+>>
+>> #bind path =3D /scratch
+>>
+>> #bind path =3D /etc/localtime
+>>
+>> bind path =3D /etc/hosts
+>>
+>> bind path =3D /panfs/pfs.local
+>>
+>> =20
+>>
+>> user bind control =3D yes
+>>
+>> =20
+>>
+>> #enable overlay =3D no
+>>
+>> enable overlay =3D yes
+>>
+>> =20
+>>
+>> sessiondir max size =3D 16
+>>
+>> =20
+>>
+>> #limit container owners =3D gmk, singularity, nobody
+>>
+>> =20
+>>
+>> #limit container paths =3D /scratch, /tmp, /global
+>>
+>> =20
+>>
+>> allow container squashfs =3D yes
+>>
+>> allow container extfs =3D yes
+>>
+>> allow container dir =3D yes
+>>
+>> =20
+>>
+>> #autofs bug path =3D /nfs
+>>
+>> #autofs bug path =3D /cifs-share
+>>
+>> =20
+>>
+>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s=20
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n=20
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>> =20
+>>
+>> --=20
+>> You received this message because you are subscribed to a topic in the=
+=20
+>> Google Groups "singularity" group.
+>> To unsubscribe from this topic, visit=20
+>> https://groups.google.com/a/lbl.gov/d/topic/singularity/u2CokAIQ3zU/unsu=
+bscribe
+>> .
+>> To unsubscribe from this group and all its topics, send an email to=20
+>> singu...@lbl.gov <javascript:>.
+>>
+>> =20
+>>
+>> --=20
+>> You received this message because you are subscribed to the Google Group=
+s=20
+>> "singularity" group.
+>> To unsubscribe from this group and stop receiving emails from it, send a=
+n=20
+>> email to singu...@lbl.gov <javascript:>.
+>>
+>> ------------------------------
+>>
+>> UT Southwestern=20
+>>
+>> Medical Center
+>>
+>> The future of medicine, today.
+>>
+>> --=20
+>> You received this message because you are subscribed to a topic in the=
+=20
+>> Google Groups "singularity" group.
+>> To unsubscribe from this topic, visit=20
+>> https://groups.google.com/a/lbl.gov/d/topic/singularity/u2CokAIQ3zU/unsu=
+bscribe
+>> .
+>> To unsubscribe from this group and all its topics, send an email to=20
+>> singu...@lbl.gov <javascript:>.
+>>
+>
+>
+------=_Part_5468_1773066936.1509811570506
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi Nick,<br><br>I&#39;ve come up with some stuff which inj=
+ects the $HOME and any `bind paths` into the docker container as it is extr=
+acted. This is good enough to allow people to use most docker containers un=
+modified on our RHEL6.9 systems that don&#39;t have overlayfs.<br><br>Not s=
+ure whether it&#39;ll be considered for merging into Singularity, but the P=
+R is here if you are interested:<br><br>https://github.com/singularityware/=
+singularity/pull/1124<br><br>Cheers,<br><br>DT<br><br><br>On Wednesday, Nov=
+ember 1, 2017 at 9:55:04 AM UTC-5, Nick Eggleston wrote:<blockquote class=
+=3D"gmail_quote" style=3D"margin: 0;margin-left: 0.8ex;border-left: 1px #cc=
+c solid;padding-left: 1ex;"><div dir=3D"ltr">@David,<div><br></div><div>Tha=
+nks so much for your help, that worked. My only problem is, we&#39;ve promi=
+sed the users that this will be a way for them to download any of the image=
+s they want and run them without us having to install the software for them=
+. With this method the root user still needs to do the building to apply th=
+e definition file for them. Is there a way around this that I&#39;m missing=
+?=C2=A0</div><div><br></div><div>Thanks</div><div>Nick</div><div><br></div>=
+<div><span style=3D"font-size:16px;font-family:Calibri,sans-serif;color:bla=
+ck">--<br></span><span style=3D"font-size:18pt;font-family:Calibri,sans-ser=
+if;color:black">Nick Eggleston</span><span style=3D"font-size:16px;font-fam=
+ily:Calibri,sans-serif;color:black"><br>University of Kansas, Center for Re=
+search Computing<br>High Performance Compute Cluster Administrator</span><b=
+r></div><div><br><div class=3D"gmail_quote">On Tue, Oct 31, 2017 at 11:27 A=
+M, David Trudgian <span dir=3D"ltr">&lt;<a href=3D"javascript:" target=3D"_=
+blank" gdf-obfuscated-mailto=3D"sUd9aqn-BgAJ" rel=3D"nofollow" onmousedown=
+=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D=
+&#39;javascript:&#39;;return true;">David.T...@<wbr>utsouthwestern.edu</a>&=
+gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0px =
+0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex">
+
+
+
+
+
+<div lang=3D"EN-US">
+<div>
+<p class=3D"MsoNormal"><span style=3D"font-size:11pt;font-family:Calibri,sa=
+ns-serif;color:rgb(31,73,125)">Hi Nick,<u></u><u></u></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:11pt;font-family:Calibri,sa=
+ns-serif;color:rgb(31,73,125)"><u></u>=C2=A0<u></u></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:11pt;font-family:Calibri,sa=
+ns-serif;color:rgb(31,73,125)">On RHEL6.9 where the is no overlay we have t=
+o build images to account for our non-standard /home2 home directories, and=
+ other cluster-fs we might want to mount.
+ We have to mkdir /home2=C2=A0 so that there is some target singularity can=
+ bind to. You=E2=80=99d need to `singularity build` images with a definitio=
+n file that mkdirs /panfs/pfs.local in %post%. We have a lot of simple Sing=
+ularity definition files looking similar to below,
+ that we have to create and build into images.<u></u><u></u></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:11pt;font-family:Calibri,sa=
+ns-serif;color:rgb(31,73,125)"><u></u>=C2=A0<u></u></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:11pt;font-family:Calibri,sa=
+ns-serif;color:rgb(31,73,125)">Bootstrap: docker<u></u><u></u></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:11pt;font-family:Calibri,sa=
+ns-serif;color:rgb(31,73,125)">From: nvidia/digits:6.0<u></u><u></u></span>=
+</p>
+<p class=3D"MsoNormal"><span style=3D"font-size:11pt;font-family:Calibri,sa=
+ns-serif;color:rgb(31,73,125)"><u></u>=C2=A0<u></u></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:11pt;font-family:Calibri,sa=
+ns-serif;color:rgb(31,73,125)">%post<u></u><u></u></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:11pt;font-family:Calibri,sa=
+ns-serif;color:rgb(31,73,125)">=C2=A0=C2=A0=C2=A0 mkdir /home2<u></u><u></u=
+></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:11pt;font-family:Calibri,sa=
+ns-serif;color:rgb(31,73,125)">=C2=A0=C2=A0=C2=A0 mkdir /project<u></u><u><=
+/u></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:11pt;font-family:Calibri,sa=
+ns-serif;color:rgb(31,73,125)">=C2=A0=C2=A0=C2=A0 mkdir /work<u></u><u></u>=
+</span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:11pt;font-family:Calibri,sa=
+ns-serif;color:rgb(31,73,125)">=C2=A0=C2=A0=C2=A0 mkdir /archive<u></u><u><=
+/u></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:11pt;font-family:Calibri,sa=
+ns-serif;color:rgb(31,73,125)"><u></u>=C2=A0<u></u></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:11pt;font-family:Calibri,sa=
+ns-serif;color:rgb(31,73,125)"><u></u>=C2=A0<u></u></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:11pt;font-family:Calibri,sa=
+ns-serif;color:rgb(31,73,125)">=E2=80=A6 to make docker or 3<sup>rd</sup> p=
+arty singularity images work on RHEL6.9 until we go up to 7.x with overlay =
+support.<u></u><u></u></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:11pt;font-family:Calibri,sa=
+ns-serif;color:rgb(31,73,125)"><u></u>=C2=A0<u></u></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:10pt;font-family:Consolas;c=
+olor:black">--<u></u><u></u></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:11pt;font-family:Calibri,sa=
+ns-serif;color:rgb(31,73,125)">David Trudgian Ph.D.<br>
+Computational Scientist, BioHPC<u></u><u></u></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:11pt;font-family:Calibri,sa=
+ns-serif;color:rgb(31,73,125)">Lyda Hill Department of Bioinformatics<br>
+UT Southwestern Medical Center<br>
+Dallas, TX 75390-9365<br>
+<br>
+</span><span style=3D"font-size:11pt;font-family:Consolas;color:rgb(31,73,1=
+25)"><u></u><u></u></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-size:11pt;font-family:Calibri,sa=
+ns-serif;color:rgb(31,73,125)"><u></u>=C2=A0<u></u></span></p>
+<p class=3D"MsoNormal"><b><span style=3D"font-size:11pt;font-family:Calibri=
+,sans-serif">From:</span></b><span style=3D"font-size:11pt;font-family:Cali=
+bri,sans-serif"> Nick Eggleston [mailto:<a href=3D"javascript:" target=3D"_=
+blank" gdf-obfuscated-mailto=3D"sUd9aqn-BgAJ" rel=3D"nofollow" onmousedown=
+=3D"this.href=3D&#39;javascript:&#39;;return true;" onclick=3D"this.href=3D=
+&#39;javascript:&#39;;return true;">ni...@gmail.com</a>]
+<br>
+<b>Sent:</b> Tuesday, October 31, 2017 11:21 AM<br>
+<b>To:</b> <a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=
+=3D"sUd9aqn-BgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascri=
+pt:&#39;;return true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return =
+true;">si...@lbl.gov</a><br>
+<b>Subject:</b> Re: [Singularity] Panasas on Singularity<u></u><u></u></spa=
+n></p><div><div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+<div>
+<p class=3D"MsoNormal">Yes, I think you&#39;re absolutely right. /home work=
+s because it&#39;s already in the image whereas /panfs/pfs.local (the realm=
+) doesn&#39;t because it&#39;s not already in the image. So far I haven&#39=
+;t had much luck with bind but I&#39;m working on that. Since
+ I downloaded this particular image from a repository that hosts biology sp=
+ecific images for one of our users I&#39;m not really sure about modifying =
+it. The Singularity docs say something about using --writable but I haven&#=
+39;t found a permutation of commands that
+ recognizes --writable as a real thing and the docs don&#39;t give any exam=
+ples of where or how it&#39;s actually supposed to be used (or more likely =
+I haven&#39;t found the right page yet).=C2=A0<u></u><u></u></p>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">Yes I&#39;ve discovered overlay doesn&#39;t exist in=
+ our kernel and feel foolish for not realizing that earlier, although I thi=
+nk it would probably solve my problem, upgrading to RHEL 7 isn&#39;t on the=
+ roadmap until next year.<u></u><u></u></p>
+</div>
+</div>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+<div>
+<p class=3D"MsoNormal">On Tue, Oct 31, 2017 at 11:14 AM, Gabe Turner &lt;<a=
+ href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"sUd9aqn-Bg=
+AJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;retur=
+n true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">eb...@g=
+mail.com</a>&gt; wrote:<u></u><u></u></p>
+<blockquote style=3D"border-top:none;border-right:none;border-bottom:none;b=
+order-left:1pt solid rgb(204,204,204);padding:0in 0in 0in 6pt;margin-left:4=
+.8pt;margin-right:0in">
+<div>
+<div>
+<div>
+<div>
+<p class=3D"MsoNormal" style=3D"margin-bottom:12pt">Nick:<u></u><u></u></p>
+</div>
+<p class=3D"MsoNormal" style=3D"margin-bottom:12pt">I&#39;m skeptical that =
+the Panasas has anything to do with the problems you&#39;ve mentioned. I&#3=
+9;ve used Singularity with user homes, scratches, and share application spa=
+ces on Panasas. You will need to bind all of the
+ volumes that your users need to access, or bind the whole realm (which mig=
+ht be your /panfs/pfs.local above), and ensure that any symlinks to anythin=
+g in the realm exist in your other bound filesystems or in the image itself=
+ (whichever is applicable).<u></u><u></u></p>
+</div>
+<p class=3D"MsoNormal" style=3D"margin-bottom:12pt">Lastly, disable overlay=
+, as it&#39;s not support in RHEL 6.<u></u><u></u></p>
+</div>
+<p class=3D"MsoNormal"><span><span style=3D"color:rgb(136,136,136)">Gabe</s=
+pan></span><u></u><u></u></p>
+</div>
+<div>
+<div>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+<div>
+<p class=3D"MsoNormal">On Mon, Oct 30, 2017 at 1:16 PM, Nick Eggleston &lt;=
+<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"sUd9aqn-=
+BgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;ret=
+urn true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">ni...=
+@gmail.com</a>&gt; wrote:<u></u><u></u></p>
+<blockquote style=3D"border-top:none;border-right:none;border-bottom:none;b=
+order-left:1pt solid rgb(204,204,204);padding:0in 0in 0in 6pt;margin-left:4=
+.8pt;margin-right:0in">
+<div>
+<p class=3D"MsoNormal">Hey All,<u></u><u></u></p>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">I&#39;m one of the HPC Sysadmins for University of K=
+ansas. We use Panasas for our cluster file storage, and I&#39;m having a bi=
+t of an issue getting Singularity to play nice with some of our Panasas. As=
+ is standard with a lot of compute clusters,
+ we give users a home, work, and scratch directory to play in. Home is acce=
+ssible under /home/&lt;username&gt; as would be expected, and we do this wi=
+th a symlink to the home volume under our Panasas mount. Like I said before=
+ we also give a work and scratch directory
+ to every user and these directories have higher space limitations than the=
+ home directory so that&#39;s where most everyone puts their files. When I =
+start a Singularity container, I don&#39;t have any issues with /home, that=
+ just seems to work. What doesn&#39;t seem to
+ work is anything else that needs to reach out to the Panasas. Users all ha=
+ve a symlink in their homedir that points to their work and scratch and tho=
+se links appear to be broken, and that Panasas doesn&#39;t show up at all, =
+even though I&#39;ve enabled what I think
+ would be the relevant settings in my singularity.conf file (which I&#39;ll=
+ paste a condensed version of below in case you all see something I don&#39=
+;t). Does anyone have any experience with using Panasas in this context wit=
+h Singularity? So far the people I know
+ that use both only use the homedir as the only link to the outside world s=
+o to speak, but that&#39;s not enough for our users. Also, just for a relev=
+ant info include, we run RHEL 6.4 with a 2.6 kernel.<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">Thanks!<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<div>
+<div>
+<p class=3D"MsoNormal"># SINGULARITY.CONF<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal"># This is the global configuration file for Singular=
+ity. This file controls<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal"># what the container is allowed to do on a particula=
+r host, and as a result<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal"># this file must be owned by root.<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">allow setuid =3D yes<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">max loop devices =3D 256<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">allow pid ns =3D yes<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">config passwd =3D yes<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">config group =3D yes<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">config resolv_conf =3D yes<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">mount proc =3D yes<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">mount sys =3D yes<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">mount dev =3D yes<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">mount devpts =3D yes<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">mount home =3D yes<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">mount tmp =3D yes<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">#mount hostfs =3D no<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">mount hostfs =3D yes<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">#bind path =3D /etc/singularity/default-<wbr>nsswitc=
+h.conf:/etc/nsswitch.<wbr>conf<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">#bind path =3D /opt<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">#bind path =3D /scratch<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">#bind path =3D /etc/localtime<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">bind path =3D /etc/hosts<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">bind path =3D /panfs/pfs.local<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">user bind control =3D yes<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">#enable overlay =3D no<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">enable overlay =3D yes<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">sessiondir max size =3D 16<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">#limit container owners =3D gmk, singularity, nobody=
+<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">#limit container paths =3D /scratch, /tmp, /global<u=
+></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">allow container squashfs =3D yes<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">allow container extfs =3D yes<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">allow container dir =3D yes<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">#autofs bug path =3D /nfs<u></u><u></u></p>
+</div>
+<div>
+<p class=3D"MsoNormal">#autofs bug path =3D /cifs-share<u></u><u></u></p>
+</div>
+</div>
+<div>
+<p class=3D"MsoNormal"><span style=3D"color:rgb(136,136,136)"><u></u>=C2=A0=
+<u></u></span></p>
+</div>
+</div>
+<p class=3D"MsoNormal"><span><span style=3D"color:rgb(136,136,136)">--
+</span></span><span style=3D"color:rgb(136,136,136)"><br>
+<span>You received this message because you are subscribed to the Google Gr=
+oups &quot;singularity&quot; group.</span><br>
+<span>To unsubscribe from this group and stop receiving emails from it, sen=
+d an email to
+<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"sUd9aqn-=
+BgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;ret=
+urn true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">singu=
+larity...@lbl.<wbr>gov</a>.</span></span><u></u><u></u></p>
+</blockquote>
+</div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<p class=3D"MsoNormal">-- <br>
+You received this message because you are subscribed to a topic in the Goog=
+le Groups &quot;singularity&quot; group.<br>
+To unsubscribe from this topic, visit <a href=3D"https://groups.google.com/=
+a/lbl.gov/d/topic/singularity/u2CokAIQ3zU/unsubscribe" target=3D"_blank" re=
+l=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://groups.google.com/a/=
+lbl.gov/d/topic/singularity/u2CokAIQ3zU/unsubscribe&#39;;return true;" oncl=
+ick=3D"this.href=3D&#39;https://groups.google.com/a/lbl.gov/d/topic/singula=
+rity/u2CokAIQ3zU/unsubscribe&#39;;return true;">
+https://groups.google.com/a/<wbr>lbl.gov/d/topic/singularity/<wbr>u2CokAIQ3=
+zU/unsubscribe</a>.<br>
+To unsubscribe from this group and all its topics, send an email to <a href=
+=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"sUd9aqn-BgAJ" r=
+el=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return tru=
+e;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">
+singularity...@lbl.<wbr>gov</a>.<u></u><u></u></p>
+</div>
+</div>
+</blockquote>
+</div>
+<p class=3D"MsoNormal"><u></u>=C2=A0<u></u></p>
+</div>
+<p class=3D"MsoNormal">-- <br>
+You received this message because you are subscribed to the Google Groups &=
+quot;singularity&quot; group.<br>
+To unsubscribe from this group and stop receiving emails from it, send an e=
+mail to
+<a href=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"sUd9aqn-=
+BgAJ" rel=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;ret=
+urn true;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">singu=
+larity...@lbl.<wbr>gov</a>.<u></u><u></u></p>
+</div></div></div>
+<br>
+<hr>
+<table cellpadding=3D"0" border=3D"0">
+<tbody>
+<tr>
+<td>
+<p style=3D"text-align:right" align=3D"right"><span style=3D"font-size:17pt=
+;letter-spacing:-3px;font-family:Helvetica,sans-serif;color:rgb(0,84,160);f=
+ont-weight:bolder">UT</span><span style=3D"font-size:17pt;letter-spacing:0p=
+x;font-family:Helvetica,sans-serif;color:rgb(0,84,160);font-weight:bolder">
+ Southwestern</span> </p>
+</td>
+</tr>
+<tr>
+<td>
+<p style=3D"text-align:right" align=3D"right"><span style=3D"font-size:13pt=
+;font-family:Helvetica,sans-serif;color:rgb(102,109,112)">Medical Center</s=
+pan></p>
+</td>
+</tr>
+<tr>
+<td></td>
+</tr>
+<tr>
+<td>
+<p style=3D"text-align:right"><span style=3D"font-size:10pt;font-family:Hel=
+vetica,sans-serif;color:rgb(102,109,112)">The future of medicine, today.</s=
+pan></p>
+</td>
+</tr>
+</tbody>
+</table>
+</div><div><div>
+
+
+<p></p>
+
+-- <br>
+You received this message because you are subscribed to a topic in the Goog=
+le Groups &quot;singularity&quot; group.<br>
+To unsubscribe from this topic, visit <a href=3D"https://groups.google.com/=
+a/lbl.gov/d/topic/singularity/u2CokAIQ3zU/unsubscribe" target=3D"_blank" re=
+l=3D"nofollow" onmousedown=3D"this.href=3D&#39;https://groups.google.com/a/=
+lbl.gov/d/topic/singularity/u2CokAIQ3zU/unsubscribe&#39;;return true;" oncl=
+ick=3D"this.href=3D&#39;https://groups.google.com/a/lbl.gov/d/topic/singula=
+rity/u2CokAIQ3zU/unsubscribe&#39;;return true;">https://groups.google.com/a=
+/<wbr>lbl.gov/d/topic/singularity/<wbr>u2CokAIQ3zU/unsubscribe</a>.<br>
+To unsubscribe from this group and all its topics, send an email to <a href=
+=3D"javascript:" target=3D"_blank" gdf-obfuscated-mailto=3D"sUd9aqn-BgAJ" r=
+el=3D"nofollow" onmousedown=3D"this.href=3D&#39;javascript:&#39;;return tru=
+e;" onclick=3D"this.href=3D&#39;javascript:&#39;;return true;">singularity.=
+..@lbl.<wbr>gov</a>.<br>
+</div></div></blockquote></div><br></div></div>
+</blockquote></div>
+------=_Part_5468_1773066936.1509811570506--
+
+------=_Part_5467_1783831734.1509811570504--

@@ -17,7 +17,8 @@ class GoogleGroupsScraper(object):
 
     def __init__(self, organization,
                        group_name, 
-                       verbose=True):
+                       verbose=True,
+                       wait_seconds=3):
         '''perform a scrape based on an organization, group name, and the class
            of the top div of the post list. You'll need to find this by viewing the source of
            the page and then finding the top div.
@@ -29,6 +30,7 @@ class GoogleGroupsScraper(object):
         self.driver = self._get_driver()
         self.wait = WebDriverWait(self.driver, 30)
         self.verbose = verbose
+        self.wait_sec = wait_seconds
 
         # Set up output folder, organized by <org>/<group>/<date>
         self.setup_output()
@@ -107,7 +109,7 @@ class GoogleGroupsScraper(object):
 
         # Wait for Javascript to load
         try:
-            WebDriverWait(self.driver, 3).until(lambda d: False)
+            WebDriverWait(self.driver, self.wait_sec).until(lambda d: False)
         except TimeoutException:
             pass
 

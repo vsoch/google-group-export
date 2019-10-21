@@ -54,6 +54,19 @@ or earlier! Here is the bottom of the Singularity forum:
 
 ![img/bottom.png](img/bottom.png)
 
+Once you've scrolled to the bottom and pressed enter, it will proceed to
+extract the messages from the topic threads.
+
+```bash
+...
+/home/vanessa/Documents/Dropbox/Code/Python/GoogleGroupScraper/exports/a-lbl.gov/singularity/2019-10-21 already exists, will only get new topics.
+Output: /home/vanessa/Documents/Dropbox/Code/Python/GoogleGroupScraper/exports/a-lbl.gov/singularity/2019-10-21
+Scroll to the bottom (the first post) and press Enter to continue...
+Found 1016 topics links on forum
+Obtained 3 raw urls.
+Obtained 4 raw urls.
+```
+
 ## Concepts
 
 Before we talk about output files, let's review some basic concepts that will
